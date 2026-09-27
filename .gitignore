@@ -1,0 +1,7 @@
+*.env
+private/
+LATAM_Bank_Complete_Data_Dictionary (2).pdf
+data/
+.venv/
+__pycache__/
+*.pyc

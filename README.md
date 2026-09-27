@@ -1,0 +1,42 @@
+# Factored AI & Data Hackathon 2026 — MCG
+
+This repository contains our data audit and implementation plan for a FLUJO-powered **unrecognized-charge inquiry and simulated dispute-intake** workflow. It is an analysis and planning deliverable; the customer-facing flow and banking sandbox are not implemented yet.
+
+## Start here
+
+- [Hackathon audit and delivery plan](docs/HACKATHON_AUDIT_PLAN.md)
+- [Direct S3 data review](docs/DATA_REVIEW_2026-09-26.md)
+- [Aggregate profile](docs/DATA_PROFILE_AGGREGATES_2026-09-26.json)
+- [Challenge and dataset references](docs/reference/)
+- [S3 profiling script](scripts/profile_s3.py)
+
+The full scan found **12,297 unrecognized-charge complaints** and **4,425,008 transactions** with valid customer/product ownership. Historical complaint links are unusable for the proposed customer workflow: all complaint origin-interaction IDs are empty, and every populated affected-product ID belongs to another customer. See the review for methods, denominators, and limits.
+
+## Local S3 profiling
+
+Install the dependency and copy the configuration template:
+
+```powershell
+python -m pip install -r requirements-s3.txt
+Copy-Item S3credentials.env.example S3credentials.env
+```
+
+Fill `S3credentials.env` privately, then run:
+
+```powershell
+python scripts/profile_s3.py
+```
+
+The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFILE_AGGREGATES_2026-09-26.json`. It does not save source rows or credentials. The local env file, raw data, and `private/` source materials are ignored by Git. The data dictionary under `docs/reference/` has its credential page redacted.
+
+## Repository layout
+
+| Path | Purpose |
+| --- | --- |
+| `docs/` | Plan, evidence report, and aggregate JSON |
+| `docs/reference/` | Organizer PDFs, including a redacted data dictionary |
+| `scripts/` | Reproducible profiling code |
+| `notes/` | Team idea notes |
+| `private/` | Local-only original credential-bearing reference |
+
+The proposed banking MCP server is a separate application component in the plan. Direct S3 access is used for offline data preparation; the customer-facing agent should receive only bounded, authorized banking tools.

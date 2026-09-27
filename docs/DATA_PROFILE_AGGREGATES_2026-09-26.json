@@ -1,0 +1,425 @@
+{
+  "method": "Direct read-only S3 streaming; aggregate output only; no raw records retained",
+  "dataset_cutoff": "2026-06-17",
+  "inventory": {
+    "branches": {
+      "objects": 1,
+      "bytes": 89529
+    },
+    "call_center_interactions": {
+      "objects": 1097,
+      "bytes": 139734950
+    },
+    "call_transcripts": {
+      "objects": 1097,
+      "bytes": 137235657
+    },
+    "campaign_sends": {
+      "objects": 1083,
+      "bytes": 325976325
+    },
+    "complaints": {
+      "objects": 1097,
+      "bytes": 17990612
+    },
+    "customers": {
+      "objects": 1,
+      "bytes": 46897358
+    },
+    "daily_exchange_rates": {
+      "objects": 1,
+      "bytes": 778914
+    },
+    "digital_events": {
+      "objects": 1097,
+      "bytes": 3757355051
+    },
+    "marketing_campaigns": {
+      "objects": 1,
+      "bytes": 32710
+    },
+    "products": {
+      "objects": 1,
+      "bytes": 68213646
+    },
+    "satisfaction_surveys": {
+      "objects": 1097,
+      "bytes": 46446098
+    },
+    "service_agents": {
+      "objects": 1,
+      "bytes": 237992
+    },
+    "transactions": {
+      "objects": 1097,
+      "bytes": 808333639
+    }
+  },
+  "tables": {
+    "customers": {
+      "rows": 150000,
+      "duplicate_ids": 0,
+      "countries": {
+        "México": 74907,
+        "Colombia": 45251,
+        "Argentina": 29842
+      },
+      "segments": {
+        "Basic": 89756,
+        "Plus": 37547,
+        "Premium": 15207,
+        "Student": 7490
+      },
+      "status": {
+        "Active": 127700,
+        "Inactive": 14914,
+        "Suspended": 4407,
+        "Closed": 2979
+      },
+      "credit_score_nonempty": 127508,
+      "income_nonempty": 119967,
+      "last_updated_after_cutoff": 9316,
+      "columns": [
+        "customer_id",
+        "document_number",
+        "document_type",
+        "first_name",
+        "last_name",
+        "date_of_birth",
+        "gender",
+        "email",
+        "mobile_phone",
+        "landline_phone",
+        "address",
+        "city",
+        "state",
+        "country",
+        "postal_code",
+        "detected_accent",
+        "segment",
+        "credit_score",
+        "estimated_monthly_income",
+        "occupation",
+        "marital_status",
+        "education_level",
+        "registration_date",
+        "registration_branch_id",
+        "customer_status",
+        "last_updated",
+        "accepts_marketing"
+      ]
+    },
+    "products": {
+      "rows": 400000,
+      "duplicate_ids": 0,
+      "orphan_customer_ids": 0,
+      "types": {
+        "Cuenta Ahorro": 120203,
+        "Tarjeta Crédito": 100102,
+        "Cuenta Corriente": 99979,
+        "Tarjeta Débito": 39938,
+        "Préstamo Personal": 19960,
+        "Préstamo Hipotecario": 11910,
+        "Inversión": 5859,
+        "Seguro": 2049
+      },
+      "status": {
+        "Active": 339965,
+        "Closed": 32039,
+        "Blocked": 19935,
+        "Suspended": 8061
+      },
+      "by_customer_country": {
+        "México": 200398,
+        "Colombia": 120160,
+        "Argentina": 79442
+      },
+      "credit_limit_nonempty": 125317,
+      "days_past_due_nonempty": 125350,
+      "last_updated_after_cutoff": 25113,
+      "columns": [
+        "product_id",
+        "customer_id",
+        "product_type",
+        "product_number",
+        "currency",
+        "current_balance",
+        "credit_limit",
+        "interest_rate",
+        "opening_date",
+        "expiration_date",
+        "opening_branch_id",
+        "product_status",
+        "opening_channel",
+        "has_linked_app",
+        "days_past_due",
+        "last_transaction_date",
+        "last_updated"
+      ]
+    },
+    "call_center_interactions": {
+      "rows": 686296,
+      "duplicate_ids": 0,
+      "orphan_customer_ids": 0,
+      "reason": {
+        "Transaccional": 240056,
+        "Producto": 150863,
+        "Queja": 117021,
+        "Técnico": 102899,
+        "Comercial": 54879,
+        "Retención": 20578
+      },
+      "reason_category": {
+        "Transaccional": 240056,
+        "Producto": 150863,
+        "Queja": 117021,
+        "Técnico": 102899,
+        "Comercial": 54879,
+        "Retención": 20578
+      },
+      "by_country": {
+        "México": 343189,
+        "Colombia": 206790,
+        "Argentina": 136317
+      },
+      "by_month": {
+        "2026-03": 20547,
+        "2024-04": 19870,
+        "2024-08": 19796,
+        "2025-12": 19735,
+        "2024-07": 19729,
+        "2023-08": 19722,
+        "2025-07": 19686,
+        "2025-05": 19634,
+        "2024-10": 19555,
+        "2025-03": 19498,
+        "2025-01": 19496,
+        "2025-09": 19394,
+        "2023-07": 19247,
+        "2023-10": 19243,
+        "2025-04": 19177,
+        "2024-05": 19168,
+        "2024-12": 19101,
+        "2023-12": 19099,
+        "2025-10": 19022,
+        "2025-08": 19014,
+        "2024-01": 19006,
+        "2025-11": 18952,
+        "2024-09": 18944,
+        "2024-03": 18865,
+        "2026-04": 18790,
+        "2023-11": 18719,
+        "2026-01": 18681,
+        "2026-05": 18657,
+        "2024-02": 18478,
+        "2023-09": 18261,
+        "2025-06": 18237,
+        "2024-06": 18074,
+        "2026-02": 17789,
+        "2024-11": 17624,
+        "2025-02": 17211,
+        "2026-06": 11021,
+        "2023-06": 9254
+      },
+      "resolved_true": 526030,
+      "escalated_true": 68386,
+      "has_transcript_true": 171321,
+      "requires_followup_true": 239054,
+      "contact_reason_equals_category": 686296,
+      "partition_date_mismatch": 0,
+      "schema_variants": 1
+    },
+    "complaints": {
+      "rows": 67095,
+      "duplicate_ids": 0,
+      "orphan_customer_ids": 0,
+      "category": {
+        "Transactions": 13580,
+        "Fees": 13553,
+        "Technical": 13407,
+        "Branch": 13361,
+        "Service": 13194
+      },
+      "subcategory": {
+        "Cargo no reconocido": 12297,
+        "Cobro indebido": 12194,
+        "Problema con app": 12128,
+        "Atención en sucursal": 11892,
+        "Calidad de servicio": 11886,
+        "": 6698
+      },
+      "case_type": {
+        "Complaint": 40452,
+        "Claim": 16598,
+        "Request": 6761,
+        "Suggestion": 3284
+      },
+      "status": {
+        "In Process": 26823,
+        "Open": 20125,
+        "Resolved": 13512,
+        "Escalated": 3321,
+        "Closed": 2609,
+        "Rejected": 705
+      },
+      "by_country": {
+        "México": 33375,
+        "Colombia": 20384,
+        "Argentina": 13336
+      },
+      "unrecognized_by_country": {
+        "México": 6149,
+        "Colombia": 3727,
+        "Argentina": 2421
+      },
+      "by_month": {
+        "2025-01": 1998,
+        "2026-03": 1975,
+        "2025-10": 1972,
+        "2025-07": 1971,
+        "2023-12": 1945,
+        "2025-12": 1944,
+        "2026-01": 1924,
+        "2024-03": 1913,
+        "2024-07": 1912,
+        "2023-08": 1906,
+        "2024-01": 1898,
+        "2025-08": 1890,
+        "2024-12": 1885,
+        "2023-10": 1881,
+        "2023-07": 1879,
+        "2024-10": 1877,
+        "2024-08": 1876,
+        "2025-05": 1876,
+        "2024-11": 1872,
+        "2024-04": 1868,
+        "2026-04": 1858,
+        "2024-09": 1845,
+        "2023-11": 1836,
+        "2024-06": 1829,
+        "2025-06": 1825,
+        "2024-05": 1823,
+        "2026-05": 1822,
+        "2023-09": 1805,
+        "2025-04": 1797,
+        "2025-09": 1790,
+        "2025-11": 1784,
+        "2025-03": 1764,
+        "2025-02": 1745,
+        "2024-02": 1731,
+        "2026-02": 1706,
+        "2026-06": 1047,
+        "2023-06": 826
+      },
+      "origin_interaction_nonempty": 0,
+      "origin_interaction_known": 0,
+      "origin_interaction_customer_mismatch": 0,
+      "affected_product_nonempty": 44570,
+      "affected_product_known": 44570,
+      "affected_product_customer_mismatch": 44570,
+      "claimed_amount_nonempty": 21751,
+      "sla_breached_true": 13495,
+      "partition_date_mismatch": 0,
+      "resolution_after_cutoff": 213,
+      "schema_variants": 1,
+      "distinct_exact_descriptions": 5
+    },
+    "call_transcripts": {
+      "rows": 171321,
+      "duplicate_ids": 0,
+      "orphan_customer_ids": 0,
+      "languages": {
+        "es": 171321
+      },
+      "intents": {
+        "consulta_general": 162864,
+        "": 8457
+      },
+      "by_country": {
+        "México": 85897,
+        "Colombia": 51258,
+        "Argentina": 34166
+      },
+      "interaction_known": 171321,
+      "interaction_customer_mismatch": 0,
+      "customer_text_nonempty": 171321,
+      "partition_date_mismatch": 0,
+      "schema_variants": 1,
+      "distinct_exact_customer_texts": 42,
+      "texts_with_multiple_intent_tags": 42
+    },
+    "transactions": {
+      "rows": 4425008,
+      "duplicate_ids": 0,
+      "orphan_customer_ids": 0,
+      "product_unknown": 0,
+      "product_owner_mismatch": 0,
+      "status": {
+        "Approved": 4070681,
+        "Declined": 221234,
+        "Pending": 88343,
+        "Reversed": 44750
+      },
+      "type": {
+        "Purchase": 1083406,
+        "Withdrawal": 964673,
+        "Transfer": 896438,
+        "Payment": 738964,
+        "Deposit": 609409,
+        "Adjustment": 132118
+      },
+      "country": {
+        "México": 2105794,
+        "Colombia": 1289503,
+        "Argentina": 867561,
+        "USA": 40621,
+        "Spain": 40542,
+        "Mexico": 40515,
+        "Brazil": 40472
+      },
+      "by_month": {
+        "2024-07": 129316,
+        "2025-10": 129256,
+        "2023-10": 128065,
+        "2023-08": 127919,
+        "2024-10": 127758,
+        "2026-05": 127155,
+        "2025-07": 126867,
+        "2025-05": 126679,
+        "2026-04": 126499,
+        "2024-05": 126416,
+        "2025-08": 125886,
+        "2023-12": 125490,
+        "2026-03": 124296,
+        "2025-03": 123365,
+        "2024-12": 123343,
+        "2025-12": 122817,
+        "2024-01": 122418,
+        "2023-11": 122255,
+        "2024-08": 122109,
+        "2025-01": 122056,
+        "2024-04": 121731,
+        "2026-01": 121549,
+        "2024-06": 121441,
+        "2023-07": 121121,
+        "2024-03": 121105,
+        "2025-04": 120838,
+        "2024-11": 120835,
+        "2025-11": 120323,
+        "2025-06": 118998,
+        "2023-09": 118902,
+        "2025-09": 118785,
+        "2024-09": 118012,
+        "2024-02": 117330,
+        "2026-02": 115332,
+        "2025-02": 110632,
+        "2026-06": 70691,
+        "2023-06": 57418
+      },
+      "fraud_true": 4316,
+      "amount_missing": 0,
+      "partition_date_mismatch": 0,
+      "schema_variants": 1
+    }
+  }
+}
