@@ -2,7 +2,7 @@
 
 **Prepared:** 2026-09-25; **updated after direct S3 full-table profiling:** 2026-09-26. **Recommendation:** build a **verified unrecognized-charge inquiry and simulated dispute-intake assistant** using FLUJO as the orchestrator and a small, purpose-built banking sandbox behind MCP. The outcome we automate is a correctly answered transaction inquiry or a **verified dispute-intake receipt**. We do not claim that opening a case resolves the underlying dispute. The measured full-table evidence, method, and revised decisions are in [DATA_REVIEW_2026-09-26.md](DATA_REVIEW_2026-09-26.md).
 
-**September 27 implementation update:** [BANKING_MCP_S3_PLAN.md](BANKING_MCP_S3_PLAN.md) specifies direct, bounded reads from the source S3 CSVs through the banking MCP server. It supersedes this document's earlier private indexed-extract choice; the workflow and data-quality findings below remain in force.
+**September 27 implementation update:** [BANKING_MCP_S3_PLAN.md](BANKING_MCP_S3_PLAN.md) specifies direct, bounded reads from the source S3 CSVs through the banking MCP server. The [FLUJO banking run design](FLUJO_BANKING_RUN_AUTH.md) proposes a verified per-run principal and signed per-call banking context so FLUJO can remain the workflow backend for multiple customers. These supersede the earlier private indexed-extract and gateway-as-MCP-client choices; the workflow and data-quality findings below remain in force.
 
 ## 1. What the challenge actually asks for
 
@@ -50,8 +50,8 @@ Assessed against local FLUJO source at commit `15d019f7b952b2f2d3aea1197722ac8d9
 ```mermaid
 flowchart LR
   U[Customer demo UI] --> G[Authenticated gateway / trusted test session]
-  G --> M[Bank sandbox MCP server]
-  G -->|bounded verified facts| F[FLUJO workflow: clarify, route, respond]
+  G -->|verified run assertion| F[FLUJO workflow: clarify, route, respond]
+  F -->|signed per-call customer context| M[Bank sandbox MCP server]
   F --> G
   M --> R[(Read-only source S3 CSVs)]
   M --> C[(Simulated case store + receipt)]
@@ -72,7 +72,7 @@ Treat transcript text, complaint descriptions, and tool-returned free text as un
 
 **Multi-agent use:** start with one customer-facing FLUJO flow plus deterministic services. If it improves held-out results, add one read-only **evidence/policy-check subflow** to assemble source-backed facts before the response. Compare it with the single-flow baseline for unsafe outcomes, handoff quality, latency, and cost. Use parallel team/AI work during development for data profiling, policy drafting, and adversarial-case generation, with human review and a frozen test set. A “reviewer agent” must never authorize a banking action or replace service-layer checks.
 
-**Deployment spike and hard gate:** use the authenticated gateway as the banking MCP client for the multi-customer path and call the local FLUJO flow through its documented `/v1` contract with only bounded, verified facts. Keep FLUJO and MCP services private to the deployment network; expose only the demo UI/gateway with seeded test identities. A separate spike may test direct FLUJO-to-MCP calls, but it must prove with interleaved customer traces that the gateway's verified principal reaches each banking tool through a channel the model cannot edit. A text prompt containing a customer ID or token is not such a channel. **If that propagation cannot be proven, do not deploy FLUJO with shared customer-record tools.** Record which path is actually deployed.
+**Deployment spike and hard gate:** the frontend server authenticates the test customer and calls private FLUJO through a banking-specific `/v1` ingress. The [FLUJO run design](FLUJO_BANKING_RUN_AUTH.md) verifies and binds that identity to the conversation, then signs a per-call context when FLUJO invokes the private banking MCP. Test interleaved customers, foreign conversation IDs, Static and Process nodes, pauses/resumes, and every path that can reach the bank MCP. A text prompt containing a customer ID or token is not a trusted channel. Keep FLUJO and MCP private; expose only the demo frontend. **If per-run identity propagation cannot be proven, do not deploy FLUJO with shared customer-record tools.** The frontend server can call the banking MCP directly as the fallback while FLUJO handles language and orchestration. Record which path is actually deployed.
 
 ## 5. Data, ML, and evaluation plan
 
@@ -107,7 +107,7 @@ Avoid a vector database, new model training stack, streaming platform, or multi-
 | **Sep 25** | Lock scope and synthetic-policy assumptions; inventory data access and submission requirements; protect credentials and dataset. |
 | **Sep 26** | Complete the [direct S3 full-table review](DATA_REVIEW_2026-09-26.md) of six key families; retain unrecognized-charge focus, reject transcript-trained intent classification, and record missing/broken historical case links. |
 | **Sep 27** | Specify the direct S3 query contract and typed MCP tools; label master-table values as supplied snapshots, pin source lineage, and reject complaint affected-product links. |
-| **Sep 28** | Trusted test-session gateway and read-only MCP tools; prove gateway-to-MCP principal binding and pass cross-customer/expired-session tests. Keep direct FLUJO-to-MCP access disabled unless its separate propagation gate passes. |
+| **Sep 28** | Trusted frontend session, FLUJO run principal, and read-only MCP tools; prove frontend-to-FLUJO-to-MCP binding and pass cross-customer/expired-session tests. |
 | **Sep 29** | Idempotent dispute-intake and verified read-back; structured handoff packet and simulated operator queue. |
 | **Sep 30** | FLUJO flow with clarification, source-backed responses, guarded action path, Spanish/Portuguese demo cases. |
 | **Oct 1** | Manually reviewed labels; rule baseline and learned component; freeze the held-out workload. |

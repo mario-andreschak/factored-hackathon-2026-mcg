@@ -1,12 +1,12 @@
 # Banking MCP over the source S3 dataset
 
-**Plan date:** 2026-09-27. **Status:** design only; no banking MCP, identity gateway, case store, or live flow exists in this repository. This plan refines the [hackathon delivery plan](HACKATHON_AUDIT_PLAN.md) for the requested **direct S3** access path. The [data review](DATA_REVIEW_2026-09-26.md) is the evidence base.
+**Plan date:** 2026-09-27. **Status:** design only; no banking MCP, customer-bound FLUJO integration, case store, or live flow exists in this repository. This plan refines the [hackathon delivery plan](HACKATHON_AUDIT_PLAN.md) for the requested **direct S3** access path. The [data review](DATA_REVIEW_2026-09-26.md) is the evidence base. The [FLUJO banking run design](FLUJO_BANKING_RUN_AUTH.md) is the current proposal for customer identity and 500-user scale.
 
 ## Decision
 
 Build a small **banking MCP server** that reads the organizer's source S3 CSV objects with the AWS SDK on each customer transaction inquiry. Expose only customer-scoped banking operations to its MCP client. The server, not the model, chooses S3 keys, parses rows, checks ownership, masks fields, and applies policy. The dataset remains read-only. A separate private case store holds simulated intake and handoff records.
 
-Use a trusted demo gateway as the MCP client for the multi-customer path until a test proves FLUJO can forward a verified **per-request** principal to a banking tool through a model-inaccessible channel. The inspected FLUJO checkout is still `15d019f7` and has unrelated local changes; its documented local `/v1` endpoint is not end-user authentication, and configured MCP headers are connection configuration rather than demonstrated per-run identity. The gateway can pass authorized, bounded facts into FLUJO for language orchestration; FLUJO must not have a shared, all-customer S3 tool connection. A single-customer isolated demo is a fallback only and must be labeled as such.
+Use the separate frontend's server to authenticate each demo customer, then run one shared graphical FLUJO flow with a verified runtime principal. FLUJO calls the banking MCP directly and attaches a signed, per-call customer assertion outside model text; the bank server verifies it independently. This requires the narrow FLUJO enhancement and security gates in the [run design](FLUJO_BANKING_RUN_AUTH.md). The inspected FLUJO checkout is still `15d019f7` and has unrelated local changes; its documented local `/v1` endpoint is not end-user authentication, and configured MCP headers alone do not establish per-run identity. If the direct FLUJO security gate fails, the frontend server can call the banking MCP itself while FLUJO handles language and orchestration.
 
 ### Review of current evidence
 
@@ -22,17 +22,17 @@ Use a trusted demo gateway as the MCP client for the multi-customer path until a
 ```mermaid
 flowchart LR
   U[Demo customer UI] --> G[Authenticated gateway]
-  G -->|short-lived user-bound authorization| M[Private banking MCP server]
+  G -->|verified run assertion| F[Private FLUJO flow]
+  F -->|signed customer context per tool call| M[Private banking MCP server]
   M -->|read-only SDK calls| S[(Source S3 CSVs)]
   M -->|atomic writes / read-back| C[(Private simulated case store)]
   M --> A[(Redacted audit events)]
-  G -->|bounded verified facts| F[FLUJO response flow]
   F --> G
 ```
 
 ### Why this access pattern
 
-The scanned source has single CSVs for `customers` (~47 MB) and `products` (~68 MB), and **1,097 daily transaction CSVs totaling ~808 MB**. The audit found 4,425,008 transactions with no observed customer/product owner mismatch, but that does not replace a runtime check. The source is partitioned by process date, **not customer or transaction ID**. An unrestricted `get_transaction(id)` would require a broad scan; S3 range reads cannot find a CSV record by ID without a separate byte-offset index. A direct, bounded date query is therefore the MVP contract. If measured latency or broader lookback needs justify it, add a private customer/date index later while still retrieving authoritative rows from source S3.
+The scanned source has single CSVs for `customers` (~47 MB) and `products` (~68 MB), and **1,097 daily transaction CSVs totaling ~808 MB**. The audit found 4,425,008 transactions with no observed customer/product owner mismatch, but that does not replace a runtime check. The source is partitioned by process date, **not customer or transaction ID**. An unrestricted `get_transaction(id)` would require a broad scan; S3 range reads cannot find a CSV record by ID without a separate byte-offset index. A direct, bounded date query is the first contract. For the 500-concurrent-customer target, build the private customer-to-date index described in the [FLUJO run design](FLUJO_BANKING_RUN_AUTH.md) before claiming production-like latency, while still retrieving authoritative transaction rows from source S3.
 
 ## Source access and query contract
 
@@ -61,7 +61,7 @@ Customer confirmation is a gateway/UI event tied to the selected transaction and
 
 ## Identity, AWS, and data protection
 
-- **Customer identity:** Gateway authenticates one seeded test user and maps that identity to one dataset `customer_id` in a private, reviewed fixture. The mapping never comes from prompt text or tool arguments. The banking MCP validates issuer, audience, signature, expiry, and customer/session scope of a short-lived token on each HTTP request, or accepts equivalent authenticated internal RPC context. The gateway creates a separate FLUJO conversation per test session and never relies on FLUJO workspace partitions for customer isolation. If FLUJO is to call the MCP directly, prove its per-run token binding with two concurrent customers and a forged-ID test first. Shared static authorization headers do not satisfy this gate.
+- **Customer identity:** The frontend server authenticates a seeded test user and sends a short-lived assertion to FLUJO. FLUJO binds each conversation to that verified subject and signs per-call customer context for the banking MCP; the bank server maps the subject to a dataset `customer_id` privately and checks it against every row. The mapping never comes from prompt text or tool arguments. The bank MCP validates both its HTTP service credential and the per-call assertion. FLUJO workspace partitions and shared static MCP headers are not customer isolation. The [run design](FLUJO_BANKING_RUN_AUTH.md) details the binding and fail-closed tests.
 - **S3 identity:** Only the banking server holds AWS permissions. Prefer workload-role temporary credentials for deployment; the existing local `S3credentials.env` is for private development/profiling and must never be shipped to browser, FLUJO prompts, or public repo. Ask the dataset owner for a role or scoped temporary credentials. Scope `s3:ListBucket` to required prefixes and `s3:GetObject` to the three source families; deny writes in this role. If objects use SSE-KMS, arrange only the required decrypt permission. S3 IAM protects the dataset at the application boundary; because many customers share an object, **per-customer authorization is enforced in the server code**, not by S3 object permissions.
 - **Network and secrets:** Keep MCP and case store private; expose only the authenticated gateway over HTTPS. Use managed secrets or runtime identity, TLS to S3, encrypted private case storage, tight log access and retention, and no raw source CSV persistence. Do not return S3 URLs or presigned URLs. Avoid logging tokens, source rows, customer text, document/product numbers, or AWS request headers.
 - **Untrusted content:** Treat merchant names and any source free text as data. Escape or structure it before sending to FLUJO, cap lengths, and test prompt-injection attempts. MCP errors must not reveal whether another customer's ID exists.
@@ -74,17 +74,17 @@ AWS recommends temporary workload credentials and least privilege; its S3 docs d
 | Gate | Concrete output | Pass condition |
 | --- | --- | --- |
 | 1. Source contract | Key allowlist, CSV schema checks, manifest, minimal owner maps | Read-only direct S3 startup works; changed/missing source fails closed. |
-| 2. Identity and read tools | Gateway-to-MCP token binding, bounded date scans, handles | Two concurrent users cannot see or select each other's rows; forged IDs/handles, expired sessions, and oversized windows are denied. |
+| 2. Identity and read tools | Frontend-to-FLUJO-to-MCP principal binding, bounded date scans, handles | Two concurrent users cannot see or select each other's rows; forged IDs/handles, expired sessions, and oversized windows are denied. |
 | 3. Action path | Synthetic policy, durable case store, idempotency, read-back | Confirmation is tied to the selected owned transaction; retries return one receipt; no receipt is claimed before verification. |
-| 4. FLUJO integration | Flow using bounded verified facts, or tested direct per-run MCP auth | A trace proves the principal never comes from model text and remains isolated across interleaved runs. |
+| 4. FLUJO integration | Shared graphical flow with verified per-run principal and signed per-call banking context | A trace proves the principal never comes from model text and remains isolated across interleaved runs. |
 | 5. Evaluation | Frozen Spanish/Portuguese cases and redacted traces | Measure safe inquiry/intake, handoff errors, leakage/action attempts, p50/p95 latency, S3 GETs/bytes, and cost on the same cases as the rule baseline. |
 
-For the October 5 submission, prioritize gates 1–4 before polish. A practical first smoke test uses two seeded customers with known transactions on different dates, one cross-customer selection attempt, one expired session, one changed-object simulation, and an uncertain-write retry. The broader held-out set in the hackathon plan remains the evaluation target. If direct daily scans breach the measured latency/transfer budget, build an encrypted private customer-to-date index from S3 and use it only to narrow candidate **source objects**; keep the ownership recheck and authoritative `GetObject` read. Do not silently replace direct source reads with an untracked cached copy.
+For the October 5 submission, prioritize gates 1–4 before polish. A practical first smoke test uses two seeded customers with known transactions on different dates, one cross-customer selection attempt, one expired session, one changed-object simulation, and an uncertain-write retry. The broader held-out set in the hackathon plan remains the evaluation target. Build an encrypted private customer-to-date index from S3 for the 500-customer load gate and use it only to narrow candidate **source objects**; keep the ownership recheck and authoritative `GetObject` read. Do not claim the 500-customer target until the indexed path passes the measured load test, and do not silently replace direct source reads with an untracked cached copy.
 
 ## Open decisions for the team
 
 1. Dataset owner: grant a scoped deploy identity or temporary credentials; confirm allowed hosting region, source bucket versioning, encryption, and any data-retention limits. The present read-only key does not authorize case writes or an index in the source bucket.
 2. Banking policy owner: approve a clearly synthetic eligibility and handoff table, including treatment of statuses and suspected fraud. The dataset does not provide an authoritative dispute policy.
-3. Deployment owner: choose the private case database and gateway identity provider/test-user mapping; prove per-request FLUJO identity propagation if direct FLUJO-to-MCP calls are desired.
+3. Deployment owner: choose the private case database and frontend identity provider/test-user mapping; prove per-request FLUJO identity propagation before enabling FLUJO-to-MCP banking calls.
 
 These decisions affect deployment and claims, but the read-only source adapter and authorization tests can be built first.

@@ -7,6 +7,7 @@ This repository contains our data audit and implementation plan for a FLUJO-powe
 - [Hackathon audit and delivery plan](docs/HACKATHON_AUDIT_PLAN.md)
 - [Direct S3 data review](docs/DATA_REVIEW_2026-09-26.md)
 - [Banking MCP direct S3 plan](docs/BANKING_MCP_S3_PLAN.md)
+- [FLUJO customer-bound banking run design](docs/FLUJO_BANKING_RUN_AUTH.md)
 - [Aggregate profile](docs/DATA_PROFILE_AGGREGATES_2026-09-26.json)
 - [Challenge and dataset references](docs/reference/)
 - [S3 profiling script](scripts/profile_s3.py)
@@ -40,4 +41,4 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 
-The proposed banking MCP server is a separate application component in the plan. It will read the source S3 transaction CSVs directly for bounded date windows, enforce customer ownership in service code, and return only masked, authorized banking facts. The customer-facing agent must not receive generic S3 tools or credentials. This direct-read design supersedes the earlier private-extract implementation choice in the September 26 audit.
+The proposed banking MCP server is a separate application component in the plan. FLUJO remains the workflow backend and calls it with verified, per-run customer context; the MCP service reads bounded source S3 transaction CSVs, enforces ownership in service code, and returns only masked banking facts. The customer-facing agent must not receive generic S3 tools or credentials. The direct-read design supersedes the earlier private-extract implementation choice in the September 26 audit.
