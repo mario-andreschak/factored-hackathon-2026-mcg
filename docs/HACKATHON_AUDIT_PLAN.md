@@ -2,6 +2,8 @@
 
 **Prepared:** 2026-09-25; **updated after direct S3 full-table profiling:** 2026-09-26. **Recommendation:** build a **verified unrecognized-charge inquiry and simulated dispute-intake assistant** using FLUJO as the orchestrator and a small, purpose-built banking sandbox behind MCP. The outcome we automate is a correctly answered transaction inquiry or a **verified dispute-intake receipt**. We do not claim that opening a case resolves the underlying dispute. The measured full-table evidence, method, and revised decisions are in [DATA_REVIEW_2026-09-26.md](DATA_REVIEW_2026-09-26.md).
 
+**September 27 implementation update:** [BANKING_MCP_S3_PLAN.md](BANKING_MCP_S3_PLAN.md) specifies direct, bounded reads from the source S3 CSVs through the banking MCP server. It supersedes this document's earlier private indexed-extract choice; the workflow and data-quality findings below remain in force.
+
 ## 1. What the challenge actually asks for
 
 The problem statement asks for **one focused, end-to-end banking customer-service workflow**, supported by analysis of the supplied data, with Spanish and Portuguese interactions. The demo must show a normal case, an ambiguous or unsupported case, and a human-required case. It also asks for a learned component compared with a baseline, held-out evaluation, data contracts, access control outside the model, verified tool outcomes, and an honest route to production. Multiple agents, streaming, a new model, and a dashboard are optional, not scoring targets. [Problem statement, pp. 2–6; kickoff, pp. 10–15]
@@ -23,7 +25,7 @@ The kickoff timeline shows **challenge launch September 25 and submissions close
 
 The dictionary describes larger expected counts, but the full S3 files contain 4,425,008 transactions, 686,296 interactions, 171,321 transcripts, and 67,095 complaints. The full scan confirms the unrecognized-charge complaint subtype and a clean transaction → product → customer ownership chain. **All 67,095 complaints have an empty `origin_interaction_id`**, and the table has no direct `transaction_id` field. More critically, **all 44,570 populated `affected_product_id` values point to products owned by a different customer**. Historical complaint-to-transaction matching and complaint-product enrichment are therefore off limits. Transcript and complaint text is highly templated. [Dataset summary, pp. 2–5; dictionary, pp. 8–12, 15–16; direct S3 review](DATA_REVIEW_2026-09-26.md)
 
-**September 26 decision gate passed with conditions:** the full complaint count supports retaining this focused workflow, and all 4.43 million transactions have valid customer/product ownership. Do **not** build historical case-level attribution from complaints, use their affected-product links, or train a dispute classifier on repetitive transcripts. Customer/product master records include updates after the stated dataset cutoff, so use dated transactions for grounded inquiry facts and label master attributes as supplied snapshot values. The next gate is a tested, customer-scoped extract and trusted session binding.
+**September 26 decision gate passed with conditions:** the full complaint count supports retaining this focused workflow, and all 4.43 million transactions have valid customer/product ownership. Do **not** build historical case-level attribution from complaints, use their affected-product links, or train a dispute classifier on repetitive transcripts. Customer/product master records include updates after the stated dataset cutoff, so use dated transactions for grounded inquiry facts and label master attributes as supplied snapshot values. The next gate is tested, bounded, customer-scoped direct S3 access and trusted session binding.
 
 ## 3. FLUJO capability audit
 
@@ -48,11 +50,12 @@ Assessed against local FLUJO source at commit `15d019f7b952b2f2d3aea1197722ac8d9
 ```mermaid
 flowchart LR
   U[Customer demo UI] --> G[Authenticated gateway / trusted test session]
-  G --> F[FLUJO workflow: clarify, route, respond]
-  F --> M[Bank sandbox MCP server]
-  M --> R[(Read-only customer/transaction snapshot)]
+  G --> M[Bank sandbox MCP server]
+  G -->|bounded verified facts| F[FLUJO workflow: clarify, route, respond]
+  F --> G
+  M --> R[(Read-only source S3 CSVs)]
   M --> C[(Simulated case store + receipt)]
-  F --> H[Structured human handoff]
+  M --> H[Structured human handoff]
   M --> A[(Redacted audit events)]
   H --> A
 ```
@@ -60,20 +63,20 @@ flowchart LR
 **MCP tool surface (draft contract):**
 
 1. `session_context()` returns an opaque, server-verified customer binding and session expiry **only if** the deployed invocation can convey a trusted principal to the tool server outside model-authored text. The model cannot choose a `customer_id` or session token to impersonate.
-2. `list_my_transactions(limit, time_window)` and `get_my_transaction(transaction_id)` enforce ownership, return only necessary masked fields, and provide source record IDs and snapshot timestamp.
+2. `list_my_transactions(start_date, end_date, limit, cursor)` scans bounded source S3 date partitions; `get_my_transaction(selection_handle)` re-reads the selected partition. Both enforce ownership and return only necessary masked fields and source-as-of metadata. The handle binds the selected record to the verified customer and session.
 3. `get_dispute_policy(version)` returns a clearly labeled synthetic policy with source/version. Rules such as eligible status, duplicate-case detection, and escalation conditions run in service code.
-4. `create_dispute_intake(transaction_id, reason_code, customer_confirmation, idempotency_key)` checks session, ownership, policy, required fields, and confirmation; writes exactly once; returns a case ID and receipt. A follow-up read verifies persistence before the assistant says “created.”
+4. `create_dispute_intake(selection_handle, reason_code, confirmation_reference)` checks session, ownership, policy, required fields, and a gateway-issued confirmation. The gateway supplies an idempotency key outside model text; the service writes exactly once to a separate simulated case store and returns a case ID and receipt. A follow-up read verifies persistence before the assistant says “created.”
 5. `get_my_case(case_id)` and `create_handoff(case_id_or_context, reason_code, verified_facts, unresolved_questions)` are similarly scoped. The handoff record contains only necessary facts, action receipts, source IDs, and next step.
 
 Treat transcript text, complaint descriptions, and tool-returned free text as untrusted data. Limit result sizes, validate tool schemas, redact logs, and test prompt injection. **Enforce ownership across session customer, transaction customer, product customer, and transaction product ID; never rely on `complaints.affected_product_id` for a customer-facing tool.** Keep fraud labels, risk scores, document numbers, full account/card numbers, and historical outcome fields out of the model’s ordinary response context unless a specific tested need exists. The documented `is_fraud` field is not a customer-facing determination. [Dictionary, pp. 4–5, 8–12; problem statement, pp. 3–5; direct S3 review](DATA_REVIEW_2026-09-26.md)
 
 **Multi-agent use:** start with one customer-facing FLUJO flow plus deterministic services. If it improves held-out results, add one read-only **evidence/policy-check subflow** to assemble source-backed facts before the response. Compare it with the single-flow baseline for unsafe outcomes, handoff quality, latency, and cost. Use parallel team/AI work during development for data profiling, policy drafting, and adversarial-case generation, with human review and a frozen test set. A “reviewer agent” must never authorize a banking action or replace service-layer checks.
 
-**Deployment spike and hard gate:** test the local FLUJO flow through its documented `/v1` contract from a thin authenticated gateway, and prove with a test trace that the gateway's verified customer principal reaches each banking tool through a channel the model cannot edit. A text prompt containing a customer ID or token is not such a channel. Keep FLUJO and MCP services private to the deployment network; expose only the demo UI/gateway with seeded test identities. **If trusted identity propagation cannot be proven, do not deploy FLUJO with shared customer-record tools.** Put record access and actions in the authenticated standalone gateway/service, using FLUJO only for non-authoritative language/orchestration experiments or an isolated single-user demo. Record which path is actually deployed.
+**Deployment spike and hard gate:** use the authenticated gateway as the banking MCP client for the multi-customer path and call the local FLUJO flow through its documented `/v1` contract with only bounded, verified facts. Keep FLUJO and MCP services private to the deployment network; expose only the demo UI/gateway with seeded test identities. A separate spike may test direct FLUJO-to-MCP calls, but it must prove with interleaved customer traces that the gateway's verified principal reaches each banking tool through a channel the model cannot edit. A text prompt containing a customer ID or token is not such a channel. **If that propagation cannot be proven, do not deploy FLUJO with shared customer-record tools.** Record which path is actually deployed.
 
 ## 5. Data, ML, and evaluation plan
 
-**Preparation.** Direct, read-only S3 streaming through `boto3` now works; [scripts/profile_s3.py](../scripts/profile_s3.py) inventories all 13 families and fully profiles six. The current S3 MCP connection can list objects and read bounded daily files, but a whole-object read of the ~68 MB `products.csv` returned `Connection closed`. Use the direct SDK path for batch ingestion and extraction; reserve MCP for narrow, customer-scoped application tools. Build a private indexed extract of needed `customers`, `products`, and `transactions` columns. Exclude complaint product links, because all 44,570 populated links fail ownership. Enforce types, unique IDs, owner relationships, and cutoff semantics; the full scan found zero duplicates or transaction/product ownership errors in the checked families, but 9,316 customer and 25,113 product `last_updated` values after the stated cutoff. The organizer's generic quality rates and schema-evolution notes should not be repeated as observed facts. Pin the source object manifest and transform version; label master data as a supplied snapshot unless temporal reconstruction is possible. [Summary, pp. 2–5; direct S3 review](DATA_REVIEW_2026-09-26.md)
+**Preparation.** Direct, read-only S3 streaming through `boto3` now works; [scripts/profile_s3.py](../scripts/profile_s3.py) inventories all 13 families and fully profiles six. The current generic S3 MCP connection can list objects and read bounded daily files, but a whole-object read of the ~68 MB `products.csv` returned `Connection closed`. Use the SDK inside a narrow banking MCP service: load minimal customer/product owner maps at startup and stream only allowlisted, bounded transaction date partitions for each inquiry. The [direct S3 plan](BANKING_MCP_S3_PLAN.md) specifies the query limits, source-version handling, and identity boundary. Exclude complaint product links, because all 44,570 populated links fail ownership. Enforce types, unique IDs, owner relationships, and cutoff semantics; the full scan found zero duplicates or transaction/product ownership errors in the checked families, but 9,316 customer and 25,113 product `last_updated` values after the stated cutoff. The organizer's generic quality rates and schema-evolution notes should not be repeated as observed facts. Pin the source object manifest; label master data as a supplied snapshot unless temporal reconstruction is possible. [Summary, pp. 2–5; direct S3 review](DATA_REVIEW_2026-09-26.md)
 
 **Demand baseline.** Use `complaints.subcategory` for unrecognized-charge demand: **12,297/67,095** full-table complaints (18.3%). Report broad interaction reasons and operational rates separately. `contact_reason` duplicated `reason_category` in all 686,296 interactions; complaint-to-interaction links were empty in all 67,095 complaints. Complaint customer-to-country joins are valid; complaint affected-product ownership joins are not. Survey coverage remains unprofiled. State denominators and missingness. Historical outcomes motivate the problem; they are **not** a measured improvement caused by the prototype.
 
@@ -87,8 +90,8 @@ Treat transcript text, complaint descriptions, and tool-returned free text as un
 
 | Tool | Use now? | Why |
 | --- | --- | --- |
-| Direct S3 SDK (`boto3`) | **Yes; already working** | Stream source objects for reproducible offline profiling and private extracts. [scripts/profile_s3.py](../scripts/profile_s3.py) is the aggregate-only scan. Do not give the customer agent generic S3 access. |
-| [DuckDB](https://duckdb.org/docs/stable/data/csv/overview) | Optional | Local SQL over a private, typed extract if it speeds development. The direct S3 scan already provides the decision-relevant full-table audit. |
+| Direct S3 SDK (`boto3`) | **Yes; already working for profiling** | Stream source objects for reproducible profiling and bounded, direct banking-service reads. [scripts/profile_s3.py](../scripts/profile_s3.py) is the aggregate-only scan. Do not give the customer agent generic S3 access. |
+| [DuckDB](https://duckdb.org/docs/stable/data/csv/overview) | Optional | Offline analysis only if it speeds development. The customer-facing MCP path reads bounded source S3 objects directly. |
 | Python + [scikit-learn](https://scikit-learn.org/stable/modules/model_evaluation.html) | Optional | Metrics and group-aware evaluation helpers if useful. Do **not** train a transcript-text classifier on the observed repetitive text/coarse labels. The primary learned component is the evaluated pretrained model in FLUJO. |
 | Existing FLUJO TypeScript/Zod + [MCP SDK documentation](https://ts.sdk.modelcontextprotocol.io/server) | **Yes** | Build a narrow local MCP server using the SDK version already installed in FLUJO; verify the exact transport/API against that version before coding. |
 | [Playwright](https://playwright.dev/docs/intro) | **Yes, small scope** | One deployed end-to-end smoke test for Spanish normal, Portuguese normal, and handoff. FLUJO already has Playwright in its development stack. |
@@ -103,8 +106,8 @@ Avoid a vector database, new model training stack, streaming platform, or multi-
 | --- | --- |
 | **Sep 25** | Lock scope and synthetic-policy assumptions; inventory data access and submission requirements; protect credentials and dataset. |
 | **Sep 26** | Complete the [direct S3 full-table review](DATA_REVIEW_2026-09-26.md) of six key families; retain unrecognized-charge focus, reject transcript-trained intent classification, and record missing/broken historical case links. |
-| **Sep 27** | Build a private customer-keyed transaction extract and typed contracts; label master-table values as supplied snapshots, pin source lineage, and reject complaint affected-product links. |
-| **Sep 28** | Trusted test-session service and read-only MCP tools; prove principal propagation and pass cross-customer/expired-session tests. If the propagation gate fails, move bank access/actions to the authenticated standalone service. |
+| **Sep 27** | Specify the direct S3 query contract and typed MCP tools; label master-table values as supplied snapshots, pin source lineage, and reject complaint affected-product links. |
+| **Sep 28** | Trusted test-session gateway and read-only MCP tools; prove gateway-to-MCP principal binding and pass cross-customer/expired-session tests. Keep direct FLUJO-to-MCP access disabled unless its separate propagation gate passes. |
 | **Sep 29** | Idempotent dispute-intake and verified read-back; structured handoff packet and simulated operator queue. |
 | **Sep 30** | FLUJO flow with clarification, source-backed responses, guarded action path, Spanish/Portuguese demo cases. |
 | **Oct 1** | Manually reviewed labels; rule baseline and learned component; freeze the held-out workload. |
