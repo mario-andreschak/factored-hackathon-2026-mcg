@@ -151,42 +151,51 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
     if tbc.exists():
         out = settings.gold / "demo_seed_candidates.parquet"
         con.execute(f"""
-            COPY (
-                WITH t AS (
-                    SELECT * FROM read_parquet('{sql_path(tbc)}/**/*.parquet') WHERE ownership_valid
-                ),
-                near_dup AS (   -- same product, merchant and amount within the window
-                    SELECT customer_id, transaction_id,
-                           transaction_date - lag(transaction_date) OVER (
-                               PARTITION BY customer_id, product_id, merchant_name, amount
-                               ORDER BY transaction_date) AS gap
-                    FROM t WHERE merchant_name IS NOT NULL
-                ),
-                nd AS (
-                    SELECT customer_id, count(*) AS n FROM near_dup
-                    WHERE gap <= {NEAR_DUP_WINDOW} GROUP BY 1
-                )
-                SELECT t.customer_id,
-                       count(*) AS n_transactions,
-                       count(*) FILTER (WHERE transaction_status = 'Reversed') AS n_reversed,
-                       count(*) FILTER (WHERE transaction_status = 'Pending')  AS n_pending,
-                       count(*) FILTER (WHERE transaction_status = 'Declined') AS n_declined,
-                       count(*) FILTER (WHERE is_fraud) AS n_fraud_flagged,
-                       coalesce(any_value(nd.n), 0) AS n_near_duplicate_charges,
-                       max(transaction_date) AS last_transaction_date
-                FROM t LEFT JOIN nd USING (customer_id)
-                GROUP BY t.customer_id
-                HAVING n_reversed > 0 OR n_near_duplicate_charges > 0 OR n_fraud_flagged > 0
-                ORDER BY (n_reversed > 0)::INT + (n_near_duplicate_charges > 0)::INT
-                         + (n_fraud_flagged > 0)::INT DESC,
-                         n_transactions BETWEEN 10 AND 80 DESC, customer_id
-                LIMIT 500
-            ) TO '{sql_path(out)}' (FORMAT parquet)
+            CREATE OR REPLACE TEMP TABLE profile AS
+            WITH t AS (
+                SELECT * FROM read_parquet('{sql_path(tbc)}/**/*.parquet') WHERE ownership_valid
+            ),
+            near_dup AS (   -- same product and amount (and merchant, when known) within the window
+                SELECT customer_id,
+                       transaction_date - lag(transaction_date) OVER (
+                           PARTITION BY customer_id, product_id, amount, coalesce(merchant_name, '')
+                           ORDER BY transaction_date) AS gap
+                FROM t
+            ),
+            nd AS (SELECT customer_id, count(*) AS n FROM near_dup
+                   WHERE gap <= {NEAR_DUP_WINDOW} GROUP BY 1)
+            SELECT t.customer_id,
+                   count(*) AS n_transactions,
+                   count(*) FILTER (WHERE transaction_status = 'Reversed') AS n_reversed,
+                   count(*) FILTER (WHERE transaction_status = 'Pending')  AS n_pending,
+                   count(*) FILTER (WHERE transaction_status = 'Declined') AS n_declined,
+                   count(*) FILTER (WHERE is_fraud) AS n_fraud_flagged,
+                   coalesce(any_value(nd.n), 0) AS n_near_duplicate_charges,
+                   count(*) FILTER (WHERE merchant_name IS NOT NULL) AS n_with_merchant,
+                   max(transaction_date) AS last_transaction_date
+            FROM t LEFT JOIN nd USING (customer_id)
+            GROUP BY t.customer_id
         """)
-        c = con.execute(f"""SELECT count(*), count(*) FILTER (WHERE n_reversed > 0),
-                                   count(*) FILTER (WHERE n_near_duplicate_charges > 0),
-                                   count(*) FILTER (WHERE n_fraud_flagged > 0)
-                            FROM '{sql_path(out)}'""").fetchone()
-        g["demo_seed_candidates"] = {"rows": c[0], "with_reversed": c[1],
-                                     "with_near_duplicate": c[2], "with_fraud_flag": c[3]}
-        print(f"gold    demo_seed_candidates       {c[0]:>11,} customers", flush=True)
+        # One small, readable pool per demo scenario. "normal" = happy path with a clean history.
+        scenarios = {
+            "normal":         "n_reversed = 0 AND n_pending = 0 AND n_declined = 0 AND n_fraud_flagged = 0",
+            "reversed":       "n_reversed > 0 AND n_fraud_flagged = 0",
+            "pending":        "n_pending > 0 AND n_fraud_flagged = 0",
+            "declined":       "n_declined > 0 AND n_fraud_flagged = 0",
+            "fraud_flagged":  "n_fraud_flagged > 0",
+            "near_duplicate": "n_near_duplicate_charges > 0",
+        }
+        picks = " UNION ALL ".join(
+            f"""(SELECT '{name}' AS scenario, * FROM profile WHERE {cond}
+                 ORDER BY (n_transactions BETWEEN 10 AND 80) DESC, n_with_merchant DESC, customer_id
+                 LIMIT 25)""" for name, cond in scenarios.items())
+        con.execute(f"COPY ({picks}) TO '{sql_path(out)}' (FORMAT parquet)")
+        population = con.execute("SELECT " + ", ".join(
+            f"count(*) FILTER (WHERE {cond})" for cond in scenarios.values()) + " FROM profile").fetchone()
+        picked = dict(con.execute(f"SELECT scenario, count(*) FROM '{sql_path(out)}' GROUP BY 1").fetchall())
+        g["demo_seed_candidates"] = {
+            "customers_eligible": dict(zip(scenarios, population)),
+            "customers_picked": {k: picked.get(k, 0) for k in scenarios},
+        }
+        print(f"gold    demo_seed_candidates       eligible {g['demo_seed_candidates']['customers_eligible']}",
+              flush=True)

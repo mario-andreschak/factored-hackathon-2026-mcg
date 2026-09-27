@@ -6,6 +6,8 @@ seeded with known defects so tests can assert exact counts:
 
   customers    1 exact duplicate row, 1 PK with two versions (later last_updated wins)
   products     1 orphan customer_id, 1 product whose owner differs from the txn customer
+  complaints   1 affected_product_id owned by a different customer
+  countries    'México' and 'Mexico' both used in transaction_country (spelling drift)
   transactions 1 exact re-delivery in a later partition, 1 non-numeric amount,
                1 missing customer_id, 1 Reversed, 1 near-duplicate pair, 1 fraud flag
   late batch   (write_late_batch) a new partition day that carries
@@ -93,7 +95,8 @@ def write_base(root: Path) -> None:
         base = dict(transaction_id=f"TXN{n:08d}", customer_id=cid(i),
                     product_id=f"PRD{i:06d}", transaction_date=f"{day} 10:{n % 60:02d}:00",
                     process_date=day, amount=f"{100 + n}.50", merchant_name=MERCHANTS[n % 5],
-                    transaction_status="Approved", is_fraud="False")
+                    transaction_status="Approved", is_fraud="False",
+                    transaction_country="México" if n % 7 else "Mexico")   # spelling drift
         return _row(c, "transactions", **{**base, **over})
 
     day1 = [tx(n, n % N_CUSTOMERS, "2026-06-01") for n in range(40)]
@@ -136,7 +139,8 @@ def write_base(root: Path) -> None:
 
     complaints = [_row(c, "complaints", complaint_id=f"CMP{n:08d}", customer_id=cid(n),
                        creation_date="2026-06-01 11:00:00", process_date="2026-06-01",
-                       subcategory="Cargo no reconocido", affected_product_id="",
+                       subcategory="Cargo no reconocido",
+                       affected_product_id="PRD000001" if n == 0 else "",   # owned by another customer
                        origin_interaction_id="", description="cargo no reconocido")
                   for n in range(5)]
     _write(_part(root, "complaints", "2026-06-01"), c, "complaints", complaints)

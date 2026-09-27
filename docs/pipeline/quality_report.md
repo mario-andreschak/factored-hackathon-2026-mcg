@@ -1,6 +1,6 @@
 # Data quality report
 
-Run `20260927T215415Z-c2be31` · pipeline 0.1.0 · contracts `e1fe119611f1` · source `s3://<bucket>/data` · stages `bronze,silver,gold`
+Run `20260927T221649Z-727b3e` · pipeline 0.1.0 · contracts `2be73d5f8e83` · source `s3://<bucket>/data` · stages `silver,gold`
 
 Measured by `python -m pipeline run`. Every raw row is accounted for: **raw = silver + quarantined + duplicates removed** (the *Reconciles* column).
 
@@ -28,17 +28,17 @@ Measured by `python -m pipeline run`. Every raw row is accounted for: **raw = si
 
 ## Referential integrity (orphans are flagged, not dropped)
 
-| Table.column | → parent | Non-null | Missing in parent | Rate |
-|---|---|---:|---:|---:|
-| products.customer_id | customers | 400,000 | 0 | 0.00% |
-| transactions.product_id | products | 4,425,008 | 0 | 0.00% |
-| transactions.customer_id | customers | 4,425,008 | 0 | 0.00% |
-| call_center_interactions.customer_id | customers | 686,296 | 0 | 0.00% |
-| call_transcripts.interaction_id | call_center_interactions | 171,321 | 0 | 0.00% |
-| call_transcripts.customer_id | customers | 171,321 | 0 | 0.00% |
-| complaints.customer_id | customers | 67,095 | 0 | 0.00% |
-| complaints.affected_product_id | products | 44,570 | 0 | 0.00% |
-| complaints.origin_interaction_id | call_center_interactions | 0 | 0 | — |
+| Table.column | → parent | Non-null | Missing in parent | Rate | Parent owned by another customer |
+|---|---|---:|---:|---:|---:|
+| products.customer_id | customers | 400,000 | 0 | 0.00% | — |
+| transactions.product_id | products | 4,425,008 | 0 | 0.00% | 0 (0.00%) |
+| transactions.customer_id | customers | 4,425,008 | 0 | 0.00% | — |
+| call_center_interactions.customer_id | customers | 686,296 | 0 | 0.00% | — |
+| call_transcripts.interaction_id | call_center_interactions | 171,321 | 0 | 0.00% | — |
+| call_transcripts.customer_id | customers | 171,321 | 0 | 0.00% | — |
+| complaints.customer_id | customers | 67,095 | 0 | 0.00% | — |
+| complaints.affected_product_id | products | 44,570 | 0 | 0.00% | 44,570 (100.00%) |
+| complaints.origin_interaction_id | call_center_interactions | 0 | 0 | — | — |
 
 ## Quarantine reasons
 
@@ -55,12 +55,12 @@ None.
 
 ## Contract drift
 
-None detected.
+- **transactions.transaction_country** same value, different spelling: `México` 2,105,794, `Mexico` 40,515
 
 ## Gold outputs
 
 - **transactions_by_customer**: 4,425,008 rows in 128 buckets; 4,425,008 with product owned by the same customer (only these are served).
-- **classifier_dataset**: 171,321 rows, splits {'test': 2946, 'val': 17219, 'train': 109580, 'excluded': 41576}, time holdout 2026-03-17. Distinct normalized texts: 42. **Test rows whose exact text also appears in train: 2,946 (1.0)** — report metrics on the unseen-text subset too.
+- **classifier_dataset**: 171,321 rows, splits {'test': 2946, 'train': 109580, 'excluded': 41576, 'val': 17219}, time holdout 2026-03-17. Distinct normalized texts: 42. **Test rows whose exact text also appears in train: 2,946 (1.0)** — report metrics on the unseen-text subset too.
 - **contact_demand**: 3,927 rows. Top reasons: Transaccional 35.0%; Producto 22.0%; Queja 17.1%; Técnico 15.0%; Comercial 8.0%; Retención 3.0%
-- **demo_seed_candidates**: 500 customers (500 with a reversal, 0 with near-duplicate charges, 500 fraud-flagged).
-- **lookup latency** (50 customers, local disk): p50 20.8 ms · p95 23.2 ms · max 49.5 ms.
+- **demo_seed_candidates** (customers eligible per scenario; up to 25 picked each): normal 18,836, reversed 35,052, pending 58,394, declined 95,804, fraud_flagged 4,233, near_duplicate 0. **No natural near-duplicate charges exist**: the 'charged twice' demo needs a clearly labeled synthetic injection.
+- **lookup latency** (50 customers, local disk): p50 20.4 ms · p95 27.4 ms · max 44.7 ms.

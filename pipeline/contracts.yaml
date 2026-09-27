@@ -13,6 +13,9 @@
 #               confirms the real vocabulary.
 #   drop: true  Column is not carried into silver (PII minimisation).
 #   fk          <table>.<column>. Orphans are FLAGGED (_fk_<col>_missing), never dropped.
+#   same_owner_as  <column>. The referenced parent row must carry the same value in that
+#               column (e.g. a product referenced by a transaction must belong to the same
+#               customer). Violations are FLAGGED (_owner_mismatch_<col>) and reported.
 #
 # Table-level:
 #   pk              Primary key. Dedup keeps one row per PK (see dedup_order).
@@ -87,7 +90,7 @@ tables:
       transaction_id:       {type: VARCHAR, required: true}
       transaction_date:     {type: TIMESTAMP, required: true}
       process_date:         {type: DATE, required: true}
-      product_id:           {type: VARCHAR, required: true, fk: products.product_id}
+      product_id:           {type: VARCHAR, required: true, fk: products.product_id, same_owner_as: customer_id}
       customer_id:          {type: VARCHAR, required: true, fk: customers.customer_id}
       transaction_type:     {type: VARCHAR, required: true}
       transaction_category: {type: VARCHAR}
@@ -174,7 +177,7 @@ tables:
       category:              {type: VARCHAR, required: true}
       subcategory:           {type: VARCHAR}
       reception_channel:     {type: VARCHAR, required: true}
-      affected_product_id:   {type: VARCHAR, fk: products.product_id}
+      affected_product_id:   {type: VARCHAR, fk: products.product_id, same_owner_as: customer_id}
       related_branch_id:     {type: VARCHAR}
       origin_interaction_id: {type: VARCHAR, fk: call_center_interactions.interaction_id}
       description:           {type: VARCHAR, required: true}

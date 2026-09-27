@@ -111,6 +111,17 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
             else:
                 fk_cols.append(f"NULL::BOOLEAN AS {ident(flag)}")
             fk_stats[col] = parent
+            # Existence is not enough: a referenced product must belong to the same customer.
+            owner = c.get("same_owner_as")
+            if owner:
+                oflag = f"_owner_mismatch_{col}"
+                if parent in settings.tables and parent_path.exists():
+                    fk_cols.append(f"""({ident(col)} IS NOT NULL AND EXISTS (
+                        SELECT 1 FROM '{sql_path(parent_path)}' p
+                        WHERE p.{ident(parent_col)} = t.{ident(col)}
+                          AND p.{ident(owner)} IS DISTINCT FROM t.{ident(owner)})) AS {ident(oflag)}""")
+                else:
+                    fk_cols.append(f"NULL::BOOLEAN AS {ident(oflag)}")
 
         late = ("(_partition_date IS NOT NULL AND process_date IS NOT NULL "
                 "AND _partition_date > process_date)"
@@ -126,7 +137,7 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
                        {late} AS _late_arrival,
                        {partition_mismatch} AS _partition_mismatch
                        {extra}
-                FROM ranked WHERE _rn = 1
+                FROM ranked t WHERE _rn = 1
                 ORDER BY {pk}
             ) TO '{sql_path(out)}' (FORMAT parquet, COMPRESSION zstd)
         """)
@@ -140,6 +151,10 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
             ).fetchone()
             orphans[col] = {"parent": parent, "non_null": nonnull,
                             "missing_in_parent": missing if parent in settings.tables else None}
+            if spec["columns"][col].get("same_owner_as") and parent in settings.tables:
+                orphans[col]["owned_by_other_customer"] = con.execute(
+                    f"SELECT count(*) FILTER (WHERE {ident('_owner_mismatch_' + col)}) "
+                    f"FROM '{sql_path(out)}'").fetchone()[0]
         late_n, mismatch_n = con.execute(
             f"SELECT count(*) FILTER (WHERE _late_arrival), count(*) FILTER (WHERE _partition_mismatch) "
             f"FROM '{sql_path(out)}'").fetchone()
@@ -151,6 +166,27 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
             row = con.execute("SELECT " + ", ".join(
                 f"avg(({ident(c)} IS NULL)::INT)" for c in nullable) + f" FROM '{sql_path(out)}'").fetchone()
             null_rates = {c: round(v, 4) for c, v in zip(nullable, row)}
+        # Inconsistent spellings: distinct values that collide once accents/case/spaces
+        # are ignored (e.g. 'México' vs 'Mexico'). Only low-cardinality text columns.
+        spelling = {}
+        text_cols = [c for c, s in spec["columns"].items()
+                     if s["type"] == "VARCHAR" and not s.get("drop") and c != spec["pk"]
+                     and not s.get("fk")]
+        if text_cols and silver_rows:
+            card = con.execute("SELECT " + ", ".join(
+                f"approx_count_distinct({ident(c)})" for c in text_cols) + f" FROM '{sql_path(out)}'").fetchone()
+            for col, n in zip(text_cols, card):
+                if n is None or n > 500:
+                    continue
+                rows = con.execute(f"""
+                    SELECT list(v ORDER BY n DESC), list(n ORDER BY n DESC) FROM (
+                        SELECT {ident(col)} AS v, count(*) AS n,
+                               lower(strip_accents(regexp_replace(trim({ident(col)}), '\\s+', ' ', 'g'))) AS k
+                        FROM '{sql_path(out)}' WHERE {ident(col)} IS NOT NULL GROUP BY 1, 3)
+                    GROUP BY k HAVING count(*) > 1""").fetchall()
+                if rows:
+                    spelling[col] = [dict(zip(vals, ns)) for vals, ns in rows]
+
         enum_issues = {}
         for col, c in spec["columns"].items():
             if c.get("enum") and not c.get("drop"):
@@ -178,6 +214,7 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
             "orphans": orphans,
             "null_rates": null_rates,
             "enum_out_of_vocabulary": enum_issues,
+            "inconsistent_spellings": spelling,
             "contract_columns_absent_in_source": absent,
             "source_columns_not_in_contract": unexpected,
             "seconds": round(time.perf_counter() - t0, 1),

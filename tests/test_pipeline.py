@@ -129,10 +129,26 @@ def test_classifier_split_has_no_customer_or_future_leakage(ws):
 
 def test_demo_candidates_cover_each_scenario(ws):
     _, m = run(ws)
-    d = m["gold"]["demo_seed_candidates"]
-    assert d["with_reversed"] >= 1 and d["with_near_duplicate"] >= 1 and d["with_fraud_flag"] >= 1
+    d = m["gold"]["demo_seed_candidates"]["customers_eligible"]
+    for scenario in ("normal", "reversed", "pending", "fraud_flagged", "near_duplicate"):
+        assert d[scenario] >= 1, scenario
     path = (ws / "out" / "gold" / "demo_seed_candidates.parquet").as_posix()
-    assert q(f"SELECT n_near_duplicate_charges FROM '{path}' WHERE customer_id = ?", cid(3)) == [(1,)]
+    assert q(f"""SELECT n_near_duplicate_charges FROM '{path}'
+                 WHERE scenario = 'near_duplicate' AND customer_id = ?""", cid(3)) == [(1,)]
+    # A fraud-flagged customer must never be offered as a "normal" happy-path customer.
+    assert q(f"SELECT count(*) FROM '{path}' WHERE scenario = 'normal' AND n_fraud_flagged > 0") == [(0,)]
+
+
+def test_cross_customer_references_and_spelling_drift(ws):
+    _, m = run(ws)
+    t = m["tables"]
+    # TXN00000907 uses a product owned by another customer; complaint 0 references customer 1's product.
+    assert t["transactions"]["silver"]["orphans"]["product_id"]["owned_by_other_customer"] == 1
+    assert t["complaints"]["silver"]["orphans"]["affected_product_id"]["owned_by_other_customer"] == 1
+    spell = t["transactions"]["silver"]["inconsistent_spellings"]["transaction_country"]
+    assert {"México", "Mexico"} <= set(spell[0])
+    report = (ws / "reports" / "quality_report.md").read_text(encoding="utf-8")
+    assert "same value, different spelling" in report and "owned by another customer" in report
 
 
 def test_contract_failure_exits_non_zero(ws):

@@ -1,11 +1,11 @@
 {
   "pipeline_version": "0.1.0",
-  "contracts_sha256_12": "e1fe119611f1",
-  "run_id": "20260927T215415Z-c2be31",
-  "finished_at": "2026-09-27T22:08:05+00:00",
-  "seconds": 830.0,
+  "contracts_sha256_12": "2be73d5f8e83",
+  "run_id": "20260927T221649Z-727b3e",
+  "finished_at": "2026-09-27T22:20:29+00:00",
+  "seconds": 220.5,
   "source": "s3://<bucket>/data",
-  "stages": "bronze,silver,gold",
+  "stages": "silver,gold",
   "tables_requested": [
     "customers",
     "products",
@@ -71,9 +71,10 @@
           "accepts_marketing": 0.0
         },
         "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 1.5
+        "seconds": 3.4
       }
     },
     "products": {
@@ -133,9 +134,10 @@
           "last_transaction_date": 0.2357
         },
         "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 4.2
+        "seconds": 6.2
       }
     },
     "transactions": {
@@ -186,7 +188,8 @@
           "product_id": {
             "parent": "products",
             "non_null": 4425008,
-            "missing_in_parent": 0
+            "missing_in_parent": 0,
+            "owned_by_other_customer": 0
           },
           "customer_id": {
             "parent": "customers",
@@ -205,9 +208,17 @@
           "fraud_score": 0.2
         },
         "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {
+          "transaction_country": [
+            {
+              "México": 2105794,
+              "Mexico": 40515
+            }
+          ]
+        },
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 127.5
+        "seconds": 153.6
       }
     },
     "call_center_interactions": {
@@ -272,9 +283,10 @@
           "mentioned_products": 0.6003
         },
         "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 8.8
+        "seconds": 10.3
       }
     },
     "call_transcripts": {
@@ -342,9 +354,10 @@
           "duration_seconds": 0.1403
         },
         "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 8.7
+        "seconds": 7.4
       }
     },
     "complaints": {
@@ -405,7 +418,8 @@
           "affected_product_id": {
             "parent": "products",
             "non_null": 44570,
-            "missing_in_parent": 0
+            "missing_in_parent": 0,
+            "owned_by_other_customer": 44570
           },
           "origin_interaction_id": {
             "parent": "call_center_interactions",
@@ -432,9 +446,10 @@
           "is_repeat_complainer": 0.0
         },
         "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 2.4
+        "seconds": 4.1
       }
     }
   },
@@ -443,7 +458,7 @@
       "rows": 4425008,
       "ownership_valid_rows": 4425008,
       "buckets": 128,
-      "seconds": 18.3
+      "seconds": 20.1
     },
     "contact_demand": {
       "rows": 3927,
@@ -484,9 +499,9 @@
       "rows": 171321,
       "splits": {
         "test": 2946,
-        "val": 17219,
         "train": 109580,
-        "excluded": 41576
+        "excluded": 41576,
+        "val": 17219
       },
       "time_holdout": "2026-03-17",
       "distinct_normalized_texts": 42,
@@ -495,16 +510,28 @@
       "transcripts_without_matching_interaction": 0
     },
     "demo_seed_candidates": {
-      "rows": 500,
-      "with_reversed": 500,
-      "with_near_duplicate": 0,
-      "with_fraud_flag": 500
+      "customers_eligible": {
+        "normal": 18836,
+        "reversed": 35052,
+        "pending": 58394,
+        "declined": 95804,
+        "fraud_flagged": 4233,
+        "near_duplicate": 0
+      },
+      "customers_picked": {
+        "normal": 25,
+        "reversed": 25,
+        "pending": 25,
+        "declined": 25,
+        "fraud_flagged": 25,
+        "near_duplicate": 0
+      }
     },
     "lookup_bench": {
       "samples": 50,
-      "p50_ms": 20.8,
-      "p95_ms": 23.2,
-      "max_ms": 49.5
+      "p50_ms": 20.4,
+      "p95_ms": 27.4,
+      "max_ms": 44.7
     }
   },
   "contract_failures": []

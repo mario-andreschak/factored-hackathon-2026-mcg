@@ -55,13 +55,16 @@ def write(report_dir: Path, run: dict, stats: dict) -> None:
                      f"| {_fmt(sv['pks_with_conflicting_content'])} |")
 
     L += ["", "## Referential integrity (orphans are flagged, not dropped)", "",
-          "| Table.column | → parent | Non-null | Missing in parent | Rate |", "|---|---|---:|---:|---:|"]
+          "| Table.column | → parent | Non-null | Missing in parent | Rate | Parent owned by another customer |",
+          "|---|---|---:|---:|---:|---:|"]
     for t, s in stats.items():
         sv = s.get("silver") if not t.startswith("_") else None
         for col, o in (sv or {}).get("orphans", {}).items():
             m, nn = o["missing_in_parent"], o["non_null"]
             rate = f"{m / nn:.2%}" if m is not None and nn else "—"
-            L.append(f"| {t}.{col} | {o['parent']} | {_fmt(nn)} | {_fmt(m)} | {rate} |")
+            other = o.get("owned_by_other_customer")
+            other_s = "—" if other is None else (f"{_fmt(other)} ({other / nn:.2%})" if nn else _fmt(other))
+            L.append(f"| {t}.{col} | {o['parent']} | {_fmt(nn)} | {_fmt(m)} | {rate} | {other_s} |")
 
     L += ["", "## Quarantine reasons", ""]
     any_q = False
@@ -90,6 +93,11 @@ def write(report_dir: Path, run: dict, stats: dict) -> None:
             for col, vals in sv[key].items():
                 drift = True
                 L.append(f"- **{t}.{col}** {label}: " + ", ".join(f"`{v}` {_fmt(n)}" for v, n in vals.items()))
+        for col, groups in sv.get("inconsistent_spellings", {}).items():
+            drift = True
+            for grp in groups:
+                L.append(f"- **{t}.{col}** same value, different spelling: "
+                         + ", ".join(f"`{v}` {_fmt(n)}" for v, n in grp.items()))
         if sv["contract_columns_absent_in_source"]:
             drift = True
             L.append(f"- **{t}** contract columns absent in source: {sv['contract_columns_absent_in_source']}")
@@ -121,8 +129,11 @@ def write(report_dir: Path, run: dict, stats: dict) -> None:
                 f"{r['reason']} {r['share']:.1%}" for r in x["top_contact_reasons"][:6]))
         if "demo_seed_candidates" in gold:
             x = gold["demo_seed_candidates"]
-            L.append(f"- **demo_seed_candidates**: {x['rows']} customers ({x['with_reversed']} with a reversal, "
-                     f"{x['with_near_duplicate']} with near-duplicate charges, {x['with_fraud_flag']} fraud-flagged).")
+            L.append("- **demo_seed_candidates** (customers eligible per scenario; up to 25 picked each): "
+                     + ", ".join(f"{k} {_fmt(v)}" for k, v in x["customers_eligible"].items())
+                     + (". **No natural near-duplicate charges exist**: the 'charged twice' demo needs a "
+                        "clearly labeled synthetic injection." if not x["customers_eligible"].get("near_duplicate")
+                        else "."))
         if "lookup_bench" in gold:
             x = gold["lookup_bench"]
             L.append(f"- **lookup latency** ({x['samples']} customers, local disk): "
