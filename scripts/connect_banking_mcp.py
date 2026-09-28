@@ -32,7 +32,7 @@ def main():
               "rootPath": "", "env": {}, "_buildCommand": "", "_installCommand": "",
               "exposeAsMcpServer": False, "enableMcpApps": False, "enableMcpSkills": False,
               "sampling": {"enabled": False}, "elicitation": {"enabled": False},
-              "headers": {}, "serverUrl": "", "command": "", "args": []}
+              "headers": {}, "serverUrl": "", "command": "", "args": [], "source": {"type": "local"}}
     if a.runtime_stdio:
         command = str(a.python) if a.python else "/opt/banking-mcp/.venv/bin/python"
         if not all(PurePosixPath(v).is_absolute() for v in [command, a.runtime_config, a.runtime_repo]):
@@ -58,7 +58,10 @@ def main():
     else:
         request("POST", "/api/mcp/servers", config)
     tools = request("GET", "/api/mcp/servers/" + quote(a.name, safe="") + "/tools")
-    print(json.dumps({"server": a.name, "tools": [t["name"] for t in tools.get("tools", [])]}))
+    names = [t["name"] for t in tools.get("tools", [])]
+    if tools.get("error") or set(names) != {"banking_status", "list_my_transactions", "get_my_transaction"}:
+        raise ValueError("Banking stdio process is not ready; check its in-runtime installation and mounts")
+    print(json.dumps({"server": a.name, "transport": "stdio", "tools": names}))
 
 
 if __name__ == "__main__":

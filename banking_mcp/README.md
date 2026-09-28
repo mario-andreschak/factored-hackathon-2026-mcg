@@ -12,7 +12,7 @@ At `http://127.0.0.1:43420/`, both registrations are connected:
 | Registration | Dataset | Usable now |
 | --- | --- | --- |
 | **Banking MCP Demo** | Explicit synthetic fixture, one fixed demo customer | Build graphical flows and call all three tools. S3 verification is unavailable. |
-| **Banking MCP** | Real bucket's derived snapshot, 4,425,008 transactions | Discover tools and check status. Customer reads require a signed assertion on each tool call. |
+| **Banking MCP** | Real bucket's derived snapshot, 4,425,008 transactions | Protected FLUJO flow reads work with verified per-call identity; ordinary tool testers cannot supply customer authority. |
 
 Banking MCP runs as a **stdio child process inside the existing FLUJO container**.
 FLUJO launches `/opt/banking-mcp/.venv/bin/python`; stdin/stdout carry MCP messages.

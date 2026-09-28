@@ -30,18 +30,36 @@ source keys, credentials, signatures or private mappings are committed here.
 
 | Check | Result |
 | --- | --- |
-| Pipeline + MCP regression tests | **54 passed**; one Starlette TestClient deprecation warning |
-| FLUJO tool discovery and service status | Both servers connected and ready |
-| Synthetic list → inspect through FLUJO's MCP API | Passed; responses explicitly synthetic |
-| Real customer read through ordinary FLUJO MCP call | Rejected with `authorization_required` |
-| Signed direct MCP reads for two real customers | Passed; different transaction sets |
-| Customer B uses customer A's selection handle | Rejected with `reference_unavailable` |
-| Selected real transaction verified against pinned S3 | Passed, including conditional customer/product ETag checks |
-| Interleaved isolation test | 500 synthetic reads passed |
+| MCP regression tests, including actual stdio subprocess and private revocation | **37 passed** |
+| FLUJO banking + workspace mutation/process writer/snapshot tests | **107 passed** |
+| TypeScript, changed-file lint, Linux production build | Passed |
+| FLUJO process ancestry | Real and synthetic Python stdio servers are children of `next-server` in the existing container |
+| Synthetic list and inspect through FLUJO | Passed; explicitly synthetic |
+| Real reads through the protected FLUJO flow | Two customers matched independent private owner queries |
+| Foreign read/delete/cancel/continue; ingress replay | Rejected |
+| Ordinary FLUJO tool tester on the real bank | Rejected without trusted banking context |
+| Signed local revocation | Passed; survives worker restart in both FLUJO and bank state |
+| Saved Slack OAuth after restart | Reconnected |
+| Live 500-subject burst through FLUJO | **500/500 successful; 500/500 tool results matched the expected customer** |
 
-The direct MCP tests use a local operator signer and private seeded subject map.
-They verify the service boundary; they do not demonstrate authenticated frontend
-users or FLUJO's trusted identity injection. No model/provider calls were made.
+The live test uses operator-issued frontend assertions with 500 distinct subjects
+mapped privately to 500 real dataset customers. It exercises a shared pinned Static
+flow and the real stdio MCP, without a model provider. Thirty-two runs are active at
+once; the remaining requests wait in the bounded queue. Each call returns one row.
+
+| Current stdio + FLUJO test | Result |
+| --- | --- |
+| Concurrent submitted requests | 500 |
+| p50 / p95 response latency, including queue time | 26.399 s / 48.401 s |
+| Total test time, including private result audit | 53.43 s |
+| Provider calls / selected-source S3 readback | 0 / disabled |
+
+The initial burst exposed repeated workspace writer registrations: only 288 requests
+completed before queued authority expired. One workspace write admission per banking
+turn fixed that bottleneck; each individual commit retains ownership/revocation checks.
+No authorization lifetime was extended. This proves the backend serving path for the
+measured flow, not a production SLA or 500 paid model calls. Earlier conditional S3
+readback and cross-customer selection-handle tests remain part of the service checks.
 
 ## Earlier standalone HTTP measurements (not the current stdio deployment)
 
@@ -66,9 +84,9 @@ overflow returns `server_busy`; queued requests still require unexpired assertio
 FLUJO's identity-hook PR adds authenticated banking routes, durable conversation
 ownership, model-inaccessible per-call assertions and local signed revocation.
 Live acceptance uses a pinned Static flow with two real customers. A customer-facing
-frontend and API-provider conversational flow still need integration. The 500-request
-authentication test uses mocked flow execution; a full 500-distinct-customer run with
-providers and real dataset traffic remains an acceptance gate.
+frontend and API-provider conversational flow still need integration. The live 500-customer
+backend test uses real derived data. Authentication through the actual frontend and
+the conversational provider path remain acceptance gates.
 
 See [server setup and assertion contract](../banking_mcp/README.md),
 [FLUJO run auth design](FLUJO_BANKING_RUN_AUTH.md), and
