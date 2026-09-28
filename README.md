@@ -8,6 +8,8 @@ This repository contains our data audit and implementation plan for a FLUJO-powe
 - [Direct S3 data review](docs/DATA_REVIEW_2026-09-26.md)
 - [Banking MCP direct S3 plan](docs/BANKING_MCP_S3_PLAN.md)
 - [FLUJO customer-bound banking run design](docs/FLUJO_BANKING_RUN_AUTH.md)
+- [FLUJO proposal review, alternatives and executed evidence](docs/FLUJO_BANKING_RUN_AUTH_REVIEW.md)
+- [DuckDB data pipeline and snapshot serving option](pipeline/README.md)
 - [Aggregate profile](docs/DATA_PROFILE_AGGREGATES_2026-09-26.json)
 - [Challenge and dataset references](docs/reference/)
 - [S3 profiling script](scripts/profile_s3.py)
@@ -37,7 +39,8 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | --- | --- |
 | `docs/` | Plan, evidence report, and aggregate JSON |
 | `docs/reference/` | Organizer PDFs, including a redacted data dictionary |
-| `scripts/` | Reproducible profiling code |
+| `scripts/` | Reproducible profiling and FLUJO review probes |
+| `pipeline/` | DuckDB ingestion, ownership validation and customer-sharded snapshot outputs |
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 
