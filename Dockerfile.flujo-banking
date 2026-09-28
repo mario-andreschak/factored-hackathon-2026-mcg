@@ -1,0 +1,15 @@
+# Extend the existing FLUJO worker image; this creates no second runtime service.
+# docker build --build-arg FLUJO_IMAGE=<existing-worker-image> -f Dockerfile.flujo-banking -t <updated-worker-image> .
+ARG FLUJO_IMAGE=flujo-slack-worker:local
+FROM ${FLUJO_IMAGE}
+USER root
+WORKDIR /opt/banking-mcp
+COPY requirements-mcp.txt requirements-pipeline.txt requirements-s3.txt ./
+RUN python3 -m venv .venv \
+    && .venv/bin/pip install --no-cache-dir -r requirements-mcp.txt
+COPY banking_mcp ./banking_mcp
+COPY pipeline ./pipeline
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+USER node
+# Inherit FLUJO's entrypoint, healthcheck and command. FLUJO launches the stdio child.

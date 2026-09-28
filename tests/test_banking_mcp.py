@@ -321,3 +321,45 @@ def test_http_rejects_untrusted_host_and_origin(bank):
     with TestClient(create_http_app(bank[0]), base_url="http://127.0.0.1:43421") as client:
         assert client.post("/mcp", headers={**headers, "Host": "evil.example"}, json={}).status_code == 421
         assert client.post("/mcp", headers={**headers, "Origin": "https://evil.example"}, json={}).status_code == 403
+
+
+def test_stdio_child_process_and_private_revocation(bank, tmp_path):
+    import anyio
+    import subprocess
+    import sys
+    from pathlib import Path
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    service, _ = bank
+    config = tmp_path / "bank.json"
+    config.write_text(service.config.model_dump_json())
+    repo = Path(__file__).resolve().parents[1]
+    async def exercise():
+        params = StdioServerParameters(command=sys.executable,
+            args=["-m", "banking_mcp", "serve", "--config", str(config)], cwd=str(repo))
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as client:
+                await client.initialize()
+                assert {t.name for t in (await client.list_tools()).tools} == {
+                    "banking_status", "list_my_transactions", "get_my_transaction"}
+                args = {"limit": 1}
+                result = await client.call_tool("list_my_transactions", args,
+                    meta=assertion(bank, "list_my_transactions", args))
+                assert not result.isError
+                assert len(json.loads(result.content[0].text)["transactions"]) == 1
+                # A read assertion cannot invoke the private revocation control.
+                invalid = subprocess.run([sys.executable, "-m", "banking_mcp", "revoke-session",
+                    "--config", str(config)], input=assertion(bank, "revoke_session", {})[ASSERTION_META],
+                    text=True, capture_output=True, cwd=repo, timeout=10)
+                assert invalid.returncode == 2 and invalid.stdout == ""
+                token = assertion(bank, "revoke_session", {}, scope=["bank:revoke"])[ASSERTION_META]
+                claims = jwt.decode(token, options={"verify_signature": False})
+                token = jwt.encode(claims, bank[1], algorithm="EdDSA",
+                    headers={"kid": "test", "typ": "bank-revoke+jwt"})
+                revoked = subprocess.run([sys.executable, "-m", "banking_mcp", "revoke-session",
+                    "--config", str(config)], input=token, text=True, capture_output=True, cwd=repo, timeout=10)
+                assert revoked.returncode == 0 and revoked.stdout == ""
+                result = await client.call_tool("list_my_transactions", args,
+                    meta=assertion(bank, "list_my_transactions", args))
+                assert result.isError and "authorization_denied" in result.content[0].text
+    anyio.run(exercise)

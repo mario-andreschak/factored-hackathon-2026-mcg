@@ -14,13 +14,12 @@ There are three synchronous read-only tools: `banking_status`,
 `list_my_transactions`, and `get_my_transaction`. The last can conditionally
 recheck its pinned S3 object. There are no bank mutations or dispute submissions.
 
-**Deployment:** FLUJO and the MCP execute inside the same Docker Desktop Linux VM,
-in separate Linux containers on `flujo-slack_default`. The MCP uses Linux Python
-3.13, with code installed in its image. Verified from inside FLUJO's container:
-the internal MCP URL is reachable and rejects a request without its service bearer
-with HTTP 401. Windows hosts the read-only bind-mounted files; no Windows Python
-process serves or launches this MCP. Real credentials/data stay outside FLUJO's
-general tool container.
+**Deployment:** Banking MCP is installed **inside the existing FLUJO container**
+and launched by FLUJO as a Linux Python stdio child process. Both real and synthetic
+registrations use stdio. Dataset/configuration/source files are read-only mounts;
+SQLite state stays on durable writable volumes. No remote MCP URL or separate
+Banking MCP service is required. The earlier separate-container deployment was
+incorrect for this requirement and has been replaced.
 
 The serving snapshot contains 150,000 customers, 400,000 products and 4,425,008
 ownership-valid transactions. It was built from the real bucket with this branch's
@@ -44,7 +43,7 @@ The direct MCP tests use a local operator signer and private seeded subject map.
 They verify the service boundary; they do not demonstrate authenticated frontend
 users or FLUJO's trusted identity injection. No model/provider calls were made.
 
-## Local HTTP burst measurements
+## Earlier standalone HTTP measurements (not the current stdio deployment)
 
 Real 4.4M-row snapshot, Docker Desktop on Windows, two mapped customers alternating,
 one transaction per page, eight active readers, two container CPUs and 2 GiB RAM.
@@ -62,20 +61,14 @@ check, not a 500-distinct-customer or production capacity claim. The local mount
 one-row pages and repeated buckets limit what these numbers establish. Request
 overflow returns `server_busy`; queued requests still require unexpired assertions.
 
-## What remains for real customer chat
+## FLUJO identity integration
 
-1. **FLUJO ingress:** verify the frontend session, resolve its authorized customer,
-   and enforce conversation ownership.
-2. **FLUJO runtime:** keep authority outside graph/model inputs and sign the exact
-   tool call immediately before dispatch via MCP `_meta`. Mint a fresh assertion
-   for every retry; propagate logout/revocation to the MCP's private state store.
-3. **Acceptance test:** 500 distinct authenticated frontend customers through
-   FLUJO, with normal pages, retries, providers and the real identity hook.
-
-The MCP defaults to denying customer reads until steps 1 and 2 exist. Shared
-headers, environment variables, conversation IDs and `@` tool substitutions do
-not satisfy those requirements. Multiple MCP replicas require shared replay,
-revocation and reference state before deployment.
+FLUJO's identity-hook PR adds authenticated banking routes, durable conversation
+ownership, model-inaccessible per-call assertions and local signed revocation.
+Live acceptance uses a pinned Static flow with two real customers. A customer-facing
+frontend and API-provider conversational flow still need integration. The 500-request
+authentication test uses mocked flow execution; a full 500-distinct-customer run with
+providers and real dataset traffic remains an acceptance gate.
 
 See [server setup and assertion contract](../banking_mcp/README.md),
 [FLUJO run auth design](FLUJO_BANKING_RUN_AUTH.md), and

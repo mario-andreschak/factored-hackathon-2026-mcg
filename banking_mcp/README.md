@@ -14,28 +14,21 @@ At `http://127.0.0.1:43420/`, both registrations are connected:
 | **Banking MCP Demo** | Explicit synthetic fixture, one fixed demo customer | Build graphical flows and call all three tools. S3 verification is unavailable. |
 | **Banking MCP** | Real bucket's derived snapshot, 4,425,008 transactions | Discover tools and check status. Customer reads require a signed assertion on each tool call. |
 
-The real service intentionally rejects ordinary FLUJO customer calls today. The
-remaining integration is the trusted FLUJO runtime signer described below. The
-local test signer proves the MCP contract; it does not authenticate frontend users.
-
-FLUJO and both MCP services run **inside the same Docker Desktop Linux VM**, in
-separate Linux containers on FLUJO's private Docker network. The MCP runs Python
-inside its container; it never launches a Windows Python executable. They are reachable
-from FLUJO at `http://banking-mcp:8000/mcp` and
-`http://banking-mcp-demo:8000/mcp`, and from the host on loopback ports 43421/43422.
-Each uses its own service bearer and persistent SQLite state volume. The demo
-container has no real dataset or S3 credential mount. Configuration and keys live
-under the ignored `private/banking-mcp/` directory in the main checkout.
+Banking MCP runs as a **stdio child process inside the existing FLUJO container**.
+FLUJO launches `/opt/banking-mcp/.venv/bin/python`; stdin/stdout carry MCP messages.
+There is no separate Banking MCP container, remote MCP URL, or banking server port.
 
 ```text
-Docker Desktop Linux VM
-  FLUJO container  →  banking-mcp container (real data, signed authority)
-                  →  banking-mcp-demo container (synthetic data only)
+Existing FLUJO container
+  FLUJO -> Python Banking MCP (stdio)
+        -> Python synthetic demo MCP (stdio)
 ```
 
-The dataset/config files are read-only bind mounts into these containers. Writable
-replay/reference state lives in Docker volumes. Separate containers keep real S3
-credentials and raw customer data outside FLUJO's general tool runtime.
+Code and dependencies are installed in the worker image. Dataset, credentials and
+private configuration are read-only mounts. Replay, revocation and reference records
+live on durable writable volumes. The synthetic process uses its marked fixture and
+separate state. Private files remain in ignored `private/`. The banking flow cannot
+advertise shell, filesystem or generic S3 tools.
 
 ## Tools
 
@@ -73,13 +66,12 @@ text remains untrusted data; models must not follow instructions inside it.
 5. Before returning a read, it checks expiry and revocation again. Missing or invalid
    authority returns an error, with no customer read.
 
-The shared HTTP bearer only authenticates the FLUJO service. It never selects a
-customer. Static headers/env-vars or a shared conversation ID cannot replace the
+The local stdio transport does not select a customer. Static headers/env-vars or a shared conversation ID cannot replace the
 per-call assertion. Synthetic mode bypasses customer assertions only for a marked,
 fixed-customer fixture and explicitly labels every customer result `synthetic:true`.
 
-See [the FLUJO integration design](../docs/FLUJO_BANKING_RUN_AUTH.md) for the remaining
-ingress, run-context and tool-dispatch work. Signing keys must stay outside FLUJO
+See [the FLUJO integration design](../docs/FLUJO_BANKING_RUN_AUTH.md) for
+ingress, run-context and tool-dispatch requirements. Signing keys must stay outside FLUJO
 graph configuration, user metadata, the model and ordinary tool parameters. Strip
 incoming assertions and mint fresh ones from verified server context. Reject
 client-supplied run authority. Do not log assertions or expose them through tracing.
@@ -104,11 +96,13 @@ args_sha256: hex SHA-256 of RFC 8785 canonical JSON of the raw business argument
 ```
 
 The MCP trusts the configured signer to verify session, conversation, run and graph
-ownership. It does not query a FLUJO run registry itself. Revocation is currently an
-operator `StateStore.revoke(session_id)` operation; frontend logout/revocation
-propagation still needs the runtime integration. Deploy one instance with its
-persistent state volume; multiple replicas require shared replay/revocation/reference
-storage before they can safely serve interchangeable requests.
+ownership. It does not query a FLUJO run registry itself. Frontend logout first
+revokes FLUJO's durable session, then passes a separately typed `bank-revoke+jwt`
+assertion over stdin to the fixed local `revoke-session --config <private-file>`
+command. It is not an MCP tool. Authority never appears in argv or environment.
+The MCP independently verifies the assertion and revokes its shared SQLite session;
+existing processes consult that store before returning reads. Multiple FLUJO replicas
+need shared fenced identity, replay and reference storage.
 
 ## S3 and snapshot freshness
 
@@ -145,33 +139,33 @@ public verification key and a randomly generated service token of at least 32
 characters. Use absolute host paths for native Python. Keep the private signer in
 the trusted runtime, separate from the MCP. The MCP gets only the public key.
 
-HTTP binds to loopback by default. Every HTTP request needs the service bearer.
-Hostnames are allowlisted and browser origins restricted to local origins. For
-Docker, explicitly bind `0.0.0.0`, allow the internal hostname and publish only to
-loopback. For a deployment beyond the local machine, put TLS and authenticated
-network access in front of the endpoint.
+### Install inside the existing FLUJO worker
 
-Build the image with `docker build -f Dockerfile.banking-mcp -t factored-hackathon/banking-mcp:local .`.
-Mount the dataset and config read-only, mount a writable `/state` volume, and mount
-S3 credentials only for the real service. The Docker config uses `/dataset`,
-`/state/banking.db`, `/run/secrets/banking.json` and `/run/secrets/source.env`. Run
-as the image's non-root user, with a read-only root, `/tmp` tmpfs, dropped
-capabilities and `no-new-privileges`. The image build context excludes private data
-and credentials. Local container names are `hackathon-banking-mcp` and
-`hackathon-banking-mcp-demo`; both restart with Docker.
+`Dockerfile.flujo-banking` extends the existing worker image and inherits FLUJO's
+startup command. Build with `--build-arg FLUJO_IMAGE=<existing-worker-image>`.
+Update the existing worker service to that image; do not start another FLUJO instance.
+Mount the dataset at `/banking-data`, config at `/run/banking/bank-config.json`,
+source credentials at `/run/banking/source.env`, and durable state at `/banking-state`.
+Private config paths must match these Linux mounts. Run as FLUJO's existing `node`
+user; the state volume must be writable by that user. A separate demo config points
+only to `/banking-data/banking-demo` and its own writable state volume.
+
+The default `serve` transport is stdio. HTTP remains an optional standalone transport;
+it is not used by this FLUJO deployment. `Dockerfile.banking-mcp` is an optional
+standalone server image, not the worker installation path.
 
 ### Register in FLUJO
 
-For FLUJO running in Docker:
+For the existing Linux FLUJO container, after installing code and mounts:
 
 ```powershell
-python scripts/connect_banking_mcp.py --name "Banking MCP" --config private/banking-mcp/real-docker.json --server-url http://banking-mcp:8000/mcp
-python scripts/connect_banking_mcp.py --name "Banking MCP Demo" --config private/banking-mcp/demo-docker.json --server-url http://banking-mcp-demo:8000/mcp
+python scripts/connect_banking_mcp.py --name "Banking MCP" --config private/banking-mcp/real-stdio.json --runtime-stdio
+python scripts/connect_banking_mcp.py --name "Banking MCP Demo" --config private/banking-mcp/demo-stdio.json --runtime-stdio --runtime-config /run/banking/demo-config.json
 ```
 
-For native FLUJO/Python, omit `--server-url` and pass `--python` with the local
-Python executable to use stdio. Registration saves the HTTP bearer as a secret
-header, with apps, skills, sampling and proxy exposure disabled. The server advertises
+For native FLUJO/Python, omit `--runtime-stdio` and pass `--python` with the local
+Python executable. Registration uses stdio and empty env, and disables apps, skills,
+sampling, elicitation and proxy exposure. The server advertises
 only synchronous tools: no prompts, customer resources, tasks, callbacks or SSE GET
 streams.
 

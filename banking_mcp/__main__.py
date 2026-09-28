@@ -11,7 +11,7 @@ from pathlib import Path
 import anyio
 
 from .config import Config, load_config
-from .security import BankError
+from .security import Authorizer, BankError, StateStore
 from .service import Service
 
 
@@ -41,18 +41,27 @@ def main():
     sub = p.add_subparsers(dest="command", required=True)
     serve = sub.add_parser("serve")
     serve.add_argument("--config", type=Path, required=True)
-    serve.add_argument("--transport", choices=["stdio", "streamable-http"], default="streamable-http")
+    serve.add_argument("--transport", choices=["stdio", "streamable-http"], default="stdio")
     serve.add_argument("--port", type=int, default=43421)
     serve.add_argument("--host", default="127.0.0.1")
     demo = sub.add_parser("demo")
     demo.add_argument("--out", type=Path, required=True)
     demo.add_argument("--config", type=Path, required=True)
+    revoke = sub.add_parser("revoke-session")
+    revoke.add_argument("--config", type=Path, required=True)
     args = p.parse_args()
     try:
         if args.command == "demo":
             build_demo(args.out, args.config)
             return 0
         config = load_config(args.config)
+        if args.command == "revoke-session":
+            # Private control channel: never argv/env, and never an advertised tool.
+            token = sys.stdin.read(8193)
+            if not token or len(token) > 8192:
+                raise BankError("authorization_denied")
+            Authorizer(config, StateStore(config.state_db)).revoke_assertion(token)
+            return 0
         service = Service(config)
         from .server import create_http_app, run_stdio
         if args.transport == "stdio":
