@@ -1,5 +1,11 @@
 # Banking integration through FLUJO's existing tool presets
 
+> **Superseded September 28:** [the coordinated next implementation plan](BANKING_MCP_NEXT_STEPS.md)
+> keeps presets optional. Customer credentials must not be placed in flow snapshots
+> or preset values: those structures are persisted. Use private runtime authority
+> and the existing fresh per-call assertion instead. The proposal below records the
+> earlier review direction.
+
 September 28, 2026. This corrects the integration direction in the earlier banking
 review. The banking adaptation below is a proposal, not a deployed feature.
 
