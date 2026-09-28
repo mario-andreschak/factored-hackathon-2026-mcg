@@ -1,0 +1,12 @@
+# Allow only code and dependencies into the build context. Dataset, credentials,
+# private configuration, git history and local Python environments stay outside.
+**
+!Dockerfile.banking-mcp
+!requirements-mcp.txt
+!requirements-pipeline.txt
+!requirements-s3.txt
+!banking_mcp/
+!banking_mcp/*.py
+!pipeline/
+!pipeline/*.py
+!pipeline/contracts.yaml

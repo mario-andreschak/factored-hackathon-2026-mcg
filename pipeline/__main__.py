@@ -67,6 +67,17 @@ def cmd_run(a) -> int:
             stats.setdefault("_gold", {})["lookup_bench"] = lookup.bench(settings.gold)
             b = stats["_gold"]["lookup_bench"]
             print(f"bench   per-customer lookup        p50 {b['p50_ms']} ms | p95 {b['p95_ms']} ms", flush=True)
+        # The MCP must pin lineage to the same immutable snapshot as the served rows.
+        # A report beside CURRENT can be overwritten by the next ingestion run.
+        lineage = settings.report_dir / "source_objects.json"
+        if lineage.exists():
+            inventory = json.loads(lineage.read_text(encoding="utf-8"))
+            if inventory.get("fingerprint") == stats.get("_source_fingerprint"):
+                shutil.copyfile(lineage, settings.build_dir / "source_objects.json")
+        (settings.build_dir / "snapshot.json").write_text(json.dumps({
+            "build_id": run_id, "source_fingerprint": stats.get("_source_fingerprint"),
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }) + "\n", encoding="utf-8")
         publish(settings.out_dir, run_id)
         published = True
         print(f"publish build {run_id} is now serving", flush=True)

@@ -1,6 +1,6 @@
 # Factored AI & Data Hackathon 2026 — MCG
 
-This repository contains our data audit and implementation plan for a FLUJO-powered **unrecognized-charge inquiry and simulated dispute-intake** workflow. It is an analysis and planning deliverable; the customer-facing flow and banking sandbox are not implemented yet.
+This repository contains our data audit, DuckDB data pipeline, classifier baseline and read-only banking MCP for a FLUJO-powered **unrecognized-charge inquiry and simulated dispute-intake** workflow. The MCP is connected to local FLUJO; authenticated frontend integration and dispute intake remain to be implemented.
 
 ## Start here
 
@@ -10,6 +10,8 @@ This repository contains our data audit and implementation plan for a FLUJO-powe
 - [FLUJO customer-bound banking run design](docs/FLUJO_BANKING_RUN_AUTH.md)
 - [FLUJO proposal review, alternatives and executed evidence](docs/FLUJO_BANKING_RUN_AUTH_REVIEW.md)
 - [DuckDB data pipeline and snapshot serving option](pipeline/README.md)
+- [Banking MCP: tools, local FLUJO connections and identity contract](banking_mcp/README.md)
+- [Banking MCP implementation and executed checks](docs/BANKING_MCP_IMPLEMENTATION.md)
 - [Aggregate profile](docs/DATA_PROFILE_AGGREGATES_2026-09-26.json)
 - [Challenge and dataset references](docs/reference/)
 - [S3 profiling script](scripts/profile_s3.py)
@@ -41,7 +43,8 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | `docs/reference/` | Organizer PDFs, including a redacted data dictionary |
 | `scripts/` | Reproducible profiling and FLUJO review probes |
 | `pipeline/` | DuckDB ingestion, ownership validation and customer-sharded snapshot outputs |
+| `banking_mcp/` | Read-only MCP server with verified per-call authority and bounded transaction reads |
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 
-The proposed banking MCP server is a separate application component in the plan. FLUJO remains the workflow backend and calls it with verified, per-run customer context; the MCP service reads bounded source S3 transaction CSVs, enforces ownership in service code, and returns only masked banking facts. The customer-facing agent must not receive generic S3 tools or credentials. The direct-read design supersedes the earlier private-extract implementation choice in the September 26 audit.
+FLUJO remains the workflow backend. The banking MCP uses Carlos's customer-sharded Parquet snapshots for lookup and conditional S3 read-back for a selected transaction. Real customer reads require signed per-call authority outside model arguments; the trusted FLUJO runtime hook remains to be implemented. A separate synthetic demo is usable now for graphical flow development. The customer-facing agent must not receive generic S3 tools or credentials. This serving path updates the earlier direct-S3 proposal.

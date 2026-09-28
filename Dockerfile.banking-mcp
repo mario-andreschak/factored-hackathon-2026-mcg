@@ -1,0 +1,12 @@
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements-mcp.txt requirements-pipeline.txt requirements-s3.txt ./
+RUN pip install --no-cache-dir -r requirements-mcp.txt \
+    && useradd --uid 10001 --create-home bank \
+    && mkdir /state && chown bank:bank /state
+COPY banking_mcp/ ./banking_mcp/
+COPY pipeline/ ./pipeline/
+USER bank
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+EXPOSE 8000
+CMD ["python", "-m", "banking_mcp", "serve", "--config", "/run/secrets/banking.json", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000"]

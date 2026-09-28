@@ -43,6 +43,7 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
                        t.response_code,
                        t.is_fraud,                          -- routing only; never shown to customer
                        t._late_arrival,
+                       t._source_file, t._partition_date, t._row_hash,
                        -- Served only if the customer exists AND the product exists AND the
                        -- product belongs to that same customer.
                        (c.customer_id IS NOT NULL AND p.product_id IS NOT NULL
