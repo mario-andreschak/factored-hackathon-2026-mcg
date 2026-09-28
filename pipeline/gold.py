@@ -29,11 +29,11 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
     have = lambda t: (settings.silver / f"{t}.parquet").exists()
     g = stats.setdefault("_gold", {})
 
-    if have("transactions") and have("products"):
+    if have("transactions") and have("products") and have("customers"):
         t0 = time.perf_counter()
         out = settings.gold / "transactions_by_customer"
         if out.exists():
-            shutil.rmtree(out)  # full refresh => idempotent
+            shutil.rmtree(out)  # builds are fresh directories; this only guards manual re-runs
         con.execute(f"""
             COPY (
                 SELECT t.transaction_id, t.customer_id, t.product_id, t.transaction_date,
@@ -43,10 +43,14 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
                        t.response_code,
                        t.is_fraud,                          -- routing only; never shown to customer
                        t._late_arrival,
-                       (p.customer_id IS NOT NULL AND p.customer_id = t.customer_id) AS ownership_valid,
+                       -- Served only if the customer exists AND the product exists AND the
+                       -- product belongs to that same customer.
+                       (c.customer_id IS NOT NULL AND p.product_id IS NOT NULL
+                        AND p.customer_id = t.customer_id) AS ownership_valid,
                        {sql_bucket('t.customer_id', TXN_BUCKETS)} AS bucket
                 FROM '{s("transactions")}' t
-                LEFT JOIN '{s("products")}' p USING (product_id)
+                LEFT JOIN '{s("products")}' p ON p.product_id = t.product_id
+                LEFT JOIN '{s("customers")}' c ON c.customer_id = t.customer_id
                 ORDER BY bucket, t.customer_id, t.transaction_date DESC
             ) TO '{sql_path(out)}' (FORMAT parquet, PARTITION_BY (bucket), COMPRESSION zstd,
                                     ROW_GROUP_SIZE 20000)

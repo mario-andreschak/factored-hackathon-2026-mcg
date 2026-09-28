@@ -98,6 +98,12 @@ def write(report_dir: Path, run: dict, stats: dict) -> None:
             for grp in groups:
                 L.append(f"- **{t}.{col}** same value, different spelling: "
                          + ", ".join(f"`{v}` {_fmt(n)}" for v, n in grp.items()))
+        for col, c in sv.get("inconsistent_spellings_counts", {}).items():
+            if not c["values_published"]:  # free text: counts only, values never leave the build
+                drift = True
+                L.append(f"- **{t}.{col}** (free text, values withheld): {_fmt(c['collision_groups'])} "
+                         f"groups of case/accent variants, {_fmt(c['rows_in_minority_spellings'])} rows "
+                         f"in minority spellings")
         if sv["contract_columns_absent_in_source"]:
             drift = True
             L.append(f"- **{t}** contract columns absent in source: {sv['contract_columns_absent_in_source']}")

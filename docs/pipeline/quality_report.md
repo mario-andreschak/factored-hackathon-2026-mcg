@@ -1,6 +1,6 @@
 # Data quality report
 
-Run `20260927T221649Z-727b3e` · pipeline 0.1.0 · contracts `2be73d5f8e83` · source `s3://<bucket>/data` · stages `silver,gold`
+Run `20260927T235730Z-e408c7` · pipeline 0.1.0 · contracts `98f0add581f4` · source `s3://<bucket>/data` · stages `bronze,silver,gold`
 
 Measured by `python -m pipeline run`. Every raw row is accounted for: **raw = silver + quarantined + duplicates removed** (the *Reconciles* column).
 
@@ -63,4 +63,4 @@ None.
 - **classifier_dataset**: 171,321 rows, splits {'test': 2946, 'train': 109580, 'excluded': 41576, 'val': 17219}, time holdout 2026-03-17. Distinct normalized texts: 42. **Test rows whose exact text also appears in train: 2,946 (1.0)** — report metrics on the unseen-text subset too.
 - **contact_demand**: 3,927 rows. Top reasons: Transaccional 35.0%; Producto 22.0%; Queja 17.1%; Técnico 15.0%; Comercial 8.0%; Retención 3.0%
 - **demo_seed_candidates** (customers eligible per scenario; up to 25 picked each): normal 18,836, reversed 35,052, pending 58,394, declined 95,804, fraud_flagged 4,233, near_duplicate 0. **No natural near-duplicate charges exist**: the 'charged twice' demo needs a clearly labeled synthetic injection.
-- **lookup latency** (50 customers, local disk): p50 20.4 ms · p95 27.4 ms · max 44.7 ms.
+- **lookup latency** (50 customers, local disk): p50 38.6 ms · p95 51.2 ms · max 65.4 ms.

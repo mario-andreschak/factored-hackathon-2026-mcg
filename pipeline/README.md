@@ -18,7 +18,7 @@ python -m pipeline run --stage silver gold          # re-run from local bronze, 
 python -m pytest -q                                 # tests on the synthetic fixture
 ```
 
-Outputs go to `data/` (git-ignored). Only aggregates are written to `docs/pipeline/`
+Outputs go to `data/` (git-ignored): `data/bronze/` (raw landing), `data/builds/<run_id>/` (silver, gold, quarantine) and `data/CURRENT` (the published build). Only aggregates are written to `docs/pipeline/`
 (`quality_report.md`, `manifest.json`), which are safe to commit: no rows, no credentials,
 the bucket name is redacted. Low-RAM machines: add `--memory-limit 6GB`.
 
@@ -27,6 +27,17 @@ the bucket name is redacted. Low-RAM machines: add `--memory-limit 6GB`.
 4.4M transactions: **p50 21 ms, p95 23 ms**. Row counts match `scripts/profile_s3.py` exactly
 (4,425,008 transactions · 686,296 interactions · 171,321 transcripts · 67,095 complaints), so two
 independent readers agree.
+
+## Serving layer: snapshots, isolation, lineage, load, and source verification
+
+| Need | How |
+|---|---|
+| **A failed build never replaces good data** | Silver, gold and quarantine are written to an isolated `data/builds/<run_id>/`. Gold only runs if silver passed every contract. `data/CURRENT` is swapped **atomically** to the new build only after the whole run succeeds; otherwise the previous snapshot keeps serving (`manifest.json` shows `"published": false`). Builds are never modified after they are written, so a reader that resolved a snapshot keeps a complete, consistent view even while a rebuild runs. The last 3 builds are kept. Resolve the live snapshot with `pipeline.common.current_gold("data")`. |
+| **No cross-customer results** | `lookup.get_customer_transactions()` opens its **own cursor per call** (execute, description and fetch on that cursor, then close it), even when given a shared connection. A row is served only if the **customer exists**, the **product exists**, and the product belongs to that same customer. |
+| **Reports are safe to commit** | Values are written to `docs/pipeline/` only for allow-listed categorical columns (`publish_values: true` in `contracts.yaml`). Free text (`customer_text`, complaint `description`, `merchant_name`, ...) is reported as **counts only**. |
+| **S3 stays the source of record** | The pipeline only reads it. `docs/pipeline/source_objects.json` lists every object a build read (key, bytes, ETag, last-modified) plus a **source fingerprint**, which is also recorded in `manifest.json`. Same inputs give the same fingerprint; any new or changed object changes it. Every silver row keeps its `_source_file`. |
+| **Load** | `python -m pipeline bench` runs 1 / 50 / 500 concurrent callers against the published snapshot and writes `docs/pipeline/lookup_bench.json`. Result on a 4-CPU machine over a 2M-row stand-in, local disk, one process: p95 **7 / 341 / 351 ms**, 0 errors, ~265 req/s. Per-request cursors cost latency under load; that is the price of isolation. A deployed service adds network overhead and can scale horizontally, because snapshots are read-only files. |
+| **Confirm before acting** | [`verify.py`](verify.py) `verify_transaction_in_source()` re-reads the transaction from its S3 partition, plus the 7 days after it for late arrivals, and compares it with gold. It returns `verified`, `changed` (use the source values) or `not_found`. **Another customer's transaction returns `not_found`, identical to a missing one**; the real reason is only in `audit`, for server logs. Try it: `python -m pipeline verify --sample`. |
 
 ## What each stage guarantees
 
@@ -58,4 +69,4 @@ These change how the rest of the team should work:
 
 ## Files
 
-`contracts.yaml` rules · `bronze.py` / `silver.py` / `gold.py` stages · `lookup.py` MCP read path + bench · `report.py` report/manifest · `fixture.py` **synthetic** test data (not organizer data) · `../tests/test_pipeline.py` 13 end-to-end tests.
+`contracts.yaml` rules · `bronze.py` / `silver.py` / `gold.py` stages · `lookup.py` MCP read path + bench · `report.py` report/manifest · `fixture.py` **synthetic** test data (not organizer data) · `verify.py` source re-check · `../tests/test_pipeline.py` 21 end-to-end tests, including a regression test for each finding of the PR #1 review.
