@@ -14,6 +14,14 @@ There are three synchronous read-only tools: `banking_status`,
 `list_my_transactions`, and `get_my_transaction`. The last can conditionally
 recheck its pinned S3 object. There are no bank mutations or dispute submissions.
 
+**Deployment:** FLUJO and the MCP execute inside the same Docker Desktop Linux VM,
+in separate Linux containers on `flujo-slack_default`. The MCP uses Linux Python
+3.13, with code installed in its image. Verified from inside FLUJO's container:
+the internal MCP URL is reachable and rejects a request without its service bearer
+with HTTP 401. Windows hosts the read-only bind-mounted files; no Windows Python
+process serves or launches this MCP. Real credentials/data stay outside FLUJO's
+general tool container.
+
 The serving snapshot contains 150,000 customers, 400,000 products and 4,425,008
 ownership-valid transactions. It was built from the real bucket with this branch's
 private lineage fields and immutable source-object sidecar. No customer records,

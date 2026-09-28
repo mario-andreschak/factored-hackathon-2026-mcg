@@ -18,12 +18,24 @@ The real service intentionally rejects ordinary FLUJO customer calls today. The
 remaining integration is the trusted FLUJO runtime signer described below. The
 local test signer proves the MCP contract; it does not authenticate frontend users.
 
-The services run beside FLUJO on its private Docker network. They are reachable
+FLUJO and both MCP services run **inside the same Docker Desktop Linux VM**, in
+separate Linux containers on FLUJO's private Docker network. The MCP runs Python
+inside its container; it never launches a Windows Python executable. They are reachable
 from FLUJO at `http://banking-mcp:8000/mcp` and
 `http://banking-mcp-demo:8000/mcp`, and from the host on loopback ports 43421/43422.
 Each uses its own service bearer and persistent SQLite state volume. The demo
 container has no real dataset or S3 credential mount. Configuration and keys live
 under the ignored `private/banking-mcp/` directory in the main checkout.
+
+```text
+Docker Desktop Linux VM
+  FLUJO container  →  banking-mcp container (real data, signed authority)
+                  →  banking-mcp-demo container (synthetic data only)
+```
+
+The dataset/config files are read-only bind mounts into these containers. Writable
+replay/reference state lives in Docker volumes. Separate containers keep real S3
+credentials and raw customer data outside FLUJO's general tool runtime.
 
 ## Tools
 
