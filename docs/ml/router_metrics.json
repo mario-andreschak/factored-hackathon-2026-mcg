@@ -1,0 +1,534 @@
+{
+  "test_set": "PROVISIONAL (written by the same author as train)",
+  "test_file": "router_test_provisional.csv",
+  "train_n": 307,
+  "test_n": 60,
+  "selected_C": 8,
+  "cv_macro_f1_by_C": {
+    "0.5": 0.826,
+    "1": 0.826,
+    "2": 0.82,
+    "4": 0.827,
+    "8": 0.83,
+    "16": 0.83
+  },
+  "tau": 0.65,
+  "target_automated_precision": 0.95,
+  "near_duplicates_train_test": [],
+  "baseline_keywords": {
+    "n": 60,
+    "accuracy": 0.783,
+    "accuracy_ci95": [
+      0.683,
+      0.883
+    ],
+    "macro_f1": 0.784,
+    "per_class": {
+      "inquiry": {
+        "precision": 0.722,
+        "recall": 0.867,
+        "f1": 0.788,
+        "support": 15
+      },
+      "dispute": {
+        "precision": 1.0,
+        "recall": 0.533,
+        "f1": 0.696,
+        "support": 15
+      },
+      "human": {
+        "precision": 1.0,
+        "recall": 0.867,
+        "f1": 0.929,
+        "support": 15
+      },
+      "other": {
+        "precision": 0.619,
+        "recall": 0.867,
+        "f1": 0.722,
+        "support": 15
+      }
+    },
+    "confusion": {
+      "labels": [
+        "inquiry",
+        "dispute",
+        "human",
+        "other"
+      ],
+      "matrix": [
+        [
+          13,
+          0,
+          0,
+          2
+        ],
+        [
+          3,
+          8,
+          0,
+          4
+        ],
+        [
+          0,
+          0,
+          13,
+          2
+        ],
+        [
+          2,
+          0,
+          0,
+          13
+        ]
+      ]
+    },
+    "by_lang": {
+      "es": {
+        "n": 52,
+        "accuracy": 0.75
+      },
+      "pt": {
+        "n": 8,
+        "accuracy": 1.0
+      }
+    },
+    "human_missed": 2,
+    "human_total": 15,
+    "unnecessary_handoffs": 0
+  },
+  "model_no_abstention": {
+    "n": 60,
+    "accuracy": 0.9,
+    "accuracy_ci95": [
+      0.817,
+      0.967
+    ],
+    "macro_f1": 0.899,
+    "per_class": {
+      "inquiry": {
+        "precision": 0.778,
+        "recall": 0.933,
+        "f1": 0.848,
+        "support": 15
+      },
+      "dispute": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 15
+      },
+      "human": {
+        "precision": 0.875,
+        "recall": 0.933,
+        "f1": 0.903,
+        "support": 15
+      },
+      "other": {
+        "precision": 1.0,
+        "recall": 0.733,
+        "f1": 0.846,
+        "support": 15
+      }
+    },
+    "confusion": {
+      "labels": [
+        "inquiry",
+        "dispute",
+        "human",
+        "other"
+      ],
+      "matrix": [
+        [
+          14,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          15,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          14,
+          0
+        ],
+        [
+          3,
+          0,
+          1,
+          11
+        ]
+      ]
+    },
+    "by_lang": {
+      "es": {
+        "n": 52,
+        "accuracy": 0.885
+      },
+      "pt": {
+        "n": 8,
+        "accuracy": 1.0
+      }
+    },
+    "human_missed": 1,
+    "human_total": 15,
+    "unnecessary_handoffs": 2
+  },
+  "model_with_abstention": {
+    "n": 60,
+    "accuracy": 0.7,
+    "accuracy_ci95": [
+      0.583,
+      0.817
+    ],
+    "macro_f1": 0.711,
+    "per_class": {
+      "inquiry": {
+        "precision": 0.8,
+        "recall": 0.533,
+        "f1": 0.64,
+        "support": 15
+      },
+      "dispute": {
+        "precision": 1.0,
+        "recall": 0.667,
+        "f1": 0.8,
+        "support": 15
+      },
+      "human": {
+        "precision": 0.484,
+        "recall": 1.0,
+        "f1": 0.652,
+        "support": 15
+      },
+      "other": {
+        "precision": 1.0,
+        "recall": 0.6,
+        "f1": 0.75,
+        "support": 15
+      }
+    },
+    "confusion": {
+      "labels": [
+        "inquiry",
+        "dispute",
+        "human",
+        "other"
+      ],
+      "matrix": [
+        [
+          8,
+          0,
+          7,
+          0
+        ],
+        [
+          0,
+          10,
+          5,
+          0
+        ],
+        [
+          0,
+          0,
+          15,
+          0
+        ],
+        [
+          2,
+          0,
+          4,
+          9
+        ]
+      ]
+    },
+    "by_lang": {
+      "es": {
+        "n": 52,
+        "accuracy": 0.673
+      },
+      "pt": {
+        "n": 8,
+        "accuracy": 0.875
+      }
+    },
+    "human_missed": 0,
+    "human_total": 15,
+    "unnecessary_handoffs": 16,
+    "automated_share": 0.483,
+    "automated_precision": 0.931
+  },
+  "abstention_curve": [
+    {
+      "tau": 0.3,
+      "automated_share": 0.733,
+      "automated_precision": 0.909,
+      "human_missed": 1,
+      "unnecessary_handoffs": 2
+    },
+    {
+      "tau": 0.4,
+      "automated_share": 0.717,
+      "automated_precision": 0.93,
+      "human_missed": 1,
+      "unnecessary_handoffs": 3
+    },
+    {
+      "tau": 0.5,
+      "automated_share": 0.583,
+      "automated_precision": 0.943,
+      "human_missed": 0,
+      "unnecessary_handoffs": 10
+    },
+    {
+      "tau": 0.55,
+      "automated_share": 0.55,
+      "automated_precision": 0.939,
+      "human_missed": 0,
+      "unnecessary_handoffs": 12
+    },
+    {
+      "tau": 0.6,
+      "automated_share": 0.517,
+      "automated_precision": 0.935,
+      "human_missed": 0,
+      "unnecessary_handoffs": 14
+    },
+    {
+      "tau": 0.65,
+      "automated_share": 0.483,
+      "automated_precision": 0.931,
+      "human_missed": 0,
+      "unnecessary_handoffs": 16
+    },
+    {
+      "tau": 0.7,
+      "automated_share": 0.483,
+      "automated_precision": 0.931,
+      "human_missed": 0,
+      "unnecessary_handoffs": 16
+    },
+    {
+      "tau": 0.8,
+      "automated_share": 0.35,
+      "automated_precision": 0.905,
+      "human_missed": 0,
+      "unnecessary_handoffs": 24
+    }
+  ],
+  "errors": [
+    {
+      "text": "ya me depositaron o todavia no? me dijeron q antier",
+      "label": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "routed": "human",
+      "confidence": 0.469
+    },
+    {
+      "text": "ese cobro de 8.40 dolares q sale el 4 de junio de q es?",
+      "label": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "routed": "human",
+      "confidence": 0.451
+    },
+    {
+      "text": "me aparece reversada una compra eso es bueno o malo",
+      "label": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "routed": "human",
+      "confidence": 0.474
+    },
+    {
+      "text": "hasta cuando tengo para pagar la tarjeta sin recargo",
+      "label": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "routed": "human",
+      "confidence": 0.517
+    },
+    {
+      "text": "q onda con mi transferencia a banorte sigue en proceso?",
+      "label": "inquiry",
+      "baseline": "inquiry",
+      "model": "human",
+      "routed": "human",
+      "confidence": 0.462
+    },
+    {
+      "text": "cuanta plata me entro hoy",
+      "label": "inquiry",
+      "baseline": "other",
+      "model": "inquiry",
+      "routed": "human",
+      "confidence": 0.556
+    },
+    {
+      "text": "me confirmas si ya pague el credito de la moto",
+      "label": "inquiry",
+      "baseline": "other",
+      "model": "inquiry",
+      "routed": "inquiry",
+      "confidence": 0.894
+    },
+    {
+      "text": "a compra do mercado ja foi aprovada?",
+      "label": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "routed": "human",
+      "confidence": 0.578
+    },
+    {
+      "text": "ese cargo d 1500 no lo hice yo",
+      "label": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "routed": "dispute",
+      "confidence": 0.919
+    },
+    {
+      "text": "me cobraron 2 veces la gasolina wey",
+      "label": "dispute",
+      "baseline": "other",
+      "model": "dispute",
+      "routed": "dispute",
+      "confidence": 0.967
+    },
+    {
+      "text": "el cajero se trabo no saco billetes y igual me desconto",
+      "label": "dispute",
+      "baseline": "other",
+      "model": "dispute",
+      "routed": "human",
+      "confidence": 0.494
+    },
+    {
+      "text": "cancele spotify hace 2 meses y sigue el debito",
+      "label": "dispute",
+      "baseline": "dispute",
+      "model": "dispute",
+      "routed": "human",
+      "confidence": 0.406
+    },
+    {
+      "text": "compre unos tenis y nunca me llegaron y ya me cobraron",
+      "label": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "routed": "dispute",
+      "confidence": 0.944
+    },
+    {
+      "text": "xq me cobraron doble el super si pase la tarjeta una vez",
+      "label": "dispute",
+      "baseline": "dispute",
+      "model": "dispute",
+      "routed": "human",
+      "confidence": 0.646
+    },
+    {
+      "text": "la tienda dijo q me devolvio la plata hace 20 dias y nada",
+      "label": "dispute",
+      "baseline": "dispute",
+      "model": "dispute",
+      "routed": "human",
+      "confidence": 0.547
+    },
+    {
+      "text": "el cobro del hotel fue mas alto que lo que decia la reserva",
+      "label": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "routed": "dispute",
+      "confidence": 0.717
+    },
+    {
+      "text": "mande plata a mi primo y a el no le llego pero de mi cuenta si salio",
+      "label": "dispute",
+      "baseline": "other",
+      "model": "dispute",
+      "routed": "human",
+      "confidence": 0.642
+    },
+    {
+      "text": "me sale un debito de disney plus y nunca me suscribi",
+      "label": "dispute",
+      "baseline": "other",
+      "model": "dispute",
+      "routed": "dispute",
+      "confidence": 0.821
+    },
+    {
+      "text": "me estan pidiendo plata por whatsapp haciendose pasar por mi hijo y ya les mande",
+      "label": "human",
+      "baseline": "other",
+      "model": "human",
+      "routed": "human",
+      "confidence": 0.881
+    },
+    {
+      "text": "mi abuela recibio una llamada y le sacaron toda la plata",
+      "label": "human",
+      "baseline": "other",
+      "model": "human",
+      "routed": "human",
+      "confidence": 0.584
+    },
+    {
+      "text": "a q hora cierran el sabado",
+      "label": "other",
+      "baseline": "other",
+      "model": "other",
+      "routed": "human",
+      "confidence": 0.452
+    },
+    {
+      "text": "ey q tal",
+      "label": "other",
+      "baseline": "other",
+      "model": "inquiry",
+      "routed": "human",
+      "confidence": 0.39
+    },
+    {
+      "text": "cuanto esta el dolar",
+      "label": "other",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "routed": "inquiry",
+      "confidence": 0.895
+    },
+    {
+      "text": "se puede sacar plata sin tarjeta en el cajero?",
+      "label": "other",
+      "baseline": "other",
+      "model": "other",
+      "routed": "human",
+      "confidence": 0.474
+    },
+    {
+      "text": "me voy de viaje a españa la tarjeta sirve alla?",
+      "label": "other",
+      "baseline": "other",
+      "model": "human",
+      "routed": "human",
+      "confidence": 0.493
+    },
+    {
+      "text": "q tal el cdt de ustedes cuanto paga",
+      "label": "other",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "routed": "inquiry",
+      "confidence": 0.891
+    }
+  ]
+}
