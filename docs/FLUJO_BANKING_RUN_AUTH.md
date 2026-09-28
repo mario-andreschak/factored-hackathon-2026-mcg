@@ -1,67 +1,132 @@
 # Customer-bound banking runs in FLUJO
 
-**Proposal, 2026-09-27.** Keep FLUJO as the workflow backend and its graphical flow as the one shared flow definition. Enhance its execution boundary so every banking tool call carries a verified, run-specific customer identity outside model text. This supersedes the gateway-as-MCP-client default in the [earlier S3 plan](BANKING_MCP_S3_PLAN.md); that route remains a fallback if the security gate fails. No FLUJO code was changed for this proposal.
+**Revised after the second review, 2026-09-27. Status: implementation proposal.** FLUJO remains the workflow backend and banking MCP client. Use shared graphical flows, an authenticated frontend server, an immutable principal for each run, and independently enforced ownership in the banking MCP. The [review record](FLUJO_BANKING_RUN_AUTH_REVIEW.md) separates source findings, executed probes, alternatives and implementation gates. This review does not implement banking authorization.
 
-## What the current checkout already offers
+## 1. Decision and scope
 
-The inspected FLUJO checkout is `15d019f7` with unrelated working changes. Its `/v1/chat/completions` route maps into `processChatCompletion` and `runFlow`. `FlowRunInput` already has runtime-only authority concepts; `SharedState.executionAuthority` is installed non-enumerably and removed from persisted state. `MCPService.callTool` is the common dispatch path for model and Static-node calls. `tools.ts` already attaches FLUJO-owned data to `tools/call.params._meta`, and the installed MCP SDK passes request metadata to server handlers as `extra._meta`. These are useful extension points.
+**Hackathon default:** retain FLUJO's default MCP SDK v1 path. Add a bank-specific signed assertion to `tools/call.params._meta` in trusted server code after argument normalization. A fixed service credential authenticates the private HTTP connection. The bank verifies both credentials and every requested object's owner. Customer identity never comes from model arguments, caller-authored metadata, URLs or workspace names.
 
-The existing `@conversation` reference can resolve the current conversation ID in a hidden, authoritative fixed tool parameter. That is useful for correlation. A reference with an explicit target can resolve another conversation, and a conversation ID alone proves no customer identity. The current trusted-context injector overrides a model's `conversation_id` only for FLUJO's own `create_ticket_for_human` tool. The Static node calls `MCPService.callTool` without that trusted context and does not use the Process-node preset path. Banking authorization therefore belongs at the **central dispatch and banking server**, across all call sources.
+**Credible alternative:** the installed SDK v2 supports custom per-request HTTP headers on a shared Streamable HTTP client. A synthetic probe verified `X-Flujo-Bank-Assertion` without connection mutation. Those options cannot override `Authorization`; v1 ignores them. Choose this carrier if a bank-specific v2 factory is added and verified. Avoid changing the workspace-wide experimental switch merely for banking. Both carriers require the same authorization envelope and tests. Pin exact SDK versions and protocol revision in implementation.
 
-Configured HTTP MCP headers are resolved into a connection and the client pool is keyed by server name. Updating the configured header or creating a customer-specific MCP config/flow during a request would mutate shared deployment state and multiply connections. `workspace` names are data partitions, not customer authentication. The local `/v1` compatibility API key is not end-user authentication. Conversation execution locks are keyed by conversation ID, so different conversations need not serialize on one lock, but 500 concurrent runs have not been proven by this audit.
+Use a dedicated FLUJO banking deployment and one fixed workspace. Reuse an approved inquiry graph across customers. An optional second **shared Static-only action graph** can handle confirmed case creation; neither graph is copied per customer. Preserve the editor, adapters, context, retries and aggregate statistics while restricting banking execution.
 
-## Recommended path
+**Threat model:** defend against authenticated customers selecting foreign IDs/URLs, forged browser metadata, prompt injection, malicious source text, concurrency, expiry, retries and restart/resume. Frontend server, vetted graph authors, FLUJO runtime/signing code, bank MCP, identity mapping and private stores are trusted. Compromise of their code/signing keys is outside the customer-isolation claim. Non-enumerable state prevents accidental serialization; it is not a sandbox against arbitrary JavaScript, shell or file access.
+
+## 2. Evidence from current code
+
+Reviewed FLUJO source at `15d019f7b952b2f2d3aea1197722ac8d9f520d7c`, preserving unrelated working changes. Installed SDKs: `@modelcontextprotocol/sdk` **1.30.0**, `@modelcontextprotocol/client` **2.0.0**. The source calls its switch `mcpBetaProtocol`; that name does not establish the installed package's release status.
+
+- Generic `/v1` accepts caller routing/debug/context fields. Its ordinary local bearer is not customer authentication. Worker mode has a central **service** bearer gate in `src/proxy.ts`; adapt it with a separate banking execution credential, keeping snapshot/admin authority separate.
+- `runFlow` installs `executionAuthority` non-enumerably, clears stale authority on invocation and strips it from persistence. Persona execution authority is not banking identity, but this is a useful pattern.
+- ModelHandler, Claude/Codex adapters, Static nodes, tool tester, Apps and proxy tool calls reach `MCPService.callTool`. All need explicit context or denial. `resumeAfterApproval.ts` invokes tool processing without conversation/run/authority context and needs a specific change.
+- `tools.ts` constructs host-owned request `_meta`. SDK/server probes passed 500 interleaved synthetic calls per metadata carrier, verifying serialization/correlation rather than full FLUJO authorization.
+- `@conversation.id` works in dynamic references/presets; fixed presets override model values. Explicit references can select another conversation. Static templates resolve run variables/resources, not that preset path: the live Static fixture left `@conversation.id` literal. Runtime context must supply identity in every node.
+- **Elicitation currently has a shared-run hazard:** `elicitationContext.ts` keeps one context per workspace/server. B overwrites A; A's cleanup can erase B. The handler uses that context to route a server prompt to a conversation. Disable banking elicitation until routing uses the authenticated originating request.
+- Task poll/result/cancel and resource/prompt reads have separate paths. A tool-only guard is insufficient if they carry customer data. Bank MVP exposes synchronous tools with static customer-independent schemas.
+- Conversation locks, active state, event channels and control registries are process-local. ModelHandler's concurrency caps apply to a batch, not all 500 runs. Warm-client and terminal-cache limits do not cap active work.
+
+## 3. Trust path and ingress
 
 ```mermaid
 flowchart LR
-  B[Browser] --> W[Frontend server: authenticates user]
-  W -->|signed, short-lived backend assertion| F[Private FLUJO /v1]
-  F -->|one shared graphical flow| R[Customer-bound run]
-  R -->|signed per-call context in MCP request metadata| M[Banking MCP]
-  M -->|read-only| S[(Source S3 CSVs)]
-  M --> C[(Private simulated case store)]
+  B[Browser session] --> W[Frontend server]
+  W -->|execution credential + user assertion| I[Private FLUJO banking ingress]
+  I --> O[(Durable conversation owners)]
+  I --> R[Verified run + approved graph]
+  R -->|service credential + signed call assertion| M[Private bank MCP]
+  M -->|bounded authoritative reads| S[(Source S3)]
+  M --> C[(Consent + case + idempotency store)]
 ```
 
-1. **Authenticate at the frontend server.** It owns the browser session and sends a short-lived assertion to a dedicated banking FLUJO ingress (for example, `/v1/banking/chat/completions`). FLUJO verifies signature, issuer, audience, expiry, and a stable demo-user subject on **each** request. The `user` field, prompt, URL query, `metadata.customerId`, workspace, and requested `conversation_id` are never identity claims. FLUJO and the bank MCP remain private; only the frontend is public. The frontend backend forces the vetted banking flow and exposes only required chat/event/confirmation endpoints; the dedicated FLUJO deployment does not expose its control plane, generic filesystem/shell/conversation tools, or arbitrary flow selection to banking customers.
-2. **Bind every conversation to its owner.** Atomically store `(workspace, conversation_id) -> authenticated subject` at conversation creation. On every chat turn, stream/event read, approval, cancel, retry, or resume, compare the fresh verified subject to that binding **before** loading conversation state or tool results. A supplied ID for another subject returns the same generic forbidden/unavailable response whether or not it exists. Force the banking workspace/flow from server configuration; the browser cannot select them. Re-authenticate paused/resumed runs. For the hackathon, bank-enabled scheduler, proxy, tool-tester, and unauthenticated internal runs fail closed.
-3. **Introduce `TrustedRunPrincipal`.** Add a runtime-only value to `FlowRunInput` and install it non-enumerably on `SharedState`, like `executionAuthority`. It contains subject, frontend session reference, conversation ID, run ID, expiry, and allowed banking scope, **not** an AWS key or dataset customer ID. Do not put it in `variables`, prompt metadata, messages, flow snapshots, statistics payloads, or persisted conversation JSON. Explicitly propagate it to authorized subflows; deny banking tools in detached/background flows until inheritance and resume behavior are tested. Check expiry and conversation binding again immediately before tool dispatch.
-4. **Authorize at one MCP dispatch seam.** Mark the banking MCP configuration as `requiresTrustedRunPrincipal`. `MCPService.callTool` rejects every protected banking call lacking that principal, regardless of whether it came from a Process node, Static node, MCP proxy, app frame, tool tester, or retry. Before invoking the SDK, FLUJO discards any caller-supplied banking `_meta` and creates a short-lived signed assertion bound to issuer, bank-MCP audience, subject, conversation, run, tool name, scope, expiry, and unique call ID. Attach it under a reserved vendor-specific `tools/call.params._meta` key; do not add it to model-authored arguments or event logs. The bank MCP connection can have a static **service** credential in its HTTP Authorization header. Its service credential alone grants no customer data: the bank server also requires and verifies the per-call assertion and rejects replayed call IDs. This is an application-specific delegation layer on top of MCP transport authorization, not an assertion that arbitrary `_meta` is trustworthy. A future general FLUJO feature could use per-request OAuth headers when the chosen SDK/transport supports them without mutating a shared connection.
-5. **Enforce data ownership again in the bank MCP.** The bank server maps the verified demo subject to a dataset customer ID privately. For every result or case action, it checks transaction customer, product ID, product owner, source version, and policy. No `customer_id`, S3 key, bucket, or arbitrary URL is a tool argument. Missing/invalid assertions, expired sessions, mismatched conversations, and caller-selected foreign IDs fail closed. A case write additionally requires a frontend-issued confirmation reference tied to that subject and selected transaction, an idempotency key, and receipt read-back. The model cannot create its own confirmation by saying the customer agreed.
+1. Frontend authenticates its browser session, derives subject/scope from trusted policy, and issues a short-lived assertion for the **FLUJO banking ingress audience**. Do not pass a browser-claimed subject or unchecked identity-provider token to the bank.
+2. Add exact banking chat/read/events/cancel/confirmation routes, protected with a dedicated execution credential or mTLS plus the user assertion. Adapt worker admission so this credential grants only those routes; retain separate snapshot/admin credentials. Host/Origin checks and private networking are not authentication.
+3. Accept a bounded new **user** message and optional existing conversation ID. Reconstruct history from owned server state. Reject/ignore caller `model`, `flujo`, workspace query/header, `processNodeId`, graph/snapshot, Persona target, debug, tools/results, app context, skills, system/assistant roles and arbitrary metadata. Server selects the pinned approved graph/provider policy and forces workspace **before** workspace/state lookup.
+4. Generate conversation UUIDs on the server. Atomically insert `(deployment, workspace, conversation_id) -> (issuer, subject, graph_revision)` in a durable owner registry before use. A supplied unknown ID is not a creation request. Do not adopt legacy/unbound conversations. Owners are immutable; deletion tombstones prevent resurrection/rebinding.
+5. On every turn/read/event replay/cancel/confirmation/approval/resume, verify fresh identity and owner **before** state load or registry side effects. Foreign and unknown IDs get the same unavailable response. Include child conversations, resources/media, archives, list/search and recovery if exposed. Keep global firehose and generic control/debug routes inaccessible to customers.
+6. SSE uses owned channels, disables shared/proxy caching, and closes on expiry/revocation. Re-authenticate reconnect/replay. Keep credentials out of URLs.
 
-MCP's HTTP authorization specification requires an access token intended for the MCP resource on each HTTP request; the service credential fulfills that transport boundary in this proposed internal deployment. The signed customer assertion in `_meta` is a separate, bank-specific authorization input, validated by the bank server. If FLUJO later supports safe per-request credentials on a shared transport, use a customer-bound token in the HTTP Authorization header instead. See the [MCP authorization specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/authorization/index.mdx) and the [TypeScript SDK's request metadata](https://ts.sdk.modelcontextprotocol.io/v2/api/index/%40modelcontextprotocol/client/).
+These checks follow [OWASP authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html). MCP's [security guidance](https://modelcontextprotocol.io/docs/2025-11-25/tutorials/security/security_best_practices) also treats session IDs as state, not authentication.
 
-## Assessment of the suggested FLUJO mechanisms
+## 4. Runtime context and dispatch
 
-| Mechanism | Use in this design | Reason |
-| --- | --- | --- |
-| Dynamic MCP configs, headers, or env vars per customer | Avoid for the shared bank connection | Config is persisted/shared and the client pool is keyed by server name. Reconfiguration and 500 simultaneous users create isolation and lifecycle hazards. A static service credential is fine when every data call also requires per-run authorization. |
-| Static tool nodes | Yes | Useful for deterministic sequence, policy checks, and verified receipt read-back. They still need the central dispatch guard; current Static-node calls omit trusted context. |
-| Copy a template flow per customer | Avoid | Graph duplication adds no identity proof, complicates updates and cleanup, and creates unnecessary state at 500 customers. One graph can serve isolated runs. |
-| Conversation metadata or `@conversation.id` | Yes, for binding/correlation | The ID locates a secure owner binding; it does not establish ownership. Hidden fixed parameters can help trace calls, while signed run context supplies authority. Never accept an explicit `@conversation[other-id]` target as authorization. |
-| Narrow FLUJO branch | Recommended | Add a banking-specific ingress and trusted-run MCP adapter behind a feature flag. Preserve the graph editor, adapters, run history, and general MCP behavior. Generalize only after the security tests pass. |
+Create an immutable server-only `TrustedRunContext` after verification/owner admission, with provenance from a private factory/registry. A matching TypeScript shape alone proves nothing. Include `(issuer, subject)`, session/revocation reference, workspace, root/current conversation, logical run ID, graph revision, allowed operations, expiry and `assertCurrent()`. Bind logical run ID when `runFlow` creates/resumes it; conversation and run IDs are different.
 
-### Suggested change map in FLUJO
+Pass context explicitly through `FlowRunInput`, nodes, handlers and adapter options. A non-enumerable SharedState handle may ease integration; explicitly strip it from snapshots, debug/error/trace/model projections. Replace/clear it per invocation. Never recover authority solely from a caller-selected conversation ID. Approval paths install fresh context **before** executing a tool or resolving a live registry.
 
-| Seam in the inspected checkout | Narrow change |
+**Dispatch sequence:**
+
+1. Resolve the destination from immutable server policy; deny missing/expired/unrecognized context before connecting. A protected config flag is useful, but the bank independently rejects unasserted calls even through aliases or a missing flag.
+2. Apply approved presets and argument normalization, then validate the strict bank schema. Reserve identity/auth fields and discard caller-supplied assertions. Signing keys/credentials never enter FLUJO's global variable interpolation store.
+3. Recheck session, owner, graph/tool and scope immediately before dispatch. Sign a short-lived **bank-MCP-audience** assertion bound to tool and a digest of finalized normalized business arguments. Use maintained JOSE/canonicalization libraries with a fixed profile.
+4. Inject a namespaced `_meta` key such as `com.flujo.bank/assertion`, or the approved custom per-request header. Never swap shared headers/tokens/env vars/current-customer state. Never reuse the frontend assertion as the bank assertion.
+5. Bank verifies the assertion and privately maps `(issuer, subject)` to dataset customer. Check customer/product/transaction/handle/cursor/receipt ownership and source versions. S3 keys/buckets/URLs and dataset customer IDs are not model parameters.
+6. Recheck context after long calls and before releasing results or further persistence. Expiry/revocation blocks further disclosure/actions, but does not undo a committed write; reconcile its receipt.
+
+Token profile: separate frontend/bank types, audiences and keys; fixed allowlisted algorithm and trusted issuer/key IDs; required subject/iat/nbf/exp/jti, bounded TTL/skew/size, session reference, logical call ID, root/current conversation/run, graph/tool/scope and arguments digest. Reject unsigned/wrong-type/wrong-audience/unknown-key tokens. Do not follow token-supplied `jku`/`x5u` URLs. Require authoritative session/revocation validation before signing rather than relying solely on TTL. Bound key-rotation overlap to token lifetime. See [JWT best current practices](https://www.rfc-editor.org/rfc/rfc8725.html).
+
+### Bank protocol and graph restrictions
+
+Use Streamable HTTP, synchronous tools and static schemas. Disable bank Apps, elicitation, sampling, customer resources/prompts/skills, tasks, subscriptions and detached bank subflows. Reject unsolicited task/input-required results explicitly; a disabled client flag alone is insufficient. Shared MCP session represents the FLUJO service. Bank must have no session current-user state, customer-bearing global notifications or unscoped result cache.
+
+Only vetted synchronous subflows may inherit narrowed context. Bind child ownership to the same subject/root before access; a model session key cannot establish ownership. Keep bank calls top-level until inheritance passes its tests.
+
+Reject graph features sharing customer facts across runs: `${kv:...}`, `captureKv`, generic conversation/resource/file/shell tools, unsafe filesystem attachments and broad memory/retrieval. Shared policy text is fine; persisted customer facts need owner namespaces/checks. Validate the graph/subflow closure at publication and execution. Non-enumerability cannot protect an exposed shell/file tool.
+
+## 5. Consent, retry and write contract
+
+Verified identity establishes eligibility, not consent for every write. Frontend displays the owned transaction and exact simulated action. Its authenticated backend registers consent bound to subject, conversation, transaction/source version, action digest and policy version, with expiry. Model/browser cannot change what that reference authorizes. This follows [OWASP transaction authorization](https://cheatsheetseries.owasp.org/cheatsheets/Transaction_Authorization_Cheat_Sheet.html).
+
+A deterministic Static action path consumes consent. Bank derives payload/idempotency identity from that consent/logical operation, rechecks ownership, and atomically commits consumption + one case/receipt. Concurrent confirmations/retries create at most one case. Receipt lookup checks owner. Generic FLUJO approval may supplement this contract but cannot replace it.
+
+Separate **logical operation ID** from **assertion jti/transport attempt**. Replay cannot execute a different operation or changed arguments. Freshly authorized retry of the same operation returns its receipt; conflicting payload is denied. Deny replayed execution and reconcile ambiguous failures through a scoped status/read-back path. Test SDK auth/reconnect behavior; do not weaken replay checks to make retries succeed. Claim success only after receipt read-back.
+
+A fixed service bearer is a custom internal profile, **not proof of MCP OAuth conformance**. [MCP authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization) is optional at protocol level and specifies OAuth/discovery/token validation when supported. Our service credential + signed delegation is a closed deployment design. For interoperable OAuth later, evaluate [RFC 8693 token exchange](https://www.rfc-editor.org/rfc/rfc8693.html); do not pass through tokens intended for another service.
+
+## 6. Alternatives
+
+| Alternative | Conditions and assessment |
 | --- | --- |
-| `src/app/v1/chat/completions/route.ts` and `chatCompletionService.ts` | Verify the frontend assertion before invoking the banking flow; pass only a server-created principal to `runFlow`. Deny unverified use of the bank flow. |
-| `src/backend/execution/flow/runFlow.ts`, `types.ts`, and `persistConversationState.ts` | Bind owner to conversation; attach the principal as runtime-only state and explicitly strip it from persistence/log/model context. Reconstruct it only from a freshly verified request on resume. |
-| `src/backend/execution/flow/nodes/SubflowNode.ts`, `handlers/ModelHandler.ts`, and `nodes/StaticNode.ts` | Propagate the runtime context to approved child runs and every banking tool dispatch, including deterministic Static calls. |
-| `src/backend/services/mcp/index.ts` and `tools.ts` | Add the protected-server check at central dispatch; mint a signed per-call assertion and place it in request `_meta` after model arguments are finalized. Existing `_meta.flujo` is a precedent, but the new assertion needs its own key and signature. |
-| `src/app/v1/chat/conversations/...` and event/approval routes | Check the subject against the durable conversation owner before reading, streaming, modifying, or resuming state. Block customer access to unrelated routes at the frontend as well. |
-| Banking MCP server | Require service authentication plus signed customer context on every protected tool; map subject to dataset owner and recheck every source row. |
+| Signed `_meta` on shared v1 client | Default: runtime injection, signature/args/owner checks and restricted protocol. Carrier demonstrated. |
+| Signed custom header on shared v2 client | Same checks, bank-specific factory. Demonstrated under legacy negotiation; avoids credential in MCP body. Modern negotiation/SSE retries remain to test. Per-request Authorization override is blocked. |
+| Opaque random capability in `_meta`/header | Unguessable server-issued value and private registry binding owner/run/scope/expiry; atomic revocation. Sound alternative to JWT, with a shared lookup per call. |
+| Per-customer immutable client/config | Can be secure with authenticated subject/credential pool keys and bounded lifecycle. More connections/token state; still needs conversation/result checks. Avoid persisted reconfiguration races. |
+| Owner registry + `@conversation.id` | Useful correlation if runtime overwrites ID. Bank still requires trusted signed/opaque delegation; ID + service key alone is insufficient. |
+| Template copy / workspace per customer | Useful customization/process isolation when credentials/resources are also isolated. Duplication alone proves no ownership; unnecessary for 500 users. |
+| User OAuth token exchange | Standards-based evolution with real authorization server, correct audience/scopes and request-safe transport. Greater infrastructure cost. |
+| Frontend calls MCP; FLUJO uses bounded facts | Fallback only if direct FLUJO banking gates cannot pass; frontend still uses FLUJO orchestration. Must be tested before deployment. |
 
-## 500 parallel customers
+## 7. S3 and 500 concurrent customers
 
-Auth state is immutable per run; one flow definition and a small number of pooled MCP connections serve many customers. Never swap global headers or use a process-global `currentCustomer`. The existing per-conversation lock should serialize concurrent updates to one conversation while allowing different conversations to run independently. Multiple FLUJO replicas require sticky routing or a shared lock/queue for the **same** conversation because the inspected lock map is process-local; bank MCP remains stateless for reads and uses a transactional shared case store for writes.
+Audit: 1,097 transaction CSVs, 808,333,639 bytes. Five hundred full 31-day scans imply **15,500 GETs and ~11.4 GB** at average file size. This is an estimate, not a benchmark. The 150,000-customer/4.43-million-transaction average suggests a sparse date index helps, but measure skew/hot dates.
 
-The prior 31-day raw scan is a poor 500-user serving plan: at the audit's average daily transaction-object size, 500 simultaneous 31-day scans mean about **15,500 source GETs and 11 GB transferred** before model calls. Build a private, source-versioned **customer-to-date index** from the read-only S3 data. For a request, the bank MCP reads the subject's private date index and fetches only source daily objects that can contain that customer's rows, then repeats row-level ownership checks. Store the index in a private application bucket or database; never in the organizer's read-only source bucket. It narrows reads while the actual transaction facts still come directly from source S3. The 150,000 customers share 4.43 million transactions across 1,097 dates, so a typical 31-day window should touch far fewer than 31 daily files for a single customer; measure skew and hot dates rather than relying on that average. If measured load still misses the target, build a carefully validated byte-range index or S3 customer-sharded read model; label any snapshot delay explicitly. Bound S3 concurrency, bytes, model calls, memory, and retries per run. Test 1, 50, and 500 concurrent customers and report p50/p95 latency, S3 GETs/bytes, queue time, errors, memory, provider limits, and cross-customer disclosures. No static code inspection can certify a 500-run latency target.
+The current repo now has `pipeline/gold.py` and `pipeline/lookup.py`: customer-sharded Parquet and a local sequential benchmark. Reuse ownership validation/ingestion where useful. This is a **snapshot read model**, not direct source access or 500-user evidence. Gold omits per-row source-file lineage; aggregate manifest does not pin every object's VersionId/ETag.
 
-## Security and implementation gates
+For direct-source access, build a private customer-to-source-date/file index from bronze/silver lineage with an immutable source manifest. Fetch authoritative S3 rows and recheck owners. Prefer version-pinned snapshots, `GetObjectVersion` permission and a snapshot label. With unversioned objects, `If-Match` detects changes only in files fetched: it cannot detect new rows in an excluded date. Require organizer-enforced immutability or manifest invalidation/atomic rebuild before claiming completeness. Changed/missing sources or unvalidated indexes return unavailable, not “no transactions.” See [S3 GetObject](https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html).
 
-1. **Ingress and conversation gate:** two seeded subjects; create, resume, events, approval, cancel, and retries. Foreign conversation IDs, URL/query switches, workspace switches, forged metadata, and expired assertions must never reveal another conversation or cause a bank call.
-2. **MCP context gate:** Process and Static nodes, subflows, retries, MCP proxy, direct tool-test APIs, and missing-context runs. Only a verified run produces a signed banking assertion; every other path fails before dispatch. Verify both installed v1 and beta-v2 MCP client paths preserve the custom request metadata. Verify debug traces and model messages contain no assertion.
-3. **Bank server gate:** reject forged/replayed/expired/wrong-audience assertions and mismatched tool scopes; then check customer/product/transaction ownership independently. Cross-customer IDs and source links return no data. Write confirmation, idempotency, uncertain-write retry, and receipt read-back must pass.
-4. **Load gate:** 500 interleaved subjects with randomized foreign-ID probes while measuring throughput and latency. Include concurrent turns in one conversation, MCP reconnects, FLUJO restart/resume, and S3 object changes. Zero observed cross-customer disclosure/action is a release gate; performance has an explicit measured target agreed before deployment.
+If indexing misses the budget, evaluate version-bound byte ranges with correct quoted/multiline CSV parsing, or private Parquet gold including S3 hosting. Gold needs an explicit change to direct-source semantics and a freshness contract.
 
-**Implementation order:** ingress and owner binding; runtime principal; central MCP guard and signed metadata; bank-side verification; static/write path; customer-to-date index; isolation and load tests. The frontend backend can call FLUJO throughout. The direct frontend-to-bank-MCP route stays available only as a tested fallback if the FLUJO gate cannot be completed safely before the submission.
+Add central admission/bounded queues per subject, deployment and bank service. Per-batch caps cannot limit 500 runs. Bound aggregate S3 bytes/GETs, provider concurrency, retries, results, active runs and SSE buffers; measure limits/fairness. Filtered caches include subject/query/source version; private shared source caches are filtered before return.
+
+Initially use one FLUJO process and durable local workspace storage, then measure 500 conversations. Active/paused states bypass the terminal cache's 200-entry/64 MiB eviction bounds. Multiple workers require authoritative conversation routing, all control/SSE traffic sent to its owner, durable state and fenced failover. Sticky routing alone gives no failover durability; a distributed lock alone gives no cache/state/event synchronization. Bank reads scale statelessly; consent/cases/idempotency require transactional shared storage.
+
+## 8. Change map and release gates
+
+| Area | Change |
+| --- | --- |
+| `src/proxy.ts`, worker admission, banking DTO/routes | Separate execution credential, verified assertion, fixed graph/workspace, narrow allowlist. |
+| Durable owner/session service | Atomic binding/tombstones, expiry/revocation; check before state/control access. |
+| `runFlow`, runtime types, persistence/debug/model projections | Context provenance, invocation replacement, logical run ID, explicit serialization removal. |
+| ModelHandler, StaticNode, Claude/Codex adapters, adapter types | Context in every protected dispatch. |
+| `resumeAfterApproval`, respond/headless approval routes | Fresh context before execution/registry resolution, independent bank consent. |
+| Subflow/session/recovery | Narrow inheritance/owner checks or denial; no detached banking initially. |
+| `MCPService.callTool`, `tools.ts` | Early guard, final-argument digest/signing, carrier, post-call check, unsolicited-result denial. |
+| Bank MCP | Independent auth/owners, synchronous profile, private source/index, transactional consent/idempotency/receipt. |
+| Diagnostics/queues | Redact credentials/PII/consent refs, preserve pseudonymous audit/statistics, aggregate capacity limits. |
+
+1. **Ingress/owner:** token forgery, foreign/unknown/legacy/deleted IDs, graph/workspace/node switches, injected history/tool roles, owner races, logout/expiry, SSE replay, child/resource/archive access. Prove failed authorization precedes state/registry access.
+2. **Propagation:** ordinary loop, Static, every enabled adapter, synchronous subflow, approval and restart. Proxy/app/tester/scheduler/internal paths denied. Missing/stale/model-forged context never signs. Sentinel credentials absent from model wire, debug/SSE, logs, snapshots and statistics.
+3. **Bank/protocol:** shared-client interleaving, no session current user, all token/digest/scope checks, replay, owner checks on rows/handles/cursors/receipts, unsolicited tasks/input/resources rejected, source change invalidation.
+4. **Write:** actual frontend consent; altered owner/payload/source; concurrent duplicates; expired/reused confirmation; crashes/timeouts/SDK retries; receipt read-back. At most one case per authorized operation.
+5. **Load:** 1/50/500 authenticated runs with foreign-ID probes, cold/warm connections, repeated turns, SSE and realistic S3/provider work. Report p50/p95/p99, throughput, queues, errors, heap/RSS, event-loop lag, GETs/bytes/retries/provider throttling. Agree latency/error budgets before acceptance. Zero observed foreign disclosure/action is necessary, not a mathematical proof of no bugs.
+
+**Order:** ingress/owners; read-only runtime/dispatch/bank path; adversarial two-user proof; Static confirmed-action path; index/capacity; end-to-end 500-user gate; then expand subflows/protocol features. Frontend calls FLUJO throughout. See [review record](FLUJO_BANKING_RUN_AUTH_REVIEW.md) for completed evidence.

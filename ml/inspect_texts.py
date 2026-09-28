@@ -16,13 +16,16 @@ from pathlib import Path
 
 import duckdb
 
-DATASET = Path("data/gold/classifier_dataset.parquet")
+from pipeline.common import current_gold
+
 OUT = Path("data/ml/text_inventory.csv")
 
 
 def main() -> int:
-    if not DATASET.exists():
-        print(f"{DATASET} not found. Run: python -m pipeline run --stage silver gold", file=sys.stderr)
+    try:
+        DATASET = current_gold("data") / "classifier_dataset.parquet"
+    except FileNotFoundError as exc:
+        print(f"{exc}. Run: python -m pipeline run --stage silver gold", file=sys.stderr)
         return 1
     sys.stdout.reconfigure(encoding="utf-8")
     con = duckdb.connect()

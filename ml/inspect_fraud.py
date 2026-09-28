@@ -21,7 +21,8 @@ from pathlib import Path
 
 import duckdb
 
-SILVER = Path("data/silver")
+from pipeline.common import current_silver
+
 
 
 def auc_from_bins(bins: list[tuple[int, int]]) -> float | None:
@@ -66,10 +67,12 @@ FEATURES = {
 
 
 def main() -> int:
-    tx = SILVER / "transactions.parquet"
-    if not tx.exists():
-        print(f"{tx} not found. Run: python -m pipeline run --stage silver", file=sys.stderr)
+    try:
+        SILVER = current_silver("data")
+    except FileNotFoundError as exc:
+        print(f"{exc}. Run: python -m pipeline run --stage silver gold", file=sys.stderr)
         return 1
+    tx = SILVER / "transactions.parquet"
     sys.stdout.reconfigure(encoding="utf-8")
     con = duckdb.connect()
     con.execute("SET enable_progress_bar = false")

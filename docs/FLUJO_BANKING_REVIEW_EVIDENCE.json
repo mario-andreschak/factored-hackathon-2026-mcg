@@ -1,0 +1,51 @@
+{
+  "review_date": "2026-09-27",
+  "reviewed_flujo_commit": "15d019f7b952b2f2d3aea1197722ac8d9f520d7c",
+  "hackathon_base_commit": "5787cc6",
+  "sdk_versions": {"sdk": "1.30.0", "client": "2.0.0"},
+  "node_version": "22.13.1",
+  "carrier_probes": [
+    {"generation": 1, "carrier": "meta", "calls": 500, "result": "pass"},
+    {"generation": 2, "carrier": "meta", "calls": 500, "result": "pass"},
+    {"generation": 2, "carrier": "header", "calls": 500, "result": "pass"},
+    {"generation": 1, "carrier": "v1-header-negative", "calls": 2, "result": "pass"}
+  ],
+  "carrier_scope": "Actual installed clients and v1 server transport through in-process Fetch; one shared client per probe; v2 legacy negotiation only. Not FLUJO end-to-end authorization or performance.",
+  "elicitation_overlap": {
+    "source_sha256": "6e1d8db26903d308cd59b09bd8807b4994d76bfa993d32ef591e402b0c3596ec",
+    "observation": "B replaces A; clearing by server removes remaining context.",
+    "scope": "Actual TS module transpiled; workspaceCacheKey stubbed to fixed namespace; no live elicitation or SSE."
+  },
+  "existing_flujo_tests": {
+    "suites_passed": 6,
+    "tests_passed": 35,
+    "paths": [
+      "__tests__/flow/dynamicReferences.test.ts",
+      "__tests__/mcp/trustedToolContext.test.ts",
+      "__tests__/flow/conversationExecutionLock.test.ts",
+      "__tests__/mcp/elicitation.test.ts",
+      "__tests__/chat/applyApprovalDecision.test.ts",
+      "__tests__/mcp/betaProtocolToggle.test.ts"
+    ],
+    "scope": "Existing regression tests, including mocked seams; not banking isolation/signature/concurrency proof."
+  },
+  "live_probe": {
+    "base": "http://localhost:4200",
+    "workspace": "default-workspace",
+    "runtime_build_attested": false,
+    "fixture": "Start -> Static -> Finish, synthetic only; no Process/MCP nodes",
+    "flow_id": "ac85bebb-ab9f-4a59-af99-7241f1c15232",
+    "conversation_ids": ["77bfc8f9-94a4-4c4f-9f47-d18dd8e7a75d", "7f3f81a5-11a6-43aa-a1e4-538a385b6b20"],
+    "observations": {
+      "two_concurrent_runs_returned_200": true,
+      "conversation_ids_preserved": true,
+      "static_at_reference_expanded": false,
+      "B_history_readable_with_A_claimed_identity": true,
+      "history_readable_without_bearer": true
+    },
+    "cleanup_delete_statuses": [204, 204, 204],
+    "cleanup_verified_absent_via_GET_404": true,
+    "observed_at_unix": 1790553336,
+    "scope": "Local single-user posture, two static runs; not live bank MCP propagation, SSE routing or 500-user performance. Synthetic runtime statistics/events may remain."
+  }
+}

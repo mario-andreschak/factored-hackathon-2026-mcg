@@ -1,11 +1,13 @@
 {
   "pipeline_version": "0.1.0",
-  "contracts_sha256_12": "2be73d5f8e83",
-  "run_id": "20260927T221649Z-727b3e",
-  "finished_at": "2026-09-27T22:20:29+00:00",
-  "seconds": 220.5,
+  "contracts_sha256_12": "98f0add581f4",
+  "run_id": "20260927T235730Z-e408c7",
+  "finished_at": "2026-09-28T00:14:01+00:00",
+  "seconds": 991.2,
   "source": "s3://<bucket>/data",
-  "stages": "silver,gold",
+  "stages": "bronze,silver,gold",
+  "published": true,
+  "source_fingerprint": "fd07da3c5193e25a",
   "tables_requested": [
     "customers",
     "products",
@@ -18,6 +20,8 @@
     "customers": {
       "bronze": {
         "source_objects": 1,
+        "source_bytes": 46897358,
+        "source_fingerprint": "34fb92c504eb6c37",
         "source_objects_with_rows": 1,
         "rows": 150000,
         "schema_variants": 1,
@@ -50,7 +54,7 @@
           "last_updated",
           "accepts_marketing"
         ],
-        "seconds": 6.8
+        "seconds": 19.0
       },
       "silver": {
         "raw_rows": 150000,
@@ -72,14 +76,17 @@
         },
         "enum_out_of_vocabulary": {},
         "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 3.4
+        "seconds": 5.3
       }
     },
     "products": {
       "bronze": {
         "source_objects": 1,
+        "source_bytes": 68213646,
+        "source_fingerprint": "ca3c93398a4651b7",
         "source_objects_with_rows": 1,
         "rows": 400000,
         "schema_variants": 1,
@@ -102,7 +109,7 @@
           "last_transaction_date",
           "last_updated"
         ],
-        "seconds": 5.0
+        "seconds": 11.9
       },
       "silver": {
         "raw_rows": 400000,
@@ -135,14 +142,17 @@
         },
         "enum_out_of_vocabulary": {},
         "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 6.2
+        "seconds": 6.9
       }
     },
     "transactions": {
       "bronze": {
         "source_objects": 1097,
+        "source_bytes": 808333639,
+        "source_fingerprint": "ece75471c907c96d",
         "source_objects_with_rows": 1097,
         "rows": 4425008,
         "schema_variants": 1,
@@ -170,7 +180,7 @@
           "latitude",
           "longitude"
         ],
-        "seconds": 232.0
+        "seconds": 244.8
       },
       "silver": {
         "raw_rows": 4425008,
@@ -216,14 +226,23 @@
             }
           ]
         },
+        "inconsistent_spellings_counts": {
+          "transaction_country": {
+            "collision_groups": 1,
+            "rows_in_minority_spellings": 40515,
+            "values_published": true
+          }
+        },
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 153.6
+        "seconds": 183.6
       }
     },
     "call_center_interactions": {
       "bronze": {
         "source_objects": 1097,
+        "source_bytes": 139734950,
+        "source_fingerprint": "6f1c56f4c95a0545",
         "source_objects_with_rows": 1097,
         "rows": 686296,
         "schema_variants": 1,
@@ -250,7 +269,7 @@
           "has_transcript",
           "has_recording"
         ],
-        "seconds": 145.3
+        "seconds": 154.9
       },
       "silver": {
         "raw_rows": 686296,
@@ -284,14 +303,17 @@
         },
         "enum_out_of_vocabulary": {},
         "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 10.3
+        "seconds": 15.8
       }
     },
     "call_transcripts": {
       "bronze": {
         "source_objects": 1097,
+        "source_bytes": 137235657,
+        "source_fingerprint": "6b3b096e2a26cfca",
         "source_objects_with_rows": 1097,
         "rows": 171321,
         "schema_variants": 1,
@@ -315,7 +337,7 @@
           "audio_quality",
           "duration_seconds"
         ],
-        "seconds": 146.0
+        "seconds": 153.8
       },
       "silver": {
         "raw_rows": 171321,
@@ -355,14 +377,17 @@
         },
         "enum_out_of_vocabulary": {},
         "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 7.4
+        "seconds": 9.6
       }
     },
     "complaints": {
       "bronze": {
         "source_objects": 1097,
+        "source_bytes": 17990612,
+        "source_fingerprint": "420772004a61e300",
         "source_objects_with_rows": 1097,
         "rows": 67095,
         "schema_variants": 1,
@@ -395,7 +420,7 @@
           "resolution_satisfaction",
           "is_repeat_complainer"
         ],
-        "seconds": 106.9
+        "seconds": 115.0
       },
       "silver": {
         "raw_rows": 67095,
@@ -447,9 +472,10 @@
         },
         "enum_out_of_vocabulary": {},
         "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
         "contract_columns_absent_in_source": [],
         "source_columns_not_in_contract": [],
-        "seconds": 4.1
+        "seconds": 4.2
       }
     }
   },
@@ -458,7 +484,7 @@
       "rows": 4425008,
       "ownership_valid_rows": 4425008,
       "buckets": 128,
-      "seconds": 20.1
+      "seconds": 29.6
     },
     "contact_demand": {
       "rows": 3927,
@@ -529,9 +555,9 @@
     },
     "lookup_bench": {
       "samples": 50,
-      "p50_ms": 20.4,
-      "p95_ms": 27.4,
-      "max_ms": 44.7
+      "p50_ms": 38.6,
+      "p95_ms": 51.2,
+      "max_ms": 65.4
     }
   },
   "contract_failures": []

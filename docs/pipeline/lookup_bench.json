@@ -1,0 +1,40 @@
+{
+  "machine_cpus": 4,
+  "customers_sampled": 500,
+  "method": "in-process threads sharing one DuckDB connection, one cursor per request, local gold Parquet (published snapshot)",
+  "levels": [
+    {
+      "concurrency": 1,
+      "requests": 1000,
+      "ok": 1000,
+      "errors": 0,
+      "error_types": [],
+      "p50_ms": 24.5,
+      "p95_ms": 34.5,
+      "p99_ms": 49.6,
+      "throughput_rps": 39.2
+    },
+    {
+      "concurrency": 50,
+      "requests": 1000,
+      "ok": 1000,
+      "errors": 0,
+      "error_types": [],
+      "p50_ms": 560.9,
+      "p95_ms": 1928.5,
+      "p99_ms": 2847.4,
+      "throughput_rps": 67.4
+    },
+    {
+      "concurrency": 500,
+      "requests": 1000,
+      "ok": 1000,
+      "errors": 0,
+      "error_types": [],
+      "p50_ms": 5253.3,
+      "p95_ms": 13386.2,
+      "p99_ms": 14522.4,
+      "throughput_rps": 65.6
+    }
+  ]
+}
