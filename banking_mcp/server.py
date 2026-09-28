@@ -13,6 +13,7 @@ from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
+from starlette.requests import Request
 from starlette.routing import Mount
 
 from . import __version__
@@ -68,6 +69,25 @@ def create_http_app(service: Service):
             expected = ("Bearer " + service.config.service_token).encode()
             if not secrets.compare_digest(actual, expected):
                 await JSONResponse({"error": "service_authentication_required"}, status_code=401)(scope, receive, send)
+                return
+            if scope["path"] == "/internal/revoke" and scope["method"] == "POST":
+                try:
+                    request = Request(scope, receive)
+                    parts, size = [], 0
+                    async for part in request.stream():
+                        size += len(part)
+                        if size > 10000:
+                            raise ValueError("body")
+                        parts.append(part)
+                    value = json.loads(b"".join(parts))
+                    if not isinstance(value, dict) or set(value) != {"assertion"}:
+                        raise ValueError("body")
+                    await anyio.to_thread.run_sync(service.auth.revoke_assertion, value["assertion"])
+                    response = JSONResponse({"revoked": True}, headers={"Cache-Control": "no-store"})
+                except Exception:
+                    response = JSONResponse({"error": "authorization_denied"}, status_code=403,
+                                            headers={"Cache-Control": "no-store"})
+                await response(scope, receive, send)
                 return
             if scope["path"] != "/mcp" or scope["method"] not in {"POST", "DELETE"}:
                 await JSONResponse({"error": "method_not_allowed"}, status_code=405)(scope, receive, send)

@@ -110,6 +110,46 @@ def test_revoke_before_and_after_read(bank, monkeypatch):
         call(bank)
 
 
+def test_session_cannot_rebind_to_another_subject_after_restart(bank):
+    service, key = bank
+    call(bank)
+    reopened = Service(service.config)
+    with pytest.raises(BankError, match="authorization_denied"):
+        call((reopened, key), subject="bob", session_id="session-alice")
+
+
+def revoke_token(bank, **overrides):
+    meta = assertion(bank, "revoke_session", {}, scope=["bank:revoke"], **overrides)
+    claims = jwt.decode(meta[ASSERTION_META], options={"verify_signature": False})
+    return jwt.encode(claims, bank[1], algorithm="EdDSA", headers={"kid": "test", "typ": "bank-revoke+jwt"})
+
+
+def test_http_revocation_requires_separate_typed_signed_authority(bank, monkeypatch):
+    service, _ = bank
+    with TestClient(create_http_app(service)) as client:
+        url = "/internal/revoke"
+        auth = {"Authorization": "Bearer " + service.config.service_token}
+        token = revoke_token(bank)
+        assert client.post(url, json={"assertion": token}).status_code == 401
+        read_token = assertion(bank, "list_my_transactions", {})[ASSERTION_META]
+        assert client.post(url, headers=auth, json={"assertion": read_token}).status_code == 403
+        assert client.post(url, headers=auth, json={"assertion": token, "session_id": "session-bob"}).status_code == 403
+        assert client.post(url, headers=auth, json={"assertion": token}).status_code == 200
+        assert client.post(url, headers=auth, json={"assertion": token}).status_code == 403
+        assert client.post(url, headers=auth, json={"assertion": revoke_token(bank)}).status_code == 200
+    reopened = Service(service.config)
+    monkeypatch.setattr(reopened.repository, "snapshot", lambda: pytest.fail("revoked access touched dataset"))
+    with pytest.raises(BankError, match="authorization_denied"):
+        call((reopened, bank[1]))
+
+
+def test_revocation_cannot_target_another_subjects_session(bank):
+    call(bank, subject="bob")
+    with pytest.raises(BankError, match="authorization_denied"):
+        bank[0].auth.revoke_assertion(revoke_token(bank, session_id="session-bob"))
+    assert not bank[0].store.is_revoked("session-bob")
+
+
 def test_output_minimized_and_cross_customer_handle_denied(bank):
     result = call(bank)
     assert not result["synthetic"]  # delegated mode is exercised with a synthetic fixture
