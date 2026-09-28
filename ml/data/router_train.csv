@@ -1,0 +1,308 @@
+text,label,lang,author
+¿Cuál es el saldo de mi cuenta de ahorros?,inquiry,es,claude-train
+Quiero saber cuánto tengo disponible en la tarjeta de crédito,inquiry,es,claude-train
+¿Me pueden decir mis últimos movimientos?,inquiry,es,claude-train
+¿Ya se acreditó la transferencia que me hicieron ayer?,inquiry,es,claude-train
+Necesito ver las compras que hice esta semana,inquiry,es,claude-train
+¿Cuánto debo pagar este mes de la tarjeta?,inquiry,es,claude-train
+¿Cuándo es la fecha de corte de mi tarjeta?,inquiry,es,claude-train
+"Hola, quisiera consultar si mi pago de la tarjeta ya se aplicó",inquiry,es,claude-train
+¿Qué es el cargo de Rappi que aparece el martes?,inquiry,es,claude-train
+"Me aparece un movimiento de Mercado Libre, ¿me dicen de qué fecha es?",inquiry,es,claude-train
+¿Por qué mi compra en el súper sale como pendiente?,inquiry,es,claude-train
+¿Cuánto tiempo tarda en reflejarse un depósito?,inquiry,es,claude-train
+¿Me confirman si el retiro del cajero de ayer quedó registrado?,inquiry,es,claude-train
+quiero revisar cuanto gaste en restaurantes este mes,inquiry,es,claude-train
+¿Cuál fue mi última compra con la tarjeta de débito?,inquiry,es,claude-train
+"Buenas, ¿me indican el estado de la transferencia a mi hermana?",inquiry,es,claude-train
+¿En qué quedó la devolución que me hizo Amazon?,inquiry,es,claude-train
+¿Aparece ya el reembolso de la aerolínea?,inquiry,es,claude-train
+Necesito saber si el pago de la luz se hizo,inquiry,es,claude-train
+¿Me pueden mostrar los cargos de la tarjeta del mes pasado?,inquiry,es,claude-train
+"Qué onda, ¿cuánta lana tengo en la cuenta?",inquiry,es,claude-train
+"¿Cuánto me queda de línea de crédito, porfa?",inquiry,es,claude-train
+"Oye, ¿ya me cayó la quincena?",inquiry,es,claude-train
+¿Me llegó el depósito de mi jefe? Checa porfa,inquiry,es,claude-train
+Quiero checar mis movimientos de la tarjeta,inquiry,es,claude-train
+¿Cuánta plata tengo en la cuenta de ahorros?,inquiry,es,claude-train
+"Parce, ¿me dice cuánto tengo disponible?",inquiry,es,claude-train
+¿Ya me entró la consignación que me hicieron esta mañana?,inquiry,es,claude-train
+"¿Me regala los últimos cinco movimientos, por favor?",inquiry,es,claude-train
+Quisiera saber cuánto debo de la tarjeta para no pagar intereses,inquiry,es,claude-train
+¿Cuánta guita tengo en la caja de ahorro?,inquiry,es,claude-train
+"Che, ¿me pasás el saldo de la cuenta?",inquiry,es,claude-train
+¿Ya se acreditó la transferencia que me mandaron?,inquiry,es,claude-train
+¿Cuándo vence el resumen de la tarjeta?,inquiry,es,claude-train
+¿Me decís cuánto gasté este mes con la tarjeta?,inquiry,es,claude-train
+"Hola, ¿el cargo de Spotify de 5 dólares es mensual?",inquiry,es,claude-train
+¿De qué es el cobro de 12.500 que tengo del jueves?,inquiry,es,claude-train
+¿Qué significa que una compra esté en estado pendiente?,inquiry,es,claude-train
+¿Por qué un pago me aparece como rechazado si tengo saldo?,inquiry,es,claude-train
+"Una compra me salió como revertida, ¿qué quiere decir eso?",inquiry,es,claude-train
+¿En cuántos días se libera un pago pendiente?,inquiry,es,claude-train
+¿Me pueden confirmar el monto exacto de la compra en Liverpool?,inquiry,es,claude-train
+¿El retiro de 200 mil ya se descontó?,inquiry,es,claude-train
+necesito el detalle del pago que hice con el celular,inquiry,es,claude-train
+¿Cuánto me cobraron de comisión por la transferencia?,inquiry,es,claude-train
+¿Cuál es el monto mínimo a pagar este mes?,inquiry,es,claude-train
+¿Me muestran las transacciones del 1 al 15?,inquiry,es,claude-train
+¿Qué compras hice en el exterior el mes pasado?,inquiry,es,claude-train
+saldo por favor,inquiry,es,claude-train
+movimientos de la tarjeta de crédito,inquiry,es,claude-train
+¿Cuánto tengo en dólares en la cuenta?,inquiry,es,claude-train
+Consulta: ¿ya se procesó mi pago de la hipoteca?,inquiry,es,claude-train
+¿Se registró el depósito que hice en la sucursal?,inquiry,es,claude-train
+¿Cuándo me devuelven el dinero de la compra cancelada? Solo quiero saber la fecha,inquiry,es,claude-train
+Quiero saber a quién le transferí el lunes,inquiry,es,claude-train
+¿El pago a la escuela salió bien?,inquiry,es,claude-train
+¿Me aparece algún cargo automático este mes?,inquiry,es,claude-train
+¿Cuántas compras tengo pendientes de aprobar?,inquiry,es,claude-train
+¿Cuál fue el último depósito que recibí?,inquiry,es,claude-train
+¿Me confirmas si la tarjeta tiene cargos de Uber esta semana?,inquiry,es,claude-train
+¿Cuánto llevo gastado en gasolina?,inquiry,es,claude-train
+"Hola buenas tardes, necesito consultar el saldo de mi tarjeta de crédito",inquiry,es,claude-train
+¿Ya está disponible el dinero que deposité con cheque?,inquiry,es,claude-train
+¿Por qué el saldo disponible es distinto al saldo total?,inquiry,es,claude-train
+¿Me puedes decir qué cargos tengo de Amazon?,inquiry,es,claude-train
+¿Cuánto fue la compra de anoche en el cine?,inquiry,es,claude-train
+Qual é o saldo da minha conta?,inquiry,pt,claude-train
+Quero ver meus últimos movimentos do cartão,inquiry,pt,claude-train
+A transferência de ontem já caiu na conta?,inquiry,pt,claude-train
+Quanto eu tenho disponível no cartão de crédito?,inquiry,pt,claude-train
+Quando vence a fatura do cartão?,inquiry,pt,claude-train
+Pode me mostrar as compras dessa semana?,inquiry,pt,claude-train
+O Pix que me mandaram já entrou?,inquiry,pt,claude-train
+Por que uma compra aparece como pendente?,inquiry,pt,claude-train
+Quanto eu gastei esse mês no cartão?,inquiry,pt,claude-train
+O pagamento da fatura já foi registrado?,inquiry,pt,claude-train
+O que é essa cobrança do iFood na terça?,inquiry,pt,claude-train
+Qual o valor mínimo da fatura desse mês?,inquiry,pt,claude-train
+No reconozco un cargo de 45 mil pesos en mi tarjeta,dispute,es,claude-train
+Me cobraron dos veces la misma compra en Oxxo,dispute,es,claude-train
+Hay un cobro en mi cuenta que yo no hice,dispute,es,claude-train
+Me descontaron un dinero que no autoricé,dispute,es,claude-train
+Pagué en un restaurante y me cobraron el doble,dispute,es,claude-train
+El cajero no me dio el dinero pero sí me lo descontó,dispute,es,claude-train
+Cancelé la suscripción y me siguen cobrando,dispute,es,claude-train
+Me cobraron un monto distinto al que pagué,dispute,es,claude-train
+Hice una compra por 200 y me cargaron 2000,dispute,es,claude-train
+Devolví el producto y nunca me reembolsaron,dispute,es,claude-train
+Tengo un cargo de Netflix y yo no tengo Netflix,dispute,es,claude-train
+Quiero reclamar un cobro que no reconozco,dispute,es,claude-train
+Aparece una compra en una tienda donde nunca he ido,dispute,es,claude-train
+Me hicieron un cargo duplicado en la gasolinera,dispute,es,claude-train
+Pagué el recibo y me lo volvieron a cobrar,dispute,es,claude-train
+El comercio me dice que el pago no le llegó pero a mí sí me lo descontaron,dispute,es,claude-train
+Necesito disputar un cargo de la tarjeta,dispute,es,claude-train
+Esa compra de Amazon no la hice yo,dispute,es,claude-train
+Me aplicaron una comisión que no corresponde,dispute,es,claude-train
+Me cobraron intereses aunque pagué a tiempo,dispute,es,claude-train
+"Oigan, me cobraron dos veces el Uber de anoche",dispute,es,claude-train
+"Neta, tengo un cargo raro de 890 pesos que no es mío",dispute,es,claude-train
+Me clavaron un cobro doble en Liverpool,dispute,es,claude-train
+No hice ninguna compra en Walmart y me aparece un cargo,dispute,es,claude-train
+"Me sacaron plata de la cuenta y no sé por qué, quiero que la devuelvan",dispute,es,claude-train
+Hay una consignación que hice y la plata nunca le llegó al destinatario,dispute,es,claude-train
+Me cobraron la cuota de manejo dos veces este mes,dispute,es,claude-train
+"Parce, me aparece un cobro que yo no hice en Rappi",dispute,es,claude-train
+Me debitaron algo que no compré,dispute,es,claude-train
+Me cobraron dos veces la cuota del gimnasio,dispute,es,claude-train
+"Che, me debitaron dos veces la misma compra",dispute,es,claude-train
+Tengo un débito que no reconozco en la caja de ahorro,dispute,es,claude-train
+Me cobraron una compra en dólares que no hice,dispute,es,claude-train
+"Compré algo por Mercado Libre, lo cancelé y el cobro sigue",dispute,es,claude-train
+"Me descontaron el pago dos veces, quiero que me devuelvan uno",dispute,es,claude-train
+El cargo del hotel es mayor al que acordamos,dispute,es,claude-train
+La tienda me hizo el reembolso pero no aparece en mi cuenta hace un mes,dispute,es,claude-train
+Me cobraron una compra que fue rechazada,dispute,es,claude-train
+Ese cobro de 1.200 no lo reconozco,dispute,es,claude-train
+Quiero objetar un cargo del 3 de junio,dispute,es,claude-train
+La transferencia salió de mi cuenta pero nunca llegó a la otra persona,dispute,es,claude-train
+Me cargaron un seguro que nunca contraté,dispute,es,claude-train
+Pagué con la app y me descontaron tres veces,dispute,es,claude-train
+Me cobran una membresía que di de baja,dispute,es,claude-train
+El retiro en el cajero me lo cobraron dos veces,dispute,es,claude-train
+Hay un movimiento de 300 dólares que yo no autoricé,dispute,es,claude-train
+¿Por qué me cobraron dos veces el supermercado?,dispute,es,claude-train
+¿Cómo es posible que me hayan cobrado algo que no compré?,dispute,es,claude-train
+Quiero que me devuelvan un cobro duplicado,dispute,es,claude-train
+Me cobraron de más en la farmacia,dispute,es,claude-train
+no reconozco este cargo,dispute,es,claude-train
+cobro duplicado en mi tarjeta,dispute,es,claude-train
+me descontaron dos veces,dispute,es,claude-train
+Me cobraron una compra que ya había cancelado en la tienda,dispute,es,claude-train
+La compra aparece aprobada pero el comercio dice que no se completó,dispute,es,claude-train
+Me cobraron el envío aunque la compra se canceló,dispute,es,claude-train
+Pagué la cuota del préstamo y me aparece como no pagada y con recargo,dispute,es,claude-train
+El monto del cargo no coincide con el ticket,dispute,es,claude-train
+Me cobraron en pesos y en dólares la misma compra,dispute,es,claude-train
+Tengo varios cargos pequeños de una app que nunca usé,dispute,es,claude-train
+Un cobro de suscripción anual que no pedí,dispute,es,claude-train
+Me reembolsaron solo la mitad de lo que me cobraron,dispute,es,claude-train
+Hice una transferencia por error al número equivocado y quiero recuperar el dinero,dispute,es,claude-train
+Me descontaron por una compra que nunca recibí,dispute,es,claude-train
+El comercio me cobró antes de entregarme el producto y ahora no responde,dispute,es,claude-train
+Não reconheço uma compra no meu cartão,dispute,pt,claude-train
+Fui cobrado duas vezes na mesma compra,dispute,pt,claude-train
+Tem uma cobrança que eu não fiz,dispute,pt,claude-train
+Cancelei a assinatura e continuam cobrando,dispute,pt,claude-train
+O caixa eletrônico não liberou o dinheiro mas debitou,dispute,pt,claude-train
+Paguei a fatura e cobraram de novo,dispute,pt,claude-train
+Essa compra na Amazon não fui eu,dispute,pt,claude-train
+Cobraram um valor diferente do que eu paguei,dispute,pt,claude-train
+Devolvi o produto e não recebi o estorno,dispute,pt,claude-train
+Quero contestar uma cobrança do cartão,dispute,pt,claude-train
+Me cobraram em dobro no posto de gasolina,dispute,pt,claude-train
+O Pix saiu da minha conta mas não chegou na outra pessoa,dispute,pt,claude-train
+Me robaron la tarjeta,human,es,claude-train
+Perdí mi tarjeta y creo que la están usando,human,es,claude-train
+Alguien entró a mi cuenta sin permiso,human,es,claude-train
+"Me clonaron la tarjeta, tengo cargos que no hice",human,es,claude-train
+Recibí un mensaje del banco pidiendo mi clave y lo respondí,human,es,claude-train
+Le di mi código de seguridad a alguien que llamó diciendo ser del banco,human,es,claude-train
+Quiero hablar con un asesor,human,es,claude-train
+"Pásame con una persona, por favor",human,es,claude-train
+"Necesito hablar con alguien de verdad, no con un robot",human,es,claude-train
+Voy a demandar al banco,human,es,claude-train
+"Esto es un robo, voy a ir a la Profeco",human,es,claude-train
+Voy a poner una queja en la Superintendencia,human,es,claude-train
+Mi mamá falleció y necesito saber qué pasa con su cuenta,human,es,claude-train
+Me están extorsionando y me piden que transfiera dinero,human,es,claude-train
+Me asaltaron y se llevaron la billetera con las tarjetas,human,es,claude-train
+Cambiaron la contraseña de mi app y yo no fui,human,es,claude-train
+Me llegó un código de verificación que yo no pedí y ahora tengo movimientos raros,human,es,claude-train
+Creo que me hackearon la banca en línea,human,es,claude-train
+Me hicieron una estafa por WhatsApp y transferí dinero,human,es,claude-train
+"Hay transferencias desde mi cuenta a nombres que no conozco, creo que es fraude",human,es,claude-train
+Quiero bloquear la tarjeta urgente porque me la robaron,human,es,claude-train
+"Llevo tres llamadas y nadie me resuelve, quiero un supervisor",human,es,claude-train
+"Esto es una falta de respeto, exijo hablar con un gerente",human,es,claude-train
+Me metieron un gol con un link falso del banco y puse mis datos,human,es,claude-train
+Me clonaron la tarjeta en un cajero,human,es,claude-train
+"Oiga, me vaciaron la cuenta",human,es,claude-train
+Se robaron mi celular con la app del banco abierta,human,es,claude-train
+Una persona está usando mi identidad para sacar créditos,human,es,claude-train
+Mi ex tiene mis claves y está sacando plata,human,es,claude-train
+Quiero cerrar mi cuenta por fraude,human,es,claude-train
+Necesito un asesor humano ya,human,es,claude-train
+Me chorearon la billetera con las tarjetas,human,es,claude-train
+Me afanaron el celular y tengo la app del banco,human,es,claude-train
+"Che, pasame con alguien que me atienda",human,es,claude-train
+Me estafaron con una compra falsa en Marketplace y pagué con transferencia,human,es,claude-train
+Recibí una llamada del supuesto banco y me hicieron instalar una aplicación,human,es,claude-train
+Mi papá es adulto mayor y alguien lo engañó para sacar su dinero,human,es,claude-train
+"No reconozco varias compras y además no tengo la tarjeta, creo que me la robaron",human,es,claude-train
+Hay cargos que no hice y me llegaron correos de cambio de contraseña,human,es,claude-train
+Voy a denunciar esto con mi abogado,human,es,claude-train
+Quiero presentar una queja formal,human,es,claude-train
+Me secuestraron virtualmente y pagué,human,es,claude-train
+Suplantaron mi identidad en la app,human,es,claude-train
+"Me bloquearon la cuenta y no me dicen por qué, necesito hablar con alguien",human,es,claude-train
+"Tengo miedo, me están amenazando para que les pase dinero",human,es,claude-train
+"No puedo más con esto, necesito que alguien me ayude en persona",human,es,claude-train
+me robaron,human,es,claude-train
+fraude,human,es,claude-train
+asesor,human,es,claude-train
+Mi tarjeta la tiene otra persona y está comprando,human,es,claude-train
+Hackearon mi correo y desde ahí entraron al banco,human,es,claude-train
+"Me llegó una notificación de compra mientras tengo la tarjeta en la mano, ¿me clonaron?",human,es,claude-train
+Dejé la tarjeta en un taxi,human,es,claude-train
+Me pidieron un préstamo a mi nombre que yo no solicité,human,es,claude-train
+Quiero reportar un intento de phishing,human,es,claude-train
+Mi cuenta muestra accesos desde otro país,human,es,claude-train
+Me cambiaron el número de celular asociado sin que yo lo pidiera,human,es,claude-train
+"Necesito que un humano revise mi caso, ya van semanas",human,es,claude-train
+La app me pide que confirme una transferencia que yo no hice,human,es,claude-train
+Me mandaron un link para desbloquear la cuenta y ahora me falta dinero,human,es,claude-train
+Me robaron el teléfono y tenía guardadas las claves,human,es,claude-train
+"Estoy en el extranjero, me robaron todo y necesito ayuda",human,es,claude-train
+Roubaram meu cartão,human,pt,claude-train
+Alguém entrou na minha conta,human,pt,claude-train
+Clonaram meu cartão,human,pt,claude-train
+Quero falar com um atendente,human,pt,claude-train
+Caí num golpe pelo WhatsApp e fiz um Pix,human,pt,claude-train
+"Me passa para uma pessoa, por favor",human,pt,claude-train
+Vou processar o banco,human,pt,claude-train
+Roubaram meu celular com o aplicativo do banco,human,pt,claude-train
+Recebi uma ligação falsa do banco e passei minha senha,human,pt,claude-train
+Perdi o cartão e estão usando,human,pt,claude-train
+Mudaram minha senha e não fui eu,human,pt,claude-train
+Quero registrar uma reclamação formal,human,pt,claude-train
+Hola,other,es,claude-train
+Buenos días,other,es,claude-train
+Gracias,other,es,claude-train
+¿Qué requisitos piden para un préstamo personal?,other,es,claude-train
+¿A qué hora abre la sucursal del centro?,other,es,claude-train
+Quiero abrir una cuenta de ahorros,other,es,claude-train
+¿Qué tarjetas de crédito tienen?,other,es,claude-train
+¿Cuál es la tasa de interés del crédito hipotecario?,other,es,claude-train
+¿Cómo descargo la app del banco?,other,es,claude-train
+¿Tienen cajeros en el aeropuerto?,other,es,claude-train
+Quiero aumentar el límite de mi tarjeta,other,es,claude-train
+¿Cómo activo mi tarjeta nueva?,other,es,claude-train
+¿Puedo pedir una tarjeta adicional para mi hija?,other,es,claude-train
+¿Qué seguros ofrecen?,other,es,claude-train
+Quiero invertir en un plazo fijo,other,es,claude-train
+¿Cómo cambio mi dirección?,other,es,claude-train
+¿Cuál es el número de atención al cliente?,other,es,claude-train
+¿Dónde está la sucursal más cercana?,other,es,claude-train
+¿Cómo registro mi huella en la app?,other,es,claude-train
+¿Qué documentos necesito para abrir una cuenta?,other,es,claude-train
+¿Cuánto cobran de cuota de manejo la tarjeta gold?,other,es,claude-train
+¿Puedo pagar servicios desde la app?,other,es,claude-train
+¿Trabajan los domingos?,other,es,claude-train
+¿Cómo solicito un crédito de nómina?,other,es,claude-train
+Quiero cancelar mi tarjeta porque ya no la uso,other,es,claude-train
+¿Tienen cuenta para estudiantes?,other,es,claude-train
+¿Cuál es el tipo de cambio del dólar hoy?,other,es,claude-train
+¿Qué beneficios tiene la tarjeta platinum?,other,es,claude-train
+Quiero actualizar mi correo electrónico,other,es,claude-train
+¿Cómo genero un estado de cuenta en PDF?,other,es,claude-train
+¿Me pueden enviar la tarjeta a otra dirección?,other,es,claude-train
+¿Hay promociones de meses sin intereses?,other,es,claude-train
+¿Cómo hago una transferencia internacional?,other,es,claude-train
+Quiero domiciliar el pago de mi celular,other,es,claude-train
+¿Qué es el CAT?,other,es,claude-train
+¿Cómo funciona el cashback?,other,es,claude-train
+¿Me pueden dar una constancia de cuenta?,other,es,claude-train
+"Qué onda, ¿cómo estás?",other,es,claude-train
+¿Eres un robot?,other,es,claude-train
+¿Qué puedes hacer?,other,es,claude-train
+"Parce, ¿cómo saco un CDT?",other,es,claude-train
+¿Cuánto rinde un CDT a un año?,other,es,claude-train
+"Che, ¿cómo saco un plazo fijo?",other,es,claude-train
+¿Tienen cuenta en dólares?,other,es,claude-train
+¿Cómo cambio el PIN de la tarjeta?,other,es,claude-train
+¿Cómo pido una chequera?,other,es,claude-train
+¿Pueden refinanciar mi deuda?,other,es,claude-train
+¿Me prestan para comprar un carro?,other,es,claude-train
+¿Qué horario tiene la línea telefónica?,other,es,claude-train
+¿Puedo retirar sin tarjeta?,other,es,claude-train
+¿Cómo configuro las notificaciones de compras?,other,es,claude-train
+"Gracias, eso era todo",other,es,claude-train
+ok,other,es,claude-train
+"Perfecto, muchas gracias por la ayuda",other,es,claude-train
+¿Cuál es la dirección de la oficina principal?,other,es,claude-train
+¿Hacen préstamos a independientes?,other,es,claude-train
+¿Cómo abro una cuenta para mi empresa?,other,es,claude-train
+¿Puedo usar la tarjeta en el extranjero?,other,es,claude-train
+"Voy a viajar, ¿tengo que avisar?",other,es,claude-train
+¿Qué es una tarjeta virtual y cómo la pido?,other,es,claude-train
+¿Cómo me doy de alta en la banca en línea?,other,es,claude-train
+¿Qué pasa si pago tarde la tarjeta?,other,es,claude-train
+¿Cuántos retiros gratis tengo al mes?,other,es,claude-train
+¿Me recomiendas una inversión?,other,es,claude-train
+¿Cuál es el clima hoy?,other,es,claude-train
+Cuéntame un chiste,other,es,claude-train
+Olá,other,pt,claude-train
+Obrigado,other,pt,claude-train
+Quais os requisitos para um empréstimo?,other,pt,claude-train
+Que horas abre a agência?,other,pt,claude-train
+Quero abrir uma conta,other,pt,claude-train
+Como ativo meu cartão novo?,other,pt,claude-train
+Vocês têm conta para estudante?,other,pt,claude-train
+Como baixo o aplicativo do banco?,other,pt,claude-train
+Quero aumentar o limite do cartão,other,pt,claude-train
+Qual a taxa de juros do financiamento?,other,pt,claude-train
+Posso usar o cartão no exterior?,other,pt,claude-train
+Como mudo meu endereço?,other,pt,claude-train
