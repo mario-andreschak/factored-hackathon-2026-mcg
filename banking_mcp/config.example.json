@@ -1,0 +1,12 @@
+{
+  "mode": "delegated",
+  "data_dir": "/dataset",
+  "state_db": "/state/banking.db",
+  "service_token": "REPLACE_ME",
+  "issuer": "flujo-banking-runtime",
+  "audience": "banking-mcp",
+  "public_keys": {"runtime-key-1": "REPLACE_WITH_ED25519_PUBLIC_PEM"},
+  "principal_customers": {"VERIFIED_AUTH_SUBJECT": "AUTHORIZED_DATASET_CUSTOMER"},
+  "source_env": "/run/secrets/source.env",
+  "http_hosts": ["127.0.0.1:*", "localhost:*", "banking-mcp:*"]
+}
