@@ -2,6 +2,11 @@
 
 **Revised after the second review, 2026-09-27. Status: implementation proposal.** FLUJO remains the workflow backend and banking MCP client. Use shared graphical flows, an authenticated frontend server, an immutable principal for each run, and independently enforced ownership in the banking MCP. The [review record](FLUJO_BANKING_RUN_AUTH_REVIEW.md) separates source findings, executed probes, alternatives and implementation gates. This review does not implement banking authorization.
 
+> Integration correction, September 28: use FLUJO's existing hidden tool presets
+> and normal chat path. See [the current presets plan](FLUJO_TOOL_PRESETS_PLAN.md).
+> The banking-specific ingress below records the earlier design and must not be
+> treated as the intended chat/Slack integration.
+
 ## 1. Decision and scope
 
 **Hackathon default:** retain FLUJO's default MCP SDK v1 path. Add a bank-specific signed assertion to `tools/call.params._meta` in trusted server code after argument normalization. A fixed service credential authenticates the private HTTP connection. The bank verifies both credentials and every requested object's owner. Customer identity never comes from model arguments, caller-authored metadata, URLs or workspace names.

@@ -81,6 +81,11 @@ overflow returns `server_busy`; queued requests still require unexpired assertio
 
 ## FLUJO identity integration
 
+**Integration direction:** use the existing hidden tool-parameter mechanism and
+ordinary chat/Slack path. See [the presets plan](FLUJO_TOOL_PRESETS_PLAN.md).
+The selectable customer test contract and frontend binding adapter described there
+are not implemented yet; the current real-data authority checks remain enforced.
+
 FLUJO's identity-hook PR adds authenticated banking routes, durable conversation
 ownership, model-inaccessible per-call assertions and local signed revocation.
 Live acceptance uses a pinned Static flow with two real customers. A customer-facing

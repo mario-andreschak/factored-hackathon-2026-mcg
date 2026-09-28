@@ -2,6 +2,11 @@
 
 **Date:** 2026-09-27. **Verdict:** retain FLUJO as backend/MCP client, revise the security and scaling contract before implementation. The original direction is feasible; several details were incomplete or overstated. The [revised proposal](FLUJO_BANKING_RUN_AUTH.md) incorporates the corrections below. This is a source/architecture review with limited executed probes, not certification of an implemented bank system.
 
+> September 28 correction: this review correctly identified Static/preset gaps,
+> but the resulting banking-specific ingress bypassed the requested existing UI
+> and Slack workflow. The [presets plan](FLUJO_TOOL_PRESETS_PLAN.md) corrects that
+> integration decision. Historical probe results below retain their original scope.
+
 ## Review scope and provenance
 
 - Hackathon repo fast-forwarded from `ecdd0b9` to `5787cc6`; this includes the team's DuckDB pipeline. Reviewed gold/lookup/lineage/report code as a new serving alternative without changing it.
