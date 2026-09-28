@@ -24,15 +24,68 @@ class Settings:
     s3: dict[str, str] = field(default_factory=dict)
     threads: int | None = None
     memory_limit: str | None = None
+    build_id: str | None = None       # silver/gold/quarantine of this run live in builds/<build_id>/
 
+    # bronze is a shared raw landing area; everything derived from it is written into an
+    # isolated build directory and only becomes visible through publish() (see below).
     @property
     def bronze(self) -> Path: return self.out_dir / "bronze"
     @property
-    def silver(self) -> Path: return self.out_dir / "silver"
+    def build_dir(self) -> Path:
+        if not self.build_id:
+            raise RuntimeError("build_id not set")
+        return self.out_dir / "builds" / self.build_id
     @property
-    def quarantine(self) -> Path: return self.out_dir / "quarantine"
+    def silver(self) -> Path: return self.build_dir / "silver"
     @property
-    def gold(self) -> Path: return self.out_dir / "gold"
+    def quarantine(self) -> Path: return self.build_dir / "quarantine"
+    @property
+    def gold(self) -> Path: return self.build_dir / "gold"
+
+
+# --- published snapshot ----------------------------------------------------------------
+# data/CURRENT holds the id of the last build that passed every contract. It is replaced
+# atomically (write temp file + os.replace), so a reader sees either the old or the new
+# build, never a half-written one. Builds are immutable once written; a failed build is
+# never published, so the previous good snapshot keeps serving.
+KEEP_BUILDS = 3
+
+
+def current_build(out_dir: Path | str) -> Path:
+    out_dir = Path(out_dir)
+    pointer = out_dir / "CURRENT"
+    if not pointer.exists():
+        raise FileNotFoundError(f"no published build under {out_dir} (run: python -m pipeline run)")
+    build = out_dir / "builds" / pointer.read_text(encoding="utf-8").strip()
+    if not build.is_dir():
+        raise FileNotFoundError(f"{pointer} points to a missing build: {build}")
+    return build
+
+
+def current_gold(out_dir: Path | str) -> Path:
+    return current_build(out_dir) / "gold"
+
+
+def current_silver(out_dir: Path | str) -> Path:
+    return current_build(out_dir) / "silver"
+
+
+def publish(out_dir: Path | str, build_id: str) -> None:
+    import os
+    import shutil
+    out_dir = Path(out_dir)
+    if not (out_dir / "builds" / build_id).is_dir():
+        raise FileNotFoundError(build_id)
+    tmp = out_dir / f"CURRENT.{build_id}.tmp"
+    tmp.write_text(build_id, encoding="utf-8")
+    os.replace(tmp, out_dir / "CURRENT")
+    # Prune old builds, never the published one. Readers resolve CURRENT per request, so
+    # a snapshot is only removed after KEEP_BUILDS newer builds exist.
+    builds = sorted((p for p in (out_dir / "builds").iterdir() if p.is_dir()),
+                    key=lambda p: p.name, reverse=True)
+    for old in builds[KEEP_BUILDS:]:
+        if old.name != build_id:
+            shutil.rmtree(old, ignore_errors=True)
 
 
 def load_env(path: Path) -> dict[str, str]:

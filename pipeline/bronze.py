@@ -7,8 +7,11 @@ typing and rejection happen in silver where they are counted.
 from __future__ import annotations
 
 import csv
+import hashlib
+import json
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .common import Settings, connect, sql_path
@@ -16,22 +19,63 @@ from .common import Settings, connect, sql_path
 PART_RE = r"year=(\d{4})/month=(\d{2})/day=(\d{2})"
 
 
-def discover(con, settings: Settings) -> dict[str, list[str]]:
-    """Map table -> list of CSV objects, using the same naming rule as scripts/profile_s3.py:
-    table = first path segment under the source root, minus a trailing '.csv'."""
+def s3_client(settings: Settings, pool: int = 32):
+    import boto3
+    from botocore.config import Config
+    return boto3.client(
+        "s3", region_name=settings.s3["Region"],
+        aws_access_key_id=settings.s3["AccessKeyID"],
+        aws_secret_access_key=settings.s3["SecretAccessKey"],
+        config=Config(max_pool_connections=pool, retries={"max_attempts": 4}))
+
+
+def list_objects(settings: Settings) -> list[dict]:
+    """Every CSV object under the source root with version metadata.
+
+    Returns dicts: uri (full, internal only), key (relative to root, safe to publish),
+    bytes, etag (S3 ETag, or sha256 for local files), last_modified.
+    """
     root = settings.source.rstrip("/")
+    out = []
     if root.startswith("s3://"):
-        files = [r[0] for r in con.execute(f"SELECT file FROM glob('{sql_path(root)}/**/*.csv')").fetchall()]
-        rel = [f[len(root) + 1:] for f in files]
+        bucket, _, prefix = root[len("s3://"):].partition("/")
+        prefix = prefix.rstrip("/") + "/" if prefix else ""
+        pages = s3_client(settings).get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix)
+        for page in pages:
+            for obj in page.get("Contents", []):
+                if obj["Key"].endswith(".csv"):
+                    out.append({"uri": f"s3://{bucket}/{obj['Key']}", "key": obj["Key"][len(prefix):],
+                                "bytes": obj["Size"], "etag": obj["ETag"].strip('"'),
+                                "last_modified": obj["LastModified"].isoformat(timespec="seconds")})
     else:
         base = Path(root)
-        files = sorted(str(p) for p in base.rglob("*.csv"))
-        rel = [Path(f).relative_to(base).as_posix() for f in files]
-    tables: dict[str, list[str]] = {}
-    for full, r in zip(files, rel):
-        table = r.split("/")[0].removesuffix(".csv")
-        tables.setdefault(table, []).append(full)
-    return {t: sorted(v) for t, v in tables.items()}
+        for p in sorted(base.rglob("*.csv")):
+            st = p.stat()
+            out.append({"uri": str(p), "key": p.relative_to(base).as_posix(), "bytes": st.st_size,
+                        "etag": "sha256:" + hashlib.sha256(p.read_bytes()).hexdigest()[:32],
+                        "last_modified": datetime.fromtimestamp(st.st_mtime, timezone.utc)
+                        .isoformat(timespec="seconds")})
+    return sorted(out, key=lambda o: o["key"])
+
+
+def table_of(key: str) -> str:
+    """Same naming rule as scripts/profile_s3.py: first path segment minus a trailing '.csv'."""
+    return key.split("/")[0].removesuffix(".csv")
+
+
+def fingerprint(objects: list[dict]) -> str:
+    """Identifies exactly which source object versions a build read."""
+    h = hashlib.sha256()
+    for o in sorted(objects, key=lambda o: o["key"]):
+        h.update(f"{o['key']}|{o['etag']}|{o['bytes']}\n".encode())
+    return h.hexdigest()[:16]
+
+
+def discover(con, settings: Settings) -> dict[str, list[dict]]:
+    tables: dict[str, list[dict]] = {}
+    for o in list_objects(settings):
+        tables.setdefault(table_of(o["key"]), []).append(o)
+    return tables
 
 
 def read_headers(settings: Settings, files: list[str]) -> list[tuple[str, ...]]:
@@ -46,14 +90,7 @@ def read_headers(settings: Settings, files: list[str]) -> list[tuple[str, ...]]:
                 out.append(parse(fh.readline()))
         return out
 
-    import boto3
-    from botocore.config import Config
-
-    client = boto3.client(
-        "s3", region_name=settings.s3["Region"],
-        aws_access_key_id=settings.s3["AccessKeyID"],
-        aws_secret_access_key=settings.s3["SecretAccessKey"],
-        config=Config(max_pool_connections=32, retries={"max_attempts": 4}))
+    client = s3_client(settings)
 
     def one(uri: str) -> tuple[str, ...]:
         bucket, key = uri[len("s3://"):].split("/", 1)
@@ -72,8 +109,22 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
     if missing:
         raise SystemExit(f"bronze: no CSV objects found for {missing} under the source root")
 
+    inventory = {t: [{k: o[k] for k in ("key", "bytes", "etag", "last_modified")} for o in found[t]]
+                 for t in settings.tables}
+    settings.report_dir.mkdir(parents=True, exist_ok=True)
+    (settings.report_dir / "source_objects.json").write_text(json.dumps({
+        "run_id": run_id,
+        "note": "Exact source object versions read by this build. Keys are relative to the "
+                "source root; the bucket name is intentionally omitted.",
+        "fingerprint": fingerprint([o for objs in found.values() for o in objs
+                                    if table_of(o["key"]) in settings.tables]),
+        "tables": {t: {"fingerprint": fingerprint(found[t]), "objects": inventory[t]}
+                   for t in settings.tables},
+    }, indent=1) + "\n", encoding="utf-8")
+    stats["_source_fingerprint"] = fingerprint([o for t in settings.tables for o in found[t]])
+
     for table in settings.tables:
-        files = found[table]
+        files = [o["uri"] for o in found[table]]
         t0 = time.perf_counter()
         out = settings.bronze / f"{table}.parquet"
         # Store paths relative to the source root so bucket names never reach outputs.
@@ -113,6 +164,8 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
             f"SELECT count(*), count(DISTINCT _source_file) FROM '{sql_path(out)}'").fetchone()
         stats.setdefault(table, {})["bronze"] = {
             "source_objects": len(files),
+            "source_bytes": sum(o["bytes"] for o in found[table]),
+            "source_fingerprint": fingerprint(found[table]),
             "source_objects_with_rows": files_with_rows,
             "rows": rows,
             "schema_variants": len(groups),

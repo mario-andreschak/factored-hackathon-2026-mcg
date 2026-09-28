@@ -166,26 +166,32 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
             row = con.execute("SELECT " + ", ".join(
                 f"avg(({ident(c)} IS NULL)::INT)" for c in nullable) + f" FROM '{sql_path(out)}'").fetchone()
             null_rates = {c: round(v, 4) for c, v in zip(nullable, row)}
-        # Inconsistent spellings: distinct values that collide once accents/case/spaces
-        # are ignored (e.g. 'México' vs 'Mexico'). Only low-cardinality text columns.
-        spelling = {}
+        # Inconsistent spellings: distinct values that collide once accents/case/spaces are
+        # ignored (e.g. 'México' vs 'Mexico'). PRIVACY: raw values are only kept for columns
+        # marked publish_values (categorical, allow-listed). For every other text column
+        # (customer_text, description, merchant_name, ...) only counts leave this function.
+        spelling, spelling_counts = {}, {}
         text_cols = [c for c, s in spec["columns"].items()
                      if s["type"] == "VARCHAR" and not s.get("drop") and c != spec["pk"]
                      and not s.get("fk")]
         if text_cols and silver_rows:
-            card = con.execute("SELECT " + ", ".join(
-                f"approx_count_distinct({ident(c)})" for c in text_cols) + f" FROM '{sql_path(out)}'").fetchone()
-            for col, n in zip(text_cols, card):
-                if n is None or n > 500:
-                    continue
-                rows = con.execute(f"""
+            for col in text_cols:
+                publishable = bool(spec["columns"][col].get("publish_values"))
+                groups = con.execute(f"""
                     SELECT list(v ORDER BY n DESC), list(n ORDER BY n DESC) FROM (
                         SELECT {ident(col)} AS v, count(*) AS n,
                                lower(strip_accents(regexp_replace(trim({ident(col)}), '\\s+', ' ', 'g'))) AS k
                         FROM '{sql_path(out)}' WHERE {ident(col)} IS NOT NULL GROUP BY 1, 3)
                     GROUP BY k HAVING count(*) > 1""").fetchall()
-                if rows:
-                    spelling[col] = [dict(zip(vals, ns)) for vals, ns in rows]
+                if not groups:
+                    continue
+                spelling_counts[col] = {
+                    "collision_groups": len(groups),
+                    "rows_in_minority_spellings": int(sum(sum(ns[1:]) for _, ns in groups)),
+                    "values_published": publishable,
+                }
+                if publishable:
+                    spelling[col] = [dict(zip(vals, ns)) for vals, ns in groups[:10]]
 
         enum_issues = {}
         for col, c in spec["columns"].items():
@@ -195,7 +201,8 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
                     WHERE {ident(col)} IS NOT NULL AND {ident(col)} NOT IN ({allowed})
                     GROUP BY 1 ORDER BY 2 DESC LIMIT 8""").fetchall()
                 if vals:
-                    enum_issues[col] = dict(vals)
+                    enum_issues[col] = (dict(vals) if c.get("publish_values")
+                                        else {"_values_withheld": int(sum(n for _, n in vals))})
 
         reject_rate = rejected / raw_rows if raw_rows else 0.0
         s = stats.setdefault(table, {})
@@ -215,6 +222,7 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
             "null_rates": null_rates,
             "enum_out_of_vocabulary": enum_issues,
             "inconsistent_spellings": spelling,
+            "inconsistent_spellings_counts": spelling_counts,
             "contract_columns_absent_in_source": absent,
             "source_columns_not_in_contract": unexpected,
             "seconds": round(time.perf_counter() - t0, 1),

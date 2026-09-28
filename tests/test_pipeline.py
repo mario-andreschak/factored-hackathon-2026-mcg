@@ -12,7 +12,7 @@ import duckdb
 import pytest
 
 from pipeline.__main__ import main
-from pipeline.common import bucket_for, sql_bucket
+from pipeline.common import bucket_for, current_gold, current_silver, sql_bucket
 from pipeline.fixture import cid, write_base, write_late_batch
 from pipeline.lookup import get_customer_transactions
 
@@ -29,7 +29,11 @@ def q(sql, *params):
 
 
 def silver(tmp, table):
-    return (tmp / "out" / "silver" / f"{table}.parquet").as_posix()
+    return (current_silver(tmp / "out") / f"{table}.parquet").as_posix()
+
+
+def gold_dir(tmp):
+    return current_gold(tmp / "out")
 
 
 @pytest.fixture()
@@ -93,7 +97,7 @@ def test_late_batch_upserts_and_is_flagged(ws):
                   FROM '{silver(ws, 'transactions')}' WHERE transaction_id='TXN00000904'""")
     assert after == [("Reversed", True, "2026-06-04")]
     # Gold serves the corrected state.
-    rows = get_customer_transactions(ws / "out" / "gold", cid(6), limit=100)
+    rows = get_customer_transactions(gold_dir(ws), cid(6), limit=100)
     assert {r["transaction_id"]: r["transaction_status"] for r in rows}["TXN00000904"] == "Reversed"
 
 
@@ -107,7 +111,7 @@ def test_silver_and_gold_rerun_without_source(ws):
 
 def test_lookup_enforces_ownership_and_isolation(ws):
     run(ws)
-    gold = ws / "out" / "gold"
+    gold = gold_dir(ws)
     rows = get_customer_transactions(gold, cid(9), limit=100)
     assert all(r["transaction_id"] != "TXN00000907" for r in rows)       # product owned by someone else
     assert get_customer_transactions(gold, "CUS000999", limit=100) == []
@@ -118,7 +122,7 @@ def test_lookup_enforces_ownership_and_isolation(ws):
 
 def test_classifier_split_has_no_customer_or_future_leakage(ws):
     _, m = run(ws)
-    path = (ws / "out" / "gold" / "classifier_dataset.parquet").as_posix()
+    path = (gold_dir(ws) / "classifier_dataset.parquet").as_posix()
     overlap = q(f"""SELECT count(*) FROM (SELECT DISTINCT customer_id FROM '{path}' WHERE split='train')
                     JOIN (SELECT DISTINCT customer_id FROM '{path}' WHERE split IN ('test','val')) USING (customer_id)""")
     assert overlap == [(0,)]
@@ -132,7 +136,7 @@ def test_demo_candidates_cover_each_scenario(ws):
     d = m["gold"]["demo_seed_candidates"]["customers_eligible"]
     for scenario in ("normal", "reversed", "pending", "fraud_flagged", "near_duplicate"):
         assert d[scenario] >= 1, scenario
-    path = (ws / "out" / "gold" / "demo_seed_candidates.parquet").as_posix()
+    path = (gold_dir(ws) / "demo_seed_candidates.parquet").as_posix()
     assert q(f"""SELECT n_near_duplicate_charges FROM '{path}'
                  WHERE scenario = 'near_duplicate' AND customer_id = ?""", cid(3)) == [(1,)]
     # A fraud-flagged customer must never be offered as a "normal" happy-path customer.
@@ -201,3 +205,212 @@ def test_schema_evolution_and_quoted_text(ws):
     assert t["silver"]["reconciles"] and t["silver"]["rows"] == 61
     got = q(f"SELECT customer_text FROM '{silver(ws, 'call_transcripts')}' WHERE transcript_id='TRN99999999'")
     assert got == [('me cobraron "dos veces", en Oxxo\ny luego otra vez',)]
+
+
+# --- lineage, concurrency benchmark, source verification --------------------------------
+
+def test_source_objects_are_versioned(ws):
+    _, m1 = run(ws)
+    inv = json.loads((ws / "reports" / "source_objects.json").read_text(encoding="utf-8"))
+    assert len(inv["tables"]["transactions"]["objects"]) == m1["tables"]["transactions"]["bronze"]["source_objects"]
+    assert all(o["etag"] and o["bytes"] > 0 for o in inv["tables"]["transactions"]["objects"])
+    assert m1["source_fingerprint"] == inv["fingerprint"]
+    _, m2 = run(ws)
+    assert m2["source_fingerprint"] == m1["source_fingerprint"]           # same inputs, same version
+    write_late_batch(ws / "src")
+    _, m3 = run(ws)
+    assert m3["source_fingerprint"] != m1["source_fingerprint"]           # new object, new version
+    assert m3["tables"]["customers"]["bronze"]["source_fingerprint"] == \
+        m1["tables"]["customers"]["bronze"]["source_fingerprint"]         # untouched table unchanged
+    _, m4 = run(ws, "--stage", "silver", "gold")
+    assert m4["source_fingerprint"] == m3["source_fingerprint"]           # carried into partial runs
+
+
+def test_concurrent_bench_reports_every_level(ws):
+    from pipeline.lookup import bench_concurrent
+    run(ws)
+    r = bench_concurrent(gold_dir(ws), levels=(1, 8), requests=40)
+    assert [lv["concurrency"] for lv in r["levels"]] == [1, 8]
+    assert all(lv["errors"] == 0 and lv["ok"] == 40 and lv["p95_ms"] is not None for lv in r["levels"])
+
+
+def test_verify_against_source(ws):
+    from pipeline.verify import verify_transaction_in_source
+    run(ws)
+    src, gold = str(ws / "src"), gold_dir(ws)
+    ok = verify_transaction_in_source(src, "TXN00000001", cid(1), "2026-06-01", gold_dir=gold)
+    assert ok["status"] == "verified" and ok["transaction"]["transaction_id"] == "TXN00000001"
+    assert "is_fraud" not in ok["transaction"] and "customer_id" not in ok["transaction"]
+
+    # Someone else's transaction is indistinguishable from a missing one.
+    other = verify_transaction_in_source(src, "TXN00000001", cid(2), "2026-06-01", gold_dir=gold)
+    missing = verify_transaction_in_source(src, "TXN99999999", cid(2), "2026-06-01", gold_dir=gold)
+    assert other["status"] == missing["status"] == "not_found"
+    assert other["transaction"] is None and other["audit"]["reason"] == "owner_mismatch"
+    assert set(other) == set(missing)
+
+    # Product owned by another customer (TXN00000907) is refused via gold's ownership flag.
+    assert verify_transaction_in_source(src, "TXN00000907", cid(9), "2026-06-01",
+                                        gold_dir=gold)["status"] == "not_found"
+
+    # A correction lands in a later partition after the last build: source wins, flagged as changed.
+    write_late_batch(ws / "src")
+    ch = verify_transaction_in_source(src, "TXN00000904", cid(6), "2026-06-01", gold_dir=gold,
+                                      refresh_listing=True)
+    assert ch["status"] == "changed"
+    assert ch["transaction"]["transaction_status"] == "Reversed"
+    assert ch["differences"]["transaction_status"] == ["Pending", "Reversed"]
+    assert ch["source_key"].startswith("transactions/year=2026/month=06/day=04/")
+    # A late row that gold has never seen is found by searching later partitions.
+    late = verify_transaction_in_source(src, "TXN00000950", cid(6), "2026-06-02", gold_dir=gold,
+                                        refresh_listing=True)
+    assert late["status"] == "changed" and late["transaction"]["transaction_id"] == "TXN00000950"
+
+
+# --- regressions from PR #1 review (Mario) ------------------------------------------------
+
+def _customer_ids(rows):
+    return sorted(r["transaction_id"] for r in rows)
+
+
+def test_review_p1_shared_connection_never_leaks_results(ws):
+    """Repro: A-execute, B-execute, A-fetch on a shared connection gave A the rows of B."""
+    import threading
+    run(ws)
+    gold = gold_dir(ws)
+    expected = {c: _customer_ids(get_customer_transactions(gold, c, limit=100))
+                for c in (cid(0), cid(1), cid(3), cid(6))}
+    assert expected[cid(0)] != expected[cid(1)]
+
+    # 1) Deterministic: the shared connection's own result slot is never used.
+    class NoDirectExecute:
+        def __init__(self, real):
+            self.real = real
+        def execute(self, *a, **k):
+            raise AssertionError("lookup must not execute on the shared connection")
+        def cursor(self):
+            return self.real.cursor()
+    shared = NoDirectExecute(duckdb.connect())
+    assert _customer_ids(get_customer_transactions(gold, cid(0), limit=100, con=shared)) == expected[cid(0)]
+
+    # 2) The exact interleaving from the review, on a raw connection, shows the hazard ...
+    raw = duckdb.connect()
+    path0 = (gold / "transactions_by_customer" / f"bucket={bucket_for(cid(0))}").as_posix()
+    path1 = (gold / "transactions_by_customer" / f"bucket={bucket_for(cid(1))}").as_posix()
+    a = raw.execute(f"SELECT transaction_id FROM read_parquet('{path0}/*.parquet') WHERE customer_id=?", [cid(0)])
+    raw.execute(f"SELECT transaction_id FROM read_parquet('{path1}/*.parquet') WHERE customer_id=?", [cid(1)])
+    assert sorted(r[0] for r in a.fetchall()) == expected[cid(1)]   # A got B's rows: the bug
+    # ... while per-call cursors on that same connection stay isolated.
+    assert _customer_ids(get_customer_transactions(gold, cid(0), limit=100, con=raw)) == expected[cid(0)]
+
+    # 3) Stress: many threads, one shared connection, every result must belong to its caller.
+    errors, shared_con = [], duckdb.connect()
+    def worker(n):
+        for i in range(60):
+            c = list(expected)[(n + i) % len(expected)]
+            got = _customer_ids(get_customer_transactions(gold, c, limit=100, con=shared_con))
+            if got != expected[c]:
+                errors.append((c, got))
+    threads = [threading.Thread(target=worker, args=(n,)) for n in range(16)]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    assert errors == []
+
+
+def _corrupt_first_transactions_file(ws):
+    p = sorted((ws / "src" / "transactions").rglob("*.csv"))[0]
+    lines = p.read_text(encoding="utf-8").splitlines()
+    idx = lines[0].split(",").index("amount")
+    p.write_text("\n".join([lines[0]] + [",".join(v if i != idx else "oops" for i, v in enumerate(l.split(",")))
+                                         for l in lines[1:]]) + "\n", encoding="utf-8")
+
+
+def test_review_p1_failed_build_keeps_last_good_snapshot(ws):
+    """Repro: a rebuild that exits 2 replaced CUS000003's 5 served transactions with 1."""
+    code, _ = run(ws)
+    assert code == 0
+    good_build = current_gold(ws / "out")
+    before = _customer_ids(get_customer_transactions(good_build, cid(3), limit=100))
+    assert len(before) == 5
+
+    _corrupt_first_transactions_file(ws)
+    code, m = run(ws)
+    assert code == 2 and m["contract_failures"] and m["published"] is False
+    assert current_gold(ws / "out") == good_build                       # pointer unchanged
+    assert _customer_ids(get_customer_transactions(current_gold(ws / "out"), cid(3), limit=100)) == before
+    # Gold was not even built for the failed run.
+    failed = sorted((ws / "out" / "builds").iterdir())[-1]
+    assert failed != good_build.parent and not (failed / "gold").exists()
+
+
+def test_review_p1_reads_during_rebuild_see_a_complete_snapshot(ws, monkeypatch):
+    import pipeline.gold as gold_mod
+    run(ws)
+    before_build = current_gold(ws / "out")
+    before = _customer_ids(get_customer_transactions(before_build, cid(6), limit=100))
+    write_late_batch(ws / "src")                                       # rebuild will change cid(6)
+    seen = {}
+    real_run = gold_mod.run
+
+    def spy(settings, run_id, stats):
+        real_run(settings, run_id, stats)
+        # New gold is fully written but not yet published: readers still get the old snapshot,
+        # and the old snapshot's files were never touched.
+        live = current_gold(ws / "out")
+        seen["pointer"] = live
+        seen["rows"] = _customer_ids(get_customer_transactions(live, cid(6), limit=100))
+    monkeypatch.setattr(gold_mod, "run", spy)
+    code, _ = run(ws)
+    assert code == 0
+    assert seen["pointer"] == before_build and seen["rows"] == before
+    after = _customer_ids(get_customer_transactions(current_gold(ws / "out"), cid(6), limit=100))
+    assert current_gold(ws / "out") != before_build and "TXN00000951" in after and "TXN00000951" not in before
+    # The previous snapshot is still intact for any reader that resolved it earlier.
+    assert _customer_ids(get_customer_transactions(before_build, cid(6), limit=100)) == before
+
+
+def test_review_p1_free_text_never_reaches_reports(ws):
+    """Repro: case variants of a transcript sentence were copied verbatim into both reports."""
+    import csv
+    marker = "SYNTH-EMAIL-7731@example.test"
+    for table, col, id_col in (("call_transcripts", "customer_text", "transcript_id"),
+                               ("complaints", "description", "complaint_id")):
+        files = sorted((ws / "src" / table).rglob("*.csv"))
+        with files[0].open(encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+            header = list(rows[0])
+        rows[0][col] = f"mi correo es {marker} por favor"
+        rows[1][col] = f"MI CORREO ES {marker.upper()} POR FAVOR"
+        with files[0].open("w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=header)
+            w.writeheader()
+            w.writerows(rows)
+    _, m = run(ws)
+    reports = "".join(p.read_text(encoding="utf-8") for p in (ws / "reports").iterdir() if p.is_file())
+    assert marker.lower() not in reports.lower()
+    assert "SYNTH-EMAIL" not in reports.upper()
+    for rid in ("TRN000000", "CMP000000"):                               # no record identifiers either
+        assert rid not in reports
+    # ...but the collision is still counted, and allow-listed categoricals still show values.
+    assert m["tables"]["call_transcripts"]["silver"]["inconsistent_spellings_counts"]["customer_text"][
+        "values_published"] is False
+    assert "customer_text" not in m["tables"]["call_transcripts"]["silver"]["inconsistent_spellings"]
+    assert "México" in reports
+
+
+def test_review_p2_orphan_customer_is_never_served(ws):
+    """Repro: txn with customer CUS999999 + product PRD999999 (both orphan) was served."""
+    from pipeline.common import load_contracts
+    from pipeline.fixture import _part, _row, _write
+    c = load_contracts()
+    _write(_part(ws / "src", "transactions", "2026-06-03"), c, "transactions", [
+        _row(c, "transactions", transaction_id="TXN00000999", customer_id="CUS999999",
+             product_id="PRD999999", transaction_date="2026-06-03 10:00:00", process_date="2026-06-03",
+             amount="10.00", transaction_status="Approved", is_fraud="False")])
+    code, m = run(ws)
+    assert code == 0
+    assert get_customer_transactions(gold_dir(ws), "CUS999999", limit=100) == []
+    t = m["tables"]["transactions"]["silver"]["orphans"]
+    assert t["customer_id"]["missing_in_parent"] == 1
+    assert m["gold"]["transactions_by_customer"]["ownership_valid_rows"] == \
+        m["gold"]["transactions_by_customer"]["rows"] - 2          # 907 (other owner) + 999 (orphan)
