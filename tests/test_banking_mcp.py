@@ -102,6 +102,19 @@ def _confirm_in_process(config_json, handle, ready, barrier, results):
         service.close()
 
 
+def _handoff_in_process(config_json, request_id, ready, barrier, results):
+    service = Service(Config.model_validate_json(config_json))
+    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    try:
+        ready.wait(timeout=15)
+        barrier.wait(timeout=15)
+        results.put(service.actions.handoff(principal, "customer_request", None, request_id)["state"])
+    except BankError as exc:
+        results.put(exc.code)
+    finally:
+        service.close()
+
+
 def test_simulated_intake_requires_coverage_confirmation_and_readback(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
@@ -157,6 +170,47 @@ def test_no_target_handoffs_are_distinct_and_retryable(bank):
     assert action_call(bank, "create_verified_handoff", first_args) == first
     with pytest.raises(BankError, match="invalid_arguments"):
         action_call(bank, "create_verified_handoff", {"reason": "customer_request"})
+
+
+def test_selected_handoff_lost_response_reuses_logical_request(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    request_id = str(uuid.uuid4())
+    first_pending = action_call(bank, "prepare_unrecognized_charge",
+                                {"transaction_id": targets[0], "snapshot": build})["pending_handle"]
+    first = action_call(bank, "create_verified_handoff", {"pending_handle": first_pending,
+                        "reason": "customer_request", "request_id": request_id})
+    retry_pending = action_call(bank, "prepare_unrecognized_charge",
+                                {"transaction_id": targets[0], "snapshot": build})["pending_handle"]
+    replay = action_call(bank, "create_verified_handoff", {"pending_handle": retry_pending,
+                         "reason": "customer_request", "request_id": request_id})
+    assert replay == first
+    other_pending = action_call(bank, "prepare_unrecognized_charge",
+                                {"transaction_id": targets[1], "snapshot": build})["pending_handle"]
+    with pytest.raises(BankError, match="invalid_arguments"):
+        action_call(bank, "create_verified_handoff", {"pending_handle": other_pending,
+                    "reason": "customer_request", "request_id": request_id})
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM sandbox_handoffs").fetchone()[0] == 1
+
+
+def test_revocation_winning_handoff_writer_prevents_packet(bank):
+    service = bank[0]
+    ctx = multiprocessing.get_context("spawn")
+    ready, barrier, results = ctx.Barrier(2), ctx.Barrier(2), ctx.Queue()
+    child = ctx.Process(target=_handoff_in_process,
+                        args=(service.config.model_dump_json(), str(uuid.uuid4()), ready, barrier, results))
+    child.start()
+    ready.wait(timeout=15)
+    with service.store.connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        barrier.wait(timeout=15)
+        db.execute("INSERT INTO revoked(session) VALUES (?)", ("session-alice",))
+        time.sleep(0.2)
+    child.join(25)
+    assert child.exitcode == 0 and results.get(timeout=2) == "authorization_denied"
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM sandbox_handoffs").fetchone()[0] == 0
 
 
 def test_sandbox_coverage_requires_same_persisted_ledger_generation(bank, tmp_path):

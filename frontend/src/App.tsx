@@ -943,10 +943,11 @@ function Assistant({
       state: string;
       message: string;
       pending_handle?: string;
+      request_id?: string;
     } | null>(null),
     [actionBusy, setActionBusy] = useState(false),
     [actionLanguage, setActionLanguage] = useState<"es" | "pt">("es"),
-    [handoffRequestId, setHandoffRequestId] = useState(() =>
+    [handoffRequestId, setHandoffRequestId] = useState<string>(() =>
       crypto.randomUUID(),
     ),
     [busy, setBusy] = useState(false),
@@ -962,6 +963,7 @@ function Assistant({
   }, [messages, busy, open]);
   useEffect(() => {
     setAction(null);
+    setHandoffRequestId(crypto.randomUUID());
   }, [selected?.reference]);
   useEffect(() => {
     alive.current = true;
@@ -989,6 +991,26 @@ function Assistant({
           setHistoryLimited(Boolean(result.limited));
           setHistoryReady(true);
           setBusy(result.active);
+          if (!result.active && status.sandbox_intake_available) {
+            api<{
+              state: string;
+              message?: string;
+              pending_handle?: string;
+              request_id?: string;
+            }>("/api/action/status", { signal: historyController.signal })
+              .then((recovered) => {
+                if (historyController.signal.aborted || !alive.current) return;
+                const message = recovered.message;
+                if (recovered.state !== "none" && typeof message === "string") {
+                  setAction((current) => current ?? { ...recovered, message });
+                  if (recovered.request_id)
+                    setHandoffRequestId(recovered.request_id);
+                }
+              })
+              .catch(() => {
+                /* The saved chat remains usable if action status is unavailable. */
+              });
+          }
           // A query admitted before a page refresh can finish in the server.
           // Recover its result rather than submitting that query a second time.
           if (result.active) timer = setTimeout(recover, 2000);
@@ -1055,16 +1077,14 @@ function Assistant({
         state: string;
         message: string;
         pending_handle?: string;
+        request_id?: string;
       }>(path, {
         method: "POST",
         body: JSON.stringify({ ...body, language: actionLanguage }),
       });
       if (alive.current) {
         setAction(result);
-        if (
-          path === "/api/action/handoff" &&
-          result.state === "handoff_verified"
-        )
+        if (result.state === "handoff_verified")
           setHandoffRequestId(crypto.randomUUID());
       }
     } catch (e) {
@@ -1073,6 +1093,29 @@ function Assistant({
         setError(
           "No pudimos verificar esta acción. Consulta el estado antes de volver a intentarlo.",
         );
+    } finally {
+      if (alive.current) setActionBusy(false);
+    }
+  }
+  async function refreshAction() {
+    if (actionBusy || busy || !historyReady) return;
+    setActionBusy(true);
+    try {
+      const recovered = await api<{
+        state: string;
+        message?: string;
+        pending_handle?: string;
+        request_id?: string;
+      }>(`/api/action/status?language=${actionLanguage}`);
+      if (alive.current && recovered.state !== "none" && recovered.message) {
+        setAction({ ...recovered, message: recovered.message });
+        if (recovered.request_id) setHandoffRequestId(recovered.request_id);
+        setError("");
+      }
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) onExpired();
+      else if (alive.current)
+        setError("No pudimos verificar el estado. Intenta de nuevo más tarde.");
     } finally {
       if (alive.current) setActionBusy(false);
     }
@@ -1137,6 +1180,14 @@ function Assistant({
                 {action.message}
               </p>
             )}
+            <button
+              type="button"
+              className="button outline"
+              disabled={actionBusy || busy}
+              onClick={refreshAction}
+            >
+              Consultar estado de la solicitud
+            </button>
             {selected && !action && (
               <button
                 type="button"
@@ -1145,13 +1196,15 @@ function Assistant({
                 onClick={() =>
                   runAction("/api/action/prepare", {
                     transaction_reference: selected.reference,
+                    request_id: handoffRequestId,
                   })
                 }
               >
                 Revisar recepción simulada
               </button>
             )}
-            {action?.state === "pending_confirmation" &&
+            {selected &&
+              action?.state === "pending_confirmation" &&
               action.pending_handle && (
                 <button
                   type="button"
@@ -1167,7 +1220,9 @@ function Assistant({
                   Confirmo la recepción simulada para este cargo
                 </button>
               )}
-            {(!action || action.state === "pending_confirmation") && (
+            {(!action ||
+              action.state === "pending_confirmation" ||
+              action.state === "handoff_unverified") && (
               <button
                 type="button"
                 className="button outline"
@@ -1175,11 +1230,12 @@ function Assistant({
                 onClick={() =>
                   runAction("/api/action/handoff", {
                     reason: "customer_request",
+                    request_id: handoffRequestId,
                     ...(action?.pending_handle
                       ? { pending_handle: action.pending_handle }
                       : selected
                         ? { transaction_reference: selected.reference }
-                        : { request_id: handoffRequestId }),
+                        : {}),
                   })
                 }
               >

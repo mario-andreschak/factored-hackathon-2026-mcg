@@ -77,6 +77,10 @@ class ChatService:
                 UNIQUE(session_id, operation, role)
             )""")
             db.execute("CREATE INDEX IF NOT EXISTS chat_messages_session ON chat_messages(session_id, id)")
+            db.execute("""CREATE TABLE IF NOT EXISTS action_status (
+                session_id TEXT PRIMARY KEY, owner TEXT NOT NULL, expires INTEGER NOT NULL,
+                result_json TEXT NOT NULL, updated_at INTEGER NOT NULL
+            )""")
             db.execute("CREATE TABLE IF NOT EXISTS chat_migrations (name TEXT PRIMARY KEY)")
             db.execute("""CREATE TABLE IF NOT EXISTS pending_revocations (
                 session_id TEXT PRIMARY KEY, owner TEXT NOT NULL, subject TEXT NOT NULL,
@@ -244,17 +248,31 @@ class ChatService:
             raise ChatError("inquiry_required", 409,
                             "Primero consulta el movimiento con Savia para iniciar una conversación segura.")
         payload = {"conversationId": conversation, **operation}
+        def finish(result: dict[str, Any]) -> dict[str, Any]:
+            saved = dict(result)
+            if handle := operation.get("pendingHandle"):
+                saved.setdefault("pending_handle", handle)
+            if request_id := operation.get("requestId"):
+                saved.setdefault("request_id", request_id)
+            self._remember_action(session_id, owner, session_exp, saved)
+            return saved
+        if operation.get("operation") == "confirm":
+            # Persist the attempt before sending a write. After refresh, an
+            # absent receipt must never be presented as safe to confirm again.
+            self._remember_action(session_id, owner, session_exp,
+                                  {"state": "action_unverified",
+                                   "pending_handle": operation["pendingHandle"]})
         try:
-            return await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
-                                    payload, timeout_seconds=45)
+            return finish(await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                                           payload, timeout_seconds=45))
         except ChatError as exc:
             if operation.get("operation") == "handoff" and exc.code in {
                     "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                 try:
-                    return await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
-                                            payload, timeout_seconds=20)
+                    return finish(await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                                                   payload, timeout_seconds=20))
                 except ChatError:
-                    return {"state": "handoff_unverified"}
+                    return finish({"state": "handoff_unverified"})
             if operation.get("operation") != "confirm" or exc.code not in {
                     "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                 raise
@@ -265,13 +283,50 @@ class ChatService:
                     {"conversationId": conversation, "operation": "receipt",
                      "pendingHandle": operation["pendingHandle"]}, timeout_seconds=20)
                 if receipt.get("state") == "intake_verified":
-                    return receipt
+                    return finish(receipt)
                 handoff = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
                     {"conversationId": conversation, "operation": "handoff",
                      "reason": "action_unverified", "pendingHandle": operation["pendingHandle"]}, timeout_seconds=20)
-                return {"state": "action_unverified", "handoff": handoff}
+                return finish({"state": "action_unverified", "handoff": handoff})
             except ChatError:
-                return {"state": "action_unverified", "handoff": {"state": "handoff_unverified"}}
+                return finish({"state": "action_unverified", "handoff": {"state": "handoff_unverified"}})
+
+    def _remember_action(self, session_id: str, owner: str, session_exp: int,
+                         result: dict[str, Any]) -> None:
+        with self._connection() as db:
+            db.execute("""INSERT INTO action_status VALUES (?,?,?,?,?)
+                ON CONFLICT(session_id) DO UPDATE SET owner=excluded.owner, expires=excluded.expires,
+                result_json=excluded.result_json, updated_at=excluded.updated_at""",
+                (session_id, owner, session_exp, json.dumps(result), int(time.time())))
+
+    async def action_status(self, customer_id: str, session_id: str, session_exp: int) -> dict[str, Any]:
+        if not self._action_enabled:
+            raise ChatError("action_unavailable", 503, "La recepción simulada no está habilitada.")
+        subject, owner = self._identity(customer_id, session_id, session_exp)
+        with self._connection() as db:
+            session = db.execute("SELECT owner,expires,revoked,conversation_id FROM chat_sessions WHERE session_id=?",
+                                 (session_id,)).fetchone()
+            row = db.execute("SELECT owner,expires,result_json FROM action_status WHERE session_id=?",
+                             (session_id,)).fetchone()
+        if (not session or session["owner"] != owner or session["expires"] != session_exp
+                or session["revoked"]):
+            raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+        if not row:
+            return {"state": "none"}
+        if row["owner"] != owner or row["expires"] != session_exp:
+            raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+        saved = json.loads(row["result_json"])
+        if saved.get("state") == "action_unverified" and isinstance(saved.get("pending_handle"), str):
+            try:
+                receipt = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                    {"conversationId": session["conversation_id"], "operation": "receipt",
+                     "pendingHandle": saved["pending_handle"]}, timeout_seconds=20)
+                if receipt.get("state") == "intake_verified":
+                    self._remember_action(session_id, owner, session_exp, receipt)
+                    return receipt
+            except ChatError:
+                pass
+        return saved
 
     @staticmethod
     def _validate_session(session_id: str, session_exp: int) -> None:

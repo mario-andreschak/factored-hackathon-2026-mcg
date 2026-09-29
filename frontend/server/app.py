@@ -41,6 +41,7 @@ class ChatBody(BaseModel):
 class PrepareActionBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     transaction_reference: str = Field(pattern=r"^txn_[a-f0-9]{24}$")
+    request_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
     language: Literal["es", "pt"] = "es"
 
 
@@ -369,6 +370,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except ValueError:
             raise HTTPException(502, "No se pudo verificar la respuesta de la recepción simulada.") from None
 
+    @app.get("/api/action/status")
+    async def action_status(request: Request, language: Literal["es", "pt"] = "es"):
+        current = session(request)
+        customer = request.app.state.repository.profile_customer(current.profile_id)
+        service = request.app.state.chat_service
+        if not service:
+            raise HTTPException(503, "El asistente FLUJO aún no está conectado.")
+        from .action import render_action
+        from .chat import ChatError
+        try:
+            result = await service.action_status(customer, current.id, current.expires_at)
+            return result if result.get("state") == "none" else render_action(result, language)
+        except ChatError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+        except ValueError:
+            raise HTTPException(502, "No se pudo verificar el estado de la recepción simulada.") from None
+
     @app.post("/api/action/prepare")
     async def action_prepare(body: PrepareActionBody, request: Request):
         current = session(request)
@@ -376,7 +394,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not target:
             raise HTTPException(404, "El movimiento seleccionado no está disponible.")
         return await run_action(request, {"operation": "prepare", "transactionId": target["transaction_id"],
-                                          "snapshot": target["snapshot"]}, body.language)
+                                          "snapshot": target["snapshot"],
+                                          **({"requestId": body.request_id} if body.request_id else {})}, body.language)
 
     @app.post("/api/action/confirm")
     async def action_confirm(body: ConfirmActionBody, request: Request):
@@ -385,26 +404,37 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/action/handoff")
     async def action_handoff(body: HandoffActionBody, request: Request):
+        if body.transaction_reference and body.pending_handle:
+            raise HTTPException(422, "Selecciona una sola referencia para la revisión humana.")
         if body.transaction_reference and not body.pending_handle:
+            if not body.request_id:
+                raise HTTPException(422, "Se requiere una solicitud de revisión identificable.")
             current = session(request)
             target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
             if not target:
                 raise HTTPException(404, "El movimiento seleccionado no está disponible.")
             prepared = await run_action(request, {"operation": "prepare",
-                "transactionId": target["transaction_id"], "snapshot": target["snapshot"]}, body.language)
+                "transactionId": target["transaction_id"], "snapshot": target["snapshot"],
+                "requestId": body.request_id}, body.language)
             if prepared.get("state") != "pending_confirmation":
                 return prepared
             pending = prepared.get("pending_handle")
             if not isinstance(pending, str):
                 raise HTTPException(502, "No se pudo verificar la solicitud de revisión humana.")
-            return await run_action(request, {"operation": "handoff", "reason": body.reason,
-                                              "pendingHandle": pending}, body.language)
+            handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
+                                                "pendingHandle": pending, "requestId": body.request_id}, body.language)
+            if handed.get("state") == "handoff_unverified":
+                handed["pending_handle"] = pending
+            return handed
         if not body.pending_handle and not body.request_id:
             raise HTTPException(422, "Se requiere una solicitud de revisión identificable.")
-        return await run_action(request, {"operation": "handoff", "reason": body.reason,
-                                          **({"pendingHandle": body.pending_handle} if body.pending_handle else
-                                             {"requestId": body.request_id})},
-                                body.language)
+        handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
+                                            **({"pendingHandle": body.pending_handle} if body.pending_handle else {}),
+                                            **({"requestId": body.request_id} if body.request_id else {})},
+                                  body.language)
+        if handed.get("state") == "handoff_unverified" and body.pending_handle:
+            handed["pending_handle"] = body.pending_handle
+        return handed
 
     @app.get("/{path:path}")
     def frontend(path: str):

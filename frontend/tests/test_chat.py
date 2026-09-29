@@ -87,6 +87,44 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
                                   "snapshot": "synthetic-build"})
         self.assertEqual(foreign.exception.code, "session_mismatch")
 
+    async def test_action_status_recovers_receipt_from_persisted_attempt(self):
+        enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        seen = []
+        def respond(request):
+            if request.url.path == "/v1/banking/action":
+                body = json.loads(request.content)
+                seen.append(body["operation"])
+                if body["operation"] == "prepare":
+                    return httpx.Response(200, json={"state": "pending_confirmation",
+                        "pending_handle": "a" * 43})
+                return httpx.Response(200, json={"state": "intake_verified",
+                    "receipt": {"id": "CMP-SBX-abcdefgh"}})
+            return self.respond(request)
+        enabled._transport = httpx.MockTransport(respond)
+        await enabled.send("customer-a", self.session_a, self.expiry, "No reconozco el cargo")
+        await enabled.action("customer-a", self.session_a, self.expiry,
+                             {"operation": "prepare", "transactionId": "TXN00000001",
+                              "snapshot": "synthetic-build"})
+        self.assertEqual((await enabled.action_status("customer-a", self.session_a, self.expiry))["state"],
+                         "pending_confirmation")
+        self.assertEqual(seen, ["prepare"])
+        owner = enabled._owner_for_subject("subject-a")
+        enabled._remember_action(self.session_a, owner, self.expiry,
+                                 {"state": "action_unverified", "pending_handle": "a" * 43})
+        reloaded = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        reloaded._transport = httpx.MockTransport(respond)
+        recovered = await reloaded.action_status("customer-a", self.session_a, self.expiry)
+        self.assertEqual(recovered["receipt"]["id"], "CMP-SBX-abcdefgh")
+        self.assertEqual(seen, ["prepare", "receipt"])
+        self.assertEqual((await reloaded.action_status("customer-a", self.session_a, self.expiry))["state"],
+                         "intake_verified")
+        with self.assertRaises(ChatError):
+            await reloaded.action_status("customer-b", self.session_a, self.expiry)
+        with reloaded._connection() as db:
+            db.execute("UPDATE chat_sessions SET revoked=1 WHERE session_id=?", (self.session_a,))
+        with self.assertRaises(ChatError):
+            await reloaded.action_status("customer-a", self.session_a, self.expiry)
+
     def test_es_pt_fallback_requires_verified_persisted_ids(self):
         handoff = {"state": "handoff_verified", "handoff": {"id": "HOF-" + "a" * 8}}
         for language, id_label in [("es", "Folio"), ("pt", "Protocolo")]:

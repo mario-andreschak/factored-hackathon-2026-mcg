@@ -196,24 +196,31 @@ class Actions:
                 request_id: str | None = None) -> dict:
         if reason not in HANDOFF_REASONS:
             raise BankError("invalid_arguments")
-        if not pending_handle:
+        if request_id is not None or not pending_handle:
             try:
                 if not request_id or str(uuid.UUID(request_id)) != request_id:
                     raise ValueError()
             except ValueError:
                 raise BankError("invalid_arguments") from None
         with self.store.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            if principal.expires <= int(time.time()) or db.execute(
+                    "SELECT 1 FROM revoked WHERE session=?", (principal.session,)).fetchone():
+                raise BankError("authorization_denied")
             pending = self._pending(db, principal, pending_handle, require_fresh=False) if pending_handle else None
             transaction_id = pending[2] if pending else None
             snapshot = pending[3] if pending else None
             facts = pending[7] if pending else "{}"
-            key = _digest(json.dumps([principal.binding(), _digest(pending_handle) if pending_handle
-                                      else request_id, transaction_id, snapshot, reason]))
+            key = _digest(json.dumps([principal.binding(), request_id])) if request_id else _digest(
+                json.dumps([principal.binding(), _digest(pending_handle), transaction_id, snapshot, reason]))
             db.execute("""INSERT OR IGNORE INTO sandbox_handoffs
                 VALUES (?,?,?,?,?,?,?,?,?)""", (_receipt_id("HOF-"),
                 principal.binding(), principal.customer, transaction_id, snapshot,
                 reason, self.clock(), facts, key))
-            row = db.execute("SELECT id FROM sandbox_handoffs WHERE idempotency_key=?", (key,)).fetchone()
+            row = db.execute("""SELECT id,transaction_id,snapshot,reason,facts FROM sandbox_handoffs
+                WHERE idempotency_key=?""", (key,)).fetchone()
+            if row[1:] != (transaction_id, snapshot, reason, facts):
+                raise BankError("invalid_arguments")
         return self.read_handoff(principal, row[0])
 
     def read_handoff(self, principal: Principal, handoff_id: str) -> dict:
