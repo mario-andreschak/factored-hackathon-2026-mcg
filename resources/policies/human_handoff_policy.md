@@ -3,7 +3,7 @@
 ## Cuándo derivar
 <!-- chunk_id: handoff-01 -->
 
-La solicitud de asesor, emergencia, alto riesgo, intentos agotados, falta de evidencia esencial o acción sin verificar pueden requerir revisión humana. Fuera de política se ofrece esta opción.
+La solicitud de asesor, emergencia, alto riesgo, intentos agotados, falta de evidencia esencial o acción sin verificar pueden requerir revisión humana. Un historial propio potencialmente relevante sin vínculo transaccional requiere revisión por missing_evidence. Una señal de posible duplicado que persiste tras elegir el movimiento requiere revisión por duplicate_review; no se repite la misma elección ni se crea un reclamo. Fuera de política se ofrece esta opción.
 
 ## Paquete
 <!-- chunk_id: handoff-02 -->

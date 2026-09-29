@@ -18,16 +18,17 @@ Documentar las reglas **en orden de precedencia** (gana la primera que aplique):
 | R9 | Fallo de herramienta tras `tool_retries` | `TOOL_ERROR` | Si `tool_failures ≥ 2` en la sesión → `HANDOFF` |
 | R10 | `DISPUTE`/`INQUIRY` sin ningún criterio de búsqueda (sin monto, sin fecha, sin id, sin comercio) | `CLARIFY` | `missing_fields = ["amount","date"]` |
 | R11 | `match_count = 0` | `NO_MATCH` | Si `no_match_attempts ≥ max` → `HANDOFF` |
-| R12 | `match_count > 1` | `CLARIFY` | `pending = awaiting_selection` con hasta `max_candidates_to_show` candidatos; si hay más, pedir un criterio adicional |
-| R13 | `match_count = 1` e `intent = TRANSACTION_INQUIRY` | `INFORM` | |
-| R14 | `match_count = 1`, `DISPUTE` y la transacción tiene más de `dispute_window_days` | `OUT_OF_POLICY` | Ofrecer handoff |
-| R15 | `match_count = 1`, `DISPUTE` y existe un reclamo abierto relacionado | `INFORM_EXISTING_CASE` | **No** crear |
-| R16 | `match_count = 1`, `DISPUTE` y riesgo alto (`fraud_score ≥ umbral` o `amount_usd ≥ umbral` o ≥ N no reconocidas en 24 h) | `HANDOFF` | `reason_code = high_risk`; crear handoff y verificarlo |
-| R17 | `match_count = 1`, `DISPUTE` y ninguna de las anteriores | `CONFIRM_ACTION` | `pending = awaiting_confirmation`, `proposed_action = CREATE_COMPLAINT` |
+| R12 | Varios candidatos sin target vigente; o señal de duplicado persistente en el target | `CLARIFY` / `HANDOFF` | Sin target: selección con hasta `max_candidates_to_show` candidatos; si hay más, pedir filtro. Con target y señal: `duplicate_review` |
+| R13 | Target propio vigente e `intent = TRANSACTION_INQUIRY` | `INFORM` | |
+| R14 | Target propio vigente, `DISPUTE` y antigüedad mayor que `dispute_window_days` | `OUT_OF_POLICY` | Ofrecer handoff |
+| R15 | Target propio vigente, `DISPUTE` y `duplicate_check = exact_open_case` | `INFORM_EXISTING_CASE` | **No** crear |
+| R16 | Target propio vigente, `DISPUTE` y riesgo alto (`fraud_score ≥ umbral` o `amount_usd ≥ umbral` o ≥ N no reconocidas en 24 h) | `HANDOFF` | `reason_code = high_risk`; crear handoff y verificarlo |
+| R17 | Target propio vigente, `DISPUTE` y todos los demás guardas aprobados | `CONFIRM_ACTION` | `pending = awaiting_confirmation`, `proposed_action = CREATE_COMPLAINT` |
 | R18 | `intent = COMPLAINT_STATUS` | 0 reclamos → `NO_MATCH`; varios → `CLARIFY`; uno → `INFORM` | |
 
 - Cada decisión registra `rule_ids` en `policy_decision`; es la explicación auditable.
-- Un candidato con `possible_duplicate_of` nunca se trata como coincidencia única: fuerza R12.
+- Target propio vigente significa un único candidato propio releído, obtenido por búsqueda completa de una coincidencia o por selección válida del snapshot mostrado. No implica que match_count haya cambiado.
+- Con varios candidatos resolver primero la selección; si persiste una señal de duplicado en el target, revisión humana. Con un solo candidato propio releído y señal persistente, duplicate_review directo; no pedir una elección inútil ni repetir R12.
 
 
 ## Semántica normativa y correcciones de integración
@@ -37,22 +38,24 @@ La tabla anterior es el inventario R0–R18. Esta sección precisa los guardas y
 1. R0, R1 y R2 preceden siempre cualquier lectura privada o escritura, incluso al confirmar. R2 lee turn.unauthorized_reference (preprocesador) OR turn.slots.foreign_customer_reference. Un ID ajeno no se consulta. Reiniciar action.authorized=false al cambiar de turno.
 2. R3 es una transición, nunca una autorización por el solo texto CONFIRMED. Verificar tipo de pending, target, snapshot, sesión, pertenencia, vigencia de 600 segundos configurables, misma transacción, estado Approved, ventana, ausencia de duplicado y señales de riesgo actuales. Releer esos datos bajo el scope del cliente antes de autorizar; si cambiaron, volver a la regla aplicable y pedir nueva confirmación si procede. Persistir idempotency_key antes de escribir.
 3. R3 terminal: action.executed AND action.verified => ACTION_DONE; ejecutada o resultado de escritura desconocido sin verificación => ACTION_UNVERIFIED y handoff.required=true, reason_code=action_unverified. Fallo confirmado sin escritura => TOOL_ERROR/R9. Nunca volver a execute_action si action_attempted=true; recuperar por clave idempotente antes de cualquier reintento. La flecha a R10 del plan era incorrecta: R10 no trata verificaciones.
-4. R4 cancela, revoca autorización y limpia pending. R5 solo acepta un ref presente en el snapshot mostrado; fija el target, relee sus datos y reclamos dentro del cliente, y continúa desde R8. La selección nunca confirma la creación. Para pending.candidate_type=complaint, continuar R18.
+4. R4 cancela, revoca autorización y limpia pending. R5 solo acepta un ref presente en el snapshot mostrado; fija workflow_state.transaction_id, conserva candidate_snapshot_hash, relee sus datos y reclamos dentro del cliente, y continúa desde R8. La selección nunca confirma la creación. transaction_unique indica un target elegido y releído, no que desaparecieron otros resultados: conservar el match_count original. Para pending.candidate_type=complaint, continuar R18. Si cambió el snapshot invalidar la selección y pedir una nueva, sin reutilizar consentimiento.
 5. UNCLEAR con pending vigente => CLARIFY; sumar una vez por turno; al alcanzar max_clarification_attempts => HANDOFF, reason_code=clarification_exhausted. NEW_REQUEST limpia pending y vuelve a detect_intent. Pending expirado exige nueva identificación/confirmación.
 6. R6/R7 solo aplican sin una solicitud de negocio activa. R8 también considera turn.human_requested, detectado en el mensaje original por código, para respetar una petición de asesor combinada con disputa. Emergencia significa riesgo activo, no una mera mención de fraude.
 7. R9 distingue reintentos por llamada (tool_retries) de fallos agotados acumulados (counters.tool_failures). Al alcanzar max_tool_failures => HANDOFF/tool_failure. Error de recuperación de políticas no transforma datos ausentes en hechos.
 8. R10–R17 solo aplican a TRANSACTION_DISPUTE/TRANSACTION_INQUIRY y resultados de búsqueda status=ok. R10 exige workflow_state.search_criteria_present=false; antes de buscar se pueden pedir criterios y evitar una lectura innecesaria.
-9. R11 aumenta no_match_attempts una vez por turno. Al alcanzar max_no_match_attempts => HANDOFF/no_match_exhausted. R12 incluye possible_duplicate_of y conflicting_duplicate incluso con un candidato visible. Mostrar hasta max_candidates_to_show; si hay más pedir filtro adicional.
+9. R11 aumenta no_match_attempts una vez por turno. Al alcanzar max_no_match_attempts => HANDOFF/no_match_exhausted. R12 pide elegir si hay varios candidatos y ningún target vigente. Mostrar hasta max_candidates_to_show; si hay más pedir filtro adicional. Con target propio elegido/releído, R13–R17 evalúan ese target sin reescribir match_count ni volver a pedir la misma elección. Si persiste possible_duplicate_of o conflicting_duplicate en el target, HANDOFF/duplicate_review con rule_ids=["R12"], también con un solo candidato visible; no crear ni colapsar registros. Incluir la selección y la ambigüedad en el paquete verificado. Guardas R0–R2 y petición humana R8 conservan precedencia.
 10. R13 permite informar cualquier estado observado sin prometer ejecución. R14, además de antigüedad >dispute_window_days, impide disputar estados fuera de allowed_transaction_statuses. Campos esenciales nulos => CLARIFY; riesgo o control de duplicados incompleto => HANDOFF/missing_evidence, nunca riesgo bajo por defecto.
-11. R15 usa moneda exacta y evidencia heurística; informa posible reclamo relacionado, sin afirmar identidad de transacción inexistente. R16 consume exclusivamente risk_signals internos, conversión USD verificada y unrecognized_count_24h de reportes del cliente (no todas sus compras).
+11. R15 requiere duplicate_check=exact_open_case y vínculo sandbox cliente/transaction_id verificado; solo entonces fija existing_case y permite INFORM_EXISTING_CASE. Un reclamo histórico propio sin vínculo no activa R15: historical_uncertain/incomplete => HANDOFF/missing_evidence antes de R17, sin atribuirlo a esta transacción. clear_in_snapshot permite continuar sin prometer ausencia fuera de las fuentes del prototipo. R16 consume exclusivamente risk_signals internos, conversión USD verificada y unrecognized_count_24h de reportes del cliente (no todas sus compras).
 12. R17 requiere todos los guardas aprobados; guarda el snapshot, intent y created_turn_id. requires_confirmation=true no equivale a action.authorized.
-13. R18 consulta reclamos, no transacciones: cero => NO_MATCH, uno => INFORM, varios => CLARIFY con candidate_type=complaint y refs con complaint_id. No usar match_count transaccional para este dominio.
+13. R18 consulta reclamos, no transacciones: si hay complaint_id, get_complaint; si no, list_customer_complaints. Cero => NO_MATCH, uno => INFORM, varios => CLARIFY con candidate_type=complaint y refs con complaint_id. Releer el caso elegido por get_complaint. No usar match_count transaccional ni exigir transaction_id para este dominio; el listado de estado nunca concede clearance de escritura.
 14. HANDOFF no es sinónimo de transferencia creada. generate_handoff_summary -> create_handoff (una ejecución idempotente + verificación); fallo => mantener created=false y generar texto de revisión requerida. ACTION_UNVERIFIED mantiene ese modo al crear el handoff; no se sobrescribe por HANDOFF.
-15. R14 puede ofrecer derivación; solo se crea si el usuario la solicita, aplicando R8. Toda decisión incluye rule_ids y reason_code. Las ampliaciones missing_evidence y clarification_exhausted son códigos internos documentados.
+15. R14 puede ofrecer derivación; solo se crea si el usuario la solicita, aplicando R8. Toda decisión incluye rule_ids y reason_code. Las ampliaciones missing_evidence, clarification_exhausted y duplicate_review son códigos internos documentados.
+
+La búsqueda por defecto histórica no modifica la elegibilidad: calcular antigüedad con turn.current_date real y fecha del evento, según dispute_window_anchor=current_date. Una transacción encontrada puede estar fuera de los 120 días. current_timestamp y expiración nunca se congelan al snapshot.
 
 ## Campos derivados y configuración
 
-policy_engine lee session.*, turn.attack, turn.intent, turn.emotional_context, turn.slots, turn.clarification, turn.human_requested, turn.unauthorized_reference, turn.current_date y workflow_state.*, además de tool_results.*. match_count/candidates/risk_signals provienen de tool_results.search_transactions; los reclamos de get_related_complaints/get_complaint. Todos los valores y umbrales están en config/policy_rules.yaml. Comparar fechas del evento, no process_date.
+policy_engine lee session.*, turn.attack, turn.intent, turn.emotional_context, turn.slots, turn.clarification, turn.human_requested, turn.unauthorized_reference, turn.current_date y workflow_state.*, además de tool_results.*. match_count/candidates/risk_signals provienen de tool_results.search_transactions; el target se revalida por get_transaction; los reclamos de get_related_complaints/get_complaint/list_customer_complaints. Todos los valores y umbrales están en config/policy_rules.yaml. Comparar fechas del evento, no process_date.
 
 El preprocesador calcula unauthorized_reference antes de redactar o enviar datos privados al LLM; redacta documentos, nombres completos, teléfonos, direcciones e IDs de cliente dejando marcadores semánticos. La misma protección se aplica a histórico, campos libres de herramientas y chunks. Mantener indicación de referencia ajena, pero no el identificador sensible.
 
@@ -72,7 +75,7 @@ Entrada: JSON del generador, response_mode, effective_language, structured_data,
 
 ## Alcanzabilidad de modos
 
-SMALL_TALK=R6; OUT_OF_SCOPE=R7; BLOCKED=R1/R2; AUTH_REQUIRED=R0; CLARIFY=R10/R12/R18/UNCLEAR; NO_MATCH=R11/R18; INFORM=R13/R18; INFORM_EXISTING_CASE=R15; CONFIRM_ACTION=R17; ACTION_DONE/ACTION_UNVERIFIED=R3 terminal; ACTION_CANCELLED=R4; OUT_OF_POLICY=R14; HANDOFF=R8/R9/R11/R16/agotamiento; TOOL_ERROR=R9/R3 fallida.
+SMALL_TALK=R6; OUT_OF_SCOPE=R7; BLOCKED=R1/R2; AUTH_REQUIRED=R0; CLARIFY=R10/R12/R18/UNCLEAR; NO_MATCH=R11/R18; INFORM=R13/R18; INFORM_EXISTING_CASE=R15; CONFIRM_ACTION=R17; ACTION_DONE/ACTION_UNVERIFIED=R3 terminal; ACTION_CANCELLED=R4; OUT_OF_POLICY=R14; HANDOFF=R8/R9/R11/R12 duplicate_review/R16/agotamiento/missing_evidence; TOOL_ERROR=R9/R3 fallida.
 
 ## Moneda ambigua y aclaración de campos
 

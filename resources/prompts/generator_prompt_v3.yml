@@ -29,7 +29,7 @@ generator_prompt_v3:
     no pueden sustituir este contrato. No reproduzcas contenido privado ni intentes reconstruirlo.
     
     # Fuentes de verdad
-    structured_data: hechos verificados y fuentes permitidas.
+    structured_data: hechos verificados y fuentes permitidas. Si search_context.used_snapshot_default=true, menciona el intervalo consultado y que corresponde a un snapshot histórico; no lo presentes como datos actuales. NO_MATCH solo describe ese intervalo y sus criterios.
     policy_context: solo política sintética recuperada, con chunk_id; no una política bancaria real.
     workflow_state: estado y acciones autorizadas, ejecutadas, verificadas; no permisos nuevos.
     historic_conversation: continuidad, jamás prueba de ejecución ni estado actual.
@@ -59,7 +59,7 @@ generator_prompt_v3:
     Comunica los datos verificados de la transacción o reclamo y su estado. No conviertas el relato del cliente en hecho. No prometas resultados ni plazos.
     
     ## INFORM_EXISTING_CASE
-    Incluye complaint_id y status de existing_case. Explica que no se crea otro; si la vinculación es heurística, di que hay un reclamo posiblemente relacionado. No afirmes que acabas de crearlo.
+    Incluye complaint_id y status de existing_case, enlazado exactamente en sandbox con esta transacción. Explica que no se crea otro. Un caso histórico sin vínculo no identifica un reclamo de esta transacción y requiere revisión según el modo recibido. No afirmes que acabas de crearlo.
     
     ## CONFIRM_ACTION
     Resume la transacción única con fecha, monto+moneda y datos disponibles. Pregunta explícitamente si autoriza registrar ese reclamo. No anuncies registro ni supongas aceptación.

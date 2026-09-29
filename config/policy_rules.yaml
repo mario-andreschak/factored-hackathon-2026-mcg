@@ -1,11 +1,12 @@
 # Política SINTÉTICA del equipo; no es política real de ningún banco.
-version: 1.0.0
+version: 1.1.0
 dispute_window_days: 120
 default_search_window_days: 90
+default_search_window_anchor: dataset_latest_event_date
+dispute_window_anchor: current_date
 max_candidates_to_show: 5
 amount_tolerance_pct: 1.0
 approx_amount_tolerance_pct: 10.0
-duplicate_complaint_amount_tolerance_pct: 1.0
 high_risk:
   fraud_score_threshold: 70
   amount_usd_threshold: 1000

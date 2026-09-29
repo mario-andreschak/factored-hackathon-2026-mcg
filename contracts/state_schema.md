@@ -138,20 +138,39 @@ Estado interno; jamás enviar completo al LLM.
       "match_count": 0,
       "candidates": [],
       "risk_signals": {},
-      "data_quality_flags": []
+      "data_quality_flags": [],
+      "search_context": {
+        "date_from": "YYYY-MM-DD",
+        "date_to": "YYYY-MM-DD",
+        "date_basis": "event_date",
+        "snapshot_id": "str",
+        "used_snapshot_default": false,
+        "coverage_complete": false
+      }
     },
     "get_related_complaints": {
       "status": "ok | error",
-      "complaints": []
+      "complaints": [],
+      "historical_candidates": [],
+      "match_method": "exact_sandbox",
+      "duplicate_check": "clear_in_snapshot | exact_open_case | historical_uncertain | incomplete",
+      "data_quality_flags": []
     },
     "get_complaint": {
       "status": "ok | error",
       "complaint": null
     },
+    "list_customer_complaints": {
+      "status": "ok | error",
+      "match_count": 0,
+      "complaints": [],
+      "coverage_complete": false
+    },
     "get_transaction": {
       "status": "ok|error",
       "transaction": null,
-      "risk_signals": {}
+      "risk_signals": {},
+      "data_quality_flags": []
     },
     "get_recent_interactions": {
       "status": "ok|error",
@@ -297,10 +316,17 @@ Estado interno; jamás enviar completo al LLM.
 | tool_results.search_transactions.candidates | array | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | tool_results.search_transactions.risk_signals | object | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | tool_results.search_transactions.data_quality_flags | array | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
+| tool_results.search_transactions.search_context | object: date_from, date_to, date_basis, snapshot_id, used_snapshot_default, coverage_complete | adaptador de búsqueda; metadatos del snapshot validados en código | política; generador recibe contexto histórico mínimo |
 | tool_results.get_related_complaints.status | ok | error | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | tool_results.get_related_complaints.complaints | array | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
+| tool_results.get_related_complaints.historical_candidates | array de complaint_id, status, linkage=unknown | adaptador de reclamos; filtro de propiedad antes de consultar | política y paquete humano; no se proyecta como relación transaccional |
+| tool_results.get_related_complaints.match_method | exact_sandbox | adaptador de reclamos | política |
+| tool_results.get_related_complaints.duplicate_check | clear_in_snapshot / exact_open_case / historical_uncertain / incomplete | adaptador de reclamos con cobertura verificada | política; guardas de escritura |
+| tool_results.get_related_complaints.data_quality_flags | array | adaptador de reclamos | política y paquete humano |
+| tool_results.list_customer_complaints | status, match_count, complaints, coverage_complete | adaptador de reclamos filtrado por cliente | R18; no concede autorización de escritura |
+| tool_results.get_transaction.data_quality_flags | array; señales recomputadas del target propio | adaptador de transacciones | política y paquete humano; no flags de candidatos descartados |
 | tool_results.get_complaint.status | ok | error | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
-| tool_results.get_complaint.complaint | str|null | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
+| tool_results.get_complaint.complaint | object|null; transaction_id=null/linkage=unknown en historial, exact_sandbox en recibo | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | tool_results.get_transaction.status | ok|error | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | tool_results.get_transaction.transaction | str|null | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | tool_results.get_transaction.risk_signals | object | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
@@ -334,6 +360,9 @@ Estado interno; jamás enviar completo al LLM.
 - Cada turno reinicia resultados de clasificación, validación y herramientas. Los resultados anteriores se revalidan antes de usarse. trace es evidencia operativa, nunca chain-of-thought.
 - pending se conserva durante la resolución y se limpia después de consumir la selección/confirmación, al cambiar de tema, al cancelar o cuando turns_waiting > pending_expiry_turns. La expiración invalida toda autorización.
 - Una confirmación solo corresponde al target y snapshot mostrados, dentro de la misma sesión. No se autoriza a partir del texto reescrito sin contrastarlo con el mensaje original saneado.
+- turn.current_date es la fecha real del cliente; turn.current_timestamp y TTL usan reloj real. El default histórico solo afecta search_context y no mueve el plazo de disputa.
+- transaction_unique significa un target propio releído, de una búsqueda completa con una coincidencia o de una selección válida del snapshot. Conservar match_count de la búsqueda; un target con señal de duplicado persistente exige duplicate_review, sin repetición de la misma selección.
+- existing_case representa solo un vínculo sandbox exacto verificado. historical_candidates conserva casos propios sin vínculo y no se presenta como relación transaccional. duplicate_check=incomplete/historical_uncertain impide autorización.
 - Contadores de clarificación y búsqueda fallida aumentan una vez por turno (last_counted_turn_id), no por cada reentrada al motor. Se reinician al abrir un workflow nuevo.
 - action_attempted y action_outcome evitan bucles de escritura cuando verify_action vuelve al motor. executed no implica verified. Un timeout de escritura deja outcome=unknown.
 - El estado completo es interno. workflow_state y pending que reciben los LLM son proyecciones con lista permitida; sin customer_id, risk_signals, idempotency_key ni campos privados. Los candidatos de pending son la excepción mínima necesaria para seleccionar una referencia, no una autorización.
