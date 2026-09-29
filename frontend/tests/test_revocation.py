@@ -311,21 +311,71 @@ class RevocationTests(unittest.IsolatedAsyncioTestCase):
         restored._transport = httpx.MockTransport(lambda _: httpx.Response(200, json={"revoked": True}))
         self.assertEqual(await restored.attempt_revoke(self.session), "confirmed")
 
-    async def test_subject_reassignment_cannot_revoke_under_a_different_customer(self):
-        self.service.queue_revoke("customer-a", self.session, self.expiry)
-        reassigned = ChatService({**self.config, "principal_customers": {
-            "subject-a": "customer-b"}}, self.root)
-        requests = []
-        reassigned._transport = httpx.MockTransport(lambda request: requests.append(request) or
-                                                    httpx.Response(200, json={"revoked": True}))
-        self.assertEqual(await reassigned.attempt_revoke(self.session), "pending")
-        self.assertEqual(requests, [])
-        self.assertEqual(reassigned.revocation_diagnostics()["last_error_code"],
-                         "revoke_configuration_unavailable")
-        restored = ChatService(self.config, self.root)
-        restored._transport = httpx.MockTransport(lambda _: httpx.Response(200, json={"revoked": True}))
-        self.force_due()
-        self.assertEqual(await restored.attempt_revoke(self.session), "confirmed")
+    async def test_changed_admission_authority_stalls_revoke_until_original_policy_returns(self):
+        def chat_reply(_):
+            return httpx.Response(200, json={"conversation_id": str(uuid.uuid4()), "status": "completed",
+                "choices": [{"message": {"role": "assistant", "content": "Visible reply"}}]})
+
+        changes = {
+            "issuer": {"frontend_issuer": "different-frontend"},
+            "model": {"model": "flow-Banking_Changed"},
+            "customer": {"principal_customers": {"subject-a": "customer-b"}},
+        }
+        for authority, override in changes.items():
+            with self.subTest(authority=authority):
+                session = str(uuid.uuid4())
+                self.service._transport = httpx.MockTransport(chat_reply)
+                await self.service.send("customer-a", session, self.expiry, "Hola")
+                self.assertEqual(self.service.queue_revoke("customer-a", session, self.expiry), "pending")
+
+                changed = ChatService({**self.config, **override}, self.root)
+                sent = []
+                changed._transport = httpx.MockTransport(
+                    lambda request: sent.append(request) or httpx.Response(200, json={"revoked": True}))
+                self.assertEqual(await changed.attempt_revoke(session), "pending")
+                self.assertEqual(sent, [])
+                diagnostics = changed.revocation_diagnostics()
+                self.assertGreaterEqual(diagnostics["pending"], 1)
+                self.assertEqual(diagnostics["last_error_code"], "revoke_configuration_unavailable")
+                with changed._connection() as db:
+                    state = db.execute("SELECT state FROM pending_revocations WHERE session_id=?",
+                                       (session,)).fetchone()[0]
+                self.assertEqual(state, "pending")
+
+                with self.service._connection() as db:
+                    db.execute("UPDATE pending_revocations SET next_attempt_at=0 WHERE session_id=?", (session,))
+                self.service._transport = httpx.MockTransport(
+                    lambda _: httpx.Response(200, json={"revoked": True}))
+                self.assertEqual(await self.service.attempt_revoke(session), "confirmed")
+
+    async def test_trusted_key_only_rotation_confirms_old_admission_revoke(self):
+        self.service._transport = httpx.MockTransport(lambda _: httpx.Response(200, json={
+            "conversation_id": str(uuid.uuid4()), "status": "completed",
+            "choices": [{"message": {"role": "assistant", "content": "Visible reply"}}]}))
+        await self.service.send("customer-a", self.session, self.expiry, "Hola")
+        self.assertEqual(self.service.queue_revoke("customer-a", self.session, self.expiry), "pending")
+
+        new_signer = Ed25519PrivateKey.generate()
+        new_key_file = self.root / "rotated-signer.pem"
+        new_key_file.write_bytes(new_signer.private_bytes(serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
+        rotated = ChatService({**self.config, "frontend_signing_key_file": str(new_key_file),
+                               "frontend_kid": "approved-front-rotated"}, self.root)
+        seen = []
+
+        def trusted_worker(request):
+            assertion = request.headers["X-Flujo-User-Assertion"]
+            claims = jwt.decode(assertion, new_signer.public_key(), algorithms=["EdDSA"],
+                                issuer="approved-frontend", audience="flujo-banking-ingress")
+            self.assertEqual(jwt.get_unverified_header(assertion)["kid"], "approved-front-rotated")
+            self.assertEqual((claims["sub"], claims["session_id"]), ("subject-a", self.session))
+            seen.append(request)
+            return httpx.Response(200, json={"revoked": True})
+
+        rotated._transport = httpx.MockTransport(trusted_worker)
+        self.assertEqual(await rotated.attempt_revoke(self.session), "confirmed")
+        self.assertEqual(len(seen), 1)
+        self.assertEqual(rotated.revocation_diagnostics()["pending"], 0)
 
 
 def _api_with_chat(dataset_settings, tmp_path):
