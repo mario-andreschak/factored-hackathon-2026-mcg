@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import shutil
 import time
+from contextlib import closing
+from dataclasses import replace
 
 from .common import TXN_BUCKETS, Settings, connect, sql_bucket, sql_path
 
@@ -23,7 +25,12 @@ NEAR_DUP_WINDOW = "INTERVAL 1 HOUR"
 
 
 def run(settings: Settings, run_id: str, stats: dict) -> None:
-    con = connect(settings)
+    # Gold reads only local silver, including a legacy snapshot migration.
+    with closing(connect(replace(settings, source="", s3={}))) as con:
+        _run(con, settings, run_id, stats)
+
+
+def _run(con, settings: Settings, run_id: str, stats: dict) -> None:
     settings.gold.mkdir(parents=True, exist_ok=True)
     s = lambda t: sql_path(settings.silver / f"{t}.parquet")
     have = lambda t: (settings.silver / f"{t}.parquet").exists()

@@ -3,6 +3,7 @@
 **
 !Dockerfile.banking-mcp
 !Dockerfile.flujo-banking
+!Dockerfile.flujo-banking-integration
 !requirements-mcp.txt
 !requirements-pipeline.txt
 !requirements-s3.txt

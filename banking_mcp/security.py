@@ -1,4 +1,4 @@
-"""Request authority and opaque references; none of these are model arguments."""
+"""Verified authority and opaque references. Selectors alone never authorize bound reads."""
 from __future__ import annotations
 
 import hashlib
@@ -117,11 +117,28 @@ class Authorizer:
         self.config, self.store = config, store
 
     def authorize(self, tool: str, args: dict, meta: dict | None) -> Principal:
-        if self.config.mode == "synthetic-demo":
-            return Principal("synthetic-demo", self.config.demo_customer, "synthetic-demo",
-                             "synthetic-demo", int(time.time()) + MAX_ASSERTION_TTL)
-        token = (meta or {}).get(ASSERTION_META)
-        return self._verify(token, tool, args, TOKEN_TYPE, "bank:read")
+        if self.config.mode == "operator-test":
+            customer, conversation = args.get("customer_id"), args.get("conversation_id")
+            if (not isinstance(customer, str) or customer not in self.config.approved_customers
+                or not isinstance(conversation, str) or not 1 <= len(conversation) <= 128
+                or any(c.isspace() or ord(c) < 32 for c in conversation)
+                or "@" in conversation or "${" in conversation):
+                raise BankError("authorization_denied")
+            # A/B selection is intentionally permitted in a private test thread. Handles
+            # still bind its customer and conversation independently, including on restart.
+            principal = Principal("operator-test", customer, "operator-test", conversation,
+                                  int(time.time()) + MAX_ASSERTION_TTL)
+        elif self.config.mode == "synthetic-demo":
+            principal = Principal("synthetic-demo", self.config.demo_customer, "synthetic-demo",
+                                  "synthetic-demo", int(time.time()) + MAX_ASSERTION_TTL)
+        else:
+            token = (meta or {}).get(ASSERTION_META)
+            principal = self._verify(token, tool, args, TOKEN_TYPE, "bank:read")
+        # Even a validly signed caller cannot change the mapped customer or conversation.
+        for name, expected in (("customer_id", principal.customer), ("conversation_id", principal.conversation)):
+            if name in args and args[name] != expected:
+                raise BankError("authorization_denied")
+        return principal
 
     def revoke_assertion(self, token: str):
         if self.config.mode != "delegated":

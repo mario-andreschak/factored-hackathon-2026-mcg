@@ -5,10 +5,10 @@
 
 Why this exists: both label sources in the organizer dataset are unlearnable (see
 ml/inspect_texts.py and ml/inspect_fraud.py), so the learned component is trained on
-team-authored utterances (ml/data/router_train.csv) and evaluated on a SEPARATE held-out
-set written by someone who did not see the training data (ml/data/router_test.csv).
-Until that file exists, ml/data/router_test_provisional.csv is used and every report is
-labelled PROVISIONAL.
+AI-authored utterances (ml/data/router_train.csv) and evaluated on a SEPARATE held-out
+set independently AI-authored without seeing the training data (ml/data/router_test.csv).
+Its labels await human review; see docs/ml/router_holdout_provenance.md. If that file is
+absent, ml/data/router_test_provisional.csv is used and reports are labelled PROVISIONAL.
 
 Design
 - Baseline: ordered keyword rules (security first), no learning.
@@ -196,7 +196,7 @@ def train_and_evaluate() -> int:
 
     results = {
         "test_set": "PROVISIONAL (written by the same author as train)" if provisional
-                    else "held-out, team-authored",
+                    else "held-out, independently AI-authored; human review pending (see provenance)",
         "test_file": (TEST_PROVISIONAL if provisional else TEST).name,
         "train_n": len(train), "test_n": len(test),
         "selected_C": C, "cv_macro_f1_by_C": grid, "tau": tau,
@@ -248,7 +248,7 @@ def render(r: dict) -> str:
     L = ["# Intent router: evaluation", ""]
     if r["test_set"].startswith("PROVISIONAL"):
         L += ["> **PROVISIONAL.** The test set was written by the same author as the training set, "
-              "so these numbers are optimistic. They will be replaced when the team-authored "
+              "so these numbers are optimistic. They will be replaced when the independently authored "
               "`ml/data/router_test.csv` lands.", ""]
     L += [f"Train {r['train_n']} phrases (team/AI-authored, `router_train.csv`) · test {r['test_n']} phrases "
           f"(`{r['test_file']}`, {r['test_set']}) · C = {r['selected_C']} and abstention τ = {r['tau']}, "

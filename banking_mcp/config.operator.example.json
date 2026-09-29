@@ -1,0 +1,9 @@
+{
+  "mode": "operator-test",
+  "data_dir": "/banking-data",
+  "state_db": "/banking-state/operator.db",
+  "service_token": "REPLACE_WITH_AT_LEAST_32_RANDOM_CHARACTERS",
+  "approved_customers": ["APPROVED_SYNTHETIC_CUSTOMER_A", "APPROVED_SYNTHETIC_CUSTOMER_B"],
+  "max_active_reads": 8,
+  "max_queued_reads": 512
+}

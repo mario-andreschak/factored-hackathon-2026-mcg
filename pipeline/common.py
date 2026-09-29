@@ -48,9 +48,6 @@ class Settings:
 # atomically (write temp file + os.replace), so a reader sees either the old or the new
 # build, never a half-written one. Builds are immutable once written; a failed build is
 # never published, so the previous good snapshot keeps serving.
-KEEP_BUILDS = 3
-
-
 def current_build(out_dir: Path | str) -> Path:
     out_dir = Path(out_dir)
     pointer = out_dir / "CURRENT"
@@ -72,20 +69,15 @@ def current_silver(out_dir: Path | str) -> Path:
 
 def publish(out_dir: Path | str, build_id: str) -> None:
     import os
-    import shutil
     out_dir = Path(out_dir)
     if not (out_dir / "builds" / build_id).is_dir():
         raise FileNotFoundError(build_id)
     tmp = out_dir / f"CURRENT.{build_id}.tmp"
     tmp.write_text(build_id, encoding="utf-8")
     os.replace(tmp, out_dir / "CURRENT")
-    # Prune old builds, never the published one. Readers resolve CURRENT per request, so
-    # a snapshot is only removed after KEEP_BUILDS newer builds exist.
-    builds = sorted((p for p in (out_dir / "builds").iterdir() if p.is_dir()),
-                    key=lambda p: p.name, reverse=True)
-    for old in builds[KEEP_BUILDS:]:
-        if old.name != build_id:
-            shutil.rmtree(old, ignore_errors=True)
+    # A request can pin an older build across arbitrarily many publications. Without
+    # reader leases, age/count is not evidence that deletion is safe. Keep builds until
+    # an operator performs offline cleanup with every reader stopped.
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -112,6 +104,14 @@ def contracts_digest() -> str:
 
 def connect(settings: Settings) -> duckdb.DuckDBPyConnection:
     con = duckdb.connect()
+    try:
+        return _configure_connection(con, settings)
+    except BaseException:
+        con.close()
+        raise
+
+
+def _configure_connection(con: duckdb.DuckDBPyConnection, settings: Settings) -> duckdb.DuckDBPyConnection:
     if settings.threads:
         con.execute(f"SET threads = {int(settings.threads)}")
     if settings.memory_limit:

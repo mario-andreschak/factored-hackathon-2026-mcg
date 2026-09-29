@@ -16,11 +16,12 @@ import shutil
 import sys
 import time
 import uuid
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
 from . import bronze, gold, lookup, report, silver
-from .common import Settings, current_gold, current_silver, load_env, publish
+from .common import Settings, current_build, current_gold, load_env, publish
 
 DEFAULT_TABLES = ["customers", "products", "transactions", "call_center_interactions",
                   "call_transcripts", "complaints"]
@@ -50,9 +51,16 @@ def cmd_run(a) -> int:
         if prev_manifest.get("source_fingerprint"):
             stats["_source_fingerprint"] = prev_manifest["source_fingerprint"]
     settings.build_id = run_id
+    lineage = settings.bronze / "source_objects.json"
+    if "silver" in stages and "bronze" not in stages and not lineage.is_file():
+        raise RuntimeError("validated bronze inventory missing; run bronze before silver")
     if "gold" in stages and "silver" not in stages:
         # gold-only: this snapshot is built from a copy of the last published silver
-        shutil.copytree(current_silver(settings.out_dir), settings.silver)
+        previous = current_build(settings.out_dir)
+        lineage = previous / "source_objects.json"
+        if not lineage.is_file():
+            raise RuntimeError("published source inventory missing; rebuild from bronze")
+        shutil.copytree(previous / "silver", settings.silver)
     t0 = time.perf_counter()
     published = False
     for stage in stages:
@@ -69,14 +77,17 @@ def cmd_run(a) -> int:
             print(f"bench   per-customer lookup        p50 {b['p50_ms']} ms | p95 {b['p95_ms']} ms", flush=True)
         # The MCP must pin lineage to the same immutable snapshot as the served rows.
         # A report beside CURRENT can be overwritten by the next ingestion run.
-        lineage = settings.report_dir / "source_objects.json"
-        if lineage.exists():
-            inventory = json.loads(lineage.read_text(encoding="utf-8"))
-            if inventory.get("fingerprint") == stats.get("_source_fingerprint"):
-                shutil.copyfile(lineage, settings.build_dir / "source_objects.json")
+        inventory = json.loads(lineage.read_text(encoding="utf-8"))
+        if not all(t in inventory["tables"] for t in settings.tables):
+            raise RuntimeError("source inventory does not cover requested tables; rebuild from bronze")
+        stats["_source_fingerprint"] = inventory["fingerprint"]
+        shutil.copyfile(lineage, settings.build_dir / "source_objects.json")
         (settings.build_dir / "snapshot.json").write_text(json.dumps({
             "build_id": run_id, "source_fingerprint": stats.get("_source_fingerprint"),
+            "source_validation": inventory.get("source_validation", "legacy_inventory"),
             "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "gold_files": {p.relative_to(settings.gold).as_posix(): p.stat().st_size
+                           for p in sorted(settings.gold.rglob("*.parquet"))},
         }) + "\n", encoding="utf-8")
         publish(settings.out_dir, run_id)
         published = True
@@ -117,10 +128,11 @@ def cmd_verify(a) -> int:
     if a.sample:
         import duckdb
         from .common import sql_path
-        row = duckdb.connect().execute(f"""
-            SELECT transaction_id, customer_id, process_date::VARCHAR
-            FROM read_parquet('{sql_path(current_gold(a.out) / "transactions_by_customer")}/**/*.parquet')
-            WHERE ownership_valid USING SAMPLE 1 ROWS""").fetchone()
+        with closing(duckdb.connect()) as con:
+            row = con.execute(f"""
+                SELECT transaction_id, customer_id, process_date::VARCHAR
+                FROM read_parquet('{sql_path(current_gold(a.out) / "transactions_by_customer")}/**/*.parquet')
+                WHERE ownership_valid USING SAMPLE 1 ROWS""").fetchone()
         a.transaction_id, a.customer, a.date = row
         print(f"sampled {a.transaction_id} for {a.customer} on {a.date}")
     if not (a.transaction_id and a.customer and a.date):

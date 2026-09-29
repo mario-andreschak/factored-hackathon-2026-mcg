@@ -8,6 +8,8 @@ raw = silver + quarantined + duplicates_removed for every table.
 from __future__ import annotations
 
 import time
+from contextlib import closing
+from dataclasses import replace
 
 from .common import Settings, connect, ident, load_contracts, sql_path
 
@@ -44,8 +46,13 @@ def _typed_select(spec: dict, bronze_cols: set[str], table: str) -> tuple[str, s
 
 
 def run(settings: Settings, run_id: str, stats: dict) -> None:
+    # Silver reads only local landed Parquet; it needs no S3 credentials/extensions.
+    with closing(connect(replace(settings, source="", s3={}))) as con:
+        _run(con, settings, run_id, stats)
+
+
+def _run(con, settings: Settings, run_id: str, stats: dict) -> None:
     contracts = load_contracts()
-    con = connect(settings)
     settings.silver.mkdir(parents=True, exist_ok=True)
     settings.quarantine.mkdir(parents=True, exist_ok=True)
     failures = []

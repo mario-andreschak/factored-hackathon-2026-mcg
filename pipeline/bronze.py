@@ -10,6 +10,7 @@ import csv
 import hashlib
 import json
 import time
+from contextlib import closing
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,13 +41,14 @@ def list_objects(settings: Settings) -> list[dict]:
     if root.startswith("s3://"):
         bucket, _, prefix = root[len("s3://"):].partition("/")
         prefix = prefix.rstrip("/") + "/" if prefix else ""
-        pages = s3_client(settings).get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix)
-        for page in pages:
-            for obj in page.get("Contents", []):
-                if obj["Key"].endswith(".csv"):
-                    out.append({"uri": f"s3://{bucket}/{obj['Key']}", "key": obj["Key"][len(prefix):],
-                                "bytes": obj["Size"], "etag": obj["ETag"].strip('"'),
-                                "last_modified": obj["LastModified"].isoformat(timespec="seconds")})
+        with closing(s3_client(settings)) as client:
+            pages = client.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix)
+            for page in pages:
+                for obj in page.get("Contents", []):
+                    if obj["Key"].endswith(".csv"):
+                        out.append({"uri": f"s3://{bucket}/{obj['Key']}", "key": obj["Key"][len(prefix):],
+                                    "bytes": obj["Size"], "etag": obj["ETag"].strip('"'),
+                                    "last_modified": obj["LastModified"].isoformat(timespec="seconds")})
     else:
         base = Path(root)
         for p in sorted(base.rglob("*.csv")):
@@ -94,16 +96,28 @@ def read_headers(settings: Settings, files: list[str]) -> list[tuple[str, ...]]:
 
     def one(uri: str) -> tuple[str, ...]:
         bucket, key = uri[len("s3://"):].split("/", 1)
-        body = client.get_object(Bucket=bucket, Key=key, Range="bytes=0-65535")["Body"].read()
+        with closing(client.get_object(Bucket=bucket, Key=key, Range="bytes=0-65535")["Body"]) as stream:
+            body = stream.read()
         return parse(body.decode("utf-8-sig", errors="replace").splitlines()[0])
 
-    with ThreadPoolExecutor(max_workers=32) as pool:
-        return list(pool.map(one, files))
+    try:
+        with ThreadPoolExecutor(max_workers=32) as pool:
+            return list(pool.map(one, files))
+    finally:
+        client.close()
 
 
 def run(settings: Settings, run_id: str, stats: dict) -> None:
-    con = connect(settings)
+    with closing(connect(settings)) as con:
+        _run(con, settings, run_id, stats)
+
+
+def _run(con, settings: Settings, run_id: str, stats: dict) -> None:
     settings.bronze.mkdir(parents=True, exist_ok=True)
+    # A failed landing can leave partly overwritten shared bronze. Never let a later
+    # silver-only run attach the previous successful inventory to those rows.
+    marker = settings.bronze / "source_objects.json"
+    marker.unlink(missing_ok=True)
     found = discover(con, settings)
     missing = [t for t in settings.tables if t not in found]
     if missing:
@@ -111,17 +125,17 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
 
     inventory = {t: [{k: o[k] for k in ("key", "bytes", "etag", "last_modified")} for o in found[t]]
                  for t in settings.tables}
-    settings.report_dir.mkdir(parents=True, exist_ok=True)
-    (settings.report_dir / "source_objects.json").write_text(json.dumps({
+    source_inventory = {
         "run_id": run_id,
-        "note": "Exact source object versions read by this build. Keys are relative to the "
-                "source root; the bucket name is intentionally omitted.",
+        "note": "Source inventory was unchanged between listing and completed ingestion. "
+                "This assumes static inputs, not an immutable S3 versioned read. Keys are "
+                "relative to the source root; the bucket name is intentionally omitted.",
+        "source_validation": "unchanged_inventory_after_ingestion",
         "fingerprint": fingerprint([o for objs in found.values() for o in objs
                                     if table_of(o["key"]) in settings.tables]),
         "tables": {t: {"fingerprint": fingerprint(found[t]), "objects": inventory[t]}
                    for t in settings.tables},
-    }, indent=1) + "\n", encoding="utf-8")
-    stats["_source_fingerprint"] = fingerprint([o for t in settings.tables for o in found[t]])
+    }
 
     for table in settings.tables:
         files = [o["uri"] for o in found[table]]
@@ -174,3 +188,16 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
         }
         print(f"bronze  {table:<26} {rows:>11,} rows from {len(files):>5} objects "
               f"({stats[table]['bronze']['seconds']}s)", flush=True)
+
+    # The source is a static hackathon inventory, not an immutable versioned read API.
+    # Re-list after both ranged headers and DuckDB reads; changed/deleted/added inputs
+    # fail closed before any derived snapshot or successful lineage is published.
+    consumed = [o for t in settings.tables for o in found[t]]
+    after = [o for o in list_objects(settings) if table_of(o["key"]) in settings.tables]
+    if fingerprint(consumed) != fingerprint(after):
+        raise RuntimeError("bronze source inventory changed during ingestion; retry from bronze")
+    stats["_source_fingerprint"] = source_inventory["fingerprint"]
+    payload = json.dumps(source_inventory, indent=1) + "\n"
+    marker.write_text(payload, encoding="utf-8")
+    settings.report_dir.mkdir(parents=True, exist_ok=True)
+    (settings.report_dir / "source_objects.json").write_text(payload, encoding="utf-8")

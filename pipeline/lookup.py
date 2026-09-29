@@ -10,8 +10,10 @@ The caller MUST pass the customer_id from the verified session, never from model
 from __future__ import annotations
 
 import statistics
+import atexit
 import threading
 import time
+from contextlib import closing
 from pathlib import Path
 
 import duckdb
@@ -33,6 +35,18 @@ def _default_connection() -> duckdb.DuckDBPyConnection:
         if _DEFAULT is None:
             _DEFAULT = duckdb.connect()
         return _DEFAULT
+
+
+def close_default_connection() -> None:
+    """Release the helper connection after all lookup callers have stopped."""
+    global _DEFAULT
+    with _DEFAULT_LOCK:
+        if _DEFAULT is not None:
+            _DEFAULT.close()
+            _DEFAULT = None
+
+
+atexit.register(close_default_connection)
 
 
 def get_customer_transactions(gold_dir: Path | str, customer_id: str, limit: int = 20,
@@ -75,11 +89,14 @@ def bench_concurrent(gold_dir: Path | str, levels=(1, 50, 500), requests: int = 
     so levels are comparable. This measures the storage layer in one process on one machine;
     a deployed service adds network and server overhead on top.
     """
+    with closing(duckdb.connect()) as base:
+        return _bench_concurrent(base, gold_dir, levels, requests)
+
+
+def _bench_concurrent(base, gold_dir, levels, requests) -> dict:
     import os
     from concurrent.futures import ThreadPoolExecutor
-
     gold_dir = Path(gold_dir)
-    base = duckdb.connect()
     ids = [r[0] for r in base.execute(f"""
         SELECT DISTINCT customer_id FROM read_parquet(
             '{sql_path(gold_dir / "transactions_by_customer")}/**/*.parquet')
@@ -112,7 +129,11 @@ def bench_concurrent(gold_dir: Path | str, levels=(1, 50, 500), requests: int = 
 
 
 def bench(gold_dir: Path | str, samples: int = 50) -> dict:
-    con = duckdb.connect()
+    with closing(duckdb.connect()) as con:
+        return _bench(con, gold_dir, samples)
+
+
+def _bench(con, gold_dir, samples) -> dict:
     ids = [r[0] for r in con.execute(f"""
         SELECT DISTINCT customer_id FROM read_parquet(
             '{sql_path(Path(gold_dir) / "transactions_by_customer")}/**/*.parquet')
