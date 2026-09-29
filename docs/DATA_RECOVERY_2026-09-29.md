@@ -49,7 +49,8 @@ flowchart LR
 | Main `b5d0ef2` / `031db90`; open [PR #7](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/7) | Proposed graph/contracts/policies and YAML prompts; these do not implement the named graph nodes or banking write tools |
 
 The primary local checkout was at `6c6cef7`, behind the MCP work. Recovery uses
-`codex/data-recovery`, with PR #6 and newer main changes combined in an isolated checkout.
+`codex/data-recovery`, based on PR #6 in an isolated checkout. Newer main proposals
+were reviewed separately; this recovery PR changes the data workflow.
 The older direct-S3 plans are historical. For runtime behavior, use
 [the MCP implementation](BANKING_MCP_IMPLEMENTATION.md) and
 [banking_mcp/README.md](../banking_mcp/README.md).
