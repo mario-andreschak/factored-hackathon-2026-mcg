@@ -928,6 +928,7 @@ type ActionResult = {
   reason?: string;
   target_reference?: string;
   recovery_exhausted?: boolean;
+  review_reference?: string;
   handoff?: { state?: string };
 };
 
@@ -974,7 +975,12 @@ const actionCopy = {
     unverified:
       "No pudimos verificar la solicitud anterior. Consulta su estado antes de continuar.",
     recoveryExhausted:
-      "Se agotó la recuperación segura de esta solicitud. No inicies otra; pide revisión del equipo.",
+      "Se agotó la recuperación segura. La solicitud sigue sin resolver y bloqueada. La referencia visible no avisa al equipo ni indica que alguien la haya tomado.",
+    recoveryExhaustedWithoutReference:
+      "Se agotó la recuperación segura. La solicitud sigue sin resolver y bloqueada. Pide ayuda al equipo que te dio acceso a la demo.",
+    reviewReference: "Referencia para revisión",
+    shareReviewReference:
+      "Copia esta referencia y compártela con el equipo que te dio acceso a la demo.",
     statusFailed: "No pudimos verificar el estado. Intenta de nuevo más tarde.",
     initialStatusFailed:
       "No pudimos verificar la solicitud anterior. Consulta su estado antes de iniciar otra.",
@@ -1019,7 +1025,12 @@ const actionCopy = {
     unverified:
       "Não foi possível verificar a solicitação anterior. Consulte o estado antes de continuar.",
     recoveryExhausted:
-      "A recuperação segura desta solicitação se esgotou. Não inicie outra; peça revisão da equipe.",
+      "A recuperação segura se esgotou. A solicitação continua sem resolução e bloqueada. A referência visível não avisa a equipe nem indica que alguém assumiu o caso.",
+    recoveryExhaustedWithoutReference:
+      "A recuperação segura se esgotou. A solicitação continua sem resolução e bloqueada. Peça ajuda à equipe que lhe deu acesso à demonstração.",
+    reviewReference: "Referência para análise",
+    shareReviewReference:
+      "Copie esta referência e compartilhe com a equipe que lhe deu acesso à demonstração.",
     statusFailed:
       "Não foi possível verificar o estado. Tente novamente mais tarde.",
     initialStatusFailed:
@@ -1044,7 +1055,10 @@ function fallbackActionMessage(
   language: ActionLanguage,
 ): string {
   const copy = actionCopy[language];
-  if (action.recovery_exhausted) return copy.recoveryExhausted;
+  if (action.recovery_exhausted)
+    return action.review_reference
+      ? copy.recoveryExhausted
+      : copy.recoveryExhaustedWithoutReference;
   if (action.state === "preparing") return copy.preparing;
   if (action.state === "pending_confirmation") return copy.pendingConfirmation;
   if (action.state === "intake_verified") return copy.intakeVerified;
@@ -1489,6 +1503,14 @@ export function Assistant({
               <p role="status" className="action-result">
                 {action.message ||
                   fallbackActionMessage(action, actionLanguage)}
+              </p>
+            )}
+            {action?.recovery_exhausted && action.review_reference && (
+              <p className="action-result">
+                <strong>{copy.reviewReference}:</strong>{" "}
+                <code>{action.review_reference}</code>
+                <br />
+                {copy.shareReviewReference}
               </p>
             )}
             {actionBlocksNewCharge && (

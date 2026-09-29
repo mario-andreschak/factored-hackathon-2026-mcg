@@ -363,8 +363,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def render_action_result(result: dict, language: str):
         if result.get("state") in {"preparing", "prepare_unverified"}:
             message = (
-                {"es": "Se agotó la recuperación segura de esta solicitud. No inicies otra; pide revisión del equipo.",
-                 "pt": "A recuperação segura desta solicitação se esgotou. Não inicie outra; peça revisão da equipe."}
+                ({"es": "Se agotó la recuperación segura. La solicitud sigue sin resolver y bloqueada. La referencia visible no avisa al equipo ni indica que alguien la haya tomado.",
+                  "pt": "A recuperação segura se esgotou. A solicitação continua sem resolução e bloqueada. A referência visível não avisa a equipe nem indica que alguém assumiu o caso."}
+                 if result.get("review_reference") else
+                 {"es": "Se agotó la recuperación segura. La solicitud sigue sin resolver y bloqueada. Pide ayuda al equipo que te dio acceso a la demo.",
+                  "pt": "A recuperação segura se esgotou. A solicitação continua sem resolução e bloqueada. Peça ajuda à equipe que lhe deu acesso à demonstração."})
                 if result.get("recovery_exhausted") else
                 {"es": "Se está verificando la solicitud para este movimiento. Consulta su estado antes de iniciar otra.",
                  "pt": "A solicitação deste lançamento está sendo verificada. Consulte o estado antes de iniciar outra."}

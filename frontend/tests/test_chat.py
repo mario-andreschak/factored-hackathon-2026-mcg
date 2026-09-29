@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import closing
+import hashlib
 import json
 from pathlib import Path
 import sqlite3
@@ -19,8 +20,22 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from frontend.server.chat import ChatError, ChatService
 from frontend.server.action import render_action
+from frontend.server.review import review_reference
 
 _REQUEST_ID_PATTERN = r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+
+
+def test_review_reference_accepts_only_saved_random_action_ids():
+    action_id = "123e4567-e89b-42d3-a456-426614174000"
+    expected = "rev_" + hashlib.sha256(
+        ("savia-demo-review-v1:" + action_id).encode("ascii")).hexdigest()[:24]
+    assert review_reference(action_id) == expected
+    assert review_reference(action_id) == expected
+    assert review_reference("a" * 32) == "rev_" + hashlib.sha256(
+        ("savia-demo-review-v1:" + "a" * 32).encode("ascii")).hexdigest()[:24]
+    for invalid in [None, "", "subject-a", "txn_" + "a" * 24,
+                    action_id.upper(), "123e4567-e89b-12d3-a456-426614174000", "A" * 32]:
+        assert review_reference(invalid) is None
 
 
 class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
@@ -285,11 +300,26 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
             {"operation": "prepare", "transactionId": "private-a", "snapshot": "test"},
             target_reference="txn_" + "a" * 24)
         with enabled._connection() as db:
+            row = db.execute("SELECT action_id,prepare_conversation_id FROM action_status WHERE session_id=?",
+                             (self.session_a,)).fetchone()
             db.execute("UPDATE action_status SET prepare_recovery_deadline=? WHERE session_id=?",
                        (int(time.time()) - 1, self.session_a))
         status = await enabled.action_status("customer-a", self.session_a, self.expiry)
         self.assertEqual((status["state"], status["recovery_exhausted"]),
                          ("prepare_unverified", True))
+        self.assertEqual(status["review_reference"], review_reference(row["action_id"]))
+        self.assertRegex(status["review_reference"], r"^rev_[a-f0-9]{24}$")
+        public = json.dumps(status)
+        for private in ("private-a", "subject-a", "customer-a", self.session_a,
+                        row["action_id"], row["prepare_conversation_id"]):
+            self.assertNotIn(private, public)
+        self.assertEqual(len(writes), 1)
+        reloaded = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        reloaded._transport = httpx.MockTransport(respond)
+        self.assertEqual((await reloaded.action_status("customer-a", self.session_a, self.expiry))["review_reference"],
+                         status["review_reference"])
+        with self.assertRaises(ChatError):
+            await reloaded.action_status("customer-b", self.session_a, self.expiry)
         self.assertEqual(len(writes), 1)
         with self.assertRaises(ChatError) as blocked:
             await enabled.action("customer-a", self.session_a, self.expiry,
