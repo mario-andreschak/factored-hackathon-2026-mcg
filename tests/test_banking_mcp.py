@@ -241,6 +241,9 @@ def test_prepare_same_request_serializes_across_processes_and_scopes_binding(ban
 def test_prepare_denies_expired_and_revoked_bindings_before_insert(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
+    with pytest.raises(BankError, match="invalid_arguments"):
+        call(bank, "prepare_unrecognized_charge", {"transaction_id": targets[0], "snapshot": build},
+             scope=["bank:prepare"])
     expired = Principal("alice", cid(3), "session-expired", "conversation-alice", int(time.time()) - 1)
     with pytest.raises(BankError, match="authorization_denied"):
         service.actions.prepare(expired, targets[0], build, str(uuid.uuid4()))
