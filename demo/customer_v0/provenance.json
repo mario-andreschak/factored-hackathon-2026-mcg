@@ -1,0 +1,57 @@
+{
+  "schema": "customer-v0-prompt-provenance/v1",
+  "fragment": "customer-v0-readonly",
+  "version": "1.0.0",
+  "promptSha256": "d865102c9f691a3f2f36ae6f56be272805be12f2a5c63ffe5b991efb8de96a80",
+  "flujoCommit": "59444647c10b9ce72396a97557a47fb238a6121e",
+  "sources": [
+    {
+      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "path": "resources/prompts/generator_prompt_v3.yml",
+      "sha256": "1f8993372d50e25a334ce28527d525c9bbe1bceea34e44a82cc662e062ac0654"
+    },
+    {
+      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "path": "resources/prompts/fallback_templates.yaml",
+      "sha256": "a8053e092b45d7a7acf240de750b01d05bf7f4c66172666bc989e66c3d09c08c"
+    },
+    {
+      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "path": "contracts/v0_reconciliation.md",
+      "sha256": "8b594e766619f2a7d5e53472bcc203eba80eaec10a932fb0c97fc85a974b0264"
+    },
+    {
+      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "path": "contracts/policy_engine.md",
+      "sha256": "8a90ccd77159796323ab229d6b361b98e5e9bfda48b503372e462eeadb589513"
+    },
+    {
+      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "path": "banking_mcp/service.py",
+      "sha256": "611f6ab844a5e3f8b0dca56ff61434fb32d1268f1e4b286c51017ee741976e4c"
+    },
+    {
+      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "path": "banking_mcp/repository.py",
+      "sha256": "9ae1f83a2d042dd4acb80ccface1553a1857546a3c95c175c9d5cc69a37d728f"
+    },
+    {
+      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "path": "frontend/server/action.py",
+      "sha256": "241702f3b591705eea3de7fbafbe7eb62657ba24f583fa0ab40b932c7b7f6d27"
+    },
+    {
+      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "path": "docs/SIMULATED_INTAKE_V0.md",
+      "sha256": "383efad856bfa0a7a34146a112875bf780f4006fb4e4203567f7732226a0df61"
+    }
+  ],
+  "adaptations": [
+    "Embed the ES/PT style and verified-fact grounding in the actual customer Process flow.",
+    "Use the three current banking read tools and process_date windows of at most 31 dates.",
+    "Require list-returned selection handles and a successful get before explaining a selected charge.",
+    "Treat frontend display context as user data, not a banking handle or verified read.",
+    "Leave consent, CMP/HOF and action recovery wording to UI and host action results.",
+    "Omit proposed event-date, 90-day, case-status and human-pickup workflow branches."
+  ]
+}
