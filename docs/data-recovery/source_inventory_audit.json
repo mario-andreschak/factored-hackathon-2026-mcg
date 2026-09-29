@@ -1,0 +1,641 @@
+{
+  "observed_at_utc": "2026-09-29T15:35:21+00:00",
+  "method": "Read-only S3 ListObjectsV2 metadata inventory; no source rows fetched; local Parquet aggregate inspection",
+  "live_s3": {
+    "families": 13,
+    "fingerprint": "6688d738c8c0dbea",
+    "csv_objects": 7671,
+    "csv_bytes": 5349322481,
+    "non_csv_objects": 0,
+    "versioning_evidence": {
+      "permission": "not_verified",
+      "error_class": "AccessDenied"
+    },
+    "tables": {
+      "branches": {
+        "objects": 1,
+        "bytes": 89529,
+        "fingerprint": "52d13c2be8eec9eb",
+        "partition_min": null,
+        "partition_max": null,
+        "distinct_partition_dates": 0,
+        "missing_partition_dates_within_observed_bounds": null,
+        "missing_partition_dates_against_global_20230617_20260617": null,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 1,
+        "last_modified_min": "2026-09-01T02:36:08+00:00",
+        "last_modified_max": "2026-09-01T02:36:08+00:00"
+      },
+      "call_center_interactions": {
+        "objects": 1097,
+        "bytes": 139734950,
+        "fingerprint": "6f1c56f4c95a0545",
+        "partition_min": "2023-06-17",
+        "partition_max": "2026-06-17",
+        "distinct_partition_dates": 1097,
+        "missing_partition_dates_within_observed_bounds": 0,
+        "missing_partition_dates_against_global_20230617_20260617": 0,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 0,
+        "last_modified_min": "2026-09-01T02:36:08+00:00",
+        "last_modified_max": "2026-09-01T02:36:35+00:00"
+      },
+      "call_transcripts": {
+        "objects": 1097,
+        "bytes": 137235657,
+        "fingerprint": "6b3b096e2a26cfca",
+        "partition_min": "2023-06-17",
+        "partition_max": "2026-06-17",
+        "distinct_partition_dates": 1097,
+        "missing_partition_dates_within_observed_bounds": 0,
+        "missing_partition_dates_against_global_20230617_20260617": 0,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 0,
+        "last_modified_min": "2026-09-01T02:37:09+00:00",
+        "last_modified_max": "2026-09-01T02:37:37+00:00"
+      },
+      "campaign_sends": {
+        "objects": 1083,
+        "bytes": 325976325,
+        "fingerprint": "a2f572fd642e058f",
+        "partition_min": "2023-07-01",
+        "partition_max": "2026-06-17",
+        "distinct_partition_dates": 1083,
+        "missing_partition_dates_within_observed_bounds": 0,
+        "missing_partition_dates_against_global_20230617_20260617": 14,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 0,
+        "last_modified_min": "2026-09-01T02:37:37+00:00",
+        "last_modified_max": "2026-09-01T02:38:32+00:00"
+      },
+      "complaints": {
+        "objects": 1097,
+        "bytes": 17990612,
+        "fingerprint": "420772004a61e300",
+        "partition_min": "2023-06-17",
+        "partition_max": "2026-06-17",
+        "distinct_partition_dates": 1097,
+        "missing_partition_dates_within_observed_bounds": 0,
+        "missing_partition_dates_against_global_20230617_20260617": 0,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 0,
+        "last_modified_min": "2026-09-01T02:38:33+00:00",
+        "last_modified_max": "2026-09-01T02:38:54+00:00"
+      },
+      "customers": {
+        "objects": 1,
+        "bytes": 46897358,
+        "fingerprint": "34fb92c504eb6c37",
+        "partition_min": null,
+        "partition_max": null,
+        "distinct_partition_dates": 0,
+        "missing_partition_dates_within_observed_bounds": null,
+        "missing_partition_dates_against_global_20230617_20260617": null,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 1,
+        "last_modified_min": "2026-09-01T02:38:54+00:00",
+        "last_modified_max": "2026-09-01T02:38:54+00:00"
+      },
+      "daily_exchange_rates": {
+        "objects": 1,
+        "bytes": 778914,
+        "fingerprint": "81e41ae3ac40c1cb",
+        "partition_min": null,
+        "partition_max": null,
+        "distinct_partition_dates": 0,
+        "missing_partition_dates_within_observed_bounds": null,
+        "missing_partition_dates_against_global_20230617_20260617": null,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 1,
+        "last_modified_min": "2026-09-01T02:38:54+00:00",
+        "last_modified_max": "2026-09-01T02:38:54+00:00"
+      },
+      "digital_events": {
+        "objects": 1097,
+        "bytes": 3757355051,
+        "fingerprint": "5622547adfa5729b",
+        "partition_min": "2023-06-17",
+        "partition_max": "2026-06-17",
+        "distinct_partition_dates": 1097,
+        "missing_partition_dates_within_observed_bounds": 0,
+        "missing_partition_dates_against_global_20230617_20260617": 0,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 0,
+        "last_modified_min": "2026-09-01T02:38:54+00:00",
+        "last_modified_max": "2026-09-01T02:48:51+00:00"
+      },
+      "marketing_campaigns": {
+        "objects": 1,
+        "bytes": 32710,
+        "fingerprint": "7c214bce8563c4d2",
+        "partition_min": null,
+        "partition_max": null,
+        "distinct_partition_dates": 0,
+        "missing_partition_dates_within_observed_bounds": null,
+        "missing_partition_dates_against_global_20230617_20260617": null,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 1,
+        "last_modified_min": "2026-09-01T02:48:51+00:00",
+        "last_modified_max": "2026-09-01T02:48:51+00:00"
+      },
+      "products": {
+        "objects": 1,
+        "bytes": 68213646,
+        "fingerprint": "ca3c93398a4651b7",
+        "partition_min": null,
+        "partition_max": null,
+        "distinct_partition_dates": 0,
+        "missing_partition_dates_within_observed_bounds": null,
+        "missing_partition_dates_against_global_20230617_20260617": null,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 1,
+        "last_modified_min": "2026-09-01T02:48:51+00:00",
+        "last_modified_max": "2026-09-01T02:48:51+00:00"
+      },
+      "satisfaction_surveys": {
+        "objects": 1097,
+        "bytes": 46446098,
+        "fingerprint": "6da80c61198862ac",
+        "partition_min": "2023-06-17",
+        "partition_max": "2026-06-17",
+        "distinct_partition_dates": 1097,
+        "missing_partition_dates_within_observed_bounds": 0,
+        "missing_partition_dates_against_global_20230617_20260617": 0,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 0,
+        "last_modified_min": "2026-09-01T02:48:51+00:00",
+        "last_modified_max": "2026-09-01T02:49:26+00:00"
+      },
+      "service_agents": {
+        "objects": 1,
+        "bytes": 237992,
+        "fingerprint": "2d4a3e328b322b80",
+        "partition_min": null,
+        "partition_max": null,
+        "distinct_partition_dates": 0,
+        "missing_partition_dates_within_observed_bounds": null,
+        "missing_partition_dates_against_global_20230617_20260617": null,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 1,
+        "last_modified_min": "2026-09-01T02:49:26+00:00",
+        "last_modified_max": "2026-09-01T02:49:26+00:00"
+      },
+      "transactions": {
+        "objects": 1097,
+        "bytes": 808333639,
+        "fingerprint": "ece75471c907c96d",
+        "partition_min": "2023-06-17",
+        "partition_max": "2026-06-17",
+        "distinct_partition_dates": 1097,
+        "missing_partition_dates_within_observed_bounds": 0,
+        "missing_partition_dates_against_global_20230617_20260617": 0,
+        "dates_with_multiple_csv_objects": 0,
+        "csv_objects_without_date_partition": 0,
+        "last_modified_min": "2026-09-01T02:49:26+00:00",
+        "last_modified_max": "2026-09-01T02:51:35+00:00"
+      }
+    }
+  },
+  "committed_six_family_lineage": {
+    "present": true,
+    "run_id": "20260927T235730Z-e408c7",
+    "source_validation": "legacy_inventory",
+    "note": "Exact source object versions read by this build. Keys are relative to the source root; the bucket name is intentionally omitted.",
+    "recorded_fingerprint": "fd07da3c5193e25a",
+    "fingerprint_self_consistent": true,
+    "families_not_in_inventory": [
+      "branches",
+      "campaign_sends",
+      "daily_exchange_rates",
+      "digital_events",
+      "marketing_campaigns",
+      "satisfaction_surveys",
+      "service_agents"
+    ],
+    "tables": {
+      "customers": {
+        "recorded": {
+          "objects": 1,
+          "bytes": 46897358,
+          "fingerprint": "34fb92c504eb6c37",
+          "partition_min": null,
+          "partition_max": null,
+          "distinct_partition_dates": 0,
+          "missing_partition_dates_within_observed_bounds": null,
+          "missing_partition_dates_against_global_20230617_20260617": null,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 1,
+          "last_modified_min": "2026-09-01T02:38:54+00:00",
+          "last_modified_max": "2026-09-01T02:38:54+00:00"
+        },
+        "live": {
+          "objects": 1,
+          "bytes": 46897358,
+          "fingerprint": "34fb92c504eb6c37",
+          "partition_min": null,
+          "partition_max": null,
+          "distinct_partition_dates": 0,
+          "missing_partition_dates_within_observed_bounds": null,
+          "missing_partition_dates_against_global_20230617_20260617": null,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 1,
+          "last_modified_min": "2026-09-01T02:38:54+00:00",
+          "last_modified_max": "2026-09-01T02:38:54+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      },
+      "products": {
+        "recorded": {
+          "objects": 1,
+          "bytes": 68213646,
+          "fingerprint": "ca3c93398a4651b7",
+          "partition_min": null,
+          "partition_max": null,
+          "distinct_partition_dates": 0,
+          "missing_partition_dates_within_observed_bounds": null,
+          "missing_partition_dates_against_global_20230617_20260617": null,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 1,
+          "last_modified_min": "2026-09-01T02:48:51+00:00",
+          "last_modified_max": "2026-09-01T02:48:51+00:00"
+        },
+        "live": {
+          "objects": 1,
+          "bytes": 68213646,
+          "fingerprint": "ca3c93398a4651b7",
+          "partition_min": null,
+          "partition_max": null,
+          "distinct_partition_dates": 0,
+          "missing_partition_dates_within_observed_bounds": null,
+          "missing_partition_dates_against_global_20230617_20260617": null,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 1,
+          "last_modified_min": "2026-09-01T02:48:51+00:00",
+          "last_modified_max": "2026-09-01T02:48:51+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      },
+      "transactions": {
+        "recorded": {
+          "objects": 1097,
+          "bytes": 808333639,
+          "fingerprint": "ece75471c907c96d",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:49:26+00:00",
+          "last_modified_max": "2026-09-01T02:51:35+00:00"
+        },
+        "live": {
+          "objects": 1097,
+          "bytes": 808333639,
+          "fingerprint": "ece75471c907c96d",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:49:26+00:00",
+          "last_modified_max": "2026-09-01T02:51:35+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      },
+      "call_center_interactions": {
+        "recorded": {
+          "objects": 1097,
+          "bytes": 139734950,
+          "fingerprint": "6f1c56f4c95a0545",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:36:08+00:00",
+          "last_modified_max": "2026-09-01T02:36:35+00:00"
+        },
+        "live": {
+          "objects": 1097,
+          "bytes": 139734950,
+          "fingerprint": "6f1c56f4c95a0545",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:36:08+00:00",
+          "last_modified_max": "2026-09-01T02:36:35+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      },
+      "call_transcripts": {
+        "recorded": {
+          "objects": 1097,
+          "bytes": 137235657,
+          "fingerprint": "6b3b096e2a26cfca",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:37:09+00:00",
+          "last_modified_max": "2026-09-01T02:37:37+00:00"
+        },
+        "live": {
+          "objects": 1097,
+          "bytes": 137235657,
+          "fingerprint": "6b3b096e2a26cfca",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:37:09+00:00",
+          "last_modified_max": "2026-09-01T02:37:37+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      },
+      "complaints": {
+        "recorded": {
+          "objects": 1097,
+          "bytes": 17990612,
+          "fingerprint": "420772004a61e300",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:38:33+00:00",
+          "last_modified_max": "2026-09-01T02:38:54+00:00"
+        },
+        "live": {
+          "objects": 1097,
+          "bytes": 17990612,
+          "fingerprint": "420772004a61e300",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:38:33+00:00",
+          "last_modified_max": "2026-09-01T02:38:54+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      }
+    }
+  },
+  "current_local_build_lineage": {
+    "present": true,
+    "run_id": "20260928T180642Z-5c821a",
+    "source_validation": "legacy_inventory",
+    "note": "Exact source object versions read by this build. Keys are relative to the source root; the bucket name is intentionally omitted.",
+    "recorded_fingerprint": "492b923192bf6ea2",
+    "fingerprint_self_consistent": true,
+    "families_not_in_inventory": [
+      "branches",
+      "call_center_interactions",
+      "call_transcripts",
+      "campaign_sends",
+      "complaints",
+      "daily_exchange_rates",
+      "digital_events",
+      "marketing_campaigns",
+      "satisfaction_surveys",
+      "service_agents"
+    ],
+    "tables": {
+      "customers": {
+        "recorded": {
+          "objects": 1,
+          "bytes": 46897358,
+          "fingerprint": "34fb92c504eb6c37",
+          "partition_min": null,
+          "partition_max": null,
+          "distinct_partition_dates": 0,
+          "missing_partition_dates_within_observed_bounds": null,
+          "missing_partition_dates_against_global_20230617_20260617": null,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 1,
+          "last_modified_min": "2026-09-01T02:38:54+00:00",
+          "last_modified_max": "2026-09-01T02:38:54+00:00"
+        },
+        "live": {
+          "objects": 1,
+          "bytes": 46897358,
+          "fingerprint": "34fb92c504eb6c37",
+          "partition_min": null,
+          "partition_max": null,
+          "distinct_partition_dates": 0,
+          "missing_partition_dates_within_observed_bounds": null,
+          "missing_partition_dates_against_global_20230617_20260617": null,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 1,
+          "last_modified_min": "2026-09-01T02:38:54+00:00",
+          "last_modified_max": "2026-09-01T02:38:54+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      },
+      "products": {
+        "recorded": {
+          "objects": 1,
+          "bytes": 68213646,
+          "fingerprint": "ca3c93398a4651b7",
+          "partition_min": null,
+          "partition_max": null,
+          "distinct_partition_dates": 0,
+          "missing_partition_dates_within_observed_bounds": null,
+          "missing_partition_dates_against_global_20230617_20260617": null,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 1,
+          "last_modified_min": "2026-09-01T02:48:51+00:00",
+          "last_modified_max": "2026-09-01T02:48:51+00:00"
+        },
+        "live": {
+          "objects": 1,
+          "bytes": 68213646,
+          "fingerprint": "ca3c93398a4651b7",
+          "partition_min": null,
+          "partition_max": null,
+          "distinct_partition_dates": 0,
+          "missing_partition_dates_within_observed_bounds": null,
+          "missing_partition_dates_against_global_20230617_20260617": null,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 1,
+          "last_modified_min": "2026-09-01T02:48:51+00:00",
+          "last_modified_max": "2026-09-01T02:48:51+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      },
+      "transactions": {
+        "recorded": {
+          "objects": 1097,
+          "bytes": 808333639,
+          "fingerprint": "ece75471c907c96d",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:49:26+00:00",
+          "last_modified_max": "2026-09-01T02:51:35+00:00"
+        },
+        "live": {
+          "objects": 1097,
+          "bytes": 808333639,
+          "fingerprint": "ece75471c907c96d",
+          "partition_min": "2023-06-17",
+          "partition_max": "2026-06-17",
+          "distinct_partition_dates": 1097,
+          "missing_partition_dates_within_observed_bounds": 0,
+          "missing_partition_dates_against_global_20230617_20260617": 0,
+          "dates_with_multiple_csv_objects": 0,
+          "csv_objects_without_date_partition": 0,
+          "last_modified_min": "2026-09-01T02:49:26+00:00",
+          "last_modified_max": "2026-09-01T02:51:35+00:00"
+        },
+        "added_keys": 0,
+        "deleted_keys": 0,
+        "etag_or_bytes_changed": 0,
+        "last_modified_changed": 0,
+        "version_id_recorded": 0,
+        "table_fingerprint_self_consistent": true
+      }
+    }
+  },
+  "local_current": {
+    "current_build": "20260928T235012Z-ad5cf4",
+    "snapshot": {
+      "build_id": "20260928T235012Z-ad5cf4",
+      "source_fingerprint": "492b923192bf6ea2",
+      "source_validation": "legacy_inventory",
+      "created_at": "2026-09-28T23:50:25+00:00"
+    },
+    "gold_file_inventory_matches_snapshot": true,
+    "gold_files": 129,
+    "gold_bytes": 239774140,
+    "bronze_lineage_present": false,
+    "tables": {
+      "customers": {
+        "bronze": {
+          "bytes": 11567164,
+          "rows": 150000,
+          "columns": 31,
+          "source_files_with_rows": 1,
+          "distinct_ingestion_runs": 1,
+          "duplicate_primary_key_rows": 0
+        },
+        "silver": {
+          "bytes": 7284419,
+          "rows": 150000,
+          "columns": 18,
+          "source_files_with_rows": 1,
+          "distinct_ingestion_runs": 1,
+          "duplicate_primary_key_rows": 0
+        }
+      },
+      "products": {
+        "bronze": {
+          "bytes": 19572152,
+          "rows": 400000,
+          "columns": 21,
+          "source_files_with_rows": 1,
+          "distinct_ingestion_runs": 1,
+          "duplicate_primary_key_rows": 0
+        },
+        "silver": {
+          "bytes": 23495425,
+          "rows": 400000,
+          "columns": 24,
+          "source_files_with_rows": 1,
+          "distinct_ingestion_runs": 1,
+          "duplicate_primary_key_rows": 0
+        }
+      },
+      "transactions": {
+        "bronze": {
+          "bytes": 218790388,
+          "rows": 4425008,
+          "columns": 26,
+          "source_files_with_rows": 1097,
+          "distinct_ingestion_runs": 1,
+          "duplicate_primary_key_rows": 0
+        },
+        "silver": {
+          "bytes": 303236330,
+          "rows": 4425008,
+          "columns": 30,
+          "source_files_with_rows": 1097,
+          "distinct_ingestion_runs": 1,
+          "duplicate_primary_key_rows": 0
+        }
+      }
+    },
+    "gold_transactions_rows": 4425008
+  },
+  "limits": [
+    "ListObjectsV2 observes only current versions, not a point-in-time immutable snapshot.",
+    "ETags are change-detection tokens, not universally content SHA-256 checksums.",
+    "Object inventory agreement does not prove row-level values, transformation provenance, or business validity.",
+    "Seven inventory-only families remain unprofiled; no full S3 row re-scan was performed.",
+    "Metadata list results are accumulated across pages, not an atomic bucket-wide observation."
+  ]
+}

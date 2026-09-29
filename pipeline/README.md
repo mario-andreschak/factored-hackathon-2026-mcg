@@ -4,6 +4,10 @@ Deterministic bronze → silver → gold pipeline over the organizer's S3 CSVs. 
 cluster, runs on a laptop or Colab. Complements `scripts/profile_s3.py` (which measures) by
 producing **clean, reusable, tested outputs** for the banking MCP service, analytics, and ML.
 
+For the recovered local setup, current limitations, ownership rules, and the distinction
+between implemented code and proposed contracts, start with the
+[September 29 recovery runbook](../docs/DATA_RECOVERY_2026-09-29.md).
+
 ```
 S3 CSVs ──► bronze (raw, all text + lineage) ──► silver (typed, deduped, flagged) ──► gold (one output per consumer)
                                                   └─► quarantine (rejected rows + reason)
@@ -22,7 +26,14 @@ Outputs go to `data/` (git-ignored): `data/bronze/` (raw landing), `data/builds/
 (`quality_report.md`, `manifest.json`), which are safe to commit: no rows, no credentials,
 the bucket name is redacted. Low-RAM machines: add `--memory-limit 6GB`.
 
-**Measured on the real bucket** (Windows laptop, 2026-09-27): all 6 tables, 5.9M rows, 4,391 objects in
+Published builds also contain their own aggregate `manifest.json` and quality report;
+those pinned files describe the serving snapshot even after later runs overwrite the
+external report directory. Gold publication requires customers, products and transactions.
+Other table subsets may run bronze/silver for analysis without replacing `CURRENT`.
+One writer per output root is enforced by `data/.pipeline-writer.lock`. After a crashed
+writer, confirm that it stopped before removing its stale lock.
+
+**Measured on the real bucket** (Windows laptop, 2026-09-27): all 6 tables, 5.9M rows, 4,390 objects in
 ~13 min, most of it S3 download. `--stage silver gold` re-runs locally in ~3 min. Per-customer lookup over
 4.4M transactions: **p50 21 ms, p95 23 ms**. Row counts match `scripts/profile_s3.py` exactly
 (4,425,008 transactions · 686,296 interactions · 171,321 transcripts · 67,095 complaints), so two
@@ -32,19 +43,19 @@ independent readers agree.
 
 | Need | How |
 |---|---|
-| **A failed build never replaces good data** | Silver, gold and quarantine are written to an isolated `data/builds/<run_id>/`. Gold only runs if silver passed every contract. `data/CURRENT` is swapped **atomically** to the new build only after the whole run succeeds; otherwise the previous snapshot keeps serving (`manifest.json` shows `"published": false`). Builds are never modified after they are written, so a reader that resolved a snapshot keeps a complete, consistent view even while a rebuild runs. The last 3 builds are kept. Resolve the live snapshot with `pipeline.common.current_gold("data")`. |
+| **A failed build never replaces good data** | Silver, gold and quarantine are written to an isolated `data/builds/<run_id>/`. Gold only runs if silver passed every contract. `data/CURRENT` is swapped **atomically** to the new build only after the whole run succeeds; otherwise the previous snapshot keeps serving (`manifest.json` shows `"published": false`). Builds are immutable and retained while readers may hold them. Cleanup is an offline operator task with all readers stopped. Resolve the live snapshot with `pipeline.common.current_gold("data")`. |
 | **No cross-customer results** | `lookup.get_customer_transactions()` opens its **own cursor per call** (execute, description and fetch on that cursor, then close it), even when given a shared connection. A row is served only if the **customer exists**, the **product exists**, and the product belongs to that same customer. |
 | **Reports are safe to commit** | Values are written to `docs/pipeline/` only for allow-listed categorical columns (`publish_values: true` in `contracts.yaml`). Free text (`customer_text`, complaint `description`, `merchant_name`, ...) is reported as **counts only**. |
 | **S3 stays the source of record** | The pipeline only reads it. `docs/pipeline/source_objects.json` lists every object a build read (key, bytes, ETag, last-modified) plus a **source fingerprint**, which is also recorded in `manifest.json`. Same inputs give the same fingerprint; any new or changed object changes it. Every silver row keeps its `_source_file`. |
-| **Load** | `python -m pipeline bench` runs 1 / 50 / 500 concurrent callers against the published snapshot and writes `docs/pipeline/lookup_bench.json`. Result on a 4-CPU machine over a 2M-row stand-in, local disk, one process: p95 **7 / 341 / 351 ms**, 0 errors, ~265 req/s. Per-request cursors cost latency under load; that is the price of isolation. A deployed service adds network overhead and can scale horizontally, because snapshots are read-only files. |
-| **Confirm before acting** | [`verify.py`](verify.py) `verify_transaction_in_source()` re-reads the transaction from its S3 partition, plus the 7 days after it for late arrivals, and compares it with gold. It returns `verified`, `changed` (use the source values) or `not_found`. **Another customer's transaction returns `not_found`, identical to a missing one**; the real reason is only in `audit`, for server logs. Try it: `python -m pipeline verify --sample`. |
+| **Load** | `python -m pipeline bench` runs 1 / 50 / 500 concurrent callers against the published snapshot. The committed [benchmark](../docs/pipeline/lookup_bench.json) used the published data, local disk, one process, 4 CPUs and 1,000 requests per level: p95 **34.5 / 1,928.5 / 13,386.2 ms**, 0 errors. These are data lookup measurements; FLUJO/model capacity has separate evidence in the banking implementation report. |
+| **Source diagnostics** | [`verify.py`](verify.py) searches the transaction's source partition plus 7 later days and compares selected fields with gold. It is an offline diagnostic, not the shipped MCP verification path or a banking write authorization. The MCP instead conditionally checks pinned customer/product ETags and reads the selected transaction object with `If-Match`; see [its freshness contract](../banking_mcp/README.md#s3-and-snapshot-freshness). Both checks have bounded freshness semantics. |
 
 ## What each stage guarantees
 
 | Stage | Guarantees |
 |---|---|
-| **bronze** | Every CSV object is landed as-is (all `VARCHAR`), with `_source_file`, `_partition_date`, `_run_id`, `_ingested_at`. Objects are grouped by header, so **schema evolution** is handled and counted (`schema_variants`) without a slow per-file `union_by_name`. |
-| **silver** | Types and required fields enforced from [`contracts.yaml`](contracts.yaml). Failing rows go to `data/quarantine/<table>.parquet` with reasons. **Dedup by PK** keeps the latest version (`dedup_order`, deterministic tie-break), and the report separates exact re-deliveries from conflicting versions. **Orphan FKs are flagged** (`_fk_<col>_missing`), never dropped, and so are **references to a product owned by a different customer** (`_owner_mismatch_<col>`). **Inconsistent spellings** (values that collide once accents and case are ignored, e.g. `México`/`Mexico`) are reported. **Late arrivals** flagged (`_late_arrival`: row sits in a partition later than its `process_date`). PII not needed downstream is dropped. The run **exits non-zero** if a table's reject rate exceeds `max_reject_rate`. |
+| **bronze** | Every selected CSV object is represented in Parquet as text with `_source_file`, `_partition_date`, `_run_id`, `_ingested_at`. This preserves logical CSV values, not the original CSV bytes; S3 remains the source of record. Objects are grouped by header, so **schema evolution** is handled and counted (`schema_variants`) without a slow per-file `union_by_name`. Inventory is compared before and after ingestion, assuming static source objects; this is not an S3 VersionId-pinned read. |
+| **silver** | Types and required fields enforced from [`contracts.yaml`](contracts.yaml). Failing rows go to `data/builds/<run_id>/quarantine/<table>.parquet` with reasons. **Dedup by PK** keeps the latest version (`dedup_order`, deterministic tie-break), and the report separates exact re-deliveries from conflicting versions. **Orphan FKs are flagged** (`_fk_<col>_missing`), never dropped, and so are **references to a product owned by a different customer** (`_owner_mismatch_<col>`). **Inconsistent spellings** (values that collide once accents and case are ignored, e.g. `México`/`Mexico`) are reported. **Late arrivals** flagged (`_late_arrival`: row sits in a partition later than its `process_date`). PII not needed downstream is dropped. The run **exits non-zero** if a table's reject rate exceeds `max_reject_rate`. |
 | **reconciliation** | For every table: `raw = silver + quarantined + duplicates_removed`. Shown as ✅/❌ in the report. |
 | **idempotency** | Full refresh; same input → identical silver rows (content hashes compared in tests). A late partition simply appears on the next run, and a corrected record **upserts** (tested). |
 
@@ -69,4 +80,4 @@ These change how the rest of the team should work:
 
 ## Files
 
-`contracts.yaml` rules · `bronze.py` / `silver.py` / `gold.py` stages · `lookup.py` MCP read path + bench · `report.py` report/manifest · `fixture.py` **synthetic** test data (not organizer data) · `verify.py` source re-check · `../tests/test_pipeline.py` 21 end-to-end tests, including a regression test for each finding of the PR #1 review.
+`contracts.yaml` rules · `bronze.py` / `silver.py` / `gold.py` stages · `lookup.py` read library + bench · `report.py` aggregate reports · `fixture.py` **synthetic** test data · `verify.py` offline source diagnostic · `../scripts/check_dataset.py` published-dataset health and optional S3 inventory comparison · `../tests/test_pipeline.py` end-to-end regression tests.
