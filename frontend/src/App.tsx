@@ -927,13 +927,135 @@ type ActionResult = {
   request_id?: string;
   reason?: string;
   target_reference?: string;
+  recovery_exhausted?: boolean;
   handoff?: { state?: string };
 };
+
+type ActionLanguage = "es" | "pt";
+const ACTION_LANGUAGE_STORAGE = "flujo-bank-action-language";
+
+function savedActionLanguage(): ActionLanguage {
+  if (typeof window === "undefined") return "es";
+  try {
+    return window.localStorage.getItem(ACTION_LANGUAGE_STORAGE) === "pt"
+      ? "pt"
+      : "es";
+  } catch {
+    return "es";
+  }
+}
+
+const actionCopy = {
+  es: {
+    title: "¿No reconoces un cargo?",
+    disclosure:
+      "La recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.",
+    language: "Idioma de esta respuesta",
+    pendingCharge: "Solicitud pendiente para este cargo",
+    pendingReview: "Solicitud de revisión pendiente",
+    noCharge: "Revisión general sin cargo asociado.",
+    otherCharge:
+      "La solicitud anterior sigue vinculada al cargo indicado. El cargo que ves seleccionado no puede confirmarla ni reemplazarla.",
+    returnCharge: " Vuelve a ese cargo para continuar.",
+    checkOtherCharge: " Consulta su estado antes de realizar otra acción.",
+    backToCharge: "Volver al cargo pendiente",
+    verifyFirst:
+      "Verifica el estado de la solicitud antes de iniciar o confirmar otra acción.",
+    checkStatus: "Consultar estado de la solicitud",
+    reviewIntake: "Revisar recepción simulada",
+    confirmIntake: "Confirmo la recepción simulada para este cargo",
+    retryHandoff: "Verificar revisión humana pendiente",
+    preferHuman: "Prefiero revisión humana",
+    preparing: "Estamos verificando la preparación de esta solicitud.",
+    pendingConfirmation:
+      "La recepción simulada está preparada. Confirma solo si quieres registrarla para este cargo.",
+    intakeVerified: "La recepción simulada quedó verificada.",
+    handoffVerified: "La revisión humana quedó registrada.",
+    unverified:
+      "No pudimos verificar la solicitud anterior. Consulta su estado antes de continuar.",
+    recoveryExhausted:
+      "Se agotó la recuperación segura de esta solicitud. No inicies otra; pide revisión del equipo.",
+    statusFailed: "No pudimos verificar el estado. Intenta de nuevo más tarde.",
+    initialStatusFailed:
+      "No pudimos verificar la solicitud anterior. Consulta su estado antes de iniciar otra.",
+    wrongCharge:
+      "La solicitud recibida corresponde a otro cargo. Consulta su estado antes de continuar.",
+    previousUnresolved:
+      "Hay una solicitud anterior sin resolver. Revisa el cargo indicado y consulta su estado antes de continuar.",
+    confirmUnverified:
+      "No pudimos verificar la confirmación. Consulta el estado; no la repitas.",
+    requestUnverified:
+      "No pudimos verificar la solicitud. Consulta su estado antes de iniciar otra.",
+    actionFailed:
+      "No pudimos verificar esta acción. Consulta el estado antes de volver a intentarlo.",
+    previousNotVerified:
+      "Aún no pudimos verificar la solicitud anterior. No inicies otra.",
+  },
+  pt: {
+    title: "Não reconhece uma cobrança?",
+    disclosure:
+      "O registro é uma simulação. Não bloqueia cartões, devolve dinheiro nem resolve uma contestação.",
+    language: "Idioma desta resposta",
+    pendingCharge: "Solicitação pendente para este lançamento",
+    pendingReview: "Solicitação de análise pendente",
+    noCharge: "Análise geral sem lançamento associado.",
+    otherCharge:
+      "A solicitação anterior continua vinculada ao lançamento indicado. O lançamento selecionado não pode confirmá-la nem substituí-la.",
+    returnCharge: " Volte a esse lançamento para continuar.",
+    checkOtherCharge: " Consulte o estado antes de realizar outra ação.",
+    backToCharge: "Voltar ao lançamento pendente",
+    verifyFirst:
+      "Verifique o estado da solicitação antes de iniciar ou confirmar outra ação.",
+    checkStatus: "Consultar estado da solicitação",
+    reviewIntake: "Revisar registro simulado",
+    confirmIntake: "Confirmo o registro simulado para este lançamento",
+    retryHandoff: "Verificar análise humana pendente",
+    preferHuman: "Prefiro análise humana",
+    preparing: "Estamos verificando a preparação desta solicitação.",
+    pendingConfirmation:
+      "O registro simulado está preparado. Confirme apenas se quiser registrá-lo para este lançamento.",
+    intakeVerified: "O registro simulado foi verificado.",
+    handoffVerified: "A análise humana foi registrada.",
+    unverified:
+      "Não foi possível verificar a solicitação anterior. Consulte o estado antes de continuar.",
+    recoveryExhausted:
+      "A recuperação segura desta solicitação se esgotou. Não inicie outra; peça revisão da equipe.",
+    statusFailed:
+      "Não foi possível verificar o estado. Tente novamente mais tarde.",
+    initialStatusFailed:
+      "Não foi possível verificar a solicitação anterior. Consulte o estado antes de iniciar outra.",
+    wrongCharge:
+      "A solicitação recebida corresponde a outro lançamento. Consulte o estado antes de continuar.",
+    previousUnresolved:
+      "Há uma solicitação anterior sem resolução. Confira o lançamento indicado e consulte o estado antes de continuar.",
+    confirmUnverified:
+      "Não foi possível verificar a confirmação. Consulte o estado; não a repita.",
+    requestUnverified:
+      "Não foi possível verificar a solicitação. Consulte o estado antes de iniciar outra.",
+    actionFailed:
+      "Não foi possível verificar esta ação. Consulte o estado antes de tentar novamente.",
+    previousNotVerified:
+      "Ainda não foi possível verificar a solicitação anterior. Não inicie outra.",
+  },
+} as const;
+
+function fallbackActionMessage(
+  action: ActionResult,
+  language: ActionLanguage,
+): string {
+  const copy = actionCopy[language];
+  if (action.recovery_exhausted) return copy.recoveryExhausted;
+  if (action.state === "preparing") return copy.preparing;
+  if (action.state === "pending_confirmation") return copy.pendingConfirmation;
+  if (action.state === "intake_verified") return copy.intakeVerified;
+  if (action.state === "handoff_verified") return copy.handoffVerified;
+  return copy.unverified;
+}
 
 const actionIsTerminal = (action: ActionResult | null) =>
   action?.state === "intake_verified" || action?.state === "handoff_verified";
 
-function Assistant({
+export function Assistant({
   open,
   status,
   selected,
@@ -959,7 +1081,9 @@ function Assistant({
     [action, setAction] = useState<ActionResult | null>(null),
     [actionReady, setActionReady] = useState(false),
     [actionBusy, setActionBusy] = useState(false),
-    [actionLanguage, setActionLanguage] = useState<"es" | "pt">("es"),
+    [actionStatusLoading, setActionStatusLoading] = useState(false),
+    [actionLanguage, setActionLanguage] =
+      useState<ActionLanguage>(savedActionLanguage),
     [handoffRequestId, setHandoffRequestId] = useState<string>(() =>
       crypto.randomUUID(),
     ),
@@ -970,7 +1094,18 @@ function Assistant({
     [historyAttempt, setHistoryAttempt] = useState(0);
   const end = useRef<HTMLDivElement>(null),
     controller = useRef<AbortController | null>(null),
-    alive = useRef(true);
+    alive = useRef(true),
+    actionLanguageRef = useRef(actionLanguage),
+    actionStatusSequence = useRef(0);
+  const copy = actionCopy[actionLanguage];
+  useEffect(() => {
+    actionLanguageRef.current = actionLanguage;
+    try {
+      window.localStorage.setItem(ACTION_LANGUAGE_STORAGE, actionLanguage);
+    } catch {
+      // Private browsing may deny storage; the current visit still works.
+    }
+  }, [actionLanguage]);
   useEffect(() => {
     if (open) end.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy, open]);
@@ -1008,11 +1143,23 @@ function Assistant({
           setHistoryReady(true);
           setBusy(result.active);
           if (!result.active && status.sandbox_intake_available) {
-            api<ActionResult>("/api/action/status", {
-              signal: historyController.signal,
-            })
+            const requestedLanguage = actionLanguageRef.current;
+            const sequence = ++actionStatusSequence.current;
+            setActionStatusLoading(true);
+            api<ActionResult>(
+              `/api/action/status?language=${requestedLanguage}`,
+              {
+                signal: historyController.signal,
+              },
+            )
               .then((recovered) => {
-                if (historyController.signal.aborted || !alive.current) return;
+                if (
+                  historyController.signal.aborted ||
+                  !alive.current ||
+                  sequence !== actionStatusSequence.current ||
+                  requestedLanguage !== actionLanguageRef.current
+                )
+                  return;
                 if (recovered.state !== "none") {
                   setAction(recovered);
                   if (recovered.request_id)
@@ -1025,12 +1172,19 @@ function Assistant({
                 setActionReady(true);
               })
               .catch(() => {
-                if (!historyController.signal.aborted && alive.current) {
+                if (
+                  !historyController.signal.aborted &&
+                  alive.current &&
+                  sequence === actionStatusSequence.current &&
+                  requestedLanguage === actionLanguageRef.current
+                ) {
                   setActionReady(false);
-                  setError(
-                    "No pudimos verificar la solicitud anterior. Consulta su estado antes de iniciar otra.",
-                  );
+                  setError(actionCopy[requestedLanguage].initialStatusFailed);
                 }
+              })
+              .finally(() => {
+                if (alive.current && sequence === actionStatusSequence.current)
+                  setActionStatusLoading(false);
               });
           } else if (!status.sandbox_intake_available) {
             setActionReady(true);
@@ -1092,23 +1246,54 @@ function Assistant({
       if (alive.current) setBusy(false);
     }
   }
-  async function loadActionStatus() {
-    const recovered = await api<ActionResult>(
-      `/api/action/status?language=${actionLanguage}`,
-    );
-    if (alive.current) {
-      if (recovered.state !== "none") {
-        setAction(recovered);
-        if (recovered.request_id) setHandoffRequestId(recovered.request_id);
-      } else {
-        // A transiently empty status cannot prove a local uncertain write safe.
-        setAction((current) =>
-          current && !actionIsTerminal(current) ? current : null,
-        );
+  async function loadActionStatus(
+    language: ActionLanguage = actionLanguageRef.current,
+  ) {
+    const sequence = ++actionStatusSequence.current;
+    setActionStatusLoading(true);
+    try {
+      const recovered = await api<ActionResult>(
+        `/api/action/status?language=${language}`,
+      );
+      if (
+        alive.current &&
+        sequence === actionStatusSequence.current &&
+        language === actionLanguageRef.current
+      ) {
+        if (recovered.state !== "none") {
+          setAction(recovered);
+          if (recovered.request_id) setHandoffRequestId(recovered.request_id);
+        } else {
+          // A transiently empty status cannot prove a local uncertain write safe.
+          setAction((current) =>
+            current && !actionIsTerminal(current) ? current : null,
+          );
+        }
+        setActionReady(true);
       }
-      setActionReady(true);
+      return recovered;
+    } finally {
+      if (alive.current && sequence === actionStatusSequence.current)
+        setActionStatusLoading(false);
     }
-    return recovered;
+  }
+  function changeActionLanguage(language: ActionLanguage) {
+    if (language === actionLanguageRef.current) return;
+    actionLanguageRef.current = language;
+    setActionLanguage(language);
+    setAction((current) =>
+      current ? { ...current, message: undefined } : current,
+    );
+    setActionReady(false);
+    setError("");
+    void loadActionStatus(language).catch((e) => {
+      if (!alive.current || language !== actionLanguageRef.current) return;
+      if (e instanceof ApiError && e.status === 401) onExpired();
+      else {
+        setActionReady(false);
+        setError(actionCopy[language].statusFailed);
+      }
+    });
   }
   async function runAction(path: string, body: Record<string, unknown>) {
     if (actionBusy || busy || !historyReady || !actionReady) return;
@@ -1136,9 +1321,7 @@ function Assistant({
           // newly selected charge when a response disagrees with the request.
           setAction(result);
           setActionReady(false);
-          setError(
-            "La solicitud recibida corresponde a otro cargo. Consulta su estado antes de continuar.",
-          );
+          setError(copy.wrongCharge);
           return;
         }
         setAction({
@@ -1163,9 +1346,7 @@ function Assistant({
           } catch {
             setActionReady(false);
           }
-          setError(
-            "Hay una solicitud anterior sin resolver. Revisa el cargo indicado y consulta su estado antes de continuar.",
-          );
+          setError(copy.previousUnresolved);
         } else {
           const uncertain =
             !(e instanceof ApiError) ||
@@ -1179,8 +1360,7 @@ function Assistant({
                   ? {
                       ...current,
                       state: "action_unverified",
-                      message:
-                        "No pudimos verificar la confirmación. Consulta el estado; no la repitas.",
+                      message: copy.confirmUnverified,
                     }
                   : current;
               }
@@ -1194,14 +1374,11 @@ function Assistant({
                   typeof body.request_id === "string"
                     ? body.request_id
                     : undefined,
-                message:
-                  "No pudimos verificar la solicitud. Consulta su estado antes de iniciar otra.",
+                message: copy.requestUnverified,
               };
             });
           }
-          setError(
-            "No pudimos verificar esta acción. Consulta el estado antes de volver a intentarlo.",
-          );
+          setError(copy.actionFailed);
         }
       }
     } finally {
@@ -1209,7 +1386,7 @@ function Assistant({
     }
   }
   async function refreshAction() {
-    if (actionBusy || busy || !historyReady) return;
+    if (actionBusy || actionStatusLoading || busy || !historyReady) return;
     setActionBusy(true);
     try {
       const recovered = await loadActionStatus();
@@ -1217,15 +1394,13 @@ function Assistant({
         setError("");
       } else if (alive.current && action && !actionIsTerminal(action)) {
         setActionReady(false);
-        setError(
-          "Aún no pudimos verificar la solicitud anterior. No inicies otra.",
-        );
+        setError(copy.previousNotVerified);
       }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) onExpired();
       else if (alive.current) {
         setActionReady(false);
-        setError("No pudimos verificar el estado. Intenta de nuevo más tarde.");
+        setError(copy.statusFailed);
       }
     } finally {
       if (alive.current) setActionBusy(false);
@@ -1269,7 +1444,9 @@ function Assistant({
           <span>
             {status.available
               ? status.sandbox_intake_available
-                ? "Conectado a FLUJO · Recepción simulada disponible tras confirmación"
+                ? actionLanguage === "pt"
+                  ? "Conectado ao FLUJO · Registro simulado disponível após confirmação"
+                  : "Conectado a FLUJO · Recepción simulada disponible tras confirmación"
                 : "Conectado a FLUJO · Consulta de solo lectura"
               : "El asistente no está disponible ahora"}
           </span>
@@ -1293,17 +1470,15 @@ function Assistant({
         historyReady &&
         (messages.length > 0 || action) && (
           <div className="action-panel">
-            <strong>¿No reconoces un cargo?</strong>
-            <p>
-              La recepción es una simulación. No bloquea tarjetas, devuelve
-              dinero ni resuelve una disputa.
-            </p>
+            <strong>{copy.title}</strong>
+            <p>{copy.disclosure}</p>
             <label>
-              Idioma de esta respuesta
+              {copy.language}
               <select
                 value={actionLanguage}
+                disabled={actionBusy || busy}
                 onChange={(e) =>
-                  setActionLanguage(e.target.value as "es" | "pt")
+                  changeActionLanguage(e.target.value as ActionLanguage)
                 }
               >
                 <option value="es">Español</option>
@@ -1313,9 +1488,7 @@ function Assistant({
             {action && (
               <p role="status" className="action-result">
                 {action.message ||
-                  (action.state === "preparing"
-                    ? "Estamos verificando la preparación de esta solicitud."
-                    : "No pudimos verificar la solicitud anterior. Consulta su estado antes de continuar.")}
+                  fallbackActionMessage(action, actionLanguage)}
               </p>
             )}
             {actionBlocksNewCharge && (
@@ -1324,14 +1497,13 @@ function Assistant({
                 <span>
                   <strong>
                     {action?.target_reference
-                      ? "Solicitud pendiente para este cargo"
-                      : "Solicitud de revisión pendiente"}
+                      ? copy.pendingCharge
+                      : copy.pendingReview}
                   </strong>
                   <small>
                     {actionTarget
                       ? `${label(actionTarget)} · ${date(actionTarget.occurred_at)} · ${money(actionTarget.amount, actionTarget.currency, hidden)} ${actionTarget.currency}`
-                      : action?.target_reference ||
-                        "Revisión general sin cargo asociado."}
+                      : action?.target_reference || copy.noCharge}
                   </small>
                 </span>
               </div>
@@ -1340,12 +1512,8 @@ function Assistant({
               action?.target_reference &&
               !selectedIsActionTarget && (
                 <p className="modal-disclosure">
-                  La solicitud anterior sigue vinculada al cargo indicado. El
-                  cargo que ves seleccionado no puede confirmarla ni
-                  reemplazarla.
-                  {actionTarget
-                    ? " Vuelve a ese cargo para continuar."
-                    : " Consulta su estado antes de realizar otra acción."}
+                  {copy.otherCharge}
+                  {actionTarget ? copy.returnCharge : copy.checkOtherCharge}
                 </p>
               )}
             {actionBlocksNewCharge &&
@@ -1356,22 +1524,19 @@ function Assistant({
                   className="button outline"
                   onClick={() => onSelectTransaction(actionTarget)}
                 >
-                  Volver al cargo pendiente
+                  {copy.backToCharge}
                 </button>
               )}
             {!actionReady && (
-              <p className="modal-disclosure">
-                Verifica el estado de la solicitud antes de iniciar o confirmar
-                otra acción.
-              </p>
+              <p className="modal-disclosure">{copy.verifyFirst}</p>
             )}
             <button
               type="button"
               className="button outline"
-              disabled={actionBusy || busy}
+              disabled={actionBusy || actionStatusLoading || busy}
               onClick={refreshAction}
             >
-              Consultar estado de la solicitud
+              {copy.checkStatus}
             </button>
             {selected && canStartAction && (
               <button
@@ -1385,7 +1550,7 @@ function Assistant({
                   })
                 }
               >
-                Revisar recepción simulada
+                {copy.reviewIntake}
               </button>
             )}
             {action?.state === "pending_confirmation" &&
@@ -1402,7 +1567,7 @@ function Assistant({
                     })
                   }
                 >
-                  Confirmo la recepción simulada para este cargo
+                  {copy.confirmIntake}
                 </button>
               )}
             {canRequestHandoff && (
@@ -1440,9 +1605,7 @@ function Assistant({
                   });
                 }}
               >
-                {canRetryHandoff
-                  ? "Verificar revisión humana pendiente"
-                  : "Prefiero revisión humana"}
+                {canRetryHandoff ? copy.retryHandoff : copy.preferHuman}
               </button>
             )}
           </div>
