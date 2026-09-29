@@ -1,0 +1,241 @@
+"""Boundary tests against a tiny explicitly synthetic Parquet snapshot."""
+from __future__ import annotations
+
+import hashlib
+import json
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
+from pathlib import Path
+
+import duckdb
+import pytest
+from fastapi.testclient import TestClient
+
+from frontend.server.app import COOKIE, create_app
+from frontend.server.config import Settings
+from frontend.server.repository import Repository
+from frontend.server.state import State
+
+
+def bucket(customer):
+    return int(hashlib.md5(customer.encode()).hexdigest()[:8], 16) % 128
+
+
+@pytest.fixture()
+def settings(tmp_path):
+    data = tmp_path / "data"
+    build = data / "builds" / "fixture-1"
+    silver = build / "silver"
+    silver.mkdir(parents=True)
+    gold = build / "gold" / "transactions_by_customer"
+    gold.mkdir(parents=True)
+    with duckdb.connect() as con:
+        con.execute("""CREATE TABLE customers AS SELECT * FROM (VALUES
+            ('private-customer-co','Colombia','Bogotá','Plus','Active',TIMESTAMP '2025-01-01'),
+            ('private-customer-mx','México','Monterrey','Basic','Active',TIMESTAMP '2025-01-02'),
+            ('private-customer-ar','Argentina','Buenos Aires','Premium','Active',TIMESTAMP '2025-01-03')
+        ) t(customer_id,country,city,segment,customer_status,registration_date)""")
+        con.execute("""CREATE TABLE products AS SELECT *, 2500::DECIMAL(15,2) AS credit_limit,
+            4.5::DECIMAL(5,2) AS interest_rate, DATE '2025-01-01' AS opening_date,
+            DATE '2028-01-01' AS expiration_date,TIMESTAMP '2026-06-18' AS last_updated,
+            TIMESTAMP '2026-06-17' AS last_transaction_date FROM (VALUES
+            ('private-account-co','private-customer-co','Cuenta Ahorro','COP',1000::DECIMAL(15,2),'Active'),
+            ('private-account-usd','private-customer-co','Cuenta Corriente','USD',25::DECIMAL(15,2),'Active'),
+            ('private-card-co','private-customer-co','Tarjeta Crédito','COP',200::DECIMAL(15,2),'Active'),
+            ('private-account-mx','private-customer-mx','Cuenta Ahorro','USD',500::DECIMAL(15,2),'Active'),
+            ('private-account-ar','private-customer-ar','Cuenta Ahorro','ARS',750::DECIMAL(15,2),'Active')
+        ) t(product_id,customer_id,product_type,currency,current_balance,product_status)""")
+        con.execute("""CREATE TABLE transactions AS SELECT *, DATE '2026-06-17' AS process_date,
+            'App' AS channel, NULL::VARCHAR AS transaction_category, NULL::VARCHAR AS merchant_name,
+            NULL::VARCHAR AS merchant_category,'Colombia' AS transaction_country,
+            NULL::VARCHAR AS transaction_city, true AS ownership_valid, false AS is_fraud
+        FROM (VALUES
+            ('private-txn-co-deposit','private-customer-co','private-account-co',TIMESTAMP '2026-06-17 12:00:00','Deposit',150::DECIMAL(15,2),'COP','Approved'),
+            ('private-txn-co-purchase','private-customer-co','private-card-co',TIMESTAMP '2026-06-17 11:00:00','Purchase',50::DECIMAL(15,2),'COP','Approved'),
+            ('private-txn-co-transfer','private-customer-co','private-account-co',TIMESTAMP '2026-06-17 10:00:00','Transfer',200::DECIMAL(15,2),'COP','Approved'),
+            ('private-txn-co-pending','private-customer-co','private-account-co',TIMESTAMP '2026-06-17 09:00:00','Deposit',999::DECIMAL(15,2),'COP','Pending'),
+            ('private-txn-co-usd','private-customer-co','private-account-usd',TIMESTAMP '2026-06-17 08:00:00','Deposit',10::DECIMAL(15,2),'USD','Approved'),
+            ('private-txn-mx','private-customer-mx','private-account-mx',TIMESTAMP '2026-06-17 07:00:00','Deposit',20::DECIMAL(15,2),'USD','Approved'),
+            ('private-txn-ar','private-customer-ar','private-account-ar',TIMESTAMP '2026-06-17 06:00:00','Withdrawal',30::DECIMAL(15,2),'ARS','Approved'),
+            ('private-txn-cross-owner','private-customer-co','private-account-ar',TIMESTAMP '2026-06-17 13:00:00','Deposit',800::DECIMAL(15,2),'ARS','Approved'),
+            ('private-txn-orphan','absent-customer','private-account-ar',TIMESTAMP '2026-06-17 14:00:00','Deposit',800::DECIMAL(15,2),'ARS','Approved')
+        ) t(transaction_id,customer_id,product_id,transaction_date,transaction_type,amount,currency,transaction_status)""")
+        # Even a mistakenly valid gold bit must not override silver owner joins.
+        con.execute("UPDATE transactions SET ownership_valid=false WHERE transaction_id='private-txn-co-usd'")
+        for table in ("customers", "products"):
+            con.execute(f"COPY {table} TO ? (FORMAT PARQUET)", [str(silver / f"{table}.parquet")])
+        for customer in ["private-customer-co", "private-customer-mx", "private-customer-ar", "absent-customer"]:
+            out = gold / f"bucket={bucket(customer)}" / "data_0.parquet"
+            out.parent.mkdir(exist_ok=True)
+            path = out.as_posix().replace("'", "''")
+            con.execute(f"COPY (SELECT * FROM transactions WHERE customer_id=?) TO '{path}' (FORMAT PARQUET)", [customer])
+    inventory = {p.relative_to(build / "gold").as_posix(): p.stat().st_size for p in (build / "gold").rglob("*.parquet")}
+    (build / "snapshot.json").write_text(json.dumps({"build_id": "fixture-1", "source_fingerprint": "a" * 16,
+        "created_at": "2026-09-29T00:00:00Z", "gold_files": inventory}))
+    (data / "CURRENT").write_text("fixture-1")
+    return Settings(data_dir=data, state_dir=tmp_path / "state", static_dir=tmp_path / "dist",
+                    profiles={key: {"customer_id": customer} for key,customer in [
+                        ("colombia","private-customer-co"),("mexico","private-customer-mx"),("argentina","private-customer-ar")]})
+
+
+def login(client, profile="colombia", **kwargs):
+    return client.post("/api/auth/login", json={"profile":profile,"code":"2026"}, **kwargs)
+
+
+def test_real_ownership_currency_and_no_invented_data(settings):
+    with TestClient(create_app(settings)) as client:
+        assert client.get("/api/overview").status_code == 401
+        assert login(client).status_code == 200
+        data = client.get("/api/overview").json()
+        assert len(data["transactions"]) == 4  # rejects owner mismatch AND false ownership bit
+        assert data["metadata"]["transactions_total"] == 4
+        raw = json.dumps(data)
+        assert "private-" not in raw and "is_fraud" not in raw
+        assert all(p["masked_number"] is None for p in data["products"])
+        assert all(t["merchant"] is None for t in data["transactions"])
+        transfer = next(t for t in data["transactions"] if t["type"] == "Transfer")
+        assert transfer["direction"] == "unknown" and transfer["amount"] == 200
+        totals = {r["currency"]:r for r in data["summary"]["balances_by_currency"]}
+        assert totals["COP"]["deposit_balance"] == 1000
+        assert totals["COP"]["credit_balance"] == 200
+        assert totals["USD"]["deposit_balance"] == 25
+        month = data["summary"]["monthly_activity"][0]
+        assert month["inflow"] == 150 and month["outflow"] == 50 and month["unclassified"] == 200
+        assert data["metadata"]["source_fingerprint"] == "a"*16
+
+
+def test_public_profiles_do_not_expose_ids(settings):
+    with TestClient(create_app(settings)) as client:
+        data = client.get("/api/auth/profiles").json()
+        assert len(data["profiles"]) == 3 and data["demo"] and data["code_hint"] == "2026"
+        assert "private-" not in json.dumps(data)
+        assert next(p for p in data["profiles"] if p["id"] == "mexico")["primary_currency"] == "USD"
+
+
+def test_session_restart_rotation_expiry_and_logout(settings):
+    with TestClient(create_app(settings)) as client:
+        login(client)
+        initial = client.cookies.get(COOKIE)
+        assert "HttpOnly" in login(client).headers["set-cookie"]
+        assert initial != client.cookies.get(COOKIE)
+        with TestClient(create_app(settings)) as restarted:
+            restarted.cookies.set(COOKIE, initial)
+            assert restarted.get("/api/auth/me").status_code == 401
+            restarted.cookies.set(COOKIE, client.cookies.get(COOKIE))
+            assert restarted.get("/api/auth/me").status_code == 200
+        current = client.cookies.get(COOKIE)
+        assert client.post("/api/auth/logout", json={}).status_code == 204
+        client.cookies.set(COOKIE,current)
+        assert client.get("/api/auth/me").status_code == 401
+        login(client)
+        with client.app.state.bank_state.connect() as db:
+            db.execute("UPDATE sessions SET expires_at=0")
+        assert client.get("/api/auth/me").status_code == 401
+
+
+def test_same_origin_and_login_throttle(settings):
+    with TestClient(create_app(settings)) as client:
+        assert login(client, headers={"origin":"https://evil.invalid"}).status_code == 403
+        assert login(client, headers={"origin":"http://testserver"}).status_code == 200
+        assert login(client, headers={"sec-fetch-site":"cross-site"}).status_code == 403
+        assert client.post("/api/auth/logout",content="x").status_code == 415
+        assert client.post("/api/auth/login",json={"profile":"colombia","code":"é"}).status_code == 401
+        for _ in range(9):
+            assert client.post("/api/auth/login",json={"profile":"colombia","code":"wrong"}).status_code == 401
+        assert login(client).status_code == 429
+
+
+def test_published_snapshot_fail_closed_after_cached_read(settings):
+    with TestClient(create_app(settings)) as client:
+        login(client)
+        assert client.get("/healthz").status_code == 200
+        pointer = settings.data_dir / "CURRENT"
+        pointer.write_text("../fixture-1")
+        assert client.get("/api/overview").status_code == 503
+        pointer.write_text("fixture-1")
+        gold = next((settings.data_dir / "builds/fixture-1/gold").rglob("*.parquet"))
+        gold.unlink()
+        assert client.get("/healthz").status_code == 503
+        assert client.get("/api/overview").status_code == 503
+
+
+def test_concurrent_profiles_and_foreign_transaction_reference(settings):
+    repo = Repository(settings, State(settings.state_dir))
+    def read(profile):
+        data = repo.overview(profile)
+        expected = {"colombia":"COP","mexico":"USD","argentina":"ARS"}[profile]
+        assert all(t["currency"] == expected for t in data["transactions"])
+        return data
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        results = list(pool.map(read,["colombia","mexico","argentina"]*8))
+    foreign = results[1]["transactions"][0]["reference"]
+    assert repo.transaction("colombia", foreign) is None
+    with TestClient(create_app(settings)) as client:
+        login(client)
+        client.app.state.chat_service = object()
+        response = client.post("/api/chat/messages",json={"message":"Ayuda","transaction_reference":foreign})
+        assert response.status_code == 404
+
+
+def test_secure_cookie_origin_and_custom_demo_code(settings):
+    settings = replace(settings,secure_cookie=True,public_origin="https://bank.example",demo_code="private-code")
+    with TestClient(create_app(settings),base_url="https://bank.example") as client:
+        assert "code_hint" not in client.get("/api/auth/profiles").json()
+        response=client.post("/api/auth/login",json={"profile":"colombia","code":"private-code"},headers={"origin":"https://bank.example"})
+        assert response.status_code == 200 and "Secure" in response.headers["set-cookie"]
+        assert client.get("/api/auth/me").status_code == 200
+        assert login(client,headers={"origin":"http://bank.example"}).status_code == 403
+
+
+def test_changed_private_profile_binding_revokes_old_deployment_cookie(settings):
+    with TestClient(create_app(settings)) as old_client:
+        login(old_client)
+        cookie = old_client.cookies.get(COOKIE)
+        profiles = {**settings.profiles, "colombia": {"customer_id": "new-private-customer"}}
+        with TestClient(create_app(replace(settings,profiles=profiles))) as restarted:
+            restarted.cookies.set(COOKIE,cookie)
+            assert restarted.get("/api/auth/me").status_code == 401
+
+
+@pytest.mark.parametrize("manifest", [[], None, {"build_id":"fixture-1","source_fingerprint":"a"*16,"gold_files":{}}])
+def test_malformed_published_inventory_is_service_unavailable(settings, manifest):
+    (settings.data_dir / "builds/fixture-1/snapshot.json").write_text(json.dumps(manifest))
+    with TestClient(create_app(settings)) as client:
+        assert client.get("/healthz").status_code == 503
+        assert client.get("/api/auth/profiles").status_code == 503
+
+
+def test_cent_precision_summary_and_explicit_snapshot_provenance(settings):
+    products = settings.data_dir / "builds/fixture-1/silver/products.parquet"
+    with duckdb.connect() as con:
+        con.execute("CREATE TABLE amounts AS SELECT * FROM read_parquet(?)", [str(products)])
+        con.execute("UPDATE amounts SET current_balance=0.10 WHERE product_id='private-account-co'")
+        con.execute("UPDATE amounts SET current_balance=0.20,currency='COP' WHERE product_id='private-account-usd'")
+        con.execute("COPY amounts TO ? (FORMAT PARQUET)",[str(products)])
+    manifest_file = settings.data_dir / "builds/fixture-1/snapshot.json"
+    manifest = json.loads(manifest_file.read_text())
+    manifest["source_validation"] = "legacy_inventory"
+    manifest_file.write_text(json.dumps(manifest))
+    with TestClient(create_app(settings)) as client:
+        login(client)
+        data=client.get("/api/overview").json()
+        assert data["summary"]["balances_by_currency"][0]["deposit_balance"] == 0.30
+        assert data["metadata"]["source_validation"] == "legacy_inventory"
+        assert data["metadata"]["freshness"] == "derived_snapshot"
+
+
+def test_transaction_filters_run_before_page_limit_and_keep_owner_scope(settings):
+    with TestClient(create_app(settings)) as client:
+        login(client)
+        pending = client.get("/api/transactions?status=Pending&limit=1").json()
+        assert len(pending["transactions"]) == 1 and pending["transactions"][0]["status"] == "Pending"
+        assert pending["metadata"]["filtered_count"] == 1
+        data = client.get("/api/overview").json()
+        card = next(p for p in data["products"] if p["type"] == "Tarjeta Crédito")
+        card_history = client.get("/api/transactions",params={"product":card["reference"],"limit":1}).json()
+        assert len(card_history["transactions"]) == 1 and card_history["transactions"][0]["type"] == "Purchase"
+        search = client.get("/api/transactions?q=transfer&limit=1").json()
+        assert len(search["transactions"]) == 1 and search["transactions"][0]["type"] == "Transfer"
+        login(client,"mexico")
+        foreign = client.get("/api/transactions",params={"product":card["reference"],"limit":1}).json()
+        assert foreign["transactions"] == [] and foreign["metadata"]["filtered_count"] == 0

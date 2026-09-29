@@ -16,7 +16,25 @@ jobs:
         with:
           python-version: '3.13'
           cache: pip
-          cache-dependency-path: requirements-*.txt
-      - run: python -m pip install -r requirements-mcp.txt -r requirements-ml.txt
-      - run: python -m pytest -q tests scripts/banking_acceptance_load_test.py
-      - run: python -m compileall -q banking_mcp pipeline demo scripts
+          cache-dependency-path: |
+            requirements-*.txt
+            frontend/requirements.txt
+      - run: python -m pip install -r requirements-mcp.txt -r requirements-ml.txt -r frontend/requirements.txt
+      - run: python -m pytest -q tests frontend/tests scripts/banking_acceptance_load_test.py
+      - run: python -m compileall -q banking_mcp pipeline demo scripts frontend/server
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run format:check
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend

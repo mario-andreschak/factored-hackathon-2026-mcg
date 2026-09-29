@@ -5,3 +5,8 @@ LATAM_Bank_Complete_Data_Dictionary (2).pdf
 .venv/
 __pycache__/
 *.pyc
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/.state/
+frontend/test-results/
