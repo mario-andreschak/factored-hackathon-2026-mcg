@@ -99,7 +99,8 @@ export function csv(transactions: Transaction[]) {
   const rows = [
     [
       "Referencia",
-      "Fecha",
+      "Fecha del movimiento",
+      "Fecha de procesamiento",
       "Descripción",
       "Tipo",
       "Monto",
@@ -110,6 +111,7 @@ export function csv(transactions: Transaction[]) {
     ...transactions.map((t) => [
       t.reference,
       t.occurred_at,
+      t.process_date,
       label(t),
       t.type,
       t.amount,

@@ -288,6 +288,9 @@ def test_history_pages_and_older_chat_selection_keep_strict_ownership(expanded_h
         assert overview["metadata"]["transactions_offset"] == 0
         assert overview["metadata"]["transactions_truncated"] is True
         assert overview["metadata"]["next_offset"] == 500
+        newer = overview["transactions"][0]
+        assert newer["occurred_at"].startswith("2026-06-18")
+        assert newer["process_date"] == "2026-06-17"
 
         # A filter can select the old purchase without loading every earlier page.
         older = client.get("/api/transactions", params={"q": "Purchase", "month": "2026-06", "limit": 1}).json()
@@ -335,6 +338,18 @@ def test_history_pages_and_older_chat_selection_keep_strict_ownership(expanded_h
         assert public_selection["reference"] == selected["reference"]
         assert public_selection["amount"] == 50 and public_selection["type"] == "Purchase"
 
+        # A displayed next-day movement must carry its separate MCP query date.
+        response = client.post("/api/chat/messages", json={"message": "Explícame este movimiento", "transaction_reference": newer["reference"]})
+        assert response.status_code == 200 and len(chat.calls) == 2
+        message = chat.calls[1][3]
+        assert '"occurred_at": "2026-06-18T00:00:00"' in message
+        assert '"process_date": "2026-06-17"' in message
+        assert '"mcp_date_window_basis": "process_date"' in message
+        display_message, public_selection = chat.public_calls[1]
+        assert display_message == "Explícame este movimiento"
+        assert public_selection["occurred_at"].startswith("2026-06-18")
+        assert "process_date" not in public_selection
+
         repository = client.app.state.repository
         denied = [
             repository.reference("txn", "private-customer-ar", "private-txn-ar"),
@@ -346,7 +361,7 @@ def test_history_pages_and_older_chat_selection_keep_strict_ownership(expanded_h
             response = client.post("/api/chat/messages", json={"message": "Ayuda", "transaction_reference": reference})
             assert response.status_code == 404
             assert response.json()["detail"] == "El movimiento seleccionado no está disponible."
-            assert len(chat.calls) == 1
+            assert len(chat.calls) == 2
 
         # The selected owned reference remains unavailable to a different customer.
         assert repository.transaction("argentina", selected["reference"]) is None

@@ -50,6 +50,15 @@ Every gold transaction has valid ownership. Transaction timestamps run from
 June 17, 2023 through June 18, 2026. This identifies the published organizer
 snapshot; it is not a fresh S3 or live-bank synchronization claim.
 
+The snapshot has two date bases. For 1,106,307 of its 4,425,008 transactions,
+the calendar day of `transaction_date` is one day after `process_date`.
+The latest processing date is June 17, 2026, while the latest event timestamp
+is June 18, 2026. The portal list and month views use the event timestamp;
+CSV export includes both dates. Banking MCP `list_my_transactions` applies
+its start/end window to `process_date`. Selected-transaction chat context
+carries both dates so a June 18 event processed on June 17 is not treated
+as a conflicting record.
+
 Only customers, products and transactions are present as silver tables in
 the current build. Earlier repository reports describe six tables in an
 older build, so complaint/transcript availability cannot be inferred from
@@ -130,22 +139,25 @@ The complete repository Python suite passed 157 tests and 43 subtests in
 acceptance-runner CI script added 7 passing tests, for 164 tests plus
 43 subtests across the executed checks. Python compilation checks passed
 for `banking_mcp`, `pipeline`, `demo`, `scripts` and `frontend/server`.
+After the date-basis correction, all 15 focused frontend API tests passed,
+including selected next-day event context and owner checks. Prettier and the
+TypeScript/Vite production build passed again.
 
 The final Linux Docker build passed TypeScript and Vite compilation with
 the dependency lockfile. The running image is
-`sha256:47c6225d63a0b215895b8ffeaba5ff0399dbc31c5f0824c040ffc7fba68c8128`
-at 239,542,168 bytes. Dataset files, private configuration, signing keys and
+`sha256:5a638e66991b473ced00e5863bc6fc0b2e417fb031a3c7fd562395ea929a97c8`
+at 239,542,683 bytes. Dataset files, private configuration, signing keys and
 test sources are excluded from the image. `docker compose ... up -d --build
 --wait` created or updated only `hackathon-banking-frontend-1`, publishing
 `127.0.0.1:43800` to port 8080. The service reported healthy and
 `GET /healthz` returned `status=ok`, `dataset_ready=true`.
 
-The updated image first started at `2026-09-29T16:16:50Z`. Every copied runtime
+The current image started at `2026-09-29T17:38:01Z`. Every copied runtime
 source file and generated static asset was compared byte-for-byte against
 the frozen working tree: all 6 Python files, `requirements.txt` and 20 static
 files matched. The combined SHA-256 manifest is
-`a7cd39ed605967960e82479b2b112ead7328596bdde5a64cba383af5ce1267aa`.
-The browser assets are `index-Cxk_VqUk.css` and `index-BFi5thxe.js`.
+`5c922ade080b471fffe859d886e11938dc6c0e7e6ee58151acecea5a24b1879a`.
+The browser assets are `index-Cxk_VqUk.css` and `index-B1P03VjK.js`.
 
 Docker inspection confirmed the unprivileged `banking` user, read-only root
 filesystem and data/config/signer mounts, an isolated writable named state
@@ -177,6 +189,11 @@ An actual selected-transaction request through the browser completed with a
 real FLUJO reply matching the approved status, source amount and transaction
 date, with no browser console errors. Reply emphasis and references render
 through escaped React text rather than injected HTML.
+
+The rebuilt browser displayed both dates for a real Valentina movement:
+June 2, 2026 at 02:48 as the movement date and June 1, 2026 as its
+processing date. This verifies the visible date distinction; the selected
+next-day chat payload was verified by the focused API test.
 
 The review regressions also ran in a native browser against an isolated synthetic
 604-row history. Search found an older purchase absent from the first 500 API rows;

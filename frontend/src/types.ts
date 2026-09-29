@@ -25,6 +25,7 @@ export type Transaction = {
   reference: string;
   product_reference: string;
   occurred_at: string;
+  process_date: string;
   type: string;
   category: string | null;
   amount: number;

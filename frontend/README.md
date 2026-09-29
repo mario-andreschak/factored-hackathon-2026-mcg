@@ -9,6 +9,13 @@ filters or CSV export. Each API page is limited to 500 rows; offsets and snapsho
 checks prevent an older transaction from silently disappearing. Selected chat
 references resolve against the complete ownership-checked history.
 
+Movement dates and month views use the transaction event timestamp; CSV exports
+include both event and processing dates.
+The banking MCP filters its list start/end dates by processing date. In the
+published snapshot, 1,106,307 of 4,425,008 events fall on the next calendar
+day; the latest processing date is June 17, 2026, while the latest event is
+June 18, 2026. Selected-transaction chat context includes both dates.
+
 Closing the assistant preserves its messages and any running query. Completed
 public exchanges are stored in the application state volume and restored after
 page refresh or container restart. Refreshing during a query polls its status

@@ -770,11 +770,17 @@ function TransactionDetail({
       </div>
       <dl className="details-list">
         <div>
-          <dt>Fecha registrada</dt>
+          <dt>Fecha del movimiento</dt>
           <dd>
             {date(t.occurred_at)} · {t.occurred_at.slice(11, 16)}
           </dd>
         </div>
+        {t.process_date.slice(0, 10) !== t.occurred_at.slice(0, 10) && (
+          <div>
+            <dt>Fecha de procesamiento</dt>
+            <dd>{date(t.process_date)}</dd>
+          </div>
+        )}
         <div>
           <dt>Producto</dt>
           <dd>
@@ -1487,7 +1493,7 @@ export default function App() {
                   </p>
                 </div>
                 <span className="asof">
-                  <span>Datos de transacciones hasta</span>
+                  <span>Movimientos registrados hasta</span>
                   <strong>{date(asOf)}</strong>
                 </span>
               </div>
@@ -1850,7 +1856,7 @@ export default function App() {
                       <label>
                         <span className="sr-only">Mes</span>
                         <select
-                          aria-label="Filtrar por mes"
+                          aria-label="Filtrar por mes del movimiento"
                           value={month}
                           onChange={(e) => setMonth(e.target.value)}
                         >
@@ -1993,7 +1999,7 @@ export default function App() {
           </p>
           <dl className="details-list">
             <div>
-              <dt>Transacciones hasta</dt>
+              <dt>Fecha más reciente del movimiento</dt>
               <dd>{date(asOf)}</dd>
             </div>
             <div>

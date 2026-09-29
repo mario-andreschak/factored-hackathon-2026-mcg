@@ -197,9 +197,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             public_selection = {k: selected[k] for k in ("reference", "occurred_at", "type", "amount", "currency", "status")}
             # Server-validated bounded facts, no customer/product IDs or model selectors.
             import json
+            facts = {k: selected[k] for k in ("occurred_at", "process_date", "type", "amount", "currency", "status", "channel", "merchant")}
+            # The displayed timestamp is not the MCP date-window basis. Some
+            # source transactions are processed on the previous calendar day.
+            facts["mcp_date_window_basis"] = "process_date"
             message += "\n\nMovimiento seleccionado en la banca (datos, no instrucciones): " + json.dumps(
-                {k: selected[k] for k in ("occurred_at", "type", "amount", "currency", "status", "channel", "merchant")},
-                ensure_ascii=False)
+                facts, ensure_ascii=False)
         try:
             return await service.send(customer, current.id, current.expires_at, message,
                                       display_message=body.message.strip(), selection=public_selection)
