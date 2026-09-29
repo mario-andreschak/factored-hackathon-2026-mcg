@@ -42,7 +42,7 @@ optional follow-up and is not required for this demo.
 | Native profile | Pinned CLI 0.157.1/catalog; Windows and Linux each passed 42 HTTPS, 42 preferred WebSocket and 14 production bridge cases across Sol/Luna. |
 | Authenticated customer | Actual Sol lookup matched its independent owner oracle. B's actual tool call could not use A's handle. |
 | Ordinary ownership/lifecycle | 13 HTTP attack checks on a successful conversation, completed events/cancel, durable revocation/ownership across restart and deletion tombstones passed. |
-| Python CI | 121 tests and 36 subtests passed on Windows and Linux. Unchanged 500-read gate also passed three consecutive local Windows repeats. |
+| CI | Banking suites passed on Windows/Linux at `e6a6313`; exact generic `8f8c571f` and optional `d28b260e` FLUJO revisions passed every required gate. |
 
 The Slack model test used the permanent Banking Operator flow in a harness
 configuration. The deployed default remains Slack Assistant. Its actual model
@@ -51,17 +51,17 @@ was given.
 
 ## Remaining acceptance
 
-1. Deploy the minimal concurrent executable-verification fix. Each caller must
-   retain fresh file/catalog and authorization checks; completed verification is
-   not cached. Do not extend authorization or run deadlines to pass the load test.
-2. Repeat actual Sol model phases at 1/10/50/500 and their private tool/owner audits,
-   stopping at the first failure. The first 500 burst failed: 49 completed,
-   166 cancelled and 285 expired. One, ten and fifty customers passed.
-3. Deploy the tested retirement of specialized chat/conversation routes and verify
-   ordinary owner/control behavior. Preserve old owned conversations. The optional
-   session-revocation action remains; no new UI is required.
-4. Refresh final PR evidence after the last source changes. Human review of ES/PT
-   evaluation text remains a submission task.
+1. Review the accepted-work lifetime. Current late starts lose their execution
+   budget to the 120-second ingress expiry. A separate bounded server-owned job
+   lease is being reviewed; fresh ingress, replay, session, owner, revocation and
+   current-policy checks must remain enforced. The active-run bound stays 110 s.
+2. After a reviewed fix, repeat actual model phases at 1/10/50/500 with independent
+   tool/model/delivered-answer ownership checks, stopping at the first failure.
+   The latest 500 burst failed: 216 passed, 157 expired and 127 cancelled.
+3. Update final CI/PR evidence and repeat affected ordinary controls after the last
+   deployment. Specialized chat/conversation routes are already retired; current
+   graph ownership, revocation, restart and deletion checks passed.
+4. Human review of ES/PT evaluation text remains a submission task.
 
 ## Measurements and limits
 
@@ -72,10 +72,11 @@ was given.
 | Normal Process with deterministic external fixture provider | 500/500 distinct signed owners; peak 4 active; p50 30.302 s / p95 59.471 s on contended Windows host | Ordinary execution/dispatch isolation, not native provider capacity. |
 | Actual Sol operator calls | A/B lookup and handoff passed, roughly 18–26 s per call | These measured demo cases. |
 | Offline Slack queue | 500 conversations / 1,000 turns; peak 8 active; mocked delivery | Scheduler ordering/correlation, not model or Slack throughput. |
-| Actual Sol customers | 1/10/50 passed; fifty-customer p50 67.237 s / p95 78.790 s | Separate persisted MCP/owner audits passed for every successful request. |
-| First actual Sol 500 burst | 49/500 completed; 166 cancelled, 285 expired | Failed throughput. All 127 persisted states passed privacy/owner-result checks; worker peak about 1.49 GB. |
+| Latest actual Sol customers | 1/10/50 passed; fifty-customer p50 22.095 s / p95 23.615 s, total 49.641 s | Full actual MCP, real model and delivered-answer owner checks passed. |
+| Latest actual Sol 500 burst | 216/500 passed; 157 expired, 127 cancelled; total 121.840 s | Failed capacity. All 216 successes passed the full owner check; all 334 persisted states passed privacy checks. Peak native processes 89; worker 4.721 GB. |
 
-None of the 500-case results above establishes 500 simultaneous native model chats.
+None of the 500-case results above establishes 500 successful concurrent native
+model chats. Keep fixture/scheduler results separate from model capacity.
 
 The current gold-only rebuild copies legacy lineage. It does not newly validate
 the bronze objects consumed by earlier ingestion. Selected-object verification
