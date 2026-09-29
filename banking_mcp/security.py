@@ -91,7 +91,7 @@ class StateStore:
                     transaction_id TEXT NOT NULL, snapshot TEXT NOT NULL,
                     action TEXT NOT NULL, decision TEXT NOT NULL, reason TEXT,
                     facts TEXT NOT NULL, expires INTEGER NOT NULL,
-                    evidence_digest TEXT);
+                    evidence_digest TEXT, request_key TEXT, result_json TEXT);
                 CREATE TABLE IF NOT EXISTS sandbox_cases(
                     id TEXT PRIMARY KEY, customer TEXT NOT NULL, transaction_id TEXT NOT NULL,
                     action TEXT NOT NULL, snapshot TEXT NOT NULL, created_at REAL NOT NULL,
@@ -114,6 +114,11 @@ class StateStore:
             columns = {row[1] for row in db.execute("PRAGMA table_info(action_pending)")}
             if "evidence_digest" not in columns:
                 db.execute("ALTER TABLE action_pending ADD COLUMN evidence_digest TEXT")
+            if "request_key" not in columns:
+                db.execute("ALTER TABLE action_pending ADD COLUMN request_key TEXT")
+            if "result_json" not in columns:
+                db.execute("ALTER TABLE action_pending ADD COLUMN result_json TEXT")
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS action_pending_request_key ON action_pending(request_key)")
             db.execute("INSERT OR IGNORE INTO sandbox_ledger_identity VALUES (1, ?)",
                        (secrets.token_hex(32),))
 

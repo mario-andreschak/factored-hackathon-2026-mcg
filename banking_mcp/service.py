@@ -54,6 +54,7 @@ class GetArgs(CustomerArgs):
 class PrepareArgs(CustomerArgs):
     transaction_id: str = Field(min_length=1, max_length=128)
     snapshot: str = Field(pattern=r"^[A-Za-z0-9_-]{1,96}$")
+    request_id: str = Field(pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
 
 
 class ConfirmArgs(CustomerArgs):
@@ -112,7 +113,7 @@ class Service:
         self.auth = Authorizer(config, self.store)
         self.repository = Repository(config, self.store)
         self.actions = Actions(self.store, self.repository, config.sandbox_report_coverage_start,
-                               config.synthetic_evidence_file)
+                               config.synthetic_evidence_file, config.service_token)
         self._pending = 0
         self._semaphore = asyncio.Semaphore(config.max_active_reads)
         self._thread_limiter = None
@@ -152,7 +153,7 @@ class Service:
         elif name == "get_my_transaction":
             result = self.repository.get_transaction(principal, parsed.selection_handle, parsed.verify_source)
         elif name == "prepare_unrecognized_charge":
-            result = self.actions.prepare(principal, parsed.transaction_id, parsed.snapshot)
+            result = self.actions.prepare(principal, parsed.transaction_id, parsed.snapshot, parsed.request_id)
         elif name == "confirm_simulated_intake":
             result = self.actions.confirm(principal, parsed.pending_handle, parsed.confirmed)
         elif name == "read_intake_receipt":

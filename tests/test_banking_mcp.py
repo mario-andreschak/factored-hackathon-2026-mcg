@@ -73,6 +73,8 @@ def call(bank, tool="list_my_transactions", args=None, subject="alice", **claims
 
 def action_call(bank, tool, args, subject="alice"):
     from banking_mcp.service import SCOPES
+    if tool == "prepare_unrecognized_charge" and "request_id" not in args:
+        args = {**args, "request_id": str(uuid.uuid4())}
     return call(bank, tool, args, subject, scope=[SCOPES[tool]])
 
 
@@ -111,6 +113,18 @@ def _handoff_in_process(config_json, request_id, ready, barrier, results):
         results.put(service.actions.handoff(principal, "customer_request", None, request_id)["state"])
     except BankError as exc:
         results.put(exc.code)
+    finally:
+        service.close()
+
+
+def _prepare_in_process(config_json, transaction_id, build, request_id, barrier, results):
+    service = Service(Config.model_validate_json(config_json))
+    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    try:
+        barrier.wait(timeout=15)
+        results.put(service.actions.prepare(principal, transaction_id, build, request_id))
+    except BankError as exc:
+        results.put({"error": exc.code})
     finally:
         service.close()
 
@@ -170,6 +184,72 @@ def test_no_target_handoffs_are_distinct_and_retryable(bank):
     assert action_call(bank, "create_verified_handoff", first_args) == first
     with pytest.raises(BankError, match="invalid_arguments"):
         action_call(bank, "create_verified_handoff", {"reason": "customer_request"})
+
+
+def test_prepare_request_replays_after_lost_response_and_restart(bank):
+    service, key = bank
+    build, targets = owned_action_target(bank)
+    request_id = str(uuid.uuid4())
+    args = {"transaction_id": targets[0], "snapshot": build, "request_id": request_id}
+    original = action_call(bank, "prepare_unrecognized_charge", args)
+    restarted = Service(service.config)
+    try:
+        assert action_call((restarted, key), "prepare_unrecognized_charge", args) == original
+        with pytest.raises(BankError, match="invalid_arguments"):
+            action_call((restarted, key), "prepare_unrecognized_charge",
+                        {**args, "transaction_id": targets[1]})
+        with pytest.raises(BankError, match="invalid_arguments"):
+            action_call((restarted, key), "prepare_unrecognized_charge", {**args, "snapshot": "other-build"})
+        with restarted.store.connect() as db:
+            assert db.execute("SELECT count(*) FROM action_pending WHERE request_key IS NOT NULL").fetchone()[0] == 1
+            db.execute("UPDATE action_pending SET expires=0 WHERE request_key IS NOT NULL")
+        with pytest.raises(BankError, match="reference_unavailable"):
+            action_call((restarted, key), "prepare_unrecognized_charge", args)
+    finally:
+        restarted.close()
+
+
+def test_prepare_same_request_serializes_across_processes_and_scopes_binding(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    request_id = str(uuid.uuid4())
+    ctx = multiprocessing.get_context("spawn")
+    barrier, results = ctx.Barrier(2), ctx.Queue()
+    children = [ctx.Process(target=_prepare_in_process,
+                args=(service.config.model_dump_json(), targets[0], build, request_id, barrier, results))
+                for _ in range(2)]
+    for child in children:
+        child.start()
+    for child in children:
+        child.join(25)
+        assert child.exitcode == 0
+    first, second = (results.get(timeout=2) for _ in children)
+    assert first == second and len(first["pending_handle"]) == 43
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM action_pending WHERE request_key IS NOT NULL").fetchone()[0] == 1
+    different_session = Principal("alice", cid(3), "session-other", "conversation-alice", int(time.time()) + 60)
+    different_conversation = Principal("alice", cid(3), "session-alice", "conversation-other", int(time.time()) + 60)
+    for principal in (different_session, different_conversation):
+        assert service.actions.prepare(principal, targets[0], build, request_id)["pending_handle"] != first["pending_handle"]
+    foreign = Principal("bob", cid(4), "session-bob", "conversation-bob", int(time.time()) + 60)
+    with pytest.raises(BankError, match="reference_unavailable"):
+        service.actions.prepare(foreign, targets[0], build, request_id)
+    with pytest.raises(BankError, match="invalid_arguments"):
+        service.actions.prepare(different_session, targets[0], build, str(uuid.uuid1()))
+
+
+def test_prepare_denies_expired_and_revoked_bindings_before_insert(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    expired = Principal("alice", cid(3), "session-expired", "conversation-alice", int(time.time()) - 1)
+    with pytest.raises(BankError, match="authorization_denied"):
+        service.actions.prepare(expired, targets[0], build, str(uuid.uuid4()))
+    service.store.revoke("session-alice")
+    revoked = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    with pytest.raises(BankError, match="authorization_denied"):
+        service.actions.prepare(revoked, targets[0], build, str(uuid.uuid4()))
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM action_pending").fetchone()[0] == 0
 
 
 def test_selected_handoff_lost_response_reuses_logical_request(bank):
@@ -1021,7 +1101,8 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
                     meta=assertion(bank, "list_my_transactions", args))
                 assert not result.isError
                 assert len(json.loads(result.content[0].text)["transactions"]) == 1
-                prepare_args = {"transaction_id": targets[0], "snapshot": build}
+                prepare_args = {"transaction_id": targets[0], "snapshot": build,
+                                "request_id": str(uuid.uuid4())}
                 prepared = await client.call_tool("prepare_unrecognized_charge", prepare_args,
                     meta=assertion(bank, "prepare_unrecognized_charge", prepare_args, scope=["bank:prepare"]))
                 assert not prepared.isError
