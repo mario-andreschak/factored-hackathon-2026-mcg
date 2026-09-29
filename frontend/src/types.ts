@@ -68,6 +68,20 @@ export type Overview = {
     amounts_note: string;
     transactions_returned: number;
     transactions_total: number;
+    filtered_count: number;
+    transactions_limit: number;
+    transactions_offset: number;
+    transactions_truncated: boolean;
+    next_offset: number | null;
   };
 };
 export type ChatStatus = { available: boolean; mode?: string; reason?: string };
+export type ChatSelection = Pick<
+  Transaction,
+  "reference" | "occurred_at" | "type" | "amount" | "currency" | "status"
+>;
+export type ChatMessage = {
+  role: "user" | "assistant";
+  text: string;
+  selection?: ChatSelection;
+};

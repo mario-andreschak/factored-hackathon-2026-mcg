@@ -33,6 +33,7 @@ import {
   X,
 } from "lucide-react";
 import type {
+  ChatMessage,
   ChatStatus,
   Overview,
   Product,
@@ -848,35 +849,89 @@ function AssistantText({ text }: { text: string }) {
 }
 
 function Assistant({
+  open,
   status,
   selected,
   hidden,
   onClose,
   onExpired,
 }: {
+  open: boolean;
   status: ChatStatus;
   selected: Transaction | null;
   hidden: boolean;
   onClose: () => void;
   onExpired: () => void;
 }) {
-  const [messages, setMessages] = useState<
-      { role: "user" | "assistant"; text: string }[]
-    >([]),
+  const [messages, setMessages] = useState<ChatMessage[]>([]),
     [input, setInput] = useState(""),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [historyReady, setHistoryReady] = useState(false),
+    [historyLimited, setHistoryLimited] = useState(false),
+    [historyAttempt, setHistoryAttempt] = useState(0);
   const end = useRef<HTMLDivElement>(null),
-    controller = useRef<AbortController | null>(null);
+    controller = useRef<AbortController | null>(null),
+    alive = useRef(true);
   useEffect(() => {
-    end.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, busy]);
-  useEffect(() => () => controller.current?.abort(), []);
+    if (open) end.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, busy, open]);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      controller.current?.abort();
+    };
+  }, []);
+  useEffect(() => {
+    if (!status.available) return;
+    const historyController = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    setHistoryReady(false);
+    setError("");
+    function recover() {
+      api<{ messages: ChatMessage[]; active: boolean; limited?: boolean }>(
+        "/api/chat/history",
+        {
+          signal: historyController.signal,
+        },
+      )
+        .then((result) => {
+          if (historyController.signal.aborted || !alive.current) return;
+          setMessages(result.messages);
+          setHistoryLimited(Boolean(result.limited));
+          setHistoryReady(true);
+          setBusy(result.active);
+          // A query admitted before a page refresh can finish in the server.
+          // Recover its result rather than submitting that query a second time.
+          if (result.active) timer = setTimeout(recover, 2000);
+        })
+        .catch((e) => {
+          if (historyController.signal.aborted || !alive.current) return;
+          if (e instanceof ApiError && e.status === 401) onExpired();
+          else {
+            setHistoryReady(false);
+            setBusy(false);
+            setError(
+              "No pudimos recuperar tu conversación. Vuelve a intentar antes de enviar una consulta.",
+            );
+          }
+        });
+    }
+    recover();
+    return () => {
+      historyController.abort();
+      clearTimeout(timer);
+    };
+  }, [status.available, historyAttempt, onExpired]);
   async function send(text: string) {
-    if (!text.trim() || busy || !status.available) return;
+    if (!text.trim() || busy || !status.available || !historyReady) return;
     setInput("");
     setError("");
-    setMessages((m) => [...m, { role: "user", text }]);
+    setMessages((m) => [
+      ...m,
+      { role: "user", text, ...(selected ? { selection: selected } : {}) },
+    ]);
     setBusy(true);
     controller.current = new AbortController();
     try {
@@ -888,8 +943,10 @@ function Assistant({
           ...(selected ? { transaction_reference: selected.reference } : {}),
         }),
       });
+      if (!alive.current || controller.current.signal.aborted) return;
       setMessages((m) => [...m, { role: "assistant", text: result.reply }]);
     } catch (e) {
+      if (!alive.current) return;
       if (e instanceof ApiError && e.status === 401) {
         onExpired();
         return;
@@ -899,9 +956,12 @@ function Assistant({
           "La consulta no pudo completarse. Puedes intentar de nuevo; tu historial sigue disponible.",
         );
     } finally {
-      setBusy(false);
+      if (alive.current) setBusy(false);
     }
   }
+  // Closing the dialog keeps this authenticated component alive. A running
+  // query can finish and its visible transcript will be here on reopening.
+  if (!open) return null;
   return (
     <Modal title="Tu asistente Savia" onClose={onClose} wide>
       <div className="assistant-status">
@@ -932,7 +992,18 @@ function Assistant({
         </div>
       )}
       <div className="chat-messages" aria-live="polite">
-        {messages.length === 0 ? (
+        {historyLimited && (
+          <p className="modal-disclosure">
+            Mostramos los mensajes más recientes. El asistente mantiene el
+            contexto de esta conversación.
+          </p>
+        )}
+        {status.available && !historyReady && !error ? (
+          <div className="chat-thinking">
+            <LoaderCircle size={16} className="spin" />
+            Recuperando tu conversación…
+          </div>
+        ) : messages.length === 0 && !busy ? (
           <div className="chat-welcome">
             <MessageCircle size={30} />
             <h3>Vamos a entender tus movimientos.</h3>
@@ -954,7 +1025,7 @@ function Assistant({
               ).map((text) => (
                 <button
                   key={text}
-                  disabled={!status.available}
+                  disabled={!status.available || !historyReady}
                   onClick={() => send(text)}
                 >
                   {text}
@@ -967,6 +1038,16 @@ function Assistant({
           messages.map((m, i) => (
             <div key={i} className={`chat-message ${m.role}`}>
               <span>{m.role === "assistant" ? "Savia" : "Tú"}</span>
+              {m.selection && (
+                <div className="chat-message-selection">
+                  <CreditCard size={14} />
+                  <span>
+                    {typeNames[m.selection.type] || m.selection.type} ·{" "}
+                    {date(m.selection.occurred_at)} ·{" "}
+                    {money(m.selection.amount, m.selection.currency, hidden)}
+                  </span>
+                </div>
+              )}
               {m.role === "assistant" ? (
                 <AssistantText text={m.text} />
               ) : (
@@ -982,9 +1063,17 @@ function Assistant({
           </div>
         )}
         {error && (
-          <p role="alert" className="form-error">
-            {error}
-          </p>
+          <div role="alert" className="form-error">
+            <p>{error}</p>
+            {!historyReady && (
+              <button
+                className="button outline"
+                onClick={() => setHistoryAttempt((attempt) => attempt + 1)}
+              >
+                Recuperar conversación
+              </button>
+            )}
+          </div>
         )}
         <div ref={end} />
       </div>
@@ -1005,11 +1094,11 @@ function Assistant({
               : "Asistente temporalmente desconectado"
           }
           maxLength={2000}
-          disabled={!status.available || busy}
+          disabled={!status.available || !historyReady || busy}
         />
         <button
           aria-label="Enviar mensaje"
-          disabled={!status.available || busy || !input.trim()}
+          disabled={!status.available || !historyReady || busy || !input.trim()}
         >
           <Send size={19} />
         </button>
@@ -1043,7 +1132,9 @@ export default function App() {
     [mobileMenu, setMobileMenu] = useState(false),
     [info, setInfo] = useState(false),
     [toast, setToast] = useState("");
+  const dataController = useRef<AbortController | null>(null);
   const expired = useCallback(() => {
+    dataController.current?.abort();
     setAuthenticated(false);
     setData(null);
     setAssistant(false);
@@ -1052,10 +1143,49 @@ export default function App() {
     setInfo(false);
   }, []);
   const load = useCallback(async () => {
+    dataController.current?.abort();
+    const controller = new AbortController();
+    dataController.current = controller;
     setLoading(true);
     setError("");
     try {
-      const result = await api<Overview>("/api/overview");
+      const result = await api<Overview>("/api/overview", {
+        signal: controller.signal,
+      });
+      const transactions = [...result.transactions];
+      let offset = result.metadata.next_offset ?? null;
+      while (offset !== null) {
+        const next = await api<Pick<Overview, "transactions" | "metadata">>(
+          `/api/transactions?limit=500&offset=${offset}`,
+          { signal: controller.signal },
+        );
+        if (
+          next.metadata.build_id !== result.metadata.build_id ||
+          next.metadata.source_fingerprint !==
+            result.metadata.source_fingerprint ||
+          !next.transactions.length ||
+          (next.metadata.next_offset !== null &&
+            next.metadata.next_offset <= offset)
+        ) {
+          throw new Error(
+            "The transaction snapshot could not be loaded consistently.",
+          );
+        }
+        transactions.push(...next.transactions);
+        offset = next.metadata.next_offset;
+      }
+      if (
+        transactions.length !== result.metadata.transactions_total ||
+        new Set(transactions.map((transaction) => transaction.reference))
+          .size !== transactions.length
+      ) {
+        throw new Error("The transaction history is incomplete.");
+      }
+      if (controller.signal.aborted) return;
+      result.transactions = transactions;
+      result.metadata.transactions_returned = transactions.length;
+      result.metadata.transactions_truncated = false;
+      result.metadata.next_offset = null;
       setData(result);
       setCurrency(
         result.profile.primary_currency ||
@@ -1067,6 +1197,7 @@ export default function App() {
         .then(setChatStatus)
         .catch(() => setChatStatus({ available: false }));
     } catch (e) {
+      if (controller.signal.aborted) return;
       if (e instanceof ApiError && e.status === 401) expired();
       else {
         setAuthenticated(true);
@@ -1075,9 +1206,10 @@ export default function App() {
         );
       }
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [expired]);
+  useEffect(() => () => dataController.current?.abort(), []);
   useEffect(() => {
     api("/api/auth/me")
       .then(load)
@@ -1841,15 +1973,14 @@ export default function App() {
           onChat={() => openChat(selectedTx)}
         />
       )}
-      {assistant && (
-        <Assistant
-          status={chatStatus}
-          selected={chatSelection}
-          hidden={hidden}
-          onClose={closeAssistant}
-          onExpired={expired}
-        />
-      )}
+      <Assistant
+        open={assistant}
+        status={chatStatus}
+        selected={chatSelection}
+        hidden={hidden}
+        onClose={closeAssistant}
+        onExpired={expired}
+      />
       {info && (
         <Modal title="Una experiencia con datos reales" onClose={closeInfo}>
           <div className="about-logo">

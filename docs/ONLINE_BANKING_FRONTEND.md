@@ -68,6 +68,22 @@ The older specialized banking chat and conversation routes are retired in
 the current FLUJO banking implementation.
 
 Browser sessions and chat ownership bindings persist in an isolated named volume.
+Completed public chat exchanges and validated transaction summaries persist there
+as well. `GET /api/chat/history` restores only the authenticated session's ordered
+user/assistant messages; worker conversation IDs, tools, credentials and server-added
+prompt facts are excluded. Closing the dialog keeps its request alive, and page
+refresh polls an admitted query's active status without resending it. Logout and
+expiry prevent history access. A one-time migration clears legacy conversation
+bindings that had no displayable transcript; subsequent restarts preserve the
+paired transcript and conversation binding atomically. Restored history is bounded
+to recent exchanges, with a visible disclosure when limited.
+
+Transaction API pages contain at most 500 rows and expose offsets, matching counts
+and `next_offset`. Filtering occurs before pagination. The browser loads all pages
+and verifies the build ID, fingerprint, unique references and full owned count
+before allowing local filters or CSV export. Inconsistent or incomplete history
+fails closed. Selected transaction references resolve over the complete
+ownership-checked gold relation independently of a display page.
 Customer routes support authenticated banking reads and transaction inquiries.
 The container runs as an unprivileged user with a read-only root filesystem,
 bounded temporary storage and dropped Linux capabilities. Private config,
@@ -99,42 +115,46 @@ profile/code sign-in before public customer use.
 
 ## Verification
 
-The API and chat adapter passed 22 focused tests covering owner filtering,
+The API and chat adapter passed 34 focused tests covering owner filtering,
 filtering before result limits, malformed snapshot failures, opaque references,
 revoked sessions, profile rebinding, invalid origins, Unicode access-code
-input, bounded chat deadlines and customer-bound FLUJO assertions. The existing
+input, bounded chat deadlines, complete history paging, older selected transactions,
+durable transcript restoration, atomic writes and customer-bound FLUJO assertions. The existing
 worker completed three real Sol customer queries using the approved signer
 and narrow profile mapping; each returned owner-matched references, and each
 fresh test session was revoked successfully. These host adapter checks took
 31.9–32.8 seconds per response and did not modify the worker configuration.
 
-The complete repository Python suite passed 145 tests and 43 subtests in
-223.23 seconds, including those 22 frontend API/chat tests. The remaining
-acceptance-runner CI script added 7 passing tests, for 152 tests plus
+The complete repository Python suite passed 157 tests and 43 subtests in
+79.34 seconds, including those 34 frontend API/chat/history tests. The remaining
+acceptance-runner CI script added 7 passing tests, for 164 tests plus
 43 subtests across the executed checks. Python compilation checks passed
 for `banking_mcp`, `pipeline`, `demo`, `scripts` and `frontend/server`.
 
 The final Linux Docker build passed TypeScript and Vite compilation with
 the dependency lockfile. The running image is
-`sha256:75052199a5218379ee8f2b0cce6ef51c512470f621a9a1a70cb95407b01041c1`
-at 239,531,279 bytes. Dataset files, private configuration, signing keys and
+`sha256:47c6225d63a0b215895b8ffeaba5ff0399dbc31c5f0824c040ffc7fba68c8128`
+at 239,542,168 bytes. Dataset files, private configuration, signing keys and
 test sources are excluded from the image. `docker compose ... up -d --build
 --wait` created or updated only `hackathon-banking-frontend-1`, publishing
 `127.0.0.1:43800` to port 8080. The service reported healthy and
 `GET /healthz` returned `status=ok`, `dataset_ready=true`.
 
-The final container started at `2026-09-29T15:53:22Z`. Every copied runtime
+The updated image first started at `2026-09-29T16:16:50Z`. Every copied runtime
 source file and generated static asset was compared byte-for-byte against
 the frozen working tree: all 6 Python files, `requirements.txt` and 20 static
 files matched. The combined SHA-256 manifest is
-`a1ed591b29d839efc2f15f8ac00366c62d46529542f81c9a5fdbd8b447480e8e`.
-The browser assets are `index-BaG6PKe_.css` and `index-Cc7q3G5f.js`.
+`a7cd39ed605967960e82479b2b112ead7328596bdde5a64cba383af5ce1267aa`.
+The browser assets are `index-Cxk_VqUk.css` and `index-BFi5thxe.js`.
 
 Docker inspection confirmed the unprivileged `banking` user, read-only root
 filesystem and data/config/signer mounts, an isolated writable named state
 volume, and membership in the existing `flujo-slack_default` network. The
-existing FLUJO worker remained healthy with its preceding ten-hour uptime;
-the existing browser proxy and Slack gateway were also left running.
+frontend deployment did not recreate the existing FLUJO worker, browser proxy
+or Slack gateway. Docker Desktop then stopped responding during live verification;
+starting the installed app restored the existing containers. The frontend and
+worker reported healthy after recovery at `2026-09-29T16:22:09Z`; the proxy and
+gateway were running on their existing images. Dataset `CURRENT` stayed unchanged.
 One resource sample showed 52 MiB frontend memory; this is a sample, not a
 load-test or peak-memory claim.
 
@@ -157,5 +177,22 @@ An actual selected-transaction request through the browser completed with a
 real FLUJO reply matching the approved status, source amount and transaction
 date, with no browser console errors. Reply emphasis and references render
 through escaped React text rather than injected HTML.
+
+The review regressions also ran in a native browser against an isolated synthetic
+604-row history. Search found an older purchase absent from the first 500 API rows;
+its selected inquiry succeeded, and an actual CSV download contained all 604 rows,
+including that purchase. Closing during a query preserved its message and busy
+state. Refresh restored completed exchanges and their selected transaction, and a
+follow-up reused the same upstream conversation. A different profile after logout
+had an empty transcript. API tests additionally traverse 1,604 owned rows with
+equal timestamps and reject foreign, false-ownership and forged-product selections.
+
+On the corrected real deployment, a customer inquiry survived dialog closing and
+page refresh while FLUJO was still processing it. The restored UI disabled sends,
+polled the admitted query, then displayed the ordered exchange and validated
+transaction summary. A follow-up without reselecting the transaction confirmed its
+actual amount and processing date. The restored dialog also fit a 320-pixel mobile
+viewport without horizontal overflow. Independent source review found no material
+remaining issue in these two fixes.
 
 The local deployment procedure is in [frontend/README.md](../frontend/README.md).

@@ -4,6 +4,18 @@ A customer banking portal built with React and Vite, served together with a
 FastAPI data API. Balances, products and transactions come from Carlos's
 published silver and customer-sharded gold Parquet snapshot. Demo names are aliases.
 
+The browser loads every owned transaction page before exposing local search,
+filters or CSV export. Each API page is limited to 500 rows; offsets and snapshot
+checks prevent an older transaction from silently disappearing. Selected chat
+references resolve against the complete ownership-checked history.
+
+Closing the assistant preserves its messages and any running query. Completed
+public exchanges are stored in the application state volume and restored after
+page refresh or container restart. Refreshing during a query polls its status
+without resubmitting it. History is bound to the authenticated customer session;
+logout or a new login never restores another session's messages. Restored history
+can show only recent exchanges, with an explicit notice when limited.
+
 ## Run beside the existing FLUJO worker
 
 Run the following in this `frontend/` directory. Use absolute paths to the
@@ -32,7 +44,7 @@ docker compose -f compose.yaml -f compose.flujo.yaml logs --tail 50 frontend
 Changing a private configuration file requires restarting the frontend. Update
 the image with the same `up -d --build --wait` command. To stop the frontend,
 use `docker compose -f compose.yaml -f compose.flujo.yaml down`; the named state
-volume is retained. Do not add `--volumes` unless its saved sessions and chat bindings
+volume is retained. Do not add `--volumes` unless its saved sessions, chat bindings and transcripts
 are intentionally disposable.
 
 ## Standalone deployment
@@ -63,6 +75,10 @@ provider and server-side verified customer ownership. Demo aliases, organizer
 data must stay clearly labeled. The portal serves read-only banking inquiries.
 Snapshot
 timestamps establish dataset lineage, not live-bank synchronization.
+
+The first upgrade from a frontend without saved public chat history resets those
+legacy worker conversation bindings once, so the restored interface cannot hide
+old context behind a new welcome screen. Later restarts preserve saved exchanges.
 
 ## Local development
 

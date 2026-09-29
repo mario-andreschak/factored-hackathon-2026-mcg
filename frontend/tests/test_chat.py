@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import closing
 import json
 from pathlib import Path
+import sqlite3
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 import uuid
 
 import httpx
@@ -173,6 +176,129 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
                 await self.service.send("customer-a", self.session_a, self.expiry, message)
             self.assertEqual(caught.exception.code, "invalid_message")
         self.assertEqual(self.requests, [])
+
+    async def test_public_history_is_durable_and_excludes_private_model_context(self):
+        self.service._transport = httpx.MockTransport(self.respond)
+        selection = {"reference": "txn_" + "a" * 24, "occurred_at": "2026-06-17T12:00:00",
+                     "type": "Purchase", "amount": 42.50, "currency": "COP", "status": "Approved"}
+        await self.service.send("customer-a", self.session_a, self.expiry,
+                                "Consulta este cargo\n\nserver-added-private-facts",
+                                display_message="Consulta este cargo", selection=selection)
+        expected = [{"role": "user", "text": "Consulta este cargo", "selection": selection},
+                    {"role": "assistant", "text": "Consulta verificada."}]
+        history = self.service.history("customer-a", self.session_a, self.expiry)
+        self.assertEqual(history["messages"], expected)
+        self.assertFalse(history["active"])
+        reloaded = ChatService(self.config, self.root)
+        self.assertEqual(reloaded.history("customer-a", self.session_a, self.expiry)["messages"], expected)
+        raw = json.dumps(history)
+        for private in ["server-added-private-facts", "private-tool-evidence", "subject-a", "customer-a",
+                        self.config["execution_token"], "conversation_id", "X-Flujo-User-Assertion", "PRIVATE KEY"]:
+            self.assertNotIn(private, raw)
+        reloaded._transport = httpx.MockTransport(self.respond)
+        await reloaded.send("customer-a", self.session_a, self.expiry, "Continúa")
+        self.assertIn("conversationId", self.requests[-1][1]["metadata"])
+        self.assertEqual(len(reloaded.history("customer-a", self.session_a, self.expiry)["messages"]), 4)
+
+    async def test_history_rejects_foreign_expired_revoked_identity_and_new_session_is_empty(self):
+        self.service._transport = httpx.MockTransport(self.respond)
+        await self.service.send("customer-a", self.session_a, self.expiry, "Hola")
+        for customer, expiry in [("customer-b", self.expiry), ("customer-a", self.expiry + 1),
+                                 ("customer-a", int(time.time()) - 1)]:
+            with self.assertRaises(ChatError) as caught:
+                self.service.history(customer, self.session_a, expiry)
+            self.assertEqual(caught.exception.status_code, 401)
+        fresh = self.service.history("customer-a", self.session_b, self.expiry)
+        self.assertEqual(fresh["messages"], [])
+        disabled = ChatService({}, self.root / "disabled-history")
+        self.assertEqual(disabled.history("customer-a", self.session_a, self.expiry),
+                         {"available": False, "messages": [], "active": False})
+        await self.service.revoke("customer-a", self.session_a, self.expiry)
+        with self.assertRaises(ChatError):
+            self.service.history("customer-a", self.session_a, self.expiry)
+
+    async def test_active_history_does_not_store_uncompleted_or_failed_turns(self):
+        started = asyncio.Event()
+        release = asyncio.Event()
+        async def delayed(request):
+            started.set()
+            await release.wait()
+            return self.respond(request)
+        self.service._transport = httpx.MockTransport(delayed)
+        operation = asyncio.create_task(self.service.send("customer-a", self.session_a, self.expiry, "Hola"))
+        await started.wait()
+        pending = self.service.history("customer-a", self.session_a, self.expiry)
+        self.assertTrue(pending["active"])
+        self.assertEqual(pending["messages"], [])
+        release.set()
+        await operation
+        completed = self.service.history("customer-a", self.session_a, self.expiry)
+        self.assertFalse(completed["active"])
+        self.assertEqual(len(completed["messages"]), 2)
+        self.service._transport = httpx.MockTransport(lambda _: httpx.Response(500, json={"error": "private-error"}))
+        with self.assertRaises(ChatError):
+            await self.service.send("customer-a", self.session_a, self.expiry, "Consulta fallida")
+        self.assertEqual(self.service.history("customer-a", self.session_a, self.expiry)["messages"], completed["messages"])
+        self.assertFalse(self.service.history("customer-a", self.session_a, self.expiry)["active"])
+
+    async def test_legacy_hidden_conversation_is_reset_once_and_new_history_survives_restart(self):
+        legacy = self.root / "legacy"
+        legacy.mkdir()
+        _, owner = self.service._identity("customer-a", self.session_a, self.expiry)
+        old_conversation = str(uuid.uuid4())
+        with closing(sqlite3.connect(legacy / "frontend-chat.sqlite3")) as db:
+            db.execute("""CREATE TABLE chat_sessions (session_id TEXT PRIMARY KEY, owner TEXT NOT NULL,
+                expires INTEGER NOT NULL, conversation_id TEXT, revoked INTEGER NOT NULL DEFAULT 0,
+                active_id TEXT, active_until INTEGER NOT NULL DEFAULT 0)""")
+            db.execute("INSERT INTO chat_sessions VALUES (?,?,?,?,?,?,?)",
+                       (self.session_a, owner, self.expiry, old_conversation, 0, "legacy-job", self.expiry))
+            db.commit()
+        migrated = ChatService(self.config, legacy)
+        self.assertEqual(migrated.history("customer-a", self.session_a, self.expiry)["messages"], [])
+        self.assertFalse(migrated.history("customer-a", self.session_a, self.expiry)["active"])
+        migrated._transport = httpx.MockTransport(self.respond)
+        await migrated.send("customer-a", self.session_a, self.expiry, "Una conversación visible")
+        self.assertNotIn("conversationId", self.requests[-1][1]["metadata"])
+        restored = ChatService(self.config, legacy)
+        self.assertEqual(len(restored.history("customer-a", self.session_a, self.expiry)["messages"]), 2)
+        restored._transport = httpx.MockTransport(self.respond)
+        await restored.send("customer-a", self.session_a, self.expiry, "Continúa")
+        self.assertNotEqual(self.requests[-1][1]["metadata"]["conversationId"], old_conversation)
+        self.assertEqual(len(restored.history("customer-a", self.session_a, self.expiry)["messages"]), 4)
+
+    async def test_public_selection_schema_rejects_private_fields_and_invalid_amount(self):
+        self.service._transport = httpx.MockTransport(self.respond)
+        selection = {"reference": "txn_" + "a" * 24, "occurred_at": "2026-06-17T12:00:00",
+                     "type": "Purchase", "amount": 42.50, "currency": "COP", "status": "Approved"}
+        for invalid in [{**selection, "customer_id": "private-customer"}, {**selection, "amount": float("nan")},
+                        {**selection, "reference": "upstream-handle"}]:
+            with self.assertRaises(ChatError) as caught:
+                await self.service.send("customer-a", self.session_a, self.expiry, "Hola", selection=invalid)
+            self.assertEqual(caught.exception.code, "invalid_selection")
+        self.assertEqual(self.requests, [])
+
+    async def test_transcript_pair_and_conversation_roll_back_together_on_storage_failure(self):
+        self.service._transport = httpx.MockTransport(self.respond)
+        with self.service._connection() as db:
+            db.execute("""CREATE TRIGGER reject_assistant BEFORE INSERT ON chat_messages
+                WHEN NEW.role='assistant' BEGIN SELECT RAISE(ABORT,'fixture write failure'); END""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            await self.service.send("customer-a", self.session_a, self.expiry, "Hola")
+        history = self.service.history("customer-a", self.session_a, self.expiry)
+        self.assertEqual(history["messages"], [])
+        self.assertFalse(history["active"])
+        with self.service._connection() as db:
+            conversation = db.execute("SELECT conversation_id FROM chat_sessions WHERE session_id=?",
+                                      (self.session_a,)).fetchone()[0]
+        self.assertIsNone(conversation)
+
+    async def test_history_rechecks_expiry_after_storage_read(self):
+        self.service._transport = httpx.MockTransport(self.respond)
+        await self.service.send("customer-a", self.session_a, self.expiry, "Hola")
+        with patch("frontend.server.chat.time.time", side_effect=[self.expiry - 1, self.expiry]):
+            with self.assertRaises(ChatError) as caught:
+                self.service.history("customer-a", self.session_a, self.expiry)
+        self.assertEqual(caught.exception.code, "session_expired")
 
 
 if __name__ == "__main__":

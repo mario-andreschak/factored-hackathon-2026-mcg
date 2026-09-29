@@ -10,6 +10,7 @@ import asyncio
 import hashlib
 import json
 from contextlib import contextmanager
+import math
 from pathlib import Path
 import re
 import sqlite3
@@ -26,6 +27,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 _CONVERSATION = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
 _MAX_RESPONSE = 4 * 1024 * 1024
+_MAX_HISTORY_BYTES = 256 * 1024
 _TIMEOUT = 450
 
 
@@ -61,6 +63,21 @@ class ChatService:
                 conversation_id TEXT, revoked INTEGER NOT NULL DEFAULT 0,
                 active_id TEXT, active_until INTEGER NOT NULL DEFAULT 0
             )""")
+            db.execute("""CREATE TABLE IF NOT EXISTS chat_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT NOT NULL,
+                operation TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('user','assistant')),
+                text TEXT NOT NULL, selection_json TEXT,
+                UNIQUE(session_id, operation, role)
+            )""")
+            db.execute("CREATE INDEX IF NOT EXISTS chat_messages_session ON chat_messages(session_id, id)")
+            db.execute("CREATE TABLE IF NOT EXISTS chat_migrations (name TEXT PRIMARY KEY)")
+            if not db.execute("SELECT 1 FROM chat_migrations WHERE name='public-transcript-v1'").fetchone():
+                # An earlier frontend retained private worker context without a
+                # displayable transcript. Start those sessions afresh once so a
+                # restored welcome screen cannot conceal previous model context.
+                db.execute("""UPDATE chat_sessions SET conversation_id=NULL, active_id=NULL, active_until=0
+                    WHERE NOT EXISTS (SELECT 1 FROM chat_messages m WHERE m.session_id=chat_sessions.session_id)""")
+                db.execute("INSERT INTO chat_migrations VALUES ('public-transcript-v1')")
         self._configured = True
 
     def _configure(self, config: dict[str, Any]) -> None:
@@ -122,6 +139,39 @@ class ChatService:
                 "read_only": True,
                 **({} if available else {"reason": self._reason if not self._configured
                     else "El asistente no está habilitado para este perfil de demostración."})}
+
+    def history(self, customer_id: str, session_id: str, session_exp: int) -> dict[str, Any]:
+        if not self.status(customer_id)["available"]:
+            return {"available": False, "messages": [], "active": False}
+        _, owner = self._identity(customer_id, session_id, session_exp)
+        with self._connection() as db:
+            db.execute("BEGIN")
+            row = db.execute("SELECT * FROM chat_sessions WHERE session_id=?", (session_id,)).fetchone()
+            if row is None:
+                return {"available": True, "messages": [], "active": False}
+            if row["owner"] != owner or row["expires"] != session_exp:
+                raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+            if row["revoked"]:
+                raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
+            stored = db.execute("SELECT role,text,selection_json FROM chat_messages WHERE session_id=? ORDER BY id DESC LIMIT 100",
+                                (session_id,)).fetchall()
+            messages = [{"role": entry["role"], "text": entry["text"],
+                         **({"selection": json.loads(entry["selection_json"])} if entry["selection_json"] else {})}
+                        for entry in reversed(stored)]
+            size = sum(len(json.dumps(message, ensure_ascii=False).encode("utf-8")) for message in messages)
+            limited = len(stored) == 100
+            while size > _MAX_HISTORY_BYTES and len(messages) > 2:
+                # Keep complete recent exchanges. Every stored pair is atomic.
+                removed = messages[:2]
+                messages = messages[2:]
+                size -= sum(len(json.dumps(message, ensure_ascii=False).encode("utf-8")) for message in removed)
+                limited = True
+            now = int(time.time())
+            if session_exp <= now:
+                raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
+            return {"available": True, "messages": messages,
+                    "active": bool(row["active_id"] and row["active_until"] > now),
+                    "limited": limited}
 
     def _identity(self, customer_id: str, session_id: str, session_exp: int) -> tuple[str, str]:
         if not self.status(customer_id)["available"]:
@@ -190,11 +240,32 @@ class ChatService:
         except (httpx.HTTPError, ValueError, UnicodeError):
             raise ChatError("chat_unreachable", 502, "No fue posible conectar con el asistente de FLUJO.") from None
 
-    async def send(self, customer_id: str, session_id: str, session_exp: int, message: str) -> dict[str, Any]:
+    @staticmethod
+    def _selection(selection: dict[str, Any] | None) -> dict[str, Any] | None:
+        if selection is None:
+            return None
+        fields = {"reference", "occurred_at", "type", "amount", "currency", "status"}
+        if (not isinstance(selection, dict) or set(selection) != fields
+                or not isinstance(selection["reference"], str)
+                or not re.fullmatch(r"txn_[a-f0-9]{24}", selection["reference"])
+                or not all(isinstance(selection[field], str) and 1 <= len(selection[field]) <= maximum
+                           for field, maximum in [("occurred_at", 40), ("type", 80), ("currency", 8), ("status", 80)])
+                or isinstance(selection["amount"], bool)
+                or not isinstance(selection["amount"], (int, float)) or not math.isfinite(selection["amount"])):
+            raise ChatError("invalid_selection", 400, "El movimiento seleccionado no está disponible.")
+        return {field: selection[field] for field in sorted(fields)}
+
+    async def send(self, customer_id: str, session_id: str, session_exp: int, message: str, *,
+                   display_message: str | None = None, selection: dict[str, Any] | None = None) -> dict[str, Any]:
         subject, owner = self._identity(customer_id, session_id, session_exp)
         if (not isinstance(message, str) or not message.strip() or len(message.strip()) > 4096
                 or len(message.encode("utf-8")) > 12000):
             raise ChatError("invalid_message", 400, "Escribe una consulta de hasta 4096 caracteres.")
+        public_message = message.strip() if display_message is None else display_message
+        if (not isinstance(public_message, str) or not public_message.strip()
+                or len(public_message.strip()) > 4096 or len(public_message.encode("utf-8")) > 12000):
+            raise ChatError("invalid_message", 400, "Escribe una consulta de hasta 4096 caracteres.")
+        public_selection = self._selection(selection)
         operation = str(uuid.uuid4())
         now = int(time.time())
         with self._connection() as db:
@@ -226,6 +297,11 @@ class ChatService:
                     raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
                 db.execute("UPDATE chat_sessions SET conversation_id = ? WHERE session_id = ?",
                            (returned_conversation, session_id))
+                db.executemany("INSERT INTO chat_messages(session_id,operation,role,text,selection_json) VALUES (?,?,?,?,?)", [
+                    (session_id, operation, "user", public_message.strip(),
+                     json.dumps(public_selection, ensure_ascii=False, allow_nan=False) if public_selection else None),
+                    (session_id, operation, "assistant", reply, None),
+                ])
             return {"reply": reply, "mode": "flujo", "status": status}
         finally:
             with self._connection() as db:

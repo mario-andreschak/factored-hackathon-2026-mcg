@@ -239,3 +239,114 @@ def test_transaction_filters_run_before_page_limit_and_keep_owner_scope(settings
         login(client,"mexico")
         foreign = client.get("/api/transactions",params={"product":card["reference"],"limit":1}).json()
         assert foreign["transactions"] == [] and foreign["metadata"]["filtered_count"] == 0
+
+
+@pytest.fixture()
+def expanded_history(settings, request):
+    """Many newer rows with equal timestamps exercise stable page tie-breaking."""
+    newer_rows = request.param
+    build = settings.data_dir / "builds/fixture-1"
+    path = build / "gold" / "transactions_by_customer" / f"bucket={bucket('private-customer-co')}" / "data_0.parquet"
+    with duckdb.connect() as con:
+        con.execute("CREATE TABLE history AS SELECT * FROM read_parquet(?)", [str(path)])
+        con.execute("""CREATE TABLE expanded AS SELECT h.* REPLACE (
+            'private-new-' || n.seq::VARCHAR AS transaction_id,
+            TIMESTAMP '2026-06-18' AS transaction_date
+        ) FROM history h CROSS JOIN range(?) n(seq)
+        WHERE transaction_id='private-txn-co-deposit'""", [newer_rows])
+        con.execute("INSERT INTO expanded SELECT * FROM history")
+        con.execute("COPY expanded TO ? (FORMAT PARQUET)", [str(path)])
+    manifest_path = build / "snapshot.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["gold_files"][path.relative_to(build / "gold").as_posix()] = path.stat().st_size
+    manifest_path.write_text(json.dumps(manifest))
+    return settings, newer_rows
+
+
+@pytest.mark.parametrize("expanded_history", [600, 1600], indirect=True)
+def test_history_pages_and_older_chat_selection_keep_strict_ownership(expanded_history):
+    settings, newer_rows = expanded_history
+
+    class CapturingChat:
+        def __init__(self):
+            self.calls = []
+            self.public_calls = []
+
+        async def send(self, customer, session_id, expires_at, message, *, display_message=None, selection=None):
+            self.calls.append((customer, session_id, expires_at, message))
+            self.public_calls.append((display_message, selection))
+            return {"reply": "Movimiento recibido", "mode": "flujo", "status": "completed"}
+
+    with TestClient(create_app(settings)) as client:
+        assert login(client).status_code == 200
+        overview = client.get("/api/overview").json()
+        total = newer_rows + 4
+        assert len(overview["transactions"]) == 500
+        assert overview["metadata"]["transactions_total"] == total
+        assert overview["metadata"]["filtered_count"] == total
+        assert overview["metadata"]["transactions_limit"] == 500
+        assert overview["metadata"]["transactions_offset"] == 0
+        assert overview["metadata"]["transactions_truncated"] is True
+        assert overview["metadata"]["next_offset"] == 500
+
+        # A filter can select the old purchase without loading every earlier page.
+        older = client.get("/api/transactions", params={"q": "Purchase", "month": "2026-06", "limit": 1}).json()
+        assert len(older["transactions"]) == 1
+        selected = older["transactions"][0]
+        assert selected["type"] == "Purchase" and selected["amount"] == 50
+        assert selected["reference"] not in {t["reference"] for t in overview["transactions"]}
+        assert older["metadata"]["filtered_count"] == 1
+        assert older["metadata"]["transactions_truncated"] is False
+        assert older["metadata"]["next_offset"] is None
+
+        # Equal timestamps must not introduce gaps or overlap at page boundaries.
+        references = [t["reference"] for t in overview["transactions"]]
+        next_offset = overview["metadata"]["next_offset"]
+        while next_offset is not None:
+            page = client.get("/api/transactions", params={"offset": next_offset}).json()
+            assert page["metadata"]["build_id"] == overview["metadata"]["build_id"]
+            assert page["metadata"]["transactions_offset"] == next_offset
+            assert page["metadata"]["filtered_count"] == total
+            references.extend(t["reference"] for t in page["transactions"])
+            next_offset = page["metadata"]["next_offset"]
+        assert len(references) == len(set(references)) == total
+        assert selected["reference"] in references
+
+        filtered_page = client.get("/api/transactions", params={"q": "Purchase", "offset": 1, "limit": 1}).json()
+        assert filtered_page["transactions"] == []
+        assert filtered_page["metadata"]["filtered_count"] == 1
+        assert filtered_page["metadata"]["next_offset"] is None
+        assert client.get("/api/transactions?month=2026-13").status_code == 422
+        assert client.get("/api/transactions?offset=-1").status_code == 422
+
+        # Selecting a displayed older row must reach chat with its actual facts.
+        chat = CapturingChat()
+        client.app.state.chat_service = chat
+        response = client.post("/api/chat/messages", json={"message": "Explícame este movimiento", "transaction_reference": selected["reference"]})
+        assert response.status_code == 200 and len(chat.calls) == 1
+        customer, session_id, expires_at, message = chat.calls[0]
+        assert customer == "private-customer-co"
+        current_session = client.app.state.bank_state.session(client.cookies.get(COOKIE))
+        assert (session_id, expires_at) == (current_session.id, current_session.expires_at)
+        assert '"type": "Purchase"' in message and '"amount": 50.0' in message
+        assert '"occurred_at": "2026-06-17T11:00:00"' in message
+        display_message, public_selection = chat.public_calls[0]
+        assert display_message == "Explícame este movimiento"
+        assert public_selection["reference"] == selected["reference"]
+        assert public_selection["amount"] == 50 and public_selection["type"] == "Purchase"
+
+        repository = client.app.state.repository
+        denied = [
+            repository.reference("txn", "private-customer-ar", "private-txn-ar"),
+            repository.reference("txn", "private-customer-co", "private-txn-cross-owner"),
+            repository.reference("txn", "private-customer-co", "private-txn-co-usd"),
+            "txn_" + "0" * 24,
+        ]
+        for reference in denied:
+            response = client.post("/api/chat/messages", json={"message": "Ayuda", "transaction_reference": reference})
+            assert response.status_code == 404
+            assert response.json()["detail"] == "El movimiento seleccionado no está disponible."
+            assert len(chat.calls) == 1
+
+        # The selected owned reference remains unavailable to a different customer.
+        assert repository.transaction("argentina", selected["reference"]) is None

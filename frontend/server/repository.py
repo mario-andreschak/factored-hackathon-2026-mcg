@@ -29,6 +29,10 @@ CREDIT_TYPES = {"Tarjeta Crédito", "Préstamo Personal", "Préstamo Hipotecario
 # The dataset supplies positive magnitudes. Transfer, Payment and Adjustment do not
 # identify the account leg, so they must not be presented as invented debit signs.
 DIRECTIONS = {"Deposit": "credit", "Purchase": "debit", "Withdrawal": "debit"}
+TRANSACTION_FIELDS = """transaction_id, product_id, transaction_date AS occurred_at,
+    process_date, transaction_type AS type, transaction_category AS category,
+    amount, currency, transaction_status AS status, channel, merchant_name AS merchant,
+    merchant_category, transaction_country AS country, transaction_city AS city"""
 
 
 class DatasetUnavailable(Exception):
@@ -259,11 +263,19 @@ class Repository:
             WHERE t.customer_id=? AND t.ownership_valid""", [customer])
         return True
 
+    def _public_transaction(self, transaction: dict, customer: str) -> dict:
+        transaction["reference"] = self.reference("txn", customer, transaction.pop("transaction_id"))
+        transaction["product_reference"] = self.reference("prod", customer, transaction.pop("product_id"))
+        transaction["direction"] = DIRECTIONS.get(transaction["type"], "unknown")
+        return transaction
+
     def overview(self, profile_id: str, limit: int = 500, *, product: str | None = None,
-                 status: str | None = None, q: str | None = None) -> dict:
+                 status: str | None = None, q: str | None = None, offset: int = 0,
+                 month: str | None = None) -> dict:
         snapshot = self.snapshot()
         profile = self.profile(profile_id, snapshot)
         customer = self.state.customer(profile_id)
+        page_limit, page_offset = max(1, min(limit, 500)), max(0, offset)
         with self.connection() as con:
             have_transactions = self._scoped(con, snapshot, customer)
             product_rows = records(con.execute("""SELECT p.product_id, p.product_type AS type, p.currency,
@@ -285,17 +297,17 @@ class Repository:
                 if status:
                     clauses.append("transaction_status=?")
                     params.append(status)
+                if month:
+                    clauses.append("strftime(transaction_date,'%Y-%m')=?")
+                    params.append(month)
                 if q:
                     searchable = ("transaction_type", "merchant_name", "transaction_category", "channel", "transaction_city", "currency")
                     clauses.append("(" + " OR ".join(f"contains(lower(coalesce({field},'')),?)" for field in searchable) + ")")
                     params.extend([q.lower()] * len(searchable))
                 where = " WHERE " + " AND ".join(clauses) if clauses else ""
-                txn_rows = records(con.execute(f"""SELECT transaction_id, product_id, transaction_date AS occurred_at,
-                    process_date, transaction_type AS type, transaction_category AS category,
-                    amount, currency, transaction_status AS status, channel, merchant_name AS merchant,
-                    merchant_category, transaction_country AS country, transaction_city AS city
-                    FROM scoped {where} ORDER BY transaction_date DESC, transaction_id LIMIT ?""",
-                    [*params, max(1, min(limit, 500))]))
+                txn_rows = records(con.execute(f"""SELECT {TRANSACTION_FIELDS}
+                    FROM scoped {where} ORDER BY transaction_date DESC, transaction_id LIMIT ? OFFSET ?""",
+                    [*params, page_limit, page_offset]))
                 filtered_count = con.execute("SELECT count(*) FROM scoped" + where, params).fetchone()[0]
                 total = con.execute("SELECT count(*) FROM scoped").fetchone()[0]
                 monthly = records(con.execute("""SELECT strftime(transaction_date,'%Y-%m') AS month, currency,
@@ -311,9 +323,7 @@ class Repository:
             p["balance_kind"] = "deposit" if p["type"] in DEPOSIT_TYPES else "credit" if p["type"] in CREDIT_TYPES else "investment" if p["type"] == "Inversión" else "other"
             balances[p["currency"]][f'{p["balance_kind"]}_balance'] += Decimal(str(p["balance"]))
         for t in txn_rows:
-            t["reference"] = self.reference("txn", customer, t.pop("transaction_id"))
-            t["product_reference"] = self.reference("prod", customer, t.pop("product_id"))
-            t["direction"] = DIRECTIONS.get(t["type"], "unknown")
+            self._public_transaction(t, customer)
         return {
             "profile": profile, "products": product_rows, "transactions": txn_rows,
             "summary": {"balances_by_currency": [{"currency": currency, **{k: clean(v) for k, v in amounts.items()}}
@@ -323,6 +333,9 @@ class Repository:
                          "source_fingerprint": snapshot.fingerprint, "snapshot_created_at": snapshot.created_at,
                          "source_validation": snapshot.source_validation, "freshness": "derived_snapshot",
                          "filtered_count": filtered_count,
+                         "transactions_limit": page_limit, "transactions_offset": page_offset,
+                         "transactions_truncated": len(txn_rows) < filtered_count,
+                         "next_offset": page_offset + len(txn_rows) if page_offset + len(txn_rows) < filtered_count else None,
                          "data_as_of": snapshot.data_as_of, "transactions_returned": len(txn_rows), "transactions_total": total,
                          "balances_note": "Saldos de la instantánea publicada; no representan un saldo bancario en tiempo real.",
                          "amounts_note": "Importes originales por moneda. Solo depósitos, compras y retiros tienen dirección conocida; transferencias, pagos y ajustes se muestran sin un signo inventado. La actividad suma únicamente operaciones aprobadas.",
@@ -331,6 +344,27 @@ class Repository:
         }
 
     def transaction(self, profile_id: str, reference: str) -> dict | None:
-        # References are customer-bound. Even a valid opaque handle from a different
-        # profile is indistinguishable from an absent transaction.
-        return next((t for t in self.overview(profile_id)["transactions"] if hmac.compare_digest(t["reference"], reference)), None)
+        """Resolve an owned reference independently of any display page or filter."""
+        if not isinstance(reference, str) or not re.fullmatch(r"txn_[a-f0-9]{24}", reference):
+            return None
+        snapshot = self.snapshot()
+        self.profile(profile_id, snapshot)
+        customer = self.state.customer(profile_id)
+        with self.connection() as con:
+            if not self._scoped(con, snapshot, customer):
+                return None
+            # Only IDs from the full ownership-checked relation are examined. Batch
+            # fetches bound Python memory without imposing a history-age cutoff.
+            cursor = con.execute("SELECT transaction_id FROM scoped")
+            matched = None
+            while rows := cursor.fetchmany(1024):
+                matched = next((value for (value,) in rows if hmac.compare_digest(
+                    self.reference("txn", customer, value), reference)), None)
+                if matched is not None:
+                    break
+            if matched is None:
+                return None
+            rows = records(con.execute(f"SELECT {TRANSACTION_FIELDS} FROM scoped WHERE transaction_id=?", [matched]))
+            if len(rows) != 1:
+                return None
+            return self._public_transaction(rows[0], customer)
