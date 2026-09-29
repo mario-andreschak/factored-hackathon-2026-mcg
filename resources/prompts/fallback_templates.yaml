@@ -1,0 +1,58 @@
+SMALL_TALK:
+  es: Hola. Puedo ayudarte a revisar transacciones y reclamos.
+  pt: Olá. Posso ajudar você a consultar transações e reclamações.
+OUT_OF_SCOPE:
+  es: Puedo ayudarte con consultas y reclamos sobre transacciones.
+  pt: Posso ajudar com consultas e reclamações sobre transações.
+BLOCKED:
+  es: No puedo atender esa solicitud. Puedes reformularla dentro del servicio de transacciones.
+  pt: Não posso atender essa solicitação. Você pode reformulá-la dentro do serviço
+    de transações.
+AUTH_REQUIRED:
+  es: Vuelve a iniciar sesión en el canal de confianza para continuar.
+  pt: Entre novamente no canal de confiança para continuar.
+CLARIFY:
+  es: Necesito aclarar la solicitud. {{ clarification_text }}
+  pt: Preciso esclarecer a solicitação. {{ clarification_text }}
+NO_MATCH:
+  es: No encontré coincidencias con los criterios indicados. Revisa la fecha o el
+    importe.
+  pt: Não encontrei correspondências com os critérios informados. Confira a data ou
+    o valor.
+INFORM:
+  es: 'Estos son los datos verificados: {{ verified_summary }}'
+  pt: 'Estes são os dados verificados: {{ verified_summary }}'
+INFORM_EXISTING_CASE:
+  es: 'Existe un reclamo posiblemente relacionado: **{{ complaint_id }}**, estado
+    **{{ complaint_status }}**. No se crea otro.'
+  pt: 'Existe uma reclamação possivelmente relacionada: **{{ complaint_id }}**, status
+    **{{ complaint_status }}**. Não será criada outra.'
+CONFIRM_ACTION:
+  es: ¿Autorizas registrar un reclamo por {{ transaction_summary }}?
+  pt: Você autoriza registrar uma reclamação sobre {{ transaction_summary }}?
+ACTION_DONE:
+  es: El reclamo **{{ action_result_id }}** fue registrado y verificado en el entorno
+    de prueba.
+  pt: A reclamação **{{ action_result_id }}** foi registrada e verificada no ambiente
+    de teste.
+ACTION_UNVERIFIED:
+  es: No puedo confirmar el registro de la solicitud. Se necesita revisión humana.
+  pt: Não posso confirmar o registro da solicitação. É necessária uma revisão humana.
+ACTION_CANCELLED:
+  es: No continuaré con la creación propuesta.
+  pt: Não continuarei com a criação proposta.
+OUT_OF_POLICY:
+  es: La política del prototipo impide continuar con esta solicitud. Puedes solicitar
+    revisión humana.
+  pt: A política do protótipo impede continuar com essa solicitação. Você pode pedir
+    revisão humana.
+HANDOFF:
+  es: Se necesita atención humana. No puedo confirmar aquí que la derivación esté
+    completada.
+  pt: É necessário atendimento humano. Não posso confirmar aqui que o encaminhamento
+    foi concluído.
+TOOL_ERROR:
+  es: No pude completar la operación ni confirmar su resultado. Inténtalo nuevamente
+    o solicita atención humana.
+  pt: Não consegui concluir a operação nem confirmar seu resultado. Tente novamente
+    ou solicite atendimento humano.

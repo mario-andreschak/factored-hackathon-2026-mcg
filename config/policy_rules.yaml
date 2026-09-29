@@ -1,0 +1,44 @@
+# Política SINTÉTICA del equipo; no es política real de ningún banco.
+version: 1.0.0
+dispute_window_days: 120
+default_search_window_days: 90
+max_candidates_to_show: 5
+amount_tolerance_pct: 1.0
+approx_amount_tolerance_pct: 10.0
+duplicate_complaint_amount_tolerance_pct: 1.0
+high_risk:
+  fraud_score_threshold: 70
+  amount_usd_threshold: 1000
+  unrecognized_count_24h: 3
+max_clarification_attempts: 2
+max_no_match_attempts: 2
+tool_retries: 2
+pending_expiry_turns: 2
+open_complaint_statuses:
+- Open
+- In Process
+- Escalated
+allowed_transaction_statuses:
+- Approved
+duplicate_transaction_window_minutes: 2
+max_response_retries: 1
+max_handoff_attempts: 1
+confirmation_ttl_seconds: 600
+max_structured_data_tokens: 2000
+success_phrases:
+  es:
+  - fue registrado
+  - quedó creado
+  - registré tu reclamo
+  - reclamo registrado
+  - se creó el reclamo
+  - fue registrada
+  - quedó registrada
+  pt:
+  - foi registrado
+  - foi criado
+  - registrei sua reclamação
+  - reclamação registrada
+  - foi registrada
+  - ficou registrada
+max_tool_failures: 2
