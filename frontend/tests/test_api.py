@@ -214,7 +214,8 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
             self.calls.append((customer, session_id, operation, target_reference))
             if operation["operation"] == "prepare":
                 return {"state": "pending_confirmation", "pending_handle": "a" * 43,
-                        "target_reference": target_reference}
+                        "target_reference": target_reference,
+                        "request_id": "123e4567-e89b-42d3-a456-426614174099"}
             return {"state": "handoff_verified", "handoff": {"id": "HOF-abcdefgh"},
                     **({"target_reference": target_reference} if target_reference else {})}
 
@@ -244,12 +245,14 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         assert selected_handoff.status_code == 200
         assert [entry[2]["operation"] for entry in service.calls[-2:]] == ["prepare", "handoff"]
         assert service.calls[-1][2]["pendingHandle"] == "a" * 43
-        assert all(entry[2]["requestId"] == selected_request_id for entry in service.calls[-2:])
+        assert "requestId" not in service.calls[-2][2]
+        assert service.calls[-1][2]["requestId"] == "123e4567-e89b-42d3-a456-426614174099"
         replay = client.post("/api/action/handoff", json={
             "reason": "customer_request", "transaction_reference": own,
             "request_id": selected_request_id, "language": "pt"})
         assert replay.status_code == 200
-        assert all(entry[2]["requestId"] == selected_request_id for entry in service.calls[-2:])
+        assert "requestId" not in service.calls[-2][2]
+        assert service.calls[-1][2]["requestId"] == "123e4567-e89b-42d3-a456-426614174099"
         foreign = Repository(settings, State(settings.state_dir)).overview("mexico")["transactions"][0]["reference"]
         denied = client.post("/api/action/prepare", json={"transaction_reference": foreign})
         assert denied.status_code == 404
@@ -296,8 +299,12 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
             "transaction_reference": first_ref,
             "request_id": "123e4567-e89b-42d3-a456-426614174003"})
         assert policy_spoof.status_code == 409 and not actions
-        first = client.post("/api/action/prepare", json={"transaction_reference": first_ref})
+        browser_request_id = "123e4567-e89b-42d3-a456-426614174050"
+        first = client.post("/api/action/prepare", json={
+            "transaction_reference": first_ref, "request_id": browser_request_id})
         assert first.status_code == 200 and first.json()["target_reference"] == first_ref
+        assert first.json()["request_id"] != browser_request_id
+        assert actions[-1]["requestId"] == first.json()["request_id"]
         assert client.post("/api/action/prepare", json={"transaction_reference": second_ref}).status_code == 409
         assert client.get("/api/action/status").json()["target_reference"] == first_ref
         confirmed = client.post("/api/action/confirm", json={"transaction_reference": first_ref,
@@ -320,9 +327,11 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         assert len(actions) == calls_before_mismatch
         assert client.get("/api/action/status").json()["target_reference"] == second_ref
         matched = client.post("/api/action/handoff", json={"reason": "customer_request",
-            "transaction_reference": second_ref, "pending_handle": second.json()["pending_handle"]})
+            "transaction_reference": second_ref, "pending_handle": second.json()["pending_handle"],
+            "request_id": browser_request_id})
         assert matched.status_code == 200 and matched.json()["target_reference"] == second_ref
         assert len(actions) == calls_before_mismatch + 1
+        assert actions[-1]["requestId"] == second.json()["request_id"] != browser_request_id
         general = client.post("/api/action/handoff", json={"reason": "customer_request",
             "request_id": "123e4567-e89b-42d3-a456-426614174002"})
         assert general.status_code == 200 and "target_reference" not in general.json()

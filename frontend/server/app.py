@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import hmac
 import logging
+import re
 from contextlib import asynccontextmanager, suppress
 from typing import Literal
 
@@ -361,11 +362,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     def render_action_result(result: dict, language: str):
         if result.get("state") in {"preparing", "prepare_unverified"}:
-            message = ({"es": "Se está verificando la solicitud para este movimiento. Consulta su estado antes de iniciar otra.",
-                        "pt": "A solicitação deste lançamento está sendo verificada. Consulte o estado antes de iniciar outra."}
-                       if result["state"] == "preparing" else
-                       {"es": "No se pudo verificar la preparación de esta solicitud. No inicies otra automáticamente.",
-                        "pt": "Não foi possível verificar a preparação desta solicitação. Não inicie outra automaticamente."})
+            message = (
+                {"es": "Se agotó la recuperación segura de esta solicitud. No inicies otra; pide revisión del equipo.",
+                 "pt": "A recuperação segura desta solicitação se esgotou. Não inicie outra; peça revisão da equipe."}
+                if result.get("recovery_exhausted") else
+                {"es": "Se está verificando la solicitud para este movimiento. Consulta su estado antes de iniciar otra.",
+                 "pt": "A solicitação deste lançamento está sendo verificada. Consulte o estado antes de iniciar outra."}
+                if result["state"] == "preparing" else
+                {"es": "No se pudo verificar la preparación de esta solicitud. Consulta su estado para recuperarla.",
+                 "pt": "Não foi possível verificar a preparação desta solicitação. Consulte o estado para recuperá-la."})
             return {**result, "language": language, "message": message[language]}
         from .action import render_action
         return render_action(result, language)
@@ -408,8 +413,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not target:
             raise HTTPException(404, "El movimiento seleccionado no está disponible.")
         return await run_action(request, {"operation": "prepare", "transactionId": target["transaction_id"],
-                                          "snapshot": target["snapshot"],
-                                          **({"requestId": body.request_id} if body.request_id else {})},
+                                          "snapshot": target["snapshot"]},
                                 body.language, body.transaction_reference)
 
     @app.post("/api/action/confirm")
@@ -438,22 +442,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 body.language, body.transaction_reference)
             return handed
         if body.transaction_reference and not body.pending_handle:
-            if not body.request_id:
-                raise HTTPException(422, "Se requiere una solicitud de revisión identificable.")
             current = session(request)
             target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
             if not target:
                 raise HTTPException(404, "El movimiento seleccionado no está disponible.")
             prepared = await run_action(request, {"operation": "prepare",
-                "transactionId": target["transaction_id"], "snapshot": target["snapshot"],
-                "requestId": body.request_id}, body.language, body.transaction_reference)
+                "transactionId": target["transaction_id"], "snapshot": target["snapshot"]},
+                body.language, body.transaction_reference)
             if prepared.get("state") != "pending_confirmation":
                 return prepared
             pending = prepared.get("pending_handle")
-            if not isinstance(pending, str):
+            request_id = prepared.get("request_id")
+            if (not isinstance(pending, str) or not isinstance(request_id, str)
+                    or not re.fullmatch(r"[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}",
+                                        request_id)):
                 raise HTTPException(502, "No se pudo verificar la solicitud de revisión humana.")
             handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
-                "pendingHandle": pending, "requestId": body.request_id},
+                "pendingHandle": pending, "requestId": request_id},
                 body.language, body.transaction_reference)
             if handed.get("state") == "handoff_unverified":
                 handed["pending_handle"] = pending

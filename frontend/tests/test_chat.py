@@ -130,6 +130,172 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ChatError):
             await reloaded.action_status("customer-a", self.session_a, self.expiry)
 
+    async def test_lost_prepare_response_recovers_original_pending_identity_after_restart(self):
+        enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        writes = []
+        def respond(request):
+            if request.url.path == "/v1/banking/action":
+                body = json.loads(request.content)
+                writes.append(body)
+                if body["operation"] == "prepare":
+                    if len(writes) == 1:
+                        raise httpx.ReadTimeout("response lost after original pending commit")
+                    self.assertEqual(body, writes[0])
+                    return httpx.Response(200, json={"state": "pending_confirmation",
+                        "pending_handle": "a" * 43})
+            return self.respond(request)
+        enabled._transport = httpx.MockTransport(respond)
+        await enabled.send("customer-a", self.session_a, self.expiry, "No reconozco el cargo")
+        reference = "txn_" + "a" * 24
+        browser_id = "123e4567-e89b-42d3-a456-426614174000"
+        uncertain = await enabled.action("customer-a", self.session_a, self.expiry,
+            {"operation": "prepare", "transactionId": "private-a", "snapshot": "test",
+             "requestId": browser_id}, target_reference=reference)
+        self.assertEqual((uncertain["state"], uncertain["target_reference"]),
+                         ("prepare_unverified", reference))
+        self.assertRegex(uncertain["request_id"], _REQUEST_ID_PATTERN)
+        self.assertNotEqual(uncertain["request_id"], browser_id)
+        self.assertEqual(writes[0]["requestId"], uncertain["request_id"])
+        self.assertNotIn("private-a", json.dumps(uncertain))
+        with enabled._connection() as db:
+            row = db.execute("SELECT * FROM action_status WHERE session_id=?", (self.session_a,)).fetchone()
+            self.assertEqual((row["prepare_transaction_id"], row["prepare_snapshot"]),
+                             ("private-a", "test"))
+            self.assertEqual(row["prepare_conversation_id"], writes[0]["conversationId"])
+        reloaded = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        reloaded._transport = httpx.MockTransport(respond)
+        with self.assertRaises(ChatError) as foreign:
+            await reloaded.action_status("customer-b", self.session_a, self.expiry)
+        self.assertEqual(foreign.exception.status_code, 401)
+        with self.assertRaises(ChatError) as overlap:
+            await reloaded.action("customer-a", self.session_a, self.expiry,
+                {"operation": "prepare", "transactionId": "private-b", "snapshot": "test"},
+                target_reference="txn_" + "b" * 24)
+        self.assertEqual(overlap.exception.code, "action_in_progress")
+        self.assertEqual(len(writes), 1)
+        recovered = await reloaded.action_status("customer-a", self.session_a, self.expiry)
+        self.assertEqual((recovered["state"], recovered["pending_handle"],
+                          recovered["target_reference"], recovered["request_id"]),
+                         ("pending_confirmation", "a" * 43, reference, uncertain["request_id"]))
+        self.assertEqual(len(writes), 2)
+        with reloaded._connection() as db:
+            row = db.execute("SELECT * FROM action_status WHERE session_id=?", (self.session_a,)).fetchone()
+            self.assertIsNone(row["prepare_transaction_id"])
+            self.assertIsNone(row["prepare_snapshot"])
+            self.assertIsNone(row["prepare_conversation_id"])
+
+    async def test_crashed_preparing_replays_only_after_stale_and_429_does_not_exhaust(self):
+        enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        writes = []
+        def respond(request):
+            if request.url.path == "/v1/banking/action":
+                body = json.loads(request.content)
+                writes.append(body)
+                if len(writes) == 1:
+                    raise asyncio.CancelledError()
+                if len(writes) == 2:
+                    return httpx.Response(429, json={"error": "busy"})
+                self.assertEqual(body, writes[0])
+                return httpx.Response(200, json={"state": "pending_confirmation",
+                    "pending_handle": "a" * 43})
+            return self.respond(request)
+        enabled._transport = httpx.MockTransport(respond)
+        await enabled.send("customer-a", self.session_a, self.expiry, "No reconozco el cargo")
+        with self.assertRaises(asyncio.CancelledError):
+            await enabled.action("customer-a", self.session_a, self.expiry,
+                {"operation": "prepare", "transactionId": "private-a", "snapshot": "test"},
+                target_reference="txn_" + "a" * 24)
+        reloaded = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        reloaded._transport = httpx.MockTransport(respond)
+        self.assertEqual((await reloaded.action_status("customer-a", self.session_a, self.expiry))["state"],
+                         "preparing")
+        self.assertEqual(len(writes), 1)
+        with reloaded._connection() as db:
+            db.execute("UPDATE action_status SET updated_at=? WHERE session_id=?",
+                       (int(time.time()) - 60, self.session_a))
+        self.assertEqual((await reloaded.action_status("customer-a", self.session_a, self.expiry))["state"],
+                         "preparing")
+        with reloaded._connection() as db:
+            row = db.execute("SELECT prepare_recovery_attempts FROM action_status WHERE session_id=?",
+                             (self.session_a,)).fetchone()
+            self.assertEqual(row["prepare_recovery_attempts"], 0)
+            db.execute("UPDATE action_status SET prepare_recovery_after=0 WHERE session_id=?",
+                       (self.session_a,))
+        self.assertEqual((await reloaded.action_status("customer-a", self.session_a, self.expiry))["state"],
+                         "pending_confirmation")
+        self.assertEqual(len(writes), 3)
+
+    async def test_lost_policy_handoff_recovery_cannot_overwrite_later_target(self):
+        enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        writes = []
+        replay_started, release_replay = asyncio.Event(), asyncio.Event()
+        async def respond(request):
+            if request.url.path == "/v1/banking/action":
+                body = json.loads(request.content)
+                writes.append(body)
+                if len(writes) == 1:
+                    raise httpx.ReadTimeout("response lost after HOF commit")
+                if len(writes) == 2:
+                    replay_started.set()
+                    await release_replay.wait()
+                if body["transactionId"] == "private-a":
+                    self.assertEqual(body, writes[0])
+                    return httpx.Response(200, json={"state": "handoff_verified",
+                        "pending_handle": "a" * 43,
+                        "handoff": {"id": "HOF-abcdefgh"}})
+                return httpx.Response(200, json={"state": "pending_confirmation",
+                    "pending_handle": "b" * 43})
+            return self.respond(request)
+        enabled._transport = httpx.MockTransport(respond)
+        await enabled.send("customer-a", self.session_a, self.expiry, "No reconozco el cargo")
+        first_ref, second_ref = "txn_" + "a" * 24, "txn_" + "b" * 24
+        uncertain = await enabled.action("customer-a", self.session_a, self.expiry,
+            {"operation": "prepare", "transactionId": "private-a", "snapshot": "test"},
+            target_reference=first_ref)
+        self.assertEqual(uncertain["state"], "prepare_unverified")
+        reloaded = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        reloaded._transport = httpx.MockTransport(respond)
+        late = asyncio.create_task(reloaded.action_status("customer-a", self.session_a, self.expiry))
+        await asyncio.wait_for(replay_started.wait(), 2)
+        with reloaded._connection() as db:
+            db.execute("UPDATE action_status SET prepare_recovery_after=0 WHERE session_id=?",
+                       (self.session_a,))
+        verified = await reloaded.action_status("customer-a", self.session_a, self.expiry)
+        self.assertEqual((verified["state"], verified["target_reference"], verified["handoff"]["id"]),
+                         ("handoff_verified", first_ref, "HOF-abcdefgh"))
+        second = await reloaded.action("customer-a", self.session_a, self.expiry,
+            {"operation": "prepare", "transactionId": "private-b", "snapshot": "test"},
+            target_reference=second_ref)
+        release_replay.set()
+        self.assertEqual(await asyncio.wait_for(late, 2), second)
+        self.assertEqual((await reloaded.action_status("customer-a", self.session_a, self.expiry)), second)
+        self.assertEqual(len(writes), 4)
+
+    async def test_expired_prepare_recovery_stays_locked_and_explains_limit(self):
+        enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        writes = []
+        def respond(request):
+            if request.url.path == "/v1/banking/action":
+                writes.append(json.loads(request.content))
+                raise httpx.ReadTimeout("prepare response lost")
+            return self.respond(request)
+        enabled._transport = httpx.MockTransport(respond)
+        await enabled.send("customer-a", self.session_a, self.expiry, "No reconozco el cargo")
+        await enabled.action("customer-a", self.session_a, self.expiry,
+            {"operation": "prepare", "transactionId": "private-a", "snapshot": "test"},
+            target_reference="txn_" + "a" * 24)
+        with enabled._connection() as db:
+            db.execute("UPDATE action_status SET prepare_recovery_deadline=? WHERE session_id=?",
+                       (int(time.time()) - 1, self.session_a))
+        status = await enabled.action_status("customer-a", self.session_a, self.expiry)
+        self.assertEqual((status["state"], status["recovery_exhausted"]),
+                         ("prepare_unverified", True))
+        self.assertEqual(len(writes), 1)
+        with self.assertRaises(ChatError) as blocked:
+            await enabled.action("customer-a", self.session_a, self.expiry,
+                {"operation": "handoff", "reason": "customer_request"})
+        self.assertEqual(blocked.exception.code, "action_in_progress")
+
     async def test_unresolved_prepare_blocks_another_target_before_upstream(self):
         enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
         action_calls = []
