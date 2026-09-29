@@ -920,10 +920,25 @@ function AssistantText({ text }: { text: string }) {
   );
 }
 
+type ActionResult = {
+  state: string;
+  message?: string;
+  pending_handle?: string;
+  request_id?: string;
+  reason?: string;
+  target_reference?: string;
+  handoff?: { state?: string };
+};
+
+const actionIsTerminal = (action: ActionResult | null) =>
+  action?.state === "intake_verified" || action?.state === "handoff_verified";
+
 function Assistant({
   open,
   status,
   selected,
+  transactions,
+  onSelectTransaction,
   hidden,
   synthetic,
   onClose,
@@ -932,6 +947,8 @@ function Assistant({
   open: boolean;
   status: ChatStatus;
   selected: Transaction | null;
+  transactions: Transaction[];
+  onSelectTransaction: (transaction: Transaction) => void;
   hidden: boolean;
   synthetic: boolean;
   onClose: () => void;
@@ -939,13 +956,8 @@ function Assistant({
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]),
     [input, setInput] = useState(""),
-    [action, setAction] = useState<{
-      state: string;
-      message: string;
-      pending_handle?: string;
-      request_id?: string;
-      reason?: string;
-    } | null>(null),
+    [action, setAction] = useState<ActionResult | null>(null),
+    [actionReady, setActionReady] = useState(false),
     [actionBusy, setActionBusy] = useState(false),
     [actionLanguage, setActionLanguage] = useState<"es" | "pt">("es"),
     [handoffRequestId, setHandoffRequestId] = useState<string>(() =>
@@ -963,8 +975,10 @@ function Assistant({
     if (open) end.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy, open]);
   useEffect(() => {
-    setAction(null);
-    setHandoffRequestId(crypto.randomUUID());
+    // A pending action belongs to its original charge, even when the visitor
+    // opens another charge. Rotate only a completed or unused request ID.
+    if (!action || actionIsTerminal(action))
+      setHandoffRequestId(crypto.randomUUID());
   }, [selected?.reference]);
   useEffect(() => {
     alive.current = true;
@@ -978,6 +992,7 @@ function Assistant({
     const historyController = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     setHistoryReady(false);
+    setActionReady(false);
     setError("");
     function recover() {
       api<{ messages: ChatMessage[]; active: boolean; limited?: boolean }>(
@@ -993,25 +1008,32 @@ function Assistant({
           setHistoryReady(true);
           setBusy(result.active);
           if (!result.active && status.sandbox_intake_available) {
-            api<{
-              state: string;
-              message?: string;
-              pending_handle?: string;
-              request_id?: string;
-              reason?: string;
-            }>("/api/action/status", { signal: historyController.signal })
+            api<ActionResult>("/api/action/status", {
+              signal: historyController.signal,
+            })
               .then((recovered) => {
                 if (historyController.signal.aborted || !alive.current) return;
-                const message = recovered.message;
-                if (recovered.state !== "none" && typeof message === "string") {
-                  setAction((current) => current ?? { ...recovered, message });
+                if (recovered.state !== "none") {
+                  setAction(recovered);
                   if (recovered.request_id)
                     setHandoffRequestId(recovered.request_id);
+                } else {
+                  setAction((current) =>
+                    current && !actionIsTerminal(current) ? current : null,
+                  );
                 }
+                setActionReady(true);
               })
               .catch(() => {
-                /* The saved chat remains usable if action status is unavailable. */
+                if (!historyController.signal.aborted && alive.current) {
+                  setActionReady(false);
+                  setError(
+                    "No pudimos verificar la solicitud anterior. Consulta su estado antes de iniciar otra.",
+                  );
+                }
               });
+          } else if (!status.sandbox_intake_available) {
+            setActionReady(true);
           }
           // A query admitted before a page refresh can finish in the server.
           // Recover its result rather than submitting that query a second time.
@@ -1070,32 +1092,118 @@ function Assistant({
       if (alive.current) setBusy(false);
     }
   }
+  async function loadActionStatus() {
+    const recovered = await api<ActionResult>(
+      `/api/action/status?language=${actionLanguage}`,
+    );
+    if (alive.current) {
+      if (recovered.state !== "none") {
+        setAction(recovered);
+        if (recovered.request_id) setHandoffRequestId(recovered.request_id);
+      } else {
+        // A transiently empty status cannot prove a local uncertain write safe.
+        setAction((current) =>
+          current && !actionIsTerminal(current) ? current : null,
+        );
+      }
+      setActionReady(true);
+    }
+    return recovered;
+  }
   async function runAction(path: string, body: Record<string, unknown>) {
-    if (actionBusy || busy || !historyReady) return;
+    if (actionBusy || busy || !historyReady || !actionReady) return;
+    const requestedReference =
+      typeof body.transaction_reference === "string"
+        ? body.transaction_reference
+        : undefined;
+    const continuesPendingHandle =
+      typeof body.pending_handle === "string" &&
+      body.pending_handle === action?.pending_handle;
     setActionBusy(true);
     setError("");
     try {
-      const result = await api<{
-        state: string;
-        message: string;
-        pending_handle?: string;
-        request_id?: string;
-        reason?: string;
-      }>(path, {
+      const result = await api<ActionResult>(path, {
         method: "POST",
         body: JSON.stringify({ ...body, language: actionLanguage }),
       });
       if (alive.current) {
-        setAction(result);
-        if (result.state === "handoff_verified")
-          setHandoffRequestId(crypto.randomUUID());
+        if (
+          requestedReference &&
+          result.target_reference &&
+          result.target_reference !== requestedReference
+        ) {
+          // Keep the server's saved target visible; never relabel it with the
+          // newly selected charge when a response disagrees with the request.
+          setAction(result);
+          setActionReady(false);
+          setError(
+            "La solicitud recibida corresponde a otro cargo. Consulta su estado antes de continuar.",
+          );
+          return;
+        }
+        setAction({
+          ...result,
+          target_reference:
+            result.target_reference ??
+            requestedReference ??
+            (continuesPendingHandle ? action?.target_reference : undefined),
+        });
+        if (actionIsTerminal(result)) setHandoffRequestId(crypto.randomUUID());
       }
     } catch (e) {
-      if (e instanceof ApiError && e.status === 401) onExpired();
-      else if (alive.current)
-        setError(
-          "No pudimos verificar esta acción. Consulta el estado antes de volver a intentarlo.",
-        );
+      if (e instanceof ApiError && e.status === 401) {
+        onExpired();
+      } else if (alive.current) {
+        if (e instanceof ApiError && e.status === 409) {
+          // The server keeps the original pending charge. Recover that target
+          // instead of replacing it with the newly selected charge.
+          setActionReady(false);
+          try {
+            await loadActionStatus();
+          } catch {
+            setActionReady(false);
+          }
+          setError(
+            "Hay una solicitud anterior sin resolver. Revisa el cargo indicado y consulta su estado antes de continuar.",
+          );
+        } else {
+          const uncertain =
+            !(e instanceof ApiError) ||
+            e.status >= 500 ||
+            path === "/api/action/confirm";
+          if (uncertain) {
+            setActionReady(false);
+            setAction((current) => {
+              if (current && !actionIsTerminal(current)) {
+                return path === "/api/action/confirm"
+                  ? {
+                      ...current,
+                      state: "action_unverified",
+                      message:
+                        "No pudimos verificar la confirmación. Consulta el estado; no la repitas.",
+                    }
+                  : current;
+              }
+              return {
+                state:
+                  path === "/api/action/prepare"
+                    ? "prepare_unverified"
+                    : "handoff_unverified",
+                target_reference: requestedReference,
+                request_id:
+                  typeof body.request_id === "string"
+                    ? body.request_id
+                    : undefined,
+                message:
+                  "No pudimos verificar la solicitud. Consulta su estado antes de iniciar otra.",
+              };
+            });
+          }
+          setError(
+            "No pudimos verificar esta acción. Consulta el estado antes de volver a intentarlo.",
+          );
+        }
+      }
     } finally {
       if (alive.current) setActionBusy(false);
     }
@@ -1104,26 +1212,49 @@ function Assistant({
     if (actionBusy || busy || !historyReady) return;
     setActionBusy(true);
     try {
-      const recovered = await api<{
-        state: string;
-        message?: string;
-        pending_handle?: string;
-        request_id?: string;
-        reason?: string;
-      }>(`/api/action/status?language=${actionLanguage}`);
-      if (alive.current && recovered.state !== "none" && recovered.message) {
-        setAction({ ...recovered, message: recovered.message });
-        if (recovered.request_id) setHandoffRequestId(recovered.request_id);
+      const recovered = await loadActionStatus();
+      if (alive.current && recovered.state !== "none") {
         setError("");
+      } else if (alive.current && action && !actionIsTerminal(action)) {
+        setActionReady(false);
+        setError(
+          "Aún no pudimos verificar la solicitud anterior. No inicies otra.",
+        );
       }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) onExpired();
-      else if (alive.current)
+      else if (alive.current) {
+        setActionReady(false);
         setError("No pudimos verificar el estado. Intenta de nuevo más tarde.");
+      }
     } finally {
       if (alive.current) setActionBusy(false);
     }
   }
+  const actionBlocksNewCharge =
+    action !== null && action.state !== "none" && !actionIsTerminal(action);
+  const actionTarget = transactions.find(
+    (transaction) => transaction.reference === action?.target_reference,
+  );
+  const selectedIsActionTarget =
+    Boolean(actionTarget) && selected?.reference === action?.target_reference;
+  const canUsePendingTarget =
+    actionReady && selectedIsActionTarget && Boolean(action?.pending_handle);
+  const canStartAction = actionReady && !actionBlocksNewCharge;
+  const canRetryHandoff =
+    actionReady &&
+    (action?.state === "handoff_unverified" ||
+      (action?.state === "action_unverified" &&
+        action.handoff?.state === "handoff_unverified" &&
+        action.reason === "action_unverified")) &&
+    Boolean(action.reason) &&
+    (action.target_reference
+      ? canUsePendingTarget
+      : Boolean(action.request_id) && !action.pending_handle);
+  const canRequestHandoff =
+    canStartAction ||
+    (canUsePendingTarget && action?.state === "pending_confirmation") ||
+    canRetryHandoff;
   // Closing the dialog keeps this authenticated component alive. A running
   // query can finish and its visible transcript will be here on reopening.
   if (!open) return null;
@@ -1160,7 +1291,7 @@ function Assistant({
       )}
       {status.sandbox_intake_available &&
         historyReady &&
-        messages.length > 0 && (
+        (messages.length > 0 || action) && (
           <div className="action-panel">
             <strong>¿No reconoces un cargo?</strong>
             <p>
@@ -1181,7 +1312,57 @@ function Assistant({
             </label>
             {action && (
               <p role="status" className="action-result">
-                {action.message}
+                {action.message ||
+                  (action.state === "preparing"
+                    ? "Estamos verificando la preparación de esta solicitud."
+                    : "No pudimos verificar la solicitud anterior. Consulta su estado antes de continuar.")}
+              </p>
+            )}
+            {actionBlocksNewCharge && (
+              <div className="chat-selection" role="status">
+                {actionTarget && <TxIcon transaction={actionTarget} />}
+                <span>
+                  <strong>
+                    {action?.target_reference
+                      ? "Solicitud pendiente para este cargo"
+                      : "Solicitud de revisión pendiente"}
+                  </strong>
+                  <small>
+                    {actionTarget
+                      ? `${label(actionTarget)} · ${date(actionTarget.occurred_at)} · ${money(actionTarget.amount, actionTarget.currency, hidden)} ${actionTarget.currency}`
+                      : action?.target_reference ||
+                        "Revisión general sin cargo asociado."}
+                  </small>
+                </span>
+              </div>
+            )}
+            {actionBlocksNewCharge &&
+              action?.target_reference &&
+              !selectedIsActionTarget && (
+                <p className="modal-disclosure">
+                  La solicitud anterior sigue vinculada al cargo indicado. El
+                  cargo que ves seleccionado no puede confirmarla ni
+                  reemplazarla.
+                  {actionTarget
+                    ? " Vuelve a ese cargo para continuar."
+                    : " Consulta su estado antes de realizar otra acción."}
+                </p>
+              )}
+            {actionBlocksNewCharge &&
+              actionTarget &&
+              !selectedIsActionTarget && (
+                <button
+                  type="button"
+                  className="button outline"
+                  onClick={() => onSelectTransaction(actionTarget)}
+                >
+                  Volver al cargo pendiente
+                </button>
+              )}
+            {!actionReady && (
+              <p className="modal-disclosure">
+                Verifica el estado de la solicitud antes de iniciar o confirmar
+                otra acción.
               </p>
             )}
             <button
@@ -1192,7 +1373,7 @@ function Assistant({
             >
               Consultar estado de la solicitud
             </button>
-            {selected && !action && (
+            {selected && canStartAction && (
               <button
                 type="button"
                 className="button outline"
@@ -1207,9 +1388,8 @@ function Assistant({
                 Revisar recepción simulada
               </button>
             )}
-            {selected &&
-              action?.state === "pending_confirmation" &&
-              action.pending_handle && (
+            {action?.state === "pending_confirmation" &&
+              canUsePendingTarget && (
                 <button
                   type="button"
                   className="button primary"
@@ -1217,6 +1397,7 @@ function Assistant({
                   onClick={() =>
                     runAction("/api/action/confirm", {
                       pending_handle: action.pending_handle,
+                      transaction_reference: action.target_reference,
                       confirmed: true,
                     })
                   }
@@ -1224,27 +1405,44 @@ function Assistant({
                   Confirmo la recepción simulada para este cargo
                 </button>
               )}
-            {(!action ||
-              action.state === "pending_confirmation" ||
-              (action.state === "handoff_unverified" &&
-                (!action.reason || action.reason === "customer_request"))) && (
+            {canRequestHandoff && (
               <button
                 type="button"
                 className="button outline"
                 disabled={actionBusy || busy}
-                onClick={() =>
+                onClick={() => {
+                  if (canRetryHandoff && action?.reason) {
+                    runAction("/api/action/handoff", {
+                      reason: action.reason,
+                      ...(action.request_id
+                        ? { request_id: action.request_id }
+                        : {}),
+                      ...(action.pending_handle
+                        ? { pending_handle: action.pending_handle }
+                        : {}),
+                      ...(action.target_reference
+                        ? { transaction_reference: action.target_reference }
+                        : {}),
+                    });
+                    return;
+                  }
                   runAction("/api/action/handoff", {
                     reason: "customer_request",
                     request_id: handoffRequestId,
-                    ...(action?.pending_handle
-                      ? { pending_handle: action.pending_handle }
+                    ...(canUsePendingTarget && action?.pending_handle
+                      ? {
+                          pending_handle: action.pending_handle,
+                          transaction_reference: action.target_reference,
+                        }
                       : selected
                         ? { transaction_reference: selected.reference }
                         : {}),
-                  })
-                }
+                  });
+                }}
               >
-                Prefiero revisión humana
+                {canRetryHandoff
+                  ? "Verificar revisión humana pendiente"
+                  : "Prefiero revisión humana"}
               </button>
             )}
           </div>
@@ -2278,6 +2476,8 @@ export default function App() {
         open={assistant}
         status={chatStatus}
         selected={chatSelection}
+        transactions={transactions}
+        onSelectTransaction={setChatSelection}
         hidden={hidden}
         synthetic={synthetic}
         onClose={closeAssistant}

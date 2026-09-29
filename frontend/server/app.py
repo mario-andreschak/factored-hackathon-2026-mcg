@@ -48,13 +48,15 @@ class PrepareActionBody(BaseModel):
 class ConfirmActionBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     pending_handle: str = Field(pattern=r"^[A-Za-z0-9_-]{32,64}$")
+    transaction_reference: str = Field(pattern=r"^txn_[a-f0-9]{24}$")
     confirmed: Literal[True]
     language: Literal["es", "pt"] = "es"
 
 
 class HandoffActionBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
-    reason: Literal["out_of_policy", "emergency", "customer_request", "clarification_exhausted"]
+    reason: Literal["out_of_policy", "emergency", "customer_request", "clarification_exhausted",
+                    "high_risk", "missing_evidence", "duplicate_review", "action_unverified"]
     pending_handle: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{32,64}$")
     transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
     request_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
@@ -357,14 +359,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             logger.error("Banking chat unavailable: %s", type(exc).__name__)
             raise HTTPException(502, "FLUJO no pudo responder. Intenta nuevamente.") from None
 
-    async def run_action(request: Request, operation: dict, language: str):
+    def render_action_result(result: dict, language: str):
+        if result.get("state") in {"preparing", "prepare_unverified"}:
+            message = ({"es": "Se está verificando la solicitud para este movimiento. Consulta su estado antes de iniciar otra.",
+                        "pt": "A solicitação deste lançamento está sendo verificada. Consulte o estado antes de iniciar outra."}
+                       if result["state"] == "preparing" else
+                       {"es": "No se pudo verificar la preparación de esta solicitud. No inicies otra automáticamente.",
+                        "pt": "Não foi possível verificar a preparação desta solicitação. Não inicie outra automaticamente."})
+            return {**result, "language": language, "message": message[language]}
+        from .action import render_action
+        return render_action(result, language)
+
+    async def run_action(request: Request, operation: dict, language: str,
+                         target_reference: str | None = None):
         current = session(request)
         customer = request.app.state.repository.profile_customer(current.profile_id)
         service = request.app.state.chat_service
-        from .action import render_action
         from .chat import ChatError
         try:
-            return render_action(await service.action(customer, current.id, current.expires_at, operation), language)
+            result = await service.action(customer, current.id, current.expires_at,
+                                          operation, target_reference=target_reference)
+            return render_action_result(result, language)
         except ChatError as exc:
             raise HTTPException(exc.status_code, exc.message) from None
         except ValueError:
@@ -377,11 +392,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         service = request.app.state.chat_service
         if not service:
             raise HTTPException(503, "El asistente FLUJO aún no está conectado.")
-        from .action import render_action
         from .chat import ChatError
         try:
             result = await service.action_status(customer, current.id, current.expires_at)
-            return result if result.get("state") == "none" else render_action(result, language)
+            return result if result.get("state") == "none" else render_action_result(result, language)
         except ChatError as exc:
             raise HTTPException(exc.status_code, exc.message) from None
         except ValueError:
@@ -395,17 +409,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(404, "El movimiento seleccionado no está disponible.")
         return await run_action(request, {"operation": "prepare", "transactionId": target["transaction_id"],
                                           "snapshot": target["snapshot"],
-                                          **({"requestId": body.request_id} if body.request_id else {})}, body.language)
+                                          **({"requestId": body.request_id} if body.request_id else {})},
+                                body.language, body.transaction_reference)
 
     @app.post("/api/action/confirm")
     async def action_confirm(body: ConfirmActionBody, request: Request):
+        current = session(request)
+        if not request.app.state.repository.action_target(current.profile_id, body.transaction_reference):
+            raise HTTPException(404, "El movimiento seleccionado no está disponible.")
         return await run_action(request, {"operation": "confirm", "pendingHandle": body.pending_handle,
-                                          "confirmed": body.confirmed}, body.language)
+                                          "confirmed": body.confirmed}, body.language,
+                                body.transaction_reference)
 
     @app.post("/api/action/handoff")
     async def action_handoff(body: HandoffActionBody, request: Request):
-        if body.transaction_reference and body.pending_handle:
-            raise HTTPException(422, "Selecciona una sola referencia para la revisión humana.")
+        if not body.pending_handle and body.reason not in {
+                "out_of_policy", "emergency", "customer_request", "clarification_exhausted"}:
+            raise HTTPException(409, "La solicitud no corresponde a una revisión pendiente.")
+        if body.pending_handle:
+            if not body.transaction_reference:
+                raise HTTPException(422, "Selecciona el movimiento asociado a esta solicitud.")
+            current = session(request)
+            if not request.app.state.repository.action_target(current.profile_id, body.transaction_reference):
+                raise HTTPException(404, "El movimiento seleccionado no está disponible.")
+            handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
+                "pendingHandle": body.pending_handle,
+                **({"requestId": body.request_id} if body.request_id else {})},
+                body.language, body.transaction_reference)
+            return handed
         if body.transaction_reference and not body.pending_handle:
             if not body.request_id:
                 raise HTTPException(422, "Se requiere una solicitud de revisión identificable.")
@@ -415,19 +446,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(404, "El movimiento seleccionado no está disponible.")
             prepared = await run_action(request, {"operation": "prepare",
                 "transactionId": target["transaction_id"], "snapshot": target["snapshot"],
-                "requestId": body.request_id}, body.language)
+                "requestId": body.request_id}, body.language, body.transaction_reference)
             if prepared.get("state") != "pending_confirmation":
                 return prepared
             pending = prepared.get("pending_handle")
             if not isinstance(pending, str):
                 raise HTTPException(502, "No se pudo verificar la solicitud de revisión humana.")
             handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
-                                                "pendingHandle": pending, "requestId": body.request_id}, body.language)
+                "pendingHandle": pending, "requestId": body.request_id},
+                body.language, body.transaction_reference)
             if handed.get("state") == "handoff_unverified":
                 handed["pending_handle"] = pending
             return handed
-        if not body.pending_handle and not body.request_id:
-            raise HTTPException(422, "Se requiere una solicitud de revisión identificable.")
         handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
                                             **({"pendingHandle": body.pending_handle} if body.pending_handle else {}),
                                             **({"requestId": body.request_id} if body.request_id else {})},

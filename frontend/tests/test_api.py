@@ -3,15 +3,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from pathlib import Path
 
 import duckdb
+import httpx
 import pytest
 from fastapi.testclient import TestClient
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from frontend.server.app import COOKIE, create_app
+from frontend.server.chat import ChatService
 from frontend.server.config import Settings
 from frontend.server.repository import DatasetUnavailable, Repository
 from frontend.server.state import State
@@ -205,11 +210,13 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         def __init__(self):
             self.calls = []
 
-        async def action(self, customer, session_id, expires, operation):
-            self.calls.append((customer, session_id, operation))
+        async def action(self, customer, session_id, expires, operation, *, target_reference=None):
+            self.calls.append((customer, session_id, operation, target_reference))
             if operation["operation"] == "prepare":
-                return {"state": "pending_confirmation", "pending_handle": "a" * 43}
-            return {"state": "handoff_verified", "handoff": {"id": "HOF-abcdefgh"}}
+                return {"state": "pending_confirmation", "pending_handle": "a" * 43,
+                        "target_reference": target_reference}
+            return {"state": "handoff_verified", "handoff": {"id": "HOF-abcdefgh"},
+                    **({"target_reference": target_reference} if target_reference else {})}
 
     with TestClient(create_app(settings)) as client:
         assert login(client).status_code == 200
@@ -219,9 +226,11 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         prepared = client.post("/api/action/prepare", json={"transaction_reference": own, "language": "pt"})
         assert prepared.status_code == 200
         assert prepared.json()["state"] == "pending_confirmation"
+        assert prepared.json()["target_reference"] == own
         assert "Confirme" in prepared.json()["message"]
         assert service.calls[0][0] == "private-customer-co"
         assert service.calls[0][2]["transactionId"].startswith("private-txn-")
+        assert service.calls[0][3] == own
         assert "private-txn-" not in prepared.text
         handoff = client.post("/api/action/handoff", json={"reason": "customer_request", "language": "es",
             "request_id": "123e4567-e89b-42d3-a456-426614174000"})
@@ -245,6 +254,83 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         denied = client.post("/api/action/prepare", json={"transaction_reference": foreign})
         assert denied.status_code == 404
         assert len(service.calls) == 6
+
+
+def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(settings):
+    settings.state_dir.mkdir(parents=True, exist_ok=True)
+    signer = Ed25519PrivateKey.generate()
+    key_file = settings.state_dir / "test-signer.pem"
+    key_file.write_bytes(signer.private_bytes(serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
+    config = {"base_url": "http://flujo:4200", "model": "flow-Banking_Customer",
+        "execution_token": "only-the-server-knows-this-token", "frontend_signing_key_file": str(key_file),
+        "frontend_kid": "approved-front", "frontend_issuer": "approved-frontend",
+        "frontend_audience": "flujo-banking-ingress", "action_enabled": True,
+        "principal_customers": {"subject-a": "private-customer-co"}}
+    conversation = str(uuid.uuid4())
+    actions = []
+    def respond(request):
+        if request.url.path == "/v1/chat/completions":
+            return httpx.Response(200, json={"conversation_id": conversation, "status": "completed",
+                "choices": [{"message": {"role": "assistant", "content": "Consulta verificada."}}]})
+        body = json.loads(request.content)
+        actions.append(body)
+        if body["operation"] == "prepare":
+            return httpx.Response(200, json={"state": "pending_confirmation",
+                "pending_handle": ("a" if len([item for item in actions if item["operation"] == "prepare"]) == 1
+                                   else "b") * 43})
+        if body["operation"] == "confirm":
+            return httpx.Response(200, json={"state": "intake_verified",
+                "receipt": {"id": "CMP-SBX-abcdefgh"}})
+        return httpx.Response(200, json={"state": "handoff_verified",
+            "handoff": {"id": "HOF-abcdefgh"}})
+    with TestClient(create_app(settings)) as client:
+        assert login(client).status_code == 200
+        service = ChatService(config, settings.state_dir)
+        service._transport = httpx.MockTransport(respond)
+        client.app.state.chat_service = service
+        refs = [entry["reference"] for entry in client.get("/api/overview").json()["transactions"]]
+        first_ref, second_ref = refs[:2]
+        assert client.post("/api/chat/messages", json={"message": "Revisa mis movimientos"}).status_code == 200
+        policy_spoof = client.post("/api/action/handoff", json={"reason": "high_risk",
+            "transaction_reference": first_ref,
+            "request_id": "123e4567-e89b-42d3-a456-426614174003"})
+        assert policy_spoof.status_code == 409 and not actions
+        first = client.post("/api/action/prepare", json={"transaction_reference": first_ref})
+        assert first.status_code == 200 and first.json()["target_reference"] == first_ref
+        assert client.post("/api/action/prepare", json={"transaction_reference": second_ref}).status_code == 409
+        assert client.get("/api/action/status").json()["target_reference"] == first_ref
+        confirmed = client.post("/api/action/confirm", json={"transaction_reference": first_ref,
+            "pending_handle": first.json()["pending_handle"], "confirmed": True})
+        assert confirmed.status_code == 200 and confirmed.json()["target_reference"] == first_ref
+        second = client.post("/api/action/prepare", json={"transaction_reference": second_ref})
+        assert second.status_code == 200 and second.json()["target_reference"] == second_ref
+        calls_before_mismatch = len(actions)
+        for reference in (first_ref, second_ref):
+            mismatch = client.post("/api/action/confirm", json={"transaction_reference": reference,
+                "pending_handle": first.json()["pending_handle"], "confirmed": True})
+            assert mismatch.status_code == 409
+        mismatch_handoff = client.post("/api/action/handoff", json={
+            "reason": "customer_request", "transaction_reference": second_ref,
+            "pending_handle": first.json()["pending_handle"]})
+        assert mismatch_handoff.status_code == 409
+        foreign = Repository(settings, State(settings.state_dir)).overview("mexico")["transactions"][0]["reference"]
+        assert client.post("/api/action/confirm", json={"transaction_reference": foreign,
+            "pending_handle": second.json()["pending_handle"], "confirmed": True}).status_code == 404
+        assert len(actions) == calls_before_mismatch
+        assert client.get("/api/action/status").json()["target_reference"] == second_ref
+        matched = client.post("/api/action/handoff", json={"reason": "customer_request",
+            "transaction_reference": second_ref, "pending_handle": second.json()["pending_handle"]})
+        assert matched.status_code == 200 and matched.json()["target_reference"] == second_ref
+        assert len(actions) == calls_before_mismatch + 1
+        general = client.post("/api/action/handoff", json={"reason": "customer_request",
+            "request_id": "123e4567-e89b-42d3-a456-426614174002"})
+        assert general.status_code == 200 and "target_reference" not in general.json()
+        general_status = client.get("/api/action/status")
+        assert general_status.status_code == 200 and general_status.json()["handoff"] == general.json()["handoff"]
+        assert "target_reference" not in general_status.json()
+        assert all("target_reference" not in operation and "transaction_reference" not in operation
+                   for operation in actions)
 
 
 def test_secure_cookie_origin_and_custom_demo_code(settings):

@@ -26,6 +26,15 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 
 _CONVERSATION = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
+_PUBLIC_TRANSACTION = re.compile(r"^txn_[a-f0-9]{24}$")
+_PENDING_HANDLE = re.compile(r"^[A-Za-z0-9_-]{32,64}$")
+_REQUEST_ID = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
+_RECEIPT_ID = re.compile(r"^CMP-SBX-[A-Za-z0-9_-]{8}$")
+_HANDOFF_ID = re.compile(r"^HOF-[A-Za-z0-9_-]{8}$")
+_CUSTOMER_HANDOFF_REASONS = frozenset({"out_of_policy", "emergency", "customer_request",
+                                       "clarification_exhausted"})
+_RECOVERABLE_HANDOFF_REASONS = _CUSTOMER_HANDOFF_REASONS | {
+    "high_risk", "missing_evidence", "duplicate_review", "action_unverified"}
 _MAX_RESPONSE = 4 * 1024 * 1024
 _MAX_HISTORY_BYTES = 256 * 1024
 _TIMEOUT = 450
@@ -79,8 +88,19 @@ class ChatService:
             db.execute("CREATE INDEX IF NOT EXISTS chat_messages_session ON chat_messages(session_id, id)")
             db.execute("""CREATE TABLE IF NOT EXISTS action_status (
                 session_id TEXT PRIMARY KEY, owner TEXT NOT NULL, expires INTEGER NOT NULL,
-                result_json TEXT NOT NULL, updated_at INTEGER NOT NULL
+                result_json TEXT NOT NULL, updated_at INTEGER NOT NULL,
+                action_id TEXT, target_reference TEXT, revision INTEGER NOT NULL DEFAULT 0
             )""")
+            action_columns = {row[1] for row in db.execute("PRAGMA table_info(action_status)")}
+            if "action_id" not in action_columns:
+                db.execute("ALTER TABLE action_status ADD COLUMN action_id TEXT")
+            if "target_reference" not in action_columns:
+                db.execute("ALTER TABLE action_status ADD COLUMN target_reference TEXT")
+            if "revision" not in action_columns:
+                db.execute("ALTER TABLE action_status ADD COLUMN revision INTEGER NOT NULL DEFAULT 0")
+            # Legacy status can still be recovered, but without a saved public
+            # target it cannot authorize a new confirmation.
+            db.execute("UPDATE action_status SET action_id=lower(hex(randomblob(16))) WHERE action_id IS NULL")
             db.execute("CREATE TABLE IF NOT EXISTS chat_migrations (name TEXT PRIMARY KEY)")
             db.execute("""CREATE TABLE IF NOT EXISTS pending_revocations (
                 session_id TEXT PRIMARY KEY, owner TEXT NOT NULL, subject TEXT NOT NULL,
@@ -231,11 +251,142 @@ class ChatService:
                     "active": bool(row["active_id"] and row["active_until"] > now),
                     "limited": limited}
 
+    @staticmethod
+    def _action_row(db: sqlite3.Connection, session_id: str, owner: str,
+                    session_exp: int) -> sqlite3.Row | None:
+        row = db.execute("SELECT * FROM action_status WHERE session_id=?", (session_id,)).fetchone()
+        if row and (row["owner"] != owner or row["expires"] != session_exp):
+            raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+        return row
+
+    @staticmethod
+    def _action_result(row: sqlite3.Row) -> dict[str, Any]:
+        result = json.loads(row["result_json"])
+        if not isinstance(result, dict):
+            raise ChatError("action_invalid_state", 503, "No se pudo verificar la recepción simulada.")
+        if row["target_reference"]:
+            result["target_reference"] = row["target_reference"]
+        return result
+
+    @staticmethod
+    def _verified_terminal(result: dict[str, Any]) -> bool:
+        if result.get("state") == "intake_verified":
+            receipt = result.get("receipt")
+            return (isinstance(receipt, dict) and isinstance(receipt.get("id"), str)
+                    and bool(_RECEIPT_ID.fullmatch(receipt["id"])))
+        if result.get("state") == "handoff_verified":
+            handoff = result.get("handoff")
+            return (isinstance(handoff, dict) and isinstance(handoff.get("id"), str)
+                    and bool(_HANDOFF_ID.fullmatch(handoff["id"])))
+        return False
+
+    @staticmethod
+    def _assert_action_session(db: sqlite3.Connection, session_id: str,
+                               owner: str, session_exp: int) -> None:
+        session = db.execute("SELECT owner,expires,revoked FROM chat_sessions WHERE session_id=?",
+                             (session_id,)).fetchone()
+        if (not session or session["owner"] != owner or session["expires"] != session_exp
+                or session["revoked"] or session_exp <= int(time.time())):
+            raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
+
+    def _reserve_action(self, session_id: str, owner: str, session_exp: int,
+                        target_reference: str | None, initial: dict[str, Any]
+                        ) -> tuple[str, int, sqlite3.Row | None]:
+        now = int(time.time())
+        action_id = str(uuid.uuid4())
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._assert_action_session(db, session_id, owner, session_exp)
+            row = self._action_row(db, session_id, owner, session_exp)
+            if row and not self._verified_terminal(self._action_result(row)):
+                raise ChatError("action_in_progress", 409,
+                                "Primero resuelve o revisa la solicitud anterior con Savia.")
+            revision = row["revision"] + 1 if row else 1
+            result = dict(initial)
+            if target_reference:
+                result["target_reference"] = target_reference
+            db.execute("""INSERT INTO action_status
+                (session_id,owner,expires,result_json,updated_at,action_id,target_reference,revision)
+                VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(session_id) DO UPDATE SET
+                result_json=excluded.result_json,updated_at=excluded.updated_at,
+                action_id=excluded.action_id,target_reference=excluded.target_reference,
+                revision=excluded.revision""",
+                (session_id, owner, session_exp, json.dumps(result), now, action_id,
+                 target_reference, revision))
+        return action_id, revision, row
+
+    def _rollback_unadmitted_action(self, session_id: str, owner: str, session_exp: int,
+                                    action_id: str, revision: int,
+                                    previous: sqlite3.Row | None) -> None:
+        """A definitive pre-admission 429 can restore the prior visible state.
+
+        The revision stays monotonic so a late observer of the old state cannot
+        write through the rollback. Ambiguous transport failures never call it.
+        """
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._assert_action_session(db, session_id, owner, session_exp)
+            current = self._action_row(db, session_id, owner, session_exp)
+            if not current or current["action_id"] != action_id or current["revision"] != revision:
+                raise ChatError("action_changed", 409,
+                                "La solicitud cambió. Actualiza su estado antes de continuar.")
+            if previous is None:
+                db.execute("DELETE FROM action_status WHERE session_id=?", (session_id,))
+            else:
+                db.execute("""UPDATE action_status SET result_json=?,updated_at=?,action_id=?,
+                    target_reference=?,revision=? WHERE session_id=?""",
+                    (previous["result_json"], int(time.time()), previous["action_id"],
+                     previous["target_reference"], revision + 1, session_id))
+
+    def _advance_action(self, session_id: str, owner: str, session_exp: int,
+                        action_id: str, revision: int, result: dict[str, Any]) -> tuple[dict[str, Any], int]:
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._assert_action_session(db, session_id, owner, session_exp)
+            row = self._action_row(db, session_id, owner, session_exp)
+            if not row or row["action_id"] != action_id or row["revision"] != revision:
+                raise ChatError("action_changed", 409,
+                                "La solicitud cambió. Actualiza su estado antes de continuar.")
+            saved = dict(result)
+            if row["target_reference"]:
+                saved["target_reference"] = row["target_reference"]
+            db.execute("""UPDATE action_status SET result_json=?,updated_at=?,revision=?
+                WHERE session_id=? AND action_id=? AND revision=?""",
+                (json.dumps(saved), int(time.time()), revision + 1,
+                 session_id, action_id, revision))
+        return saved, revision + 1
+
+    def _current_action(self, session_id: str, owner: str,
+                        session_exp: int) -> tuple[sqlite3.Row | None, dict[str, Any] | None]:
+        with self._connection() as db:
+            self._assert_action_session(db, session_id, owner, session_exp)
+            row = self._action_row(db, session_id, owner, session_exp)
+        return row, self._action_result(row) if row else None
+
     async def action(self, customer_id: str, session_id: str, session_exp: int,
-                     operation: dict[str, Any]) -> dict[str, Any]:
+                     operation: dict[str, Any], *, target_reference: str | None = None) -> dict[str, Any]:
         """A trusted frontend control, separate from model text and tool arguments."""
         if not self._action_enabled:
             raise ChatError("action_unavailable", 503, "La recepción simulada no está habilitada.")
+        kind = operation.get("operation")
+        if kind not in {"prepare", "confirm", "handoff"}:
+            raise ChatError("invalid_action", 400, "La solicitud no está disponible.")
+        operation = dict(operation)
+        supplied_request_id = operation.get("requestId")
+        if supplied_request_id is not None and (not isinstance(supplied_request_id, str)
+                or not _REQUEST_ID.fullmatch(supplied_request_id)):
+            raise ChatError("invalid_action", 400, "La solicitud no está disponible.")
+        if kind == "prepare":
+            # FLUJO forwards this to its policy-triggered handoff. Persist it
+            # before the call so a lost HOF response can reuse the same key.
+            operation.setdefault("requestId", str(uuid.uuid4()))
+        if kind == "handoff" and operation.get("reason") not in _RECOVERABLE_HANDOFF_REASONS:
+            raise ChatError("invalid_action", 400, "La solicitud no está disponible.")
+        handle = operation.get("pendingHandle")
+        if kind in {"prepare", "confirm"} or handle:
+            if not isinstance(target_reference, str) or not _PUBLIC_TRANSACTION.fullmatch(target_reference):
+                raise ChatError("action_target_required", 409,
+                                "Selecciona el mismo movimiento antes de continuar.")
         subject, owner = self._identity(customer_id, session_id, session_exp)
         with self._connection() as db:
             row = self._bind(db, session_id, owner, session_exp)
@@ -247,33 +398,159 @@ class ChatService:
         if not isinstance(conversation, str) or not _CONVERSATION.fullmatch(conversation):
             raise ChatError("inquiry_required", 409,
                             "Primero consulta el movimiento con Savia para iniciar una conversación segura.")
+        action_id: str | None = None
+        revision: int | None = None
+        previous: sqlite3.Row | None = None
+        confirm_handoff_retry = False
+        if kind == "prepare":
+            action_id, revision, previous = self._reserve_action(session_id, owner, session_exp,
+                target_reference, {"state": "preparing", "request_id": operation["requestId"]})
+        elif kind == "confirm" or handle:
+            if not isinstance(handle, str) or not _PENDING_HANDLE.fullmatch(handle):
+                raise ChatError("action_mismatch", 409, "La solicitud no corresponde al movimiento seleccionado.")
+            current, saved = self._current_action(session_id, owner, session_exp)
+            if (not current or current["target_reference"] != target_reference
+                    or saved.get("pending_handle") != handle):
+                raise ChatError("action_mismatch", 409, "La solicitud no corresponde al movimiento seleccionado.")
+            if kind == "confirm" and saved.get("state") == "intake_verified" and self._verified_terminal(saved):
+                return saved
+            if kind == "handoff" and saved.get("state") == "handoff_verified" and self._verified_terminal(saved):
+                return saved
+            retry = kind == "handoff" and (
+                saved.get("state") == "handoff_unverified" or
+                (saved.get("state") == "action_unverified" and
+                 isinstance(saved.get("handoff"), dict) and
+                 saved["handoff"].get("state") == "handoff_unverified" and
+                 operation.get("reason") == "action_unverified"))
+            if retry:
+                if (saved.get("reason") or "action_unverified") != operation.get("reason"):
+                    raise ChatError("action_mismatch", 409,
+                                    "La solicitud no corresponde al movimiento seleccionado.")
+                saved_request_id = saved.get("request_id")
+                if supplied_request_id is not None and supplied_request_id != saved_request_id:
+                    raise ChatError("action_mismatch", 409,
+                                    "La solicitud no corresponde al movimiento seleccionado.")
+                if saved_request_id:
+                    operation["requestId"] = saved_request_id
+                else:
+                    operation.pop("requestId", None)
+                confirm_handoff_retry = saved.get("state") == "action_unverified"
+            elif kind == "handoff":
+                if saved.get("state") == "action_unverified":
+                    # A lost confirm response might hide a policy-created HOF.
+                    # Without its reason we cannot choose a safe idempotency key.
+                    raise ChatError("action_in_progress", 409,
+                                    "Primero revisa el estado de la solicitud anterior.")
+                if operation["reason"] not in _CUSTOMER_HANDOFF_REASONS:
+                    raise ChatError("action_mismatch", 409,
+                                    "La solicitud no corresponde al movimiento seleccionado.")
+                operation.setdefault("requestId", str(uuid.uuid4()))
+            allowed = ({"pending_confirmation"} if kind == "confirm" else
+                       {"pending_confirmation", "action_unverified", "handoff_unverified"})
+            if saved.get("state") not in allowed:
+                raise ChatError("action_in_progress", 409,
+                                "Primero revisa el estado de la solicitud anterior.")
+            action_id, revision = current["action_id"], current["revision"]
+            previous = current
+            uncertain = {"state": "action_unverified" if kind == "confirm" or confirm_handoff_retry
+                         else "handoff_unverified",
+                         "pending_handle": handle}
+            if confirm_handoff_retry:
+                uncertain["handoff"] = {"state": "handoff_unverified"}
+            if request_id := operation.get("requestId"):
+                uncertain["request_id"] = request_id
+            if reason := operation.get("reason"):
+                uncertain["reason"] = reason
+            _, revision = self._advance_action(session_id, owner, session_exp,
+                                               action_id, revision, uncertain)
+        else:
+            # A general handoff has no transaction target or pending handle,
+            # but still needs an identity before the upstream write begins.
+            current, saved = self._current_action(session_id, owner, session_exp)
+            if (current and saved.get("state") == "handoff_unverified"
+                    and not saved.get("pending_handle")
+                    and current["target_reference"] is None
+                    and saved.get("reason") == operation["reason"]
+                    and saved.get("request_id") == supplied_request_id):
+                action_id, revision = current["action_id"], current["revision"]
+                previous = current
+                _, revision = self._advance_action(session_id, owner, session_exp,
+                    action_id, revision, {"state": "handoff_unverified",
+                                          "reason": operation["reason"],
+                                          "request_id": supplied_request_id})
+            else:
+                if operation["reason"] not in _CUSTOMER_HANDOFF_REASONS:
+                    raise ChatError("action_mismatch", 409,
+                                    "La solicitud no corresponde a una revisión pendiente.")
+                operation.setdefault("requestId", str(uuid.uuid4()))
+                initial = {"state": "handoff_unverified",
+                           "request_id": operation["requestId"], "reason": operation["reason"]}
+                action_id, revision, previous = self._reserve_action(session_id, owner,
+                                                                       session_exp, None, initial)
+
         payload = {"conversationId": conversation, **operation}
+
         def finish(result: dict[str, Any]) -> dict[str, Any]:
-            saved = dict(result)
-            if handle := operation.get("pendingHandle"):
+            nonlocal revision
+            saved = ({"state": "action_unverified", "reason": "action_unverified",
+                      "handoff": result} if confirm_handoff_retry else dict(result))
+            if handle:
                 saved.setdefault("pending_handle", handle)
             if request_id := operation.get("requestId"):
                 saved.setdefault("request_id", request_id)
-            self._remember_action(session_id, owner, session_exp, saved)
+            if reason := operation.get("reason"):
+                saved.setdefault("reason", reason)
+            if action_id is not None and revision is not None:
+                saved, revision = self._advance_action(session_id, owner, session_exp,
+                                                       action_id, revision, saved)
             return saved
-        if operation.get("operation") == "confirm":
-            # Persist the attempt before sending a write. After refresh, an
-            # absent receipt must never be presented as safe to confirm again.
-            self._remember_action(session_id, owner, session_exp,
-                                  {"state": "action_unverified",
-                                   "pending_handle": operation["pendingHandle"]})
         try:
-            return finish(await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
-                                           payload, timeout_seconds=45))
+            result = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                                      payload, timeout_seconds=45)
+            if kind == "prepare":
+                if self._verified_terminal(result) and result.get("state") == "handoff_verified":
+                    return finish(result)
+                if (result.get("state") == "handoff_unverified"
+                        and result.get("reason") in _RECOVERABLE_HANDOFF_REASONS
+                        and isinstance(result.get("pending_handle"), str)
+                        and _PENDING_HANDLE.fullmatch(result["pending_handle"])):
+                    return finish(result)
+                if (result.get("state") != "pending_confirmation" or
+                        not isinstance(result.get("pending_handle"), str) or
+                        not _PENDING_HANDLE.fullmatch(result["pending_handle"])):
+                    return finish({"state": "prepare_unverified"})
+            if kind == "confirm" and result.get("state") == "handoff_unverified" and (
+                    result.get("reason") in {"high_risk", "missing_evidence", "action_unverified"}):
+                return finish(result)
+            if kind == "confirm" and result.get("state") == "action_unverified" and (
+                    isinstance(result.get("handoff"), dict)):
+                return finish({**result, "reason": "action_unverified"})
+            if kind == "confirm" and not self._verified_terminal(result):
+                return finish({"state": "action_unverified"})
+            if kind == "handoff" and result.get("state") != "handoff_unverified" and not self._verified_terminal(result):
+                return finish({"state": "handoff_unverified"})
+            return finish(result)
         except ChatError as exc:
-            if operation.get("operation") == "handoff" and exc.code in {
+            if exc.code == "chat_busy" and action_id is not None and revision is not None:
+                self._rollback_unadmitted_action(session_id, owner, session_exp,
+                                                  action_id, revision, previous)
+                raise
+            if kind == "prepare" and exc.code in {
+                    "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
+                return finish({"state": "prepare_unverified"})
+            if kind == "handoff" and exc.code in {
                     "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                 try:
-                    return finish(await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
-                                                   payload, timeout_seconds=20))
-                except ChatError:
+                    retry = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                                             payload, timeout_seconds=20)
+                except ChatError as retry_error:
+                    if retry_error.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
+                        raise
                     return finish({"state": "handoff_unverified"})
-            if operation.get("operation") != "confirm" or exc.code not in {
+                if retry.get("state") != "handoff_unverified" and not self._verified_terminal(retry):
+                    return finish({"state": "handoff_unverified"})
+                return finish(retry)
+            if kind != "confirm" or exc.code not in {
                     "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                 raise
             # The write may have committed before its response was lost. Read
@@ -281,23 +558,25 @@ class ChatService:
             try:
                 receipt = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
                     {"conversationId": conversation, "operation": "receipt",
-                     "pendingHandle": operation["pendingHandle"]}, timeout_seconds=20)
-                if receipt.get("state") == "intake_verified":
-                    return finish(receipt)
-                handoff = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
-                    {"conversationId": conversation, "operation": "handoff",
-                     "reason": "action_unverified", "pendingHandle": operation["pendingHandle"]}, timeout_seconds=20)
-                return finish({"state": "action_unverified", "handoff": handoff})
-            except ChatError:
-                return finish({"state": "action_unverified", "handoff": {"state": "handoff_unverified"}})
+                     "pendingHandle": handle}, timeout_seconds=20)
+            except ChatError as receipt_error:
+                if receipt_error.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
+                    raise
+                return finish({"state": "action_unverified"})
+            if receipt.get("state") == "intake_verified" and self._verified_terminal(receipt):
+                return finish(receipt)
+            # Receipt absence does not identify whether FLUJO made a policy
+            # handoff under another reason before the response was lost.
+            return finish({"state": "action_unverified"})
 
     def _remember_action(self, session_id: str, owner: str, session_exp: int,
                          result: dict[str, Any]) -> None:
-        with self._connection() as db:
-            db.execute("""INSERT INTO action_status VALUES (?,?,?,?,?)
-                ON CONFLICT(session_id) DO UPDATE SET owner=excluded.owner, expires=excluded.expires,
-                result_json=excluded.result_json, updated_at=excluded.updated_at""",
-                (session_id, owner, session_exp, json.dumps(result), int(time.time())))
+        # Legacy test/migration helper: even direct local recovery updates must
+        # obey the current action identity and revision.
+        row, _ = self._current_action(session_id, owner, session_exp)
+        if not row:
+            raise ChatError("action_invalid_state", 503, "No se pudo verificar la recepción simulada.")
+        self._advance_action(session_id, owner, session_exp, row["action_id"], row["revision"], result)
 
     async def action_status(self, customer_id: str, session_id: str, session_exp: int) -> dict[str, Any]:
         if not self._action_enabled:
@@ -306,27 +585,36 @@ class ChatService:
         with self._connection() as db:
             session = db.execute("SELECT owner,expires,revoked,conversation_id FROM chat_sessions WHERE session_id=?",
                                  (session_id,)).fetchone()
-            row = db.execute("SELECT owner,expires,result_json FROM action_status WHERE session_id=?",
-                             (session_id,)).fetchone()
         if (not session or session["owner"] != owner or session["expires"] != session_exp
                 or session["revoked"]):
             raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+        row, saved = self._current_action(session_id, owner, session_exp)
         if not row:
             return {"state": "none"}
-        if row["owner"] != owner or row["expires"] != session_exp:
-            raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
-        saved = json.loads(row["result_json"])
         if saved.get("state") == "action_unverified" and isinstance(saved.get("pending_handle"), str):
             try:
                 receipt = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
                     {"conversationId": session["conversation_id"], "operation": "receipt",
                      "pendingHandle": saved["pending_handle"]}, timeout_seconds=20)
-                if receipt.get("state") == "intake_verified":
-                    self._remember_action(session_id, owner, session_exp, receipt)
-                    return receipt
-            except ChatError:
-                pass
-        return saved
+            except ChatError as exc:
+                # A lost receipt response leaves the durable uncertain state.
+                # Local ownership/revocation errors must still propagate.
+                if exc.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
+                    raise
+            else:
+                if self._verified_terminal(receipt) and receipt.get("state") == "intake_verified":
+                    try:
+                        recovered, _ = self._advance_action(session_id, owner, session_exp,
+                            row["action_id"], row["revision"],
+                            {**receipt, "pending_handle": saved["pending_handle"]})
+                        return recovered
+                    except ChatError as changed:
+                        if changed.code != "action_changed":
+                            raise
+                        # A later status may have recovered A and allowed B to
+                        # start. Return the current slot, never overwrite B.
+        _, latest = self._current_action(session_id, owner, session_exp)
+        return latest if latest else {"state": "none"}
 
     @staticmethod
     def _validate_session(session_id: str, session_exp: int) -> None:
