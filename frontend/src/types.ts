@@ -76,7 +76,8 @@ export type Overview = {
     next_offset: number | null;
   };
 };
-export type ChatStatus = { available: boolean; mode?: string; reason?: string };
+export type ChatStatus = { available: boolean; mode?: string; reason?: string;
+  read_only?: boolean; sandbox_intake_available?: boolean };
 export type ChatSelection = Pick<
   Transaction,
   "reference" | "occurred_at" | "type" | "amount" | "currency" | "status"

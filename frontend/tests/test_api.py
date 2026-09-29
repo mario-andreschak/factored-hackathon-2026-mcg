@@ -200,6 +200,39 @@ def test_concurrent_profiles_and_foreign_transaction_reference(settings):
         assert response.status_code == 404
 
 
+def test_action_api_resolves_owned_reference_and_localizes_verified_state(settings):
+    class ActionService:
+        def __init__(self):
+            self.calls = []
+
+        async def action(self, customer, session_id, expires, operation):
+            self.calls.append((customer, session_id, operation))
+            if operation["operation"] == "prepare":
+                return {"state": "pending_confirmation", "pending_handle": "a" * 43}
+            return {"state": "handoff_verified", "handoff": {"id": "HOF-abcdefgh"}}
+
+    with TestClient(create_app(settings)) as client:
+        assert login(client).status_code == 200
+        service = ActionService()
+        client.app.state.chat_service = service
+        own = client.get("/api/overview").json()["transactions"][0]["reference"]
+        prepared = client.post("/api/action/prepare", json={"transaction_reference": own, "language": "pt"})
+        assert prepared.status_code == 200
+        assert prepared.json()["state"] == "pending_confirmation"
+        assert "Confirme" in prepared.json()["message"]
+        assert service.calls[0][0] == "private-customer-co"
+        assert service.calls[0][2]["transactionId"].startswith("private-txn-")
+        assert "private-txn-" not in prepared.text
+        handoff = client.post("/api/action/handoff", json={"reason": "customer_request", "language": "es"})
+        assert handoff.status_code == 200
+        assert "HOF-abcdefgh" in handoff.json()["message"]
+        assert "respuesta de una persona" in handoff.json()["message"]
+        foreign = Repository(settings, State(settings.state_dir)).overview("mexico")["transactions"][0]["reference"]
+        denied = client.post("/api/action/prepare", json={"transaction_reference": foreign})
+        assert denied.status_code == 404
+        assert len(service.calls) == 2
+
+
 def test_secure_cookie_origin_and_custom_demo_code(settings):
     settings = replace(settings,secure_cookie=True,public_origin="https://bank.example",demo_code="private-code")
     with TestClient(create_app(settings),base_url="https://bank.example") as client:

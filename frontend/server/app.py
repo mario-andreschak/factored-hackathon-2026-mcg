@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import logging
 from contextlib import asynccontextmanager, suppress
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
@@ -35,6 +36,26 @@ class ChatBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     message: str = Field(min_length=1, max_length=4000)
     transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
+
+
+class PrepareActionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    transaction_reference: str = Field(pattern=r"^txn_[a-f0-9]{24}$")
+    language: Literal["es", "pt"] = "es"
+
+
+class ConfirmActionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    pending_handle: str = Field(pattern=r"^[A-Za-z0-9_-]{32,64}$")
+    confirmed: Literal[True]
+    language: Literal["es", "pt"] = "es"
+
+
+class HandoffActionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    reason: Literal["out_of_policy", "emergency", "customer_request", "clarification_exhausted"]
+    pending_handle: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{32,64}$")
+    language: Literal["es", "pt"] = "es"
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -332,6 +353,39 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(exc.status_code, exc.message) from None
             logger.error("Banking chat unavailable: %s", type(exc).__name__)
             raise HTTPException(502, "FLUJO no pudo responder. Intenta nuevamente.") from None
+
+    async def run_action(request: Request, operation: dict, language: str):
+        current = session(request)
+        customer = request.app.state.repository.profile_customer(current.profile_id)
+        service = request.app.state.chat_service
+        from .action import render_action
+        from .chat import ChatError
+        try:
+            return render_action(await service.action(customer, current.id, current.expires_at, operation), language)
+        except ChatError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+        except ValueError:
+            raise HTTPException(502, "No se pudo verificar la respuesta de la recepción simulada.") from None
+
+    @app.post("/api/action/prepare")
+    async def action_prepare(body: PrepareActionBody, request: Request):
+        current = session(request)
+        target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
+        if not target:
+            raise HTTPException(404, "El movimiento seleccionado no está disponible.")
+        return await run_action(request, {"operation": "prepare", "transactionId": target["transaction_id"],
+                                          "snapshot": target["snapshot"]}, body.language)
+
+    @app.post("/api/action/confirm")
+    async def action_confirm(body: ConfirmActionBody, request: Request):
+        return await run_action(request, {"operation": "confirm", "pendingHandle": body.pending_handle,
+                                          "confirmed": body.confirmed}, body.language)
+
+    @app.post("/api/action/handoff")
+    async def action_handoff(body: HandoffActionBody, request: Request):
+        return await run_action(request, {"operation": "handoff", "reason": body.reason,
+                                          **({"pendingHandle": body.pending_handle} if body.pending_handle else {})},
+                                body.language)
 
     @app.get("/{path:path}")
     def frontend(path: str):

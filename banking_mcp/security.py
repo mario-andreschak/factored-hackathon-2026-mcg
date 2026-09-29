@@ -86,6 +86,21 @@ class StateStore:
                 CREATE TABLE IF NOT EXISTS capabilities(
                     id TEXT PRIMARY KEY, kind TEXT NOT NULL, binding TEXT NOT NULL,
                     expires INTEGER NOT NULL, payload TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS action_pending(
+                    id TEXT PRIMARY KEY, binding TEXT NOT NULL, customer TEXT NOT NULL,
+                    transaction_id TEXT NOT NULL, snapshot TEXT NOT NULL,
+                    action TEXT NOT NULL, decision TEXT NOT NULL, reason TEXT,
+                    facts TEXT NOT NULL, expires INTEGER NOT NULL);
+                CREATE TABLE IF NOT EXISTS sandbox_cases(
+                    id TEXT PRIMARY KEY, customer TEXT NOT NULL, transaction_id TEXT NOT NULL,
+                    action TEXT NOT NULL, snapshot TEXT NOT NULL, created_at REAL NOT NULL,
+                    facts TEXT NOT NULL, UNIQUE(customer, transaction_id, action));
+                CREATE INDEX IF NOT EXISTS sandbox_cases_recent ON sandbox_cases(customer, created_at);
+                CREATE TABLE IF NOT EXISTS sandbox_handoffs(
+                    id TEXT PRIMARY KEY, binding TEXT NOT NULL, customer TEXT NOT NULL,
+                    transaction_id TEXT, snapshot TEXT, reason TEXT NOT NULL,
+                    created_at INTEGER NOT NULL, facts TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL UNIQUE);
             """)
 
     @contextmanager
@@ -146,7 +161,7 @@ class Authorizer:
     def __init__(self, config: Config, store: StateStore):
         self.config, self.store = config, store
 
-    def authorize(self, tool: str, args: dict, meta: dict | None) -> Principal:
+    def authorize(self, tool: str, args: dict, meta: dict | None, scope: str = "bank:read") -> Principal:
         if self.config.mode == "operator-test":
             customer, conversation = args.get("customer_id"), args.get("conversation_id")
             if (not isinstance(customer, str) or customer not in self.config.approved_customers
@@ -163,7 +178,7 @@ class Authorizer:
                                   "synthetic-demo", int(time.time()) + MAX_ASSERTION_TTL)
         else:
             token = (meta or {}).get(ASSERTION_META)
-            principal = self._verify(token, tool, args, TOKEN_TYPE, "bank:read")
+            principal = self._verify(token, tool, args, TOKEN_TYPE, scope)
         # Even a validly signed caller cannot change the mapped customer or conversation.
         for name, expected in (("customer_id", principal.customer), ("conversation_id", principal.conversation)):
             if name in args and args[name] != expected:

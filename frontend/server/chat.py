@@ -49,6 +49,7 @@ class ChatService:
         self._configured = False
         self._reason = "El asistente de FLUJO todavía no está conectado a esta demo."
         self._customer_subjects: dict[str, str] = {}
+        self._action_enabled = False
         self._approved_subject_customers: dict[str, str] = {}
         self._approved_owner_subjects: dict[str, tuple[str, str]] = {}
         self._db_path = Path(state_dir) / "frontend-chat.sqlite3"
@@ -118,6 +119,9 @@ class ChatService:
                     {"flujo", "localhost", "127.0.0.1", "::1", "host.docker.internal"})):
             raise ValueError("Private service URL required")
         self._model = config["model"]
+        if not isinstance(config.get("action_enabled", False), bool):
+            raise ValueError("Invalid action configuration")
+        self._action_enabled = config.get("action_enabled", False)
         self._execution_token = config["execution_token"]
         self._issuer = config["frontend_issuer"]
         self._kid = config["frontend_kid"]
@@ -164,7 +168,8 @@ class ChatService:
     def status(self, customer_id: str) -> dict[str, Any]:
         available = self._configured and customer_id in self._customer_subjects
         return {"available": available, "mode": "flujo" if available else "unavailable",
-                "read_only": True,
+                "read_only": not (available and self._action_enabled),
+                "sandbox_intake_available": available and self._action_enabled,
                 **({} if available else {"reason": self._reason if not self._configured
                     else "El asistente no está habilitado para este perfil de demostración."})}
 
@@ -221,6 +226,45 @@ class ChatService:
             return {"available": True, "messages": messages,
                     "active": bool(row["active_id"] and row["active_until"] > now),
                     "limited": limited}
+
+    async def action(self, customer_id: str, session_id: str, session_exp: int,
+                     operation: dict[str, Any]) -> dict[str, Any]:
+        """A trusted frontend control, separate from model text and tool arguments."""
+        if not self._action_enabled:
+            raise ChatError("action_unavailable", 503, "La recepción simulada no está habilitada.")
+        subject, owner = self._identity(customer_id, session_id, session_exp)
+        with self._connection() as db:
+            row = self._bind(db, session_id, owner, session_exp)
+            if row["revoked"]:
+                raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
+            conversation = row["conversation_id"]
+            if row["active_until"] > int(time.time()):
+                raise ChatError("chat_busy", 429, "Espera la respuesta de tu consulta anterior.")
+        if not isinstance(conversation, str) or not _CONVERSATION.fullmatch(conversation):
+            raise ChatError("inquiry_required", 409,
+                            "Primero consulta el movimiento con Savia para iniciar una conversación segura.")
+        payload = {"conversationId": conversation, **operation}
+        try:
+            return await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                                    payload, timeout_seconds=45)
+        except ChatError as exc:
+            if operation.get("operation") != "confirm" or exc.code not in {
+                    "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
+                raise
+            # The write may have committed before its response was lost. Read
+            # the same pending identity; never issue a second confirm.
+            try:
+                receipt = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                    {"conversationId": conversation, "operation": "receipt",
+                     "pendingHandle": operation["pendingHandle"]}, timeout_seconds=20)
+                if receipt.get("state") == "intake_verified":
+                    return receipt
+                handoff = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                    {"conversationId": conversation, "operation": "handoff",
+                     "reason": "action_unverified", "pendingHandle": operation["pendingHandle"]}, timeout_seconds=20)
+                return {"state": "action_unverified", "handoff": handoff}
+            except ChatError:
+                return {"state": "action_unverified", "handoff": {"state": "handoff_unverified"}}
 
     @staticmethod
     def _validate_session(session_id: str, session_exp: int) -> None:

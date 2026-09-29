@@ -939,6 +939,9 @@ function Assistant({
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]),
     [input, setInput] = useState(""),
+    [action, setAction] = useState<{ state: string; message: string; pending_handle?: string } | null>(null),
+    [actionBusy, setActionBusy] = useState(false),
+    [actionLanguage, setActionLanguage] = useState<"es" | "pt">("es"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [historyReady, setHistoryReady] = useState(false),
@@ -950,6 +953,7 @@ function Assistant({
   useEffect(() => {
     if (open) end.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy, open]);
+  useEffect(() => { setAction(null); }, [selected?.reference]);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -1033,6 +1037,20 @@ function Assistant({
       if (alive.current) setBusy(false);
     }
   }
+  async function runAction(path: string, body: Record<string, unknown>) {
+    if (actionBusy || busy || !historyReady) return;
+    setActionBusy(true);
+    setError("");
+    try {
+      const result = await api<{ state: string; message: string; pending_handle?: string }>(path, {
+        method: "POST", body: JSON.stringify({ ...body, language: actionLanguage }),
+      });
+      if (alive.current) setAction(result);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) onExpired();
+      else if (alive.current) setError("No pudimos verificar esta acción. Consulta el estado antes de volver a intentarlo.");
+    } finally { if (alive.current) setActionBusy(false); }
+  }
   // Closing the dialog keeps this authenticated component alive. A running
   // query can finish and its visible transcript will be here on reopening.
   if (!open) return null;
@@ -1046,7 +1064,9 @@ function Assistant({
           <strong>Un poco de claridad, cuando la necesitas.</strong>
           <span>
             {status.available
-              ? "Conectado a FLUJO · Consulta de solo lectura"
+              ? status.sandbox_intake_available
+                ? "Conectado a FLUJO · Recepción simulada disponible tras confirmación"
+                : "Conectado a FLUJO · Consulta de solo lectura"
               : "El asistente no está disponible ahora"}
           </span>
         </div>
@@ -1063,6 +1083,35 @@ function Assistant({
             </small>
           </span>
           <CheckCheck size={18} />
+        </div>
+      )}
+      {status.sandbox_intake_available && historyReady && messages.length > 0 && (
+        <div className="action-panel">
+          <strong>¿No reconoces un cargo?</strong>
+          <p>La recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.</p>
+          <label>Idioma de esta respuesta
+            <select value={actionLanguage} onChange={(e) => setActionLanguage(e.target.value as "es" | "pt")}>
+              <option value="es">Español</option><option value="pt">Português</option>
+            </select>
+          </label>
+          {action && <p role="status" className="action-result">{action.message}</p>}
+          {selected && !action && <button type="button" className="button outline"
+            disabled={actionBusy || busy} onClick={() => runAction("/api/action/prepare",
+              { transaction_reference: selected.reference })}>Revisar recepción simulada</button>}
+          {action?.state === "pending_confirmation" && action.pending_handle && (
+            <button type="button" className="button primary" disabled={actionBusy || busy}
+              onClick={() => runAction("/api/action/confirm",
+                { pending_handle: action.pending_handle, confirmed: true })}>
+              Confirmo la recepción simulada para este cargo
+            </button>
+          )}
+          {(!action || action.state === "pending_confirmation") && (
+            <button type="button" className="button outline" disabled={actionBusy || busy}
+              onClick={() => runAction("/api/action/handoff", { reason: "customer_request",
+                ...(action?.pending_handle ? { pending_handle: action.pending_handle } : {}) })}>
+              Prefiero revisión humana
+            </button>
+          )}
         </div>
       )}
       <div className="chat-messages" aria-live="polite">

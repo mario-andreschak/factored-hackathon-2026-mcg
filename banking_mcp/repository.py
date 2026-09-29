@@ -206,6 +206,16 @@ class Repository:
         return {"transaction": self._visible(row, snapshot), "snapshot": snapshot.id,
                 "freshness": freshness, "read_only": True}
 
+    def owned_transaction_id(self, principal: Principal, transaction_id: str, build: str) -> tuple[Snapshot, dict]:
+        """Host-only exact target resolution; ownership and CURRENT are rechecked."""
+        snapshot = self.snapshot()
+        if snapshot.id != build:
+            raise BankError("snapshot_changed")
+        rows = self._rows(snapshot, principal, "transaction_id=?", [transaction_id], 2)
+        if len(rows) != 1:
+            raise BankError("reference_unavailable")
+        return snapshot, rows[0]
+
     def _verify_source(self, snapshot: Snapshot, principal: Principal, row: dict):
         if self.config.source_env is None:
             raise BankError("source_verification_unavailable")

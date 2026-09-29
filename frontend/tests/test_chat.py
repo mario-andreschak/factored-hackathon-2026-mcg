@@ -18,6 +18,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from frontend.server.chat import ChatError, ChatService
+from frontend.server.action import render_action
 
 
 class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
@@ -55,6 +56,49 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
     def claims(self, request):
         return jwt.decode(request.headers["X-Flujo-User-Assertion"], self.signer.public_key(),
             algorithms=["EdDSA"], issuer="approved-frontend", audience="flujo-banking-ingress")
+
+    async def test_action_requires_inquiry_and_sends_fresh_bound_assertion(self):
+        enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
+        with self.assertRaises(ChatError) as missing:
+            await enabled.action("customer-a", self.session_a, self.expiry,
+                                 {"operation": "handoff", "reason": "customer_request"})
+        self.assertEqual(missing.exception.code, "inquiry_required")
+        seen = []
+        def respond(request):
+            seen.append(request)
+            if request.url.path == "/v1/banking/action":
+                body = json.loads(request.content)
+                self.assertEqual(body["operation"], "prepare")
+                self.assertRegex(body["conversationId"], r"^[a-f0-9-]{36}$")
+                return httpx.Response(200, json={"state": "pending_confirmation",
+                    "pending_handle": "a" * 43, "message": "server result"})
+            return self.respond(request)
+        enabled._transport = httpx.MockTransport(respond)
+        await enabled.send("customer-a", self.session_a, self.expiry, "No reconozco el cargo")
+        result = await enabled.action("customer-a", self.session_a, self.expiry,
+                                      {"operation": "prepare", "transactionId": "TXN00000001",
+                                       "snapshot": "synthetic-build"})
+        self.assertEqual(result["state"], "pending_confirmation")
+        self.assertNotEqual(self.claims(seen[0])["jti"], self.claims(seen[1])["jti"])
+        self.assertEqual(self.claims(seen[1])["sub"], "subject-a")
+        with self.assertRaises(ChatError) as foreign:
+            await enabled.action("customer-b", self.session_a, self.expiry,
+                                 {"operation": "prepare", "transactionId": "TXN00000001",
+                                  "snapshot": "synthetic-build"})
+        self.assertEqual(foreign.exception.code, "session_mismatch")
+
+    def test_es_pt_fallback_requires_verified_persisted_ids(self):
+        handoff = {"state": "handoff_verified", "handoff": {"id": "HOF-" + "a" * 8}}
+        for language, id_label in [("es", "Folio"), ("pt", "Protocolo")]:
+            named = render_action(handoff, language)
+            self.assertIn(id_label, named["message"])
+            self.assertIn(handoff["handoff"]["id"], named["message"])
+            uncertain = render_action({"state": "action_unverified", "handoff": handoff}, language)
+            self.assertIn(handoff["handoff"]["id"], uncertain["message"])
+            self.assertIn("No se pudo verificar" if language == "es" else "Não foi possível verificar",
+                          uncertain["message"])
+            unverified = render_action({"state": "handoff_unverified", "handoff": handoff["handoff"]}, language)
+            self.assertNotIn(handoff["handoff"]["id"], unverified["message"])
 
     async def test_assertions_are_fresh_and_conversations_are_server_bound(self):
         self.service._transport = httpx.MockTransport(self.respond)

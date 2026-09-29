@@ -20,6 +20,9 @@ class Config(BaseModel):
     demo_customer: str | None = None
     approved_customers: frozenset[str] = Field(default_factory=frozenset, repr=False)
     source_env: Path | None = None
+    # An operator attests when the SANDBOX report ledger became complete. This
+    # never represents bank-wide historical reporting coverage.
+    sandbox_report_coverage_start: int | None = Field(default=None, ge=1)
     max_active_reads: int = Field(default=8, ge=1, le=32)
     max_queued_reads: int = Field(default=512, ge=1, le=1024)
     http_hosts: list[str] = Field(default_factory=lambda: ["127.0.0.1:*", "localhost:*"])

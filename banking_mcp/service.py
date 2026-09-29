@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from pydantic.json_schema import SkipJsonSchema
 
 from . import __version__
+from .actions import Actions
 from .config import Config
 from .repository import Repository
 from .security import Authorizer, BankError, StateStore
@@ -50,7 +51,39 @@ class GetArgs(CustomerArgs):
     verify_source: bool = False
 
 
-SCHEMAS = {"banking_status": EmptyArgs, "list_my_transactions": ListArgs, "get_my_transaction": GetArgs}
+class PrepareArgs(CustomerArgs):
+    transaction_id: str = Field(min_length=1, max_length=128)
+    snapshot: str = Field(pattern=r"^[A-Za-z0-9_-]{1,96}$")
+
+
+class ConfirmArgs(CustomerArgs):
+    pending_handle: str = Field(min_length=32, max_length=64)
+    confirmed: bool
+
+
+class ReceiptArgs(CustomerArgs):
+    pending_handle: str = Field(min_length=32, max_length=64)
+
+
+class HandoffArgs(CustomerArgs):
+    reason: str = Field(pattern=r"^(high_risk|missing_evidence|out_of_policy|emergency|action_unverified|customer_request|clarification_exhausted|duplicate_review|no_match_exhausted|tool_failure)$")
+    pending_handle: str | None = Field(default=None, min_length=32, max_length=64)
+
+
+class ReadHandoffArgs(CustomerArgs):
+    handoff_id: str = Field(pattern=r"^HOF-[A-Za-z0-9_-]{8}$")
+
+
+ACTION_SCHEMAS = {"prepare_unrecognized_charge": PrepareArgs,
+                  "confirm_simulated_intake": ConfirmArgs,
+                  "read_intake_receipt": ReceiptArgs,
+                  "create_verified_handoff": HandoffArgs,
+                  "read_verified_handoff": ReadHandoffArgs}
+SCOPES = {"prepare_unrecognized_charge": "bank:prepare", "confirm_simulated_intake": "bank:write",
+          "read_intake_receipt": "bank:receipt", "create_verified_handoff": "bank:handoff",
+          "read_verified_handoff": "bank:handoff-read"}
+SCHEMAS = {"banking_status": EmptyArgs, "list_my_transactions": ListArgs,
+           "get_my_transaction": GetArgs, **ACTION_SCHEMAS}
 DESCRIPTIONS = {
     "banking_status": "Read-only service status. Contains no customer information.",
     "list_my_transactions": "List the authenticated customer's transactions for at most 31 process dates. "
@@ -63,6 +96,11 @@ DESCRIPTIONS = {
         "In bound mode omit customer_id; operator-test mode requires the approved selector and runtime "
         "conversation_id used for the list. "
         "Set verify_source to recheck its pinned S3 source. This tool creates no dispute or bank action.",
+    "prepare_unrecognized_charge": "Host-only: recheck an exact owned transaction and create a sandbox report/pending action.",
+    "confirm_simulated_intake": "Host-only: consume explicit server-verified confirmation and atomically create a simulated case.",
+    "read_intake_receipt": "Host-only: read a persisted owner-bound simulated case after uncertain writes.",
+    "create_verified_handoff": "Host-only: persist a minimal owner-bound handoff packet, not a human response.",
+    "read_verified_handoff": "Host-only: read a persisted handoff packet before claiming it was created.",
 }
 
 
@@ -72,6 +110,7 @@ class Service:
         self.store = StateStore(config.state_db)
         self.auth = Authorizer(config, self.store)
         self.repository = Repository(config, self.store)
+        self.actions = Actions(self.store, self.repository, config.sandbox_report_coverage_start)
         self._pending = 0
         self._semaphore = asyncio.Semaphore(config.max_active_reads)
         self._thread_limiter = None
@@ -79,7 +118,10 @@ class Service:
     def execute(self, name: str, args: dict, meta: dict | None = None) -> dict:
         if name not in SCHEMAS or not isinstance(args, dict):
             raise BankError("invalid_arguments")
-        principal = None if name == "banking_status" else self.auth.authorize(name, args, meta)
+        if name in ACTION_SCHEMAS and self.config.mode != "delegated":
+            raise BankError("authorization_denied")
+        principal = None if name == "banking_status" else self.auth.authorize(
+            name, args, meta, SCOPES.get(name, "bank:read"))
         try:
             parsed = SCHEMAS[name].model_validate(args)
         except ValidationError:
@@ -90,19 +132,33 @@ class Service:
                 ready = True
             except BankError:
                 ready = False
-            return {"service": "banking-mcp", "version": __version__, "read_only": True,
+            return {"service": "banking-mcp", "version": __version__,
+                    "read_only": self.config.mode != "delegated",
+                    "sandbox_actions_only": self.config.mode == "delegated",
                     "mode": self.config.mode, "dataset_ready": ready,
                     "customer_assertion_required": self.config.mode == "delegated",
                     "customer_selection_required": self.config.mode == "operator-test",
                     "conversation_correlation_required": self.config.mode == "operator-test",
                     "source_verification_configured": self.config.source_env is not None,
-                    "tools": list(SCHEMAS)}
+                    "tools": list(SCHEMAS if self.config.mode == "delegated" else
+                                  {name: schema for name, schema in SCHEMAS.items()
+                                   if name not in ACTION_SCHEMAS})}
         self.auth.assert_current(principal)
         if name == "list_my_transactions":
             result = self.repository.list_transactions(principal, parsed.start_date, parsed.end_date,
                                                        parsed.limit, parsed.cursor)
-        else:
+        elif name == "get_my_transaction":
             result = self.repository.get_transaction(principal, parsed.selection_handle, parsed.verify_source)
+        elif name == "prepare_unrecognized_charge":
+            result = self.actions.prepare(principal, parsed.transaction_id, parsed.snapshot)
+        elif name == "confirm_simulated_intake":
+            result = self.actions.confirm(principal, parsed.pending_handle, parsed.confirmed)
+        elif name == "read_intake_receipt":
+            result = self.actions.receipt(principal, parsed.pending_handle)
+        elif name == "create_verified_handoff":
+            result = self.actions.handoff(principal, parsed.reason, parsed.pending_handle)
+        else:
+            result = self.actions.read_handoff(principal, parsed.handoff_id)
         self.auth.assert_current(principal)
         return {**result, "synthetic": self.config.mode != "delegated",
                 "operator_test": self.config.mode == "operator-test"}

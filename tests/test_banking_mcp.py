@@ -58,6 +58,159 @@ def call(bank, tool="list_my_transactions", args=None, subject="alice", **claims
     return bank[0].execute(tool, args, assertion(bank, tool, args, subject, **claims))
 
 
+def action_call(bank, tool, args, subject="alice"):
+    from banking_mcp.service import SCOPES
+    return call(bank, tool, args, subject, scope=[SCOPES[tool]])
+
+
+def owned_action_target(bank, subject="alice"):
+    from banking_mcp.security import Principal
+    service = bank[0]
+    customer = service.config.principal_customers[subject]
+    principal = Principal(subject, customer, "session-" + subject,
+                          "conversation-" + subject, int(time.time()) + 60)
+    snapshot = service.repository.snapshot()
+    rows = service.repository._rows(snapshot, principal, "transaction_status='Approved'", [], 20)
+    return snapshot.id, [r["transaction_id"] for r in rows]
+
+
+def test_simulated_intake_requires_coverage_confirmation_and_readback(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    service.actions.coverage_start = int(time.time()) - 90000
+    pending = action_call(bank, "prepare_unrecognized_charge",
+                          {"transaction_id": targets[0], "snapshot": build})
+    assert pending["decision"] == "intake"
+    assert pending["risk"]["unrecognized_count_24h"] == 1
+    assert pending["risk"]["risk_data_complete"] is True
+    assert pending["risk"]["source"] == "sandbox_cases"
+    args = {"pending_handle": pending["pending_handle"], "confirmed": True}
+    first = action_call(bank, "confirm_simulated_intake", args)
+    again = action_call(bank, "confirm_simulated_intake", args)
+    assert first == again
+    assert first["state"] == "created" and first["receipt"]["simulated"] is True
+    assert action_call(bank, "read_intake_receipt", {"pending_handle": pending["pending_handle"]}) == first
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 1
+        db.execute("UPDATE action_pending SET snapshot='another-build'")
+    assert action_call(bank, "read_intake_receipt", {"pending_handle": pending["pending_handle"]})["state"] == "action_unverified"
+    with pytest.raises(BankError, match="reference_unavailable"):
+        action_call(bank, "read_intake_receipt", {"pending_handle": pending["pending_handle"]}, "bob")
+
+
+def test_action_missing_coverage_and_verified_handoff(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    pending = action_call(bank, "prepare_unrecognized_charge",
+                          {"transaction_id": targets[0], "snapshot": build})
+    assert pending["decision"] == "handoff"
+    assert pending["reason"] == "missing_evidence"
+    assert pending["risk"]["unrecognized_count_24h"] is None
+    with pytest.raises(BankError, match="handoff_required"):
+        action_call(bank, "confirm_simulated_intake",
+                    {"pending_handle": pending["pending_handle"], "confirmed": True})
+    handoff = action_call(bank, "create_verified_handoff",
+                          {"pending_handle": pending["pending_handle"], "reason": "missing_evidence"})
+    assert handoff["state"] == "created" and handoff["handoff"]["human_responded"] is False
+    assert action_call(bank, "read_verified_handoff",
+                       {"handoff_id": handoff["handoff"]["id"]}) == handoff
+    assert action_call(bank, "create_verified_handoff",
+                       {"pending_handle": pending["pending_handle"], "reason": "missing_evidence"}) == handoff
+
+
+def test_action_risk_threshold_and_duplicate_report(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    assert len(set(targets)) >= 3
+    service.actions.coverage_start = int(time.time()) - 90000
+    decisions = []
+    for target in targets[:2]:
+        pending = action_call(bank, "prepare_unrecognized_charge",
+                              {"transaction_id": target, "snapshot": build})
+        assert pending["decision"] == "intake"
+        assert action_call(bank, "confirm_simulated_intake",
+                           {"pending_handle": pending["pending_handle"], "confirmed": True})["state"] == "created"
+        decisions.append(pending)
+    decisions.append(action_call(bank, "prepare_unrecognized_charge",
+                                 {"transaction_id": targets[2], "snapshot": build}))
+    assert [p["decision"] for p in decisions] == ["intake", "intake", "handoff"]
+    assert decisions[2]["reason"] == "high_risk"
+    duplicate = action_call(bank, "prepare_unrecognized_charge",
+                            {"transaction_id": targets[0], "snapshot": build})
+    assert duplicate["risk"]["unrecognized_count_24h"] == 2
+    assert duplicate["decision"] == "handoff" and duplicate["reason"] == "duplicate_review"
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 2
+    with pytest.raises(BankError, match="handoff_required"):
+        action_call(bank, "confirm_simulated_intake",
+                    {"pending_handle": decisions[2]["pending_handle"], "confirmed": True})
+
+
+def test_action_foreign_target_and_snapshot_swap_denied(bank):
+    build, targets = owned_action_target(bank, "bob")
+    bank[0].actions.coverage_start = int(time.time()) - 90000
+    with pytest.raises(BankError, match="reference_unavailable"):
+        action_call(bank, "prepare_unrecognized_charge",
+                    {"transaction_id": targets[0], "snapshot": build}, "alice")
+    with pytest.raises(BankError, match="snapshot_changed"):
+        action_call(bank, "prepare_unrecognized_charge",
+                    {"transaction_id": targets[0], "snapshot": "other-build"}, "bob")
+
+
+def test_action_concurrent_confirmation_and_expired_pending_readback(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    service.actions.coverage_start = int(time.time()) - 90000
+    pending = action_call(bank, "prepare_unrecognized_charge",
+                          {"transaction_id": targets[0], "snapshot": build})["pending_handle"]
+    args = {"pending_handle": pending, "confirmed": True}
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(lambda _: action_call(bank, "confirm_simulated_intake", args), range(2)))
+    assert results[0] == results[1]
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 1
+        db.execute("UPDATE action_pending SET expires=0")
+    assert action_call(bank, "read_intake_receipt", {"pending_handle": pending}) == results[0]
+    with pytest.raises(BankError, match="reference_unavailable"):
+        action_call(bank, "confirm_simulated_intake", args)
+
+
+def test_action_r16_utc_window_lower_boundary_and_incomplete_ledger(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    assert len(set(targets)) >= 3
+    frozen = time.time()
+    service.actions.clock = lambda: frozen
+    service.actions.coverage_start = int(frozen - 90000)
+    customer = service.config.principal_customers["alice"]
+    with service.store.connect() as db:
+        for index, created_at in enumerate([frozen - 86400, frozen - 86400 - 0.001]):
+            db.execute("INSERT INTO sandbox_cases VALUES (?,?,?,?,?,?,?)",
+                (f"CMP-SBX-TEST{index:04d}", customer, targets[index],
+                 "simulated_intake", build, created_at, "{}"))
+    prepared = action_call(bank, "prepare_unrecognized_charge",
+                           {"transaction_id": targets[2], "snapshot": build})
+    assert prepared["risk"]["unrecognized_count_24h"] == 2
+    assert prepared["decision"] == "intake"
+    with service.store.connect() as db:
+        db.execute("UPDATE sandbox_cases SET created_at=? WHERE transaction_id=?",
+                   (frozen - 86400 + 0.001, targets[1]))
+    threshold = action_call(bank, "prepare_unrecognized_charge",
+                            {"transaction_id": targets[2], "snapshot": build})
+    assert threshold["risk"]["unrecognized_count_24h"] == 3
+    assert threshold["decision"] == "handoff" and threshold["reason"] == "high_risk"
+    service.actions.coverage_start = int(frozen - 3600)
+    unavailable = action_call(bank, "prepare_unrecognized_charge",
+                              {"transaction_id": targets[2], "snapshot": build})
+    assert unavailable["risk"]["unrecognized_count_24h"] is None
+    assert unavailable["reason"] == "missing_evidence"
+
+
+def test_operator_mode_cannot_invoke_or_advertise_action_tools(operator):
+    with pytest.raises(BankError, match="authorization_denied"):
+        operator.execute("prepare_unrecognized_charge", {"transaction_id": "forged", "snapshot": "build"})
+
+
 def test_missing_principal_denied_before_data_access(bank, monkeypatch):
     monkeypatch.setattr(bank[0].repository, "snapshot", lambda: pytest.fail("dataset was touched"))
     with pytest.raises(BankError, match="authorization_required"):
@@ -240,6 +393,7 @@ def test_operator_stdio_selector_contract_and_concurrent_handles(operator, tmp_p
             async with ClientSession(read, write) as client:
                 await client.initialize()
                 tools = {tool.name: tool.inputSchema for tool in (await client.list_tools()).tools}
+                assert set(tools) == {"banking_status", "list_my_transactions", "get_my_transaction"}
                 for name in ("list_my_transactions", "get_my_transaction"):
                     assert {"customer_id", "conversation_id"} <= set(tools[name]["properties"])
                     assert "customer_id" not in tools[name].get("required", [])
@@ -645,6 +799,7 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
     service, _ = bank
+    build, targets = owned_action_target(bank)
     config = tmp_path / "bank.json"
     config.write_text(service.config.model_dump_json())
     repo = Path(__file__).resolve().parents[1]
@@ -655,12 +810,29 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
             async with ClientSession(read, write) as client:
                 await client.initialize()
                 assert {t.name for t in (await client.list_tools()).tools} == {
-                    "banking_status", "list_my_transactions", "get_my_transaction"}
+                    "banking_status", "list_my_transactions", "get_my_transaction",
+                    "prepare_unrecognized_charge", "confirm_simulated_intake", "read_intake_receipt",
+                    "create_verified_handoff", "read_verified_handoff"}
                 args = {"limit": 1}
                 result = await client.call_tool("list_my_transactions", args,
                     meta=assertion(bank, "list_my_transactions", args))
                 assert not result.isError
                 assert len(json.loads(result.content[0].text)["transactions"]) == 1
+                prepare_args = {"transaction_id": targets[0], "snapshot": build}
+                prepared = await client.call_tool("prepare_unrecognized_charge", prepare_args,
+                    meta=assertion(bank, "prepare_unrecognized_charge", prepare_args, scope=["bank:prepare"]))
+                assert not prepared.isError
+                pending = json.loads(prepared.content[0].text)
+                assert pending["decision"] == "handoff" and pending["reason"] == "missing_evidence"
+                handoff_args = {"reason": "missing_evidence", "pending_handle": pending["pending_handle"]}
+                created = await client.call_tool("create_verified_handoff", handoff_args,
+                    meta=assertion(bank, "create_verified_handoff", handoff_args, scope=["bank:handoff"]))
+                assert not created.isError
+                handoff_id = json.loads(created.content[0].text)["handoff"]["id"]
+                read_args = {"handoff_id": handoff_id}
+                read = await client.call_tool("read_verified_handoff", read_args,
+                    meta=assertion(bank, "read_verified_handoff", read_args, scope=["bank:handoff-read"]))
+                assert not read.isError and json.loads(read.content[0].text)["handoff"]["id"] == handoff_id
                 # A read assertion cannot invoke the private revocation control.
                 invalid = subprocess.run([sys.executable, "-m", "banking_mcp", "revoke-session",
                     "--config", str(config)], input=assertion(bank, "revoke_session", {})[ASSERTION_META],

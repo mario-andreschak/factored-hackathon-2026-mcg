@@ -8,5 +8,6 @@
   "public_keys": {"runtime-key-1": "REPLACE_WITH_ED25519_PUBLIC_PEM"},
   "principal_customers": {"VERIFIED_AUTH_SUBJECT": "AUTHORIZED_DATASET_CUSTOMER"},
   "source_env": "/run/secrets/source.env",
+  "sandbox_report_coverage_start": null,
   "http_hosts": ["127.0.0.1:*", "localhost:*", "banking-mcp:*"]
 }
