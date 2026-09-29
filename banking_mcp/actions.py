@@ -155,19 +155,19 @@ class Actions:
         evidence = self._evidence(snapshot, pending[2])
         if evidence is None or self._evidence_digest(evidence) != pending[9]:
             raise BankError("risk_data_unavailable")
-        now = self.clock()
-        age = (datetime.fromtimestamp(now, timezone.utc).date() - row["transaction_date"].date()).days
-        if age < 0 or age > 120 or str(row["transaction_status"]).lower() != "approved":
-            raise BankError("risk_data_unavailable")
         with self.store.connect() as db:
             # Reserve the SQLite writer before reading the R16 count. The same
             # transaction serializes distinct charge confirmations and revokes
             # across MCP processes, not merely across threads in this process.
             db.execute("BEGIN IMMEDIATE")
+            now = self.clock()
             pending = self._pending(db, principal, pending_handle)
             if principal.expires <= int(time.time()) or db.execute(
                     "SELECT 1 FROM revoked WHERE session=?", (principal.session,)).fetchone():
                 raise BankError("authorization_denied")
+            age = (datetime.fromtimestamp(now, timezone.utc).date() - row["transaction_date"].date()).days
+            if age < 0 or age > 120 or str(row["transaction_status"]).lower() != "approved":
+                raise BankError("risk_data_unavailable")
             existing = db.execute("""SELECT id FROM sandbox_cases WHERE
                 customer=? AND transaction_id=? AND action=?""",
                 (principal.customer, pending[2], ACTION)).fetchone()

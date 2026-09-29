@@ -87,10 +87,11 @@ def owned_action_target(bank, subject="alice"):
     return snapshot.id, [r["transaction_id"] for r in rows]
 
 
-def _confirm_in_process(config_json, handle, barrier, results):
+def _confirm_in_process(config_json, handle, ready, barrier, results):
     service = Service(Config.model_validate_json(config_json))
     principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     try:
+        ready.wait(timeout=15)
         barrier.wait(timeout=15)
         results.put(service.actions.confirm(principal, handle, True)["state"])
     except BankError as exc:
@@ -273,12 +274,20 @@ def test_cross_process_distinct_confirmations_serialize_r16_threshold(bank):
                            {"transaction_id": target, "snapshot": build}) for target in targets[1:3]]
     assert all(item["decision"] == "intake" for item in pending)
     ctx = multiprocessing.get_context("spawn")
-    barrier, results = ctx.Barrier(2), ctx.Queue()
+    ready, barrier, results = ctx.Barrier(3), ctx.Barrier(3), ctx.Queue()
     config_json = service.config.model_copy(update={"sandbox_report_coverage_start": start}).model_dump_json()
     children = [ctx.Process(target=_confirm_in_process,
-                            args=(config_json, item["pending_handle"], barrier, results)) for item in pending]
+                            args=(config_json, item["pending_handle"], ready, barrier, results)) for item in pending]
     for child in children:
         child.start()
+    ready.wait(timeout=15)
+    # Hold the writer while both children enter confirm. On the old path both
+    # captured a stale upper window bound before acquiring the writer, then
+    # each excluded the other's later case and incorrectly created two cases.
+    with service.store.connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        barrier.wait(timeout=15)
+        time.sleep(0.3)
     for child in children:
         child.join(25)
         assert child.exitcode == 0
