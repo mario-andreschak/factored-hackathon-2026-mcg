@@ -1,5 +1,11 @@
 # Banking MCP over the source S3 dataset
 
+> **Historical design:** the MCP is now implemented as stdio inside the existing
+> FLUJO worker. See [implemented state](BANKING_MCP_IMPLEMENTATION.md) and
+> [the coordinated next plan](BANKING_MCP_NEXT_STEPS.md) for current serving and
+> integration decisions. Statements below that no MCP exists or that banking-specific
+> ingress is the target are superseded.
+
 **Plan date:** 2026-09-27; revised after the second FLUJO review. **Status:** design only; no banking MCP, customer-bound FLUJO integration, case store, or banking flow exists in this repository. Data ingestion and snapshot lookup are implemented in [pipeline/](../pipeline/README.md). This plan refines the [hackathon delivery plan](HACKATHON_AUDIT_PLAN.md) for the requested **direct S3** access path. The [data review](DATA_REVIEW_2026-09-26.md) is the evidence base. The [FLUJO banking run design](FLUJO_BANKING_RUN_AUTH.md) and [review record](FLUJO_BANKING_RUN_AUTH_REVIEW.md) specify customer identity, executed evidence and the 500-user release gate.
 
 ## Decision

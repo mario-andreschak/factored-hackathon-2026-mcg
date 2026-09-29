@@ -1,11 +1,13 @@
-"""Request authority and opaque references; none of these are model arguments."""
+"""Verified authority and opaque references. Selectors alone never authorize bound reads."""
 from __future__ import annotations
 
 import hashlib
 import json
 import secrets
 import sqlite3
+import threading
 import time
+import weakref
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +20,26 @@ from .config import Config
 ASSERTION_META = "com.flujo.bank/assertion"
 TOKEN_TYPE = "bank-mcp+jwt"
 MAX_ASSERTION_TTL = 60
+
+
+class _DatabaseGate:
+    def __init__(self):
+        self.lock = threading.RLock()
+
+
+_GATES: weakref.WeakValueDictionary[Path, _DatabaseGate] = weakref.WeakValueDictionary()
+_GATES_LOCK = threading.Lock()
+
+
+def _database_gate(path: Path) -> _DatabaseGate:
+    # Separate StateStore objects for the same file must share admission too.
+    # Weak values release the registry entry once its last store is gone.
+    with _GATES_LOCK:
+        gate = _GATES.get(path)
+        if gate is None:
+            gate = _DatabaseGate()
+            _GATES[path] = gate
+        return gate
 
 
 class BankError(Exception):
@@ -44,10 +66,17 @@ class Principal:
 
 
 class StateStore:
-    """One SQLite connection per operation, durable replay/revocation and capability state."""
+    """Short serialized SQLite operations; durable replay/revocation and capability state.
+
+    SQLite has one writer. Serialize the entire connection lifetime within this
+    process, including reads/close, to prevent writer starvation and overlapping
+    last-connection WAL checkpoints/recovery on Windows. No data/provider work
+    runs under this gate. Other processes still use SQLite locking and timeout.
+    """
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-        self.path = path
+        self.path = path.resolve()
+        self._gate = _database_gate(self.path)
         with self.connect() as db:
             db.execute("PRAGMA journal_mode=WAL")
             db.executescript("""
@@ -61,12 +90,13 @@ class StateStore:
 
     @contextmanager
     def connect(self):
-        db = sqlite3.connect(self.path, timeout=10)
-        try:
-            with db:
-                yield db
-        finally:
-            db.close()
+        with self._gate.lock:
+            db = sqlite3.connect(self.path, timeout=10)
+            try:
+                with db:
+                    yield db
+            finally:
+                db.close()
 
     def consume(self, jti: str, expires: int):
         with self.connect() as db:
@@ -117,11 +147,28 @@ class Authorizer:
         self.config, self.store = config, store
 
     def authorize(self, tool: str, args: dict, meta: dict | None) -> Principal:
-        if self.config.mode == "synthetic-demo":
-            return Principal("synthetic-demo", self.config.demo_customer, "synthetic-demo",
-                             "synthetic-demo", int(time.time()) + MAX_ASSERTION_TTL)
-        token = (meta or {}).get(ASSERTION_META)
-        return self._verify(token, tool, args, TOKEN_TYPE, "bank:read")
+        if self.config.mode == "operator-test":
+            customer, conversation = args.get("customer_id"), args.get("conversation_id")
+            if (not isinstance(customer, str) or customer not in self.config.approved_customers
+                or not isinstance(conversation, str) or not 1 <= len(conversation) <= 128
+                or any(c.isspace() or ord(c) < 32 for c in conversation)
+                or "@" in conversation or "${" in conversation):
+                raise BankError("authorization_denied")
+            # A/B selection is intentionally permitted in a private test thread. Handles
+            # still bind its customer and conversation independently, including on restart.
+            principal = Principal("operator-test", customer, "operator-test", conversation,
+                                  int(time.time()) + MAX_ASSERTION_TTL)
+        elif self.config.mode == "synthetic-demo":
+            principal = Principal("synthetic-demo", self.config.demo_customer, "synthetic-demo",
+                                  "synthetic-demo", int(time.time()) + MAX_ASSERTION_TTL)
+        else:
+            token = (meta or {}).get(ASSERTION_META)
+            principal = self._verify(token, tool, args, TOKEN_TYPE, "bank:read")
+        # Even a validly signed caller cannot change the mapped customer or conversation.
+        for name, expected in (("customer_id", principal.customer), ("conversation_id", principal.conversation)):
+            if name in args and args[name] != expected:
+                raise BankError("authorization_denied")
+        return principal
 
     def revoke_assertion(self, token: str):
         if self.config.mode != "delegated":
@@ -172,5 +219,9 @@ class Authorizer:
             raise BankError("authorization_denied") from None
 
     def assert_current(self, principal: Principal):
-        if principal.expires <= time.time() or self.store.is_revoked(principal.session):
+        if principal.expires <= time.time():
+            raise BankError("authorization_denied")
+        # A state operation can wait behind a writer. Recheck expiry after that
+        # wait, including at the final result fence; never extend the assertion.
+        if self.store.is_revoked(principal.session) or principal.expires <= time.time():
             raise BankError("authorization_denied")

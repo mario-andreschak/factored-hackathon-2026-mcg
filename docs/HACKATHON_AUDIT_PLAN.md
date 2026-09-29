@@ -1,5 +1,10 @@
 # Factored AI & Data Hackathon 2026 — FLUJO audit and plan
 
+> **Current direction:** [the coordinated September 28 plan](BANKING_MCP_NEXT_STEPS.md)
+> supersedes this audit's banking-specific ingress and per-chat direct-S3 proposals.
+> Challenge requirements and data findings remain evidence; implementation status
+> and delivery dates below are historical planning context.
+
 **Prepared:** 2026-09-25; **updated after direct S3 full-table profiling:** 2026-09-26. **Recommendation:** build a **verified unrecognized-charge inquiry and simulated dispute-intake assistant** using FLUJO as the orchestrator and a small, purpose-built banking sandbox behind MCP. The outcome we automate is a correctly answered transaction inquiry or a **verified dispute-intake receipt**. We do not claim that opening a case resolves the underlying dispute. The measured full-table evidence, method, and revised decisions are in [DATA_REVIEW_2026-09-26.md](DATA_REVIEW_2026-09-26.md).
 
 **September 27 implementation update:** [BANKING_MCP_S3_PLAN.md](BANKING_MCP_S3_PLAN.md) specifies direct, bounded reads from the source S3 CSVs through the banking MCP server. The [FLUJO banking run design](FLUJO_BANKING_RUN_AUTH.md) proposes a verified per-run principal and signed per-call banking context so FLUJO can remain the workflow backend for multiple customers. These supersede the earlier private indexed-extract and gateway-as-MCP-client choices; the workflow and data-quality findings below remain in force.

@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 class Config(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    mode: Literal["delegated", "synthetic-demo"] = "delegated"
+    mode: Literal["delegated", "synthetic-demo", "operator-test"] = "delegated"
     data_dir: Path
     state_db: Path
     service_token: str = Field(min_length=32, repr=False)
@@ -18,6 +18,7 @@ class Config(BaseModel):
     public_keys: dict[str, str] = Field(default_factory=dict, repr=False)
     principal_customers: dict[str, str] = Field(default_factory=dict, repr=False)
     demo_customer: str | None = None
+    approved_customers: frozenset[str] = Field(default_factory=frozenset, repr=False)
     source_env: Path | None = None
     max_active_reads: int = Field(default=8, ge=1, le=32)
     max_queued_reads: int = Field(default=512, ge=1, le=1024)
@@ -36,17 +37,23 @@ class Config(BaseModel):
         if not self.data_dir.is_absolute() or not self.state_db.is_absolute():
             raise ValueError("data_dir and state_db must be absolute")
         if self.mode == "delegated":
-            if not self.public_keys or not self.principal_customers or self.demo_customer:
+            if not self.public_keys or not self.principal_customers or self.demo_customer or self.approved_customers:
                 raise ValueError("delegated mode requires keys and a private subject mapping")
             from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
             from cryptography.hazmat.primitives.serialization import load_pem_public_key
             for value in self.public_keys.values():
                 if not isinstance(load_pem_public_key(value.encode()), Ed25519PublicKey):
                     raise ValueError("only Ed25519 public keys are supported")
+        elif self.mode == "operator-test":
+            # Explicit private operator configuration, never a missing-auth fallback.
+            # Administrators approve only organizer-synthetic or generated fixture customers.
+            if (not self.approved_customers or self.demo_customer or self.public_keys or self.principal_customers
+                or any(not 1 <= len(c) <= 128 or c != c.strip() for c in self.approved_customers)):
+                raise ValueError("operator-test requires only an explicit approved customer allowlist")
         else:
             # A demo cannot point at the real dataset or accept caller-selected customers.
             marker = self.data_dir / "SYNTHETIC_BANKING_DEMO.json"
-            if self.source_env or not self.demo_customer or not marker.is_file():
+            if self.source_env or self.approved_customers or not self.demo_customer or not marker.is_file():
                 raise ValueError("synthetic-demo requires an explicitly generated fixture")
             if json.loads(marker.read_text(encoding="utf-8")) != {
                 "synthetic": True, "customer": self.demo_customer

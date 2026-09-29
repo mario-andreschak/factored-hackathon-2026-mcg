@@ -226,6 +226,212 @@ def test_source_objects_are_versioned(ws):
     assert m4["source_fingerprint"] == m3["source_fingerprint"]           # carried into partial runs
 
 
+def test_published_manifest_inventories_every_gold_file(ws):
+    run(ws)
+    build = gold_dir(ws).parent
+    manifest = json.loads((build / "snapshot.json").read_text(encoding="utf-8"))
+    actual = {p.relative_to(build / "gold").as_posix(): p.stat().st_size
+              for p in (build / "gold").rglob("*.parquet")}
+    assert manifest["gold_files"] == actual
+    assert any(p.startswith("transactions_by_customer/bucket=") for p in actual)
+
+
+def test_source_change_during_headers_fails_before_publication(ws, monkeypatch):
+    from pipeline import bronze
+    run(ws)
+    published = gold_dir(ws)
+    original = bronze.read_headers
+    changed = False
+
+    def changing_headers(settings, files):
+        nonlocal changed
+        headers = original(settings, files)
+        if not changed:
+            changed = True
+            # csv.writer emits CRLF fixtures on every platform. Append matching
+            # bytes so this tests inventory drift, not a malformed mixed-newline CSV.
+            with open(files[0], "ab") as f:
+                f.write(b"\r\n")
+        return headers
+
+    monkeypatch.setattr(bronze, "read_headers", changing_headers)
+    with pytest.raises(RuntimeError, match="source inventory changed"):
+        run(ws)
+    assert gold_dir(ws) == published
+    assert not (ws / "out" / "bronze" / "source_objects.json").exists()
+    with pytest.raises(RuntimeError, match="validated bronze inventory missing"):
+        run(ws, "--stage", "silver", "gold")
+
+
+def test_source_added_during_ingestion_fails_before_publication(ws, monkeypatch):
+    from pipeline import bronze
+    run(ws)
+    published = gold_dir(ws)
+    original = bronze.read_headers
+    changed = False
+
+    def adding_headers(settings, files):
+        nonlocal changed
+        headers = original(settings, files)
+        if not changed:
+            changed = True
+            write_late_batch(ws / "src")
+        return headers
+
+    monkeypatch.setattr(bronze, "read_headers", adding_headers)
+    with pytest.raises(RuntimeError, match="source inventory changed"):
+        run(ws)
+    assert gold_dir(ws) == published
+
+
+def test_gold_only_uses_published_lineage_not_latest_bronze_report(ws):
+    run(ws)
+    previous = gold_dir(ws).parent
+    old_inventory = json.loads((previous / "source_objects.json").read_text(encoding="utf-8"))
+    write_late_batch(ws / "src")
+    run(ws, "--stage", "bronze")
+    assert json.loads((ws / "reports" / "source_objects.json").read_text(encoding="utf-8"))["fingerprint"] != \
+        old_inventory["fingerprint"]
+    _, manifest = run(ws, "--stage", "gold")
+    new_inventory = json.loads((gold_dir(ws).parent / "source_objects.json").read_text(encoding="utf-8"))
+    assert new_inventory == old_inventory
+    assert manifest["source_fingerprint"] == old_inventory["fingerprint"]
+    rows = get_customer_transactions(gold_dir(ws), cid(6), limit=100)
+    assert "TXN00000951" not in _customer_ids(rows)
+
+
+def test_gold_only_migrates_legacy_inventory_without_claiming_read_validation(ws):
+    run(ws)
+    build = gold_dir(ws).parent
+    lineage = build / "source_objects.json"
+    inventory = json.loads(lineage.read_text(encoding="utf-8"))
+    inventory.pop("source_validation")
+    lineage.write_text(json.dumps(inventory), encoding="utf-8")
+    snapshot_path = build / "snapshot.json"
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    snapshot.pop("gold_files")
+    snapshot.pop("source_validation")
+    snapshot_path.write_text(json.dumps(snapshot), encoding="utf-8")
+    (ws / "out" / "bronze" / "source_objects.json").unlink()
+    shutil.rmtree(ws / "src")
+    code, _ = run(ws, "--stage", "gold", "--tables", "customers", "products", "transactions")
+    migrated = json.loads((gold_dir(ws).parent / "snapshot.json").read_text(encoding="utf-8"))
+    assert code == 0 and migrated["gold_files"]
+    assert migrated["source_validation"] == "legacy_inventory"
+    assert migrated["source_fingerprint"] == snapshot["source_fingerprint"]
+
+
+def test_publications_never_delete_a_pinned_reader_snapshot(ws):
+    from pipeline.common import publish
+    run(ws)
+    pinned = gold_dir(ws)
+    before = _customer_ids(get_customer_transactions(pinned, cid(3), limit=100))
+    for i in range(6):
+        build_id = f"20990101T00000{i}Z-test"
+        (ws / "out" / "builds" / build_id).mkdir()
+        publish(ws / "out", build_id)
+    assert pinned.is_dir()
+    assert _customer_ids(get_customer_transactions(pinned, cid(3), limit=100)) == before
+
+
+def test_stages_and_benchmarks_close_owned_connections(ws, monkeypatch):
+    from pipeline import bronze, gold, lookup, silver
+    owned = []
+    original = duckdb.connect
+
+    class TrackedConnection:
+        def __init__(self, real):
+            self.real, self.closed = real, False
+            owned.append(self)
+
+        def __getattr__(self, name):
+            return getattr(self.real, name)
+
+        def close(self):
+            self.real.close()
+            self.closed = True
+
+    def tracked_connect(settings):
+        from pipeline.common import connect
+        return TrackedConnection(connect(settings))
+
+    for stage in (bronze, silver, gold):
+        monkeypatch.setattr(stage, "connect", tracked_connect)
+    run(ws)
+    assert len(owned) == 3 and all(c.closed for c in owned)
+    monkeypatch.setattr(lookup.duckdb, "connect", lambda: TrackedConnection(original()))
+    lookup.bench(gold_dir(ws), samples=2)
+    lookup.bench_concurrent(gold_dir(ws), levels=(2,), requests=4)
+    assert len(owned) == 5 and all(c.closed for c in owned)
+
+
+def test_failed_stage_closes_owned_connection(ws, monkeypatch):
+    from pipeline import bronze
+    original = bronze.connect
+    owned = []
+
+    class TrackedConnection:
+        def __init__(self, real):
+            self.real, self.closed = real, False
+            owned.append(self)
+
+        def __getattr__(self, name):
+            return getattr(self.real, name)
+
+        def close(self):
+            self.real.close()
+            self.closed = True
+
+    monkeypatch.setattr(bronze, "connect", lambda settings: TrackedConnection(original(settings)))
+    monkeypatch.setattr(bronze, "read_headers", lambda *args: (_ for _ in ()).throw(RuntimeError("test")))
+    with pytest.raises(RuntimeError, match="test"):
+        run(ws)
+    assert len(owned) == 1 and owned[0].closed
+
+
+@pytest.mark.parametrize("operation", ["listing", "headers"])
+def test_s3_helpers_close_clients_and_bodies_on_failure(tmp_path, monkeypatch, operation):
+    from pipeline import bronze
+    from pipeline.common import Settings
+    settings = Settings("s3://test/data", tmp_path, tmp_path, [])
+
+    class Body:
+        closed = False
+
+        def read(self):
+            raise RuntimeError("read failed")
+
+        def close(self):
+            self.closed = True
+
+    class Client:
+        closed = False
+        body = Body()
+
+        def get_object(self, **kwargs):
+            return {"Body": self.body}
+
+        def get_paginator(self, *args):
+            return self
+
+        def paginate(self, **kwargs):
+            raise RuntimeError("listing failed")
+
+        def close(self):
+            self.closed = True
+
+    client = Client()
+    monkeypatch.setattr(bronze, "s3_client", lambda *args: client)
+    with pytest.raises(RuntimeError, match="failed"):
+        if operation == "listing":
+            bronze.list_objects(settings)
+        else:
+            bronze.read_headers(settings, ["s3://test/data/customers.csv"])
+    assert client.closed
+    if operation == "headers":
+        assert client.body.closed
+
+
 def test_concurrent_bench_reports_every_level(ws):
     from pipeline.lookup import bench_concurrent
     run(ws)
@@ -339,7 +545,8 @@ def test_review_p1_failed_build_keeps_last_good_snapshot(ws):
     assert current_gold(ws / "out") == good_build                       # pointer unchanged
     assert _customer_ids(get_customer_transactions(current_gold(ws / "out"), cid(3), limit=100)) == before
     # Gold was not even built for the failed run.
-    failed = sorted((ws / "out" / "builds").iterdir())[-1]
+    # Build names have a random suffix; two runs in one second do not sort by age.
+    failed = ws / "out" / "builds" / m["run_id"]
     assert failed != good_build.parent and not (failed / "gold").exists()
 
 

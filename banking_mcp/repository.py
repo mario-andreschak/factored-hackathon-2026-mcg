@@ -31,6 +31,27 @@ class Snapshot:
         self.gold = build / "gold" / "transactions_by_customer"
         if not self.gold.is_dir():
             raise BankError("dataset_unavailable")
+        # The published inventory distinguishes a legitimate empty bucket from a
+        # missing file. Legacy builds without it must be rebuilt before serving.
+        manifest = json.loads((build / "snapshot.json").read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict):
+            raise BankError("dataset_unavailable")
+        files = manifest.get("gold_files")
+        if not isinstance(files, dict) or not files or manifest.get("build_id") != self.id:
+            raise BankError("dataset_unavailable")
+        self.bucket_files: dict[int, dict[Path, int]] = {}
+        for relative, size in files.items():
+            if not isinstance(relative, str) or type(size) is not int or size < 0:
+                raise BankError("dataset_unavailable")
+            file = (build / "gold" / relative).resolve()
+            if ((build / "gold").resolve() not in file.parents or not file.is_file()
+                or file.suffix != ".parquet" or file.stat().st_size != size):
+                raise BankError("dataset_unavailable")
+            matched = re.fullmatch(r"transactions_by_customer/bucket=(\d+)/([^/]+\.parquet)", relative)
+            if matched:
+                self.bucket_files.setdefault(int(matched[1]), {})[file] = size
+        if not self.bucket_files:
+            raise BankError("dataset_unavailable")
         cur = con.cursor()
         try:
             self.customers = frozenset(r[0] for r in cur.execute(
@@ -66,6 +87,13 @@ class Repository:
         self._lock = threading.Lock()
         self._snapshot = None
 
+    def close(self):
+        with self._lock:
+            if self.con is not None:
+                self.con.close()
+                self.con = None
+            self._snapshot = None
+
     def snapshot(self) -> Snapshot:
         try:
             build_id = (self.config.data_dir / "CURRENT").read_text(encoding="utf-8").strip()
@@ -76,6 +104,8 @@ class Repository:
             if build.parent != builds:
                 raise BankError("dataset_unavailable")
             with self._lock:
+                if self.con is None:
+                    raise BankError("dataset_unavailable")
                 if self._snapshot is None or self._snapshot.id != build_id:
                     self._snapshot = Snapshot(build, self.con)
                 return self._snapshot
@@ -87,16 +117,28 @@ class Repository:
         if principal.customer not in snapshot.customers:
             raise BankError("authorization_denied")
         path = snapshot.gold / f"bucket={bucket_for(principal.customer)}"
-        if not path.exists():
+        expected = snapshot.bucket_files.get(bucket_for(principal.customer), {})
+        try:
+            present = {p.resolve() for p in path.glob("*.parquet")}
+            if present != set(expected) or any(p.stat().st_size != size for p, size in expected.items()):
+                raise BankError("dataset_unavailable")
+        except OSError:
+            raise BankError("dataset_unavailable") from None
+        if not expected:
             return []
+        if self.con is None:
+            raise BankError("dataset_unavailable")
         cur = self.con.cursor()
         try:
-            cur.execute(f"SELECT {', '.join(FIELDS)} FROM read_parquet('{sql_path(path)}/*.parquet') "
+            files = "[" + ", ".join(f"'{sql_path(p)}'" for p in sorted(expected)) + "]"
+            cur.execute(f"SELECT {', '.join(FIELDS)} FROM read_parquet({files}) "
                         f"WHERE customer_id=? AND ownership_valid AND ({where}) "
                         "ORDER BY transaction_date DESC, transaction_id DESC LIMIT ?",
                         [principal.customer, *params, limit])
             names = [d[0] for d in cur.description]
             rows = [dict(zip(names, row)) for row in cur.fetchall()]
+        except (OSError, duckdb.Error):
+            raise BankError("dataset_unavailable") from None
         finally:
             cur.close()
         # Repeat owner checks independently of the materialized ownership_valid flag.

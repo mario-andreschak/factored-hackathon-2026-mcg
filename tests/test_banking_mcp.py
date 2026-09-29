@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from starlette.testclient import TestClient
 
 from banking_mcp.config import Config
-from banking_mcp.security import ASSERTION_META, TOKEN_TYPE, BankError, arguments_digest
+from banking_mcp.security import ASSERTION_META, TOKEN_TYPE, BankError, Principal, StateStore, arguments_digest
 from banking_mcp.server import create_http_app
 from banking_mcp.service import Service
 from pipeline.__main__ import main
@@ -37,7 +37,9 @@ def bank(dataset, tmp_path):
     config = Config(data_dir=dataset / "out", state_db=tmp_path / "state.db", service_token="x" * 48,
                     public_keys={"test": key.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()},
                     principal_customers={"alice": cid(3), "bob": cid(4)})
-    return Service(config), key
+    service = Service(config)
+    yield service, key
+    service.close()
 
 
 def assertion(bank, tool_name, args, subject="alice", **overrides):
@@ -89,11 +91,229 @@ def test_arguments_bound_and_assertion_not_reusable(bank):
         bank[0].execute("list_my_transactions", {"limit": 1}, meta)
 
 
-@pytest.mark.parametrize("args", [{"customer_id": cid(4)}, {"limit": 100}, {"limit": "1"},
+@pytest.mark.parametrize("args", [{"customer_id": ""}, {"customer_id": 3}, {"customer_id": None},
+                                 {"limit": 100}, {"limit": "1"},
                                  {"bucket": "other"}, {"start_date": "2026-02-31"}])
 def test_strict_business_schema(bank, args):
-    with pytest.raises(BankError, match="invalid_arguments"):
+    with pytest.raises(BankError, match="invalid_arguments|authorization_denied"):
         call(bank, args=args)
+
+
+@pytest.fixture
+def operator(dataset, tmp_path):
+    service = Service(Config(mode="operator-test", data_dir=dataset / "out", state_db=tmp_path / "operator.db",
+                             service_token="y" * 48, approved_customers={cid(3), cid(4)}))
+    yield service
+    service.close()
+
+
+@pytest.mark.parametrize("args", [
+    {}, {"conversation_id": "test-thread"}, {"customer_id": cid(3)},
+    {"customer_id": cid(999), "conversation_id": "test-thread"},
+    {"customer_id": cid(3), "conversation_id": "@current.conversation.id"},
+    {"customer_id": cid(3), "conversation_id": "${unresolved}"},
+    {"customer_id": cid(3), "conversation_id": "thread with spaces"},
+    {"customer_id": cid(3), "conversation_id": ""},
+])
+def test_operator_requires_approved_selection_and_resolved_correlation(operator, monkeypatch, args):
+    monkeypatch.setattr(operator.repository, "snapshot", lambda: pytest.fail("unauthorized dataset read"))
+    with pytest.raises(BankError, match="authorization_denied"):
+        operator.execute("list_my_transactions", args)
+
+
+def test_explicit_operator_config_and_unchanged_demo_guard(bank):
+    base = dict(data_dir=bank[0].config.data_dir, state_db=bank[0].config.state_db, service_token="z" * 48)
+    for values in ({"mode": "operator-test"}, {"mode": "operator-test", "approved_customers": {" "}},
+                   {"mode": "delegated", "approved_customers": {cid(3)}},
+                   {"mode": "synthetic-demo", "demo_customer": cid(3), "approved_customers": {cid(3)}}):
+        with pytest.raises(ValueError):
+            Config(**base, **values)
+    # A provided selector does not allow the real server to fall back to operator access.
+    with pytest.raises(BankError, match="authorization_required"):
+        bank[0].execute("list_my_transactions", {"customer_id": cid(3), "conversation_id": "thread"})
+
+
+@pytest.mark.parametrize("args", [{"customer_id": cid(4)}, {"conversation_id": "conversation-bob"}])
+def test_bound_foreign_selector_or_correlation_denied_before_lookup(bank, monkeypatch, args):
+    monkeypatch.setattr(bank[0].repository, "snapshot", lambda: pytest.fail("foreign selector reached lookup"))
+    with pytest.raises(BankError, match="authorization_denied"):
+        call(bank, args=args)
+
+
+def test_bound_optional_selector_matches_verified_identity(bank):
+    omitted = call(bank)["transactions"]
+    selected = call(bank, args={"customer_id": cid(3), "conversation_id": "conversation-alice"})["transactions"]
+    assert [r["transaction_reference"] for r in omitted] == [r["transaction_reference"] for r in selected]
+    args = {"selection_handle": selected[0]["selection_handle"], "customer_id": cid(3)}
+    assert call(bank, "get_my_transaction", args)["transaction"]
+
+
+def test_operator_customer_switch_and_foreign_thread_handles(operator):
+    context = {"customer_id": cid(3), "conversation_id": "slack-" + "a" * 48}
+    first = operator.execute("list_my_transactions", {**context, "limit": 1})
+    assert first["synthetic"] and first["operator_test"]
+    assert first["next_cursor"]
+    handle = first["transactions"][0]["selection_handle"]
+    for foreign in ({**context, "customer_id": cid(4)}, {**context, "conversation_id": "slack-" + "b" * 48}):
+        for tool, extra in (("get_my_transaction", {"selection_handle": handle}),
+                            ("list_my_transactions", {"cursor": first["next_cursor"]})):
+            with pytest.raises(BankError, match="reference_unavailable"):
+                operator.execute(tool, {**foreign, **extra})
+    assert operator.execute("get_my_transaction", {**context, "selection_handle": handle})["transaction"]
+    assert operator.execute("list_my_transactions", {**context, "customer_id": cid(4)})["transactions"]
+
+
+def test_operator_parallel_context_does_not_mix_handles(operator):
+    def one(i):
+        context = {"customer_id": cid(3 if i % 2 == 0 else 4), "conversation_id": f"thread-{i}"}
+        listed = operator.execute("list_my_transactions", {**context, "limit": 1})
+        row = listed["transactions"][0]
+        found = operator.execute("get_my_transaction", {**context, "selection_handle": row["selection_handle"]})
+        assert found["transaction"]["transaction_reference"] == row["transaction_reference"]
+        with pytest.raises(BankError, match="reference_unavailable"):
+            operator.execute("get_my_transaction", {**context, "conversation_id": f"foreign-{i}",
+                                                    "selection_handle": row["selection_handle"]})
+        return row["transaction_reference"]
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        references = list(pool.map(one, range(100)))
+    assert len(set(references[::2])) == len(set(references[1::2])) == 1
+    assert references[0] != references[1]
+
+
+def test_missing_published_bucket_is_not_empty_history(bank, tmp_path):
+    import shutil
+    from pipeline.common import bucket_for
+    copied = tmp_path / "copied"
+    shutil.copytree(bank[0].config.data_dir, copied)
+    service = Service(bank[0].config.model_copy(update={"data_dir": copied, "state_db": tmp_path / "copy.db"}))
+    try:
+        assert call((service, bank[1]))["transactions"]
+        bucket = service.repository.snapshot().gold / f"bucket={bucket_for(cid(3))}"
+        # Even a loaded snapshot must detect files disappearing underneath it.
+        shutil.rmtree(bucket)
+        with pytest.raises(BankError, match="dataset_unavailable"):
+            call((service, bank[1]))
+        service.repository._snapshot = None
+        assert not service.execute("banking_status", {})["dataset_ready"]
+    finally:
+        service.close()
+
+
+def test_legacy_snapshot_without_file_inventory_fails_closed(bank, tmp_path):
+    import shutil
+    copied = tmp_path / "legacy"
+    shutil.copytree(bank[0].config.data_dir, copied)
+    service = Service(bank[0].config.model_copy(update={"data_dir": copied, "state_db": tmp_path / "legacy.db"}))
+    try:
+        build = copied / "builds" / (copied / "CURRENT").read_text().strip()
+        manifest = json.loads((build / "snapshot.json").read_text())
+        manifest.pop("gold_files")
+        (build / "snapshot.json").write_text(json.dumps(manifest))
+        with pytest.raises(BankError, match="dataset_unavailable"):
+            call((service, bank[1]))
+    finally:
+        service.close()
+
+
+def test_repository_shutdown_closes_connection(bank):
+    bank[0].close()
+    bank[0].close()
+    assert bank[0].repository.con is None
+    assert not bank[0].execute("banking_status", {})["dataset_ready"]
+
+
+def test_operator_stdio_selector_contract_and_concurrent_handles(operator, tmp_path):
+    import asyncio
+    import sys
+    from pathlib import Path
+    import anyio
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    config = tmp_path / "operator.json"
+    config.write_text(operator.config.model_dump_json())
+
+    async def exercise():
+        params = StdioServerParameters(command=sys.executable,
+            args=["-m", "banking_mcp", "serve", "--config", str(config)],
+            cwd=str(Path(__file__).resolve().parents[1]))
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as client:
+                await client.initialize()
+                tools = {tool.name: tool.inputSchema for tool in (await client.list_tools()).tools}
+                for name in ("list_my_transactions", "get_my_transaction"):
+                    assert {"customer_id", "conversation_id"} <= set(tools[name]["properties"])
+                    assert "customer_id" not in tools[name].get("required", [])
+                    assert tools[name]["properties"]["customer_id"]["type"] == "string"
+                status = await client.call_tool("banking_status", {})
+                assert status.structuredContent["customer_selection_required"]
+                denied = await client.call_tool("list_my_transactions", {})
+                assert denied.isError and denied.structuredContent["error"] == "authorization_denied"
+
+                async def one(i):
+                    context = {"customer_id": cid(3 if i % 2 == 0 else 4), "conversation_id": f"slack-{i:048x}"}
+                    listed = await client.call_tool("list_my_transactions", {**context, "limit": 1})
+                    assert not listed.isError
+                    row = listed.structuredContent["transactions"][0]
+                    found = await client.call_tool("get_my_transaction", {**context, "selection_handle": row["selection_handle"]})
+                    assert not found.isError
+                    assert found.structuredContent["transaction"]["transaction_reference"] == row["transaction_reference"]
+                    foreign = await client.call_tool("get_my_transaction", {**context,
+                        "conversation_id": f"other-{i}", "selection_handle": row["selection_handle"]})
+                    assert foreign.isError and foreign.structuredContent["error"] == "reference_unavailable"
+                    return row["transaction_reference"]
+
+                refs = await asyncio.gather(*(one(i) for i in range(20)))
+                assert refs[0] != refs[1]
+                assert len(set(refs[::2])) == len(set(refs[1::2])) == 1
+    anyio.run(exercise)
+
+
+def test_bounded_queue_rejects_overflow_and_expired_authority(bank, monkeypatch):
+    import asyncio
+    import threading
+    import anyio
+    service = Service(bank[0].config.model_copy(update={"max_active_reads": 1, "max_queued_reads": 1}))
+    active, release = threading.Event(), threading.Event()
+    reads = []
+    original = service.repository.list_transactions
+
+    def delayed(*args):
+        reads.append(args[0].customer)
+        active.set()
+        assert release.wait(5), "test did not release blocked read"
+        return original(*args)
+
+    monkeypatch.setattr(service.repository, "list_transactions", delayed)
+    meta_a = assertion(bank, "list_my_transactions", {})
+    meta_b = assertion(bank, "list_my_transactions", {}, subject="bob")
+    now = int(time.time())
+
+    async def exercise():
+        first = asyncio.create_task(service.call("list_my_transactions", {}, meta_a))
+        second = None
+        try:
+            async with asyncio.timeout(5):
+                while not active.is_set():
+                    await asyncio.sleep(0.01)
+            second = asyncio.create_task(service.call("list_my_transactions", {}, meta_b))
+            await asyncio.sleep(0)
+            with pytest.raises(BankError, match="server_busy"):
+                await service.call("list_my_transactions", {}, meta_b)
+            # The queue cannot turn old signed authority into a fresh customer read.
+            monkeypatch.setattr("banking_mcp.security.time.time", lambda: now + 61)
+            release.set()
+            for task in (first, second):
+                with pytest.raises(BankError, match="authorization_denied"):
+                    await task
+            assert len(reads) == 1
+            assert service._pending == 0
+        finally:
+            release.set()
+            await asyncio.gather(*(task for task in (first, second) if task), return_exceptions=True)
+    try:
+        anyio.run(exercise)
+    finally:
+        service.close()
 
 
 def test_revoke_before_and_after_read(bank, monkeypatch):
@@ -199,6 +419,100 @@ def test_500_interleaved_reads_preserve_customer_isolation(bank):
         return all(r["transaction_reference"] in expected[subject] for r in result["transactions"])
     with ThreadPoolExecutor(max_workers=16) as pool:
         assert all(pool.map(one, range(500)))
+
+
+def test_concurrent_replay_consumption_across_store_instances_has_one_winner(tmp_path):
+    import threading
+    path = tmp_path / "shared.db"
+    stores = [StateStore(path) for _ in range(16)]
+    start = threading.Barrier(len(stores))
+
+    def one(store):
+        start.wait(timeout=10)
+        try:
+            store.consume("same-jti", int(time.time()) + 60)
+            return True
+        except BankError as exc:
+            assert exc.code == "authorization_denied"
+            return False
+
+    with ThreadPoolExecutor(max_workers=len(stores)) as pool:
+        assert sum(pool.map(one, stores)) == 1
+    # A fresh store cannot replay the winner either.
+    with pytest.raises(BankError, match="authorization_denied"):
+        StateStore(path).consume("same-jti", int(time.time()) + 60)
+
+
+def test_concurrent_session_binding_and_revocation_across_store_instances(tmp_path):
+    import threading
+    path = tmp_path / "shared.db"
+    stores = [StateStore(path) for _ in range(16)]
+    start = threading.Barrier(len(stores))
+
+    def one(i):
+        subject = "alice" if i % 2 == 0 else "bob"
+        principal = Principal(subject, cid(3 if i % 2 == 0 else 4), "shared-session",
+                              f"conversation-{subject}", int(time.time()) + 60)
+        start.wait(timeout=10)
+        try:
+            stores[i].bind_session(principal)
+            return subject
+        except BankError as exc:
+            assert exc.code == "authorization_denied"
+            return None
+
+    with ThreadPoolExecutor(max_workers=len(stores)) as pool:
+        accepted = [subject for subject in pool.map(one, range(len(stores))) if subject]
+    assert len(accepted) == 8 and len(set(accepted)) == 1
+    stores[0].revoke("shared-session")
+    assert all(store.is_revoked("shared-session") for store in stores)
+    assert StateStore(path).is_revoked("shared-session")
+
+
+def test_external_sqlite_writer_contention_does_not_drop_replay_or_revocation(tmp_path):
+    import sqlite3
+    import threading
+    path = tmp_path / "shared.db"
+    store = StateStore(path)
+    started = threading.Event()
+
+    def consume_and_revoke():
+        started.set()
+        store.consume("contended-jti", int(time.time()) + 60)
+        store.revoke("contended-session")
+
+    # A raw connection is outside our process gate, like the private revoke CLI.
+    external = sqlite3.connect(path)
+    try:
+        external.execute("BEGIN IMMEDIATE")
+        external.execute("INSERT INTO revoked VALUES (?)", ("external-session",))
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(consume_and_revoke)
+            try:
+                assert started.wait(5)
+                assert not future.done()
+            finally:
+                external.commit()
+            future.result(timeout=10)
+    finally:
+        external.close()
+    assert store.is_revoked("external-session") and store.is_revoked("contended-session")
+    with pytest.raises(BankError, match="authorization_denied"):
+        store.consume("contended-jti", int(time.time()) + 60)
+
+
+def test_authority_expiring_during_state_wait_is_denied(bank, monkeypatch):
+    now = int(time.time())
+    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", now + 60)
+
+    def delayed_revocation_read(session):
+        assert session == "session-alice"
+        monkeypatch.setattr("banking_mcp.security.time.time", lambda: now + 61)
+        return False
+
+    monkeypatch.setattr(bank[0].store, "is_revoked", delayed_revocation_read)
+    with pytest.raises(BankError, match="authorization_denied"):
+        bank[0].auth.assert_current(principal)
 
 
 def test_http_service_bearer_and_mcp_request_metadata(bank):
