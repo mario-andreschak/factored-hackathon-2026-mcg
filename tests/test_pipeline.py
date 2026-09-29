@@ -248,8 +248,10 @@ def test_source_change_during_headers_fails_before_publication(ws, monkeypatch):
         headers = original(settings, files)
         if not changed:
             changed = True
-            with open(files[0], "a", encoding="utf-8") as f:
-                f.write("\n")
+            # csv.writer emits CRLF fixtures on every platform. Append matching
+            # bytes so this tests inventory drift, not a malformed mixed-newline CSV.
+            with open(files[0], "ab") as f:
+                f.write(b"\r\n")
         return headers
 
     monkeypatch.setattr(bronze, "read_headers", changing_headers)
@@ -543,7 +545,8 @@ def test_review_p1_failed_build_keeps_last_good_snapshot(ws):
     assert current_gold(ws / "out") == good_build                       # pointer unchanged
     assert _customer_ids(get_customer_transactions(current_gold(ws / "out"), cid(3), limit=100)) == before
     # Gold was not even built for the failed run.
-    failed = sorted((ws / "out" / "builds").iterdir())[-1]
+    # Build names have a random suffix; two runs in one second do not sort by age.
+    failed = ws / "out" / "builds" / m["run_id"]
     assert failed != good_build.parent and not (failed / "gold").exists()
 
 
