@@ -124,6 +124,18 @@ lease at optional revision `153a0391`. All requests were submitted together with
 each phase. Admission remained capped at 128 active jobs and 512 queued jobs;
 the HTTP client's explicit 450-second timeout is separate from server deadlines.
 
+The committed acceptance runner also defaults to 450 seconds. For an authorized
+replay using an existing private manifest, make the observation budget explicit:
+
+```powershell
+python scripts/banking_acceptance_load.py --manifest PRIVATE.json --phases 1,10,50,500 --timeout-seconds 450
+```
+
+Replace `PRIVATE.json` with the approved manifest path. The timeout controls the
+HTTP client wait; request assertions remain at most 120 seconds and accepted-job
+authority remains at most 410 seconds, capped by the session. The runner reports
+aggregate response checks; its private tool/model/owner audit remains required.
+
 | Submitted together | Result | p50 / p95 | Total |
 | --- | --- | --- | --- |
 | 1 | 1/1 passed | 18.054 s / 18.054 s | 18.055 s |

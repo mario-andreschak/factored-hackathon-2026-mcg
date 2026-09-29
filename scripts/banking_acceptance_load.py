@@ -13,7 +13,10 @@ shape (all values are placeholders):
    "allowed_references":["txn_0123456789ab"]}]}
 
 Requires PyJWT/cryptography from requirements-mcp.txt. Run from the repo root:
-  python scripts/banking_acceptance_load.py --manifest PRIVATE.json --phases 1,10,50,500
+  python scripts/banking_acceptance_load.py --manifest PRIVATE.json --phases 1,10,50,500 --timeout-seconds 450
+
+The client observation timeout defaults to 450 seconds for the full workload.
+It does not change request assertion, accepted-job or session deadlines.
 
 Output contains aggregates only. Provider provenance is operator supplied, not
 runtime-attested. This runner does not measure server admission, provider retries,
@@ -276,7 +279,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--phases", default="1,10,50,500")
-    parser.add_argument("--timeout-seconds", type=float, default=180)
+    parser.add_argument("--timeout-seconds", type=float, default=450,
+                        help="HTTP observation timeout in seconds (default: 450); authorization deadlines are unchanged")
     args = parser.parse_args()
     try:
         phases = [int(value) for value in args.phases.split(",")]
