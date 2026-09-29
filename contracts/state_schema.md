@@ -154,6 +154,13 @@ Estado interno; jamás enviar completo al LLM.
       "historical_candidates": [],
       "match_method": "exact_sandbox",
       "duplicate_check": "clear_in_snapshot | exact_open_case | historical_uncertain | incomplete",
+      "report_window": {
+        "scope": "prototype_sandbox_cases",
+        "window_start": "ISO8601",
+        "window_end": "ISO8601",
+        "prior_distinct_verified_count": null,
+        "coverage_complete": false
+      },
       "data_quality_flags": []
     },
     "get_complaint": {
@@ -305,7 +312,7 @@ Estado interno; jamás enviar completo al LLM.
 | workflow_state.complaint_match_count | integer | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.candidate_snapshot_hash | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.confirmation_turn_id | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
-| workflow_state.unrecognized_count_24h | integer\|null | adaptador de riesgo con reportes propios verificados y ventana real completa; null hasta entonces | solo policy_engine; no proyectar al LLM |
+| workflow_state.unrecognized_count_24h | integer\|null | policy_engine: report_window.prior_distinct_verified_count + solicitud actual propia y distinta, solo con cobertura completa; null hasta entonces | solo policy_engine; no proyectar al LLM |
 | workflow_state.risk_data_complete | bool | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.handoff_attempted | bool | create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | tool_results.get_customer_profile.status | ok | error | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
@@ -322,6 +329,7 @@ Estado interno; jamás enviar completo al LLM.
 | tool_results.get_related_complaints.historical_candidates | array de complaint_id, status, linkage=unknown | adaptador de reclamos; filtro de propiedad antes de consultar | política y paquete humano; no se proyecta como relación transaccional |
 | tool_results.get_related_complaints.match_method | exact_sandbox | adaptador de reclamos | política |
 | tool_results.get_related_complaints.duplicate_check | clear_in_snapshot / exact_open_case / historical_uncertain / incomplete | adaptador de reclamos con cobertura verificada | política; guardas de escritura |
+| tool_results.get_related_complaints.report_window | objeto interno de alcance, intervalo real, conteo previo y coverage_complete | adaptador sandbox con tiempo de servidor y lectura completa por cliente | solo política y auditoría; nunca LLM |
 | tool_results.get_related_complaints.data_quality_flags | array | adaptador de reclamos | política y paquete humano |
 | tool_results.list_customer_complaints | status, match_count, complaints, coverage_complete | adaptador de reclamos filtrado por cliente | R18; no concede autorización de escritura |
 | tool_results.get_transaction.data_quality_flags | array; señales recomputadas del target propio | adaptador de transacciones | política y paquete humano; no flags de candidatos descartados |

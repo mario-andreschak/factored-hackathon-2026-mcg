@@ -12,6 +12,12 @@ Se conserva el objetivo de los prompts v0: aclarar un cargo propio no reconocido
 
 Se elige revisión humana para la señal persistente porque la selección por sí sola no certifica que los dos registros representen cargos independientes. No se concede al LLM permiso para relajar este control.
 
+## Decisiones de prototipo para avanzar
+
+Mientras Gloria y el equipo revisan el contrato, R16 usa una definición **sintética y acotada**: casos sandbox propios de Cargo no reconocido, distintos, persistidos y releíbles en las 24 horas reales previas, más la solicitud actual sobre un movimiento propio distinto. El agregado se obtiene del mismo almacén sandbox con tiempo de servidor y cobertura completa; el almacén inicializado desde vacío puede medir cero solo para su propio historial. Dos casos previos más la solicitud actual activan el umbral de tres y derivación verificada. Una fuente incompleta no equivale a cero y deriva por missing_evidence. No se usan categorías genéricas del call center ni se presenta esta regla como política de un banco real.
+
+El fallback ES/PT selecciona texto determinista según respuesta y estado del handoff releído. HANDOFF_VERIFIED y ACTION_UNVERIFIED_HANDOFF_VERIFIED incluyen únicamente un ID HOF verificado; las variantes sin verificación no afirman transferencia. Los textos están en resources/prompts/fallback_templates.yaml. La selección y lectura real siguen siendo trabajo del runtime.
+
 ## Casos de aceptación para la implementación
 
 Son especificaciones de cobertura pendiente, no resultados de pruebas ejecutadas.
@@ -38,9 +44,11 @@ Son especificaciones de cobertura pendiente, no resultados de pruebas ejecutadas
 | Un único candidato propio releído con señal persistente | duplicate_review directo; no pedir selección inútil |
 | Snapshot cambia tras selección o confirmación | Invalidar target/consentimiento y volver a identificar/confirmar |
 | Escritura/handoff sin lectura de verificación | No anunciar éxito o transferencia creada |
-| Fuente de reportes recientes ausente o ventana real de 24 h incompleta | `unrecognized_count_24h=null`, `risk_data_complete=false`; HANDOFF/missing_evidence, no asumir cero ni crear intake |
-| Fuente propia verificada con 24 h completas y cero reportes no reconocidos | Conteo medido cero; continuar los demás guardas R16/R17 sin prometer éxito automático |
-| Al menos tres reportes propios no reconocidos verificados en 24 h reales | R16/high_risk; crear y releer derivación, no crear intake automático |
+| Almacén sandbox no inicializado, ilegible o con ventana real de 24 h incompleta | `unrecognized_count_24h=null`, `risk_data_complete=false`; HANDOFF/missing_evidence, no asumir cero ni crear intake |
+| Almacén sandbox íntegro y vacío; primera solicitud distinta propia | Cero casos previos y conteo R16 de uno al incluir la solicitud actual; continuar los demás guardas sin prometer éxito automático |
+| Dos casos sandbox distintos propios verificados en las 24 h reales más solicitud actual distinta | Conteo R16 de tres; high_risk, crear y releer derivación, no intake automático |
+| Replay idempotente o repetición del mismo movimiento | No incrementar el conteo ni crear un nuevo caso; aplicar R15/control atómico de duplicados |
+| Fraud_score o monto alto verificado, pero otro indicador de riesgo incompleto | R16/high_risk con la señal verificada; no esperar ni declarar los demás indicadores como bajos |
 | Falla el generador tras derivación creada y releída | Fallback ES/PT comunica la derivación verificada con su ID; nunca dice que sigue sin confirmar |
 | Escritura del reclamo incierta seguida por derivación creada y releída | Conservar ACTION_UNVERIFIED para el reclamo y comunicar separadamente la derivación verificada con su ID |
 
@@ -50,4 +58,4 @@ Los ocho ejemplos ilustrativos de `resources/prompts/generator_prompt_v3.yml` us
 
 ## Integración que todavía falta
 
-El MCP actual consulta por process_date con límite de 31 días. El contrato de 90 días de event_date requiere una extensión o un adaptador que demuestre cobertura de particiones de proceso anteriores y posteriores al día del evento. También faltan los handlers de reclamos/handoff, scopes de escritura, estado pendiente durable, barrera por turno, consentimiento confiable, reserva atómica y lectura del recibo. R16 necesita una fuente verificada de reportes propios recientes con cobertura real de 24 horas; los registros históricos de contacto no la proporcionan. Las plantillas ES/PT de fallback deben distinguir una derivación verificada de una aún incierta, también después de ACTION_UNVERIFIED. La evaluación final independiente ES/PT y la medición del grafo v0 completo siguen siendo gates del producto. Ninguna comprobación de YAML/JSON demuestra estas capacidades.
+El MCP actual consulta por process_date con límite de 31 días. El contrato de 90 días de event_date requiere una extensión o un adaptador que demuestre cobertura de particiones de proceso anteriores y posteriores al día del evento. También faltan los handlers de reclamos/handoff, scopes de escritura, estado pendiente durable, barrera por turno, consentimiento confiable, reserva atómica y lectura del recibo. El agregado sandbox de R16 debe implementarse con cobertura real y conteo sin replays; los registros históricos de contacto no lo sustituyen. Las variantes ES/PT de fallback están propuestas, pero falta el selector determinista y su prueba de lectura de handoff. La evaluación final independiente ES/PT y la medición del grafo v0 completo siguen siendo gates del producto. Ninguna comprobación de YAML/JSON demuestra estas capacidades.

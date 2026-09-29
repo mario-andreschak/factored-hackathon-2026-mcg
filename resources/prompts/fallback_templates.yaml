@@ -38,6 +38,9 @@ ACTION_DONE:
 ACTION_UNVERIFIED:
   es: No puedo confirmar el registro de la solicitud. Se necesita revisión humana.
   pt: Não posso confirmar o registro da solicitação. É necessária uma revisão humana.
+ACTION_UNVERIFIED_HANDOFF_VERIFIED:
+  es: 'No puedo confirmar el registro del reclamo. La solicitud de atención humana **{{ handoff_id }}** sí quedó registrada y verificada en el entorno de prueba.'
+  pt: 'Não posso confirmar o registro da reclamação. O pedido de atendimento humano **{{ handoff_id }}** foi registrado e verificado no ambiente de teste.'
 ACTION_CANCELLED:
   es: No continuaré con la creación propuesta.
   pt: Não continuarei com a criação proposta.
@@ -51,6 +54,9 @@ HANDOFF:
     completada.
   pt: É necessário atendimento humano. Não posso confirmar aqui que o encaminhamento
     foi concluído.
+HANDOFF_VERIFIED:
+  es: 'La solicitud de atención humana **{{ handoff_id }}** quedó registrada y verificada en el entorno de prueba. Un agente humano debe revisarla.'
+  pt: 'O pedido de atendimento humano **{{ handoff_id }}** foi registrado e verificado no ambiente de teste. Um agente humano deve analisá-lo.'
 TOOL_ERROR:
   es: No pude completar la operación ni confirmar su resultado. Inténtalo nuevamente
     o solicita atención humana.

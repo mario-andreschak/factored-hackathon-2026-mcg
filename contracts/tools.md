@@ -9,7 +9,7 @@ Documentar cada herramienta con su firma, parámetros, salida JSON, errores y la
 | `get_customer_profile` | `(customer_id)` | customers, products | Devuelve `first_name`, `segment` y `products: [{product_id, product_type, currency, product_status, product_last4}]` |
 | `search_transactions` | `(customer_id, date_from, date_to, amount=None, amount_tolerance_pct=1.0, currency=None, merchant=None, transaction_type=None, channel=None, limit=10)` | transactions, products | Sin fechas: ventana de 90 días de eventos anclada al snapshot declarado. Fechas del cliente se conservan. Si `amount_is_approximate`, la tolerancia es 10% |
 | `get_transaction` | `(customer_id, transaction_id)` | transactions | Devuelve error `not_found` si el `transaction_id` no pertenece al cliente (esto es control de acceso) |
-| `get_related_complaints` | `(customer_id, transaction_id, only_open=True)` | complaints + sandbox | Vínculo exacto en sandbox; historial abierto del cliente separado, sin atribuirlo a la transacción |
+| `get_related_complaints` | `(customer_id, transaction_id, only_open=True)` | complaints + sandbox | Vínculo exacto en sandbox; historial abierto separado; agregado interno de reportes sandbox recientes |
 | `list_customer_complaints` | `(customer_id, only_open=False)` | complaints + sandbox | Consulta R18 sin exigir transaction_id; estados propios, no control de duplicados de escritura |
 | `get_complaint` | `(customer_id, complaint_id)` | complaints + sandbox | Se usa para **verificar** tras la creación |
 | `get_recent_interactions` | `(customer_id, days=30)` | call_center_interactions, call_transcripts | Devuelve un resumen, **no** `full_text` |
@@ -131,9 +131,18 @@ Fuente: complaints, sandbox/complaints_created.csv.
   "historical_candidates": [],
   "match_method": "exact_sandbox",
   "duplicate_check": "clear_in_snapshot",
+  "report_window": {
+    "scope": "prototype_sandbox_cases",
+    "window_start": "ISO8601",
+    "window_end": "ISO8601",
+    "prior_distinct_verified_count": 0,
+    "coverage_complete": true
+  },
   "data_quality_flags": []
 }
 ```
+
+`report_window` es solo para el motor determinista. Cuenta casos sandbox persistidos y releíbles de Transactions/Cargo no reconocido, del mismo cliente y transacciones distintas, con created_at de servidor UTC en `[window_end−24h, window_end)`. No cuenta llamadas históricas, compras, otros clientes ni replays idempotentes; la solicitud actual se suma por separado si es un target propio distinto. El almacén sandbox inicializado desde vacío cubre su propia historia; `coverage_complete=true` significa cobertura íntegra de **ese almacén**, no del historial bancario real. Si falta integridad o cobertura, el conteo es null y coverage_complete=false; nunca inferir cero. Se admite un agregado privado equivalente que conserve esta semántica y no se proyecte al LLM.
 
 Errores: invalid_filter, data_unavailable. Todos usan {"status":"error","error":{"code":"...","retryable":false,"message":"texto seguro"}}; no mezclar resultados parciales con status=ok.
 
@@ -194,13 +203,14 @@ Fuente: escribe únicamente sandbox/complaints_created.csv.
 {
   "status": "ok",
   "complaint_id": "CMP-SBX-XXXXXXXX",
+  "created_at": "ISO8601-server-time",
   "executed": true,
   "verified": false,
   "idempotent_replay": false
 }
 ```
 
-Errores: not_found, unauthorized_action, stale_confirmation, conflict, write_failed, write_outcome_unknown. Todos usan {"status":"error","error":{"code":"...","retryable":false,"message":"texto seguro"}}; no mezclar resultados parciales con status=ok.
+Persistir tiempo de servidor UTC `created_at`, customer_id, transaction_id, categoría y clave idempotente en el caso sandbox. Un replay devuelve el mismo ID y timestamp sin sumar otro reporte. Solo un caso persistido y releíble entra al agregado de `report_window`; la escritura incierta no cuenta como verificada. Errores: not_found, unauthorized_action, stale_confirmation, conflict, write_failed, write_outcome_unknown. Todos usan {"status":"error","error":{"code":"...","retryable":false,"message":"texto seguro"}}; no mezclar resultados parciales con status=ok.
 
 ## create_handoff: salida y errores
 
