@@ -29,6 +29,9 @@ _CONVERSATION = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9
 _MAX_RESPONSE = 4 * 1024 * 1024
 _MAX_HISTORY_BYTES = 256 * 1024
 _TIMEOUT = 450
+_REVOKE_TIMEOUT = 10
+_REVOKE_LEASE = 15
+_REVOKE_POLL = 2
 
 
 class ChatError(Exception):
@@ -46,23 +49,26 @@ class ChatService:
         self._configured = False
         self._reason = "El asistente de FLUJO todavía no está conectado a esta demo."
         self._customer_subjects: dict[str, str] = {}
+        self._approved_subject_customers: dict[str, str] = {}
+        self._approved_owner_subjects: dict[str, tuple[str, str]] = {}
         self._db_path = Path(state_dir) / "frontend-chat.sqlite3"
         # Injectable only by trusted server/test code, never request data.
         self._transport: httpx.AsyncBaseTransport | None = None
-        if not config:
-            return
-        try:
-            self._configure(config)
-        except (ValueError, TypeError, KeyError, OSError):
-            self._reason = "La conexión segura del asistente requiere configuración."
-            return
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connection() as db:
             db.execute("""CREATE TABLE IF NOT EXISTS chat_sessions (
                 session_id TEXT PRIMARY KEY, owner TEXT NOT NULL, expires INTEGER NOT NULL,
                 conversation_id TEXT, revoked INTEGER NOT NULL DEFAULT 0,
-                active_id TEXT, active_until INTEGER NOT NULL DEFAULT 0
+                active_id TEXT, active_until INTEGER NOT NULL DEFAULT 0,
+                subject TEXT, customer_id TEXT
             )""")
+            # Persist the approved admission identity, never credentials. An
+            # existing volume gets the same columns without discarding history.
+            columns = {row[1] for row in db.execute("PRAGMA table_info(chat_sessions)")}
+            if "subject" not in columns:
+                db.execute("ALTER TABLE chat_sessions ADD COLUMN subject TEXT")
+            if "customer_id" not in columns:
+                db.execute("ALTER TABLE chat_sessions ADD COLUMN customer_id TEXT")
             db.execute("""CREATE TABLE IF NOT EXISTS chat_messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT NOT NULL,
                 operation TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('user','assistant')),
@@ -71,6 +77,15 @@ class ChatService:
             )""")
             db.execute("CREATE INDEX IF NOT EXISTS chat_messages_session ON chat_messages(session_id, id)")
             db.execute("CREATE TABLE IF NOT EXISTS chat_migrations (name TEXT PRIMARY KEY)")
+            db.execute("""CREATE TABLE IF NOT EXISTS pending_revocations (
+                session_id TEXT PRIMARY KEY, owner TEXT NOT NULL, subject TEXT NOT NULL,
+                expires INTEGER NOT NULL,
+                state TEXT NOT NULL CHECK(state IN ('pending','confirmed','expired_unconfirmed')),
+                attempts INTEGER NOT NULL DEFAULT 0, next_attempt_at INTEGER NOT NULL,
+                lease_token TEXT, lease_until INTEGER NOT NULL DEFAULT 0,
+                last_error_code TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+            )""")
+            db.execute("CREATE INDEX IF NOT EXISTS pending_revocations_due ON pending_revocations(state, next_attempt_at)")
             if not db.execute("SELECT 1 FROM chat_migrations WHERE name='public-transcript-v1'").fetchone():
                 # An earlier frontend retained private worker context without a
                 # displayable transcript. Start those sessions afresh once so a
@@ -78,7 +93,18 @@ class ChatService:
                 db.execute("""UPDATE chat_sessions SET conversation_id=NULL, active_id=NULL, active_until=0
                     WHERE NOT EXISTS (SELECT 1 FROM chat_messages m WHERE m.session_id=chat_sessions.session_id)""")
                 db.execute("INSERT INTO chat_migrations VALUES ('public-transcript-v1')")
+        # Persisted admission tuples can be queued even if the signer config
+        # is temporarily absent. The configured pass also recovers old rows.
+        self._migrate_legacy_revocations()
+        if not config:
+            return
+        try:
+            self._configure(config)
+        except (ValueError, TypeError, KeyError, OSError):
+            self._reason = "La conexión segura del asistente requiere configuración."
+            return
         self._configured = True
+        self._migrate_legacy_revocations()
 
     def _configure(self, config: dict[str, Any]) -> None:
         if not isinstance(config, dict) or not isinstance(config.get("base_url"), str):
@@ -120,6 +146,8 @@ class ChatService:
                 raise ValueError("Invalid principal mapping")
             # The deployed bank may have multiple preapproved subjects for one
             # customer. A fixed first subject is used for the life of this config.
+            self._approved_subject_customers[subject] = customer
+            self._approved_owner_subjects[self._owner_for_subject(subject)] = (subject, customer)
             self._customer_subjects.setdefault(customer, subject)
 
     @contextmanager
@@ -139,6 +167,27 @@ class ChatService:
                 "read_only": True,
                 **({} if available else {"reason": self._reason if not self._configured
                     else "El asistente no está habilitado para este perfil de demostración."})}
+
+    def has_active_session(self, session_id: str, session_exp: int) -> bool:
+        """Use before policy rotation to avoid revoking sessions with no chat work."""
+        with self._connection() as db:
+            row = db.execute("SELECT expires,revoked FROM chat_sessions WHERE session_id=?",
+                             (session_id,)).fetchone()
+        return bool(row and row["expires"] == session_exp and not row["revoked"])
+
+    def has_any_session(self) -> bool:
+        """Reject reuse of a real chat volume for a synthetic invite preview."""
+        with self._connection() as db:
+            return db.execute("SELECT 1 FROM chat_sessions LIMIT 1").fetchone() is not None
+
+    def admitted_customer(self, session_id: str, session_exp: int) -> str | None:
+        """Return only the private customer bound at admission, for rotation."""
+        with self._connection() as db:
+            row = db.execute("""SELECT expires,revoked,customer_id FROM chat_sessions
+                WHERE session_id=?""", (session_id,)).fetchone()
+        if row and row["expires"] == session_exp and not row["revoked"]:
+            return row["customer_id"]
+        return None
 
     def history(self, customer_id: str, session_id: str, session_exp: int) -> dict[str, Any]:
         if not self.status(customer_id)["available"]:
@@ -173,18 +222,84 @@ class ChatService:
                     "active": bool(row["active_id"] and row["active_until"] > now),
                     "limited": limited}
 
-    def _identity(self, customer_id: str, session_id: str, session_exp: int) -> tuple[str, str]:
-        if not self.status(customer_id)["available"]:
-            raise ChatError("chat_unavailable", 503, self.status(customer_id)["reason"])
+    @staticmethod
+    def _validate_session(session_id: str, session_exp: int) -> None:
         now = int(time.time())
         if (not isinstance(session_id, str) or not 16 <= len(session_id) <= 128
                 or not isinstance(session_exp, int) or isinstance(session_exp, bool)
                 or session_exp <= now or session_exp > now + 8 * 3600):
             raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
+
+    def _identity(self, customer_id: str, session_id: str, session_exp: int) -> tuple[str, str]:
+        if not self.status(customer_id)["available"]:
+            raise ChatError("chat_unavailable", 503, self.status(customer_id)["reason"])
+        self._validate_session(session_id, session_exp)
         subject = self._customer_subjects[customer_id]
-        owner = hashlib.sha256(json.dumps([self._issuer, subject, self._model],
+        # Preserve a previously bound subject when an approved mapping changes
+        # order across a restart. The later _bind check still enforces the
+        # immutable session owner and expiry under the write transaction.
+        with self._connection() as db:
+            bound = db.execute("SELECT owner FROM chat_sessions WHERE session_id=?", (session_id,)).fetchone()
+        if bound:
+            approved = self._approved_owner_subjects.get(bound["owner"])
+            if approved and approved[1] == customer_id:
+                subject = approved[0]
+        return subject, self._owner_for_subject(subject)
+
+    def _revoke_identity(self, customer_id: str, session_id: str,
+                         session_exp: int) -> tuple[str, str] | None:
+        """Recover the immutable admission identity during signer config loss."""
+        self._validate_session(session_id, session_exp)
+        with self._connection() as db:
+            row = db.execute("SELECT owner,expires,subject,customer_id FROM chat_sessions WHERE session_id=?",
+                             (session_id,)).fetchone()
+        if row:
+            if row["expires"] != session_exp or (row["customer_id"] and row["customer_id"] != customer_id):
+                raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+            if row["subject"] and row["customer_id"] == customer_id:
+                return row["subject"], row["owner"]
+            approved = self._approved_owner_subjects.get(row["owner"])
+            if approved and approved[1] == customer_id:
+                return approved[0], row["owner"]
+            return None
+        if self.status(customer_id)["available"]:
+            return self._identity(customer_id, session_id, session_exp)
+        return None
+
+    def _owner_for_subject(self, subject: str) -> str:
+        return hashlib.sha256(json.dumps([self._issuer, subject, self._model],
                                          separators=(",", ":")).encode()).hexdigest()
-        return subject, owner
+
+    def _migrate_legacy_revocations(self) -> None:
+        """Queue older local revoke markers without inventing a subject.
+
+        Retrying an already applied revoke is safe under the worker's idempotent
+        contract. Historic owner-only rows require a current approved mapping.
+        """
+        now = int(time.time())
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            rows = db.execute("""SELECT session_id,owner FROM chat_sessions
+                WHERE subject IS NULL AND customer_id IS NULL""").fetchall()
+            for row in rows:
+                approved = self._approved_owner_subjects.get(row["owner"])
+                if approved:
+                    db.execute("""UPDATE chat_sessions SET subject=?,customer_id=?
+                        WHERE session_id=? AND subject IS NULL AND customer_id IS NULL""",
+                        (approved[0], approved[1], row["session_id"]))
+            rows = db.execute("""SELECT s.session_id,s.owner,s.expires,s.subject,s.customer_id FROM chat_sessions s
+                WHERE s.revoked=1 AND s.expires>? AND NOT EXISTS
+                (SELECT 1 FROM pending_revocations p WHERE p.session_id=s.session_id)""",
+                (now,)).fetchall()
+            for row in rows:
+                approved = self._approved_owner_subjects.get(row["owner"])
+                subject = (row["subject"] if row["subject"] and row["customer_id"] else
+                           approved[0] if approved else None)
+                if subject:
+                    db.execute("""INSERT OR IGNORE INTO pending_revocations
+                        (session_id,owner,subject,expires,state,next_attempt_at,created_at,updated_at)
+                        VALUES (?,?,?,?,'pending',?,?,?)""",
+                        (row["session_id"], row["owner"], subject, row["expires"], now, now, now))
 
     def _bind(self, db: sqlite3.Connection, session_id: str, owner: str, session_exp: int) -> sqlite3.Row:
         db.execute("INSERT OR IGNORE INTO chat_sessions(session_id, owner, expires) VALUES (?, ?, ?)",
@@ -275,6 +390,11 @@ class ChatService:
                 raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
             if row["active_until"] > now:
                 raise ChatError("chat_busy", 429, "Espera la respuesta de tu consulta anterior.")
+            if row["subject"] is None and row["customer_id"] is None:
+                db.execute("UPDATE chat_sessions SET subject=?,customer_id=? WHERE session_id=?",
+                           (subject, customer_id, session_id))
+            elif row["subject"] != subject or row["customer_id"] != customer_id:
+                raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
             conversation = row["conversation_id"]
             db.execute("UPDATE chat_sessions SET active_id = ?, active_until = ? WHERE session_id = ?",
                        (operation, min(now + _TIMEOUT + 15, session_exp), session_id))
@@ -322,17 +442,177 @@ class ChatService:
         except (KeyError, IndexError, TypeError, ValueError):
             raise ChatError("chat_invalid_response", 502, "No se pudo verificar la respuesta de FLUJO.") from None
 
-    async def revoke(self, customer_id: str, session_id: str, session_exp: int) -> None:
-        if not self.status(customer_id)["available"]:
-            return
-        subject, owner = self._identity(customer_id, session_id, session_exp)
+    def queue_revoke(self, customer_id: str, session_id: str, session_exp: int) -> str:
+        """Atomically deny local chat and persist an idempotent worker revoke intent.
+
+        The caller must do this before deleting the browser session. A storage
+        error propagates, so it cannot be mistaken for a worker acknowledgement.
+        """
+        identity = self._revoke_identity(customer_id, session_id, session_exp)
+        now = int(time.time())
         with self._connection() as db:
             db.execute("BEGIN IMMEDIATE")
-            self._bind(db, session_id, owner, session_exp)
+            if identity is None:
+                row = db.execute("SELECT expires,customer_id FROM chat_sessions WHERE session_id=?",
+                                 (session_id,)).fetchone()
+                if row is None:
+                    return "unavailable"
+                if row["expires"] != session_exp or (row["customer_id"] and row["customer_id"] != customer_id):
+                    raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+                # Legacy records may predate admission identity persistence.
+                # This durable marker is recovered into the retry queue once
+                # approved config returns; it remains operator-visible meanwhile.
+                db.execute("UPDATE chat_sessions SET revoked=1 WHERE session_id=?", (session_id,))
+                return "unresolved"
+            subject, owner = identity
+            row = self._bind(db, session_id, owner, session_exp)
+            if row["subject"] is None and row["customer_id"] is None:
+                db.execute("UPDATE chat_sessions SET subject=?,customer_id=? WHERE session_id=?",
+                           (subject, customer_id, session_id))
+            elif row["subject"] != subject or row["customer_id"] != customer_id:
+                raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
             db.execute("UPDATE chat_sessions SET revoked = 1 WHERE session_id = ?", (session_id,))
-        # Local revocation is durable before requesting the worker's independent
-        # durable revocation, which also aborts all matching admitted work.
-        result = await self._post("/v1/banking/session/revoke", self._headers(subject, session_id, session_exp), {},
-                                  timeout_seconds=10)
-        if result != {"revoked": True}:
-            raise ChatError("chat_revocation_failed", 502, "No se pudo confirmar el cierre del asistente.")
+            db.execute("""INSERT OR IGNORE INTO pending_revocations
+                (session_id,owner,subject,expires,state,next_attempt_at,created_at,updated_at)
+                VALUES (?,?,?,?,'pending',?,?,?)""",
+                (session_id, owner, subject, session_exp, now, now, now))
+            row = db.execute("SELECT owner,subject,expires,state FROM pending_revocations WHERE session_id=?",
+                             (session_id,)).fetchone()
+            if (row is None or row["owner"] != owner or row["subject"] != subject
+                    or row["expires"] != session_exp):
+                raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+            return row["state"]
+
+    def _claim_revoke(self, session_id: str) -> tuple[sqlite3.Row, str] | str:
+        now = int(time.time())
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT * FROM pending_revocations WHERE session_id=?", (session_id,)).fetchone()
+            if row is None:
+                return "absent"
+            if row["state"] != "pending":
+                return row["state"]
+            if row["lease_token"] and row["lease_until"] > now:
+                return "pending"
+            if row["expires"] <= now:
+                db.execute("""UPDATE pending_revocations SET state='expired_unconfirmed',
+                    lease_token=NULL,lease_until=0,last_error_code='revoke_session_expired',updated_at=?
+                    WHERE session_id=? AND state='pending'""", (now, session_id))
+                return "expired_unconfirmed"
+            if row["next_attempt_at"] > now:
+                return "pending"
+            lease = str(uuid.uuid4())
+            attempts = row["attempts"] + 1
+            db.execute("""UPDATE pending_revocations SET attempts=?,next_attempt_at=?,
+                lease_token=?,lease_until=?,updated_at=? WHERE session_id=? AND state='pending'""",
+                (attempts, now + min(2 ** min(attempts, 5), 30), lease,
+                 now + _REVOKE_LEASE, now, session_id))
+            return row, lease
+
+    def _finish_revoke(self, session_id: str, lease: str, *, confirmed: bool,
+                       error_code: str | None = None) -> str:
+        now = int(time.time())
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT state,attempts,lease_token FROM pending_revocations WHERE session_id=?",
+                             (session_id,)).fetchone()
+            if row is None:
+                return "absent"
+            if row["state"] == "confirmed":
+                return "confirmed"
+            if confirmed:
+                # An exact worker acknowledgement remains authoritative even
+                # if this lease expired while the response was in flight.
+                db.execute("""UPDATE pending_revocations SET state='confirmed',lease_token=NULL,
+                    lease_until=0,last_error_code=NULL,updated_at=? WHERE session_id=?""", (now, session_id))
+                return "confirmed"
+            if row["lease_token"] != lease:
+                return row["state"]
+            if row["state"] == "expired_unconfirmed":
+                return "expired_unconfirmed"
+            delay = min(2 ** min(row["attempts"], 5), 30)
+            db.execute("""UPDATE pending_revocations SET lease_token=NULL,lease_until=0,
+                next_attempt_at=?,last_error_code=?,updated_at=? WHERE session_id=? AND state='pending'""",
+                (now + delay, error_code or "revoke_internal_error", now, session_id))
+            return "pending"
+
+    async def attempt_revoke(self, session_id: str) -> str:
+        """Deliver one due revoke with a fresh assertion; response loss is retried."""
+        claim = self._claim_revoke(session_id)
+        if isinstance(claim, str):
+            return claim
+        row, lease = claim
+        with self._connection() as db:
+            binding = db.execute("""SELECT owner,expires,subject,customer_id FROM chat_sessions
+                WHERE session_id=?""", (session_id,)).fetchone()
+        mapped_customer = self._approved_subject_customers.get(row["subject"]) if self._configured else None
+        if (not binding or binding["owner"] != row["owner"] or binding["expires"] != row["expires"]
+                or (binding["subject"] and binding["subject"] != row["subject"])
+                or not mapped_customer or (binding["customer_id"] and binding["customer_id"] != mapped_customer)
+                or row["owner"] != self._owner_for_subject(row["subject"])):
+            return self._finish_revoke(session_id, lease, confirmed=False,
+                                       error_code="revoke_configuration_unavailable")
+        try:
+            result = await self._post("/v1/banking/session/revoke",
+                self._headers(row["subject"], session_id, row["expires"]), {},
+                timeout_seconds=_REVOKE_TIMEOUT)
+            if result != {"revoked": True}:
+                raise ChatError("chat_revocation_failed", 502, "No se pudo confirmar el cierre del asistente.")
+        except asyncio.CancelledError:
+            self._finish_revoke(session_id, lease, confirmed=False,
+                                error_code="revoke_interrupted")
+            raise
+        except ChatError as exc:
+            return self._finish_revoke(session_id, lease, confirmed=False, error_code=exc.code)
+        except Exception:
+            # Neither response bodies nor credential-bearing exceptions enter
+            # persistent diagnostics. The intent remains retryable.
+            return self._finish_revoke(session_id, lease, confirmed=False,
+                                       error_code="revoke_internal_error")
+        return self._finish_revoke(session_id, lease, confirmed=True)
+
+    async def revoke(self, customer_id: str, session_id: str, session_exp: int) -> str:
+        """Compatibility helper for callers that do not own session deletion."""
+        state = self.queue_revoke(customer_id, session_id, session_exp)
+        return await self.attempt_revoke(session_id) if state == "pending" else state
+
+    def revocation_diagnostics(self) -> dict[str, Any]:
+        """Aggregate operator state; contains no principal, session, or token."""
+        now = int(time.time())
+        with self._connection() as db:
+            counts = {row["state"]: row["total"] for row in db.execute(
+                "SELECT state,COUNT(*) AS total FROM pending_revocations GROUP BY state")}
+            retrying = db.execute("""SELECT COUNT(*) FROM pending_revocations
+                WHERE state='pending' AND lease_token IS NOT NULL AND lease_until>?""", (now,)).fetchone()[0]
+            unresolved = db.execute("""SELECT COUNT(*) FROM chat_sessions s WHERE s.revoked=1
+                AND s.expires>? AND NOT EXISTS
+                (SELECT 1 FROM pending_revocations p WHERE p.session_id=s.session_id)""", (now,)).fetchone()[0]
+            legacy_expired_unknown = db.execute("""SELECT COUNT(*) FROM chat_sessions s WHERE s.revoked=1
+                AND s.expires<=? AND NOT EXISTS
+                (SELECT 1 FROM pending_revocations p WHERE p.session_id=s.session_id)""", (now,)).fetchone()[0]
+            error = db.execute("""SELECT last_error_code FROM pending_revocations
+                WHERE last_error_code IS NOT NULL ORDER BY updated_at DESC LIMIT 1""").fetchone()
+        return {"configured": self._configured, "pending": counts.get("pending", 0),
+                "retrying": retrying, "confirmed": counts.get("confirmed", 0),
+                "unresolved": unresolved,
+                "legacy_expired_unknown": legacy_expired_unknown,
+                "expired_unconfirmed": counts.get("expired_unconfirmed", 0),
+                "last_error_code": error[0] if error else None}
+
+    async def retry_pending_loop(self, stop: asyncio.Event, *, poll_seconds: float = _REVOKE_POLL) -> None:
+        """Resume persisted intents at startup and retry with bounded backoff."""
+        while not stop.is_set():
+            now = int(time.time())
+            with self._connection() as db:
+                due = [row[0] for row in db.execute("""SELECT session_id FROM pending_revocations
+                    WHERE state='pending' AND (next_attempt_at<=? OR expires<=?)
+                    AND (lease_token IS NULL OR lease_until<=?)
+                    ORDER BY next_attempt_at LIMIT 16""", (now, now, now))]
+            for session_id in due:
+                if stop.is_set():
+                    return
+                await self.attempt_revoke(session_id)
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=poll_seconds)
+            except TimeoutError:
+                pass

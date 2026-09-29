@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 import duckdb
 
-from .config import Settings
+from .config import PROFILE_IDS, Settings
 from .repository import DatasetUnavailable, Repository
 from .state import Session, State
 
@@ -23,6 +24,11 @@ class LoginBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     profile: str = Field(min_length=1, max_length=24)
     code: str = Field(min_length=1, max_length=128)
+
+
+class InviteBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    code: str = Field(min_length=32, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class ChatBody(BaseModel):
@@ -38,18 +44,73 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app):
         state = State(settings.state_dir)
-        # Apply trusted rebinding before accepting cookies from a prior deployment.
-        # State.bind invalidates those sessions when the underlying customer changes.
-        for profile_id, config in settings.profiles.items():
-            if profile_id in {"colombia", "mexico", "argentina"} and config.get("customer_id"):
-                state.bind(profile_id, config["customer_id"])
+        from .chat import ChatService
+        chat_service = ChatService(settings.chat, settings.state_dir)
+        invite_bindings = ({key: value["customer_id"] for key, value in settings.profiles.items()}
+                           if settings.auth_mode == "invite" else None)
+        demo_bindings = ({key: value["customer_id"] for key, value in settings.profiles.items()
+                          if key in PROFILE_IDS and value.get("customer_id")}
+                         if settings.auth_mode == "demo" else None)
+        # Auth rotation or a trusted customer rebind can delete valid bank
+        # cookies. First persist revocations for sessions that reached FLUJO;
+        # startup fails before deletion if an admitted identity is unresolved.
+        admitted_rotations = 0
+        for old_session, old_customer in state.sessions_invalidated_by(
+                settings.auth_fingerprint(), invite_bindings, demo_bindings):
+            if not chat_service.has_active_session(old_session.id, old_session.expires_at):
+                continue
+            admitted_rotations += 1
+            customer = old_customer or chat_service.admitted_customer(old_session.id, old_session.expires_at)
+            if not customer:
+                raise RuntimeError("Cannot revoke admitted chat session without its customer")
+            disposition = chat_service.queue_revoke(customer, old_session.id, old_session.expires_at)
+            if disposition in {"unavailable", "unresolved"}:
+                raise RuntimeError("Cannot queue admitted chat session revocation")
+        if admitted_rotations and not chat_service.revocation_diagnostics()["configured"]:
+            # A re-used state volume cannot switch to an invite deployment (or
+            # lose its signer) while previously admitted worker work may run.
+            # Pending intents survive, but the old browser policy remains until
+            # the approved worker configuration is restored or state isolated.
+            raise RuntimeError("Cannot rotate admitted chat sessions without configured worker revocation")
+        if settings.auth_mode == "invite" and chat_service.has_any_session():
+            # The invited synthetic candidate must never inherit stored real
+            # conversations, including expired or already revoked ones.
+            raise RuntimeError("Invite mode requires an isolated chat state volume")
+        if settings.auth_mode == "invite":
+            state.reconcile_auth(settings.auth_fingerprint(), invite_bindings)
+        else:
+            state.reconcile_auth(settings.auth_fingerprint())
+            # Trusted demo rebinding invalidates sessions when customer changes.
+            for profile_id, config in settings.profiles.items():
+                if profile_id in PROFILE_IDS and config.get("customer_id"):
+                    state.bind(profile_id, config["customer_id"])
         app.state.bank_state = state
         app.state.repository = Repository(settings, state)
-        app.state.chat_service = None
-        if settings.chat:
-            from .chat import ChatService
-            app.state.chat_service = ChatService(settings.chat, settings.state_dir)
-        yield
+        if settings.auth_mode == "invite":
+            # An external candidate must refuse to start with a real, stale or
+            # mismatched mount; no request may trigger automatic customer choice.
+            app.state.repository.snapshot()
+            for profile_id in settings.profiles:
+                app.state.repository.profile(profile_id)
+        # Even an unconfigured restart retains and accounts for past pending
+        # revocations; it cannot sign a worker request without approved config.
+        app.state.chat_service = chat_service
+        stop_retries = asyncio.Event()
+        app.state.revoke_retry_task = asyncio.create_task(
+            app.state.chat_service.retry_pending_loop(stop_retries))
+
+        def report_retry_exit(task):
+            if not task.cancelled() and task.exception():
+                logger.error("Chat revocation retry loop stopped: %s", type(task.exception()).__name__)
+
+        app.state.revoke_retry_task.add_done_callback(report_retry_exit)
+        try:
+            yield
+        finally:
+            stop_retries.set()
+            app.state.revoke_retry_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await app.state.revoke_retry_task
 
     app = FastAPI(title="FLUJO banking demo", version="0.1.0", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
@@ -64,7 +125,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if request.url.path.startswith("/api/") and request.method not in {"GET", "HEAD", "OPTIONS"}:
             origin = request.headers.get("origin")
             expected = settings.public_origin or f"{request.url.scheme}://{request.url.netloc}"
-            if request.headers.get("sec-fetch-site") == "cross-site" or (origin and origin.rstrip("/") != expected.rstrip("/")):
+            invalid_origin = (origin != expected if settings.auth_mode == "invite" else
+                              bool(origin and origin.rstrip("/") != expected.rstrip("/")))
+            if request.headers.get("sec-fetch-site") == "cross-site" or invalid_origin:
                 return JSONResponse({"detail": "Origen de solicitud no permitido."}, status_code=403)
             if request.method != "DELETE" and request.headers.get("content-type", "").split(";")[0].strip() != "application/json":
                 return JSONResponse({"detail": "Se requiere una solicitud JSON."}, status_code=415)
@@ -83,63 +146,120 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(401, "Inicia sesión para ver tu banca.")
         return value
 
-    async def revoke(request: Request, current: Session):
-        # Delete the browser session even if the external backend is unavailable.
-        request.app.state.bank_state.delete_session(current)
+    async def revoke(request: Request, current: Session) -> tuple[str, bool]:
+        # Deny local chat and persist worker revocation before deleting the
+        # browser session. A failed queue must never be reported as confirmed.
         service = request.app.state.chat_service
-        if service:
-            try:
+        disposition = "unavailable"
+        failed = False
+        try:
+            if service:
                 customer = request.app.state.bank_state.customer(current.profile_id)
                 if customer:
-                    await service.revoke(customer, current.id, current.expires_at)
-            except Exception:
-                logger.warning("Chat revocation deferred; local banking session revoked")
+                    disposition = service.queue_revoke(customer, current.id, current.expires_at)
+        except Exception as exc:
+            failed = True
+            logger.error("Chat revocation persistence failed: %s", type(exc).__name__)
+        try:
+            request.app.state.bank_state.delete_session(current)
+        except Exception as exc:
+            failed = True
+            logger.error("Banking session deletion failed: %s", type(exc).__name__)
+        return ("persist_failed" if failed else disposition), failed
 
     @app.get("/healthz")
     def health(request: Request):
+        service = request.app.state.chat_service
+        diagnostics = {"configured": False, "pending": 0, "retrying": 0,
+                       "confirmed": 0, "expired_unconfirmed": 0, "last_error_code": None}
+        if service:
+            try:
+                diagnostics = service.revocation_diagnostics()
+            except Exception as exc:
+                logger.error("Chat revocation diagnostics failed: %s", type(exc).__name__)
+                diagnostics = {"configured": True, "status": "unavailable"}
+            task = request.app.state.revoke_retry_task
+            diagnostics["retry_worker_running"] = bool(task and not task.done())
         try:
             request.app.state.repository.snapshot()
         except DatasetUnavailable:
-            return JSONResponse({"service": "banking-frontend", "status": "degraded", "dataset_ready": False}, status_code=503)
-        return {"service": "banking-frontend", "status": "ok", "dataset_ready": True}
+            return JSONResponse({"service": "banking-frontend", "status": "degraded",
+                                 "dataset_ready": False, "chat_revocations": diagnostics}, status_code=503)
+        return {"service": "banking-frontend", "status": "ok", "dataset_ready": True,
+                "chat_revocations": diagnostics}
 
     @app.get("/api/auth/profiles")
     def profiles(request: Request):
+        if settings.auth_mode == "invite":
+            return {"mode": "invite", "demo": True, "profiles": []}
         public = []
         for profile in request.app.state.repository.profiles():
             public.append({k: profile[k] for k in ("id", "alias", "country", "segment", "description", "primary_currency")})
-        return {"profiles": public, "demo": True,
-                **({"code_hint": "2026"} if settings.demo_code == "2026" else {})}
+        return {"profiles": public, "demo": True}
 
     @app.post("/api/auth/login")
     async def login(body: LoginBody, request: Request, response: Response):
+        if settings.auth_mode != "demo":
+            raise HTTPException(404, "Ruta no disponible.")
         state = request.app.state.bank_state
         # Do not trust X-Forwarded-For unless a deployment configures its proxy;
         # hashing keeps IP addresses out of persistent attempt records.
         client = hashlib.sha256((request.client.host if request.client else "unknown").encode()).hexdigest()
         if not state.login_allowed(client):
             raise HTTPException(429, "Demasiados intentos. Intenta nuevamente en unos minutos.")
-        if body.profile not in {"colombia", "mexico", "argentina"} or not hmac.compare_digest(body.code.encode(), settings.demo_code.encode()):
+        if body.profile not in PROFILE_IDS or not hmac.compare_digest(body.code.encode(), settings.demo_code.encode()):
             state.record_failure(client)
             raise HTTPException(401, "Perfil o código de demostración incorrecto.")
-        profile = request.app.state.repository.profile(body.profile)
+        return await issue_session(request, response, body.profile)
+
+    async def issue_session(request: Request, response: Response, profile_id: str):
+        state = request.app.state.bank_state
+        profile = request.app.state.repository.profile(profile_id)
         if old := state.session(request.cookies.get(COOKIE)):
-            await revoke(request, old)
-        token, _ = state.create_session(body.profile, settings.session_seconds)
+            disposition, failed = await revoke(request, old)
+            if failed:
+                error = JSONResponse({"detail": "No se pudo confirmar el cierre completo de la sesión anterior."},
+                                     status_code=503, headers={"X-Banking-Revoke": disposition})
+                error.delete_cookie(COOKIE, httponly=True, secure=settings.secure_cookie, samesite="strict", path="/")
+                return error
+        token, _ = state.create_session(profile_id, settings.session_seconds)
         response.set_cookie(COOKIE, token, max_age=settings.session_seconds, httponly=True,
                             secure=settings.secure_cookie, samesite="strict", path="/")
-        return {"authenticated": True, "profile": profile}
+        return {"authenticated": True, "auth_mode": settings.auth_mode, "profile": profile}
+
+    @app.post("/api/auth/invite")
+    async def invite(body: InviteBody, request: Request, response: Response):
+        if settings.auth_mode != "invite":
+            raise HTTPException(404, "Ruta no disponible.")
+        # Invitations have 256 random bits. A shared proxy client address must
+        # not let one visitor lock out everyone else; external ingress applies
+        # its own per-visitor request limits without trusting forwarded headers.
+        digest = hashlib.sha256(body.code.encode()).hexdigest()
+        profile_id = None
+        for configured_digest, target in settings.invites.items():
+            if hmac.compare_digest(digest, configured_digest):
+                profile_id = target
+        if profile_id is None:
+            raise HTTPException(401, "Invitación no válida.")
+        return await issue_session(request, response, profile_id)
 
     @app.get("/api/auth/me")
     def me(request: Request):
         current = session(request)
-        return {"authenticated": True, "profile": request.app.state.repository.profile(current.profile_id)}
+        return {"authenticated": True, "auth_mode": settings.auth_mode,
+                "profile": request.app.state.repository.profile(current.profile_id)}
 
     @app.post("/api/auth/logout", status_code=204)
-    async def logout(request: Request, response: Response):
+    async def logout(request: Request):
+        disposition = "unavailable"
+        failed = False
         if current := request.app.state.bank_state.session(request.cookies.get(COOKIE)):
-            await revoke(request, current)
-        response.delete_cookie(COOKIE, httponly=True, secure=settings.secure_cookie, samesite="strict", path="/")
+            disposition, failed = await revoke(request, current)
+        result = (JSONResponse({"detail": "No se pudo confirmar el cierre completo de la sesión."},
+                               status_code=503) if failed else Response(status_code=204))
+        result.headers["X-Banking-Revoke"] = disposition
+        result.delete_cookie(COOKIE, httponly=True, secure=settings.secure_cookie, samesite="strict", path="/")
+        return result
 
     @app.get("/api/overview")
     def overview(request: Request, limit: int = Query(500, ge=1, le=500)):

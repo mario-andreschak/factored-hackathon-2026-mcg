@@ -1,9 +1,15 @@
 import type { Transaction } from "./types";
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  revokeStatus: string | null;
+  constructor(
+    message: string,
+    status: number,
+    revokeStatus: string | null = null,
+  ) {
     super(message);
     this.status = status;
+    this.revokeStatus = revokeStatus;
   }
 }
 export async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -19,6 +25,7 @@ export async function api<T>(url: string, init?: RequestInit): Promise<T> {
         ? body.detail
         : "No pudimos completar la solicitud. Intenta de nuevo.",
       response.status,
+      response.headers.get("X-Banking-Revoke"),
     );
   }
   return response.status === 204 ? (undefined as T) : response.json();

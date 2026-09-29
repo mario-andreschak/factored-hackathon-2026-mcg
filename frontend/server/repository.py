@@ -15,7 +15,7 @@ from tempfile import TemporaryDirectory
 
 import duckdb
 
-from .config import Settings
+from .config import SYNTHETIC_MARKER, Settings
 from .state import State
 
 
@@ -94,8 +94,18 @@ class Repository:
             build = (builds / pointer).resolve()
             if build.parent != builds:
                 raise DatasetUnavailable()
+            expected = self.settings.expected_snapshot if self.settings.auth_mode == "invite" else None
+            if expected and pointer != expected["build_id"]:
+                raise DatasetUnavailable()
             with self.lock:
                 if self._snapshot and self._snapshot.build == build:
+                    if expected:
+                        current_manifest = json.loads((build / "snapshot.json").read_text(encoding="utf-8"))
+                        if (not isinstance(current_manifest, dict)
+                                or current_manifest.get("build_id") != expected["build_id"]
+                                or current_manifest.get("source_fingerprint") != expected["source_fingerprint"]):
+                            raise DatasetUnavailable()
+                        self._check_synthetic_marker(build, expected)
                     # Files are immutable after publication, but missing mounted files
                     # must fail closed even after a healthy cached request.
                     self._check_files(self._snapshot)
@@ -106,6 +116,10 @@ class Repository:
                 fingerprint = manifest.get("source_fingerprint")
                 if manifest.get("build_id") != pointer or not re.fullmatch(r"[a-f0-9]{12,64}", str(fingerprint)):
                     raise DatasetUnavailable()
+                if expected:
+                    if fingerprint != expected["source_fingerprint"]:
+                        raise DatasetUnavailable()
+                    self._check_synthetic_marker(build, expected)
                 files = manifest.get("gold_files")
                 if not isinstance(files, dict) or not files:
                     raise DatasetUnavailable()
@@ -144,6 +158,12 @@ class Repository:
             raise DatasetUnavailable() from exc
 
     @staticmethod
+    def _check_synthetic_marker(build: Path, expected: dict[str, str]):
+        marker = json.loads((build / "synthetic_provenance.json").read_text(encoding="utf-8"))
+        if not isinstance(marker, dict) or marker != expected:
+            raise DatasetUnavailable()
+
+    @staticmethod
     def _check_files(snapshot: Snapshot):
         for table in ("customers", "products"):
             if not (snapshot.build / "silver" / f"{table}.parquet").is_file():
@@ -164,6 +184,13 @@ class Repository:
 
     def ensure_profiles(self, snapshot: Snapshot):
         """Aliases are fictional; private mappings restrict selectable demo records."""
+        if self.settings.auth_mode == "invite":
+            # Startup applied only explicit bindings. Never search the mounted
+            # dataset for a replacement visitor when a binding is missing.
+            if any(self.state.customer(key) != config["customer_id"]
+                   for key, config in self.settings.profiles.items()):
+                raise DatasetUnavailable()
+            return
         with self.lock:
             missing = [key for key in PROFILE_DEFAULTS if not self.state.customer(key)]
             explicit = self.settings.profiles
@@ -216,6 +243,8 @@ class Repository:
                         self.state.bind(key, candidates[0])
 
     def profile_customer(self, profile_id: str) -> str:
+        if self.settings.auth_mode == "invite" and profile_id not in self.settings.profiles:
+            raise DatasetUnavailable()
         snapshot = self.snapshot()
         self.ensure_profiles(snapshot)
         customer = self.state.customer(profile_id)
@@ -224,6 +253,8 @@ class Repository:
         return customer
 
     def profile(self, profile_id: str, snapshot: Snapshot | None = None) -> dict:
+        if self.settings.auth_mode == "invite" and profile_id not in self.settings.profiles:
+            raise DatasetUnavailable()
         snapshot = snapshot or self.snapshot()
         self.ensure_profiles(snapshot)
         customer = self.state.customer(profile_id)
@@ -237,15 +268,20 @@ class Repository:
                 GROUP BY currency ORDER BY count(*) FILTER (WHERE product_type IN ('Cuenta Ahorro','Cuenta Corriente')) DESC,
                 count(*) DESC, currency LIMIT 1""", [str(snapshot.build / "silver" / "products.parquet"), customer]).fetchone()
         template = self._profile_template(profile_id)
-        if not rows or rows[0]["country"] != template["country"]:
+        if (not rows or rows[0]["country"] != template["country"]
+                or (self.settings.auth_mode == "invite" and rows[0]["status"] != "Active")):
             raise DatasetUnavailable()
+        identity_note = ("Perfil y movimientos sintéticos creados por el equipo para esta demostración."
+                         if self.settings.auth_mode == "invite" else
+                         "Identidad de demostración; datos del dataset del hackathon.")
         return {"id": profile_id, **template, **rows[0], "primary_currency": currencies[0] if currencies else None,
-                "demo": True, "identity_note": "Identidad de demostración; datos del dataset del hackathon."}
+                "demo": True, "identity_note": identity_note}
 
     def profiles(self) -> list[dict]:
         snapshot = self.snapshot()
         self.ensure_profiles(snapshot)
-        return [self.profile(key, snapshot) for key in PROFILE_DEFAULTS if self.state.customer(key)]
+        keys = self.settings.profiles if self.settings.auth_mode == "invite" else PROFILE_DEFAULTS
+        return [self.profile(key, snapshot) for key in keys if self.state.customer(key)]
 
     def _scoped(self, con, snapshot: Snapshot, customer: str):
         con.read_parquet(str(snapshot.build / "silver" / "customers.parquet")).create_view("customers")
@@ -329,18 +365,25 @@ class Repository:
             "summary": {"balances_by_currency": [{"currency": currency, **{k: clean(v) for k, v in amounts.items()}}
                           for currency, amounts in sorted(balances.items())],
                         "transaction_count": total, "monthly_activity": monthly},
-            "metadata": {"dataset": "organizer-snapshot", "build_id": snapshot.build.name,
+            "metadata": {"dataset": "team-synthetic-fixture" if self.settings.auth_mode == "invite" else "organizer-snapshot", "build_id": snapshot.build.name,
                          "source_fingerprint": snapshot.fingerprint, "snapshot_created_at": snapshot.created_at,
-                         "source_validation": snapshot.source_validation, "freshness": "derived_snapshot",
+                         "source_validation": snapshot.source_validation,
+                         "freshness": SYNTHETIC_MARKER if self.settings.auth_mode == "invite" else "derived_snapshot",
                          "filtered_count": filtered_count,
                          "transactions_limit": page_limit, "transactions_offset": page_offset,
                          "transactions_truncated": len(txn_rows) < filtered_count,
                          "next_offset": page_offset + len(txn_rows) if page_offset + len(txn_rows) < filtered_count else None,
                          "data_as_of": snapshot.data_as_of, "transactions_returned": len(txn_rows), "transactions_total": total,
-                         "balances_note": "Saldos de la instantánea publicada; no representan un saldo bancario en tiempo real.",
+                         "balances_note": ("Saldos sintéticos de la demostración; no representan dinero real."
+                                           if self.settings.auth_mode == "invite" else
+                                           "Saldos de la instantánea publicada; no representan un saldo bancario en tiempo real."),
                          "amounts_note": "Importes originales por moneda. Solo depósitos, compras y retiros tienen dirección conocida; transferencias, pagos y ajustes se muestran sin un signo inventado. La actividad suma únicamente operaciones aprobadas.",
-                         "identity_note": "Los nombres de acceso son alias ficticios. Los productos y movimientos proceden del dataset del hackathon.",
-                         "account_numbers_note": "Los números de cuenta se eliminaron en silver; se usa una referencia opaca."},
+                         "identity_note": ("Los perfiles, productos y movimientos son datos sintéticos del equipo."
+                                           if self.settings.auth_mode == "invite" else
+                                           "Los nombres de acceso son alias ficticios. Los productos y movimientos proceden del dataset del hackathon."),
+                         "account_numbers_note": ("Se muestran referencias opacas, no números de cuenta reales."
+                                                  if self.settings.auth_mode == "invite" else
+                                                  "Los números de cuenta se eliminaron en silver; se usa una referencia opaca.")},
         }
 
     def transaction(self, profile_id: str, reference: str) -> dict | None:

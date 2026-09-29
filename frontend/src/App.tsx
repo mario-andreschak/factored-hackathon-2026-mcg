@@ -130,20 +130,30 @@ function Amount({ t, hidden }: { t: Transaction; hidden?: boolean }) {
   );
 }
 
-function Login({ onLogin }: { onLogin: () => void }) {
+function Login({
+  onLogin,
+  notice,
+}: {
+  onLogin: (mode: "demo" | "invite") => void;
+  notice: string;
+}) {
   const [profiles, setProfiles] = useState<Profile[]>([]),
+    [mode, setMode] = useState<"loading" | "demo" | "invite">("loading"),
     [profileId, setProfileId] = useState(""),
     [code, setCode] = useState(""),
-    [hint, setHint] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const load = useCallback(() => {
     setError("");
-    api<{ profiles: Profile[]; code_hint?: string }>("/api/auth/profiles")
+    setMode("loading");
+    api<{ mode?: "demo" | "invite"; profiles: Profile[] }>(
+      "/api/auth/profiles",
+      { signal: AbortSignal.timeout(8000) },
+    )
       .then((r) => {
+        setMode(r.mode === "invite" ? "invite" : "demo");
         setProfiles(r.profiles);
         setProfileId(r.profiles[0]?.id || "");
-        setHint(r.code_hint || "");
       })
       .catch(() =>
         setError(
@@ -157,11 +167,13 @@ function Login({ onLogin }: { onLogin: () => void }) {
     setBusy(true);
     setError("");
     try {
-      await api("/api/auth/login", {
+      await api(mode === "invite" ? "/api/auth/invite" : "/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ profile: profileId, code }),
+        body: JSON.stringify(
+          mode === "invite" ? { code } : { profile: profileId, code },
+        ),
       });
-      onLogin();
+      onLogin(mode === "invite" ? "invite" : "demo");
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 401
@@ -236,86 +248,117 @@ function Login({ onLogin }: { onLogin: () => void }) {
           <span className="login-lock">
             <LockKeyhole size={24} />
           </span>
-          <h2>Qué bueno verte.</h2>
-          <p className="login-intro">Entra a tu espacio personal.</p>
-          <form onSubmit={submit}>
-            <label className="field-label">
-              Elige un perfil de demostración
-            </label>
-            <div className="profile-options">
-              {profiles.map((p) => (
-                <button
-                  type="button"
-                  key={p.id}
-                  className={`profile-option ${profileId === p.id ? "selected" : ""}`}
-                  onClick={() => setProfileId(p.id || "")}
-                >
-                  <Avatar name={p.alias} small />
-                  <span>
-                    <strong>{p.alias}</strong>
-                    <small>
-                      {p.country} · {p.primary_currency}
-                    </small>
-                  </span>
-                  <span className="radio-mark">
-                    {profileId === p.id && <span />}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <label className="field-label" htmlFor="login-code">
-              Código de acceso
-            </label>
-            <div className="input-with-icon">
-              <LockKeyhole size={18} />
-              <input
-                id="login-code"
-                type="password"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Ingresa tu código"
-                autoComplete="current-password"
-                required
-                maxLength={128}
-              />
-            </div>
-            {hint && (
-              <p className="code-hint">
-                Código para explorar la demo: <strong>{hint}</strong>
-              </p>
-            )}
-            {error && (
-              <p className="form-error" role="alert">
-                {error}
-                {profiles.length === 0 && (
+          <h2>
+            {mode === "invite" ? "Tu acceso, solo tuyo." : "Qué bueno verte."}
+          </h2>
+          <p className="login-intro">
+            {mode === "invite"
+              ? "Ingresa la invitación que recibiste para explorar tu espacio."
+              : "Entra a tu espacio personal."}
+          </p>
+          {mode === "loading" ? (
+            <div className="login-loading">
+              {error ? (
+                <p className="form-error" role="alert">
+                  {error}{" "}
                   <button type="button" className="text-button" onClick={load}>
                     Reintentar
                   </button>
-                )}
-              </p>
-            )}
-            <button
-              className="button primary login-submit"
-              disabled={busy || !profileId}
-            >
-              {busy ? (
-                <LoaderCircle className="spin" size={19} />
+                </p>
               ) : (
                 <>
-                  Entrar a mi banca
-                  <ArrowRight size={18} />
+                  <LoaderCircle size={18} className="spin" /> Preparando tu
+                  acceso…
                 </>
               )}
-            </button>
-          </form>
+            </div>
+          ) : (
+            <form onSubmit={submit}>
+              {mode === "demo" && (
+                <>
+                  <label className="field-label">
+                    Elige un perfil de demostración
+                  </label>
+                  <div className="profile-options">
+                    {profiles.map((p) => (
+                      <button
+                        type="button"
+                        key={p.id}
+                        className={`profile-option ${profileId === p.id ? "selected" : ""}`}
+                        onClick={() => setProfileId(p.id || "")}
+                      >
+                        <Avatar name={p.alias} small />
+                        <span>
+                          <strong>{p.alias}</strong>
+                          <small>
+                            {p.country} · {p.primary_currency}
+                          </small>
+                        </span>
+                        <span className="radio-mark">
+                          {profileId === p.id && <span />}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              <label className="field-label" htmlFor="login-code">
+                {mode === "invite"
+                  ? "Código de invitación"
+                  : "Código de acceso"}
+              </label>
+              <div className="input-with-icon">
+                <LockKeyhole size={18} />
+                <input
+                  id="login-code"
+                  type="password"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder={
+                    mode === "invite"
+                      ? "Pega tu invitación"
+                      : "Ingresa tu código"
+                  }
+                  autoComplete={
+                    mode === "invite" ? "one-time-code" : "current-password"
+                  }
+                  required
+                  maxLength={128}
+                />
+              </div>
+              {error && (
+                <p className="form-error" role="alert">
+                  {error}
+                </p>
+              )}
+              <button
+                className="button primary login-submit"
+                disabled={busy || (mode === "demo" && !profileId)}
+              >
+                {busy ? (
+                  <LoaderCircle className="spin" size={19} />
+                ) : (
+                  <>
+                    Entrar a mi banca
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
           <div className="login-trust">
             <ShieldCheck size={17} />
             <span>Sesión privada · Acceso de solo lectura</span>
           </div>
+          {notice && (
+            <p className="login-warning" role="alert">
+              {notice}
+            </p>
+          )}
           <p className="login-disclosure">
-            Experiencia de demostración con los datos sintéticos del hackathon.
-            Los nombres son alias; los productos y movimientos provienen del
-            dataset.
+            {mode === "invite"
+              ? "Prototipo con datos sintéticos creados por el equipo. Cada invitación abre un único perfil ficticio."
+              : "Experiencia de demostración con los datos sintéticos del hackathon. Los nombres son alias; los productos y movimientos provienen del dataset."}
           </p>
         </div>
         <footer className="login-footer">
@@ -750,16 +793,19 @@ function TransactionDetail({
   transaction: t,
   products,
   hidden,
+  chatAvailable,
   onClose,
   onChat,
 }: {
   transaction: Transaction;
   products: Product[];
   hidden: boolean;
+  chatAvailable: boolean;
   onClose: () => void;
   onChat: () => void;
 }) {
   const product = products.find((p) => p.reference === t.product_reference);
+  const isCharge = t.type === "Purchase";
   return (
     <Modal title="Detalle del movimiento" onClose={onClose}>
       <div className="transaction-detail-head">
@@ -817,14 +863,34 @@ function TransactionDetail({
           se presenta sin signo.
         </p>
       )}
-      <button className="button primary full" onClick={onChat}>
+      {isCharge && (
+        <div className="charge-review">
+          <span className="charge-review-icon">
+            <ShieldCheck size={20} />
+          </span>
+          <div>
+            <strong>¿No reconoces este cargo?</strong>
+            <p>
+              {chatAvailable
+                ? "Comprueba el comercio, la fecha y el monto. Savia puede ayudarte a revisar el movimiento antes de solicitar atención humana."
+                : "Comprueba el comercio, la fecha, el monto y el producto asociado. Este prototipo aún no registra revisiones ni casos."}
+            </p>
+          </div>
+        </div>
+      )}
+      <button
+        className="button primary full"
+        onClick={onChat}
+        disabled={!chatAvailable}
+      >
         <MessageCircle size={18} />
-        Consultar este movimiento
+        {isCharge ? "Revisar este cargo" : "Consultar este movimiento"}
         <ArrowRight size={18} />
       </button>
       <p className="modal-disclosure">
-        Consulta de solo lectura. El asistente no realiza pagos ni modifica
-        productos.
+        {chatAvailable
+          ? "La consulta es de solo lectura. Un caso humano solo se registra cuando recibes una confirmación verificable."
+          : "La revisión asistida aún no está disponible en este prototipo. No se ha registrado un caso."}
       </p>
     </Modal>
   );
@@ -859,6 +925,7 @@ function Assistant({
   status,
   selected,
   hidden,
+  synthetic,
   onClose,
   onExpired,
 }: {
@@ -866,6 +933,7 @@ function Assistant({
   status: ChatStatus;
   selected: Transaction | null;
   hidden: boolean;
+  synthetic: boolean;
   onClose: () => void;
   onExpired: () => void;
 }) {
@@ -1110,8 +1178,9 @@ function Assistant({
         </button>
       </form>
       <p className="modal-disclosure">
-        Las respuestas se basan en el dataset del hackathon. Los casos y
-        acciones bancarias requieren atención humana.
+        {synthetic
+          ? "Las respuestas usan un escenario sintético del equipo. Una respuesta del asistente no confirma un caso ni una acción bancaria."
+          : "Las respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana."}
       </p>
     </Modal>
   );
@@ -1119,6 +1188,7 @@ function Assistant({
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null),
+    [authMode, setAuthMode] = useState<"demo" | "invite" | null>(null),
     [data, setData] = useState<Overview | null>(null),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(false),
@@ -1137,7 +1207,8 @@ export default function App() {
     [chatStatus, setChatStatus] = useState<ChatStatus>({ available: false }),
     [mobileMenu, setMobileMenu] = useState(false),
     [info, setInfo] = useState(false),
-    [toast, setToast] = useState("");
+    [toast, setToast] = useState(""),
+    [loginNotice, setLoginNotice] = useState("");
   const dataController = useRef<AbortController | null>(null);
   const expired = useCallback(() => {
     dataController.current?.abort();
@@ -1217,8 +1288,13 @@ export default function App() {
   }, [expired]);
   useEffect(() => () => dataController.current?.abort(), []);
   useEffect(() => {
-    api("/api/auth/me")
-      .then(load)
+    api<{ auth_mode?: "demo" | "invite" }>("/api/auth/me", {
+      signal: AbortSignal.timeout(8000),
+    })
+      .then((result) => {
+        setAuthMode(result.auth_mode === "invite" ? "invite" : "demo");
+        load();
+      })
       .catch(() => setAuthenticated(false));
   }, [load]);
   useEffect(() => {
@@ -1237,12 +1313,25 @@ export default function App() {
     try {
       await api("/api/auth/logout", { method: "POST" });
       expired();
+      setLoginNotice("");
       setPage("home");
       setQuery("");
       setProductFilter("all");
       setStatus("all");
       setMonth("all");
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof ApiError &&
+        error.status === 503 &&
+        error.revokeStatus === "persist_failed"
+      ) {
+        setLoginNotice(
+          "Se retiró el acceso de este navegador, pero no pudimos confirmar el cierre completo de la sesión y el asistente. Solicita ayuda antes de usar otra cuenta.",
+        );
+        expired();
+        setPage("home");
+        return;
+      }
       setToast("No pudimos cerrar la sesión. Intenta de nuevo.");
     }
   }
@@ -1263,7 +1352,17 @@ export default function App() {
     setSelectedTx(null);
     setAssistant(true);
   }
-  if (authenticated === false) return <Login onLogin={load} />;
+  if (authenticated === false)
+    return (
+      <Login
+        onLogin={(mode) => {
+          setAuthMode(mode);
+          setLoginNotice("");
+          load();
+        }}
+        notice={loginNotice}
+      />
+    );
   if (authenticated === null)
     return (
       <div className="app-boot">
@@ -1272,6 +1371,9 @@ export default function App() {
         <span>Preparando tu espacio…</span>
       </div>
     );
+  const synthetic =
+    authMode === "invite" ||
+    data?.metadata.dataset === "team-synthetic-fixture";
   const currencies =
     data?.summary.balances_by_currency.map((b) => b.currency) || [];
   const balance = data?.summary.balances_by_currency.find(
@@ -1345,7 +1447,9 @@ export default function App() {
           >
             <MessageCircle size={20} />
             <span>Asistente</span>
-            <span className="nav-new">FLUJO</span>
+            <span className="nav-new">
+              {chatStatus.available ? "FLUJO" : "PRONTO"}
+            </span>
           </button>
         </nav>
         <div className="sidebar-bottom">
@@ -1354,9 +1458,13 @@ export default function App() {
               <Leaf size={21} />
             </span>
             <strong>Todo un poco más claro.</strong>
-            <p>Entiende un movimiento con ayuda de tu asistente.</p>
+            <p>
+              {chatStatus.available
+                ? "Entiende un movimiento con ayuda de tu asistente."
+                : "Revisa los detalles de cada cargo en tu historial."}
+            </p>
             <button onClick={() => openChat()}>
-              Hablemos
+              {chatStatus.available ? "Hablemos" : "Estado del asistente"}
               <ArrowUpRight size={16} />
             </button>
           </div>
@@ -1421,7 +1529,7 @@ export default function App() {
             </label>
             <button className="snapshot-pill" onClick={() => setInfo(true)}>
               <span className="live-dot" />
-              Demo con datos reales
+              {synthetic ? "Escenario sintético" : "Demo con datos reales"}
             </button>
             <button
               className="icon-button help-button"
@@ -1690,15 +1798,15 @@ export default function App() {
                     <div>
                       <h3>¿Un movimiento que no te suena?</h3>
                       <p>
-                        Consulta sus detalles. Tu asistente te ayuda a
-                        entenderlo.
+                        Revisa el comercio, la fecha y el monto antes de pedir
+                        ayuda.
                       </p>
                     </div>
                     <button
                       className="button subtle"
-                      onClick={() => openChat()}
+                      onClick={() => navigate("transactions")}
                     >
-                      Vamos a verlo
+                      Ver movimientos
                       <ArrowUpRight size={17} />
                     </button>
                   </section>
@@ -1947,7 +2055,7 @@ export default function App() {
                 </span>
                 <button onClick={() => setInfo(true)}>
                   <span className="live-dot" />
-                  Dataset del hackathon
+                  {synthetic ? "Prototipo sintético" : "Dataset del hackathon"}
                   <ArrowUpRight size={13} />
                 </button>
               </footer>
@@ -1975,6 +2083,7 @@ export default function App() {
           transaction={selectedTx}
           products={products}
           hidden={hidden}
+          chatAvailable={chatStatus.available}
           onClose={closeTx}
           onChat={() => openChat(selectedTx)}
         />
@@ -1984,18 +2093,26 @@ export default function App() {
         status={chatStatus}
         selected={chatSelection}
         hidden={hidden}
+        synthetic={synthetic}
         onClose={closeAssistant}
         onExpired={expired}
       />
       {info && (
-        <Modal title="Una experiencia con datos reales" onClose={closeInfo}>
+        <Modal
+          title={
+            synthetic
+              ? "Un escenario para explorar"
+              : "Una experiencia con datos reales"
+          }
+          onClose={closeInfo}
+        >
           <div className="about-logo">
             <Brand />
           </div>
           <p className="about-intro">
-            Savia es una demo de banca personal creada para el Factored AI &
-            Data Hackathon 2026. Los productos, saldos y movimientos
-            corresponden al dataset sintético del organizador.
+            {synthetic
+              ? "Savia es un prototipo de banca personal para el Factored AI & Data Hackathon 2026. Los perfiles, productos, saldos y movimientos de este escenario fueron creados por el equipo y son completamente ficticios."
+              : "Savia es una demo de banca personal creada para el Factored AI & Data Hackathon 2026. Los productos, saldos y movimientos corresponden al dataset sintético del organizador."}
           </p>
           <dl className="details-list">
             <div>
@@ -2024,8 +2141,9 @@ export default function App() {
           <div className="inline-note">
             <Fingerprint size={21} />
             <p>
-              Los nombres son alias de demostración. La sesión limita cada
-              consulta a los productos y movimientos del perfil seleccionado.
+              {synthetic
+                ? "Cada invitación está ligada en el servidor a un único perfil ficticio. Solo puedes consultar sus productos y movimientos."
+                : "Los nombres son alias de demostración. La sesión limita cada consulta a los productos y movimientos del perfil seleccionado."}
             </p>
           </div>
           <p className="about-intro">

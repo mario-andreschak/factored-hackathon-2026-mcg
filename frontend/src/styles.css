@@ -431,6 +431,14 @@ button svg {
   color: #8a958d;
   margin: 10px 0 31px;
 }
+.login-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 170px;
+  color: #71856f;
+  font-size: 12px;
+}
 .field-label {
   font-size: 11px;
   font-weight: 600;
@@ -513,15 +521,6 @@ button svg {
 .input-with-icon input::placeholder {
   color: #a0aaa0;
 }
-.code-hint {
-  font-size: 10px;
-  color: #8c9888;
-  margin-top: 8px;
-}
-.code-hint strong {
-  letter-spacing: 1px;
-  color: #5c7455;
-}
 .login-submit {
   width: 100%;
   margin-top: 23px;
@@ -536,6 +535,16 @@ button svg {
   margin-top: 19px;
   font-size: 10px;
   color: #81937b;
+}
+.login-warning {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid #e9d8be;
+  border-radius: 9px;
+  background: #fff8ee;
+  color: #845b35;
+  font-size: 11px;
+  line-height: 1.55;
 }
 .login-disclosure {
   font-size: 10px;
@@ -2015,6 +2024,38 @@ button svg {
 }
 .transaction-detail-head .badge {
   font-size: 9px;
+}
+.charge-review {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 22px 0 17px;
+  padding: 16px;
+  border: 1px solid #dbe7d3;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #f3f8ed, #fafcf7);
+}
+.charge-review-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: #e1edd7;
+  color: #4e7848;
+}
+.charge-review strong {
+  display: block;
+  color: #294b31;
+  font-size: 12px;
+  font-weight: 600;
+}
+.charge-review p {
+  margin-top: 6px;
+  color: #6b806a;
+  font-size: 10px;
+  line-height: 1.55;
 }
 .modal-disclosure {
   font-size: 9px;

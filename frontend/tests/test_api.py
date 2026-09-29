@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from frontend.server.app import COOKIE, create_app
 from frontend.server.config import Settings
-from frontend.server.repository import Repository
+from frontend.server.repository import DatasetUnavailable, Repository
 from frontend.server.state import State
 
 
@@ -73,13 +73,36 @@ def settings(tmp_path):
     (build / "snapshot.json").write_text(json.dumps({"build_id": "fixture-1", "source_fingerprint": "a" * 16,
         "created_at": "2026-09-29T00:00:00Z", "gold_files": inventory}))
     (data / "CURRENT").write_text("fixture-1")
-    return Settings(data_dir=data, state_dir=tmp_path / "state", static_dir=tmp_path / "dist",
+    return Settings(data_dir=data, state_dir=tmp_path / "state", static_dir=tmp_path / "dist", demo_code="2026",
                     profiles={key: {"customer_id": customer} for key,customer in [
                         ("colombia","private-customer-co"),("mexico","private-customer-mx"),("argentina","private-customer-ar")]})
 
 
 def login(client, profile="colombia", **kwargs):
     return client.post("/api/auth/login", json={"profile":profile,"code":"2026"}, **kwargs)
+
+
+INVITE_CODE = "Savia_visitor_" + "a" * 32
+REPLACEMENT_INVITE_CODE = "Savia_visitor_" + "b" * 32
+
+
+def invite_settings(settings):
+    build = settings.data_dir / "builds" / "fixture-1"
+    manifest_file = build / "snapshot.json"
+    manifest = json.loads(manifest_file.read_text())
+    manifest["source_validation"] = "unchanged_inventory_after_ingestion"
+    manifest_file.write_text(json.dumps(manifest))
+    marker = {"kind": "team_synthetic_fixture", "build_id": manifest["build_id"],
+              "source_fingerprint": manifest["source_fingerprint"]}
+    (build / "synthetic_provenance.json").write_text(json.dumps(marker))
+    return replace(settings, auth_mode="invite", demo_code="", public_origin="http://localhost",
+                   invites={hashlib.sha256(INVITE_CODE.encode()).hexdigest(): "colombia"},
+                   profiles={"colombia": settings.profiles["colombia"]}, expected_snapshot=marker)
+
+
+def invite_login(client, code=INVITE_CODE, **kwargs):
+    headers = {"origin": "http://localhost", **kwargs.pop("headers", {})}
+    return client.post("/api/auth/invite", json={"code": code}, headers=headers, **kwargs)
 
 
 def test_real_ownership_currency_and_no_invented_data(settings):
@@ -107,7 +130,7 @@ def test_real_ownership_currency_and_no_invented_data(settings):
 def test_public_profiles_do_not_expose_ids(settings):
     with TestClient(create_app(settings)) as client:
         data = client.get("/api/auth/profiles").json()
-        assert len(data["profiles"]) == 3 and data["demo"] and data["code_hint"] == "2026"
+        assert len(data["profiles"]) == 3 and data["demo"] and "code_hint" not in data
         assert "private-" not in json.dumps(data)
         assert next(p for p in data["profiles"] if p["id"] == "mexico")["primary_currency"] == "USD"
 
@@ -187,6 +210,117 @@ def test_secure_cookie_origin_and_custom_demo_code(settings):
         assert login(client,headers={"origin":"http://bank.example"}).status_code == 403
 
 
+def test_invite_only_reveals_bound_synthetic_persona(settings):
+    candidate = invite_settings(settings)
+    with TestClient(create_app(candidate), base_url="http://localhost") as client:
+        assert client.get("/api/auth/profiles").json() == {"mode": "invite", "demo": True, "profiles": []}
+        assert client.get("/api/overview").status_code == 401
+        assert login(client, headers={"origin": "http://localhost"}).status_code == 404
+        assert client.post("/api/auth/invite", json={"code": INVITE_CODE, "profile": "mexico"},
+                           headers={"origin": "http://localhost"}).status_code == 422
+        assert client.post("/api/auth/invite", json={"code": INVITE_CODE}).status_code == 403
+        assert client.post("/api/auth/invite", json={"code": INVITE_CODE},
+                           headers={"origin": "http://127.0.0.1"}).status_code == 403
+        for attempt in range(12):
+            invalid = invite_login(client, f"Savia_visitor_{attempt:02d}_" + "z" * 32)
+            assert invalid.status_code == 401 and "colombia" not in invalid.text
+        # All visitors share the proxy IP in a common deployment. Failed
+        # guesses must not lock a valid, high-entropy invitation out globally.
+        response = invite_login(client)
+        assert response.status_code == 200 and response.json()["profile"]["id"] == "colombia"
+        assert "HttpOnly" in response.headers["set-cookie"]
+        assert client.get("/api/auth/me").json()["profile"]["id"] == "colombia"
+        overview = client.get("/api/overview").json()
+        assert overview["metadata"]["dataset"] == "team-synthetic-fixture"
+        assert overview["metadata"]["source_validation"] == "unchanged_inventory_after_ingestion"
+        assert "sintéticos" in overview["metadata"]["identity_note"]
+        assert "sintéticos" in overview["profile"]["identity_note"]
+        assert client.get("/api/chat/status").json()["available"] is False
+        assert client.app.state.bank_state.customer("mexico") is None
+        with pytest.raises(DatasetUnavailable):
+            client.app.state.repository.profile("mexico")
+        with client.app.state.bank_state.connect() as db:
+            db.execute("DELETE FROM profiles WHERE id='colombia'")
+        assert client.get("/api/overview").status_code == 503
+        assert client.app.state.bank_state.customer("colombia") is None
+
+
+def test_invited_profile_cannot_resolve_another_visitors_charge(settings):
+    candidate = invite_settings(settings)
+    mexico_code = "Savia_visitor_" + "m" * 32
+    candidate = replace(candidate,
+                        invites={**candidate.invites, hashlib.sha256(mexico_code.encode()).hexdigest(): "mexico"},
+                        profiles={**candidate.profiles, "mexico": settings.profiles["mexico"]})
+    with TestClient(create_app(candidate), base_url="http://localhost") as client:
+        assert invite_login(client).status_code == 200
+        owned = client.get("/api/overview").json()["transactions"][0]["reference"]
+        assert invite_login(client, mexico_code).status_code == 200
+        assert client.get("/api/overview").json()["profile"]["id"] == "mexico"
+        assert client.app.state.repository.transaction("mexico", owned) is None
+        denied = client.post("/api/chat/messages", json={"message": "Revisa este cargo",
+                                                  "transaction_reference": owned},
+                             headers={"origin": "http://localhost"})
+        assert denied.status_code == 404
+
+
+def test_invite_requires_pinned_synthetic_mount_even_after_cached_health(settings):
+    candidate = invite_settings(settings)
+    marker = settings.data_dir / "builds" / "fixture-1" / "synthetic_provenance.json"
+    with TestClient(create_app(candidate), base_url="http://localhost") as client:
+        assert client.get("/healthz").status_code == 200
+        marker.write_text(json.dumps({**candidate.expected_snapshot, "kind": "not_synthetic"}))
+        assert client.get("/healthz").status_code == 503
+        marker.unlink()
+        assert client.get("/healthz").status_code == 503
+    with pytest.raises(DatasetUnavailable):
+        with TestClient(create_app(candidate), base_url="http://localhost"):
+            pass
+
+
+def test_invite_policy_rotation_revokes_demo_and_prior_invite_sessions(settings):
+    with TestClient(create_app(settings), base_url="http://localhost") as demo:
+        assert login(demo).status_code == 200
+        old_demo_cookie = demo.cookies.get(COOKIE)
+    candidate = invite_settings(settings)
+    with TestClient(create_app(candidate), base_url="http://localhost") as first:
+        first.cookies.set(COOKIE, old_demo_cookie)
+        assert first.get("/api/auth/me").status_code == 401
+        first.cookies.clear()
+        assert invite_login(first).status_code == 200
+        old_invite_cookie = first.cookies.get(COOKIE)
+    rotated = replace(candidate, invites={hashlib.sha256(REPLACEMENT_INVITE_CODE.encode()).hexdigest(): "colombia"})
+    with TestClient(create_app(rotated), base_url="http://localhost") as second:
+        second.cookies.set(COOKIE, old_invite_cookie)
+        assert second.get("/api/auth/me").status_code == 401
+        second.cookies.clear()
+        assert invite_login(second).status_code == 401
+        assert invite_login(second, REPLACEMENT_INVITE_CODE).status_code == 200
+        rotated_cookie = second.cookies.get(COOKIE)
+    with TestClient(create_app(settings), base_url="http://localhost") as restored_demo:
+        restored_demo.cookies.set(COOKIE, rotated_cookie)
+        assert restored_demo.get("/api/auth/me").status_code == 401
+        restored_demo.cookies.clear()
+        assert login(restored_demo).status_code == 200
+
+
+def test_invite_configuration_rejects_unsafe_or_ambiguous_bindings(settings):
+    candidate = invite_settings(settings)
+    for changes in ({"public_origin": "http://bank.example"},
+                    {"public_origin": "https://bank.example", "secure_cookie": False},
+                    {"public_origin": None},
+                    {"invites": {"plaintext": "colombia"}},
+                    {"profiles": {}},
+                    {"expected_snapshot": {**candidate.expected_snapshot, "kind": "legacy_inventory"}},
+                    {"chat": {"base_url": "http://flujo:4200"}}):
+        with pytest.raises(ValueError):
+            replace(candidate, **changes)
+    secured = replace(candidate, public_origin="https://bank.example", secure_cookie=True)
+    with TestClient(create_app(secured), base_url="https://bank.example") as client:
+        assert invite_login(client, headers={"origin": "http://bank.example"}).status_code == 403
+        response = invite_login(client, headers={"origin": "https://bank.example"})
+        assert response.status_code == 200 and "Secure" in response.headers["set-cookie"]
+
+
 def test_changed_private_profile_binding_revokes_old_deployment_cookie(settings):
     with TestClient(create_app(settings)) as old_client:
         login(old_client)
@@ -195,6 +329,17 @@ def test_changed_private_profile_binding_revokes_old_deployment_cookie(settings)
         with TestClient(create_app(replace(settings,profiles=profiles))) as restarted:
             restarted.cookies.set(COOKIE,cookie)
             assert restarted.get("/api/auth/me").status_code == 401
+
+
+def test_private_demo_code_rotation_revokes_existing_cookie(settings):
+    with TestClient(create_app(settings)) as first:
+        assert login(first).status_code == 200
+        old_cookie = first.cookies.get(COOKIE)
+    with TestClient(create_app(replace(settings, demo_code="rotated-private-code"))) as second:
+        second.cookies.set(COOKIE, old_cookie)
+        assert second.get("/api/auth/me").status_code == 401
+        assert login(second).status_code == 401
+        assert second.post("/api/auth/login", json={"profile": "colombia", "code": "rotated-private-code"}).status_code == 200
 
 
 @pytest.mark.parametrize("manifest", [[], None, {"build_id":"fixture-1","source_fingerprint":"a"*16,"gold_files":{}}])

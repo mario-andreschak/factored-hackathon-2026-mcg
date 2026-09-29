@@ -2,7 +2,7 @@ name: hackathon-banking
 
 services:
   frontend:
-    image: hackathon-banking-frontend:local
+    image: ${BANKING_IMAGE:-hackathon-banking-frontend:local}
     build:
       context: .
       dockerfile: Dockerfile

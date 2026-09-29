@@ -54,10 +54,63 @@ class State:
     def bind(self, profile_id: str, customer_id: str):
         with self.connect() as db:
             old = db.execute("SELECT customer_id FROM profiles WHERE id=?", (profile_id,)).fetchone()
-            if old and old[0] != customer_id:
+            if not old or old[0] != customer_id:
                 db.execute("DELETE FROM sessions WHERE profile_id=?", (profile_id,))
             db.execute("INSERT INTO profiles VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET customer_id=excluded.customer_id",
                        (profile_id, customer_id))
+
+    def sessions_invalidated_by(self, fingerprint: str,
+                                invite_bindings: dict[str, str] | None = None,
+                                demo_bindings: dict[str, str] | None = None) -> list[tuple[Session, str | None]]:
+        """Preview active sessions that the next auth reconciliation will remove.
+
+        The caller persists any admitted FLUJO revocations before deleting these
+        banking sessions. This runs during single-replica startup, before serving
+        requests, so no other local writer can create new sessions meanwhile.
+        """
+        with self.connect() as db:
+            row = db.execute("SELECT value FROM settings WHERE key='auth_fingerprint'").fetchone()
+            changed = bool(row and row[0] != fingerprint)
+            rotate_all = changed or row is None
+            rows = db.execute("""SELECT s.id,s.profile_id,s.expires_at,s.token_hash,p.customer_id
+                FROM sessions s LEFT JOIN profiles p ON p.id=s.profile_id
+                WHERE s.expires_at>?""", (int(time.time()),)).fetchall()
+        invalidated = []
+        for session_id, profile_id, expires_at, token_hash, old_customer in rows:
+            target = ((invite_bindings or {}).get(profile_id) if invite_bindings is not None
+                      else (demo_bindings or {}).get(profile_id))
+            rebinding = target is not None and target != old_customer
+            removed = invite_bindings is not None and profile_id not in invite_bindings
+            if rotate_all or removed or rebinding:
+                invalidated.append((Session(session_id, profile_id, expires_at, token_hash), old_customer))
+        return invalidated
+
+    def reconcile_auth(self, fingerprint: str, invite_bindings: dict[str, str] | None = None):
+        """Rotate sessions with auth policy, and discard every stale invite binding."""
+        with self.connect() as db:
+            row = db.execute("SELECT value FROM settings WHERE key='auth_fingerprint'").fetchone()
+            changed = bool(row and row[0] != fingerprint)
+            # An unversioned legacy session has no authenticated policy binding.
+            # Retire it on the first migration, after startup queued any admitted
+            # FLUJO revocation intent.
+            if changed or row is None:
+                db.execute("DELETE FROM sessions")
+            if changed and invite_bindings is None:
+                # Returning to the local demo must not reuse synthetic bindings.
+                db.execute("DELETE FROM profiles")
+            if invite_bindings is not None:
+                allowed = tuple(invite_bindings)
+                placeholders = ",".join("?" for _ in allowed)
+                db.execute(f"DELETE FROM sessions WHERE profile_id NOT IN ({placeholders})", allowed)
+                db.execute(f"DELETE FROM profiles WHERE id NOT IN ({placeholders})", allowed)
+                for profile_id, customer_id in invite_bindings.items():
+                    old = db.execute("SELECT customer_id FROM profiles WHERE id=?", (profile_id,)).fetchone()
+                    if not old or old[0] != customer_id:
+                        db.execute("DELETE FROM sessions WHERE profile_id=?", (profile_id,))
+                    db.execute("INSERT INTO profiles VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET customer_id=excluded.customer_id",
+                               (profile_id, customer_id))
+            db.execute("INSERT INTO settings VALUES ('auth_fingerprint', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                       (fingerprint,))
 
     @staticmethod
     def token_hash(token: str) -> str:
