@@ -38,6 +38,11 @@ Son especificaciones de cobertura pendiente, no resultados de pruebas ejecutadas
 | Un único candidato propio releído con señal persistente | duplicate_review directo; no pedir selección inútil |
 | Snapshot cambia tras selección o confirmación | Invalidar target/consentimiento y volver a identificar/confirmar |
 | Escritura/handoff sin lectura de verificación | No anunciar éxito o transferencia creada |
+| Fuente de reportes recientes ausente o ventana real de 24 h incompleta | `unrecognized_count_24h=null`, `risk_data_complete=false`; HANDOFF/missing_evidence, no asumir cero ni crear intake |
+| Fuente propia verificada con 24 h completas y cero reportes no reconocidos | Conteo medido cero; continuar los demás guardas R16/R17 sin prometer éxito automático |
+| Al menos tres reportes propios no reconocidos verificados en 24 h reales | R16/high_risk; crear y releer derivación, no crear intake automático |
+| Falla el generador tras derivación creada y releída | Fallback ES/PT comunica la derivación verificada con su ID; nunca dice que sigue sin confirmar |
+| Escritura del reclamo incierta seguida por derivación creada y releída | Conservar ACTION_UNVERIFIED para el reclamo y comunicar separadamente la derivación verificada con su ID |
 
 Estos casos deben probarse en ES/PT donde hay interacción. Medir los desvíos a humano, la cobertura de fechas y la proporción de casos que el historial incierto impide automatizar; no ocultarlos del denominador.
 
@@ -45,4 +50,4 @@ Los ocho ejemplos ilustrativos de `resources/prompts/generator_prompt_v3.yml` us
 
 ## Integración que todavía falta
 
-El MCP actual consulta por process_date con límite de 31 días. El contrato de 90 días de event_date requiere una extensión o un adaptador que demuestre cobertura de particiones de proceso anteriores y posteriores al día del evento. También faltan los handlers de reclamos/handoff, scopes de escritura, estado pendiente durable, barrera por turno, consentimiento confiable, reserva atómica y lectura del recibo. La evaluación final independiente ES/PT y la medición del grafo v0 completo siguen siendo gates del producto. Ninguna comprobación de YAML/JSON demuestra estas capacidades.
+El MCP actual consulta por process_date con límite de 31 días. El contrato de 90 días de event_date requiere una extensión o un adaptador que demuestre cobertura de particiones de proceso anteriores y posteriores al día del evento. También faltan los handlers de reclamos/handoff, scopes de escritura, estado pendiente durable, barrera por turno, consentimiento confiable, reserva atómica y lectura del recibo. R16 necesita una fuente verificada de reportes propios recientes con cobertura real de 24 horas; los registros históricos de contacto no la proporcionan. Las plantillas ES/PT de fallback deben distinguir una derivación verificada de una aún incierta, también después de ACTION_UNVERIFIED. La evaluación final independiente ES/PT y la medición del grafo v0 completo siguen siendo gates del producto. Ninguna comprobación de YAML/JSON demuestra estas capacidades.

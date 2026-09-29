@@ -123,7 +123,7 @@ Estado interno; jamás enviar completo al LLM.
     "complaint_match_count": 0,
     "candidate_snapshot_hash": null,
     "confirmation_turn_id": null,
-    "unrecognized_count_24h": 0,
+    "unrecognized_count_24h": null,
     "risk_data_complete": false,
     "handoff_attempted": false
   },
@@ -305,7 +305,7 @@ Estado interno; jamás enviar completo al LLM.
 | workflow_state.complaint_match_count | integer | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.candidate_snapshot_hash | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.confirmation_turn_id | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
-| workflow_state.unrecognized_count_24h | integer | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
+| workflow_state.unrecognized_count_24h | integer\|null | adaptador de riesgo con reportes propios verificados y ventana real completa; null hasta entonces | solo policy_engine; no proyectar al LLM |
 | workflow_state.risk_data_complete | bool | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.handoff_attempted | bool | create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | tool_results.get_customer_profile.status | ok | error | load_customer_context / run_tools / execute_action / verify_action / create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
