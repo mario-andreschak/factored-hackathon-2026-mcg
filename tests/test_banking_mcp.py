@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from starlette.testclient import TestClient
 
 from banking_mcp.config import Config
-from banking_mcp.security import ASSERTION_META, TOKEN_TYPE, BankError, arguments_digest
+from banking_mcp.security import ASSERTION_META, TOKEN_TYPE, BankError, Principal, StateStore, arguments_digest
 from banking_mcp.server import create_http_app
 from banking_mcp.service import Service
 from pipeline.__main__ import main
@@ -419,6 +419,100 @@ def test_500_interleaved_reads_preserve_customer_isolation(bank):
         return all(r["transaction_reference"] in expected[subject] for r in result["transactions"])
     with ThreadPoolExecutor(max_workers=16) as pool:
         assert all(pool.map(one, range(500)))
+
+
+def test_concurrent_replay_consumption_across_store_instances_has_one_winner(tmp_path):
+    import threading
+    path = tmp_path / "shared.db"
+    stores = [StateStore(path) for _ in range(16)]
+    start = threading.Barrier(len(stores))
+
+    def one(store):
+        start.wait(timeout=10)
+        try:
+            store.consume("same-jti", int(time.time()) + 60)
+            return True
+        except BankError as exc:
+            assert exc.code == "authorization_denied"
+            return False
+
+    with ThreadPoolExecutor(max_workers=len(stores)) as pool:
+        assert sum(pool.map(one, stores)) == 1
+    # A fresh store cannot replay the winner either.
+    with pytest.raises(BankError, match="authorization_denied"):
+        StateStore(path).consume("same-jti", int(time.time()) + 60)
+
+
+def test_concurrent_session_binding_and_revocation_across_store_instances(tmp_path):
+    import threading
+    path = tmp_path / "shared.db"
+    stores = [StateStore(path) for _ in range(16)]
+    start = threading.Barrier(len(stores))
+
+    def one(i):
+        subject = "alice" if i % 2 == 0 else "bob"
+        principal = Principal(subject, cid(3 if i % 2 == 0 else 4), "shared-session",
+                              f"conversation-{subject}", int(time.time()) + 60)
+        start.wait(timeout=10)
+        try:
+            stores[i].bind_session(principal)
+            return subject
+        except BankError as exc:
+            assert exc.code == "authorization_denied"
+            return None
+
+    with ThreadPoolExecutor(max_workers=len(stores)) as pool:
+        accepted = [subject for subject in pool.map(one, range(len(stores))) if subject]
+    assert len(accepted) == 8 and len(set(accepted)) == 1
+    stores[0].revoke("shared-session")
+    assert all(store.is_revoked("shared-session") for store in stores)
+    assert StateStore(path).is_revoked("shared-session")
+
+
+def test_external_sqlite_writer_contention_does_not_drop_replay_or_revocation(tmp_path):
+    import sqlite3
+    import threading
+    path = tmp_path / "shared.db"
+    store = StateStore(path)
+    started = threading.Event()
+
+    def consume_and_revoke():
+        started.set()
+        store.consume("contended-jti", int(time.time()) + 60)
+        store.revoke("contended-session")
+
+    # A raw connection is outside our process gate, like the private revoke CLI.
+    external = sqlite3.connect(path)
+    try:
+        external.execute("BEGIN IMMEDIATE")
+        external.execute("INSERT INTO revoked VALUES (?)", ("external-session",))
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(consume_and_revoke)
+            try:
+                assert started.wait(5)
+                assert not future.done()
+            finally:
+                external.commit()
+            future.result(timeout=10)
+    finally:
+        external.close()
+    assert store.is_revoked("external-session") and store.is_revoked("contended-session")
+    with pytest.raises(BankError, match="authorization_denied"):
+        store.consume("contended-jti", int(time.time()) + 60)
+
+
+def test_authority_expiring_during_state_wait_is_denied(bank, monkeypatch):
+    now = int(time.time())
+    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", now + 60)
+
+    def delayed_revocation_read(session):
+        assert session == "session-alice"
+        monkeypatch.setattr("banking_mcp.security.time.time", lambda: now + 61)
+        return False
+
+    monkeypatch.setattr(bank[0].store, "is_revoked", delayed_revocation_read)
+    with pytest.raises(BankError, match="authorization_denied"):
+        bank[0].auth.assert_current(principal)
 
 
 def test_http_service_bearer_and_mcp_request_metadata(bank):
