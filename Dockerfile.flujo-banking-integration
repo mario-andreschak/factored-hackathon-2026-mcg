@@ -6,6 +6,7 @@ ARG FLUJO_WORKER_IMAGE=flujo-slack-worker:banking-stdio-base
 FROM ${FLUJO_APPLICATION_IMAGE} AS application
 FROM ${FLUJO_WORKER_IMAGE}
 USER root
+RUN install -d -o root -g 1000 -m 0750 /run/banking-runtime
 COPY --from=application /app/.next /app/.next
 COPY --from=application /app/next.config.mjs /app/next.config.mjs
 COPY --from=application /app/package.json /app/package-lock.json /app/
@@ -23,6 +24,7 @@ RUN test -x .venv/bin/python || python3 -m venv .venv
 RUN .venv/bin/pip install --no-cache-dir -r requirements-mcp.txt
 COPY banking_mcp ./banking_mcp
 COPY pipeline ./pipeline
+COPY scripts/provision_banking_runtime_policy.mjs ./scripts/provision_banking_runtime_policy.mjs
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 ARG FLUJO_BUILD_REVISION
 RUN node -e 'if (!/^[a-f0-9]{40}$/.test(process.argv[1])) process.exit(1)' "${FLUJO_BUILD_REVISION}"

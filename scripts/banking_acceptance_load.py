@@ -24,6 +24,11 @@ private tool history: set oracle_scope="response" explicitly to check final mask
 transaction references and audit private tool history separately. Restricted Codex
 uses provider_scope="configured-codex-restricted" only after native profile gates.
 Run deterministic Process tests separately.
+
+An explicitly declared workload="static-prefetch-model-summary" instead measures
+a real protected Static lookup followed by a terminal, tool-free model summary.
+It requires separate persisted tool/owner/model-attempt evidence; it is not proof
+of autonomous model tool calling. The default continues to reject Static calls.
 """
 from __future__ import annotations
 
@@ -75,10 +80,17 @@ def validate_manifest(config: dict, maximum: int) -> None:
     kinds = [node.get("data", {}).get("type", node.get("type")) for node in graph["nodes"]]
     if "process" not in kinds:
         raise AcceptanceError("process_flow_required")
+    workload = config.get("workload", "model-tools")
+    if workload not in {"model-tools", "static-prefetch-model-summary"}:
+        raise AcceptanceError("invalid_workload")
+    static_calls = []
     for node in graph["nodes"]:
         props = node.get("data", {}).get("properties", {})
-        if any(entry.get("kind") == "toolCall" for entry in props.get("entries", [])):
-            raise AcceptanceError("static_tool_workload_not_model_proof")
+        static_calls.extend(entry for entry in props.get("entries", []) if entry.get("kind") == "toolCall")
+    if workload == "model-tools" and static_calls:
+        raise AcceptanceError("static_tool_workload_not_model_proof")
+    if workload == "static-prefetch-model-summary":
+        validate_snapshot_graph(config, graph, static_calls)
     cases = config["cases"][:maximum]
     if len(cases) != maximum or len({case["subject"] for case in cases}) != maximum:
         raise AcceptanceError("distinct_subjects_required")
@@ -92,6 +104,57 @@ def validate_manifest(config: dict, maximum: int) -> None:
         references.update(allowed)
         if not isinstance(case["prompt"], str) or not case["prompt"].strip():
             raise AcceptanceError("prompt_required")
+
+
+def validate_snapshot_graph(config: dict, graph: dict, calls: list[dict]) -> None:
+    """Reject fixtures, authored answers, or native tool bridges in this scope."""
+    nodes = graph["nodes"]
+    kind = lambda node: node.get("data", {}).get("type", node.get("type"))
+    props = lambda node: node.get("data", {}).get("properties", {})
+    process = [node for node in nodes if kind(node) == "process"]
+    start = [node for node in nodes if kind(node) == "start"]
+    static = [node for node in nodes if kind(node) == "static"]
+    mcp = [node for node in nodes if kind(node) == "mcp"]
+    server = config.get("protected_server_name")
+    if (config.get("oracle_scope") != "response" or not isinstance(server, str) or not server
+            or not config.get("summary_model_ref") or len(process) != 1 or len(static) != 1
+            or len(mcp) != 1 or len(start) != 1 or len(nodes) != 4 or len(calls) != 1
+            or props(process[0]).get("boundModel") != config["summary_model_ref"]
+            or props(process[0]).get("inputMode", "full-history") != "full-history"
+            or props(static[0]).get("entries") != calls
+            or props(mcp[0]).get("boundServer") != server
+            or props(mcp[0]).get("enabledTools") != ["list_my_transactions"]):
+        raise AcceptanceError("bounded_real_snapshot_summary_required")
+    if props(process[0]).get("mcpNodes") or props(process[0]).get("availableTools"):
+        raise AcceptanceError("terminal_tool_free_process_required")
+    call = calls[0]
+    if (call.get("executionMode") != "real" or call.get("serverName") != server
+            or call.get("toolName") != "list_my_transactions"):
+        raise AcceptanceError("real_snapshot_tool_required")
+    try:
+        args = json.loads(call.get("argumentsJson", "{}"))
+        if (not isinstance(args, dict) or set(args) - {"limit", "start_date", "end_date"}
+                or not isinstance(args.get("limit"), int) or isinstance(args["limit"], bool)
+                or not 1 <= args["limit"] <= 5):
+            raise ValueError()
+    except (TypeError, ValueError):
+        raise AcceptanceError("bounded_snapshot_arguments_required") from None
+    edges = graph.get("edges", [])
+    if any(edge.get("source") == process[0]["id"] for edge in edges):
+        raise AcceptanceError("terminal_tool_free_process_required")
+    attachment = [edge for edge in edges if edge.get("data", {}).get("edgeType") == "mcp"]
+    if (len(attachment) != 1 or attachment[0].get("source") != static[0]["id"]
+            or attachment[0].get("target") != mcp[0]["id"]
+            or attachment[0].get("sourceHandle") != "static-right-mcp"
+            or attachment[0].get("targetHandle") != "mcp-left"):
+        raise AcceptanceError("connected_real_snapshot_tool_required")
+    expected = {(start[0]["id"], static[0]["id"], "standard"),
+                (static[0]["id"], process[0]["id"], "standard"),
+                (static[0]["id"], mcp[0]["id"], "mcp")}
+    actual = {(edge.get("source"), edge.get("target"), edge.get("data", {}).get("edgeType"))
+              for edge in edges}
+    if len(edges) != 3 or len({node["id"] for node in nodes}) != 4 or actual != expected:
+        raise AcceptanceError("linear_snapshot_then_summary_required")
 
 
 def tool_references(value: object) -> set[str]:
@@ -228,11 +291,15 @@ def main() -> int:
         for case in config["cases"]:
             case.setdefault("session_id", str(uuid.uuid4()))
             case.setdefault("session_exp", session_exp)
-        evidence = {"scope": "normal_completion_process", "provider_scope": config["provider_scope"],
+        snapshot = config.get("workload") == "static-prefetch-model-summary"
+        evidence = {"scope": "normal_completion_snapshot_model_summary" if snapshot else "normal_completion_process",
+            "provider_scope": config["provider_scope"],
             "oracle_scope": config.get("oracle_scope", "structured-tool"),
             "private_tool_history_audit": "required separately when oracle_scope=response",
             "provenance": "operator-supplied approved flow; running deployment must be attested separately",
-            "static_calls": 0, "saved_flow_mutations": 0, "phases": []}
+            "static_calls_per_request": 1 if snapshot else 0,
+            "model_attempt_and_private_tool_owner_audit": "required separately" if snapshot else "private tool audit required",
+            "saved_flow_mutations": 0, "phases": []}
         for count in phases:
             started = time.perf_counter()
             barrier = threading.Barrier(count)
