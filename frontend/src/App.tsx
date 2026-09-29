@@ -1529,7 +1529,9 @@ export default function App() {
             </label>
             <button className="snapshot-pill" onClick={() => setInfo(true)}>
               <span className="live-dot" />
-              {synthetic ? "Escenario sintético" : "Demo con datos reales"}
+              {synthetic
+                ? "Escenario sintético"
+                : "Datos sintéticos del organizador"}
             </button>
             <button
               className="icon-button help-button"
@@ -2102,7 +2104,7 @@ export default function App() {
           title={
             synthetic
               ? "Un escenario para explorar"
-              : "Una experiencia con datos reales"
+              : "Datos sintéticos del organizador"
           }
           onClose={closeInfo}
         >
