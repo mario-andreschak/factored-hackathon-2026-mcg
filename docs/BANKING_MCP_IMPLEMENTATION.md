@@ -75,7 +75,7 @@ revocation remains an optional integration action.
 
 | Check | Result |
 | --- | --- |
-| Python pipeline/MCP/demo/evaluation suite | Windows and Linux CI passed at `e6a6313`, including the nine additional acceptance-runner scope checks and the Docker-context correction. |
+| Python pipeline/MCP/demo/evaluation suite | Windows and Linux CI passed at `0a3ab0d`, including acceptance-runner scope checks, protected policy provisioning and the final measurements. |
 | SQLite 500-read contention | Original 500-call test unchanged; passed three consecutive local Windows repeats. Replay race, session ownership, external writer and expiry fences also passed. |
 | Chat UI | Actual Sol resolved current conversation/flow commands; actual A/B MCP lookups matched independent customer queries. Conversation preset hidden from model arguments. |
 | Operator API | Actual Sol A/B reads in one operator conversation matched independent customer queries. |
@@ -87,7 +87,7 @@ revocation remains an optional integration action.
 | Foreign handle | Actual customer B model called `get_my_transaction` with A's handle. MCP returned `reference_unavailable`; no foreign transaction was returned. |
 | Normal-route HTTP security | 19 checks passed: original foreign/replay/body/admin/graph checks plus expired history/cancel/revoke/continue assertions and forged job lease/metadata. |
 | Lifecycle | Repeated on the current graph using a retained successful model conversation: completed events/cancel, revocation, worker restart and deletion passed. Fresh authorized owners retained access; revoked sessions and deleted history were denied. No additional model calls were needed. |
-| FLUJO source checks | Accepted-job patch `153a0391` passed independent review, 16 suites/230 tests, types and lint. Its CI builds/installer/isolated gates passed; full suite/baseline remain pending. Generic `8f8c571f` passed every required gate. |
+| FLUJO source checks | Accepted-job patch `153a0391` passed independent review, 16 suites/230 tests, types and lint. Generic `8f8c571f` and optional test-only `0afeaf0b` passed every required CI gate, including full/isolated suites and published baselines, Windows/Linux builds, installer and release checks. |
 
 The Slack harness selected the permanent Banking Operator graph locally.
 The deployed default is still Slack Assistant. Its model path with outbound Slack
@@ -98,6 +98,19 @@ The resource-arming defect and strict MCP response-contract drift are fixed.
 Trusted errors now retain their safe code across separate Next server module
 graphs. The dedicated CLI 0.157.1 uses the existing Sol model and subscription;
 no new provider or model was configured.
+
+The deployed application remains `153a0391`. The production source tree is
+identical at `0afeaf0b`; only the fixture timeout and its comments changed.
+The real-model measurements below belong to that deployed application, while
+CI belongs to the exact tested source revision.
+
+The earlier `153a0391` baseline correctly caught one mocked 500-owner fixture
+exceeding its 120-second test timeout. Reviewed `0afeaf0b` grants that test
+450 seconds, preserves every assertion and changes no production code or
+baseline threshold. Its [full CI run](https://github.com/mario-andreschak/FLUJO/actions/runs/36528348650)
+passed all 7,568 executed tests; the 500-owner fixture passed in 132.404 seconds.
+The [installer run](https://github.com/mario-andreschak/FLUJO/actions/runs/36528348642)
+also passed. No redeployment or additional model run was needed.
 
 ## Current model capacity
 

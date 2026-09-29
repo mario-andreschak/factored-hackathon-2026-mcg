@@ -1,11 +1,16 @@
 # Customer-bound banking runs in FLUJO
 
-**Revised after the second review, 2026-09-27. Status: implementation proposal.** FLUJO remains the workflow backend and banking MCP client. Use shared graphical flows, an authenticated frontend server, an immutable principal for each run, and independently enforced ownership in the banking MCP. The [review record](FLUJO_BANKING_RUN_AUTH_REVIEW.md) separates source findings, executed probes, alternatives and implementation gates. This review does not implement banking authorization.
+**Historical proposal, revised September 27, 2026.** The source findings and gates
+below describe that review, not the current implementation. The
+[review record](FLUJO_BANKING_RUN_AUTH_REVIEW.md) retains its executed probes.
 
-> Integration correction, September 28: use FLUJO's existing hidden tool presets
-> and normal chat path. See [the current presets plan](FLUJO_TOOL_PRESETS_PLAN.md).
-> The banking-specific ingress below records the earlier design and must not be
-> treated as the intended chat/Slack integration.
+> **Superseded by the September 29 implementation:** see
+> [implemented behavior and measurements](BANKING_MCP_IMPLEMENTATION.md) and
+> [current decisions](BANKING_MCP_NEXT_STEPS.md). The integration uses ordinary
+> `/v1/chat/completions`, an optional generic execution adapter, private caller
+> authority and read-only banking tools over in-worker stdio. Existing chat and
+> Slack support approved-customer operator tests through one permanent flow.
+> The specialized routes and consent/case-writing proposal below are historical.
 
 ## 1. Decision and scope
 

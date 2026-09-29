@@ -137,9 +137,12 @@ requests, missed/unnecessary handoffs, unauthorized outcomes, queue/provider/too
 latency and cost per attempted/successful case, with counts and language mix.
 
 This covers the challenge's grounded workflow, clarification, local handoff,
-ES/PT and learned-component comparison. Existing Static 500-subject evidence and
-Slack's offline scheduler harness do not prove 500 model chats or a live service
-SLA. Provider-capacity, authenticated customer frontend integration, owner/history
-and native-capability isolation, source freshness and operational monitoring
-remain explicit gates. Organizer records are documented as synthetic; credentials,
+ES/PT and learned-component comparison. Actual existing-chat and mocked-delivery
+Slack tests, authenticated ownership/control checks, native capability restrictions
+and a real Sol 500-customer burst have passed. See
+[current measurements and limits](BANKING_MCP_IMPLEMENTATION.md).
+The burst used bounded admission; it does not establish a live Slack throughput
+or service SLA. Human ES/PT review, customer frontend enrollment and operational
+monitoring remain submission/deployment follow-ups. Source checks do not establish
+full S3 freshness. Organizer records are documented as synthetic; credentials,
 private mappings and separately restricted inputs stay private.

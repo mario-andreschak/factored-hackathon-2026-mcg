@@ -7,11 +7,12 @@ It is read-only: no dispute submission, refunds or bank mutations.
 
 ## Available in local FLUJO
 
-At `http://127.0.0.1:43420/`, both registrations are connected:
+At `http://127.0.0.1:43420/`, these registrations are connected:
 
 | Registration | Dataset | Usable now |
 | --- | --- | --- |
 | **Banking MCP Demo** | Explicit synthetic fixture, one fixed demo customer | Build graphical flows and call all three tools. S3 verification is unavailable. |
+| **Banking MCP Operator** | Private allowlist of approved dataset customers | Request an approved customer through existing chat or the Slack bridge, using the permanent Banking Operator flow. |
 | **Banking MCP** | Real bucket's derived snapshot, 4,425,008 transactions | Protected FLUJO flow reads work with verified per-call identity; ordinary tool testers cannot supply customer authority. |
 
 Banking MCP runs as a **stdio child process inside the existing FLUJO container**.
@@ -21,6 +22,7 @@ There is no separate Banking MCP container, remote MCP URL, or banking server po
 ```text
 Existing FLUJO container
   FLUJO -> Python Banking MCP (stdio)
+        -> Python operator banking MCP (stdio)
         -> Python synthetic demo MCP (stdio)
 ```
 
@@ -100,12 +102,14 @@ The local stdio transport does not select a customer. Static headers/env-vars or
 per-call assertion. Synthetic mode bypasses customer assertions only for a marked,
 fixed-customer fixture and explicitly labels every customer result `synthetic:true`.
 
-The optional generic FLUJO post-normalization metadata callback is the proposed
-normal-path adapter for the same fresh per-call assertions. Signing keys and bank
-policy remain in the hackathon integration, not graph parameters. The Python
-contract does not implement that FLUJO adapter or prove its chat/provider path.
+The optional generic FLUJO callback runs after final argument normalization.
+The separately selected hackathon adapter uses it to sign fresh per-call
+assertions. Signing keys and bank policy stay outside graph parameters.
+Actual model, ownership and interface acceptance are recorded in
+[the implementation report](../docs/BANKING_MCP_IMPLEMENTATION.md); Python
+contract tests alone do not establish that end-to-end result.
 
-See [the FLUJO integration design](../docs/FLUJO_BANKING_RUN_AUTH.md) for
+See [the implemented FLUJO integration](../docs/BANKING_MCP_IMPLEMENTATION.md) for
 ingress, run-context and tool-dispatch requirements. Signing keys must stay outside FLUJO
 graph configuration, user metadata, the model and ordinary tool parameters. Strip
 incoming assertions and mint fresh ones from verified server context. Reject

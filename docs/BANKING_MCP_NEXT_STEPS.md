@@ -34,7 +34,7 @@ optional follow-up and is not required for this demo.
 | Area | Evidence |
 | --- | --- |
 | Data/MCP | Optional selectors, explicit operator mode, independent row ownership checks, opaque handles, snapshot inventory validation and shutdown cleanup. |
-| FLUJO | Generic private execution seams; reference/preset fixes; separate optional banking integration. |
+| FLUJO | Generic private execution seams; all reference/preset families covered; separate optional banking integration. `@current` resolves execution context without opening a picker. Explicit entity selectors, file/folder search, tool/resource/global/run references and hidden presets retain their respective behavior. |
 | Chat UI | Actual Sol resolved current conversation/flow references. A/B banking lookups matched independent customer queries in the same operator conversation. |
 | Slack bridge | Actual Bridge/FlujoClient/Sol: A, B follow-up, then rejection of A's old handle in a fresh root. Delivery mocked; nothing posted to Slack. |
 | Human handoff | Actual Sol created a local FLUJO ticket; persisted receipt, conversation/flow presets and handoff envelope verified. No bank action. |
@@ -42,19 +42,25 @@ optional follow-up and is not required for this demo.
 | Native profile | Pinned CLI 0.157.1/catalog; Windows and Linux each passed 42 HTTPS, 42 preferred WebSocket and 14 production bridge cases across Sol/Luna. |
 | Authenticated customer | Actual Sol lookup matched its independent owner oracle. B's actual tool call could not use A's handle. |
 | Ordinary ownership/lifecycle | 19 HTTP checks passed, including expired controls and forged job authority. Events/cancel, durable revocation/ownership across restart and deletion tombstones passed on the final build. |
-| CI | Banking suites passed on Windows/Linux at `e6a6313`; exact generic `8f8c571f` and optional `d28b260e` FLUJO revisions passed every required gate. |
+| CI | Banking suites passed on Windows/Linux at `0a3ab0d`. Generic `8f8c571f` and optional test-only `0afeaf0b` passed every required gate, including full/isolated suites and published baselines. |
 
 The Slack model test used the permanent Banking Operator flow in a harness
 configuration. The deployed default remains Slack Assistant. Its actual model
 path with Slack write tools has not been tested; no outbound Slack authorization
 was given.
 
-## Remaining acceptance
+## Acceptance and follow-ups
 
-1. Finish exact-revision CI and refresh PR evidence. Runtime acceptance passed at
-   optional revision `153a0391`: actual 1/10/50/500 model phases and current
-   controls/lifecycle. Its full CI suite/baseline remain pending.
-2. Human review of ES/PT evaluation text remains a submission task.
+Implementation acceptance passed: actual 1/10/50/500 model phases and current
+controls/lifecycle on deployed `153a0391`; every required source CI gate on
+test-only `0afeaf0b`, whose production code is identical. The earlier baseline
+caught a mocked fixture's 120-second test timeout. The reviewed correction gives
+that fixture 450 seconds without changing assertions or baseline thresholds.
+See [the final CI run](https://github.com/mario-andreschak/FLUJO/actions/runs/36528348650).
+
+Human review of ES/PT evaluation text remains a submission task. Customer
+frontend enrollment, live Slack delivery and operational monitoring are separate
+deployment follow-ups; they are not prerequisites for the existing operator demo.
 
 The 500-model gate is now passed. The reviewed lease separates accepted work from
 ingress expiry; fresh controls, replay/session/owner/revocation/policy checks
