@@ -36,6 +36,13 @@ records whose approved identity cannot yet be recovered; `legacy_expired_unknown
 counts the same records after their assertion expires. No customer or session IDs
 appear there. An auth-policy rotation queues admitted session revocations before
 it invalidates browser cookies; failure to queue stops startup.
+Before changing the FLUJO issuer, model, or customer/subject mapping, let
+admitted work and pending revocations finish under the old configuration, or
+retain that configuration until those sessions expire. Retry assertions use
+the current configuration, so an incompatible change can leave an intent
+`expired_unconfirmed`; queueing alone is not worker acknowledgement. A signing
+key rotation can use fresh assertions only while the worker trusts the new key
+and the issuer and subject mapping remain stable.
 
 ## Run beside the existing FLUJO worker
 
