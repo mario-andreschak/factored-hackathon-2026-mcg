@@ -1,6 +1,6 @@
 # Banking MCP implementation
 
-Updated September 28, 2026.
+Updated September 29, 2026.
 
 ## What runs now
 
@@ -53,6 +53,14 @@ limits references/tools/control routes, and keeps authority in runtime memory.
 After final arguments/presets, it signs a fresh MCP assertion. MCP verifies issuer,
 audience, session, tool, arguments, expiry and one-use replay independently.
 
+Fresh ingress assertions remain valid for at most 120 seconds. Accepted work has
+a separate opaque server-owned lease: queue at most 300 seconds, active execution
+at most 110 seconds including validation/setup, total at most 410 seconds, always
+capped by the verified session. Wake and execution checks enforce current policy,
+ownership, revocation and cancellation. Controls and continuations require fresh
+assertions; a finished job cannot sign again. The lease stays in memory and cannot
+be supplied through metadata, prompts or tool arguments.
+
 Organizers use one permanent Banking Operator graphical flow and existing Sol.
 They select an approved customer explicitly. Hidden `@current.conversation.id`
 correlates handles; it is not customer authentication. A separate permanent
@@ -74,12 +82,12 @@ revocation remains an optional integration action.
 | Slack bridge | Actual Bridge/FlujoClient/Sol A/B turns passed; fresh root rejected the old selection handle in an actual tool result. Delivery mocked; no Slack posts. |
 | Local handoff | Actual Sol ticket creation, persisted receipt and structured handoff envelope passed after an urgency-prompt correction. |
 | Native restricted profile | Per platform, Windows and Linux: 42 HTTPS, 42 preferred WebSocket and 14 production tool-bridge cases across Sol/Luna. Approved MCP executed; forbidden native capabilities rejected. CLI 0.157.1 and the restrictive catalog are pinned by exact hashes. |
-| Deployment | Existing worker healthy at optional revision `d28b260e`; compiled optional adapter selected; native CLI/catalog hash pins verified. Live policy is a protected native Linux file, provisioned from the approved staging bytes. |
+| Deployment | Existing worker healthy at optional revision `153a0391`; compiled optional adapter selected; native CLI/catalog hash pins verified. Live policy is a protected native Linux file, provisioned from the approved staging bytes. |
 | Authenticated customer | Actual Sol lookup completed in 16.024 s; its persisted MCP transaction reference matched the independent customer oracle. Private assertions and execution credentials were absent from state. |
 | Foreign handle | Actual customer B model called `get_my_transaction` with A's handle. MCP returned `reference_unavailable`; no foreign transaction was returned. |
-| Normal-route HTTP security | 13 checks passed against a successful owned conversation: foreign history/events/delete/cancel/continue, replay, missing assertion and forged body/metadata/admin/graph requests. |
+| Normal-route HTTP security | 19 checks passed: original foreign/replay/body/admin/graph checks plus expired history/cancel/revoke/continue assertions and forged job lease/metadata. |
 | Lifecycle | Repeated on the current graph using a retained successful model conversation: completed events/cancel, revocation, worker restart and deletion passed. Fresh authorized owners retained access; revoked sessions and deleted history were denied. No additional model calls were needed. |
-| FLUJO source CI | Exact generic `8f8c571f` and optional `d28b260e` revisions passed all required CI, including full suites, published baselines, Windows/Linux builds and installers. |
+| FLUJO source checks | Accepted-job patch `153a0391` passed independent review, 16 suites/230 tests, types and lint. Its CI builds/installer/isolated gates passed; full suite/baseline remain pending. Generic `8f8c571f` passed every required gate. |
 
 The Slack harness selected the permanent Banking Operator graph locally.
 The deployed default is still Slack Assistant. Its model path with outbound Slack
@@ -98,33 +106,38 @@ read-only MCP tools. It has no Static prefetch step. Each successful request is
 checked against an independent customer oracle, its persisted successful MCP
 result, its real model attempt and its delivered HTTP answer.
 
-The latest phases used native Linux policy storage at optional revision
-`d28b260e`:
+The final phases used native Linux policy storage and the reviewed accepted-job
+lease at optional revision `153a0391`. All requests were submitted together within
+each phase. Admission remained capped at 128 active jobs and 512 queued jobs;
+the HTTP client's explicit 450-second timeout is separate from server deadlines.
 
 | Submitted together | Result | p50 / p95 | Total |
 | --- | --- | --- | --- |
-| 1 | 1/1 passed | 16.498 s / 16.498 s | 16.498 s |
-| 10 | 10/10 passed | 11.947 s / 14.161 s | 14.165 s |
-| 50 | 50/50 passed | 22.095 s / 23.615 s | 49.641 s |
-| 500 | **Failed: 216 passed, 157 expired (401), 127 cancelled (409)** | 119.787 s / 121.725 s | 121.840 s |
+| 1 | 1/1 passed | 18.054 s / 18.054 s | 18.055 s |
+| 10 | 10/10 passed | 13.067 s / 17.458 s | 17.460 s |
+| 50 | 50/50 passed | 23.804 s / 25.688 s | 45.761 s |
+| 500 | **500/500 passed** | 147.363 s / 237.784 s | 257.693 s |
 
-The 500-phase timings include failed HTTP responses. Native process peak was 89;
-worker memory peaked at 4.721 GB. Every one of the 216 successful answers passed
-the full tool/model/delivery ownership check. A separate audit of all 334 persisted
-phase states found no foreign tool results or persisted authority, and no private
-CLI homes remained. This privacy result does **not** establish 500 successful chats.
+The 500-phase audit matched exactly 500 successful MCP calls, 500 completed real
+Sol model attempts and 500 delivered answers to independent customer oracles in
+500 distinct conversations. All 500 persisted states passed the owner/privacy
+audit; no foreign results, authority markers or private CLI homes remained.
+Native process peak was 88 and worker memory peaked at 4.798 GB. Timings include
+queue time; this demonstrates 500 concurrent submitted requests with bounded
+admission, not 500 simultaneously running native processes.
 
-Successful adapter attempts took about 30.456 s median and 40.627 s at p95;
-their MCP calls took about 1.068 s median and 3.325 s at p95. Unsuccessful runs
-reached `run.started` about 100.010 s median after the burst, under the same
-120-second ingress assertion expiry. Queue time currently consumes execution
-time. These adapter spans include runtime/tool/guard work, and `run.started`
-offsets are not pure queue latency.
+Each request used one actual fresh assertion with a lifetime of at most 120
+seconds. For 293 requests, the same-run successful model terminal event and
+client-observed completion occurred after that assertion expired. This evidence
+joins the timing records to the exact ownership-audit correlation digest. It
+establishes bounded accepted work across ingress expiry, without extending fresh
+request validity. These timestamps are not network delivery or lease-acceptance
+timestamps.
 
-A bounded server-owned lifetime for accepted work is under review. Fresh request
-assertions, ownership, revocation and policy checks must remain separate from that
-lifetime. No higher admission cap, different model or accepted-job lease has been
-deployed for this measurement.
+After the burst, all 19 ordinary HTTP security checks passed, including expired
+controls and attempted lease injection. Revocation and ownership survived a
+restart; deleting the owned test conversation created an enforced tombstone.
+Read-only SQLite inspection confirmed MCP session binding and durable revocation.
 
 ## Earlier capacity evidence
 
@@ -139,15 +152,23 @@ deployed for this measurement.
 | First actual Sol 500 burst | 500 submitted / native peak 12 | 119.868 s / 133.270 s | **Failed capacity:** 49 completed, 166 cancelled (409), 285 expired (401). Timings cover all HTTP responses, including failures. |
 
 The first burst's 49 successful outputs and all 127 persisted states passed their
-owner/privacy checks. Later 500-model bursts still failed: 146 successful native
-tool runs, then 149 successful Static-prefetch/model-summary runs. The latter
-graph was tested separately and has been removed from the deployed customer flow.
+owner/privacy checks. Later bursts failed with 146 native successes, 149
+Static-prefetch/model-summary successes, and then 216 native successes at
+`d28b260e` (157 expired, 127 cancelled; 121.840 s total). The Static-prefetch graph
+was tested separately and removed from the deployed customer flow.
+
+The final pre-lease phase showed late unsuccessful `run.started` offsets around
+100 seconds median under the same 120-second ingress expiry. Successful adapter
+attempts took about 30.456 s median/40.627 s p95; MCP calls took about 1.068 s
+median/3.325 s p95. These spans included runtime/tool/guard work and the offsets
+were not pure queue latency. The accepted-job lease corrected that deadline
+coupling; the model, permanent graph and admission cap stayed unchanged.
 
 Identical executable verification is shared only while verification is in flight;
 each caller retains fresh file/catalog/authorization checks. Completed verification
 is not cached. Moving the protected policy from a Windows bind mount to native
-Linux storage preceded the latest result of 216 successes. Neither change proves
-a sole cause or sufficient throughput. There is no measured provider rate-limit
+Linux storage preceded the historical result of 216 successes. Those changes
+alone did not establish sufficient throughput. There is no measured provider rate-limit
 or memory-pressure explanation. Native process counts are not admission telemetry;
 first HTTP body byte is not model time to first token.
 

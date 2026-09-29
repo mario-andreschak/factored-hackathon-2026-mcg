@@ -1,6 +1,6 @@
 # Banking MCP: decisions and remaining acceptance
 
-Updated September 28, 2026, after four coordinated reviews and implementation.
+Updated September 29, 2026, after four coordinated reviews and implementation.
 This replaces the earlier proposal. See [implementation and measurements](BANKING_MCP_IMPLEMENTATION.md)
 and [operator demo instructions](BANKING_OPERATOR_DEMO.md).
 
@@ -38,10 +38,10 @@ optional follow-up and is not required for this demo.
 | Chat UI | Actual Sol resolved current conversation/flow references. A/B banking lookups matched independent customer queries in the same operator conversation. |
 | Slack bridge | Actual Bridge/FlujoClient/Sol: A, B follow-up, then rejection of A's old handle in a fresh root. Delivery mocked; nothing posted to Slack. |
 | Human handoff | Actual Sol created a local FLUJO ticket; persisted receipt, conversation/flow presets and handoff envelope verified. No bank action. |
-| Queues | Bounded private admission; Slack scheduler preserves ordering within each conversation. |
+| Queues | Private accepted-job lease: queue at most 300 s, active at most 110 s, total at most 410 s, capped by session. Fresh request proofs remain at most 120 s. Slack preserves ordering within each conversation. |
 | Native profile | Pinned CLI 0.157.1/catalog; Windows and Linux each passed 42 HTTPS, 42 preferred WebSocket and 14 production bridge cases across Sol/Luna. |
 | Authenticated customer | Actual Sol lookup matched its independent owner oracle. B's actual tool call could not use A's handle. |
-| Ordinary ownership/lifecycle | 13 HTTP attack checks on a successful conversation, completed events/cancel, durable revocation/ownership across restart and deletion tombstones passed. |
+| Ordinary ownership/lifecycle | 19 HTTP checks passed, including expired controls and forged job authority. Events/cancel, durable revocation/ownership across restart and deletion tombstones passed on the final build. |
 | CI | Banking suites passed on Windows/Linux at `e6a6313`; exact generic `8f8c571f` and optional `d28b260e` FLUJO revisions passed every required gate. |
 
 The Slack model test used the permanent Banking Operator flow in a harness
@@ -51,17 +51,14 @@ was given.
 
 ## Remaining acceptance
 
-1. Review the accepted-work lifetime. Current late starts lose their execution
-   budget to the 120-second ingress expiry. A separate bounded server-owned job
-   lease is being reviewed; fresh ingress, replay, session, owner, revocation and
-   current-policy checks must remain enforced. The active-run bound stays 110 s.
-2. After a reviewed fix, repeat actual model phases at 1/10/50/500 with independent
-   tool/model/delivered-answer ownership checks, stopping at the first failure.
-   The latest 500 burst failed: 216 passed, 157 expired and 127 cancelled.
-3. Update final CI/PR evidence and repeat affected ordinary controls after the last
-   deployment. Specialized chat/conversation routes are already retired; current
-   graph ownership, revocation, restart and deletion checks passed.
-4. Human review of ES/PT evaluation text remains a submission task.
+1. Finish exact-revision CI and refresh PR evidence. Runtime acceptance passed at
+   optional revision `153a0391`: actual 1/10/50/500 model phases and current
+   controls/lifecycle. Its full CI suite/baseline remain pending.
+2. Human review of ES/PT evaluation text remains a submission task.
+
+The 500-model gate is now passed. The reviewed lease separates accepted work from
+ingress expiry; fresh controls, replay/session/owner/revocation/policy checks
+remain enforced. Specialized chat/conversation routes are retired.
 
 ## Measurements and limits
 
@@ -72,11 +69,12 @@ was given.
 | Normal Process with deterministic external fixture provider | 500/500 distinct signed owners; peak 4 active; p50 30.302 s / p95 59.471 s on contended Windows host | Ordinary execution/dispatch isolation, not native provider capacity. |
 | Actual Sol operator calls | A/B lookup and handoff passed, roughly 18–26 s per call | These measured demo cases. |
 | Offline Slack queue | 500 conversations / 1,000 turns; peak 8 active; mocked delivery | Scheduler ordering/correlation, not model or Slack throughput. |
-| Latest actual Sol customers | 1/10/50 passed; fifty-customer p50 22.095 s / p95 23.615 s, total 49.641 s | Full actual MCP, real model and delivered-answer owner checks passed. |
-| Latest actual Sol 500 burst | 216/500 passed; 157 expired, 127 cancelled; total 121.840 s | Failed capacity. All 216 successes passed the full owner check; all 334 persisted states passed privacy checks. Peak native processes 89; worker 4.721 GB. |
+| Final actual Sol customers | 1/10/50 passed; fifty-customer p50 23.804 s / p95 25.688 s, total 45.761 s | Full actual MCP, real model and delivered-answer owner checks passed. |
+| Final actual Sol 500 burst | **500/500 passed**; p50 147.363 s / p95 237.784 s; total 257.693 s | Exactly 500 MCP calls/model attempts/own replies and 500 private states audited. Native peak 88; worker 4.798 GB. Admission cap 128, queued work included. |
 
-None of the 500-case results above establishes 500 successful concurrent native
-model chats. Keep fixture/scheduler results separate from model capacity.
+The final model test submitted 500 customers concurrently with bounded admission.
+It does not mean 500 native processes ran simultaneously. Keep fixture/scheduler
+results separate from this real-model capacity evidence.
 
 The current gold-only rebuild copies legacy lineage. It does not newly validate
 the bronze objects consumed by earlier ingestion. Selected-object verification
