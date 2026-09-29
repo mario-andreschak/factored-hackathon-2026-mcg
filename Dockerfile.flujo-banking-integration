@@ -16,7 +16,7 @@ COPY --from=application /app/node_modules/canonicalize /app/node_modules/canonic
 
 # A dedicated, tested binary is used only by the optional restricted profile.
 # The normal Codex executable and existing model configurations stay in the base.
-RUN npm install --prefix /opt/codex-restricted --cache /tmp/banking-codex-install-cache --omit=dev --no-audit --no-fund @openai/codex@0.153.3
+RUN npm install --prefix /opt/codex-restricted --cache /tmp/banking-codex-install-cache --omit=dev --no-audit --no-fund @openai/codex@0.157.1
 WORKDIR /opt/banking-mcp
 COPY requirements-mcp.txt requirements-pipeline.txt requirements-s3.txt ./
 RUN test -x .venv/bin/python || python3 -m venv .venv

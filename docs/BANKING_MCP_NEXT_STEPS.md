@@ -39,7 +39,9 @@ optional follow-up and is not required for this demo.
 | Slack bridge | Actual Bridge/FlujoClient/Sol: A, B follow-up, then rejection of A's old handle in a fresh root. Delivery mocked; nothing posted to Slack. |
 | Human handoff | Actual Sol created a local FLUJO ticket; persisted receipt, conversation/flow presets and handoff envelope verified. No bank action. |
 | Queues | Bounded private admission; Slack scheduler preserves ordering within each conversation. |
-| Native profile | Exact CLI/catalog hashes; 42 Linux forced-call probes across Sol/Luna. Approved MCP executed; forbidden native capabilities rejected. |
+| Native profile | Pinned CLI 0.157.1/catalog; Windows and Linux each passed 42 HTTPS, 42 preferred WebSocket and 14 production bridge cases across Sol/Luna. |
+| Authenticated customer | Actual Sol lookup matched its independent owner oracle. B's actual tool call could not use A's handle. |
+| Ordinary ownership/lifecycle | 13 HTTP attack checks on a successful conversation, completed events/cancel, durable revocation/ownership across restart and deletion tombstones passed. |
 | Python CI | 121 tests and 36 subtests passed on Windows and Linux. Unchanged 500-read gate also passed three consecutive local Windows repeats. |
 
 The Slack model test used the permanent Banking Operator flow in a harness
@@ -49,21 +51,16 @@ was given.
 
 ## Remaining acceptance
 
-1. Finish the normal customer path with an existing supported model. The build
-   selects the adapter, and the resource-arming defect is fixed. The pinned
-   0.153.3 CLI reached the provider but received unsupported-model errors for
-   both Sol and Luna. Ordinary Sol works with 0.157.1. Verify the newer binary
-   against the restrictive catalog before enrolling it; keep dispatch guards.
-2. Audit private tool results against independent customer oracles. Verify foreign
-   history/events/control, handles and revocation through the ordinary route.
-   Thirteen actual HTTP checks already passed for foreign history/control/continue,
-   replay, missing assertions and forged identity/administration requests. These
-   used an owned failed-provider conversation and made no new model calls.
-3. Run actual model phases at 1/10/50/500 distinct customers, stopping at the first
-   failure. Report queue expiry, provider limits and memory honestly.
-4. Retire specialized legacy routes only after ordinary-route owner and lifecycle
-   tests pass. Keep old conversations protected during migration.
-5. Refresh final PR evidence after the last source changes. Human review of ES/PT
+1. Deploy the minimal concurrent executable-verification fix. Each caller must
+   retain fresh file/catalog and authorization checks; completed verification is
+   not cached. Do not extend authorization or run deadlines to pass the load test.
+2. Repeat actual Sol model phases at 1/10/50/500 and their private tool/owner audits,
+   stopping at the first failure. The first 500 burst failed: 49 completed,
+   166 cancelled and 285 expired. One, ten and fifty customers passed.
+3. Deploy the tested retirement of specialized chat/conversation routes and verify
+   ordinary owner/control behavior. Preserve old owned conversations. The optional
+   session-revocation action remains; no new UI is required.
+4. Refresh final PR evidence after the last source changes. Human review of ES/PT
    evaluation text remains a submission task.
 
 ## Measurements and limits
@@ -75,6 +72,8 @@ was given.
 | Normal Process with deterministic external fixture provider | 500/500 distinct signed owners; peak 4 active; p50 30.302 s / p95 59.471 s on contended Windows host | Ordinary execution/dispatch isolation, not native provider capacity. |
 | Actual Sol operator calls | A/B lookup and handoff passed, roughly 18–26 s per call | These measured demo cases. |
 | Offline Slack queue | 500 conversations / 1,000 turns; peak 8 active; mocked delivery | Scheduler ordering/correlation, not model or Slack throughput. |
+| Actual Sol customers | 1/10/50 passed; fifty-customer p50 67.237 s / p95 78.790 s | Separate persisted MCP/owner audits passed for every successful request. |
+| First actual Sol 500 burst | 49/500 completed; 166 cancelled, 285 expired | Failed throughput. All 127 persisted states passed privacy/owner-result checks; worker peak about 1.49 GB. |
 
 None of the 500-case results above establishes 500 simultaneous native model chats.
 
