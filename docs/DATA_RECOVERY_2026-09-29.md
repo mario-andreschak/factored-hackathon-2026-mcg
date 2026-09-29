@@ -12,7 +12,8 @@ solving the observed data defects.
 Treat the organizer's S3 data as a historical migration/demo source. S3 is the original
 read-only source of record. The app reads a derived local snapshot, which can be rebuilt.
 The organizer's records are synthetic banking fixtures; they are not a live bank feed.
-The transaction period ends June 17, 2026. Some customer/product updates fall later, so
+The transaction processing-date period ends June 17, 2026; some transaction event
+timestamps fall on June 18. Some customer/product updates fall later, so
 master-table balances and statuses are supplied snapshot values, not historical balances.
 
 DuckDB is the SQL engine doing the transformations on the laptop. Parquet is the file
@@ -174,6 +175,17 @@ Actual MCP behavior is read-only, with `banking_status`, `list_my_transactions` 
 latest dates in the historical snapshot. It does not submit a complaint, refund money,
 run an FX conversion service, or expose fraud scores. A local FLUJO handoff ticket is a
 prototype receipt, not a bank action.
+
+A full scan of the fresh silver transactions found **1,106,307 of 4,425,008** event
+dates one calendar day after their `process_date`; the other 3,318,701 have the same
+calendar day. The latest process date is June 17, 2026, while the latest transaction
+event date is June 18. The [aggregate date-alignment report](data-recovery/event_date_alignment.json)
+records the counts and ranges. A customer asking about a June 18 charge cannot use
+June 18 as the current MCP's process-date filter: that filter rejects it even though
+June 18 event-dated charges are present in the June 17 partition. The application must
+search the relevant processing dates and then check the returned owned event dates,
+or say plainly which date basis was searched. An empty or invalid processing-date
+search does not prove that a charge on the customer's event date is absent.
 
 Newer `contracts/`, `graph_config_v3.yaml`, and `resources/` describe broader proposed
 behavior, including 90-day current-calendar searches and complaint writes. Their graph
