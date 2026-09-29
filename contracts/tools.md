@@ -93,8 +93,8 @@ Fuente: transactions, products.
   "risk_signals": {},
   "data_quality_flags": [],
   "search_context": {
-    "date_from": "2026-03-20",
-    "date_to": "2026-06-17",
+    "date_from": "2026-03-21",
+    "date_to": "2026-06-18",
     "date_basis": "event_date",
     "snapshot_id": "SNAPSHOT-EXAMPLE",
     "used_snapshot_default": true,
@@ -243,7 +243,7 @@ Aplicar filtro por customer_id antes de cualquier agregación o join. get_transa
 
 search_transactions: fechas de evento, extremos inclusivos. Solo cuando ambas fechas son nulas usar [max(dataset_first_event_date, dataset_latest_event_date-(default_search_window_days-1)), dataset_latest_event_date], 90 fechas calendario como máximo. El snapshot y sus límites se validan en código; si faltan, data_unavailable, sin sustituirlos por la fecha del proceso. Una fecha explícita, parcial o relativa se resuelve/pide aclaración sin recortarla ni trasladarla al snapshot. current_date sigue siendo la fecha real del cliente; current_timestamp, expiración y TTL siguen el reloj real. La antigüedad de disputa se calcula respecto de current_date, no del ancla de búsqueda.
 
-Toda búsqueda devuelve search_context={date_from,date_to,date_basis:"event_date",snapshot_id,used_snapshot_default,coverage_complete}. Solo una cobertura completa puede informar match_count total o NO_MATCH; una lectura truncada/parcial falla con data_unavailable. La proyección al cliente incluye intervalo y snapshot histórico cuando se usa el default. El MCP actual de 31 días por process_date no satisface este contrato: extenderlo o demostrar en un adaptador la cobertura de eventos, incluida llegada tardía; nunca traducir 90 días de eventos a 90 días de proceso sin esa prueba.
+Toda búsqueda devuelve search_context={date_from,date_to,date_basis:"event_date",snapshot_id,used_snapshot_default,coverage_complete}. Solo una cobertura completa puede informar match_count total o NO_MATCH; una lectura truncada/parcial falla con data_unavailable. La proyección al cliente incluye intervalo y snapshot histórico cuando se usa el default. El MCP actual de 31 días por process_date no satisface este contrato: extenderlo o demostrar en un adaptador la cobertura de eventos en particiones de proceso anteriores y posteriores; nunca traducir 90 días de eventos a 90 días de proceso sin esa prueba. El ejemplo anterior usa el último día de evento (2026-06-18) del candidato medido, no el último `process_date` (2026-06-17) ni la fecha actual del cliente.
 
 Comparación monetaria Decimal, moneda exacta, tolerancia porcentual sobre abs(amount). Para amount=0, coincidencia exacta. Monto aproximado: 10%; normal: 1%. city/country/product_hint/product_last4 son filtros adicionales del adaptador, siempre dentro del cliente. Limitar salida LLM a cinco candidatos pero match_count representa todos. Ref estable dentro del snapshot y pending, no índice global.
 
