@@ -10,6 +10,7 @@ COPY --from=application /app/.next /app/.next
 COPY --from=application /app/next.config.mjs /app/next.config.mjs
 COPY --from=application /app/package.json /app/package-lock.json /app/
 COPY --from=application /app/scripts /app/scripts
+COPY --from=application /app/mcp-servers /app/mcp-servers
 COPY --from=application /app/node_modules/jose /app/node_modules/jose
 COPY --from=application /app/node_modules/canonicalize /app/node_modules/canonicalize
 
