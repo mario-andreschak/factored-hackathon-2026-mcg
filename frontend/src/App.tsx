@@ -944,6 +944,7 @@ function Assistant({
       message: string;
       pending_handle?: string;
       request_id?: string;
+      reason?: string;
     } | null>(null),
     [actionBusy, setActionBusy] = useState(false),
     [actionLanguage, setActionLanguage] = useState<"es" | "pt">("es"),
@@ -997,6 +998,7 @@ function Assistant({
               message?: string;
               pending_handle?: string;
               request_id?: string;
+              reason?: string;
             }>("/api/action/status", { signal: historyController.signal })
               .then((recovered) => {
                 if (historyController.signal.aborted || !alive.current) return;
@@ -1078,6 +1080,7 @@ function Assistant({
         message: string;
         pending_handle?: string;
         request_id?: string;
+        reason?: string;
       }>(path, {
         method: "POST",
         body: JSON.stringify({ ...body, language: actionLanguage }),
@@ -1106,6 +1109,7 @@ function Assistant({
         message?: string;
         pending_handle?: string;
         request_id?: string;
+        reason?: string;
       }>(`/api/action/status?language=${actionLanguage}`);
       if (alive.current && recovered.state !== "none" && recovered.message) {
         setAction({ ...recovered, message: recovered.message });
@@ -1222,7 +1226,8 @@ function Assistant({
               )}
             {(!action ||
               action.state === "pending_confirmation" ||
-              action.state === "handoff_unverified") && (
+              (action.state === "handoff_unverified" &&
+                (!action.reason || action.reason === "customer_request"))) && (
               <button
                 type="button"
                 className="button outline"
