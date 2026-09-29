@@ -55,6 +55,8 @@ class HandoffActionBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     reason: Literal["out_of_policy", "emergency", "customer_request", "clarification_exhausted"]
     pending_handle: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{32,64}$")
+    transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
+    request_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
     language: Literal["es", "pt"] = "es"
 
 
@@ -383,8 +385,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/action/handoff")
     async def action_handoff(body: HandoffActionBody, request: Request):
+        if body.transaction_reference and not body.pending_handle:
+            current = session(request)
+            target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
+            if not target:
+                raise HTTPException(404, "El movimiento seleccionado no está disponible.")
+            prepared = await run_action(request, {"operation": "prepare",
+                "transactionId": target["transaction_id"], "snapshot": target["snapshot"]}, body.language)
+            if prepared.get("state") != "pending_confirmation":
+                return prepared
+            pending = prepared.get("pending_handle")
+            if not isinstance(pending, str):
+                raise HTTPException(502, "No se pudo verificar la solicitud de revisión humana.")
+            return await run_action(request, {"operation": "handoff", "reason": body.reason,
+                                              "pendingHandle": pending}, body.language)
+        if not body.pending_handle and not body.request_id:
+            raise HTTPException(422, "Se requiere una solicitud de revisión identificable.")
         return await run_action(request, {"operation": "handoff", "reason": body.reason,
-                                          **({"pendingHandle": body.pending_handle} if body.pending_handle else {})},
+                                          **({"pendingHandle": body.pending_handle} if body.pending_handle else
+                                             {"requestId": body.request_id})},
                                 body.language)
 
     @app.get("/{path:path}")

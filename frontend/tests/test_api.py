@@ -223,14 +223,20 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         assert service.calls[0][0] == "private-customer-co"
         assert service.calls[0][2]["transactionId"].startswith("private-txn-")
         assert "private-txn-" not in prepared.text
-        handoff = client.post("/api/action/handoff", json={"reason": "customer_request", "language": "es"})
+        handoff = client.post("/api/action/handoff", json={"reason": "customer_request", "language": "es",
+            "request_id": "123e4567-e89b-42d3-a456-426614174000"})
         assert handoff.status_code == 200
         assert "HOF-abcdefgh" in handoff.json()["message"]
         assert "respuesta de una persona" in handoff.json()["message"]
+        selected_handoff = client.post("/api/action/handoff", json={
+            "reason": "customer_request", "transaction_reference": own, "language": "pt"})
+        assert selected_handoff.status_code == 200
+        assert [entry[2]["operation"] for entry in service.calls[-2:]] == ["prepare", "handoff"]
+        assert service.calls[-1][2]["pendingHandle"] == "a" * 43
         foreign = Repository(settings, State(settings.state_dir)).overview("mexico")["transactions"][0]["reference"]
         denied = client.post("/api/action/prepare", json={"transaction_reference": foreign})
         assert denied.status_code == 404
-        assert len(service.calls) == 2
+        assert len(service.calls) == 4
 
 
 def test_secure_cookie_origin_and_custom_demo_code(settings):

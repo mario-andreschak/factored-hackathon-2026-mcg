@@ -23,6 +23,7 @@ class Config(BaseModel):
     # An operator attests when the SANDBOX report ledger became complete. This
     # never represents bank-wide historical reporting coverage.
     sandbox_report_coverage_start: int | None = Field(default=None, ge=1)
+    synthetic_evidence_file: Path | None = None
     max_active_reads: int = Field(default=8, ge=1, le=32)
     max_queued_reads: int = Field(default=512, ge=1, le=1024)
     http_hosts: list[str] = Field(default_factory=lambda: ["127.0.0.1:*", "localhost:*"])
@@ -37,7 +38,8 @@ class Config(BaseModel):
 
     @model_validator(mode="after")
     def validate_mode(self):
-        if not self.data_dir.is_absolute() or not self.state_db.is_absolute():
+        if (not self.data_dir.is_absolute() or not self.state_db.is_absolute()
+                or (self.synthetic_evidence_file is not None and not self.synthetic_evidence_file.is_absolute())):
             raise ValueError("data_dir and state_db must be absolute")
         if self.mode == "delegated":
             if not self.public_keys or not self.principal_customers or self.demo_customer or self.approved_customers:

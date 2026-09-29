@@ -946,6 +946,7 @@ function Assistant({
     } | null>(null),
     [actionBusy, setActionBusy] = useState(false),
     [actionLanguage, setActionLanguage] = useState<"es" | "pt">("es"),
+    [handoffRequestId] = useState(() => crypto.randomUUID()),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [historyReady, setHistoryReady] = useState(false),
@@ -1167,7 +1168,9 @@ function Assistant({
                     reason: "customer_request",
                     ...(action?.pending_handle
                       ? { pending_handle: action.pending_handle }
-                      : {}),
+                      : selected
+                        ? { transaction_reference: selected.reference }
+                        : { request_id: handoffRequestId }),
                   })
                 }
               >

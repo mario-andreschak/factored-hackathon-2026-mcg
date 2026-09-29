@@ -68,6 +68,7 @@ class ReceiptArgs(CustomerArgs):
 class HandoffArgs(CustomerArgs):
     reason: str = Field(pattern=r"^(high_risk|missing_evidence|out_of_policy|emergency|action_unverified|customer_request|clarification_exhausted|duplicate_review|no_match_exhausted|tool_failure)$")
     pending_handle: str | None = Field(default=None, min_length=32, max_length=64)
+    request_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
 
 
 class ReadHandoffArgs(CustomerArgs):
@@ -110,7 +111,8 @@ class Service:
         self.store = StateStore(config.state_db)
         self.auth = Authorizer(config, self.store)
         self.repository = Repository(config, self.store)
-        self.actions = Actions(self.store, self.repository, config.sandbox_report_coverage_start)
+        self.actions = Actions(self.store, self.repository, config.sandbox_report_coverage_start,
+                               config.synthetic_evidence_file)
         self._pending = 0
         self._semaphore = asyncio.Semaphore(config.max_active_reads)
         self._thread_limiter = None
@@ -156,7 +158,7 @@ class Service:
         elif name == "read_intake_receipt":
             result = self.actions.receipt(principal, parsed.pending_handle)
         elif name == "create_verified_handoff":
-            result = self.actions.handoff(principal, parsed.reason, parsed.pending_handle)
+            result = self.actions.handoff(principal, parsed.reason, parsed.pending_handle, parsed.request_id)
         else:
             result = self.actions.read_handoff(principal, parsed.handoff_id)
         self.auth.assert_current(principal)

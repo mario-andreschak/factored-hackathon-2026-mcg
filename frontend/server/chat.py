@@ -248,6 +248,13 @@ class ChatService:
             return await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
                                     payload, timeout_seconds=45)
         except ChatError as exc:
+            if operation.get("operation") == "handoff" and exc.code in {
+                    "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
+                try:
+                    return await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                                            payload, timeout_seconds=20)
+                except ChatError:
+                    return {"state": "handoff_unverified"}
             if operation.get("operation") != "confirm" or exc.code not in {
                     "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                 raise

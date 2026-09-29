@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import csv
 import io
+import multiprocessing
+import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -34,10 +36,21 @@ def dataset(tmp_path_factory):
 @pytest.fixture
 def bank(dataset, tmp_path):
     key = Ed25519PrivateKey.generate()
+    evidence_file = tmp_path / "synthetic-evidence.json"
     config = Config(data_dir=dataset / "out", state_db=tmp_path / "state.db", service_token="x" * 48,
                     public_keys={"test": key.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()},
-                    principal_customers={"alice": cid(3), "bob": cid(4)})
+                    principal_customers={"alice": cid(3), "bob": cid(4)},
+                    synthetic_evidence_file=evidence_file)
     service = Service(config)
+    snapshot = service.repository.snapshot()
+    manifest = json.loads((snapshot.build / "snapshot.json").read_text())
+    targets = {target for subject in ("alice", "bob")
+               for target in owned_action_target((service, key), subject)[1]}
+    evidence_file.write_text(json.dumps({"build_id": snapshot.id,
+        "source_fingerprint": manifest["source_fingerprint"],
+        "transactions": {target: {"historical_complaints": "clear_in_snapshot",
+                                 "duplicate_signal": "clear", "fraud_score": 0,
+                                 "amount_usd": 10} for target in targets}}))
     yield service, key
     service.close()
 
@@ -74,10 +87,25 @@ def owned_action_target(bank, subject="alice"):
     return snapshot.id, [r["transaction_id"] for r in rows]
 
 
+def _confirm_in_process(config_json, handle, barrier, results):
+    service = Service(Config.model_validate_json(config_json))
+    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    try:
+        barrier.wait(timeout=15)
+        results.put(service.actions.confirm(principal, handle, True)["state"])
+    except BankError as exc:
+        results.put(exc.code)
+    except Exception as exc:
+        results.put(type(exc).__name__)
+    finally:
+        service.close()
+
+
 def test_simulated_intake_requires_coverage_confirmation_and_readback(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
     service.actions.coverage_start = int(time.time()) - 90000
+    service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
     pending = action_call(bank, "prepare_unrecognized_charge",
                           {"transaction_id": targets[0], "snapshot": build})
     assert pending["decision"] == "intake"
@@ -118,11 +146,66 @@ def test_action_missing_coverage_and_verified_handoff(bank):
                        {"pending_handle": pending["pending_handle"], "reason": "missing_evidence"}) == handoff
 
 
+def test_no_target_handoffs_are_distinct_and_retryable(bank):
+    first_args = {"reason": "customer_request", "request_id": str(uuid.uuid4())}
+    second_args = {"reason": "customer_request", "request_id": str(uuid.uuid4())}
+    first = action_call(bank, "create_verified_handoff", first_args)
+    second = action_call(bank, "create_verified_handoff", second_args)
+    assert first["handoff"]["id"] != second["handoff"]["id"]
+    assert first["handoff"]["facts"] == second["handoff"]["facts"] == {}
+    assert action_call(bank, "create_verified_handoff", first_args) == first
+    with pytest.raises(BankError, match="invalid_arguments"):
+        action_call(bank, "create_verified_handoff", {"reason": "customer_request"})
+
+
+def test_sandbox_coverage_requires_same_persisted_ledger_generation(bank, tmp_path):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    start = int(time.time()) - 90000
+    service.actions.coverage_start = start
+    service.store.attest_sandbox_coverage(start, "synthetic:verified-empty-ledger")
+    complete = action_call(bank, "prepare_unrecognized_charge",
+                           {"transaction_id": targets[0], "snapshot": build})
+    assert complete["decision"] == "intake" and complete["risk"]["unrecognized_count_24h"] == 1
+    reset = Service(service.config.model_copy(update={"state_db": tmp_path / "replacement.db",
+        "sandbox_report_coverage_start": start})), bank[1]
+    replaced = action_call(reset, "prepare_unrecognized_charge",
+                           {"transaction_id": targets[0], "snapshot": build})
+    assert replaced["decision"] == "handoff" and replaced["reason"] == "missing_evidence"
+    assert replaced["risk"]["unrecognized_count_24h"] is None
+    with service.store.connect() as db:
+        db.execute("UPDATE sandbox_coverage SET generation='corrupt'")
+    corrupt = action_call(bank, "prepare_unrecognized_charge",
+                          {"transaction_id": targets[0], "snapshot": build})
+    assert corrupt["decision"] == "handoff" and corrupt["risk"]["unrecognized_count_24h"] is None
+
+
+def test_missing_or_high_synthetic_signals_never_clear_intake(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    start = int(time.time()) - 90000
+    service.actions.coverage_start = start
+    service.store.attest_sandbox_coverage(start, "synthetic:signals-ledger")
+    evidence_file = service.actions.evidence_file
+    service.actions.evidence_file = None
+    missing = action_call(bank, "prepare_unrecognized_charge",
+                          {"transaction_id": targets[0], "snapshot": build})
+    assert missing["reason"] == "missing_evidence" and missing["decision"] == "handoff"
+    service.actions.evidence_file = evidence_file
+    data = json.loads(evidence_file.read_text())
+    data["transactions"][targets[0]]["fraud_score"] = 75
+    evidence_file.write_text(json.dumps(data))
+    high = action_call(bank, "prepare_unrecognized_charge",
+                       {"transaction_id": targets[0], "snapshot": build})
+    assert high["reason"] == "high_risk" and high["decision"] == "handoff"
+
+
 def test_action_risk_threshold_and_duplicate_report(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
     assert len(set(targets)) >= 3
     service.actions.coverage_start = int(time.time()) - 90000
+    service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
     decisions = []
     for target in targets[:2]:
         pending = action_call(bank, "prepare_unrecognized_charge",
@@ -149,6 +232,7 @@ def test_action_risk_threshold_and_duplicate_report(bank):
 def test_action_foreign_target_and_snapshot_swap_denied(bank):
     build, targets = owned_action_target(bank, "bob")
     bank[0].actions.coverage_start = int(time.time()) - 90000
+    bank[0].store.attest_sandbox_coverage(bank[0].actions.coverage_start, "synthetic:bank-test-ledger")
     with pytest.raises(BankError, match="reference_unavailable"):
         action_call(bank, "prepare_unrecognized_charge",
                     {"transaction_id": targets[0], "snapshot": build}, "alice")
@@ -161,6 +245,7 @@ def test_action_concurrent_confirmation_and_expired_pending_readback(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
     service.actions.coverage_start = int(time.time()) - 90000
+    service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
     pending = action_call(bank, "prepare_unrecognized_charge",
                           {"transaction_id": targets[0], "snapshot": build})["pending_handle"]
     args = {"pending_handle": pending, "confirmed": True}
@@ -175,6 +260,60 @@ def test_action_concurrent_confirmation_and_expired_pending_readback(bank):
         action_call(bank, "confirm_simulated_intake", args)
 
 
+def test_cross_process_distinct_confirmations_serialize_r16_threshold(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    start = int(time.time()) - 90000
+    service.actions.coverage_start = start
+    service.store.attest_sandbox_coverage(start, "synthetic:cross-process-ledger")
+    prior = action_call(bank, "prepare_unrecognized_charge",
+                        {"transaction_id": targets[0], "snapshot": build})
+    action_call(bank, "confirm_simulated_intake", {"pending_handle": prior["pending_handle"], "confirmed": True})
+    pending = [action_call(bank, "prepare_unrecognized_charge",
+                           {"transaction_id": target, "snapshot": build}) for target in targets[1:3]]
+    assert all(item["decision"] == "intake" for item in pending)
+    ctx = multiprocessing.get_context("spawn")
+    barrier, results = ctx.Barrier(2), ctx.Queue()
+    config_json = service.config.model_copy(update={"sandbox_report_coverage_start": start}).model_dump_json()
+    children = [ctx.Process(target=_confirm_in_process,
+                            args=(config_json, item["pending_handle"], barrier, results)) for item in pending]
+    for child in children:
+        child.start()
+    for child in children:
+        child.join(25)
+        assert child.exitcode == 0
+    assert sorted(results.get(timeout=2) for _ in children) == ["created", "handoff_required"]
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 2
+
+
+def test_revoke_winning_during_target_recheck_prevents_case_insert(bank, monkeypatch):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    start = int(time.time()) - 90000
+    service.actions.coverage_start = start
+    service.store.attest_sandbox_coverage(start, "synthetic:revoke-race-ledger")
+    pending = action_call(bank, "prepare_unrecognized_charge",
+                          {"transaction_id": targets[0], "snapshot": build})
+    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    entered, release = threading.Event(), threading.Event()
+    original = service.repository.owned_transaction_id
+    def held(*args):
+        entered.set()
+        assert release.wait(10)
+        return original(*args)
+    monkeypatch.setattr(service.repository, "owned_transaction_id", held)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(service.actions.confirm, principal, pending["pending_handle"], True)
+        assert entered.wait(10)
+        service.store.revoke("session-alice")
+        release.set()
+        with pytest.raises(BankError, match="authorization_denied"):
+            future.result(timeout=10)
+    with service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 0
+
+
 def test_action_r16_utc_window_lower_boundary_and_incomplete_ledger(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
@@ -182,6 +321,7 @@ def test_action_r16_utc_window_lower_boundary_and_incomplete_ledger(bank):
     frozen = time.time()
     service.actions.clock = lambda: frozen
     service.actions.coverage_start = int(frozen - 90000)
+    service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
     customer = service.config.principal_customers["alice"]
     with service.store.connect() as db:
         for index, created_at in enumerate([frozen - 86400, frozen - 86400 - 0.001]):
