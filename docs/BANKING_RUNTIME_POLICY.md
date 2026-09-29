@@ -25,6 +25,11 @@ Use the SHA-256 of the exact policy already validated and approved for this
 deployment. The helper prints only a digest and permission receipt. It copies no
 keys into the image and starts no container, service or MCP process.
 
+If worker initialization started before provisioning, restart that same container
+after the receipt, then wait for its health check to pass. Missing policy can also
+deny the worker's initial control requests. Restarting preserves the provisioned
+file; keep the gateway stopped throughout this installation.
+
 The live directory is root-owned, group 1000, mode `0750`; the live policy is
 root-owned, group 1000, mode `0440`. FLUJO runs as user 1000 without capabilities:
 it can read the policy and cannot write or replace it. `/run` must also remain

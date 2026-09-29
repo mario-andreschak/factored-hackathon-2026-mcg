@@ -12,3 +12,5 @@
 !pipeline/
 !pipeline/*.py
 !pipeline/contracts.yaml
+!scripts/
+!scripts/provision_banking_runtime_policy.mjs
