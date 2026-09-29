@@ -446,11 +446,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
             if not target:
                 raise HTTPException(404, "El movimiento seleccionado no está disponible.")
-            prepared = await run_action(request, {"operation": "prepare",
-                "transactionId": target["transaction_id"], "snapshot": target["snapshot"]},
-                body.language, body.transaction_reference)
-            if prepared.get("state") != "pending_confirmation":
-                return prepared
+            previous = await action_status(request, body.language)
+            same_target = previous.get("target_reference") == body.transaction_reference
+            if same_target and previous.get("state") == "handoff_verified":
+                if previous.get("reason") != body.reason:
+                    raise HTTPException(409, "La solicitud no corresponde a la revisión anterior.")
+                return previous
+            if same_target and previous.get("state") in {"preparing", "prepare_unverified",
+                                                            "action_unverified"}:
+                return previous
+            if same_target and previous.get("state") in {"pending_confirmation", "handoff_unverified"}:
+                if (previous.get("state") == "handoff_unverified"
+                        and previous.get("reason") != body.reason):
+                    raise HTTPException(409, "La solicitud no corresponde a la revisión anterior.")
+                prepared = previous
+            else:
+                if previous.get("state") not in {"none", "intake_verified", "handoff_verified"}:
+                    raise HTTPException(409, "Primero revisa el estado de la solicitud anterior.")
+                prepared = await run_action(request, {"operation": "prepare",
+                    "transactionId": target["transaction_id"], "snapshot": target["snapshot"]},
+                    body.language, body.transaction_reference)
+                if prepared.get("state") != "pending_confirmation":
+                    return prepared
             pending = prepared.get("pending_handle")
             request_id = prepared.get("request_id")
             if (not isinstance(pending, str) or not isinstance(request_id, str)

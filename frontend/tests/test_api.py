@@ -209,15 +209,22 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
     class ActionService:
         def __init__(self):
             self.calls = []
+            self.current = {"state": "none"}
+
+        async def action_status(self, customer, session_id, expires):
+            return self.current
 
         async def action(self, customer, session_id, expires, operation, *, target_reference=None):
             self.calls.append((customer, session_id, operation, target_reference))
             if operation["operation"] == "prepare":
-                return {"state": "pending_confirmation", "pending_handle": "a" * 43,
+                self.current = {"state": "pending_confirmation", "pending_handle": "a" * 43,
                         "target_reference": target_reference,
                         "request_id": "123e4567-e89b-42d3-a456-426614174099"}
-            return {"state": "handoff_verified", "handoff": {"id": "HOF-abcdefgh"},
+            else:
+                self.current = {"state": "handoff_verified", "handoff": {"id": "HOF-abcdefgh"},
+                    "reason": operation["reason"],
                     **({"target_reference": target_reference} if target_reference else {})}
+            return self.current
 
     with TestClient(create_app(settings)) as client:
         assert login(client).status_code == 200
@@ -251,12 +258,12 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
             "reason": "customer_request", "transaction_reference": own,
             "request_id": selected_request_id, "language": "pt"})
         assert replay.status_code == 200
-        assert "requestId" not in service.calls[-2][2]
-        assert service.calls[-1][2]["requestId"] == "123e4567-e89b-42d3-a456-426614174099"
+        assert replay.json()["handoff"] == selected_handoff.json()["handoff"]
+        assert len(service.calls) == 4
         foreign = Repository(settings, State(settings.state_dir)).overview("mexico")["transactions"][0]["reference"]
         denied = client.post("/api/action/prepare", json={"transaction_reference": foreign})
         assert denied.status_code == 404
-        assert len(service.calls) == 6
+        assert len(service.calls) == 4
 
 
 def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(settings):
@@ -332,6 +339,10 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         assert matched.status_code == 200 and matched.json()["target_reference"] == second_ref
         assert len(actions) == calls_before_mismatch + 1
         assert actions[-1]["requestId"] == second.json()["request_id"] != browser_request_id
+        replay = client.post("/api/action/handoff", json={"reason": "customer_request",
+            "transaction_reference": second_ref, "request_id": browser_request_id})
+        assert replay.status_code == 200 and replay.json()["handoff"] == matched.json()["handoff"]
+        assert len(actions) == calls_before_mismatch + 1
         general = client.post("/api/action/handoff", json={"reason": "customer_request",
             "request_id": "123e4567-e89b-42d3-a456-426614174002"})
         assert general.status_code == 200 and "target_reference" not in general.json()
