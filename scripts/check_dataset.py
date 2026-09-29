@@ -147,7 +147,7 @@ def _gold_files(build: Path, snapshot: dict, tables: set[str]) -> list[Path]:
             raise HealthFailure("gold_file_size_mismatch")
         matched = BUCKET_FILE.fullmatch(relative)
         if matched:
-            if int(matched[1]) >= TXN_BUCKETS:
+            if matched[1] != str(int(matched[1])) or int(matched[1]) >= TXN_BUCKETS:
                 raise HealthFailure("gold_bucket_invalid")
             transactions.append(path)
         elif relative.startswith("transactions_by_customer/"):

@@ -1,0 +1,101 @@
+{
+  "ok": true,
+  "status": "ok",
+  "errors": [],
+  "warnings": [],
+  "source_comparison": {
+    "status": "unchanged",
+    "method": "selected_table_etag_and_size",
+    "pinned_objects": 4390,
+    "current_objects": 4390,
+    "added": 0,
+    "deleted": 0,
+    "changed": 0,
+    "tables": {
+      "customers": {
+        "pinned_objects": 1,
+        "current_objects": 1,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      },
+      "products": {
+        "pinned_objects": 1,
+        "current_objects": 1,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      },
+      "transactions": {
+        "pinned_objects": 1097,
+        "current_objects": 1097,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      },
+      "call_center_interactions": {
+        "pinned_objects": 1097,
+        "current_objects": 1097,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      },
+      "call_transcripts": {
+        "pinned_objects": 1097,
+        "current_objects": 1097,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      },
+      "complaints": {
+        "pinned_objects": 1097,
+        "current_objects": 1097,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      }
+    }
+  },
+  "build_id": "20260929T160045Z-4978ef",
+  "lineage": {
+    "status": "inventory_validated",
+    "tables": [
+      "call_center_interactions",
+      "call_transcripts",
+      "complaints",
+      "customers",
+      "products",
+      "transactions"
+    ],
+    "source_objects": 4390,
+    "immutable_source_versions": false
+  },
+  "gold_files_checked": 132,
+  "silver_rows": {
+    "call_center_interactions": 686296,
+    "call_transcripts": 171321,
+    "complaints": 67095,
+    "customers": 150000,
+    "products": 400000,
+    "transactions": 4425008
+  },
+  "gold_transactions": {
+    "rows": 4425008,
+    "ownership_valid_rows": 4425008,
+    "ownership_invalid_rows": 0,
+    "ownership_flag_mismatches": 0,
+    "wrong_bucket_rows": 0,
+    "silver_data_mismatches": 0
+  },
+  "gold_rows": {
+    "transactions_by_customer": 4425008,
+    "contact_demand": 3927,
+    "classifier_dataset": 171321,
+    "demo_seed_candidates": 125
+  },
+  "bronze": {
+    "status": "inventory_validated",
+    "reusable": true,
+    "matches_published_inventory": true
+  }
+}

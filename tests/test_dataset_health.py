@@ -9,7 +9,7 @@ import duckdb
 import pytest
 
 from pipeline.__main__ import main as pipeline_main
-from pipeline.common import current_build, sql_path
+from pipeline.common import bucket_for, current_build, sql_path
 from pipeline.fixture import cid, write_base
 from scripts import check_dataset as health
 
@@ -67,6 +67,42 @@ def test_unlisted_gold_file_is_rejected(dataset):
     report = health.check_dataset(dataset)
     assert not report["ok"]
     assert "gold_file_set_mismatch" in report["errors"]
+
+
+def test_leading_zero_bucket_name_is_rejected_even_with_updated_inventory(dataset):
+    from banking_mcp.config import Config
+    from banking_mcp.repository import Repository
+    from banking_mcp.security import BankError, Principal
+
+    build = current_build(dataset)
+    customer = cid(3)
+    bucket = bucket_for(customer)
+    original = f"transactions_by_customer/bucket={bucket}/"
+    renamed = f"transactions_by_customer/bucket=0{bucket}/"
+    (build / "gold" / original).rename(build / "gold" / renamed)
+
+    def rename_inventory(value):
+        value["gold_files"] = {
+            renamed + path[len(original):] if path.startswith(original) else path: size
+            for path, size in value["gold_files"].items()
+        }
+
+    rewrite_json(build / "snapshot.json", rename_inventory)
+    report = health.check_dataset(dataset)
+    assert not report["ok"]
+    assert "gold_bucket_invalid" in report["errors"]
+
+    # Storage-only probe: this does not authenticate an ingress request.
+    repository = Repository(Config(mode="operator-test", approved_customers={customer},
+                                   data_dir=dataset, state_db=dataset.parent / "unused.db",
+                                   service_token="synthetic-test-token-" * 3), None)
+    try:
+        snapshot = repository.snapshot()
+        principal = Principal("fixture", customer, "fixture-session", "fixture-conversation", 0)
+        with pytest.raises(BankError, match="dataset_unavailable"):
+            repository._rows(snapshot, principal, "true", [], 20)
+    finally:
+        repository.close()
 
 
 def test_expected_consumer_file_cannot_be_omitted_from_inventory(dataset):

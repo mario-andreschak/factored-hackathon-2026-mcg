@@ -1,0 +1,13 @@
+{
+  "python": "3.13.1",
+  "platform": "Windows",
+  "packages": {
+    "duckdb": "1.5.5",
+    "PyYAML": "6.0.3",
+    "boto3": "1.43.104",
+    "botocore": "1.43.104",
+    "mcp": "1.30.0",
+    "pytest": "9.1.1",
+    "scikit-learn": "1.9.1"
+  }
+}

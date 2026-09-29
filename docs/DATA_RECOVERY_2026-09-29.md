@@ -91,7 +91,7 @@ cleaned or fully profiled. Add a consumer, contract and tests before extending i
 | Master updates can exceed the advertised cutoff | Label balances/statuses as supplied snapshot values; do not reconstruct a historical balance from incomplete rules |
 | Source transaction currency includes USD for Mexico | Preserve each product's actual currency; do not infer MXN from customer country or sum mixed currencies |
 | Only 42 distinct transcript texts, with every test text also seen in training | Use independently authored ES/PT test cases, with human label review pending; do not claim production-quality ML accuracy |
-| No natural near-duplicate-charge case was found | Label any injected duplicate scenario synthetic |
+| No charge pair matched the implemented same-product/amount/merchant, within-one-hour detector | Label any injected duplicate scenario synthetic; this rule does not cover every definition of a duplicate |
 
 The source ownership chain for all 4,425,008 transactions is intact. Silver flags
 relationship errors, and gold/MCP restrict reads to known customers whose products
@@ -113,6 +113,7 @@ could replace `CURRENT` with a build containing no banking gold files. Recovery 
 - Pins the aggregate `manifest.json` inside each published build before swapping `CURRENT`.
 - Allows silver/gold regeneration without an S3 credentials file.
 - Provides `scripts/check_dataset.py` for aggregate health, ownership and optional live metadata checks.
+- Rejects non-canonical bucket paths, including leading-zero names the MCP cannot resolve.
 - Uses structured row hashing, so embedded delimiters or a literal null marker cannot conceal conflicting versions.
 - Pins the tested DuckDB version and records transformation code digest/runtime versions in aggregate build metadata.
 - Holds an exclusive writer lock for the entire run, including landing, publication and reports.
@@ -125,7 +126,10 @@ cryptographic protection against same-size tampering; filesystem access must rem
 
 ## Local commands
 
-From the recovery checkout, the virtual environment is installed in `.venv`:
+The prepared checkout is
+`C:\Users\Moe\.codex\worktrees\data-recovery\factored-hackathon-2026`.
+Its virtual environment is installed in `.venv`; its six-table local dataset is already built.
+The commands below also describe setup and rebuilds on another checkout:
 
 ```powershell
 python -m venv .venv
@@ -201,4 +205,49 @@ has a concrete consumer. None requires replacing the recovered pipeline. Histori
 capacity results and model latency belong to their exact runtime evidence; the data
 lookup benchmark is a different measurement.
 
-The local recovery build and verification results are recorded below once completed.
+## Recovered local build and verification
+
+The managed `data-recovery` checkout has an installed `.venv` and a complete private
+data root. Its `data/CURRENT` points to **`20260929T160045Z-4978ef`**, produced by pipeline
+0.2.0 with Python 3.13.1 and DuckDB 1.5.5. S3 acquisition was a separate bronze run,
+`20260929T153114Z-e62076`, using the reviewed PR #6 ingestion implementation. Its
+authenticated aggregate statistics were pinned to the matching bronze inventory before
+the updated offline silver/gold run. Future full runs produce that landing manifest directly.
+
+| Verification | Result and evidence |
+| --- | --- |
+| Fresh acquisition | 5,899,720 rows from 4,390 objects; 28.5 minutes on this connection; [acquisition manifest](data-recovery/bronze_acquisition_manifest.json) |
+| Offline silver/gold | 76.1 seconds; six tables reconcile; zero rejected or duplicate rows; [pinned build manifest](data-recovery/fresh_build_manifest.json) |
+| Full dataset health | No errors or warnings; 132 gold files checked; all ownership, bucket and silver/gold field comparisons agree; [health report](data-recovery/fresh_dataset_health.json) |
+| Source metadata after build | All 4,390 selected objects unchanged; zero additions/deletions/changes |
+| Compatibility with inherited data | Full primary-key joins over 150,000 customers, 400,000 products and 4,425,008 transactions; zero added/lost IDs or changed shared fields, identical schemas; [comparison](data-recovery/inherited_to_fresh_comparison.json) |
+| Candidate MCP compatibility | Actual deployed-image stdio startup, authenticated list/get, and conditional S3 verification passed for one existing approved customer; [aggregate proof](data-recovery/candidate_mcp_smoke.json) |
+| Automated regression tests | 171 tests and 43 subtests passed locally; one dependency deprecation warning |
+| Lookup latency | p50 15.2 ms, p95 25.3 ms; local sequential build benchmark, not model/application concurrency |
+| Source validation | `unchanged_inventory_after_ingestion`; source fingerprint `fd07da3c5193e25a`; static-input assumption, no VersionId-pinned read |
+| Remaining source defects | Complaint owner mismatches, missing merchants and transcript leakage remain explicitly visible in the [fresh quality report](data-recovery/fresh_quality_report.md) |
+
+The compatibility comparison excludes `_run_id`, `_ingested_at`, and `_row_hash`, which
+necessarily change with fresh ingestion and the corrected hash representation. Amounts,
+currencies, statuses, timestamps, IDs, source-file lineage and other shared fields agree.
+The [runtime versions](data-recovery/local_runtime_versions.json) and code digest in the
+build manifest identify the tested transformation environment.
+The preserved generated quality report says "No natural near-duplicate charges exist";
+read that as zero matches for its one-hour detector, not proof that every possible
+duplicate definition was tested. The original pinned report is retained as build evidence.
+
+The MCP smoke used a private temporary candidate copy inside the existing FLUJO worker,
+with isolated configuration/state and byte-identical deployed MCP code. An independent
+candidate-row/owner check agreed with both reads. This validates candidate storage and
+selected S3-read compatibility, not end-to-end FLUJO behavior, model quality or concurrent
+capacity. No model was called. The test process and temporary candidate copy were removed;
+live configuration, policy and the primary pointer stayed unchanged.
+The public health and smoke receipts retain identical JSON contents with normalized
+line endings. The smoke gate used the original private health receipt;
+[receipt digests](data-recovery/evidence_integrity.json) record both original and
+published byte digests so that formatting changes are explicit.
+
+The inherited live primary pointer remains `20260928T235012Z-ad5cf4`. The fresh data is
+ready in the separate local root. Frontend and MCP have the exact root, build ID, typed
+schema and aggregate evidence; a runtime publication should be coordinated with fresh
+conversations so old handles/cursors are not reused.

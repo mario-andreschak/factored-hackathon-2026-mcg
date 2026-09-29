@@ -34,7 +34,7 @@ One writer per output root is enforced by `data/.pipeline-writer.lock`. After a 
 writer, confirm that it stopped before removing its stale lock.
 
 **Measured on the real bucket** (Windows laptop, 2026-09-27): all 6 tables, 5.9M rows, 4,390 objects in
-~13 min, most of it S3 download. `--stage silver gold` re-runs locally in ~3 min. Per-customer lookup over
+~16.5 min in the committed historical manifest, most of it S3 download. Network conditions change this time. `--stage silver gold` re-runs locally in ~3 min. Per-customer lookup over
 4.4M transactions: **p50 21 ms, p95 23 ms**. Row counts match `scripts/profile_s3.py` exactly
 (4,425,008 transactions · 686,296 interactions · 171,321 transcripts · 67,095 complaints), so two
 independent readers agree.
