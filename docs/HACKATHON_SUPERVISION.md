@@ -10,7 +10,8 @@ The customer has one problem: **“I do not recognize this charge.”** The prod
 helps an authenticated customer find and select an owned transaction, understand
 verified facts, clarify ambiguity, and reach a useful human handoff. The planned
 v0 target includes **simulated dispute intake with verified receipt read-back**;
-this capability still needs implementation beyond today's read-only MCP.
+its source prototype keeps actions disabled pending joined customer-path acceptance.
+Source implementation and enabled deployment are separate evidence.
 Creating an intake does not resolve a dispute. The operator receives verified facts,
 steps already taken, unresolved questions and the reason a person is needed.
 
@@ -103,7 +104,8 @@ Review architecture changes explicitly and measure their effect on this product.
 5. Recheck the head before publishing. Track review SHA, findings and follow-up
    links so unchanged findings are not reposted. The current GitHub identity authors
    the open PRs, so supervisor reviews use comments and do not count as independent
-   approval. The supervisor does not merge PRs or change protection rules.
+   approval. The supervisor merges only with explicit user authorization and does
+   not change protection rules.
 
 Block merging changes that break ownership/authentication, invent action success,
 weaken consent/idempotency, expose restricted data/secrets, advertise unsupported
