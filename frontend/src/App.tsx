@@ -946,7 +946,9 @@ function Assistant({
     } | null>(null),
     [actionBusy, setActionBusy] = useState(false),
     [actionLanguage, setActionLanguage] = useState<"es" | "pt">("es"),
-    [handoffRequestId] = useState(() => crypto.randomUUID()),
+    [handoffRequestId, setHandoffRequestId] = useState(() =>
+      crypto.randomUUID(),
+    ),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [historyReady, setHistoryReady] = useState(false),
@@ -1057,7 +1059,14 @@ function Assistant({
         method: "POST",
         body: JSON.stringify({ ...body, language: actionLanguage }),
       });
-      if (alive.current) setAction(result);
+      if (alive.current) {
+        setAction(result);
+        if (
+          path === "/api/action/handoff" &&
+          result.state === "handoff_verified"
+        )
+          setHandoffRequestId(crypto.randomUUID());
+      }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) onExpired();
       else if (alive.current)
