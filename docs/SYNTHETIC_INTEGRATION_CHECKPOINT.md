@@ -180,10 +180,12 @@ producer head, ZIP/manifest/graph/policy/provider hashes. `validate_review()`
 rejects null identities and nonexact heads. A separately reviewed revision must
 remove the source hold. There is no dispatch input that disables it.
 
-The provider is currently absent. Required interface methods are `start/stop`,
+The provider and adapter source now exist under `scripts/synthetic_integration/fixture/`.
+They are held candidates awaiting independent review of the exact containing commit.
+Implemented interface methods are `start/stop`,
 `credentials(es|pt)`, `bind_selection(actor,cookie,"normal")`, `bind_general`,
 `observe`, `read_coverage`, `read_risk_by_request(actor,host_uuid)`, independent
-saved receipt/HOF reads (including by general request UUID), `arm_response_loss`,
+saved receipt/HOF reads (including selected prepare request UUID), `arm_response_loss`,
 `read_consumed_fault`, `read_prepare_recovery`, and `restart_preserving_state`. Selection/bootstrap must
 use ordinary authenticated frontend paths and actual repository facts. No seeded
 conversation IDs, fabricated MCP/HTTP returns, direct-MCP scenario shortcuts,
@@ -191,7 +193,22 @@ signature bypass, client-controlled identity/upstream/fault or guard bypass is
 accepted. The configured frontend must use a reviewed supported mode compatible
 with its current invite guard.
 
-`observe` returns only nonnegative counts and actual stdio dispatch counts.
+`observe` returns actual business-table row counts, `fixture_provider_calls`,
+`forwarded_faults`, `tool_calls`, `external_network_attempts` and
+`forbidden_dispatch_attempts`. The last two are attempted dispatch/egress counts,
+never a claim to observe all filesystem or SQLite writes. Denied-action probes
+compare actual pending/case/receipt/HOF rows and MCP send counts.
+`dispatch_observer.cjs` instruments the original canonical bank child stdin
+without changing argv/cwd/env, messages, signatures, result bodies or clocks.
+Every tools/call frame records a minimal started/completed sequence; only the
+actual write callback acknowledgment counts as a transport send. Missing process
+generation coverage, truncated logs, interrupted/failed sends or unknown tools
+invalidate evidence. No args, assertions, message IDs, results or exceptions are
+retained. This is instrumented fixture execution, not unchanged FLUJO acceptance
+or bank completion proof. Node TCP egress is restricted to four fixed loopback
+ports; blocked attempts are counted. Container network-none remains the outer
+ceiling. Journal callbacks independently verify completed real upstream results
+and actual commit rows before any response is withheld.
 `read_coverage` independently returns `{rows,configured_start_matches,
 generation_matches,complete}`. The completed fault marker is exactly
 `{operation,target_matches,completed_upstream,consumed,consent,receipt,handoff_id}`;
@@ -223,3 +240,46 @@ coverage are disclosed fixture inputs. External provider calls, real model
 ES/PT behavior, browser UX, joined human acceptance, capacity, shared deployment,
 held-out comparison and future virtual clock evaluation remain unproven. The
 two-clock ledger design is deferred and is not required for this first checkpoint.
+
+## Concrete source assembly candidate
+
+The seven fixture files are `integration_provider.py`, `deterministic_provider.py`,
+`fixture_setup.py`, `observer_adapter.py`, `dispatch_observer.cjs`,
+`flow-snapshot.json` and `policy-template.json`. The graph is Start -> Process ->
+Finish; only the exact advertised `handoff_to_finish` with an explicit empty
+object schema is accepted by the local provider. Both OpenAI JSON and SSE are
+implemented because ordinary Process execution may stream internally even when
+banking ingress is synchronous. The fixture emits no bank results.
+
+`start()` invokes the original bank interpreter and pipeline under the release
+guard, verifies generated input/source identities, and initializes a fresh
+stock StateStore. Authored phases alone call the supported coverage API before
+any service starts. The native worker ZIP is created inside private tmpfs and
+restored through the installed FLUJO launcher. Its empty transfer plan installs
+nothing; the bank registration uses the existing canonical interpreter/source.
+The original frontend lifespan service is retained, including its revocation
+worker. Each later login must bootstrap via real `/api/chat/messages` and its
+unchanged Cookie header; observers receive only the exactly parsed session token.
+Restart retains the same auth/config/keys/demo code, frontend databases, bank
+ledger generation/coverage, FLUJO workspace/conversations, provider, journals and
+observer confirmation baselines, and attaches wrappers to the new lifespan service.
+
+The policy uses supported demo frontend authentication with three explicit fictional
+principal bindings and fully delegated bank assertions. Phase-local secrets are
+node-owned mode0400 files under mode0700 directories. The stock policy loader
+does not require root ownership; this isolated protection is disclosed for review.
+The demo frontend metadata still labels its mount organizer-snapshot; that label
+is not used as provenance evidence. Independent generated-source/hash/marker
+checks establish this fixture basis. Graph timestamps0 are authored configuration
+metadata to avoid mtime backfill, not overridden authorization/business clocks.
+
+`assemble_source.py` reads immutable Git blobs only: the23-file original bank
+closure, unchanged frontend production API/requirements, four pinned36ae helpers,
+four original DATASET files and seven fixture files. It produces a deterministic
+private code-only ZIP, exact source-manifest and review receipt. No keys, databases,
+Parquet, generated runtime data, successful rows or unit doubles enter this ZIP.
+Its local ZIP is a review artifact, not a hosted successful bundle or execution
+release. The remaining required slice is independent exact-source review of this
+instrumentation/assembly, a private successful hosted source artifact with actual
+run/artifact/digest identities, required CI after billing is resolved, and a
+separately reviewed hold-removal revision. No runtime behavior has been verified.

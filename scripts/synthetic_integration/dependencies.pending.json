@@ -64,7 +64,7 @@
   "surface": "api_only",
   "pending_requirements": [
     "required_hosted_CI_green_after_account_billing_block_is_resolved",
-    "actual_fixture_provider_graph_policy_and_adapter_source_review",
+    "independent_exact_commit_review_of_implemented_fixture_provider_graph_policy_and_observer_instrumentation",
     "private_bundle_source_head_manifest_and_artifact_digest",
     "independent_root_review_of_exact_integration_head",
     "separate_reviewed_revision_to_remove_preparation_hold"
@@ -74,5 +74,24 @@
     "stock-prepare-response-loss",
     "authored-empty-history",
     "authored-confirm-response-loss"
-  ]
+  ],
+  "fixture_assembly_source": {
+    "status": "implemented_held_source_candidate; pending_independent_exact_commit_review",
+    "source_binding": "containing_Git_commit",
+    "files": {
+      "deterministic_provider.py": "0e1953444355e0b480eb3698f520b0b39c589e2f2607f5738f340773e57c248e",
+      "dispatch_observer.cjs": "1e2248d33c8c224beab0b8fb2d85c0005458b6f654d5f20baa9b3f1d41b7565c",
+      "fixture_setup.py": "a98a53ea04a5d13b8fbba22bcf88664cfc9453d8b83db72238d48aa89feddae2",
+      "flow-snapshot.json": "03f027688a7748fd145535f09467fb4a1b3529a12454d759986aef480eb84790",
+      "integration_provider.py": "071eb7d6058155086191ae1fd6bacbc4fc9601f068c0e1c05a8870b4f7b3e362",
+      "observer_adapter.py": "7030e359877391301b65c5867701e04bf5b5390ec7e8e30a6ea34ea5fb18ea8b",
+      "policy-template.json": "5c2e2b26658b9f7b7d1bdf1ee56e3499cafdea6d6a9e8927a489fa70b8f6769b"
+    },
+    "source_bundle_producer": "scripts/synthetic_integration/assemble_source.py",
+    "hosted_bundle_artifact": null,
+    "runtime_verified": false,
+    "dispatch_observation": "instrumented_actual_child_stdin_write_callback_acknowledgments; not bank response or all filesystem/database writes",
+    "model_fixture_wire": "OpenAI JSON and SSE Finish routing only",
+    "frontend_auth": "supported_private_demo_login; bank fully delegated assertions"
+  }
 }

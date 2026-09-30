@@ -66,6 +66,7 @@ def prepare_bundle(review: dict, root: Path) -> Path:
     require({"fixture/integration_provider.py", "banking/requirements-mcp.txt",
              "fixture/flow-snapshot.json", "fixture/policy-template.json",
              "fixture/deterministic_provider.py",
+             "fixture/dispatch_observer.cjs", "fixture/observer_adapter.py", "fixture/fixture_setup.py",
              "frontend/requirements.txt", "frontend/server/app.py", "frontend/server/chat.py"} <= set(files),
             "fixture_required_source_missing")
     for filename, field in (("flow-snapshot.json", "graph_sha256"),
