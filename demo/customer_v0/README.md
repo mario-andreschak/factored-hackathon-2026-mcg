@@ -61,11 +61,11 @@ imports, which would load workspace, policy, storage and process modules.
 The manifest states this limitation and records full-file and extracted-body
 hashes. This is not a production module or authentication test.
 
-To audit all ten prompt provenance blobs, make the three banking commits available
+To audit all fourteen prompt provenance blobs, make the three banking commits available
 in this repo's Git object store, then run:
 
 ```powershell
-git fetch origin 974f92787f84fc65ae425f693f79213f82b513f6 8fca9482271f2d534fb406e8674bb14b20c4776e f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344
+git fetch origin 974f92787f84fc65ae425f693f79213f82b513f6 f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344 2cf54ae5dd8bddfb875903ed61150a2b29853abe
 node build.cjs --audit-provenance
 ```
 

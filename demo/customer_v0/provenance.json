@@ -36,14 +36,14 @@
       "sha256": "a1882aef706b094f47fdadb50dc44bf2a1f61aa7369f02bc36ea878249577d14"
     },
     {
-      "commit": "8fca9482271f2d534fb406e8674bb14b20c4776e",
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
       "path": "frontend/server/action.py",
-      "sha256": "241702f3b591705eea3de7fbafbe7eb62657ba24f583fa0ab40b932c7b7f6d27"
+      "sha256": "e13fc14ecc5af7f3ed1d558d0275cc3fcb1605a7e1780f5fba41716f0eecea27"
     },
     {
-      "commit": "8fca9482271f2d534fb406e8674bb14b20c4776e",
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
       "path": "docs/SIMULATED_INTAKE_V0.md",
-      "sha256": "6e1a8078ce20e9501409adb8c92978c6451db1806d9e1e45888587d4cbb950a0"
+      "sha256": "bcd3791b12bc91e01f22fa16d0ec6e7fa22ce7872d9355eeedf2d3a781c028ac"
     },
     {
       "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
@@ -54,6 +54,26 @@
       "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
       "path": "docs/ISSUE21_DATA_AND_RECEIPTS.md",
       "sha256": "b1963b438fc224159d31bf177eecd3c6898d3e0e2490fd669deac17b964f1d42"
+    },
+    {
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
+      "path": "frontend/server/app.py",
+      "sha256": "914a78e220eb9e1f2a2fa6f8e0b14f880e780fca719251a49f9c2e13ae9a980f"
+    },
+    {
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
+      "path": "frontend/server/chat.py",
+      "sha256": "03ee4047c52a0103d6647ac760f208d656a09329d9951a42f17b694e9f7bab81"
+    },
+    {
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
+      "path": "frontend/server/repository.py",
+      "sha256": "139203f805fa118e51f64e84ac3838eaffc4be0b5dbdfd97dafed11a1653b64f"
+    },
+    {
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
+      "path": "docs/CHARGE_JOURNEY_UI.md",
+      "sha256": "bf2f4c9c354bda037357be17b865e1aa49ab2d27bf5d4e3f7e84f91ea2259f1a"
     }
   ],
   "adaptations": [
@@ -68,7 +88,8 @@
     "Describe interface-verified local simulated receipts and saved human-request packets without inventing case lifecycle state, questions, or human response.",
     "Adapt the corrected PR12 confirmation contract at merged main 974f927; model text cannot replace the host consent event.",
     "Pin the matching FLUJO #533 source at 3037c14; compile and validate Git blobs without activating a worker, graph, policy or model.",
-    "The frontend host and intake document at 8fca are historical starting boundaries; this source PR tightens receipt and handoff proof without claiming deployed acceptance."
+    "Pin the corrected frontend host and charge-journey contract at 2cf54ae and the current simulated-intake contract at f07cadf; source checks do not establish deployed acceptance.",
+    "Retain earlier owner/target-bound verified receipts and general handoff packets only as read-only evidence while a follow-up remains unresolved; new terminal general-request intents use fresh UUIDs."
   ],
   "canonicalPrompt": "resources/prompts/customer_v0.md"
 }
