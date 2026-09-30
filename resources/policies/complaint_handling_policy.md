@@ -3,7 +3,7 @@
 ## Registro
 <!-- chunk_id: complaint-01 -->
 
-Los reclamos del prototipo se guardan en sandbox, con categoría Transactions y subcategoría Cargo no reconocido. Nunca se escribe en los datos originales.
+Los reclamos simulados del prototipo se guardan en un ledger SQLite sandbox, con categoría Transactions y subcategoría Cargo no reconocido. El recibo se comunica solo tras relectura bajo el mismo cliente. Nunca se escribe en los datos originales ni se afirma haber registrado un reclamo en un banco real.
 
 ## Prevención de duplicados
 <!-- chunk_id: complaint-02 -->
@@ -15,4 +15,4 @@ El origen histórico no contiene transaction_id y sus afectados_productos no son
 ## Consulta de estado
 <!-- chunk_id: complaint-03 -->
 
-Solo se informa el estado releído del caso del cliente autenticado. No se infiere resolución ni éxito por una afirmación del usuario.
+Solo se informa el estado releído del caso del cliente autenticado. El estado histórico sin transaction_id no se atribuye a un cargo específico. No se infiere resolución ni éxito por una afirmación del usuario. Una solicitud local HOF releída acredita el registro del paquete para revisión, no que un asesor la recibió o respondió.

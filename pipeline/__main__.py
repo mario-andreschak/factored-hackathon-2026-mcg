@@ -16,43 +16,147 @@ import shutil
 import sys
 import time
 import uuid
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
 from . import bronze, gold, lookup, report, silver
-from .common import Settings, current_gold, current_silver, load_env, publish
+from .common import (Settings, contracts_digest, current_build, current_gold, load_contracts,
+                     load_env, publish, sql_path)
+from .writer import writer_lock
 
 DEFAULT_TABLES = ["customers", "products", "transactions", "call_center_interactions",
                   "call_transcripts", "complaints"]
 STAGES = ["bronze", "silver", "gold"]
+BANKING_TABLES = {"customers", "products", "transactions"}
+
+
+def validate_selection(tables: list[str], stages: list[str]) -> None:
+    unknown = set(tables) - set(DEFAULT_TABLES)
+    if unknown:
+        raise ValueError(f"unknown tables: {', '.join(sorted(unknown))}")
+    if len(tables) != len(set(tables)):
+        raise ValueError("select each table only once")
+    if "bronze" in stages and "gold" in stages and "silver" not in stages:
+        raise ValueError("bronze and gold require the silver stage between them")
+    if "gold" in stages and not BANKING_TABLES.issubset(tables):
+        raise ValueError("publishing gold requires customers, products and transactions; "
+                         "use bronze/silver stages for other table subsets")
+    if "silver" in stages or "gold" in stages:
+        contracts = load_contracts()
+        missing = []
+        for table in tables:
+            parents = {c["fk"].split(".")[0] for c in contracts[table]["columns"].values()
+                       if c.get("fk") and not c.get("drop")}
+            missing.extend(f"{table} requires {parent}" for parent in sorted(parents - set(tables)))
+        if missing:
+            raise ValueError("selected tables omit parent dependencies: " + "; ".join(missing))
+
+
+def selected_inventory(path: Path, tables: list[str]) -> tuple[dict, dict]:
+    original = json.loads(path.read_text(encoding="utf-8"))
+    missing = set(tables) - set(original["tables"])
+    if missing:
+        raise RuntimeError("source inventory does not cover requested tables; rebuild from bronze")
+    selected = {t: original["tables"][t] for t in tables}
+    return original, {**original, "tables": selected,
+                      "fingerprint": bronze.fingerprint([o for t in tables
+                                                          for o in selected[t]["objects"]])}
+
+
+def pinned_manifest(path: Path, inventory: dict) -> dict:
+    if not path.is_file():
+        return {}
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    # Mutable docs/pipeline reports are never an input to a build. Metadata must
+    # describe the same landing or immutable published snapshot as its inventory.
+    if manifest.get("source_fingerprint") != inventory["fingerprint"]:
+        raise RuntimeError("pinned aggregate manifest does not match its source inventory")
+    return manifest
+
+
+def bronze_statistics(settings: Settings, inventory: dict, manifest: dict) -> dict:
+    stats = {}
+    for table in settings.tables:
+        recorded = manifest.get("tables", {}).get(table, {}).get("bronze", {})
+        if recorded.get("source_fingerprint") == inventory["tables"][table]["fingerprint"]:
+            stats[table] = {"bronze": recorded}
+            continue
+        # A validated pre-existing landing may have an inventory but no pinned
+        # aggregate manifest. Recount it locally instead of inventing old metrics.
+        import duckdb
+        path = settings.bronze / f"{table}.parquet"
+        with closing(duckdb.connect()) as con:
+            rows, sources = con.execute(
+                f"SELECT count(*), count(DISTINCT _source_file) FROM '{sql_path(path)}'").fetchone()
+        objects = inventory["tables"][table]["objects"]
+        stats[table] = {"bronze": {
+            "rows": rows, "source_objects_with_rows": sources,
+            "source_objects": len(objects), "source_bytes": sum(o["bytes"] for o in objects),
+            "source_fingerprint": inventory["tables"][table]["fingerprint"],
+        }}
+    return stats
 
 
 def build_settings(a) -> Settings:
     s3 = {}
     source = a.source
     if source == "s3":
-        s3 = load_env(Path(a.env))
-        source = f"s3://{s3['BucketName']}/data"
+        if "all" in a.stage or "bronze" in a.stage:
+            s3 = load_env(Path(a.env))
+            source = f"s3://{s3['BucketName']}/data"
+        else:
+            source = "cached_bronze"  # offline derived stages use their pinned input lineage
     return Settings(source=source, out_dir=Path(a.out), report_dir=Path(a.reports),
                     tables=a.tables, s3=s3, threads=a.threads, memory_limit=a.memory_limit)
 
 
 def cmd_run(a) -> int:
-    settings = build_settings(a)
     stages = STAGES if "all" in a.stage else [s for s in STAGES if s in a.stage]
+    validate_selection(a.tables, stages)
+    settings = build_settings(a)
+    with writer_lock(settings.out_dir):
+        return run_locked(settings, stages)
+
+
+def run_locked(settings: Settings, stages: list[str]) -> int:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:6]
-    manifest_path = settings.report_dir / "manifest.json"
     stats: dict = {}
-    if "bronze" not in stages and manifest_path.exists():  # keep bronze stats from the last full run
-        prev_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        prev = prev_manifest.get("tables", {})
-        stats = {t: {"bronze": v["bronze"]} for t, v in prev.items() if "bronze" in v and t in settings.tables}
-        if prev_manifest.get("source_fingerprint"):
-            stats["_source_fingerprint"] = prev_manifest["source_fingerprint"]
+    input_manifest = {}
+    inventory = None
+    redacted = "s3://<bucket>/data" if settings.source.startswith("s3://") else Path(settings.source).as_posix()
+    silver_contracts = contracts_digest()
+    silver_build_id = run_id
     settings.build_id = run_id
+    lineage = settings.bronze / "source_objects.json"
+    if "silver" in stages and "bronze" not in stages and not lineage.is_file():
+        raise RuntimeError("validated bronze inventory missing; run bronze before silver")
+    if "silver" in stages and "bronze" not in stages:
+        original, inventory = selected_inventory(lineage, settings.tables)
+        input_manifest = pinned_manifest(settings.bronze / "manifest.json", original)
+        stats = bronze_statistics(settings, inventory, input_manifest)
+        redacted = input_manifest.get("source", "validated local bronze inventory")
     if "gold" in stages and "silver" not in stages:
         # gold-only: this snapshot is built from a copy of the last published silver
-        shutil.copytree(current_silver(settings.out_dir), settings.silver)
+        previous = current_build(settings.out_dir)
+        lineage = previous / "source_objects.json"
+        if not lineage.is_file():
+            raise RuntimeError("published source inventory missing; rebuild from bronze")
+        original, inventory = selected_inventory(lineage, settings.tables)
+        input_manifest = pinned_manifest(previous / "manifest.json", original)
+        stats = {t: {k: v for k, v in input_manifest.get("tables", {}).get(t, {}).items()
+                     if k in ("bronze", "silver")} for t in settings.tables}
+        redacted = input_manifest.get("source", "legacy published source inventory")
+        silver_contracts = input_manifest.get("silver_contracts_sha256_12",
+                                             input_manifest.get("contracts_sha256_12"))
+        silver_build_id = input_manifest.get("silver_build_id", previous.name)
+        missing = [t for t in settings.tables if not (previous / "silver" / f"{t}.parquet").is_file()]
+        if missing:
+            raise RuntimeError(f"published silver does not cover requested tables: {missing}")
+        settings.silver.mkdir(parents=True, exist_ok=True)
+        for table in settings.tables:
+            shutil.copyfile(previous / "silver" / f"{table}.parquet",
+                            settings.silver / f"{table}.parquet")
     t0 = time.perf_counter()
     published = False
     for stage in stages:
@@ -60,6 +164,12 @@ def cmd_run(a) -> int:
             print("gold    skipped: silver failed its contracts", flush=True)
             break
         {"bronze": bronze.run, "silver": silver.run, "gold": gold.run}[stage](settings, run_id, stats)
+        if stage == "bronze":
+            _, inventory = selected_inventory(lineage, settings.tables)
+            (settings.bronze / "manifest.json").write_text(json.dumps({
+                "run_id": run_id, "source": redacted, "source_fingerprint": inventory["fingerprint"],
+                "tables": {t: {"bronze": stats[t]["bronze"]} for t in settings.tables},
+            }, indent=2) + "\n", encoding="utf-8")
     # Only a build that produced gold and passed every contract becomes the serving snapshot.
     derived = [s for s in stages if s != "bronze"]
     if "gold" in stages and not stats.get("_contract_failures"):
@@ -69,30 +179,44 @@ def cmd_run(a) -> int:
             print(f"bench   per-customer lookup        p50 {b['p50_ms']} ms | p95 {b['p95_ms']} ms", flush=True)
         # The MCP must pin lineage to the same immutable snapshot as the served rows.
         # A report beside CURRENT can be overwritten by the next ingestion run.
-        lineage = settings.report_dir / "source_objects.json"
-        if lineage.exists():
-            inventory = json.loads(lineage.read_text(encoding="utf-8"))
-            if inventory.get("fingerprint") == stats.get("_source_fingerprint"):
-                shutil.copyfile(lineage, settings.build_dir / "source_objects.json")
+        if not (settings.gold / "transactions_by_customer").is_dir():
+            raise RuntimeError("gold did not produce the banking serving output; publication refused")
+        stats["_source_fingerprint"] = inventory["fingerprint"]
+        (settings.build_dir / "source_objects.json").write_text(
+            json.dumps(inventory, indent=1) + "\n", encoding="utf-8")
         (settings.build_dir / "snapshot.json").write_text(json.dumps({
             "build_id": run_id, "source_fingerprint": stats.get("_source_fingerprint"),
+            "source_validation": inventory.get("source_validation", "legacy_inventory"),
             "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "gold_files": {p.relative_to(settings.gold).as_posix(): p.stat().st_size
+                           for p in sorted(settings.gold.rglob("*.parquet"))},
         }) + "\n", encoding="utf-8")
-        publish(settings.out_dir, run_id)
         published = True
-        print(f"publish build {run_id} is now serving", flush=True)
     elif stats.get("_contract_failures"):
         print(f"publish SKIPPED: build {run_id} failed; the previous snapshot keeps serving", flush=True)
     elif derived:
         print(f"publish SKIPPED: build {run_id} has no gold stage (run silver and gold together to publish)",
               flush=True)
-    redacted = "s3://<bucket>/data" if settings.source.startswith("s3://") else Path(settings.source).as_posix()
-    report.write(settings.report_dir, {
+    if inventory is not None:
+        stats["_source_fingerprint"] = inventory["fingerprint"]
+    run = {
         "run_id": run_id, "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "seconds": round(time.perf_counter() - t0, 1), "source": redacted, "stages": ",".join(stages),
         "published": published,
         "source_fingerprint": stats.get("_source_fingerprint"),
-        "tables_requested": settings.tables}, stats)
+        "source_validation": (inventory.get("source_validation", "legacy_inventory")
+                              if inventory is not None else None),
+        "tables_requested": settings.tables,
+        "silver_build_id": silver_build_id if "gold" in stages or "silver" in stages else None,
+        "silver_contracts_sha256_12": silver_contracts if "gold" in stages or "silver" in stages else None,
+    }
+    if published:
+        # Publish only after the serving files, lineage and aggregate quality
+        # manifest are complete in the same immutable build directory.
+        report.write(settings.build_dir, run, stats)
+        publish(settings.out_dir, run_id)
+        print(f"publish build {run_id} is now serving", flush=True)
+    report.write(settings.report_dir, run, stats)
     print(f"report  {settings.report_dir / 'quality_report.md'}", flush=True)
     if stats.get("_contract_failures"):
         print("CONTRACT FAILURES:\n  " + "\n  ".join(stats["_contract_failures"]), file=sys.stderr)
@@ -117,10 +241,11 @@ def cmd_verify(a) -> int:
     if a.sample:
         import duckdb
         from .common import sql_path
-        row = duckdb.connect().execute(f"""
-            SELECT transaction_id, customer_id, process_date::VARCHAR
-            FROM read_parquet('{sql_path(current_gold(a.out) / "transactions_by_customer")}/**/*.parquet')
-            WHERE ownership_valid USING SAMPLE 1 ROWS""").fetchone()
+        with closing(duckdb.connect()) as con:
+            row = con.execute(f"""
+                SELECT transaction_id, customer_id, process_date::VARCHAR
+                FROM read_parquet('{sql_path(current_gold(a.out) / "transactions_by_customer")}/**/*.parquet')
+                WHERE ownership_valid USING SAMPLE 1 ROWS""").fetchone()
         a.transaction_id, a.customer, a.date = row
         print(f"sampled {a.transaction_id} for {a.customer} on {a.date}")
     if not (a.transaction_id and a.customer and a.date):

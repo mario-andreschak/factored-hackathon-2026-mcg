@@ -6,6 +6,7 @@ Estado interno; jamás enviar completo al LLM.
 {
   "session": {
     "session_id": "str",
+    "conversation_id": "str | null",
     "customer_id": "str | null",
     "authenticated": "bool",
     "expired": "bool"
@@ -75,7 +76,10 @@ Estado interno; jamás enviar completo al LLM.
       "created_turn_id": null,
       "intent": null,
       "candidate_type": "transaction | complaint",
-      "snapshot_hash": null
+      "snapshot_hash": null,
+      "snapshot_id": null,
+      "host_pending_handle": null,
+      "request_id": null
     },
     "transaction_identified": false,
     "transaction_unique": false,
@@ -104,6 +108,16 @@ Estado interno; jamás enviar completo al LLM.
       "error": null,
       "idempotency_key": null,
       "authorization_expires_at": null
+    },
+    "trusted_confirmation": {
+      "verified": false,
+      "source": "host_portal | null",
+      "pending_handle": null,
+      "request_id": null,
+      "bound_identity_verified": false,
+      "bound_action_target_snapshot_verified": false,
+      "verified_at": null,
+      "expires_at": null
     },
     "handoff": {
       "required": false,
@@ -229,6 +243,7 @@ Estado interno; jamás enviar completo al LLM.
 | Campo | Tipo | Escribe | Lee |
 | --- | --- | --- | --- |
 | session.session_id | str | decode_session | handlers deterministas; proyección según docs/INTEGRATION.md |
+| session.conversation_id | str|null | adaptador host autenticado | solo handlers; nunca lo infiere el LLM |
 | session.customer_id | str | null | decode_session | handlers deterministas; proyección según docs/INTEGRATION.md |
 | session.authenticated | bool | decode_session | handlers deterministas; proyección según docs/INTEGRATION.md |
 | session.expired | bool | decode_session | handlers deterministas; proyección según docs/INTEGRATION.md |
@@ -257,7 +272,7 @@ Estado interno; jamás enviar completo al LLM.
 | turn.slots.product_last4 | str|null | extract_slots | handlers deterministas; proyección según docs/INTEGRATION.md |
 | turn.slots.amount_is_approximate | bool | extract_slots | handlers deterministas; proyección según docs/INTEGRATION.md |
 | turn.slots.foreign_customer_reference | bool | extract_slots | handlers deterministas; proyección según docs/INTEGRATION.md |
-| turn.clarification.resolution_type | SELECTED|CONFIRMED|DENIED|UNCLEAR|NEW_REQUEST | resolve_clarification | handlers deterministas; proyección según docs/INTEGRATION.md |
+| turn.clarification.resolution_type | SELECTED|CONFIRMED|DENIED|UNCLEAR|NEW_REQUEST | resolve_clarification | señal lingüística no confiable; CONFIRMED nunca autoriza R3 |
 | turn.clarification.selected_ref | str|null | resolve_clarification | handlers deterministas; proyección según docs/INTEGRATION.md |
 | turn.current_date | YYYY-MM-DD | adaptador de entrada / decode_session | handlers deterministas; proyección según docs/INTEGRATION.md |
 | turn.turn_id | str | adaptador de entrada / decode_session | handlers deterministas; proyección según docs/INTEGRATION.md |
@@ -278,6 +293,9 @@ Estado interno; jamás enviar completo al LLM.
 | workflow_state.pending.intent | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.pending.candidate_type | transaction | complaint | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.pending.snapshot_hash | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
+| workflow_state.pending.snapshot_id | str|null | host al preparar la acción | interno; cotejar contra snapshot original del MCP, nunca LLM |
+| workflow_state.pending.host_pending_handle | str|null | host al preparar la acción | interno; lectura de recibo y confirmación explícita, nunca LLM |
+| workflow_state.pending.request_id | UUIDv4|null | host al preparar la acción | interno y durable para replay exacto, nunca LLM |
 | workflow_state.transaction_identified | bool | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.transaction_unique | bool | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.transaction_id | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
@@ -298,6 +316,7 @@ Estado interno; jamás enviar completo al LLM.
 | workflow_state.action.error | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.action.idempotency_key | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.action.authorization_expires_at | str|null | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
+| workflow_state.trusted_confirmation | objeto interno: verified, source, pending_handle, request_id, bound_identity_verified, bound_action_target_snapshot_verified, verified_at, expires_at | evento del control explícito del portal verificado por el host | solo R3/ejecutor; excluido de toda proyección LLM |
 | workflow_state.handoff.required | bool | policy_engine con resultados de execute/verify | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.handoff.created | bool | create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
 | workflow_state.handoff.handoff_id | str|null | create_handoff | handlers deterministas; proyección según docs/INTEGRATION.md |
@@ -366,8 +385,8 @@ Estado interno; jamás enviar completo al LLM.
 - turn.slots tiene exactamente las 17 claves del slot_extraction_prompt; turn.clarification tiene resolution_type y selected_ref. turn.intents preserva la lista completa del clasificador. Procesar consultas independientes de forma serial, sin confirmar varias acciones con un único sí.
 - get_history solo restaura workflow_state del mismo customer_id y sesión. Jamás sustituye identidad ni autenticación actual.
 - Cada turno reinicia resultados de clasificación, validación y herramientas. Los resultados anteriores se revalidan antes de usarse. trace es evidencia operativa, nunca chain-of-thought.
-- pending se conserva durante la resolución y se limpia después de consumir la selección/confirmación, al cambiar de tema, al cancelar o cuando turns_waiting > pending_expiry_turns. La expiración invalida toda autorización.
-- Una confirmación solo corresponde al target y snapshot mostrados, dentro de la misma sesión. No se autoriza a partir del texto reescrito sin contrastarlo con el mensaje original saneado.
+- El pending del grafo se conserva durante la resolución y se limpia después de consumir la selección/confirmación, al cambiar de tema, al cancelar o cuando turns_waiting > pending_expiry_turns. Su expiración invalida toda autorización. El registro durable del MCP se conserva lo necesario para replay/lectura de recibo; limpiar la proyección del grafo no demuestra que una escritura incierta falló ni autoriza reintentar.
+- R3 requiere un evento verificado por el host del control explícito del portal. El host liga el pending handle/request_id durable a sujeto, customer_id, sesión, conversación, acción, target y snapshot originales; comprueba revocación, expiración real y relectura bajo el mismo owner. `trusted_confirmation.verified` solo se fija tras esas comprobaciones. Una frase de chat, aunque el clasificador devuelva CONFIRMED y coincida con el mensaje original, no es ese evento ni puede cambiar action.authorized. El estado de confirmación y sus identificadores internos nunca se proyectan al LLM.
 - turn.current_date es la fecha real del cliente; turn.current_timestamp y TTL usan reloj real. El default histórico solo afecta search_context y no mueve el plazo de disputa.
 - transaction_unique significa un target propio releído, de una búsqueda completa con una coincidencia o de una selección válida del snapshot. Conservar match_count de la búsqueda; un target con señal de duplicado persistente exige duplicate_review, sin repetición de la misma selección.
 - existing_case representa solo un vínculo sandbox exacto verificado. historical_candidates conserva casos propios sin vínculo y no se presenta como relación transaccional. duplicate_check=incomplete/historical_uncertain impide autorización.

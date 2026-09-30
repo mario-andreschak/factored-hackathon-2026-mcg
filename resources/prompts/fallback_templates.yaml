@@ -23,13 +23,13 @@ INFORM:
   es: 'Estos son los datos verificados: {{ verified_summary }}'
   pt: 'Estes são os dados verificados: {{ verified_summary }}'
 INFORM_EXISTING_CASE:
-  es: 'Existe un reclamo posiblemente relacionado: **{{ complaint_id }}**, estado
-    **{{ complaint_status }}**. No se crea otro.'
-  pt: 'Existe uma reclamação possivelmente relacionada: **{{ complaint_id }}**, status
-    **{{ complaint_status }}**. Não será criada outra.'
+  es: 'El reclamo **{{ complaint_id }}** de esta transacción tiene estado verificado
+    **{{ complaint_status }}** en el entorno de prueba. No se crea otro.'
+  pt: 'A reclamação **{{ complaint_id }}** desta transação tem status verificado
+    **{{ complaint_status }}** no ambiente de teste. Não será criada outra.'
 CONFIRM_ACTION:
-  es: ¿Autorizas registrar un reclamo por {{ transaction_summary }}?
-  pt: Você autoriza registrar uma reclamação sobre {{ transaction_summary }}?
+  es: 'Revisa el cargo {{ transaction_summary }}. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.'
+  pt: 'Confira a cobrança {{ transaction_summary }}. Se quiser registrar uma solicitação simulada, use o controle de confirmação do portal. Responder aqui no chat não faz o registro.'
 ACTION_DONE:
   es: El reclamo **{{ action_result_id }}** fue registrado y verificado en el entorno
     de prueba.

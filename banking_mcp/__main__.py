@@ -49,12 +49,21 @@ def main():
     demo.add_argument("--config", type=Path, required=True)
     revoke = sub.add_parser("revoke-session")
     revoke.add_argument("--config", type=Path, required=True)
+    coverage = sub.add_parser("attest-sandbox-coverage")
+    coverage.add_argument("--config", type=Path, required=True)
+    coverage.add_argument("--provenance", required=True)
     args = p.parse_args()
     try:
         if args.command == "demo":
             build_demo(args.out, args.config)
             return 0
         config = load_config(args.config)
+        if args.command == "attest-sandbox-coverage":
+            if config.mode != "delegated" or config.sandbox_report_coverage_start is None:
+                raise BankError("risk_data_unavailable")
+            StateStore(config.state_db).attest_sandbox_coverage(
+                config.sandbox_report_coverage_start, args.provenance)
+            return 0
         if args.command == "revoke-session":
             # Private control channel: never argv/env, and never an advertised tool.
             token = sys.stdin.read(8193)

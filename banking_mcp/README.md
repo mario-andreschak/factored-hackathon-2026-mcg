@@ -3,15 +3,19 @@
 Carlos's PRs #1 and #2 provide the data pipeline and lookup library. This package
 adds the MCP server FLUJO can connect to. It serves the pipeline's validated,
 customer-sharded Parquet snapshot and can read a selected transaction back from S3.
-It is read-only: no dispute submission, refunds or bank mutations.
+The customer read tools remain read-only. Delegated mode also has host-only
+simulated intake and verified handoff tools; these make sandbox records only,
+never dispute submissions, refunds or bank mutations. See
+[the v0 contract](../docs/SIMULATED_INTAKE_V0.md).
 
 ## Available in local FLUJO
 
-At `http://127.0.0.1:43420/`, both registrations are connected:
+At `http://127.0.0.1:43420/`, these registrations are connected:
 
 | Registration | Dataset | Usable now |
 | --- | --- | --- |
 | **Banking MCP Demo** | Explicit synthetic fixture, one fixed demo customer | Build graphical flows and call all three tools. S3 verification is unavailable. |
+| **Banking MCP Operator** | Private allowlist of approved dataset customers | Request an approved customer through existing chat or the Slack bridge, using the permanent Banking Operator flow. |
 | **Banking MCP** | Real bucket's derived snapshot, 4,425,008 transactions | Protected FLUJO flow reads work with verified per-call identity; ordinary tool testers cannot supply customer authority. |
 
 Banking MCP runs as a **stdio child process inside the existing FLUJO container**.
@@ -21,6 +25,7 @@ There is no separate Banking MCP container, remote MCP URL, or banking server po
 ```text
 Existing FLUJO container
   FLUJO -> Python Banking MCP (stdio)
+        -> Python operator banking MCP (stdio)
         -> Python synthetic demo MCP (stdio)
 ```
 
@@ -35,19 +40,54 @@ advertise shell, filesystem or generic S3 tools.
 | Tool | Business arguments | Result |
 | --- | --- | --- |
 | `banking_status` | None | Readiness and mode, without customer information |
-| `list_my_transactions` | Optional `start_date`, `end_date`, `limit` (1–20), `cursor` | Masked transaction facts and opaque selection handles |
-| `get_my_transaction` | `selection_handle`, optional `verify_source` | One previously selected transaction; optional conditional S3 read-back |
+| `list_my_transactions` | Optional `customer_id`, `conversation_id`, `start_date`, `end_date`, `limit` (1–20), `cursor` | Masked transaction facts and opaque selection handles |
+| `get_my_transaction` | `selection_handle`, optional `customer_id`, `conversation_id`, `verify_source` | One previously selected transaction; optional conditional S3 read-back |
+| `prepare_unrecognized_charge` | Exact owned transaction ID and snapshot from the trusted host | Pending sandbox decision and private risk evidence |
+| `confirm_simulated_intake` | Pending handle and explicit host-confirmed `true` | Persisted simulated intake, if eligible |
+| `read_intake_receipt` | Pending handle | Independent receipt read-back after an uncertain write |
+| `create_verified_handoff` | Reason and optional pending handle | Persisted owner-bound human-review packet |
+| `read_verified_handoff` | Handoff ID | Independent packet read-back before naming the ID |
+
+The five action tools are advertised only in delegated mode and require distinct
+per-call scopes. They are absent from the synthetic and operator test registrations.
 
 Dates filter **process_date**, with at most 31 inclusive dates. Defaults use the
 latest 31 days present in the historical source, not the current calendar month.
 Pagination sorts by transaction timestamp and ID. Cursors keep the same window;
 repeat explicit dates when paging a custom window.
 
-Customer, product and transaction IDs, fraud labels, S3 keys, credentials and
-lineage fields never appear in tool schemas or results. Handles and cursors expire
+Customer/conversation selectors are optional schema fields; they never grant
+authority to a bound customer. Product and transaction IDs, fraud labels, S3 keys,
+credentials and lineage fields never appear in tool results. Handles and cursors expire
 after 15 minutes and are bound to the verified subject, customer, session,
 conversation and immutable build. A new build invalidates old references. Merchant
 text remains untrusted data; models must not follow instructions inside it.
+
+### Approved operator tests through existing chat and Slack
+
+The new `operator-test` profile is an explicit private configuration for approved
+organizer-synthetic customers or generated fixtures. It is not activated by a
+missing assertion. Use `config.operator.example.json` with a private nonempty
+`approved_customers` allowlist and separate durable state. Keep this registration
+available only to authorized operators in the existing private FLUJO/Slack setup.
+The profile labels its results `synthetic:true` and `operator_test:true`.
+
+Both customer tools require an approved `customer_id` and resolved `conversation_id`
+in this mode. The runtime must supply and overwrite conversation correlation on
+both tools. If necessary, fix the nonsecret conversation parameter to
+`@current.conversation.id` in the existing graphical flow; it overwrites attempted
+model values and accepts opaque Slack thread IDs. Missing or unresolved correlation
+fails. Operators simply ask for approved A or B in ordinary chat or Slack; they do
+not supply secret `_meta`. Disable a customer preset to permit selection, or fix A
+to test argument overwrite. Correlation and presets do not authenticate a customer.
+
+Handles/cursors are bound to the selected customer and conversation: switching A
+to B in an operator thread is permitted, but A's handle fails under B. Cross-thread
+isolation depends on the runtime supplying the actual root's correlation; the MCP
+cannot establish a Slack root from a model-authored argument alone. A bound
+conversation must start fresh rather than adopt
+an operator A/B transcript or provider session. This profile does not add a customer
+frontend or create per-customer flows.
 
 ## How customer isolation works
 
@@ -62,7 +102,10 @@ text remains untrusted data; models must not follow instructions inside it.
    `tools/call.params._meta["com.flujo.bank/assertion"]`. A retry gets a new assertion.
 4. The MCP verifies the signature, audience, tool, argument hash, expiry, replay
    state and session revocation. It resolves the subject through its private mapping,
-   then checks customer/product ownership while querying the customer bucket.
+   rejects any supplied customer/conversation selector differing from that verified
+   principal, then checks customer/product ownership while querying the customer bucket.
+   Omitting the selectors means the verified customer's transactions; no customer
+   preset or private metadata resolver is required for this contract.
 5. Before returning a read, it checks expiry and revocation again. Missing or invalid
    authority returns an error, with no customer read.
 
@@ -70,7 +113,14 @@ The local stdio transport does not select a customer. Static headers/env-vars or
 per-call assertion. Synthetic mode bypasses customer assertions only for a marked,
 fixed-customer fixture and explicitly labels every customer result `synthetic:true`.
 
-See [the FLUJO integration design](../docs/FLUJO_BANKING_RUN_AUTH.md) for
+The optional generic FLUJO callback runs after final argument normalization.
+The separately selected hackathon adapter uses it to sign fresh per-call
+assertions. Signing keys and bank policy stay outside graph parameters.
+Actual model, ownership and interface acceptance are recorded in
+[the implementation report](../docs/BANKING_MCP_IMPLEMENTATION.md); Python
+contract tests alone do not establish that end-to-end result.
+
+See [the implemented FLUJO integration](../docs/BANKING_MCP_IMPLEMENTATION.md) for
 ingress, run-context and tool-dispatch requirements. Signing keys must stay outside FLUJO
 graph configuration, user metadata, the model and ordinary tool parameters. Strip
 incoming assertions and mint fresh ones from verified server context. Reject
@@ -108,11 +158,24 @@ need shared fenced identity, replay and reference storage.
 
 Build the pipeline with this branch's code. It writes private source lineage into
 gold and copies `source_objects.json` into the same immutable build before updating
-`CURRENT`. Older builds lacking these fields must be rebuilt using cached bronze:
+`CURRENT`. Every published build also inventories gold Parquet paths/sizes in
+`snapshot.json`. The MCP checks that inventory and fails closed for missing/corrupt
+buckets rather than returning an empty history. Legacy builds without it require
+migration before reloading the updated server. Create a new immutable gold build
+from the current published silver and lineage, without rereading S3:
 
 ```powershell
-python -m pipeline run --stage silver gold --tables customers products transactions --out data --reports data/pipeline-reports
+python -m pipeline run --stage gold --source local-unused --tables customers products transactions --out data --reports data/pipeline-reports
 ```
+
+Use installed Python and private dataset/report paths for the existing worker.
+This preserves legacy source provenance; it does not prove stronger ingestion
+version identity. Builds are retained rather than pruned while readers may use
+them. For a fully validated refresh, run all stages with the existing private S3
+env file. Bronze validates that the selected source inventory is unchanged after
+ingestion, assuming static inputs for the run; changed inputs cannot be published.
+Silver-only or silver+gold from cached bronze requires its validated lineage marker. No
+credentials or source object keys belong in model inputs or public logs.
 
 Normal MCP reads use Parquet. `verify_source:true` checks customer/product source
 ETags and fetches only the selected date's allowlisted transaction CSV with S3
@@ -175,11 +238,17 @@ Run `python -m pytest -q tests/test_banking_mcp.py tests/test_pipeline.py`.
 Tests cover argument tampering, forged/expired/replayed assertions, revocation during
 reads, private handles/cursors, restart persistence, owner rechecks, changed snapshots,
 HTTP service/host/origin checks, conditional S3 verification and 500 interleaved
-synthetic reads. See [local integration evidence](../docs/BANKING_MCP_IMPLEMENTATION.md).
+synthetic reads. Operator tests cover missing/unknown selectors, unresolved correlation,
+A/B selection, foreign customer/thread handles, parallel calls and an actual shared
+stdio child. Snapshot inventory and connection shutdown are tested independently.
+See [earlier local integration evidence](../docs/BANKING_MCP_IMPLEMENTATION.md);
+those deployed checks predate the new operator contract.
 
 Eight active reads and 512 queued reads bound the work. Overflow returns `server_busy`.
 Queued requests cannot outlive their signed authority. This bounds resource usage;
 it is not a promise of equal latency at 500 customers. The remaining acceptance test
 must use 500 authenticated frontend customers through FLUJO, with the real signer,
-default 20-row pages, retries and provider calls. Measure p95/p99 and scale the query
-service and shared state based on that result.
+default 20-row pages, retries and provider calls. Measure p95/p99 and tune bounded
+query/provider queues and state inside the existing worker based on that result.
+Neither local lookup benchmarks nor the earlier Static burst establishes 500
+conversational model sessions or S3 verification latency.

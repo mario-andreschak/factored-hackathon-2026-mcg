@@ -3,6 +3,7 @@
 **
 !Dockerfile.banking-mcp
 !Dockerfile.flujo-banking
+!Dockerfile.flujo-banking-integration
 !requirements-mcp.txt
 !requirements-pipeline.txt
 !requirements-s3.txt
@@ -11,3 +12,5 @@
 !pipeline/
 !pipeline/*.py
 !pipeline/contracts.yaml
+!scripts/
+!scripts/provision_banking_runtime_policy.mjs

@@ -1,0 +1,121 @@
+text,label,lang,author
+"Buen día, ¿cuánto tengo disponible en mi cuenta hoy?",inquiry,es,codex_blind_holdout_20260928
+"¿Me decís de qué comercio es el consumo que figura como pendiente?",inquiry,es,codex_blind_holdout_20260928
+"Hola, ¿ya cayó la transferencia que me hicieron esta mañana?",inquiry,es,codex_blind_holdout_20260928
+"Parce, ¿en qué estado va la consignación que hice ayer?",inquiry,es,codex_blind_holdout_20260928
+"¿Cuándo cierra mi tarjeta este mes?",inquiry,es,codex_blind_holdout_20260928
+"Necesito ver los movimientos de la semana pasada, ¿me los pueden mostrar?",inquiry,es,codex_blind_holdout_20260928
+"¿Cuál es el límite que tengo para sacar plata del cajero?",inquiry,es,codex_blind_holdout_20260928
+"Oigan, ¿de dónde viene este cargo? Solo quiero ubicar el negocio.",inquiry,es,codex_blind_holdout_20260928
+"hola cuanto debo en la tarjeta ahorita",inquiry,es,codex_blind_holdout_20260928
+"¿La cuota del préstamo que ya tengo vence el lunes o el martes?",inquiry,es,codex_blind_holdout_20260928
+"Che, mandé plata hace un rato. ¿Podés decirme si sigue en proceso?",inquiry,es,codex_blind_holdout_20260928
+"¿Qué comisión me aplicaron en el último retiro? No estoy reclamando, quiero entender el detalle.",inquiry,es,codex_blind_holdout_20260928
+"¿Mi cuenta de nómina está activa todavía?",inquiry,es,codex_blind_holdout_20260928
+"Buenas, estoy organizando mis gastos y necesito saber cuánto pagué de intereses en mi último extracto.",inquiry,es,codex_blind_holdout_20260928
+"¿A qué hora se registró mi compra de ayer?",inquiry,es,codex_blind_holdout_20260928
+"¿Por qué me cobraron dos veces el mismo café?",dispute,es,codex_blind_holdout_20260928
+"Hola, ese consumo del restaurante no lo reconozco en mi resumen.",dispute,es,codex_blind_holdout_20260928
+"Me descontaron la plata de la transferencia, pero a quien se la mandé no le llegó.",dispute,es,codex_blind_holdout_20260928
+"El cajero no me dio el efectivo y sí bajó mi saldo.",dispute,es,codex_blind_holdout_20260928
+"Qué onda, la tienda devolvió mi compra hace días y el reembolso todavía no aparece.",dispute,es,codex_blind_holdout_20260928
+"En el extracto sale una cuota más alta que la que acordé para mi crédito.",dispute,es,codex_blind_holdout_20260928
+"che esta compra esta repetida, yo pagué una sola vez",dispute,es,codex_blind_holdout_20260928
+"Me cobraron una comisión que mi cuenta no debería tener.",dispute,es,codex_blind_holdout_20260928
+"Buenas tardes. Cancelé el servicio, pero me volvieron a descontar la mensualidad este mes.",dispute,es,codex_blind_holdout_20260928
+"La compra era por menos; en mi tarjeta cargaron un importe equivocado.",dispute,es,codex_blind_holdout_20260928
+"¿Me ayudan con un pago que sale doble en mi app aunque el comercio recibió uno solo?",dispute,es,codex_blind_holdout_20260928
+"La devolución figura como hecha en el comercio, pero sigo sin tener esa plata en la cuenta.",dispute,es,codex_blind_holdout_20260928
+"No solicité hablar con nadie; mi reclamo es que descontaron un pago que ya había cancelado.",dispute,es,codex_blind_holdout_20260928
+"No me suena este cobro del estacionamiento y yo no estuve allí.",dispute,es,codex_blind_holdout_20260928
+"Hice una consignación y el recibo marca una cantidad mayor que la abonada; falta parte de mi plata.",dispute,es,codex_blind_holdout_20260928
+"Quiero hablar con una persona, por favor.",human,es,codex_blind_holdout_20260928
+"Hola, pásame con un asesor para consultar mi saldo.",human,es,codex_blind_holdout_20260928
+"Me robaron la tarjeta hace un momento y necesito bloquearla ya.",human,es,codex_blind_holdout_20260928
+"Perdí la billetera con mi tarjeta, ¿cómo la bloqueo?",human,es,codex_blind_holdout_20260928
+"Hay alguien haciendo transferencias desde mi cuenta ahora mismo y no soy yo.",human,es,codex_blind_holdout_20260928
+"Me llegó un enlace que pide mi clave para evitar el cierre de la cuenta; creo que es phishing.",human,es,codex_blind_holdout_20260928
+"Che, me llamaron haciéndose pasar por el banco y compartí mi clave. Necesito frenar el acceso.",human,es,codex_blind_holdout_20260928
+"No puedo entrar y me avisaron que cambiaron mi correo sin mi permiso.",human,es,codex_blind_holdout_20260928
+"quiero un humano no el bot",human,es,codex_blind_holdout_20260928
+"Si no atienden este cobro duplicado, voy a iniciar una demanda contra el banco.",human,es,codex_blind_holdout_20260928
+"Mi pareja me está obligando a darle acceso a la cuenta y tengo miedo de que saque mi dinero.",human,es,codex_blind_holdout_20260928
+"Buenas, soy una persona mayor y no entiendo estos pasos; necesito que me atienda un asesor.",human,es,codex_blind_holdout_20260928
+"Oiga, están intentando usar mi tarjeta mientras la tengo conmigo. Me están llegando avisos de compras.",human,es,codex_blind_holdout_20260928
+"El cajero no entregó la plata; mejor comunícame con un agente para levantar el reclamo.",human,es,codex_blind_holdout_20260928
+"Me acaban de quitar el celular con la aplicación bancaria abierta.",human,es,codex_blind_holdout_20260928
+"¿Qué necesito para abrir una cuenta de ahorro?",other,es,codex_blind_holdout_20260928
+"Hola, ¿a qué hora abre la sucursal los sábados?",other,es,codex_blind_holdout_20260928
+"¿Ofrecen tarjetas sin anualidad para estudiantes?",other,es,codex_blind_holdout_20260928
+"Che, ¿qué significa inflación?",other,es,codex_blind_holdout_20260928
+"Recomiéndame una película para esta noche.",other,es,codex_blind_holdout_20260928
+"¿Dónde queda el cajero más cercano?",other,es,codex_blind_holdout_20260928
+"Buenas, quiero información general sobre sus créditos de vivienda, todavía no tengo uno.",other,es,codex_blind_holdout_20260928
+"q requisitos piden para abrir cuenta en colombia",other,es,codex_blind_holdout_20260928
+"¿Me puedes explicar qué es una transferencia internacional?",other,es,codex_blind_holdout_20260928
+"Qué onda, ¿cómo va tu día?",other,es,codex_blind_holdout_20260928
+"Quiero saber si tienen vacantes de trabajo en el banco.",other,es,codex_blind_holdout_20260928
+"¿Hay estacionamiento en su sucursal del centro?",other,es,codex_blind_holdout_20260928
+"Estoy comparando bancos, ¿cuáles son las ventajas de su cuenta para negocios?",other,es,codex_blind_holdout_20260928
+"¿Aceptan mascotas dentro de la sucursal?",other,es,codex_blind_holdout_20260928
+"Gracias por la explicación, era todo.",other,es,codex_blind_holdout_20260928
+"Bom dia, qual é o saldo disponível da minha conta?",inquiry,pt,codex_blind_holdout_20260928
+"Esse lançamento no meu extrato corresponde a qual loja?",inquiry,pt,codex_blind_holdout_20260928
+"Meu Pix de hoje já foi concluído ou ainda está em processamento?",inquiry,pt,codex_blind_holdout_20260928
+"Oi, quando vence a minha fatura deste mês?",inquiry,pt,codex_blind_holdout_20260928
+"Quanto tenho de limite livre no cartão agora?",inquiry,pt,codex_blind_holdout_20260928
+"Não perdi meu cartão; só quero saber se ele continua ativo.",inquiry,pt,codex_blind_holdout_20260928
+"Não houve fraude nem compra estranha. Preciso consultar os gastos que fiz no fim de semana.",inquiry,pt,codex_blind_holdout_20260928
+"qual o valor da proxima parcela do meu emprestimo",inquiry,pt,codex_blind_holdout_20260928
+"Dá pra me mostrar o comprovante da transferência que fiz ontem?",inquiry,pt,codex_blind_holdout_20260928
+"Minha fatura já consta como paga? Acabei de pagar pelo aplicativo.",inquiry,pt,codex_blind_holdout_20260928
+"Queria saber quanto rendeu o dinheiro que está na minha conta neste mês.",inquiry,pt,codex_blind_holdout_20260928
+"Boa tarde! Estou conferindo meu extrato e queria entender a descrição de uma tarifa que aparece nele.",inquiry,pt,codex_blind_holdout_20260928
+"Qual foi o horário do meu último saque?",inquiry,pt,codex_blind_holdout_20260928
+"O depósito de ontem já entrou na minha conta? Só estou acompanhando o prazo.",inquiry,pt,codex_blind_holdout_20260928
+"Não quero falar com atendente, só consultar a data de fechamento do meu cartão.",inquiry,pt,codex_blind_holdout_20260928
+"Por que cobraram minha compra duas vezes na fatura?",dispute,pt,codex_blind_holdout_20260928
+"Oi, não reconheço essa compra de farmácia que apareceu no extrato.",dispute,pt,codex_blind_holdout_20260928
+"Fiz um Pix, o saldo diminuiu e a pessoa não recebeu o dinheiro.",dispute,pt,codex_blind_holdout_20260928
+"O caixa eletrônico debitou o saque, mas não soltou nenhuma nota.",dispute,pt,codex_blind_holdout_20260928
+"A loja confirmou o estorno e até agora ele não entrou no cartão.",dispute,pt,codex_blind_holdout_20260928
+"A tarifa da minha conta veio errada, cobrou mais do que estava combinado.",dispute,pt,codex_blind_holdout_20260928
+"minha compra ta duplicada na fatura",dispute,pt,codex_blind_holdout_20260928
+"Não acho que seja fraude: o mercado passou a mesma compra duas vezes e preciso corrigir a cobrança.",dispute,pt,codex_blind_holdout_20260928
+"Não preciso de atendente por enquanto. Quero contestar um débito que veio mesmo depois do cancelamento.",dispute,pt,codex_blind_holdout_20260928
+"Boa noite, paguei a parcela inteira, mas estão cobrando de novo uma parte que já quitei.",dispute,pt,codex_blind_holdout_20260928
+"O valor lançado no cartão é maior que o valor do recibo da compra.",dispute,pt,codex_blind_holdout_20260928
+"Meu reembolso está atrasado; disseram que já devolveram e o saldo continua igual.",dispute,pt,codex_blind_holdout_20260928
+"Cobraram anuidade neste mês, embora meu cartão tenha isenção.",dispute,pt,codex_blind_holdout_20260928
+"Esse pagamento de estacionamento não é meu, eu nem fui lá.",dispute,pt,codex_blind_holdout_20260928
+"A transferência saiu da conta ontem e o destinatário confirmou que ainda não chegou nada.",dispute,pt,codex_blind_holdout_20260928
+"Quero falar com um atendente de verdade.",human,pt,codex_blind_holdout_20260928
+"Oi, me passa para uma pessoa para consultar meu limite?",human,pt,codex_blind_holdout_20260928
+"Acabaram de roubar meu cartão e estão tentando fazer compras.",human,pt,codex_blind_holdout_20260928
+"Perdi o cartão na rua, preciso bloquear agora.",human,pt,codex_blind_holdout_20260928
+"Tem alguém mexendo na minha conta e enviando Pix sem minha autorização neste momento.",human,pt,codex_blind_holdout_20260928
+"Recebi um link para atualizar a senha do banco e achei suspeito; parece golpe.",human,pt,codex_blind_holdout_20260928
+"Passei minha senha numa ligação que achei que era do banco. Como impeço que entrem na conta?",human,pt,codex_blind_holdout_20260928
+"Mudaram meu telefone cadastrado sem eu pedir e agora não consigo acessar o aplicativo.",human,pt,codex_blind_holdout_20260928
+"me põe com um humano pfv",human,pt,codex_blind_holdout_20260928
+"Vou processar o banco se essa cobrança duplicada continuar sem solução.",human,pt,codex_blind_holdout_20260928
+"Meu cuidador está me pressionando a entregar o controle da conta e tenho medo de ficar sem meu dinheiro.",human,pt,codex_blind_holdout_20260928
+"Não roubaram meu cartão, mas quero conversar com um atendente sobre o extrato.",human,pt,codex_blind_holdout_20260928
+"Não é um pedido de saldo: alguém acabou de entrar na conta e trocou minha senha.",human,pt,codex_blind_holdout_20260928
+"Boa tarde, o saque falhou e preciso que um agente acompanhe meu caso.",human,pt,codex_blind_holdout_20260928
+"Levaram meu celular desbloqueado com o app do banco aberto, preciso proteger a conta já.",human,pt,codex_blind_holdout_20260928
+"O que preciso levar para abrir uma conta corrente?",other,pt,codex_blind_holdout_20260928
+"A agência abre amanhã de manhã?",other,pt,codex_blind_holdout_20260928
+"Vocês têm cartão sem anuidade para quem está na faculdade?",other,pt,codex_blind_holdout_20260928
+"Como funciona o Pix em geral? Nunca usei.",other,pt,codex_blind_holdout_20260928
+"Me indica uma receita fácil pro almoço.",other,pt,codex_blind_holdout_20260928
+"Onde fica um caixa eletrônico perto do centro?",other,pt,codex_blind_holdout_20260928
+"Boa tarde, estou pesquisando financiamento de imóvel e queria conhecer as opções de vocês.",other,pt,codex_blind_holdout_20260928
+"quais documentos precisa pra abri conta",other,pt,codex_blind_holdout_20260928
+"Qual é a diferença entre cartão de crédito e de débito?",other,pt,codex_blind_holdout_20260928
+"E aí, tudo bem por aí?",other,pt,codex_blind_holdout_20260928
+"Como faço para me candidatar a uma vaga no banco?",other,pt,codex_blind_holdout_20260928
+"Tem bicicletário na agência?",other,pt,codex_blind_holdout_20260928
+"Estou pensando em abrir uma conta para minha empresa. Quais serviços vêm no pacote?",other,pt,codex_blind_holdout_20260928
+"Não fui vítima de golpe; estou preparando um trabalho escolar sobre o que é phishing.",other,pt,codex_blind_holdout_20260928
+"Valeu pela ajuda, tenha um bom dia!",other,pt,codex_blind_holdout_20260928

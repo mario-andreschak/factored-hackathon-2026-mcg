@@ -2,7 +2,7 @@
 
 
 
-Documentar cada herramienta con su firma, parámetros, salida JSON, errores y la tabla o tablas que lee. **Todas** reciben `customer_id` desde la sesión, nunca desde el LLM, y **todas** devuelven `{"status": "ok" | "error", ...}`.
+Las firmas de la tabla son **interfaces lógicas propuestas para el grafo v0**, no el inventario instalado del MCP. `customer_id` siempre proviene de la sesión, nunca del LLM. Los resultados lógicos usan `{"status": "ok" | "error", ...}`. El prototipo fuente actual expone tres lecturas y cinco acciones **solo para el host**, protegidas por scopes privados; la integración de acciones está desactivada por defecto en el frontend. Sus acciones son `prepare_unrecognized_charge`, `confirm_simulated_intake`, `read_intake_receipt`, `create_verified_handoff` y `read_verified_handoff`. `CREATE_COMPLAINT` es el nombre lógico del grafo; la acción fuente actual se llama `simulated_intake`. El host guarda un pending durable y relee recibos. El grafo R0–R18, la consulta histórica completa y R18 aún requieren adaptador/implementación; estas firmas no anuncian herramientas adicionales instaladas.
 
 | Herramienta | Firma | Lee | Notas |
 |---|---|---|---|
@@ -13,8 +13,8 @@ Documentar cada herramienta con su firma, parámetros, salida JSON, errores y la
 | `list_customer_complaints` | `(customer_id, only_open=False)` | complaints + sandbox | Consulta R18 sin exigir transaction_id; estados propios, no control de duplicados de escritura |
 | `get_complaint` | `(customer_id, complaint_id)` | complaints + sandbox | Se usa para **verificar** tras la creación |
 | `get_recent_interactions` | `(customer_id, days=30)` | call_center_interactions, call_transcripts | Devuelve un resumen, **no** `full_text` |
-| `create_complaint` | `(customer_id, transaction_id, product_id, claimed_amount, currency, description, idempotency_key)` | escribe `sandbox/complaints_created.csv` | `category='Transactions'`, `subcategory='Cargo no reconocido'`, `status='Open'`. Id con formato `CMP-SBX-XXXXXXXX` |
-| `create_handoff` | `(customer_id, payload)` | escribe `sandbox/handoffs.jsonl` | Id con formato `HOF-XXXXXXXX` |
+| `create_complaint` | `(customer_id, transaction_id, product_id, claimed_amount, currency, description, idempotency_key)` | ledger SQLite sandbox, `sandbox_cases` | Contrato lógico; el host actual confirma con `confirm_simulated_intake` y relee con `read_intake_receipt`. Categoría sintética `Transactions`/`Cargo no reconocido`; ID `CMP-SBX-XXXXXXXX` |
+| `create_handoff` | `(customer_id, payload)` | ledger SQLite sandbox, `sandbox_handoffs` | Contrato lógico; el host actual usa `create_verified_handoff` y `read_verified_handoff`. ID `HOF-XXXXXXXX` |
 | `retrieve_policy` | `(query, top_k=4)` | `resources/policies/*.md` | Devuelve `[{chunk_id, source, text}]` |
 
 Salida canónica de `search_transactions` (el generador recibe solo esta forma):
@@ -79,6 +79,8 @@ Fuente: customers, products.
 }
 ```
 
+El objeto de ejemplo está abreviado. Para evaluar R12–R17, la relectura debe incluir fecha de evento, importe, moneda, producto, estado y señales de duplicado del target; si faltan, no se autoriza la acción.
+
 Errores: not_found, data_unavailable. Todos usan {"status":"error","error":{"code":"...","retryable":false,"message":"texto seguro"}}; no mezclar resultados parciales con status=ok.
 
 ## search_transactions: salida y errores
@@ -112,7 +114,7 @@ Fuente: transactions.
 ```json
 {
   "status": "ok",
-  "transaction": null,
+  "transaction": {"transaction_id": "TRX-TISSB5PSH609J7PQJCU3", "transaction_status": "Approved"},
   "risk_signals": {},
   "data_quality_flags": []
 }
@@ -122,7 +124,7 @@ Errores: not_found, data_unavailable. Todos usan {"status":"error","error":{"cod
 
 ## get_related_complaints: salida y errores
 
-Fuente: complaints, sandbox/complaints_created.csv.
+Fuente propuesta: reclamos históricos propios más `sandbox_cases` del ledger SQLite autoritativo.
 
 ```json
 {
@@ -142,13 +144,13 @@ Fuente: complaints, sandbox/complaints_created.csv.
 }
 ```
 
-`report_window` es solo para el motor determinista. Cuenta casos sandbox persistidos y releíbles de Transactions/Cargo no reconocido, del mismo cliente y transacciones distintas, con created_at de servidor UTC en `[window_end−24h, window_end)`. No cuenta llamadas históricas, compras, otros clientes ni replays idempotentes; la solicitud actual se suma por separado si es un target propio distinto. El almacén sandbox inicializado desde vacío cubre su propia historia; `coverage_complete=true` significa cobertura íntegra de **ese almacén**, no del historial bancario real. Si falta integridad o cobertura, el conteo es null y coverage_complete=false; nunca inferir cero. Se admite un agregado privado equivalente que conserve esta semántica y no se proyecte al LLM.
+`report_window` es solo para el motor determinista. Cuenta casos sandbox persistidos y releíbles de Transactions/Cargo no reconocido, del mismo cliente y transacciones distintas, con created_at de servidor UTC en `[window_end−24h, window_end)`. No cuenta llamadas históricas, compras, otros clientes ni replays idempotentes; la solicitud actual se suma por separado si es un target propio distinto. `coverage_complete=true`, como en el ejemplo, requiere integridad y atestación privada del operador vinculada a la generación actual del ledger SQLite y a la ventana real; un archivo existente, inicializado o vacío no basta. La atestación de un ledger completo deliberadamente vacío permite contar cero solo dentro de **ese sandbox**, no del historial bancario real. Si falta integridad, cobertura o atestación, el conteo es null y coverage_complete=false; nunca inferir cero. Se admite un agregado privado equivalente que conserve esta semántica y no se proyecte al LLM.
 
 Errores: invalid_filter, data_unavailable. Todos usan {"status":"error","error":{"code":"...","retryable":false,"message":"texto seguro"}}; no mezclar resultados parciales con status=ok.
 
 ## list_customer_complaints: salida y errores
 
-Fuente: complaints, sandbox/complaints_created.csv. Filtro por customer_id antes de cualquier lectura o unión; salida de estado, independiente de transacciones.
+Fuente propuesta: reclamos históricos propios más `sandbox_cases` del ledger SQLite. Filtro por customer_id antes de cualquier lectura o unión; salida de estado, independiente de transacciones. `list_customer_complaints` para R18 todavía no está instalado en el MCP actual.
 
 ```json
 {"status":"ok","match_count":0,"complaints":[],"coverage_complete":true}
@@ -158,7 +160,7 @@ Cada entrada contiene ref estable en el snapshot, complaint_id, status, source, 
 
 ## get_complaint: salida y errores
 
-Fuente: complaints, sandbox/complaints_created.csv.
+Fuente propuesta: reclamos históricos propios más `sandbox_cases` del ledger SQLite. El MCP actual tiene `read_intake_receipt` para su recibo sandbox, pero no la lectura general de estado histórico R18.
 
 ```json
 {
@@ -197,7 +199,7 @@ Errores: data_unavailable. Todos usan {"status":"error","error":{"code":"...","r
 
 ## create_complaint: salida y errores
 
-Fuente: escribe únicamente sandbox/complaints_created.csv.
+Fuente de escritura: únicamente `sandbox_cases` en el ledger SQLite sandbox autoritativo. No se escribe un CSV de reclamos; esta firma es la interfaz lógica del grafo, mientras que el host actual confirma por `confirm_simulated_intake`.
 
 ```json
 {
@@ -214,7 +216,7 @@ Persistir tiempo de servidor UTC `created_at`, customer_id, transaction_id, cate
 
 ## create_handoff: salida y errores
 
-Fuente: escribe únicamente sandbox/handoffs.jsonl.
+Fuente de escritura: únicamente `sandbox_handoffs` en el mismo ledger SQLite sandbox. No se escribe JSONL de derivaciones; esta firma es la interfaz lógica del grafo, mientras que el host actual crea y relee por sus dos acciones protegidas.
 
 ```json
 {
@@ -273,13 +275,13 @@ get_customer_profile devuelve segment solo internamente. A LLM de entrada se per
 
 Normalizar amount_usd internamente con daily_exchange_rates de fecha del evento y par moneda/USD; si falta tipo de cambio no asumir riesgo bajo. risk_signals y datos de riesgo quedan en canal interno y paquete humano, nunca en structured_data ni prompts.
 
-create_complaint vuelve a comprobar sesión, propiedad, Approved, ventana real, política, duplicate_check=clear_in_snapshot y confirmación del target exacto. Revalidar el control de casos bajo una reserva atómica por cliente/transacción/acción para impedir duplicados entre conversaciones; además idempotency_key=SHA256(session identity + workflow ID + transaction ID + CREATE_COMPLAINT), guardada antes del intento y reutilizada tras timeout. Nunca insertar dos veces. case_type=Claim; resto de constantes según tabla. No devolver verified=true: verify_action relee por get_complaint y compara cliente, transaction_id, producto, importe y moneda.
+create_complaint (interfaz lógica) vuelve a comprobar sesión, propiedad, Approved, ventana real, política, duplicate_check=clear_in_snapshot y el evento de consentimiento explícito del portal para el target exacto. El host actual prepara con un request_id UUIDv4 durable ligado a sujeto/cliente/sesión/conversación y pending handle opaco ligado a acción, target y snapshot. La confirmación revalida revocación, expiración real, facts y evidencia bajo el scope propio. Revalidar el control de casos bajo reserva atómica por cliente/transacción/acción en SQLite para impedir duplicados entre conversaciones; el replay de la misma solicitud conserva su identidad y resultado. Nunca insertar dos veces ni reintentar la escritura a ciegas tras una respuesta perdida: leer el recibo con el mismo pending handle. case_type=Claim; resto de constantes según tabla. La respuesta de escritura sola no verifica éxito: la lectura de recibo compara propiedad, transacción, snapshot y hechos requeridos. Un caso histórico no es recibo de una acción nueva.
 
-create_handoff recibe payload ensamblado por código y una clave estable en payload para reintentos idempotentes. created=true únicamente después de releer el registro local con el mismo ID y verificar campos obligatorios. En fallo conservar required=true, created=false y no anunciar transferencia creada.
+create_handoff recibe payload ensamblado por código y una identidad estable ligada al owner, target/snapshot y motivo para reintentos idempotentes. El host actual ofrece un paquete local mínimo, no el paquete ampliado del grafo descrito abajo. created=true únicamente después de releer el registro local con el mismo ID y verificar campos obligatorios. En fallo conservar required=true, created=false y no anunciar transferencia creada ni atención humana recibida.
 
-data_s3 permanece de solo lectura. El almacenamiento sandbox es interno y nunca se envía íntegro a modelos externos. Errores, descripciones y campos de texto se sanean antes de usarse.
+data_s3 permanece de solo lectura. El ledger SQLite de casos, handoffs y pending en el MCP es la fuente autoritativa de acciones; el estado SQLite del frontend sirve a recuperación de UI y no sustituye recibos del MCP. El almacenamiento sandbox es interno y nunca se envía íntegro a modelos externos. Errores, descripciones y campos de texto se sanean antes de usarse.
 
-## Paquete final de handoff (interno, ensamblado en código)
+## Paquete final de handoff propuesto para el grafo (interno, ensamblado en código)
 
-Campos obligatorios: handoff_id:string, created_at:ISO8601, reason_code:high_risk|customer_request|emergency|no_match_exhausted|tool_failure|action_unverified|out_of_policy|clarification_exhausted|missing_evidence|duplicate_review, rule_ids:list[string], request_summary:string, customer_language:es|pt|other, verified_facts:list[{field,value,source}], customer_stated_claims:list[string], actions_taken:list[{action,result}], evidence:list[{source,id}], open_questions:list[string], risk_signals:objeto interno opcional.
+Campos del contrato futuro: handoff_id:string, created_at:ISO8601, reason_code:high_risk|customer_request|emergency|no_match_exhausted|tool_failure|action_unverified|out_of_policy|clarification_exhausted|missing_evidence|duplicate_review, rule_ids:list[string], request_summary:string, customer_language:es|pt|other, verified_facts:list[{field,value,source}], customer_stated_claims:list[string], actions_taken:list[{action,result}], evidence:list[{source,id}], open_questions:list[string], risk_signals:objeto interno opcional. El paquete mínimo persistido hoy no demuestra que un humano lo recibió o respondió.
 El resumen narrativo solo llena request_summary, customer_language, customer_stated_claims y suggested_open_questions; código filtra estas últimas y las guarda como open_questions (máximo cuatro). Los hechos y acciones siempre se reconstruyen desde herramientas y trace; jamás desde salida narrativa. customer_id se agrega exclusivamente en el almacén interno para control de acceso. risk_signals puede contener fraud_score e is_fraud para el humano, pero se excluye de cualquier entrada al LLM y mensaje al cliente.

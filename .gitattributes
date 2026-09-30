@@ -2,3 +2,4 @@
 *.md text eol=lf
 *.json text eol=lf
 *.py text eol=lf
+ml/data/router_test*.csv text eol=lf

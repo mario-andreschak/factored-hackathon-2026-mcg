@@ -1,0 +1,31 @@
+# Keep credentials, dataset rows, state, local tools and test output outside
+# both build stages. The build context is frontend/, not the repository root.
+node_modules
+dist
+*.tsbuildinfo
+.vite
+.pytest_cache
+.venv
+server/__pycache__
+**/__pycache__
+**/*.pyc
+.env
+.env.*
+*.env
+*.pem
+*.key
+private
+data
+state
+tests
+server/test_*.py
+test-results
+playwright-report
+*.sqlite
+*.sqlite3
+*.db
+*.duckdb
+*.parquet
+*.csv
+README.md
+compose*.yaml

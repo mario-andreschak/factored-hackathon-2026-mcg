@@ -6,6 +6,22 @@ from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 
+READ_TOOLS = {"banking_status", "list_my_transactions", "get_my_transaction"}
+ACTION_TOOLS = {"prepare_unrecognized_charge", "confirm_simulated_intake",
+                "read_intake_receipt", "create_verified_handoff", "read_verified_handoff"}
+
+
+def assert_ready_tools(config_path: Path, tools: dict) -> list[str]:
+    mode = json.loads(config_path.read_text(encoding="utf-8")).get("mode", "delegated")
+    if mode not in {"delegated", "synthetic-demo", "operator-test"}:
+        raise ValueError("Banking MCP mode is invalid")
+    expected = READ_TOOLS | ACTION_TOOLS if mode == "delegated" else READ_TOOLS
+    names = [tool["name"] for tool in tools.get("tools", [])]
+    if tools.get("error") or len(names) != len(expected) or set(names) != expected:
+        raise ValueError("Banking stdio process is not ready; check its in-runtime installation and mounts")
+    return names
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--base", default="http://127.0.0.1:43420")
@@ -58,9 +74,7 @@ def main():
     else:
         request("POST", "/api/mcp/servers", config)
     tools = request("GET", "/api/mcp/servers/" + quote(a.name, safe="") + "/tools")
-    names = [t["name"] for t in tools.get("tools", [])]
-    if tools.get("error") or set(names) != {"banking_status", "list_my_transactions", "get_my_transaction"}:
-        raise ValueError("Banking stdio process is not ready; check its in-runtime installation and mounts")
+    names = assert_ready_tools(a.config, tools)
     print(json.dumps({"server": a.name, "transport": "stdio", "tools": names}))
 
 

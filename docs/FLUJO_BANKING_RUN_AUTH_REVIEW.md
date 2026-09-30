@@ -1,6 +1,16 @@
 # Second review of the FLUJO banking proposal
 
+> **Historical review, September 27:** the findings and open gates below describe
+> the code inspected on that date. See [current implementation and acceptance](BANKING_MCP_IMPLEMENTATION.md)
+> and [current decisions](BANKING_MCP_NEXT_STEPS.md) for the implemented scope,
+> measured results and remaining follow-ups.
+
 **Date:** 2026-09-27. **Verdict:** retain FLUJO as backend/MCP client, revise the security and scaling contract before implementation. The original direction is feasible; several details were incomplete or overstated. The [revised proposal](FLUJO_BANKING_RUN_AUTH.md) incorporates the corrections below. This is a source/architecture review with limited executed probes, not certification of an implemented bank system.
+
+> September 28 correction: this review correctly identified Static/preset gaps,
+> but the resulting banking-specific ingress bypassed the requested existing UI
+> and Slack workflow. The [presets plan](FLUJO_TOOL_PRESETS_PLAN.md) corrects that
+> integration decision. Historical probe results below retain their original scope.
 
 ## Review scope and provenance
 

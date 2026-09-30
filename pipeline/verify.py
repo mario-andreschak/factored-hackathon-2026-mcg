@@ -17,6 +17,7 @@ Security contract
 from __future__ import annotations
 
 import time
+from contextlib import closing
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -78,7 +79,10 @@ def verify_transaction_in_source(source: str, transaction_id: str, customer_id: 
     """
     t0 = time.perf_counter()
     start = date.fromisoformat(str(process_date)[:10])
-    settings = Settings(source=source, out_dir=Path("."), report_dir=Path("."), tables=[], s3=s3 or {})
+    gold_path = Path(gold_dir).resolve() if gold_dir is not None else None
+    out_dir = (gold_path.parents[2] if gold_path is not None and gold_path.parent.parent.name == "builds"
+               else gold_path.parent if gold_path is not None else Path("data").resolve())
+    settings = Settings(source=source, out_dir=out_dir, report_dir=Path("."), tables=[], s3=s3 or {})
     objects = _partitions(settings, "transactions", start, search_days, refresh_listing)
     base = {"transaction_id": transaction_id, "partitions_checked": len(objects)}
     if not objects:
@@ -86,15 +90,15 @@ def verify_transaction_in_source(source: str, transaction_id: str, customer_id: 
                 "audit": {"reason": "no_source_partition_in_window"},
                 "ms": round((time.perf_counter() - t0) * 1000, 1)}
 
-    con = connect(settings)
     files = "[" + ", ".join(f"'{sql_path(o['uri'])}'" for o in objects) + "]"
-    rel = con.execute(f"""
-        SELECT * FROM read_csv({files}, header = true, all_varchar = true, union_by_name = true,
-                               filename = true, hive_partitioning = false)
-        WHERE transaction_id = ?
-        ORDER BY filename DESC""", [transaction_id])
-    cols = [d[0] for d in rel.description]
-    versions = [dict(zip(cols, r)) for r in rel.fetchall()]
+    with closing(connect(settings)) as con:
+        rel = con.execute(f"""
+            SELECT * FROM read_csv({files}, header = true, all_varchar = true, union_by_name = true,
+                                   filename = true, hive_partitioning = false)
+            WHERE transaction_id = ?
+            ORDER BY filename DESC""", [transaction_id])
+        cols = [d[0] for d in rel.description]
+        versions = [dict(zip(cols, r)) for r in rel.fetchall()]
     if not versions:
         return {**base, "status": "not_found", "transaction": None, "audit": {"reason": "not_in_source"},
                 "ms": round((time.perf_counter() - t0) * 1000, 1)}
@@ -113,12 +117,13 @@ def verify_transaction_in_source(source: str, transaction_id: str, customer_id: 
         bucket = Path(gold_dir) / "transactions_by_customer" / f"bucket={bucket_for(customer_id)}"
         g = None
         if bucket.exists():
-            gr = duckdb.connect().execute(
-                f"SELECT * FROM read_parquet('{sql_path(bucket)}/*.parquet') "
-                f"WHERE transaction_id = ? AND customer_id = ?", [transaction_id, customer_id])
-            gcols = [d[0] for d in gr.description]
-            hit = gr.fetchone()
-            g = dict(zip(gcols, hit)) if hit else None
+            with closing(duckdb.connect()) as gold_con:
+                gr = gold_con.execute(
+                    f"SELECT * FROM read_parquet('{sql_path(bucket)}/*.parquet') "
+                    f"WHERE transaction_id = ? AND customer_id = ?", [transaction_id, customer_id])
+                gcols = [d[0] for d in gr.description]
+                hit = gr.fetchone()
+                g = dict(zip(gcols, hit)) if hit else None
         if g is not None and not g.get("ownership_valid"):
             return {**base, "status": "not_found", "transaction": None,
                     "audit": {"reason": "product_owner_mismatch", "source_key": key},

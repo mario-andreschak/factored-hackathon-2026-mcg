@@ -1,11 +1,22 @@
 # Factored AI & Data Hackathon 2026 — MCG
 
-This repository contains our data audit, DuckDB data pipeline, classifier baseline and read-only banking MCP for a FLUJO-powered **unrecognized-charge inquiry and simulated dispute-intake** workflow. The MCP is connected to local FLUJO; authenticated frontend integration and dispute intake remain to be implemented.
+This repository contains the data audit, DuckDB pipeline, classifier baseline, banking MCP and **Savia**, a customer-facing online banking demo for FLUJO-powered unrecognized-charge inquiries. Savia uses real organizer products and transactions from the published silver/gold snapshot. Names are fictional demo aliases. An opt-in simulated intake and verified human handoff prototype is described in [docs/SIMULATED_INTAKE_V0.md](docs/SIMULATED_INTAKE_V0.md); it does not submit a bank dispute or issue a refund.
+
+## Open the banking demo
+
+The local Docker deployment is available at [localhost:43800](http://localhost:43800). Choose a Colombia, México or Argentina profile and enter the configured demo access code (local default: `2026`). Explore balances, accounts/cards, product details, transaction filters and CSV export, or ask the FLUJO assistant about a movement.
+
+See [frontend setup and portable deployment](frontend/README.md) and [dataset, architecture and verification evidence](docs/ONLINE_BANKING_FRONTEND.md). The frontend runs alongside the existing FLUJO worker; its image contains neither customer rows nor service credentials.
 
 ## Start here
 
+- [Data recovery review and local runbook (September 29)](docs/DATA_RECOVERY_2026-09-29.md)
+- [Current banking MCP implementation and measured limits](docs/BANKING_MCP_IMPLEMENTATION.md)
+- [Current operator demo](docs/BANKING_OPERATOR_DEMO.md)
 - [Hackathon audit and delivery plan](docs/HACKATHON_AUDIT_PLAN.md)
+- [Hackathon supervision and October 3 team target](docs/HACKATHON_SUPERVISION.md)
 - [Direct S3 data review](docs/DATA_REVIEW_2026-09-26.md)
+- [Channel clarifications on dataset quality (September 30)](docs/CHANNEL_DATA_CLARIFICATIONS_2026-09-30.md)
 - [Banking MCP direct S3 plan](docs/BANKING_MCP_S3_PLAN.md)
 - [FLUJO customer-bound banking run design](docs/FLUJO_BANKING_RUN_AUTH.md)
 - [FLUJO proposal review, alternatives and executed evidence](docs/FLUJO_BANKING_RUN_AUTH_REVIEW.md)
@@ -44,6 +55,7 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | `scripts/` | Reproducible profiling and FLUJO review probes |
 | `pipeline/` | DuckDB ingestion, ownership validation and customer-sharded snapshot outputs |
 | `banking_mcp/` | Read-only MCP server with verified per-call authority and bounded transaction reads |
+| `frontend/` | Savia React UI, authenticated snapshot API, FLUJO customer chat and portable Docker deployment |
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 

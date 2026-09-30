@@ -1,0 +1,19 @@
+{
+  "base_url": "http://127.0.0.1:43420",
+  "model": "flow-APPROVED_EXISTING_PROCESS_FLOW_NAME",
+  "execution_token": "PRIVATE_EXECUTION_TOKEN_DO_NOT_COMMIT",
+  "frontend_signing_key_file": "ABSOLUTE_PRIVATE_FRONTEND_KEY_PATH",
+  "frontend_kid": "APPROVED_FRONTEND_KEY_ID",
+  "frontend_issuer": "APPROVED_FRONTEND_ISSUER",
+  "frontend_audience": "flujo-banking-ingress",
+  "approved_flow_file": "ABSOLUTE_PRIVATE_APPROVED_PROCESS_SNAPSHOT_PATH",
+  "provider_scope": "configured-codex-restricted",
+  "oracle_scope": "response",
+  "cases": [
+    {
+      "subject": "APPROVED_SYNTHETIC_TEST_SUBJECT",
+      "prompt": "List one transaction in the approved historical window. Include its transaction_reference exactly as returned by the tool.",
+      "allowed_references": ["txn_0123456789ab"]
+    }
+  ]
+}

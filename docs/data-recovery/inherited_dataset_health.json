@@ -1,0 +1,76 @@
+{
+  "ok": true,
+  "status": "warning",
+  "errors": [],
+  "warnings": [
+    "bronze_refresh_required_before_silver_rebuild",
+    "historical_silver_metrics_unavailable",
+    "legacy_lineage_refresh_from_bronze_recommended",
+    "legacy_pinned_manifest_unavailable"
+  ],
+  "source_comparison": {
+    "status": "unchanged",
+    "method": "selected_table_etag_and_size",
+    "pinned_objects": 1099,
+    "current_objects": 1099,
+    "added": 0,
+    "deleted": 0,
+    "changed": 0,
+    "tables": {
+      "customers": {
+        "pinned_objects": 1,
+        "current_objects": 1,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      },
+      "products": {
+        "pinned_objects": 1,
+        "current_objects": 1,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      },
+      "transactions": {
+        "pinned_objects": 1097,
+        "current_objects": 1097,
+        "added": 0,
+        "deleted": 0,
+        "changed": 0
+      }
+    }
+  },
+  "build_id": "20260928T235012Z-ad5cf4",
+  "lineage": {
+    "status": "legacy_inventory",
+    "tables": [
+      "customers",
+      "products",
+      "transactions"
+    ],
+    "source_objects": 1099,
+    "immutable_source_versions": false
+  },
+  "gold_files_checked": 129,
+  "silver_rows": {
+    "customers": 150000,
+    "products": 400000,
+    "transactions": 4425008
+  },
+  "gold_transactions": {
+    "rows": 4425008,
+    "ownership_valid_rows": 4425008,
+    "ownership_invalid_rows": 0,
+    "ownership_flag_mismatches": 0,
+    "wrong_bucket_rows": 0,
+    "silver_data_mismatches": 0
+  },
+  "gold_rows": {
+    "transactions_by_customer": 4425008,
+    "demo_seed_candidates": 125
+  },
+  "bronze": {
+    "status": "validation_marker_missing",
+    "reusable": false
+  }
+}

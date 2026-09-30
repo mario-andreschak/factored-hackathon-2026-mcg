@@ -1,0 +1,13 @@
+{
+  "name": "banking-customer-v0-source-builder",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Source-only customer FlowSpec compilation using pinned FLUJO Git blobs",
+  "engines": { "node": ">=22.13" },
+  "scripts": { "test": "node --test builder.test.cjs" },
+  "dependencies": {
+    "typescript": "6.0.3",
+    "uuid": "14.0.1",
+    "zod": "4.4.3"
+  }
+}

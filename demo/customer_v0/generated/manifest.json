@@ -1,0 +1,105 @@
+{
+  "schema": "banking-customer-v0-source-artifact/v1",
+  "scope": "source-only; not installed or evaluated with a model",
+  "fragment": "customer-v0-readonly",
+  "fragmentVersion": "1.0.0",
+  "flujoCommit": "59444647c10b9ce72396a97557a47fb238a6121e",
+  "bindings": {
+    "modelId": "existing-model-id",
+    "bankServer": "existing-banking-server"
+  },
+  "ingressModel": "flow-banking_customer_v0",
+  "bindingEvidence": "declared public inputs; no configured-model or MCP readiness observation",
+  "exampleBindings": true,
+  "modelBankingTools": [
+    "banking_status",
+    "list_my_transactions",
+    "get_my_transaction"
+  ],
+  "internalRouting": "FLUJO also exposes the internal Finish routing control tool",
+  "sha256": {
+    "prompt": "d865102c9f691a3f2f36ae6f56be272805be12f2a5c63ffe5b991efb8de96a80",
+    "provenance": "721e7508cf349929aac9dc72c31c765c5cadfb8fc8772e51a84bb8fd3e232d4e",
+    "builder": "01ed69d64bd5a7accbf93865fb2b2b574f2bcd2f4b45bc688ca8827df7624203",
+    "toolchainLock": "f74a6ece0c33189edf2b3dc9750e7d21dea50cf3df7eb016fa62abf367fc7cb7",
+    "flujoPackageLock": "5c71477e67e43cfeee3d8dc86b5798ef35ca538481d04a43f2c9f3bbec500770",
+    "flowSpec": "0f1b371dca0b34b6a09ad80dd6c65a7a3b4464fdae83e6e58759e97ee6f8324a",
+    "compiledFlowBytes": "af516184efb09a601b3c8595115a9387904b18720b59550034eaac7c986a9866",
+    "compiledExecutionSnapshot": "95afaabb469211881cec8f14f21a228d099e38ff6e574b870aa114419c212c5b"
+  },
+  "snapshotVersion": "sha256:95afaabb469211881cec8f14f21a228d099e38ff6e574b870aa114419c212c5b",
+  "compileIssues": [],
+  "validationIssues": [],
+  "schemaCheck": "actual FLUJO FlowSnapshotSchema.parse",
+  "graphCheck": {
+    "method": "isolated execution of unchanged graph function; production authority imports omitted",
+    "functionSha256": "72de3f5a89b868604e5ac8906eb3c17ec0048c8b11b3d2099ba8ca3cd8b1b4c4",
+    "errorClassSha256": "63d0bdfdb27e10b1f7c7639c7162bb829e8ee461573f08b7769094d7f0dda7aa",
+    "toolNamesDerivation": "actual authority.ts toolSchemas keys; checked exported freeze/keys initializer"
+  },
+  "flujoSourceFiles": {
+    "src/backend/services/flow/executionSnapshot.ts": "f80ab3d97fe43f510bbff1767c59c349bd9d040619ef58f663fb97fd2f7d3908",
+    "src/integrations/hackathon-banking/authority.ts": "a637363005fe4ba670ee6d3b364392877ba3afda75e11c299b734ac84b7b67b9",
+    "src/integrations/hackathon-banking/configuredAdapter.ts": "1f673111a0f971f8f85211db2578a2d733bb9c6c854357d2c5a4492f93aa78e1",
+    "src/integrations/hackathon-banking/errors.ts": "e4c6a2eb3c87996cd0843c2d556d67a5be5777bc2174ca3d05722beff8163fb6",
+    "src/integrations/hackathon-banking/graph.ts": "06f7994c67a817ad026b7db5064772796d3a7f822d53f280beb93fd3e91f8f86",
+    "src/shared/types/enduringAgent/enduringAgent.ts": "65fcbbe2f23c5303e78d9115cc51d4f9b0decaf18356b6f232fb168e203ec7ba",
+    "src/shared/types/enduringAgent/personaMemoryGateway.ts": "fa925dcda08949c5e3fd0a1e6e12d9bd4bb9c41dd5ec9bb9fbe1af388ee0dc13",
+    "src/shared/types/enduringAgent/schemas.ts": "e4b96c68e88a1eb759c700391568e835c62c16fe6564953855165942fc039dc3",
+    "src/shared/types/flow/assistance.ts": "6f39d1b061e4179216ca8af7957f883edaf00320211f99387b8bbec0d053b891",
+    "src/shared/types/flow/behaviorRules.ts": "12a91401638b65a457ccba851900fd79605b6c0e468d03fca0e470e1d836b60a",
+    "src/shared/types/flow/flow.ts": "c759eac4453f61de8d906a8c51f0a1b74ec5031836fbee715f4c0af4d44fabef",
+    "src/shared/types/flow/index.ts": "723442adf7a728c269505a3c646146ff4ab1da229151fb8a1e7db88acf4b75af",
+    "src/shared/types/flow/response.ts": "531250dda437aace48988eea6ba7d8ff2d7d678e57da57921dd0df42161068ab",
+    "src/shared/utils/handoffNaming.ts": "2a6a2ef1787255d030cec0edbc69feb4defd402d903ae26aa6ef6c06378e0898",
+    "src/utils/shared/edgeConditions.ts": "3431d0f8f1204a4bb7ff1724c4a7138235dbfb041c2e36dbdfb475968421b5f7",
+    "src/utils/shared/flowSpecCompiler.ts": "568b5195423186539a6241a58b73493cb176917790661584f537ba02d69d0302",
+    "src/utils/shared/flowValidation.ts": "471d7b4b72b1854443acb526753575ea57a566a339b884ebaff68ce6b15ecf49",
+    "src/utils/shared/mcpBinding.ts": "377e0f8008f202591c583fc090ef2bb7c350708dbb068039f9446d30d674dbd2",
+    "src/utils/shared/resolveKvRefs.ts": "1e895281a7fbb1ddecb4b3a466f1b9a093321764771f54cea6f76c0394d20f5a",
+    "src/utils/shared/resolveRunVars.ts": "ee0fbc6870289752c62804527e930f3fadb44b4b9b09db0244b28bd5956c5325"
+  },
+  "promptSources": [
+    {
+      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "path": "resources/prompts/generator_prompt_v3.yml",
+      "sha256": "1f8993372d50e25a334ce28527d525c9bbe1bceea34e44a82cc662e062ac0654"
+    },
+    {
+      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "path": "resources/prompts/fallback_templates.yaml",
+      "sha256": "a8053e092b45d7a7acf240de750b01d05bf7f4c66172666bc989e66c3d09c08c"
+    },
+    {
+      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "path": "contracts/v0_reconciliation.md",
+      "sha256": "8b594e766619f2a7d5e53472bcc203eba80eaec10a932fb0c97fc85a974b0264"
+    },
+    {
+      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "path": "contracts/policy_engine.md",
+      "sha256": "8a90ccd77159796323ab229d6b361b98e5e9bfda48b503372e462eeadb589513"
+    },
+    {
+      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "path": "banking_mcp/service.py",
+      "sha256": "611f6ab844a5e3f8b0dca56ff61434fb32d1268f1e4b286c51017ee741976e4c"
+    },
+    {
+      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "path": "banking_mcp/repository.py",
+      "sha256": "9ae1f83a2d042dd4acb80ccface1553a1857546a3c95c175c9d5cc69a37d728f"
+    },
+    {
+      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "path": "frontend/server/action.py",
+      "sha256": "241702f3b591705eea3de7fbafbe7eb62657ba24f583fa0ab40b932c7b7f6d27"
+    },
+    {
+      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "path": "docs/SIMULATED_INTAKE_V0.md",
+      "sha256": "383efad856bfa0a7a34146a112875bf780f4006fb4e4203567f7732226a0df61"
+    }
+  ],
+  "installation": "Saving changes metadata and hash. Hash and approve the final saved authoritative Flow separately."
+}

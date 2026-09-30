@@ -8,6 +8,8 @@ raw = silver + quarantined + duplicates_removed for every table.
 from __future__ import annotations
 
 import time
+from contextlib import closing
+from dataclasses import replace
 
 from .common import Settings, connect, ident, load_contracts, sql_path
 
@@ -44,8 +46,13 @@ def _typed_select(spec: dict, bronze_cols: set[str], table: str) -> tuple[str, s
 
 
 def run(settings: Settings, run_id: str, stats: dict) -> None:
+    # Silver reads only local landed Parquet; it needs no S3 credentials/extensions.
+    with closing(connect(replace(settings, source="", s3={}))) as con:
+        _run(con, settings, run_id, stats)
+
+
+def _run(con, settings: Settings, run_id: str, stats: dict) -> None:
     contracts = load_contracts()
-    con = connect(settings)
     settings.silver.mkdir(parents=True, exist_ok=True)
     settings.quarantine.mkdir(parents=True, exist_ok=True)
     failures = []
@@ -76,14 +83,17 @@ def run(settings: Settings, run_id: str, stats: dict) -> None:
             GROUP BY 1 ORDER BY 2 DESC""").fetchall())
         rejected = con.execute("SELECT count(*) FROM typed WHERE len(_reject_reasons) > 0").fetchone()[0]
 
-        # Dedup. A content hash separates exact re-deliveries from conflicting versions.
-        content_cols = [ident(c) for c, s in spec["columns"].items() if not s.get("drop")]
+        # Dedup. Serialize the kept typed fields structurally: delimiters in text and
+        # literal null sentinels must not alias different versions of the same PK.
+        # Contract order fixes field order; lineage and dropped PII do not affect content.
+        content_fields = ", ".join(f"{ident(c)} := {ident(c)}"
+                                   for c, s in spec["columns"].items() if not s.get("drop"))
         con.execute(f"""
             CREATE OR REPLACE TEMP TABLE ranked AS
             SELECT *, row_number() OVER (PARTITION BY {pk}
                                          ORDER BY {spec["dedup_order"]}, _row_hash) AS _rn
             FROM (
-                SELECT *, md5(concat_ws('|', {", ".join(f"coalesce({c}::VARCHAR, '∅')" for c in content_cols)}))
+                SELECT *, md5(to_json(struct_pack({content_fields})))
                             AS _row_hash
                 FROM typed WHERE len(_reject_reasons) = 0
             )

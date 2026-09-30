@@ -1,0 +1,12 @@
+{
+  "build_id": "20260929T160045Z-4978ef",
+  "method": "Full aggregate scan of silver/transactions.parquet; compare calendar day of transaction_date with process_date",
+  "transactions": 4425008,
+  "process_date_range": ["2023-06-17", "2026-06-17"],
+  "transaction_event_date_range": ["2023-06-17", "2026-06-18"],
+  "event_minus_process_day_counts": {
+    "0": 3318701,
+    "1": 1106307
+  },
+  "other_offsets": 0
+}

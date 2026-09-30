@@ -1,0 +1,17 @@
+{
+  "method": "Original receipt bytes compared with published Git blobs; parsed JSON contents agree. Published receipts use LF line endings.",
+  "candidate_build": "20260929T160045Z-4978ef",
+  "receipts": {
+    "candidate_mcp_smoke.json": {
+      "original_sha256": "fc1415fb7c0c771e3695d2c328e199d3a9b9bcefa1afe019b85f162a4d846c2e",
+      "published_git_blob_sha256": "304ff96df40e4490cb2c88f170eca11e57c97f20f2e80f5a5c100438d2f4e4f3",
+      "json_contents_equal": true
+    },
+    "fresh_dataset_health.json": {
+      "original_sha256": "efe2cc117473fc87e3e6dcf85139fc0a1451c3151672ab0df3b578d214231223",
+      "published_git_blob_sha256": "3e90cdae86ed421618ea6239c05a32994bd31551bf749d8c650de31de85cd436",
+      "json_contents_equal": true,
+      "original_used_as_candidate_smoke_gate": true
+    }
+  }
+}

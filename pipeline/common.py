@@ -10,7 +10,7 @@ from pathlib import Path
 import duckdb
 import yaml
 
-PIPELINE_VERSION = "0.1.0"
+PIPELINE_VERSION = "0.2.0"
 CONTRACTS_PATH = Path(__file__).with_name("contracts.yaml")
 TXN_BUCKETS = 128  # transactions_by_customer fan-out; must match lookup.bucket_for()
 
@@ -48,9 +48,6 @@ class Settings:
 # atomically (write temp file + os.replace), so a reader sees either the old or the new
 # build, never a half-written one. Builds are immutable once written; a failed build is
 # never published, so the previous good snapshot keeps serving.
-KEEP_BUILDS = 3
-
-
 def current_build(out_dir: Path | str) -> Path:
     out_dir = Path(out_dir)
     pointer = out_dir / "CURRENT"
@@ -72,20 +69,15 @@ def current_silver(out_dir: Path | str) -> Path:
 
 def publish(out_dir: Path | str, build_id: str) -> None:
     import os
-    import shutil
     out_dir = Path(out_dir)
     if not (out_dir / "builds" / build_id).is_dir():
         raise FileNotFoundError(build_id)
     tmp = out_dir / f"CURRENT.{build_id}.tmp"
     tmp.write_text(build_id, encoding="utf-8")
     os.replace(tmp, out_dir / "CURRENT")
-    # Prune old builds, never the published one. Readers resolve CURRENT per request, so
-    # a snapshot is only removed after KEEP_BUILDS newer builds exist.
-    builds = sorted((p for p in (out_dir / "builds").iterdir() if p.is_dir()),
-                    key=lambda p: p.name, reverse=True)
-    for old in builds[KEEP_BUILDS:]:
-        if old.name != build_id:
-            shutil.rmtree(old, ignore_errors=True)
+    # A request can pin an older build across arbitrarily many publications. Without
+    # reader leases, age/count is not evidence that deletion is safe. Keep builds until
+    # an operator performs offline cleanup with every reader stopped.
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -110,8 +102,28 @@ def contracts_digest() -> str:
     return hashlib.sha256(CONTRACTS_PATH.read_bytes()).hexdigest()[:12]
 
 
+def transformation_digest() -> str:
+    """Content identity of the build code, independent of checkout/commit state."""
+    root = Path(__file__).parent
+    digest = hashlib.sha256()
+    for path in sorted([*root.glob("*.py"), CONTRACTS_PATH], key=lambda p: p.name):
+        digest.update(path.name.encode("utf-8") + b"\0")
+        digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def connect(settings: Settings) -> duckdb.DuckDBPyConnection:
     con = duckdb.connect()
+    try:
+        return _configure_connection(con, settings)
+    except BaseException:
+        con.close()
+        raise
+
+
+def _configure_connection(con: duckdb.DuckDBPyConnection, settings: Settings) -> duckdb.DuckDBPyConnection:
+    configure_spill_directory(con, settings.out_dir)
     if settings.threads:
         con.execute(f"SET threads = {int(settings.threads)}")
     if settings.memory_limit:
@@ -129,6 +141,24 @@ def connect(settings: Settings) -> duckdb.DuckDBPyConnection:
             )
         )
     return con
+
+
+def configure_spill_directory(con: duckdb.DuckDBPyConnection, out_dir: Path | str) -> Path:
+    """Keep each connection's spill buffers in the private, mutable data root.
+
+    DuckDB removes spill files on close. After a crash, remove leftovers only
+    during offline cleanup with all readers and writers stopped; empty dirs are safe.
+    """
+    import tempfile
+
+    root = Path(out_dir).resolve()
+    spill_root = root / ".duckdb-spill"
+    spill_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if spill_root.resolve().parent != root:
+        raise ValueError("DuckDB spill directory must remain inside the data root")
+    directory = Path(tempfile.mkdtemp(prefix="connection-", dir=spill_root))
+    con.execute(f"SET temp_directory = '{sql_path(directory)}'")
+    return directory
 
 
 def _q(value: str) -> str:

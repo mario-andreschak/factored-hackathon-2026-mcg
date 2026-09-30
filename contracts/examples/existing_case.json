@@ -31,7 +31,7 @@
     ],
     "data_sources": [
       "transactions",
-      "sandbox/complaints_created.csv"
+      "sandbox_case_receipt"
     ]
   },
   "workflow_state": {
