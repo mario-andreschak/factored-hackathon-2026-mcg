@@ -20,6 +20,82 @@ from .server import create_http_app, run_stdio
 from .service import Service
 
 
+class _PipeInput:
+    """Cancellable line framing only; the MCP SDK still parses every message."""
+    async def __aiter__(self):
+        pending = bytearray()
+        while True:
+            await anyio.wait_readable(0)
+            try:
+                part = os.read(0, 65536)
+            except BlockingIOError:
+                continue
+            pending.extend(part)
+            while (end := pending.find(b"\n")) >= 0:
+                if end + 1 > 65536:
+                    raise ValueError("private stdio message too large")
+                line = bytes(pending[:end + 1])
+                del pending[:end + 1]
+                yield line.decode("utf-8", errors="replace")
+            if len(pending) > 65536:
+                raise ValueError("private stdio message too large")
+            if not part:
+                if pending:
+                    yield pending.decode("utf-8", errors="replace")
+                return
+
+
+class _PipeOutput:
+    async def write(self, text):
+        pending = memoryview(text.encode("utf-8"))
+        while pending:
+            await anyio.wait_writable(1)
+            try:
+                written = os.write(1, pending)
+            except BlockingIOError:
+                continue
+            if written <= 0:
+                raise OSError("private stdio pipe unavailable")
+            pending = pending[written:]
+        return len(text)
+
+    async def flush(self):
+        # Writes reach the descriptor directly; no user-space buffer remains.
+        await anyio.lowlevel.checkpoint()
+
+
+@contextmanager
+def cancellable_stdio_pipes():
+    """Use fixed POSIX child pipes, without worker threads or owned FD closure.
+
+    The default SDK wraps stdin.readline/stdout.write in non-abandoning threads.
+    Such a read cannot drain on host failure while a living parent holds stdin
+    open. Companion mode instead gives the SDK cancellable text stream objects.
+    Only this context owns descriptor flags; restore them after SDK tasks drain.
+    """
+    if os.name != "posix":
+        raise ValueError("private companion requires POSIX stdio pipes")
+    for descriptor in (0, 1):
+        mode = os.fstat(descriptor).st_mode
+        if not (stat.S_ISFIFO(mode) or stat.S_ISSOCK(mode)):
+            raise ValueError("private companion requires child stdio pipes")
+    previous = {descriptor: os.get_blocking(descriptor) for descriptor in (0, 1)}
+    changed = []
+    try:
+        for descriptor in (0, 1):
+            os.set_blocking(descriptor, False)
+            changed.append(descriptor)
+        yield _PipeInput(), _PipeOutput()
+    finally:
+        # Try both restorations even if one descriptor was closed externally.
+        try:
+            if 1 in changed:
+                os.set_blocking(1, previous[1])
+        finally:
+            if 0 in changed:
+                os.set_blocking(0, previous[0])
+
+
 @contextmanager
 def private_instance_lock(config):
     """Reserve the one companion process BEFORE Service/state/listener creation.
@@ -150,7 +226,8 @@ async def run_stdio_with_private_http(service: Service):
         raise
 
     async def stdio():
-        await run_stdio(service, close_service=False)
+        with cancellable_stdio_pipes() as (stdin, stdout):
+            await run_stdio(service, close_service=False, stdin=stdin, stdout=stdout)
 
     async def host():
         try:

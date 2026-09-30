@@ -415,6 +415,10 @@ def test_companion_failure_before_start_closes_once(subject, monkeypatch):
 @pytest.mark.parametrize("outcome", ["eof", "startup-exit", "not-started", "unexpected-error"])
 def test_companion_runner_preserves_shared_close_ownership(subject, monkeypatch, outcome):
     service, server_options, app_options = FakeService(), [], []
+    fake_stdin, fake_stdout = object(), object()
+    @contextmanager
+    def pipes():
+        yield fake_stdin, fake_stdout
     async def scenario():
         started, stopped = anyio.Event(), anyio.Event()
         class FakeRunner:
@@ -447,7 +451,8 @@ def test_companion_runner_preserves_shared_close_ownership(subject, monkeypatch,
             server_options.append(options)
             return runner
         async def stdio(shared, **options):
-            assert shared is service and options == {"close_service": False}
+            assert shared is service and options == {"close_service": False,
+                "stdin": fake_stdin, "stdout": fake_stdout}
             try:
                 await started.wait()
             finally:
@@ -456,6 +461,7 @@ def test_companion_runner_preserves_shared_close_ownership(subject, monkeypatch,
         monkeypatch.setattr(subject.private, "private_tls_files", lambda config: None)
         monkeypatch.setattr(subject.private, "private_http_server", make_runner)
         monkeypatch.setattr(subject.private, "run_stdio", stdio)
+        monkeypatch.setattr(subject.private, "cancellable_stdio_pipes", pipes)
         with anyio.fail_after(2):
             await subject.private.run_stdio_with_private_http(service)
     if outcome == "eof":

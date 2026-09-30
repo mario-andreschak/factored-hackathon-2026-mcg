@@ -267,12 +267,25 @@ replace a listener and collect signed calls or forge results. No HTTP or
 verification-disabled fallback is supplied by this companion. Frontend trust
 configuration must be reviewed alongside the listener; it is not established
 by this server source alone.
+The matching host base URL is `https://<private_host_bind>:<private_host_port>`.
+Its trusted certificate must contain that literal IPv4 identity in the IP subject
+alternative name. A DNS-name URL produces a different Host header and is rejected;
+DNS-based configuration examples are not a working contract for this listener.
 
 Before constructing the Service or opening a listener, the CLI holds an
 exclusive nonblocking POSIX lock in the bank-owned0700 state directory. The
 lock is a single-link owned0600 regular file, opened without following links.
 Duplicate invocations fail closed without replacing an endpoint or Service.
 The lock remains held through shutdown. Default stdio uses no companion lock.
+
+Companion mode requires POSIX pipe/socket stdin and stdout. It supplies the MCP
+SDK with cancellable nonblocking text streams, bounded to65536 bytes per incoming
+line, so an idle open parent pipe cannot hold shutdown in a blocking reader
+thread. The SDK still parses and serializes standard MCP messages. Descriptor
+flags are restored after its tasks drain; the child does not close parent-owned
+stdio handles. Default stdio retains the SDK's original stream behavior. Fake
+checks cover this wiring; live EOF, signals and parent-death behavior remain
+deployment acceptance gates.
 
 The host uses the existing standard stateless JSON `/mcp` initialize, initialized
 notification and `tools/call` protocol. A service bearer gates the transport;

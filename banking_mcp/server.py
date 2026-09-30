@@ -52,10 +52,11 @@ def create_server(service: Service) -> Server:
     return server
 
 
-async def run_stdio(service: Service, *, close_service: bool = True):
+async def run_stdio(service: Service, *, close_service: bool = True, stdin=None, stdout=None):
     server = create_server(service)
     try:
-        async with stdio_server() as (read, write):
+        transport = stdio_server() if stdin is None and stdout is None else stdio_server(stdin=stdin, stdout=stdout)
+        async with transport as (read, write):
             await server.run(read, write, server.create_initialization_options())
     finally:
         if close_service:
