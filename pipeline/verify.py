@@ -79,7 +79,10 @@ def verify_transaction_in_source(source: str, transaction_id: str, customer_id: 
     """
     t0 = time.perf_counter()
     start = date.fromisoformat(str(process_date)[:10])
-    settings = Settings(source=source, out_dir=Path("."), report_dir=Path("."), tables=[], s3=s3 or {})
+    gold_path = Path(gold_dir).resolve() if gold_dir is not None else None
+    out_dir = (gold_path.parents[2] if gold_path is not None and gold_path.parent.parent.name == "builds"
+               else gold_path.parent if gold_path is not None else Path("data").resolve())
+    settings = Settings(source=source, out_dir=out_dir, report_dir=Path("."), tables=[], s3=s3 or {})
     objects = _partitions(settings, "transactions", start, search_days, refresh_listing)
     base = {"transaction_id": transaction_id, "partitions_checked": len(objects)}
     if not objects:

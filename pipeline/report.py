@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import platform
 from pathlib import Path
 
-from .common import PIPELINE_VERSION, contracts_digest
+import duckdb
+
+from .common import PIPELINE_VERSION, contracts_digest, transformation_digest
 
 
 def _fmt(n) -> str:
@@ -15,6 +18,8 @@ def _fmt(n) -> str:
 def write(report_dir: Path, run: dict, stats: dict) -> None:
     report_dir.mkdir(parents=True, exist_ok=True)
     manifest = {"pipeline_version": PIPELINE_VERSION, "contracts_sha256_12": contracts_digest(),
+                "transformation_sha256": transformation_digest(),
+                "runtime": {"python": platform.python_version(), "duckdb": duckdb.__version__},
                 **run, "tables": {k: v for k, v in stats.items() if not k.startswith("_")},
                 "gold": stats.get("_gold", {}),
                 "contract_failures": stats.get("_contract_failures", [])}

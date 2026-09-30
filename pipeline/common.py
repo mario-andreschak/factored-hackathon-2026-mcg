@@ -10,7 +10,7 @@ from pathlib import Path
 import duckdb
 import yaml
 
-PIPELINE_VERSION = "0.1.0"
+PIPELINE_VERSION = "0.2.0"
 CONTRACTS_PATH = Path(__file__).with_name("contracts.yaml")
 TXN_BUCKETS = 128  # transactions_by_customer fan-out; must match lookup.bucket_for()
 
@@ -102,6 +102,17 @@ def contracts_digest() -> str:
     return hashlib.sha256(CONTRACTS_PATH.read_bytes()).hexdigest()[:12]
 
 
+def transformation_digest() -> str:
+    """Content identity of the build code, independent of checkout/commit state."""
+    root = Path(__file__).parent
+    digest = hashlib.sha256()
+    for path in sorted([*root.glob("*.py"), CONTRACTS_PATH], key=lambda p: p.name):
+        digest.update(path.name.encode("utf-8") + b"\0")
+        digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def connect(settings: Settings) -> duckdb.DuckDBPyConnection:
     con = duckdb.connect()
     try:
@@ -112,6 +123,7 @@ def connect(settings: Settings) -> duckdb.DuckDBPyConnection:
 
 
 def _configure_connection(con: duckdb.DuckDBPyConnection, settings: Settings) -> duckdb.DuckDBPyConnection:
+    configure_spill_directory(con, settings.out_dir)
     if settings.threads:
         con.execute(f"SET threads = {int(settings.threads)}")
     if settings.memory_limit:
@@ -129,6 +141,24 @@ def _configure_connection(con: duckdb.DuckDBPyConnection, settings: Settings) ->
             )
         )
     return con
+
+
+def configure_spill_directory(con: duckdb.DuckDBPyConnection, out_dir: Path | str) -> Path:
+    """Keep each connection's spill buffers in the private, mutable data root.
+
+    DuckDB removes spill files on close. After a crash, remove leftovers only
+    during offline cleanup with all readers and writers stopped; empty dirs are safe.
+    """
+    import tempfile
+
+    root = Path(out_dir).resolve()
+    spill_root = root / ".duckdb-spill"
+    spill_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if spill_root.resolve().parent != root:
+        raise ValueError("DuckDB spill directory must remain inside the data root")
+    directory = Path(tempfile.mkdtemp(prefix="connection-", dir=spill_root))
+    con.execute(f"SET temp_directory = '{sql_path(directory)}'")
+    return directory
 
 
 def _q(value: str) -> str:

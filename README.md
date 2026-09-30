@@ -10,6 +10,9 @@ See [frontend setup and portable deployment](frontend/README.md) and [dataset, a
 
 ## Start here
 
+- [Data recovery review and local runbook (September 29)](docs/DATA_RECOVERY_2026-09-29.md)
+- [Current banking MCP implementation and measured limits](docs/BANKING_MCP_IMPLEMENTATION.md)
+- [Current operator demo](docs/BANKING_OPERATOR_DEMO.md)
 - [Hackathon audit and delivery plan](docs/HACKATHON_AUDIT_PLAN.md)
 - [Direct S3 data review](docs/DATA_REVIEW_2026-09-26.md)
 - [Banking MCP direct S3 plan](docs/BANKING_MCP_S3_PLAN.md)
