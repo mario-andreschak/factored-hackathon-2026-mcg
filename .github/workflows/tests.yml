@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: mario-andreschak/FLUJO
-          ref: 59444647c10b9ce72396a97557a47fb238a6121e
+          ref: 3037c1423f7d39ede4d4a9b50afae038e4dd7baa
           path: .source-flujo
       - uses: actions/setup-node@v4
         with:
@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: demo/customer_v0/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: demo/customer_v0
-      - run: git fetch origin cab4c8749c1a12a672e0ee1ecfe5be379ac28778 3b11d24b7f0c51ffbb49142cbb405381a3b114d3
+      - run: git fetch origin 974f92787f84fc65ae425f693f79213f82b513f6 8fca9482271f2d534fb406e8674bb14b20c4776e f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344
       - run: node build.cjs --audit-provenance
         working-directory: demo/customer_v0
       # Compile/validate Git blobs only. No FLUJO server, provider or MCP process.

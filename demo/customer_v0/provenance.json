@@ -1,57 +1,74 @@
 {
   "schema": "customer-v0-prompt-provenance/v1",
   "fragment": "customer-v0-readonly",
-  "version": "1.0.0",
-  "promptSha256": "d865102c9f691a3f2f36ae6f56be272805be12f2a5c63ffe5b991efb8de96a80",
-  "flujoCommit": "59444647c10b9ce72396a97557a47fb238a6121e",
+  "version": "1.1.0",
+  "promptSha256": "b245f06b0961472d16437a1dd316fcf40f431e9b6f1f3220a80f429c1e30e0a1",
+  "flujoCommit": "3037c1423f7d39ede4d4a9b50afae038e4dd7baa",
   "sources": [
     {
-      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
       "path": "resources/prompts/generator_prompt_v3.yml",
-      "sha256": "1f8993372d50e25a334ce28527d525c9bbe1bceea34e44a82cc662e062ac0654"
+      "sha256": "e881edbf5be21fbbb191f42c4356a99ef9a2d4196de3a2929de5739079638027"
     },
     {
-      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
       "path": "resources/prompts/fallback_templates.yaml",
-      "sha256": "a8053e092b45d7a7acf240de750b01d05bf7f4c66172666bc989e66c3d09c08c"
+      "sha256": "dd6cf378c5ae026c986813b0e74b7391cf7e0e672977a400278aeb61cb10452d"
     },
     {
-      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
       "path": "contracts/v0_reconciliation.md",
-      "sha256": "8b594e766619f2a7d5e53472bcc203eba80eaec10a932fb0c97fc85a974b0264"
+      "sha256": "fa708b748bca88e1b4474379015f7f08a8340ee9e228372dbfd74b79c0ef6864"
     },
     {
-      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
       "path": "contracts/policy_engine.md",
-      "sha256": "8a90ccd77159796323ab229d6b361b98e5e9bfda48b503372e462eeadb589513"
+      "sha256": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31"
     },
     {
-      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
       "path": "banking_mcp/service.py",
-      "sha256": "611f6ab844a5e3f8b0dca56ff61434fb32d1268f1e4b286c51017ee741976e4c"
+      "sha256": "2a829158a7ea96805bc09b01cc1ca8c13e7ed4e334d9eaf99a41f7385c134258"
     },
     {
-      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
       "path": "banking_mcp/repository.py",
-      "sha256": "9ae1f83a2d042dd4acb80ccface1553a1857546a3c95c175c9d5cc69a37d728f"
+      "sha256": "a1882aef706b094f47fdadb50dc44bf2a1f61aa7369f02bc36ea878249577d14"
     },
     {
-      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "commit": "8fca9482271f2d534fb406e8674bb14b20c4776e",
       "path": "frontend/server/action.py",
       "sha256": "241702f3b591705eea3de7fbafbe7eb62657ba24f583fa0ab40b932c7b7f6d27"
     },
     {
-      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "commit": "8fca9482271f2d534fb406e8674bb14b20c4776e",
       "path": "docs/SIMULATED_INTAKE_V0.md",
-      "sha256": "383efad856bfa0a7a34146a112875bf780f4006fb4e4203567f7732226a0df61"
+      "sha256": "6e1a8078ce20e9501409adb8c92978c6451db1806d9e1e45888587d4cbb950a0"
+    },
+    {
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
+      "path": "banking_mcp/actions.py",
+      "sha256": "31c660ad53723b650958e59dd4bb7de037b526ba2262f45c3a208cd16276208a"
+    },
+    {
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
+      "path": "docs/ISSUE21_DATA_AND_RECEIPTS.md",
+      "sha256": "b1963b438fc224159d31bf177eecd3c6898d3e0e2490fd669deac17b964f1d42"
     }
   ],
   "adaptations": [
     "Embed the ES/PT style and verified-fact grounding in the actual customer Process flow.",
-    "Use the three current banking read tools and process_date windows of at most 31 dates.",
+    "Use the three banking read tools pinned at f07cadf and event-date windows of at most 90 inclusive dates within disclosed serving-snapshot bounds.",
     "Require list-returned selection handles and a successful get before explaining a selected charge.",
     "Treat frontend display context as user data, not a banking handle or verified read.",
-    "Leave consent, CMP/HOF and action recovery wording to UI and host action results.",
-    "Omit proposed event-date, 90-day, case-status and human-pickup workflow branches."
-  ]
+    "Leave consent, handoff and action recovery wording to UI and host action results; explain exact get_my_transaction existing_case evidence only within its local sandbox scope.",
+    "Preserve explicit event-date windows and source calendar semantics, keeping historical snapshot coverage separate from the unchanged real-time 120-day intake policy.",
+    "Use resources/prompts/customer_v0.md as the sole reviewed customer prompt; generated flows embed its exact bytes.",
+    "Explain that only the UI button for the saved named charge grants consent; chat yes/sí/sim does not.",
+    "Describe interface-verified local simulated receipts and saved human-request packets without inventing case lifecycle state, questions, or human response.",
+    "Adapt the corrected PR12 confirmation contract at merged main 974f927; model text cannot replace the host consent event.",
+    "Pin the matching FLUJO #533 source at 3037c14; compile and validate Git blobs without activating a worker, graph, policy or model.",
+    "The frontend host and intake document at 8fca are historical starting boundaries; this source PR tightens receipt and handoff proof without claiming deployed acceptance."
+  ],
+  "canonicalPrompt": "resources/prompts/customer_v0.md"
 }

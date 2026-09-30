@@ -13,12 +13,12 @@ const ts = require('typescript');
 const { v5: uuidv5 } = require('uuid');
 
 const HERE = __dirname;
-const PIN = '59444647c10b9ce72396a97557a47fb238a6121e';
+const PIN = '3037c1423f7d39ede4d4a9b50afae038e4dd7baa';
 const READ_TOOLS = Object.freeze(['banking_status', 'list_my_transactions', 'get_my_transaction']);
 const DEFAULT_BINDINGS = Object.freeze({ modelId: 'existing-model-id', bankServer: 'existing-banking-server' });
-const PROCESS_PROMPT = 'Review one owned charge using the embedded Customer-v0-readonly/1.0.0 instructions. '
+const PROCESS_PROMPT = 'Review one owned charge using the embedded Customer-v0-readonly/1.1.0 instructions. '
   + 'Use successful banking reads for facts. Return concise Spanish or Portuguese customer text. '
-  + 'Leave consent and action status to the interface and host action results.';
+  + 'Leave consent, action execution and human-request status to the interface and host action results.';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const jsonBytes = value => Buffer.from(JSON.stringify(value, null, 2) + '\n', 'utf8');
 const git = (root, args) => execFileSync('git', ['-C', root, ...args], { maxBuffer: 16 * 1024 * 1024 });
@@ -121,17 +121,19 @@ function readInputs(bindings = DEFAULT_BINDINGS) {
   requireExactKeys(bindings, ['modelId', 'bankServer'], 'bindings');
   for (const value of Object.values(bindings)) assert(typeof value === 'string' && /^[^\u0000-\u001f\u007f]{1,128}$/.test(value)
     && value.trim() === value, 'Expected a nonempty public model ID/server name without control characters');
-  const promptBytes = fs.readFileSync(path.join(HERE, 'prompt.md'));
+  const promptPath = path.resolve(HERE, '../../resources/prompts/customer_v0.md');
+  const promptBytes = fs.readFileSync(promptPath);
   assert(!promptBytes.includes(13), 'Prompt must use LF line endings');
   const prompt = promptBytes.toString('utf8');
   const provenanceBytes = fs.readFileSync(path.join(HERE, 'provenance.json'));
   const provenance = JSON.parse(provenanceBytes);
   assert.equal(provenance.flujoCommit, PIN);
   assert.equal(provenance.fragment, 'customer-v0-readonly');
-  assert.equal(provenance.version, '1.0.0');
+  assert.equal(provenance.version, '1.1.0');
+  assert.equal(provenance.canonicalPrompt, 'resources/prompts/customer_v0.md');
   assert.equal(sha256(promptBytes), provenance.promptSha256, 'Immutable prompt digest mismatch');
-  assert(prompt.startsWith('Customer-v0-readonly/1.0.0\n\n'), 'Prompt/version mismatch');
-  const spec = { name: 'banking_customer_v0', description: 'Customer-v0-readonly/1.0.0: one owned charge, ES/PT, three banking reads.',
+  assert(prompt.startsWith('Customer-v0-readonly/1.1.0\n\n'), 'Prompt/version mismatch');
+  const spec = { name: 'banking_customer_v0', description: 'Customer-v0-readonly/1.1.0: one owned charge, ES/PT, three banking reads.',
     nodes: [
       { key: 'start', type: 'start', prompt },
       { key: 'customer', type: 'process', label: 'Customer inquiry', model: bindings.modelId,
@@ -198,7 +200,7 @@ function build(flujoRoot, bindings = DEFAULT_BINDINGS) {
   assert.equal(result.flows.length, 1);
   assert(result.flow);
   const flow = structuredClone(result.flow);
-  const id = label => uuidv5(`customer-v0-readonly/1.0.0/${label}`, uuidv5.URL);
+  const id = label => uuidv5(`customer-v0-readonly/1.1.0/${label}`, uuidv5.URL);
   flow.id = id('flow');
   const remap = new Map(flow.nodes.map(node => [node.id, id(node.data.type)]));
   for (const node of flow.nodes) {
@@ -216,6 +218,7 @@ function build(flujoRoot, bindings = DEFAULT_BINDINGS) {
   const manifest = {
     schema: 'banking-customer-v0-source-artifact/v1', scope: 'source-only; not installed or evaluated with a model',
     fragment: inputs.provenance.fragment, fragmentVersion: inputs.provenance.version,
+    canonicalPrompt: inputs.provenance.canonicalPrompt,
     flujoCommit: PIN, bindings, ingressModel: 'flow-' + parsed.name,
     bindingEvidence: 'declared public inputs; no configured-model or MCP readiness observation',
     exampleBindings: bindings.modelId === DEFAULT_BINDINGS.modelId || bindings.bankServer === DEFAULT_BINDINGS.bankServer,

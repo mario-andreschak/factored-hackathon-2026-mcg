@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from frontend.server.app import COOKIE, create_app
 from frontend.server.chat import ChatService
+from frontend.tests.action_fixtures import action_facts, action_handoff, action_receipt
 from frontend.server.config import Settings
 from frontend.server.repository import DatasetUnavailable, Repository
 from frontend.server.state import State
@@ -214,15 +215,21 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         async def action_status(self, customer, session_id, expires):
             return self.current
 
-        async def action(self, customer, session_id, expires, operation, *, target_reference=None):
+        async def action(self, customer, session_id, expires, operation, *, target_reference=None,
+                         expected_snapshot=None, expected_transaction=None):
             self.calls.append((customer, session_id, operation, target_reference))
             if operation["operation"] == "prepare":
+                self.selected = expected_transaction
                 self.current = {"state": "pending_confirmation", "pending_handle": "a" * 43,
+                        "snapshot": expected_snapshot, "transaction": action_facts(expected_transaction),
                         "target_reference": target_reference,
                         "request_id": "123e4567-e89b-42d3-a456-426614174099"}
             else:
-                self.current = {"state": "handoff_verified", "handoff": {"id": "HOF-abcdefgh"},
+                self.current = {"state": "handoff_verified", "handoff": action_handoff(
+                    reason=operation["reason"], snapshot="fixture-1" if target_reference else None,
+                    selected=getattr(self, "selected", None)),
                     "reason": operation["reason"],
+                    "request_id": operation.get("requestId"),
                     **({"target_reference": target_reference} if target_reference else {})}
             return self.current
 
@@ -256,9 +263,15 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         assert service.calls[-1][2]["requestId"] == "123e4567-e89b-42d3-a456-426614174099"
         replay = client.post("/api/action/handoff", json={
             "reason": "customer_request", "transaction_reference": own,
-            "request_id": selected_request_id, "language": "pt"})
+            "request_id": selected_handoff.json()["request_id"], "language": "pt"})
         assert replay.status_code == 200
         assert replay.json()["handoff"] == selected_handoff.json()["handoff"]
+        assert len(service.calls) == 4
+        for changed in ({"unanswered_questions": ["A different question"]},
+                        {"request_id": selected_request_id}):
+            denied = client.post("/api/action/handoff", json={"reason": "customer_request",
+                "transaction_reference": own, **changed})
+            assert denied.status_code == 409
         assert len(service.calls) == 4
         foreign = Repository(settings, State(settings.state_dir)).overview("mexico")["transactions"][0]["reference"]
         denied = client.post("/api/action/prepare", json={"transaction_reference": foreign})
@@ -279,6 +292,8 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         "principal_customers": {"subject-a": "private-customer-co"}}
     conversation = str(uuid.uuid4())
     actions = []
+    repository = Repository(settings, State(settings.state_dir))
+    prepared_transactions = {}
     def respond(request):
         if request.url.path == "/v1/chat/completions":
             return httpx.Response(200, json={"conversation_id": conversation, "status": "completed",
@@ -286,14 +301,19 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         body = json.loads(request.content)
         actions.append(body)
         if body["operation"] == "prepare":
+            selected = repository.transaction("colombia", repository.reference(
+                "txn", "private-customer-co", body["transactionId"]))
+            handle = ("a" if len([item for item in actions if item["operation"] == "prepare"]) == 1 else "b") * 43
+            prepared_transactions[handle] = selected
             return httpx.Response(200, json={"state": "pending_confirmation",
-                "pending_handle": ("a" if len([item for item in actions if item["operation"] == "prepare"]) == 1
-                                   else "b") * 43})
+                "snapshot": body["snapshot"], "transaction": action_facts(selected), "pending_handle": handle})
         if body["operation"] == "confirm":
             return httpx.Response(200, json={"state": "intake_verified",
-                "receipt": {"id": "CMP-SBX-abcdefgh"}})
+                "receipt": action_receipt(snapshot="fixture-1", selected=prepared_transactions[body["pendingHandle"]])})
         return httpx.Response(200, json={"state": "handoff_verified",
-            "handoff": {"id": "HOF-abcdefgh"}})
+            "handoff": action_handoff(reason=body["reason"],
+                snapshot="fixture-1" if body.get("pendingHandle") else None,
+                selected=prepared_transactions.get(body.get("pendingHandle")))})
     with TestClient(create_app(settings)) as client:
         assert login(client).status_code == 200
         service = ChatService(config, settings.state_dir)
@@ -340,7 +360,7 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         assert len(actions) == calls_before_mismatch + 1
         assert actions[-1]["requestId"] == second.json()["request_id"] != browser_request_id
         replay = client.post("/api/action/handoff", json={"reason": "customer_request",
-            "transaction_reference": second_ref, "request_id": browser_request_id})
+            "transaction_reference": second_ref, "request_id": matched.json()["request_id"]})
         assert replay.status_code == 200 and replay.json()["handoff"] == matched.json()["handoff"]
         assert len(actions) == calls_before_mismatch + 1
         general = client.post("/api/action/handoff", json={"reason": "customer_request",
@@ -351,6 +371,70 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         assert "target_reference" not in general_status.json()
         assert all("target_reference" not in operation and "transaction_reference" not in operation
                    for operation in actions)
+
+
+def test_handoff_api_normalizes_and_freezes_questions_through_lost_response_and_restart(settings):
+    settings.state_dir.mkdir(parents=True, exist_ok=True)
+    signer = Ed25519PrivateKey.generate()
+    key_file = settings.state_dir / "test-question-signer.pem"
+    key_file.write_bytes(signer.private_bytes(serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
+    config = {"base_url": "http://flujo:4200", "model": "flow-Banking_Customer",
+        "execution_token": "only-the-server-knows-this-token", "frontend_signing_key_file": str(key_file),
+        "frontend_kid": "approved-front", "frontend_issuer": "approved-frontend",
+        "frontend_audience": "flujo-banking-ingress", "action_enabled": True,
+        "principal_customers": {"subject-a": "private-customer-co"}}
+    conversation, request_id = str(uuid.uuid4()), str(uuid.uuid4())
+    questions = ["¿Cuál cargo debo revisar?", "Qual o próximo passo?"]
+    writes = []
+    def respond(request):
+        if request.url.path == "/v1/chat/completions":
+            return httpx.Response(200, json={"conversation_id": conversation, "status": "completed",
+                "choices": [{"message": {"role": "assistant", "content": "Consulta verificada."}}]})
+        body = json.loads(request.content)
+        writes.append(body)
+        # Final pinned FLUJO actionBody is strict and rejects the camel alias.
+        assert set(body) == {"conversationId", "operation", "reason", "requestId", "unanswered_questions"}
+        assert "unansweredQuestions" not in body
+        if len(writes) <= 2:
+            raise httpx.ReadTimeout("response lost after packet commit")
+        return httpx.Response(200, json={"state": "handoff_verified", "handoff": action_handoff(
+            snapshot=None, reason=body["reason"], questions=body["unanswered_questions"])})
+    with TestClient(create_app(settings)) as client:
+        assert login(client).status_code == 200
+        service = ChatService(config, settings.state_dir)
+        service._transport = httpx.MockTransport(respond)
+        client.app.state.chat_service = service
+        assert client.post("/api/chat/messages", json={"message": "Quero uma pessoa"}).status_code == 200
+        first = client.post("/api/action/handoff", json={"reason": "customer_request", "request_id": request_id,
+            "unanswered_questions": ["  ¿Cuál cargo debo revisar?  ", " Qual o próximo passo? "]})
+        assert first.status_code == 200 and first.json()["state"] == "handoff_unverified"
+        assert first.json()["unanswered_questions"] == questions
+        assert len(writes) == 2 and writes[0] == writes[1]
+        assert writes[0]["unanswered_questions"] == questions
+        cookie = client.cookies.get(COOKIE)
+    with TestClient(create_app(settings)) as restarted:
+        restarted.cookies.set(COOKIE, cookie)
+        service = ChatService(config, settings.state_dir)
+        service._transport = httpx.MockTransport(respond)
+        restarted.app.state.chat_service = service
+        changed = restarted.post("/api/action/handoff", json={"reason": "customer_request",
+            "request_id": request_id, "unanswered_questions": ["Outra pergunta?"]})
+        assert changed.status_code == 409 and len(writes) == 2
+        recovered = restarted.post("/api/action/handoff", json={"reason": "customer_request",
+            "request_id": request_id, "language": "pt"})
+        assert recovered.status_code == 200 and recovered.json()["state"] == "handoff_verified"
+        assert recovered.json()["handoff"]["unanswered_questions"] == questions
+        assert len(writes) == 3 and writes[-1] == writes[0]
+        with service._connection() as db:
+            saved_row = dict(db.execute("SELECT * FROM action_status").fetchone())
+        for fields in ({}, {"unanswered_questions": [" ¿Cuál cargo debo revisar? ", " Qual o próximo passo? "]}):
+            replay = restarted.post("/api/action/handoff", json={"reason": "customer_request",
+                "request_id": request_id, "language": "es", **fields})
+            assert replay.status_code == 200 and replay.json()["handoff"] == recovered.json()["handoff"]
+            assert len(writes) == 3
+            with service._connection() as db:
+                assert dict(db.execute("SELECT * FROM action_status").fetchone()) == saved_row
 
 
 def test_exhausted_action_status_localizes_review_reference_without_claiming_handoff(settings):
@@ -669,7 +753,7 @@ def test_history_pages_and_older_chat_selection_keep_strict_ownership(expanded_h
         message = chat.calls[1][3]
         assert '"occurred_at": "2026-06-18T00:00:00"' in message
         assert '"process_date": "2026-06-17"' in message
-        assert '"mcp_date_window_basis": "process_date"' in message
+        assert '"mcp_date_window_basis": "transaction_date"' in message
         display_message, public_selection = chat.public_calls[1]
         assert display_message == "Explícame este movimiento"
         assert public_selection["occurred_at"].startswith("2026-06-18")

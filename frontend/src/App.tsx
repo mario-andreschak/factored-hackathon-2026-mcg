@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
   ArrowDownLeft,
@@ -33,8 +33,12 @@ import {
   X,
 } from "lucide-react";
 import type {
+  ActionFacts,
+  ActionResult,
   ChatMessage,
   ChatStatus,
+  HandoffPacket,
+  IntakeReceipt,
   Overview,
   Product,
   Profile,
@@ -920,18 +924,6 @@ function AssistantText({ text }: { text: string }) {
   );
 }
 
-type ActionResult = {
-  state: string;
-  message?: string;
-  pending_handle?: string;
-  request_id?: string;
-  reason?: string;
-  target_reference?: string;
-  recovery_exhausted?: boolean;
-  review_reference?: string;
-  handoff?: { state?: string };
-};
-
 type ActionLanguage = "es" | "pt";
 const ACTION_LANGUAGE_STORAGE = "flujo-bank-action-language";
 
@@ -964,14 +956,59 @@ const actionCopy = {
       "Verifica el estado de la solicitud antes de iniciar o confirmar otra acción.",
     checkStatus: "Consultar estado de la solicitud",
     reviewIntake: "Revisar recepción simulada",
-    confirmIntake: "Confirmo la recepción simulada para este cargo",
+    confirmIntake: "Confirmo la recepción simulada para",
+    chargeReference: "Referencia del cargo",
+    eventDate: "Fecha del movimiento",
+    merchantNotReported: "Comercio no informado",
+    dateNotReported: "Fecha no informada",
+    showConsentAmount: "Mostrar monto para confirmar",
+    existingCase: "Ya hay una recepción simulada registrada para este cargo",
+    existingCaseNote:
+      "Este comprobante local acredita el registro simulado. No indica una devolución, una disputa resuelta ni atención humana.",
+    preparedEvidenceUnavailable:
+      "No pudimos vincular los datos preparados con este cargo y snapshot. Consulta el estado antes de confirmar.",
+    receiptLabel: "Comprobante local",
+    savedReview: "Solicitud de revisión guardada",
+    savedReviewNote:
+      "El paquete de revisión está guardado. No hay respuesta humana registrada; esto no confirma que una persona haya tomado la solicitud.",
+    handoffLabel: "Referencia de revisión",
+    savedAt: "Registrado el",
+    snapshot: "Snapshot histórico",
+    servingSnapshot: "Snapshot de esta consulta",
+    receiptSnapshot: "Snapshot del registro original",
+    simulatedStatus: "Estado del registro simulado",
+    received: "Recibido",
+    factsAsOf: "Snapshot consultado el",
+    snapshotReadNotice:
+      "Esta consulta del snapshot no actualiza los registros bancarios.",
+    factsSource: "Origen de los hechos",
+    ownedSnapshot: "Lectura de tu movimiento en el snapshot",
+    currentness: {
+      same_snapshot:
+        "Los hechos corresponden al snapshot disponible en la lectura verificada.",
+      different_snapshot:
+        "Los hechos se guardaron con un snapshot anterior. No confirman el estado actual del movimiento.",
+      unknown:
+        "No se pudo verificar si el snapshot guardado coincide con el disponible.",
+      not_applicable: "Solicitud general sin movimiento asociado.",
+    },
+    processDate: "Fecha de procesamiento",
+    status: "Estado registrado del movimiento",
+    reasonLabel: "Motivo de la revisión",
+    questions: "Preguntas pendientes registradas",
+    noQuestions: "No se registraron preguntas pendientes en este paquete.",
+    questionDraft: "Preguntas para la revisión (opcional)",
+    questionDraftHint:
+      "Una pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.",
+    questionDraftInvalid: "Usa hasta 8 preguntas, de 240 caracteres cada una.",
     retryHandoff: "Verificar revisión humana pendiente",
     preferHuman: "Prefiero revisión humana",
     preparing: "Estamos verificando la preparación de esta solicitud.",
     pendingConfirmation:
       "La recepción simulada está preparada. Confirma solo si quieres registrarla para este cargo.",
     intakeVerified: "La recepción simulada quedó verificada.",
-    handoffVerified: "La revisión humana quedó registrada.",
+    handoffVerified:
+      "La solicitud de revisión quedó guardada. No hay respuesta humana registrada.",
     unverified:
       "No pudimos verificar la solicitud anterior. Consulta su estado antes de continuar.",
     recoveryExhausted:
@@ -1014,14 +1051,59 @@ const actionCopy = {
       "Verifique o estado da solicitação antes de iniciar ou confirmar outra ação.",
     checkStatus: "Consultar estado da solicitação",
     reviewIntake: "Revisar registro simulado",
-    confirmIntake: "Confirmo o registro simulado para este lançamento",
+    confirmIntake: "Confirmo o registro simulado para",
+    chargeReference: "Referência do lançamento",
+    eventDate: "Data do lançamento",
+    merchantNotReported: "Estabelecimento não informado",
+    dateNotReported: "Data não informada",
+    showConsentAmount: "Mostrar valor para confirmar",
+    existingCase: "Já existe um registro simulado para este lançamento",
+    existingCaseNote:
+      "Este comprovante local confirma o registro simulado. Não indica uma devolução, uma contestação resolvida nem atendimento humano.",
+    preparedEvidenceUnavailable:
+      "Não foi possível vincular os dados preparados a este lançamento e snapshot. Consulte o estado antes de confirmar.",
+    receiptLabel: "Comprovante local",
+    savedReview: "Solicitação de análise salva",
+    savedReviewNote:
+      "O pacote de análise está salvo. Não há resposta humana registrada; isso não confirma que uma pessoa assumiu a solicitação.",
+    handoffLabel: "Referência da análise",
+    savedAt: "Registrado em",
+    snapshot: "Snapshot histórico",
+    servingSnapshot: "Snapshot desta consulta",
+    receiptSnapshot: "Snapshot do registro original",
+    simulatedStatus: "Estado do registro simulado",
+    received: "Recebido",
+    factsAsOf: "Snapshot consultado em",
+    snapshotReadNotice:
+      "Esta consulta do snapshot não atualiza os registros bancários.",
+    factsSource: "Origem dos fatos",
+    ownedSnapshot: "Consulta do seu lançamento no snapshot",
+    currentness: {
+      same_snapshot:
+        "Os fatos correspondem ao snapshot disponível na consulta verificada.",
+      different_snapshot:
+        "Os fatos foram salvos com um snapshot anterior. Não confirmam o estado atual do lançamento.",
+      unknown:
+        "Não foi possível verificar se o snapshot salvo coincide com o disponível.",
+      not_applicable: "Solicitação geral sem lançamento associado.",
+    },
+    processDate: "Data de processamento",
+    status: "Estado registrado do lançamento",
+    reasonLabel: "Motivo da análise",
+    questions: "Perguntas pendentes registradas",
+    noQuestions: "Nenhuma pergunta pendente foi registrada neste pacote.",
+    questionDraft: "Perguntas para a análise (opcional)",
+    questionDraftHint:
+      "Uma pergunta por linha; até 8 perguntas de 240 caracteres. São salvas apenas quando você solicita a análise.",
+    questionDraftInvalid: "Use até 8 perguntas, com 240 caracteres cada.",
     retryHandoff: "Verificar análise humana pendente",
     preferHuman: "Prefiro análise humana",
     preparing: "Estamos verificando a preparação desta solicitação.",
     pendingConfirmation:
       "O registro simulado está preparado. Confirme apenas se quiser registrá-lo para este lançamento.",
     intakeVerified: "O registro simulado foi verificado.",
-    handoffVerified: "A análise humana foi registrada.",
+    handoffVerified:
+      "A solicitação de análise foi salva. Não há resposta humana registrada.",
     unverified:
       "Não foi possível verificar a solicitação anterior. Consulte o estado antes de continuar.",
     recoveryExhausted:
@@ -1050,6 +1132,407 @@ const actionCopy = {
   },
 } as const;
 
+const handoffReasons = {
+  es: {
+    customer_request: "Solicitaste revisión humana",
+    out_of_policy:
+      "La solicitud requiere revisión fuera de la recepción simulada",
+    emergency: "Solicitaste ayuda urgente",
+    clarification_exhausted: "Quedan datos por aclarar",
+    high_risk: "Se necesita revisión adicional",
+    missing_evidence: "Faltan datos verificables",
+    duplicate_review: "Los movimientos similares requieren revisión",
+    action_unverified: "La acción anterior sigue sin verificarse",
+    no_match_exhausted: "No se pudo identificar el movimiento",
+    tool_failure: "No se pudo completar la consulta de los datos",
+  },
+  pt: {
+    customer_request: "Você solicitou análise humana",
+    out_of_policy: "A solicitação requer análise fora do registro simulado",
+    emergency: "Você solicitou ajuda urgente",
+    clarification_exhausted: "Ainda há dados a esclarecer",
+    high_risk: "É necessária uma análise adicional",
+    missing_evidence: "Faltam dados verificáveis",
+    duplicate_review: "Os lançamentos semelhantes requerem análise",
+    action_unverified: "A ação anterior continua sem verificação",
+    no_match_exhausted: "Não foi possível identificar o lançamento",
+    tool_failure: "Não foi possível concluir a consulta dos dados",
+  },
+} as const;
+
+const actionStatuses = {
+  es: {
+    Approved: "Aprobado",
+    Pending: "Pendiente",
+    Declined: "Rechazado",
+    Reversed: "Revertido",
+  },
+  pt: {
+    Approved: "Aprovado",
+    Pending: "Pendente",
+    Declined: "Recusado",
+    Reversed: "Estornado",
+  },
+} as const;
+
+const boundedText = (value: unknown, maximum: number): value is string =>
+  typeof value === "string" && value.length <= maximum;
+const plainQuestionCharacters = (value: string) =>
+  Array.from(value).every((character) => {
+    const point = character.codePointAt(0)!;
+    return point >= 32 && (point < 0xd800 || point > 0xdfff);
+  });
+const questionText = (value: unknown): value is string =>
+  typeof value === "string" &&
+  value.length > 0 &&
+  value.trim() === value &&
+  Array.from(value).length <= 240 &&
+  plainQuestionCharacters(value);
+const record = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+const timestamp = (value: unknown): value is string =>
+  boundedText(value, 40) &&
+  /^\d{4}-\d{2}-\d{2}(?:T|$)/.test(value) &&
+  Number.isFinite(Date.parse(value)) &&
+  new Date(value.slice(0, 10) + "T12:00:00Z").toISOString().slice(0, 10) ===
+    value.slice(0, 10);
+const utcTimestamp = (value: unknown): value is string =>
+  timestamp(value) && /T.*(?:Z|\+00:00)$/.test(value);
+const snapshotName = (value: unknown): value is string =>
+  typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
+
+function verifiedFacts(value: unknown): value is ActionFacts {
+  return (
+    record(value) &&
+    typeof value.transaction_reference === "string" &&
+    /^txn_[a-f0-9]{12}$/.test(value.transaction_reference) &&
+    timestamp(value.transaction_date) &&
+    timestamp(value.process_date) &&
+    typeof value.amount === "string" &&
+    /^\d{1,18}(?:\.\d{1,8})?$/.test(value.amount) &&
+    Number.isFinite(Number(value.amount)) &&
+    typeof value.currency === "string" &&
+    /^[A-Z]{3}$/.test(value.currency) &&
+    typeof value.status === "string" &&
+    Object.hasOwn(actionStatuses.es, value.status) &&
+    (value.merchant === null || boundedText(value.merchant, 160)) &&
+    boundedText(value.transaction_type, 80) &&
+    boundedText(value.channel, 80) &&
+    (value.product === null || boundedText(value.product, 80))
+  );
+}
+
+function verifiedReceipt(value: unknown): value is IntakeReceipt {
+  return (
+    record(value) &&
+    typeof value.id === "string" &&
+    /^CMP-SBX-[A-Za-z0-9_-]{8}$/.test(value.id) &&
+    value.kind === "simulated_intake" &&
+    value.simulated === true &&
+    value.status === "received" &&
+    snapshotName(value.snapshot) &&
+    utcTimestamp(value.created_at) &&
+    verifiedFacts(value.transaction)
+  );
+}
+
+function verifiedHandoff(action: ActionResult | null): HandoffPacket | null {
+  const nested = action?.handoff;
+  const packet: unknown =
+    action?.state === "handoff_verified"
+      ? nested
+      : action?.state === "action_unverified" &&
+          record(nested) &&
+          nested.state === "handoff_verified"
+        ? nested.handoff
+        : null;
+  if (
+    !record(packet) ||
+    typeof packet.id !== "string" ||
+    !/^HOF-[A-Za-z0-9_-]{8}$/.test(packet.id) ||
+    typeof packet.reason !== "string" ||
+    !Object.hasOwn(handoffReasons.es, packet.reason) ||
+    packet.human_responded !== false ||
+    !utcTimestamp(packet.created_at) ||
+    !record(packet.facts) ||
+    !Array.isArray(packet.unanswered_questions) ||
+    packet.unanswered_questions.length > 8 ||
+    !packet.unanswered_questions.every(questionText) ||
+    !(
+      (verifiedFacts(packet.facts) &&
+        snapshotName(packet.snapshot) &&
+        record(packet.transaction_provenance) &&
+        packet.transaction_provenance.source === "owned_serving_snapshot" &&
+        packet.transaction_provenance.snapshot === packet.snapshot &&
+        utcTimestamp(packet.transaction_provenance.as_of) &&
+        ["same_snapshot", "different_snapshot", "unknown"].includes(
+          String(packet.transaction_currentness),
+        )) ||
+      (Object.keys(packet.facts).length === 0 &&
+        packet.snapshot === null &&
+        packet.transaction_provenance === null &&
+        packet.transaction_currentness === "not_applicable")
+    )
+  )
+    return null;
+  if (
+    verifiedFacts(packet.facts) &&
+    !(
+      typeof action?.target_reference === "string" &&
+      /^txn_[a-f0-9]{24}$/.test(action.target_reference)
+    )
+  )
+    return null;
+  return packet as HandoffPacket;
+}
+
+function evidenceAmount(
+  facts: ActionFacts,
+  language: ActionLanguage,
+  hidden: boolean,
+): string {
+  if (hidden) return "••••••";
+  const locale = language === "pt" ? "pt-BR" : "es-MX";
+  const [whole, fraction = ""] = facts.amount.split(".");
+  const decimal =
+    new Intl.NumberFormat(locale)
+      .formatToParts(1.1)
+      .find((part) => part.type === "decimal")?.value || ".";
+  return `${new Intl.NumberFormat(locale).format(BigInt(whole))}${decimal}${fraction.padEnd(2, "0")}`;
+}
+
+function preparedMatchesSelection(
+  facts: ActionFacts,
+  transaction: Transaction,
+): boolean {
+  const normalizedAmount = (amount: string) => {
+    if (!/^\d+(?:\.\d+)?$/.test(amount)) return null;
+    const [whole, fraction = ""] = amount.split(".");
+    return `${BigInt(whole)}.${fraction.replace(/0+$/, "")}`;
+  };
+  return (
+    facts.transaction_date.slice(0, 10) ===
+      transaction.occurred_at.slice(0, 10) &&
+    facts.process_date.slice(0, 10) === transaction.process_date.slice(0, 10) &&
+    normalizedAmount(facts.amount) ===
+      normalizedAmount(String(transaction.amount)) &&
+    facts.currency === transaction.currency &&
+    facts.status === transaction.status &&
+    facts.merchant === ((transaction.merchant || "").slice(0, 160) || null) &&
+    facts.transaction_type === (transaction.type || "").slice(0, 80) &&
+    facts.channel === (transaction.channel || "").slice(0, 80)
+  );
+}
+
+function EvidenceFacts({
+  facts,
+  language,
+  hidden,
+}: {
+  facts: ActionFacts;
+  language: ActionLanguage;
+  hidden: boolean;
+}) {
+  const copy = actionCopy[language];
+  return (
+    <>
+      <strong>{facts.merchant || copy.merchantNotReported}</strong>
+      <dl>
+        <div>
+          <dt>{copy.eventDate}</dt>
+          <dd>{actionDate(facts.transaction_date, language)}</dd>
+        </div>
+        <div>
+          <dt>{copy.processDate}</dt>
+          <dd>{actionDate(facts.process_date, language)}</dd>
+        </div>
+        <div>
+          <dt>{facts.currency}</dt>
+          <dd>
+            {evidenceAmount(facts, language, hidden)} {facts.currency}
+          </dd>
+        </div>
+        <div>
+          <dt>{copy.status}</dt>
+          <dd>
+            {
+              actionStatuses[language][
+                facts.status as keyof typeof actionStatuses.es
+              ]
+            }
+          </dd>
+        </div>
+      </dl>
+    </>
+  );
+}
+
+function ReceiptEvidence({
+  receipt,
+  targetReference,
+  servingSnapshot,
+  language,
+  hidden,
+}: {
+  receipt: IntakeReceipt;
+  targetReference: string;
+  servingSnapshot?: string;
+  language: ActionLanguage;
+  hidden: boolean;
+}) {
+  const copy = actionCopy[language];
+  return (
+    <section className="action-evidence" aria-label={copy.receiptLabel}>
+      <h4>{copy.existingCase}</h4>
+      <p>
+        <strong>{copy.receiptLabel}:</strong> <code>{receipt.id}</code>
+      </p>
+      <p>
+        <strong>{copy.chargeReference}:</strong> <code>{targetReference}</code>
+      </p>
+      <EvidenceFacts
+        facts={receipt.transaction}
+        language={language}
+        hidden={hidden}
+      />
+      <dl>
+        <div>
+          <dt>{copy.simulatedStatus}</dt>
+          <dd>{copy.received}</dd>
+        </div>
+        <div>
+          <dt>{copy.receiptSnapshot}</dt>
+          <dd>
+            <code>{receipt.snapshot}</code>
+          </dd>
+        </div>
+        {snapshotName(servingSnapshot) && (
+          <div>
+            <dt>{copy.servingSnapshot}</dt>
+            <dd>
+              <code>{servingSnapshot}</code>
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt>{copy.savedAt}</dt>
+          <dd>{actionDate(receipt.created_at, language)}</dd>
+        </div>
+      </dl>
+      <p>{copy.existingCaseNote}</p>
+    </section>
+  );
+}
+
+function HandoffEvidence({
+  packet,
+  targetReference,
+  language,
+  hidden,
+}: {
+  packet: HandoffPacket;
+  targetReference?: string;
+  language: ActionLanguage;
+  hidden: boolean;
+}) {
+  const copy = actionCopy[language];
+  return (
+    <section className="action-evidence" aria-label={copy.handoffLabel}>
+      <h4>{copy.savedReview}</h4>
+      <p>
+        <strong>{copy.handoffLabel}:</strong> <code>{packet.id}</code>
+      </p>
+      {targetReference && (
+        <p>
+          <strong>{copy.chargeReference}:</strong>{" "}
+          <code>{targetReference}</code>
+        </p>
+      )}
+      <p>
+        <strong>{copy.reasonLabel}:</strong>{" "}
+        {
+          handoffReasons[language][
+            packet.reason as keyof typeof handoffReasons.es
+          ]
+        }
+      </p>
+      {verifiedFacts(packet.facts) && (
+        <EvidenceFacts
+          facts={packet.facts}
+          language={language}
+          hidden={hidden}
+        />
+      )}
+      <dl>
+        {packet.snapshot && (
+          <div>
+            <dt>{copy.snapshot}</dt>
+            <dd>
+              <code>{packet.snapshot}</code>
+            </dd>
+          </div>
+        )}
+        {packet.transaction_provenance && (
+          <>
+            <div>
+              <dt>{copy.factsSource}</dt>
+              <dd>{copy.ownedSnapshot}</dd>
+            </div>
+            <div>
+              <dt>{copy.factsAsOf}</dt>
+              <dd>
+                {actionMoment(packet.transaction_provenance.as_of, language)}
+              </dd>
+            </div>
+          </>
+        )}
+        <div>
+          <dt>{copy.savedAt}</dt>
+          <dd>{actionDate(packet.created_at, language)}</dd>
+        </div>
+      </dl>
+      <p>{copy.currentness[packet.transaction_currentness]}</p>
+      {packet.transaction_provenance && <p>{copy.snapshotReadNotice}</p>}
+      {packet.unanswered_questions.length ? (
+        <>
+          <strong>{copy.questions}</strong>
+          <ul>
+            {packet.unanswered_questions.map((question, i) => (
+              <li key={i}>{question}</li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p>{copy.noQuestions}</p>
+      )}
+      <p>{copy.savedReviewNote}</p>
+    </section>
+  );
+}
+
+function actionDate(value: string, language: ActionLanguage): string {
+  const eventDate = new Date(value.slice(0, 10) + "T12:00:00Z");
+  return Number.isNaN(eventDate.valueOf())
+    ? actionCopy[language].dateNotReported
+    : new Intl.DateTimeFormat(language === "pt" ? "pt-BR" : "es-MX", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(eventDate);
+}
+
+function actionMoment(value: string, language: ActionLanguage): string {
+  return (
+    new Intl.DateTimeFormat(language === "pt" ? "pt-BR" : "es-MX", {
+      dateStyle: "long",
+      timeStyle: "medium",
+      timeZone: "UTC",
+      hourCycle: "h23",
+    }).format(new Date(value)) + " UTC"
+  );
+}
+
 function fallbackActionMessage(
   action: ActionResult,
   language: ActionLanguage,
@@ -1061,13 +1544,25 @@ function fallbackActionMessage(
       : copy.recoveryExhaustedWithoutReference;
   if (action.state === "preparing") return copy.preparing;
   if (action.state === "pending_confirmation") return copy.pendingConfirmation;
-  if (action.state === "intake_verified") return copy.intakeVerified;
-  if (action.state === "handoff_verified") return copy.handoffVerified;
+  if (action.state === "intake_verified" && verifiedReceipt(action.receipt))
+    return copy.intakeVerified;
+  if (
+    action.state === "existing_case_verified" &&
+    verifiedReceipt(action.receipt)
+  )
+    return copy.existingCase;
+  if (action.state === "handoff_verified" && verifiedHandoff(action))
+    return copy.handoffVerified;
   return copy.unverified;
 }
 
 const actionIsTerminal = (action: ActionResult | null) =>
-  action?.state === "intake_verified" || action?.state === "handoff_verified";
+  (action?.state === "intake_verified" && verifiedReceipt(action.receipt)) ||
+  (action?.state === "handoff_verified" && Boolean(verifiedHandoff(action))) ||
+  (action?.state === "existing_case_verified" &&
+    typeof action.target_reference === "string" &&
+    /^txn_[a-f0-9]{24}$/.test(action.target_reference) &&
+    verifiedReceipt(action.receipt));
 
 export function Assistant({
   open,
@@ -1105,7 +1600,10 @@ export function Assistant({
     [error, setError] = useState(""),
     [historyReady, setHistoryReady] = useState(false),
     [historyLimited, setHistoryLimited] = useState(false),
-    [historyAttempt, setHistoryAttempt] = useState(0);
+    [historyAttempt, setHistoryAttempt] = useState(0),
+    [consentAmountVisible, setConsentAmountVisible] = useState(false),
+    [handoffQuestionDraft, setHandoffQuestionDraft] = useState("");
+  const consentSummaryId = useId();
   const end = useRef<HTMLDivElement>(null),
     controller = useRef<AbortController | null>(null),
     alive = useRef(true),
@@ -1128,7 +1626,16 @@ export function Assistant({
     // opens another charge. Rotate only a completed or unused request ID.
     if (!action || actionIsTerminal(action))
       setHandoffRequestId(crypto.randomUUID());
+    setHandoffQuestionDraft("");
   }, [selected?.reference]);
+  useEffect(() => {
+    setConsentAmountVisible(false);
+  }, [
+    action?.target_reference,
+    action?.snapshot,
+    action?.transaction?.amount,
+    hidden,
+  ]);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -1429,7 +1936,32 @@ export function Assistant({
     Boolean(actionTarget) && selected?.reference === action?.target_reference;
   const canUsePendingTarget =
     actionReady && selectedIsActionTarget && Boolean(action?.pending_handle);
-  const canStartAction = actionReady && !actionBlocksNewCharge;
+  const preparedFacts =
+    actionTarget &&
+    verifiedFacts(action?.transaction) &&
+    snapshotName(action?.snapshot) &&
+    preparedMatchesSelection(action.transaction, actionTarget)
+      ? action.transaction
+      : null;
+  const canConfirmPendingTarget = canUsePendingTarget && Boolean(preparedFacts);
+  const existingSelectedCase =
+    (action?.state === "existing_case_verified" ||
+      action?.state === "intake_verified") &&
+    selected?.reference === action.target_reference &&
+    verifiedReceipt(action.receipt);
+  const needsFreshReceiptReview =
+    existingSelectedCase && action?.state === "intake_verified";
+  const canStartAction =
+    actionReady && !actionBlocksNewCharge && !existingSelectedCase;
+  const receipt =
+    (action?.state === "existing_case_verified" ||
+      action?.state === "intake_verified") &&
+    typeof action.target_reference === "string" &&
+    /^txn_[a-f0-9]{24}$/.test(action.target_reference) &&
+    verifiedReceipt(action.receipt)
+      ? action.receipt
+      : null;
+  const handoffPacket = verifiedHandoff(action);
   const canRetryHandoff =
     actionReady &&
     (action?.state === "handoff_unverified" ||
@@ -1442,8 +1974,17 @@ export function Assistant({
       : Boolean(action.request_id) && !action.pending_handle);
   const canRequestHandoff =
     canStartAction ||
-    (canUsePendingTarget && action?.state === "pending_confirmation") ||
+    (canUsePendingTarget &&
+      (action?.state === "pending_confirmation" || existingSelectedCase)) ||
     canRetryHandoff;
+  const handoffQuestionLines = handoffQuestionDraft.split(/\r?\n/);
+  const handoffQuestions = handoffQuestionLines
+    .map((question) => question.trim())
+    .filter(Boolean);
+  const handoffQuestionsValid =
+    handoffQuestionLines.every(plainQuestionCharacters) &&
+    handoffQuestions.length <= 8 &&
+    handoffQuestions.every(questionText);
   // Closing the dialog keeps this authenticated component alive. A running
   // query can finish and its visible transcript will be here on reopening.
   if (!open) return null;
@@ -1505,6 +2046,23 @@ export function Assistant({
                   fallbackActionMessage(action, actionLanguage)}
               </p>
             )}
+            {receipt && action?.target_reference && (
+              <ReceiptEvidence
+                receipt={receipt}
+                targetReference={action.target_reference}
+                servingSnapshot={action.snapshot}
+                language={actionLanguage}
+                hidden={hidden}
+              />
+            )}
+            {handoffPacket && (
+              <HandoffEvidence
+                packet={handoffPacket}
+                targetReference={action?.target_reference}
+                language={actionLanguage}
+                hidden={hidden}
+              />
+            )}
             {action?.recovery_exhausted && action.review_reference && (
               <p className="action-result">
                 <strong>{copy.reviewReference}:</strong>{" "}
@@ -1514,7 +2072,11 @@ export function Assistant({
               </p>
             )}
             {actionBlocksNewCharge && (
-              <div className="chat-selection" role="status">
+              <div
+                className="chat-selection action-charge-summary"
+                role="status"
+                id={consentSummaryId}
+              >
                 {actionTarget && <TxIcon transaction={actionTarget} />}
                 <span>
                   <strong>
@@ -1523,9 +2085,37 @@ export function Assistant({
                       : copy.pendingReview}
                   </strong>
                   <small>
-                    {actionTarget
-                      ? `${label(actionTarget)} · ${date(actionTarget.occurred_at)} · ${money(actionTarget.amount, actionTarget.currency, hidden)} ${actionTarget.currency}`
-                      : action?.target_reference || copy.noCharge}
+                    {preparedFacts ? (
+                      <>
+                        <span>
+                          {preparedFacts.merchant || copy.merchantNotReported}
+                        </span>
+                        <span>
+                          {copy.eventDate}:{" "}
+                          {actionDate(
+                            preparedFacts.transaction_date,
+                            actionLanguage,
+                          )}
+                        </span>
+                        <span>
+                          {evidenceAmount(
+                            preparedFacts,
+                            actionLanguage,
+                            hidden && !consentAmountVisible,
+                          )}{" "}
+                          {preparedFacts.currency}
+                        </span>
+                        <span>
+                          {copy.snapshot}: <code>{action!.snapshot}</code>
+                        </span>
+                        <span>
+                          {copy.chargeReference}:{" "}
+                          <code>{action!.target_reference}</code>
+                        </span>
+                      </>
+                    ) : (
+                      action?.target_reference || copy.noCharge
+                    )}
                   </small>
                 </span>
               </div>
@@ -1552,6 +2142,13 @@ export function Assistant({
             {!actionReady && (
               <p className="modal-disclosure">{copy.verifyFirst}</p>
             )}
+            {action?.state === "pending_confirmation" &&
+              canUsePendingTarget &&
+              !preparedFacts && (
+                <p className="modal-disclosure" role="alert">
+                  {copy.preparedEvidenceUnavailable}
+                </p>
+              )}
             <button
               type="button"
               className="button outline"
@@ -1576,59 +2173,115 @@ export function Assistant({
               </button>
             )}
             {action?.state === "pending_confirmation" &&
-              canUsePendingTarget && (
-                <button
-                  type="button"
-                  className="button primary"
-                  disabled={actionBusy || busy}
-                  onClick={() =>
-                    runAction("/api/action/confirm", {
-                      pending_handle: action.pending_handle,
-                      transaction_reference: action.target_reference,
-                      confirmed: true,
-                    })
-                  }
-                >
-                  {copy.confirmIntake}
-                </button>
+              canConfirmPendingTarget &&
+              preparedFacts && (
+                <>
+                  {hidden && !consentAmountVisible && (
+                    <button
+                      type="button"
+                      className="button outline"
+                      onClick={() => setConsentAmountVisible(true)}
+                    >
+                      {copy.showConsentAmount}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="button primary action-confirm"
+                    aria-describedby={consentSummaryId}
+                    disabled={
+                      actionBusy || busy || (hidden && !consentAmountVisible)
+                    }
+                    onClick={() =>
+                      runAction("/api/action/confirm", {
+                        pending_handle: action.pending_handle,
+                        transaction_reference: action.target_reference,
+                        confirmed: true,
+                      })
+                    }
+                  >
+                    <span>
+                      {copy.confirmIntake}{" "}
+                      {preparedFacts.merchant || copy.merchantNotReported}
+                    </span>
+                    <small>
+                      {copy.chargeReference}: {action.target_reference}
+                    </small>
+                  </button>
+                </>
               )}
             {canRequestHandoff && (
-              <button
-                type="button"
-                className="button outline"
-                disabled={actionBusy || busy}
-                onClick={() => {
-                  if (canRetryHandoff && action?.reason) {
-                    runAction("/api/action/handoff", {
-                      reason: action.reason,
-                      ...(action.request_id
-                        ? { request_id: action.request_id }
-                        : {}),
-                      ...(action.pending_handle
-                        ? { pending_handle: action.pending_handle }
-                        : {}),
-                      ...(action.target_reference
-                        ? { transaction_reference: action.target_reference }
-                        : {}),
-                    });
-                    return;
+              <>
+                {!canRetryHandoff && (
+                  <label className="action-questions">
+                    <span id={`${consentSummaryId}-questions-label`}>
+                      {copy.questionDraft}
+                    </span>
+                    <textarea
+                      rows={3}
+                      value={handoffQuestionDraft}
+                      aria-labelledby={`${consentSummaryId}-questions-label`}
+                      disabled={actionBusy || busy}
+                      aria-describedby={`${consentSummaryId}-questions-hint`}
+                      aria-invalid={!handoffQuestionsValid}
+                      onChange={(event) =>
+                        setHandoffQuestionDraft(event.target.value)
+                      }
+                    />
+                    <small id={`${consentSummaryId}-questions-hint`}>
+                      {copy.questionDraftHint}
+                    </small>
+                    {!handoffQuestionsValid && (
+                      <span role="alert">{copy.questionDraftInvalid}</span>
+                    )}
+                  </label>
+                )}
+                <button
+                  type="button"
+                  className="button outline"
+                  disabled={
+                    actionBusy ||
+                    busy ||
+                    (!canRetryHandoff && !handoffQuestionsValid)
                   }
-                  runAction("/api/action/handoff", {
-                    reason: "customer_request",
-                    request_id: handoffRequestId,
-                    ...(canUsePendingTarget && action?.pending_handle
-                      ? {
-                          pending_handle: action.pending_handle,
-                          transaction_reference: action.target_reference,
-                        }
-                      : selected
-                        ? { transaction_reference: selected.reference }
-                        : {}),
-                  });
-                }}
-              >
-                {canRetryHandoff ? copy.retryHandoff : copy.preferHuman}
-              </button>
+                  onClick={() => {
+                    if (canRetryHandoff && action?.reason) {
+                      runAction("/api/action/handoff", {
+                        reason: action.reason,
+                        ...(action.request_id
+                          ? { request_id: action.request_id }
+                          : {}),
+                        ...(action.pending_handle
+                          ? { pending_handle: action.pending_handle }
+                          : {}),
+                        ...(action.target_reference
+                          ? { transaction_reference: action.target_reference }
+                          : {}),
+                      });
+                      return;
+                    }
+                    runAction("/api/action/handoff", {
+                      reason: "customer_request",
+                      ...(needsFreshReceiptReview
+                        ? {}
+                        : { request_id: handoffRequestId }),
+                      unanswered_questions: handoffQuestions,
+                      ...(canUsePendingTarget &&
+                      action?.pending_handle &&
+                      !needsFreshReceiptReview
+                        ? {
+                            pending_handle: action.pending_handle,
+                            transaction_reference: action.target_reference,
+                          }
+                        : selected
+                          ? { transaction_reference: selected.reference }
+                          : {}),
+                    });
+                  }}
+                >
+                  {canRetryHandoff ? copy.retryHandoff : copy.preferHuman}
+                </button>
+              </>
             )}
           </div>
         )}

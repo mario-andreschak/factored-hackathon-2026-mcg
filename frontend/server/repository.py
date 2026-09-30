@@ -426,4 +426,6 @@ class Repository:
         if not resolved:
             return None
         row, build = resolved
-        return {"transaction_id": row["transaction_id"], "snapshot": build}
+        return {"transaction_id": row["transaction_id"], "snapshot": build,
+                "transaction": {key: row[key] for key in
+                                ("occurred_at", "type", "amount", "currency", "status", "merchant")}}
