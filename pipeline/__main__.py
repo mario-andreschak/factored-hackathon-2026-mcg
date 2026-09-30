@@ -188,6 +188,10 @@ def run_locked(settings: Settings, stages: list[str]) -> int:
             "build_id": run_id, "source_fingerprint": stats.get("_source_fingerprint"),
             "source_validation": inventory.get("source_validation", "legacy_inventory"),
             "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "transaction_event_dates": {
+                **stats["_gold"]["transactions_by_customer"]["transaction_event_dates"],
+                "source_fingerprint": inventory["fingerprint"],
+            },
             "gold_files": {p.relative_to(settings.gold).as_posix(): p.stat().st_size
                            for p in sorted(settings.gold.rglob("*.parquet"))},
         }) + "\n", encoding="utf-8")

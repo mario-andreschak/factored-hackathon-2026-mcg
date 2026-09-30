@@ -199,11 +199,15 @@ first HTTP body byte is not model time to first token.
 
 ## Demo and evaluation limits
 
-The inquiry demo uses a pinned historical window of at most 31 process dates.
+The historical inquiry demo used a pinned window of at most 31 process dates.
+The issue #21 source changes use a disclosed 90-day event-date window and
+persisted sandbox case/handoff receipts. They need matching FLUJO/frontend
+contracts and separate installed/runtime acceptance; the historical measurements
+above do not cover them. See [the new source contracts](ISSUE21_DATA_AND_RECEIPTS.md).
 Pending/reversed cases exist; natural duplicate-charge cases were not found.
 Label injected duplicate cases synthetic.
 
-Handoff creates a **local FLUJO ticket**, not a banking operation. Its receipt is
+The historical operator handoff created a **local FLUJO ticket**, not a banking operation. Its receipt was
 read back from persisted FLUJO data. A repeated ticket write is not idempotent;
 do not automatically replay an uncertain write.
 

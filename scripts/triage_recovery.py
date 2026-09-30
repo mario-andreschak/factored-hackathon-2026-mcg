@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from contextlib import contextmanager
+from datetime import datetime
 import hashlib
 import json
 import math
@@ -33,6 +34,14 @@ _REASONS = frozenset({"high_risk", "missing_evidence", "out_of_policy", "emergen
                       "action_unverified", "customer_request", "clarification_exhausted",
                       "duplicate_review", "no_match_exhausted", "tool_failure"})
 _ACTION = "simulated_intake"
+_PREPARE_FIELDS = frozenset({"snapshot", "action", "decision", "reason", "transaction", "risk"})
+_PROJECTION_FIELDS = frozenset({"state", "receipt", "coverage", "source"})
+_RECEIPT_FIELDS = frozenset({"id", "kind", "simulated", "snapshot", "created_at", "status", "transaction"})
+_PACKET_FIELDS = frozenset({"schema", "transaction", "transaction_provenance", "reason",
+                            "unanswered_questions", "human_responded"})
+_TRANSACTION_LIMITS = {"transaction_reference": 16, "transaction_date": 40, "process_date": 10,
+                       "amount": 40, "currency": 8, "status": 80, "transaction_type": 80,
+                       "channel": 80, "product": 80}
 _MAX_JSON = 256 * 1024
 _FRONTEND_COLUMNS = {
     "action_status": {"session_id", "owner", "expires", "result_json", "updated_at", "action_id",
@@ -133,6 +142,80 @@ def _same_json(left: dict, right: dict) -> bool:
         return False
 
 
+def _utc_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or not 1 <= len(value) <= 40:
+        return False
+    try:
+        moment = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return moment.tzinfo is not None and moment.utcoffset().total_seconds() == 0
+    except (ValueError, TypeError, OverflowError):
+        return False
+
+
+def _transaction(facts: dict) -> bool:
+    return (set(facts) == set(_TRANSACTION_LIMITS) | {"merchant"}
+            and all(isinstance(facts.get(field), str) and len(facts[field]) <= limit
+                    for field, limit in _TRANSACTION_LIMITS.items())
+            and re.fullmatch(r"txn_[a-f0-9]{12}", facts["transaction_reference"]) is not None
+            and (facts["merchant"] is None or isinstance(facts["merchant"], str) and len(facts["merchant"]) <= 160))
+
+
+def _case_projection(value: object, facts: dict) -> bool:
+    """Validate saved current-schema evidence; this does not establish lost consent."""
+    if (not _transaction(facts) or not isinstance(value, dict) or set(value) != _PROJECTION_FIELDS
+            or value.get("coverage") != "sandbox_only" or value.get("source") != "sandbox_cases"):
+        return False
+    if not isinstance(value.get("state"), str):
+        return False
+    if value["state"] in {"not_found", "action_unverified"}:
+        return value.get("receipt") is None
+    receipt = value.get("receipt")
+    return (value.get("state") == "verified" and isinstance(receipt, dict)
+            and set(receipt) == _RECEIPT_FIELDS
+            and isinstance(receipt.get("id"), str)
+            and re.fullmatch(r"CMP-SBX-[A-Za-z0-9_-]{8}", receipt["id"]) is not None
+            and receipt.get("kind") == _ACTION and receipt.get("simulated") is True
+            and receipt.get("status") == "received"
+            and isinstance(receipt.get("snapshot"), str) and _SNAPSHOT.fullmatch(receipt["snapshot"]) is not None
+            and _utc_timestamp(receipt.get("created_at"))
+            and isinstance(receipt.get("transaction"), dict) and _same_json(receipt["transaction"], facts))
+
+
+def _prepare_schema(result: dict, facts: dict) -> str | None:
+    """Accept only the two explicit saved schemas, never arbitrary extra fields."""
+    fields = set(result)
+    if not isinstance(result.get("decision"), str):
+        return None
+    if fields == _PREPARE_FIELDS:
+        return "legacy_prepare/v0" if result.get("decision") in {"intake", "handoff"} else None
+    if fields != _PREPARE_FIELDS | {"existing_case"} or not _case_projection(result["existing_case"], facts):
+        return None
+    state, decision = result["existing_case"]["state"], result.get("decision")
+    if ((decision == "existing_case" and state != "verified")
+            or (decision != "existing_case" and state == "verified")
+            or (decision == "intake" and state != "not_found")
+            or (state == "action_unverified" and (decision != "handoff" or result.get("reason") != "action_unverified"))):
+        return None
+    return "current_prepare/v1"
+
+
+def _handoff_packet(raw: object, facts: dict, snapshot: str, reason: str) -> bool:
+    packet = _json_object(raw)
+    if not _transaction(facts) or not packet or set(packet) != _PACKET_FIELDS:
+        return False
+    provenance, questions = packet.get("transaction_provenance"), packet.get("unanswered_questions")
+    return (packet.get("schema") == "banking-sandbox-handoff/v1"
+            and isinstance(packet.get("transaction"), dict) and _same_json(packet["transaction"], facts)
+            and packet.get("reason") == reason and packet.get("human_responded") is False
+            and isinstance(provenance, dict) and set(provenance) == {"source", "snapshot", "as_of"}
+            and provenance.get("source") == "owned_serving_snapshot" and provenance.get("snapshot") == snapshot
+            and _utc_timestamp(provenance.get("as_of"))
+            and isinstance(questions, list) and len(questions) <= 8
+            and all(isinstance(question, str) and 1 <= len(question) <= 240 and question.strip()
+                    and not any(ord(char) < 32 or 0xD800 <= ord(char) <= 0xDFFF for char in question)
+                    for question in questions))
+
+
 def _report(reference: str, now: float) -> dict:
     return {"scope": "offline_snapshots_only", "review_reference": reference,
             "checked_at": int(now), "state": "unresolved",
@@ -212,20 +295,22 @@ def _inspect(frontend: sqlite3.Connection, mcp: sqlite3.Connection, row: sqlite3
         return output
     pending = pending[0]
     facts, result = _json_object(pending["facts"]), _json_object(pending["result_json"])
+    schema = _prepare_schema(result, facts) if facts and result else None
     if (pending["binding"] != binding or pending["customer"] != session["customer_id"]
             or pending["transaction_id"] != row["prepare_transaction_id"]
             or pending["snapshot"] != row["prepare_snapshot"] or pending["action"] != _ACTION
             or not _number(pending["expires"]) or not facts or not result
-            or set(result) != {"snapshot", "action", "decision", "reason", "transaction", "risk"}
+            or schema is None
             or result.get("snapshot") != pending["snapshot"] or result.get("action") != pending["action"]
             or result.get("decision") != pending["decision"] or result.get("reason") != pending["reason"]
-            or pending["decision"] not in {"intake", "handoff"}
-            or (pending["decision"] == "intake" and pending["reason"] is not None)
+            or pending["decision"] not in {"intake", "handoff", "existing_case"}
+            or (pending["decision"] in {"intake", "existing_case"} and pending["reason"] is not None)
             or (pending["decision"] == "handoff" and pending["reason"] not in _REASONS)
             or not isinstance(result.get("transaction"), dict) or not _same_json(result["transaction"], facts)
             or not isinstance(result.get("risk"), dict)):
         output["finding"] = "pending_evidence_mismatch"
         return output
+    output["prepare_schema"] = schema
     expired = pending["expires"] <= now
     _existing_case(mcp, row, session["customer_id"], output)
     output["pending_expired"] = expired
@@ -247,6 +332,19 @@ def _inspect(frontend: sqlite3.Connection, mcp: sqlite3.Connection, row: sqlite3
             or not isinstance(handoff["id"], str) or not re.fullmatch(r"HOF-[A-Za-z0-9_-]{8}", handoff["id"])
             or not handoff_facts or not _same_json(handoff_facts, facts)):
         output["finding"] = "handoff_evidence_mismatch"
+        return output
+    if "packet_json" not in handoff.keys() or handoff["packet_json"] is None:
+        # A matched historical row is useful triage evidence, but cannot prove
+        # the new saved packet or its questions/provenance/human-response fields.
+        if schema == "legacy_prepare/v0":
+            output["handoff_evidence"] = "historical_request_matched_row"
+            output["handoff_reference"] = handoff["id"]
+            output["finding"] = "historical_handoff_row_evidence"
+        else:
+            output["finding"] = "handoff_packet_unverified"
+        return output
+    if not _handoff_packet(handoff["packet_json"], facts, pending["snapshot"], pending["reason"]):
+        output["finding"] = "handoff_packet_unverified"
         return output
     output["handoff_evidence"] = "exact_request_matched_packet"
     output["handoff_reference"] = handoff["id"]

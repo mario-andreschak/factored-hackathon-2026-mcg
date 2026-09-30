@@ -27,8 +27,10 @@ OWNER = "a" * 64
 TRANSACTION = "private-transaction-a"
 SNAPSHOT = "synthetic-snapshot-v0"
 TARGET = "txn_" + "a" * 24
-FACTS = {"transaction_reference": "txn_" + "b" * 12, "amount": 25,
-         "currency": "BRL", "status": "Approved"}
+FACTS = {"transaction_reference": "txn_" + "b" * 12, "amount": "25.00",
+         "transaction_date": "2026-06-18T10:00:00", "process_date": "2026-06-17",
+         "currency": "BRL", "status": "Approved", "merchant": "Fictional store",
+         "transaction_type": "Purchase", "channel": "POS", "product": "Credit Card"}
 BINDING = cli.principal_binding(SUBJECT, CUSTOMER, SESSION, CONVERSATION)
 KEY = cli.prepare_request_key(BINDING, REQUEST_ID)
 
@@ -80,6 +82,27 @@ def snapshots(tmp_path):
     return frontend, mcp
 
 
+def current_packet():
+    return {"schema": "banking-sandbox-handoff/v1", "transaction": FACTS,
+            "transaction_provenance": {"source": "owned_serving_snapshot", "snapshot": SNAPSHOT,
+                                       "as_of": "2026-09-29T12:00:00Z"},
+            "reason": "high_risk", "unanswered_questions": ["¿Quién puede revisar este cargo?"],
+            "human_responded": False}
+
+
+@pytest.fixture
+def current_snapshots(snapshots):
+    with sqlite3.connect(snapshots[1]) as db:
+        db.execute("ALTER TABLE action_pending ADD COLUMN confirmation_state TEXT")
+        result = json.loads(db.execute("SELECT result_json FROM action_pending").fetchone()[0])
+        result["existing_case"] = {"state": "not_found", "receipt": None,
+                                   "coverage": "sandbox_only", "source": "sandbox_cases"}
+        db.execute("UPDATE action_pending SET result_json=?,confirmation_state='prepared'", (json.dumps(result),))
+        db.execute("ALTER TABLE sandbox_handoffs ADD COLUMN packet_json TEXT")
+        db.execute("UPDATE sandbox_handoffs SET packet_json=?", (json.dumps(current_packet()),))
+    return snapshots
+
+
 def update(path, table, column, value):
     with sqlite3.connect(path) as db:
         db.execute(f"UPDATE {table} SET {column}=?", (value,))
@@ -119,8 +142,9 @@ def test_exact_digest_contract_without_prepare_or_store():
 
 def test_matched_handoff_is_redacted_evidence_only(snapshots):
     result = run(snapshots)
-    assert result["finding"] == "exact_handoff_packet_evidence"
-    assert result["handoff_evidence"] == "exact_request_matched_packet"
+    assert result["finding"] == "historical_handoff_row_evidence"
+    assert result["handoff_evidence"] == "historical_request_matched_row"
+    assert result["prepare_schema"] == "legacy_prepare/v0"
     assert result["recovery_exhausted"] is True
     text = json.dumps(result)
     for private in (ACTION_ID, REQUEST_ID, CONVERSATION, SUBJECT, CUSTOMER, SESSION, OWNER,
@@ -131,12 +155,110 @@ def test_matched_handoff_is_redacted_evidence_only(snapshots):
     assert result["snapshot_action_locked"] is True
 
 
+def test_current_exact_packet_is_redacted_and_does_not_resolve_consent(current_snapshots):
+    result = run(current_snapshots)
+    assert result["finding"] == "exact_handoff_packet_evidence"
+    assert result["handoff_evidence"] == "exact_request_matched_packet"
+    assert result["prepare_schema"] == "current_prepare/v1"
+    assert result["handoff_reference"] == "HOF-abcdefgh"
+    assert "¿Quién" not in json.dumps(result, ensure_ascii=False)
+    summary = cli.triage(*current_snapshots, now=NOW)
+    assert summary["findings"] == {"exact_handoff_packet_evidence": 1}
+
+
+@pytest.mark.parametrize("mutation", ["missing", "schema", "foreign_fact", "foreign_snapshot", "source",
+                                     "naive_as_of", "human", "reason", "questions_type", "questions_count",
+                                     "questions_length", "questions_control", "questions_surrogate", "extra", "duplicate"])
+def test_current_handoff_packet_requires_complete_exact_safe_payload(current_snapshots, mutation):
+    packet = current_packet()
+    if mutation == "schema":
+        packet["schema"] = "foreign-schema"
+    elif mutation == "foreign_fact":
+        packet["transaction"] = {**FACTS, "amount": "999.00"}
+    elif mutation == "foreign_snapshot":
+        packet["transaction_provenance"]["snapshot"] = "foreign-snapshot"
+    elif mutation == "source":
+        packet["transaction_provenance"]["source"] = "browser"
+    elif mutation == "naive_as_of":
+        packet["transaction_provenance"]["as_of"] = "2026-09-29T12:00:00"
+    elif mutation == "human":
+        packet["human_responded"] = True
+    elif mutation == "reason":
+        packet["reason"] = "missing_evidence"
+    elif mutation == "questions_type":
+        packet["unanswered_questions"] = [1]
+    elif mutation == "questions_count":
+        packet["unanswered_questions"] = ["question"] * 9
+    elif mutation == "questions_length":
+        packet["unanswered_questions"] = ["x" * 241]
+    elif mutation == "questions_control":
+        packet["unanswered_questions"] = ["question\nanswer"]
+    elif mutation == "questions_surrogate":
+        packet["unanswered_questions"] = ["\ud800"]
+    elif mutation == "extra":
+        packet["private_field"] = CUSTOMER
+    encoded = json.dumps(packet)
+    if mutation == "duplicate":
+        encoded = '{"reason":"high_risk",' + encoded[1:]
+    update(current_snapshots[1], "sandbox_handoffs", "packet_json", None if mutation == "missing" else encoded)
+    result = run(current_snapshots)
+    assert result["finding"] == "handoff_packet_unverified"
+    assert result["handoff_evidence"] == "unproven"
+    assert "handoff_reference" not in result
+
+
+def existing_projection():
+    return {"state": "verified", "coverage": "sandbox_only", "source": "sandbox_cases",
+            "receipt": {"id": "CMP-SBX-abcdefgh", "kind": "simulated_intake", "simulated": True,
+                        "snapshot": "original-older-snapshot", "created_at": "2026-09-28T12:00:00Z",
+                        "status": "received", "transaction": FACTS}}
+
+
+@pytest.mark.parametrize("mutation", [None, "extra", "missing", "foreign_fact", "status", "not_found",
+                                     "false_simulated", "bad_id", "state_type", "receipt_extra"])
+def test_existing_case_prepare_requires_strict_verified_saved_receipt(current_snapshots, mutation):
+    with sqlite3.connect(current_snapshots[1]) as db:
+        result = json.loads(db.execute("SELECT result_json FROM action_pending").fetchone()[0])
+        result.update(decision="existing_case", reason=None, existing_case=existing_projection())
+        if mutation == "extra":
+            result["private_field"] = CUSTOMER
+        elif mutation == "missing":
+            result.pop("existing_case")
+        elif mutation == "foreign_fact":
+            result["existing_case"]["receipt"]["transaction"] = {**FACTS, "amount": "999.00"}
+        elif mutation == "status":
+            result["existing_case"]["receipt"]["status"] = "resolved"
+        elif mutation == "not_found":
+            result["existing_case"].update(state="not_found", receipt=None)
+        elif mutation == "false_simulated":
+            result["existing_case"]["receipt"]["simulated"] = 1
+        elif mutation == "bad_id":
+            result["existing_case"]["receipt"]["id"] = "foreign-id"
+        elif mutation == "state_type":
+            result["existing_case"]["state"] = []
+        elif mutation == "receipt_extra":
+            result["existing_case"]["receipt"]["customer"] = CUSTOMER
+        db.execute("UPDATE action_pending SET decision='existing_case',reason=NULL,result_json=?", (json.dumps(result),))
+        db.execute("DELETE FROM sandbox_handoffs")
+    output = run(current_snapshots)
+    assert output["finding"] == ("exact_pending_prepare_evidence" if mutation is None else "pending_evidence_mismatch")
+    assert output["case_evidence"] == "unproven"  # Saved projection does not prove lost consent or a present case row.
+
+
+def test_migrated_legacy_null_packet_is_explicitly_historical(snapshots):
+    with sqlite3.connect(snapshots[1]) as db:
+        db.execute("ALTER TABLE sandbox_handoffs ADD COLUMN packet_json TEXT")
+    result = run(snapshots)
+    assert result["finding"] == "historical_handoff_row_evidence"
+    assert result["handoff_evidence"] == "historical_request_matched_row"
+
+
 def test_original_expired_revoked_session_still_allows_offline_historical_review(snapshots):
     update(snapshots[0], "chat_sessions", "expires", NOW - 100)
     update(snapshots[0], "action_status", "expires", NOW - 100)
     update(snapshots[0], "chat_sessions", "revoked", 1)
     result = run(snapshots)
-    assert result["finding"] == "exact_handoff_packet_evidence"
+    assert result["finding"] == "historical_handoff_row_evidence"
     assert result["session_expired"] is True
     assert result["session_revoked"] is True
 
@@ -152,9 +274,9 @@ def test_absent_pending_never_infers_no_action(snapshots):
 def test_expired_pending_preserves_historical_hof_evidence_and_lock(snapshots):
     update(snapshots[1], "action_pending", "expires", NOW)
     result = run(snapshots)
-    assert result["finding"] == "exact_handoff_packet_evidence"
+    assert result["finding"] == "historical_handoff_row_evidence"
     assert result["pending_expired"] is True
-    assert result["handoff_evidence"] == "exact_request_matched_packet"
+    assert result["handoff_evidence"] == "historical_request_matched_row"
 
 
 def test_expired_pending_without_matching_hof_remains_expired_evidence(snapshots):
@@ -168,7 +290,7 @@ def test_summary_counts_both_historical_hof_and_pending_expiry(snapshots):
     update(snapshots[1], "action_pending", "expires", NOW)
     result = cli.triage(*snapshots, now=NOW)
     assert result["pending_expired_count"] == 1
-    assert result["findings"] == {"exact_handoff_packet_evidence": 1}
+    assert result["findings"] == {"historical_handoff_row_evidence": 1}
 
 
 @pytest.mark.parametrize(("table", "column", "value", "finding"), [
@@ -284,7 +406,7 @@ def test_legacy_review_reference_matches(snapshots):
     legacy = "a" * 32
     update(snapshots[0], "action_status", "action_id", legacy)
     result = cli.triage(*snapshots, review_reference(legacy), now=NOW)
-    assert result["finding"] == "exact_handoff_packet_evidence"
+    assert result["finding"] == "historical_handoff_row_evidence"
     assert result["snapshot_action_locked"] is True
 
 
@@ -324,7 +446,9 @@ def spy_connections(monkeypatch):
     return traces
 
 
-def test_no_state_ledger_writes_bytes_rows_or_extra_files(snapshots, monkeypatch):
+@pytest.mark.parametrize("snapshot_fixture", ["snapshots", "current_snapshots"])
+def test_no_state_ledger_writes_bytes_rows_or_extra_files(snapshot_fixture, request, monkeypatch):
+    snapshots = request.getfixturevalue(snapshot_fixture)
     parent = snapshots[0].parent
     before_files = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in parent.iterdir()}
     row_counts = []

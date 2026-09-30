@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 import duckdb
@@ -168,6 +169,33 @@ def _q(value: str) -> str:
 def sql_path(p: Path | str) -> str:
     """Forward-slash path literal that works on Windows and in DuckDB."""
     return str(p).replace("\\", "/").replace("'", "''")
+
+
+def transaction_event_dates(con, files: list[Path]) -> dict:
+    """Calendar bounds of the exact ownership-valid serving output.
+
+    The source contract uses TIMESTAMP without a supplied timezone. Its recorded
+    calendar date is retained; wall time, ingestion time and partition dates do
+    not define the search anchor. Both pipeline publication and the serving
+    reader derive this same aggregate from gold, never from a mutable report.
+    """
+    if not files:
+        raise ValueError("transaction serving files missing")
+    paths = "[" + ", ".join(f"'{sql_path(p)}'" for p in sorted(files)) + "]"
+    types = dict((r[0], r[1]) for r in con.execute(
+        f"DESCRIBE SELECT transaction_date FROM read_parquet({paths})").fetchall())
+    if types.get("transaction_date") != "TIMESTAMP":
+        raise ValueError("transaction event dates require the source TIMESTAMP contract")
+    first, last, rows, missing = con.execute(
+        f"SELECT min(transaction_date::DATE), max(transaction_date::DATE), count(*), "
+        f"count(*) FILTER (WHERE transaction_date IS NULL) FROM read_parquet({paths}) "
+        "WHERE ownership_valid").fetchone()
+    if any(value is not None and type(value) is not date for value in (first, last)):
+        raise ValueError("transaction event dates are outside supported calendar bounds")
+    return {"basis": "transaction_date", "calendar": "source_timestamp_calendar_date",
+            "first": first.isoformat() if first else None,
+            "last": last.isoformat() if last else None,
+            "ownership_valid_rows": rows, "missing_event_dates": missing}
 
 
 def ident(name: str) -> str:

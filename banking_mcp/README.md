@@ -41,20 +41,38 @@ advertise shell, filesystem or generic S3 tools.
 | --- | --- | --- |
 | `banking_status` | None | Readiness and mode, without customer information |
 | `list_my_transactions` | Optional `customer_id`, `conversation_id`, `start_date`, `end_date`, `limit` (1–20), `cursor` | Masked transaction facts and opaque selection handles |
-| `get_my_transaction` | `selection_handle`, optional `customer_id`, `conversation_id`, `verify_source` | One previously selected transaction; optional conditional S3 read-back |
+| `get_my_transaction` | `selection_handle`, optional `customer_id`, `conversation_id`, `verify_source` | One selected transaction, verified local case projection, optional conditional S3 read-back |
 | `prepare_unrecognized_charge` | Exact owned transaction ID and snapshot from the trusted host | Pending sandbox decision and private risk evidence |
 | `confirm_simulated_intake` | Pending handle and explicit host-confirmed `true` | Persisted simulated intake, if eligible |
 | `read_intake_receipt` | Pending handle | Independent receipt read-back after an uncertain write |
-| `create_verified_handoff` | Reason and optional pending handle | Persisted owner-bound human-review packet |
+| `create_verified_handoff` | Reason, optional pending handle/request ID, bounded `unanswered_questions` | Persisted owner-bound request with verified facts and questions |
 | `read_verified_handoff` | Handoff ID | Independent packet read-back before naming the ID |
 
 The five action tools are advertised only in delegated mode and require distinct
 per-call scopes. They are absent from the synthetic and operator test registrations.
 
-Dates filter **process_date**, with at most 31 inclusive dates. Defaults use the
-latest 31 days present in the historical source, not the current calendar month.
-Pagination sorts by transaction timestamp and ID. Cursors keep the same window;
-repeat explicit dates when paging a custom window.
+Dates filter **transaction_date**. With both dates omitted, the window covers up
+to 90 inclusive calendar days ending at the latest ownership-valid event date,
+bounded by the snapshot's first event. Complete explicit windows are preserved
+within the snapshot's verified bounds, with at most 90 days per request. Partial
+or out-of-coverage dates fail safely instead of being shifted or clipped. The
+response discloses the snapshot anchor and source timestamp calendar. Partition
+dates, build time and wall time do not choose the default. A June 18 event stored
+in a June 17 partition remains searchable on June 18. Cursors retain owner,
+window and anchor; repeat explicit dates when paging a custom window.
+
+`existing_case` describes only the exact owned charge in the local sandbox
+ledger. Its states are `verified`, `not_found` and `action_unverified`; historical
+complaints cannot establish a charge association. Only `verified` contains a
+persisted receipt with status `received`. Existing receipts retain their original
+snapshot and do not create another case. Legacy or uncertain records stay
+unverified. A saved confirmation-attempt state prevents failed writes from later
+becoming a clean absence result.
+
+Handoff packets save server-verified charge facts, their snapshot/as-of
+provenance, the reason and up to eight unanswered questions. A separate durable
+read determines whether the request ID may be shown. `human_responded` remains
+false; a saved request is not agent pickup. See the [source contracts and limits](../docs/ISSUE21_DATA_AND_RECEIPTS.md).
 
 Customer/conversation selectors are optional schema fields; they never grant
 authority to a bound customer. Product and transaction IDs, fraud labels, S3 keys,

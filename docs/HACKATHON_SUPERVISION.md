@@ -102,7 +102,11 @@ Review architecture changes explicitly and measure their effect on this product.
 - `banking_mcp/service.py` implements `banking_status`, `list_my_transactions` and
   `get_my_transaction`: read-only, customer-bound tools. Verify discovery/schema
   and responses on the reviewed revision before treating a proposed contract as
-  usable. The current list window is at most 31 process dates, with 20 rows per page.
+  usable. The historical read implementation used at most 31 process dates, with
+  20 rows per page. The issue #21 source adds up to 90 event calendar dates,
+  verified local case receipts and saved handoff packets; see
+  [its source contracts](ISSUE21_DATA_AND_RECEIPTS.md). Source tests do not prove
+  those changes are installed in the existing worker.
 - The deployed backend uses customer-sharded gold snapshots. The data-recovery
   work is rebuilding from S3 separately. Source metadata agreement and conditional
   read-back do not by themselves prove inherited ingestion or full freshness.

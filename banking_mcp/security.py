@@ -91,12 +91,15 @@ class StateStore:
                     transaction_id TEXT NOT NULL, snapshot TEXT NOT NULL,
                     action TEXT NOT NULL, decision TEXT NOT NULL, reason TEXT,
                     facts TEXT NOT NULL, expires INTEGER NOT NULL,
-                    evidence_digest TEXT, request_key TEXT, result_json TEXT);
+                    evidence_digest TEXT, request_key TEXT, result_json TEXT,
+                    confirmation_state TEXT);
                 CREATE TABLE IF NOT EXISTS sandbox_cases(
                     id TEXT PRIMARY KEY, customer TEXT NOT NULL, transaction_id TEXT NOT NULL,
                     action TEXT NOT NULL, snapshot TEXT NOT NULL, created_at REAL NOT NULL,
                     facts TEXT NOT NULL, UNIQUE(customer, transaction_id, action));
                 CREATE INDEX IF NOT EXISTS sandbox_cases_recent ON sandbox_cases(customer, created_at);
+                CREATE TABLE IF NOT EXISTS sandbox_case_receipts(
+                    case_id TEXT PRIMARY KEY, receipt_json TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS sandbox_handoffs(
                     id TEXT PRIMARY KEY, binding TEXT NOT NULL, customer TEXT NOT NULL,
                     transaction_id TEXT, snapshot TEXT, reason TEXT NOT NULL,
@@ -118,6 +121,15 @@ class StateStore:
                 db.execute("ALTER TABLE action_pending ADD COLUMN request_key TEXT")
             if "result_json" not in columns:
                 db.execute("ALTER TABLE action_pending ADD COLUMN result_json TEXT")
+            if "confirmation_state" not in columns:
+                # NULL preserves uncertainty for legacy prepared records.
+                # Only a new authorized prepare may mark an intent prepared.
+                db.execute("ALTER TABLE action_pending ADD COLUMN confirmation_state TEXT")
+            handoff_columns = {row[1] for row in db.execute("PRAGMA table_info(sandbox_handoffs)")}
+            if "packet_json" not in handoff_columns:
+                # Legacy packets remain unverified; initialization must not
+                # manufacture saved questions or charge evidence for them.
+                db.execute("ALTER TABLE sandbox_handoffs ADD COLUMN packet_json TEXT")
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS action_pending_request_key ON action_pending(request_key)")
             db.execute("INSERT OR IGNORE INTO sandbox_ledger_identity VALUES (1, ?)",
                        (secrets.token_hex(32),))

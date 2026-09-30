@@ -378,7 +378,11 @@ def test_action_risk_threshold_and_duplicate_report(bank):
     duplicate = action_call(bank, "prepare_unrecognized_charge",
                             {"transaction_id": targets[0], "snapshot": build})
     assert duplicate["risk"]["unrecognized_count_24h"] == 2
-    assert duplicate["decision"] == "handoff" and duplicate["reason"] == "duplicate_review"
+    assert duplicate["decision"] == "existing_case" and duplicate["reason"] is None
+    assert duplicate["existing_case"]["state"] == "verified"
+    assert duplicate["existing_case"]["receipt"]["status"] == "received"
+    assert action_call(bank, "read_intake_receipt", {
+        "pending_handle": duplicate["pending_handle"]})["receipt"] == duplicate["existing_case"]["receipt"]
     with service.store.connect() as db:
         assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 2
     with pytest.raises(BankError, match="handoff_required"):
