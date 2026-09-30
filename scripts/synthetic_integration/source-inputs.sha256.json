@@ -5,7 +5,7 @@
   "files": {
     ".gitattributes": "390f4b2f00f8da642fed2935ce50f5cb0b500a0ea15235d2e7848a5cf84b39c8",
     ".github/workflows/banking-synthetic-integration.yml": "ccd8b7f25413b4cf34114d506e41321b1f2a9f45b329204240620f3b36e8263c",
-    "docs/SYNTHETIC_INTEGRATION_CHECKPOINT.md": "fd1ff0b865c77eb3ce0fac065b2fbc929be7622a2ee6bc6a95d8c309a4909971",
+    "docs/SYNTHETIC_INTEGRATION_CHECKPOINT.md": "6bc3f12dcedd4363d66b9972735540fb7a0fc513a9d23f33b723ace7d5e9c050",
     "scripts/synthetic_integration/checkpoint.py": "0b3aad8e95424b9253d319f77bf0c2dbc6fddf9d511759a0ac6da6ea0e2cfc1c",
     "scripts/synthetic_integration/consume_package.py": "f618bf064fc5788e9f120be776ccbd585d5159661b2f0245ee54381dd13ad173",
     "scripts/synthetic_integration/contract.py": "bfbed41c4e5c1c6fdf22bce9df1d0c02ed0d5a08a42a1365a82c3cfcae8aab62",

@@ -44,7 +44,7 @@ omission and makes no inherited healthcheck survival claim.
 The loaded raw config digest, original daemon ID and derived image ID are
 distinct records. Source copies and runtime use verified full image IDs. The
 derived Dockerfile's named base context uses the validated local OCI manifest
-digest (`oci-layout://â€¦@sha256:â€¦`). Before startup the harness verifies original
+digest (`oci-layout://<layout>@sha256:<digest>`). Before startup the harness verifies original
 bank/compiled FLUJO/launcher bytes, the derived layer prefix, controlled config
 changes, and all copied fixture/harness source. It then supplies a separate
 read-only release file. The image contains no baked authorization marker.
