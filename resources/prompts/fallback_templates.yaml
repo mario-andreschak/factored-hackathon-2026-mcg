@@ -23,13 +23,13 @@ INFORM:
   es: 'Estos son los datos verificados: {{ verified_summary }}'
   pt: 'Estes são os dados verificados: {{ verified_summary }}'
 INFORM_EXISTING_CASE:
-  es: 'Existe un reclamo posiblemente relacionado: **{{ complaint_id }}**, estado
-    **{{ complaint_status }}**. No se crea otro.'
-  pt: 'Existe uma reclamação possivelmente relacionada: **{{ complaint_id }}**, status
-    **{{ complaint_status }}**. Não será criada outra.'
+  es: 'El reclamo **{{ complaint_id }}** de esta transacción tiene estado verificado
+    **{{ complaint_status }}** en el entorno de prueba. No se crea otro.'
+  pt: 'A reclamação **{{ complaint_id }}** desta transação tem status verificado
+    **{{ complaint_status }}** no ambiente de teste. Não será criada outra.'
 CONFIRM_ACTION:
-  es: ¿Autorizas registrar un reclamo por {{ transaction_summary }}?
-  pt: Você autoriza registrar uma reclamação sobre {{ transaction_summary }}?
+  es: 'Revisa el cargo {{ transaction_summary }}. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.'
+  pt: 'Confira a cobrança {{ transaction_summary }}. Se quiser registrar uma solicitação simulada, use o controle de confirmação do portal. Responder aqui no chat não faz o registro.'
 ACTION_DONE:
   es: El reclamo **{{ action_result_id }}** fue registrado y verificado en el entorno
     de prueba.
@@ -38,6 +38,9 @@ ACTION_DONE:
 ACTION_UNVERIFIED:
   es: No puedo confirmar el registro de la solicitud. Se necesita revisión humana.
   pt: Não posso confirmar o registro da solicitação. É necessária uma revisão humana.
+ACTION_UNVERIFIED_HANDOFF_VERIFIED:
+  es: 'No puedo confirmar el registro del reclamo. La solicitud de atención humana **{{ handoff_id }}** sí quedó registrada y verificada en el entorno de prueba.'
+  pt: 'Não posso confirmar o registro da reclamação. O pedido de atendimento humano **{{ handoff_id }}** foi registrado e verificado no ambiente de teste.'
 ACTION_CANCELLED:
   es: No continuaré con la creación propuesta.
   pt: Não continuarei com a criação proposta.
@@ -51,6 +54,9 @@ HANDOFF:
     completada.
   pt: É necessário atendimento humano. Não posso confirmar aqui que o encaminhamento
     foi concluído.
+HANDOFF_VERIFIED:
+  es: 'La solicitud de atención humana **{{ handoff_id }}** quedó registrada y verificada en el entorno de prueba. Un agente humano debe revisarla.'
+  pt: 'O pedido de atendimento humano **{{ handoff_id }}** foi registrado e verificado no ambiente de teste. Um agente humano deve analisá-lo.'
 TOOL_ERROR:
   es: No pude completar la operación ni confirmar su resultado. Inténtalo nuevamente
     o solicita atención humana.

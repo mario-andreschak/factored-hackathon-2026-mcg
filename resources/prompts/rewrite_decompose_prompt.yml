@@ -20,8 +20,10 @@ rewrite_decompose_prompt:
     Resuelve esa compra/la segunda con el histórico solo si el referente es inequívoco.
     El histórico va del más reciente al más antiguo y solo aporta continuidad; no verifica hechos.
     No transformes acusaciones en hechos: el cliente afirma que no autorizó la compra.
-    Para sí/no/la primera ante confirmación o selección reconstruye la respuesta completa,
+    Para sí/no/la primera ante una oferta de acción o selección reconstruye la respuesta completa,
     sin añadir aprobación si era cortesía o duda. Conserva la negación y el grado de certeza.
+    Un «sí/sim» escrito en chat expresa como máximo intención; nunca describe consentimiento
+    del control del portal ni autoriza registrar. No infieras que ese control fue usado.
     Si no hay continuidad o hay cambio de tema, no arrastres la solicitud anterior.
     No infieras hechos, permisos, riesgo, acciones ejecutadas ni identidad autenticada.
     Divide solo objetivos independientes; buscar y disputar el mismo cargo es un único workflow.
@@ -33,16 +35,16 @@ rewrite_decompose_prompt:
     # Ejemplos (ilustrativos; no son hechos del cliente)
     Entrada: {"user_question": "Esa no la reconozco.", "historic_conversation": "Compra mencionada: 850 COP de ayer."}
     Salida: {"clean_query": "No reconozco la compra de 850 COP de ayer.", "sub_queries": [{"query_text": "No reconozco la compra de 850 COP de ayer."}]}
-    Entrada: {"user_question": "sí", "historic_conversation": "¿Quieres registrar el reclamo por la transacción de 850 COP?"}
-    Salida: {"clean_query": "El usuario confirma que quiere registrar el reclamo por la transacción de 850 COP.", "sub_queries": [{"query_text": "El usuario confirma que quiere registrar el reclamo por la transacción de 850 COP."}]}
+    Entrada: {"user_question": "sí", "historic_conversation": "Se ofreció el control del portal para registrar una solicitud simulada por la transacción de 850 COP."}
+    Salida: {"clean_query": "El usuario dice que desea registrar una solicitud simulada por la transacción de 850 COP.", "sub_queries": [{"query_text": "El usuario dice que desea registrar una solicitud simulada por la transacción de 850 COP."}]}
     Entrada: {"user_question": "Essa não fui eu.", "historic_conversation": "Transferência de 200 USD ontem."}
     Salida: {"clean_query": "O cliente afirma não ter realizado a transferência de 200 USD de ontem.", "sub_queries": [{"query_text": "O cliente afirma não ter realizado a transferência de 200 USD de ontem."}]}
     Entrada: {"user_question": "Não reconheço a compra de ontem."}
     Salida: {"clean_query": "Não reconheço a compra de ontem.", "sub_queries": [{"query_text": "Não reconheço a compra de ontem."}]}
     Entrada: {"user_question": "Agora quero consultar meu saldo.", "historic_conversation": "Disputa anterior."}
     Salida: {"clean_query": "Agora quero consultar meu saldo.", "sub_queries": [{"query_text": "Agora quero consultar meu saldo."}]}
-    Entrada: {"user_question": "ok, gracias", "historic_conversation": "¿Registro el reclamo?"}
-    Salida: {"clean_query": "El usuario dice ok, gracias ante la pregunta de registrar el reclamo, sin confirmación inequívoca.", "sub_queries": [{"query_text": "El usuario dice ok, gracias ante la pregunta de registrar el reclamo, sin confirmación inequívoca."}]}
+    Entrada: {"user_question": "ok, gracias", "historic_conversation": "Se ofreció el control del portal para registrar una solicitud simulada."}
+    Salida: {"clean_query": "El usuario dice ok, gracias ante la oferta de registrar una solicitud simulada, sin expresar intención inequívoca.", "sub_queries": [{"query_text": "El usuario dice ok, gracias ante la oferta de registrar una solicitud simulada, sin expresar intención inequívoca."}]}
     Entrada: {"user_question": "###"}
     Salida: {"clean_query": "", "sub_queries": []}
     

@@ -13,4 +13,4 @@ La ventana sintética es de 120 días desde la fecha del evento. Se necesitan id
 ## Confirmación y resultado
 <!-- chunk_id: dispute-03 -->
 
-Antes de registrar se resume la transacción y se pide confirmación explícita. La cortesía no autoriza. El registro se comunica únicamente después de ejecución y relectura verificadas. Sigue una revisión, sin plazo ni devolución garantizados.
+Antes de registrar se resume la transacción propia preparada y el cliente confirma esa acción en el control explícito del portal. Un «sí/sim» en chat, la etiqueta de un clasificador, el histórico o la selección de un cargo no autorizan la escritura. El host revalida owner, sesión, conversación, target, snapshot, vigencia y guardas antes de actuar. El registro se comunica únicamente después de ejecución y relectura verificadas. Sigue una revisión, sin plazo ni devolución garantizados.
