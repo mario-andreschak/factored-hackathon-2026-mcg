@@ -14,12 +14,13 @@ Separate FLUJO branches, renamed routes and injected banking adapters do not
 create exceptions. FLUJO #534 restored the pre-#530 source tree; the previous
 worker/image and its banking state require separate migration and review.
 
-## SUPERVISOR action: Slack gateway and long-running work
+## Proposed Slack gateway long-task acceptance
 
-The owner reports that the Slack gateway times out on long-running tasks. Own
-and prioritize the gateway fix in its actual repository; this project PR is the
-request and acceptance contract, not a gateway implementation or proof of a fix.
-Keep the change generic to FLUJO and Slack, independent of banking.
+PR #30 reports that the Slack gateway times out on long-running tasks. This
+section records a proposed acceptance contract for a separate generic gateway
+follow-up in its actual repository; this project PR neither implements,
+dispatches nor proves a gateway fix. The proposed follow-up remains generic to
+FLUJO and Slack, independent of banking.
 
 **A conversation error requires FLUJO to report `status: 'error'` for that
 same conversation.** Elapsed time in the gateway, an HTTP wait ending, a
