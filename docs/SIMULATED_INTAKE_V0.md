@@ -1,5 +1,12 @@
 # Simulated unrecognized-charge intake v0
 
+> Historical worker-ingress design. Its FLUJO banking routes and in-worker
+> authority were removed by FLUJO #534 and must not be restored. Follow the
+> [direct host source contract](../frontend/DIRECT_MCP.md) and
+> [FLUJO product boundary](FLUJO_PRODUCT_BOUNDARY.md) for current direction.
+> The replacement remains held for integrated review; old evidence cannot
+> validate it. The instructions below preserve the earlier prototype record.
+
 This is a private, single-customer prototype. Savia resolves a displayed transaction reference to an owned source transaction on the frontend server, opens the already owned FLUJO conversation, and asks the protected FLUJO action route to prepare a sandbox intake. The model cannot choose or call these five action tools. The customer confirms the exact prepared action in the UI; the backend then reads a persisted sandbox receipt before displaying its ID. Handoff IDs are also displayed only after a separate read.
 
 The integration is disabled by default. Set `chat.action_enabled` to `true` in the private frontend config only after the matching FLUJO action route and delegated banking MCP source are installed. This setting never enables a live bank write. The MCP remains the existing private stdio server in the FLUJO worker; there is no remote MCP endpoint or extra container.

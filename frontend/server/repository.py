@@ -400,11 +400,21 @@ class Repository:
             # fetches bound Python memory without imposing a history-age cutoff.
             cursor = con.execute("SELECT transaction_id FROM scoped")
             matched = None
+            matches = set()
             while rows := cursor.fetchmany(1024):
-                matched = next((value for (value,) in rows if hmac.compare_digest(
-                    self.reference("txn", customer, value), reference)), None)
-                if matched is not None:
-                    break
+                matching = (value for (value,) in rows if hmac.compare_digest(
+                    self.reference("txn", customer, value), reference))
+                if not action_context:
+                    # Preserve the portal's first-match lookup. Action authority
+                    # separately checks every owned ID for a public collision.
+                    matched = next(matching, None)
+                    if matched is not None:
+                        break
+                    continue
+                matches.update(matching)
+                if len(matches) > 1:
+                    return None
+                matched = next(iter(matches), None)
             if matched is None:
                 return None
             fields = TRANSACTION_FIELDS + (", owned_product_type" if action_context else "")
@@ -422,7 +432,7 @@ class Repository:
         return self._public_transaction(row, self.state.customer(profile_id))
 
     def action_target(self, profile_id: str, reference: str) -> dict | None:
-        """Private target for FLUJO; raw IDs are never sent to the browser."""
+        """Private target for direct MCP; raw IDs are never sent to the browser."""
         resolved = self._owned_transaction(profile_id, reference, action_context=True)
         if not resolved:
             return None

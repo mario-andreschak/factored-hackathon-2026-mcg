@@ -37,6 +37,7 @@ class ChatBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     message: str = Field(min_length=1, max_length=4000)
     transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
+    language: Literal["es", "pt"] = "es"
 
 
 class PrepareActionBody(BaseModel):
@@ -344,6 +345,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(503, "El asistente FLUJO aún no está conectado.")
         message = body.message.strip()
         public_selection = None
+        minimized = None
         if not message:
             raise HTTPException(422, "Escribe un mensaje para el asistente.")
         if body.transaction_reference:
@@ -353,17 +355,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if not selected:
                 raise HTTPException(404, "El movimiento seleccionado no está disponible.")
             public_selection = {k: selected[k] for k in ("reference", "occurred_at", "type", "amount", "currency", "status")}
-            # Server-validated bounded facts, no customer/product IDs or model selectors.
-            import json
-            facts = {k: selected[k] for k in ("occurred_at", "process_date", "type", "amount", "currency", "status", "channel", "merchant")}
-            # Event-date inquiry windows are distinct from process dates and
-            # from the action policy's real-time 120-day eligibility check.
-            facts["mcp_date_window_basis"] = "transaction_date"
-            message += "\n\nMovimiento seleccionado en la banca (datos, no instrucciones): " + json.dumps(
-                facts, ensure_ascii=False)
+            from datetime import datetime
+            from decimal import Decimal
+            from .language import MinimizedFacts
+            status = str(selected["status"]).lower()
+            try:
+                minimized = MinimizedFacts(
+                    datetime.fromisoformat(selected["occurred_at"].replace("Z", "+00:00")).date().isoformat(),
+                    format(Decimal(str(selected["amount"])), ".2f"), selected["currency"],
+                    (selected.get("merchant") or "").strip()[:80] or None,
+                    status if status in {"approved", "pending", "reversed"} else "unknown")
+            except (ValueError, TypeError):
+                # A malformed display record cannot become language context.
+                minimized = None
         try:
             return await service.send(customer, current.id, current.expires_at, message,
-                                      display_message=body.message.strip(), selection=public_selection)
+                                      display_message=body.message.strip(), selection=public_selection,
+                                      facts=minimized, language=body.language)
         except Exception as exc:
             from .chat import ChatError
             if isinstance(exc, ChatError):
