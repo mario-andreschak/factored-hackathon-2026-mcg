@@ -1,0 +1,54 @@
+{
+  "schema": "banking-synthetic-integration-preparation/v1",
+  "status": "held_source_preparation_only",
+  "execution_enabled": false,
+  "package": {
+    "head": "6ebeaf73b57e7d79c691e2e48763e2adc7928398",
+    "run_id": 36679668855,
+    "receipts_artifact_id": 11081194098,
+    "receipts_zip_sha256": "31a8ce432309d4154dc67f6a45ac83dcb6c382dc3c9fc495db20e9a8f3a84120",
+    "oci_artifact_id": 11080919734,
+    "oci_zip_sha256": "1853f64b4a732af88880862a6b79f2d655261b9ed6eddc2e90c72562e7699202",
+    "oci_tar_sha256": "ddf7cd40b2b6545ddfa458c235494789e52076747bffb52dd8ceb2b636cbd5a9",
+    "banking_source": "71ac0f020303abfd0073302a148752f0d2c9f23b",
+    "flujo_source": "51ff39fc5bac84cbbb49bbd2b21b5ab89de8b14b"
+  },
+  "present_relative_generated_fixture_source": {
+    "kind": "immutable_file_pin_not_new_implementation_head",
+    "pin_sha256": "7fbd438c1b58a7bfc68132f979f0bfbd2422f289b6b849522d50b79001d9a405",
+    "generator_sha256": "23cade81be79ccf70392602bbf3f7cf5c5724821c5f9106d7717cba2f59aabf1",
+    "source_cache_sha256": "1ddabccb0329ca7c6eb0d77c63563d2d1fb4fff6fe303aa350398c4f27b474f9",
+    "contracts_sha256": "98f0add581f437c79a119682a90723451722de025b6af867e892487d8693972a",
+    "reference_inputs_sha256": "a148cedb69aca1688bf06466aa2ae7524e3ec80f58899c47c74bec6fda415cea",
+    "reference_history_sha256": "91191bbb86f018079720ee981d9131b97ec62d5678efd84aab5be5b9d99a38f8",
+    "reference_coverage_blueprint_sha256": "3d05734ba0a7e816238211fa48f59324f4647a8b91474edeb5c91a2d5fd7e1da",
+    "independent_source_audit_sha256": "ee790a68399d6f2ff6a83a745d3d6650798dbf92ea49b080baf1e4b6658053ea",
+    "copied": "portable_source_and_original_pin_only",
+    "runtime_inputs": "regenerate_after_release_with_real_UTC_then_hash_independently",
+    "source_path": "scripts/synthetic_integration/dataset_source"
+  },
+  "frontend_selection_forwarding_fault_gate_source": null,
+  "two_clock_simulation_provider_source": {
+    "status": "deferred_not_required_for_first_checkpoint",
+    "implementation": null
+  },
+  "reviewed_fixture_bundle_artifact": null,
+  "supervising_root_integration_source_review": null,
+  "claims": {
+    "integration_runs": 0,
+    "http_calls": 0,
+    "mcp_tool_calls": 0,
+    "action_writes": 0,
+    "model_requests": 0,
+    "fixture_provider_calls": 0,
+    "external_provider_requests": 0
+  },
+  "surface": "api_only",
+  "pending_requirements": [
+    "corrected_committed_frontend_gate_and_real_fixture_provider",
+    "private_bundle_source_head_manifest_and_artifact_digest",
+    "independent_root_review_of_exact_integration_head",
+    "separate_reviewed_revision_to_remove_preparation_hold",
+    "lost_prepare_recovery_probe_correlating_actual_host_minted_UUID"
+  ]
+}

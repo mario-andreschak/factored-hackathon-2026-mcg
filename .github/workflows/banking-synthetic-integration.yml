@@ -1,0 +1,54 @@
+name: Held private synthetic API integration
+on:
+  workflow_dispatch:
+    inputs:
+      checkpoint_review:
+        description: Exact source review JSON with approved private bundle identities
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: banking-synthetic-integration
+  cancel-in-progress: false
+jobs:
+  checkpoint:
+    if: github.repository == 'mario-andreschak/factored-hackathon-2026-mcg' && github.event.repository.private == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Pure source and metadata checks
+        run: python -B -m unittest discover -s tests -p 'test_synthetic_integration_*.py' -v
+      - name: Source release gate (this preparation revision always refuses)
+        env:
+          CHECKPOINT_REVIEW: ${{ inputs.checkpoint_review }}
+        run: |
+          python -B -c 'import os,sys; sys.path.insert(0,"scripts/synthetic_integration"); import contract; from checkpoint import require_execution_release; contract.validate_remote(dict(os.environ)); contract.validate_review(contract.strict_json(os.environ["CHECKPOINT_REVIEW"]),os.environ["GITHUB_SHA"]); require_execution_release()'
+      - name: Install restoration tool on the disposable hosted runner
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends skopeo
+      - name: Digest-bound API assembly checkpoint
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHECKPOINT_REVIEW: ${{ inputs.checkpoint_review }}
+        run: python -B scripts/synthetic_integration/checkpoint.py
+      - name: Retain sanitized checkpoint evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-api-integration-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/synthetic-integration/evidence/checkpoint.json
+            ${{ runner.temp }}/synthetic-integration/evidence/source-identities.json
+            ${{ runner.temp }}/synthetic-integration/evidence/observations.json
+          retention-days: 7
+          if-no-files-found: warn

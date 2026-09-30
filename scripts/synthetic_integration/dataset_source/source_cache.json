@@ -1,0 +1,10 @@
+{
+  "base_commit": "71ac0f020303abfd0073302a148752f0d2c9f23b",
+  "files": {
+    "pipeline/contracts.yaml": {
+      "git_blob": "e6550df24f2e355565787c5112141a00dabe1678",
+      "sha256": "98f0add581f437c79a119682a90723451722de025b6af867e892487d8693972a"
+    }
+  },
+  "application_calls": 0
+}
