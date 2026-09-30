@@ -1,0 +1,202 @@
+# Data contracts for the tables the dispute-intake workflow uses.
+# Source of truth: LATAM_Bank_Complete_Data_Dictionary v1.0.0 (organizer PDF).
+#
+# Semantics enforced by pipeline/silver.py:
+#   type        DuckDB type the raw VARCHAR is TRY_CAST to. A non-empty value that
+#               fails the cast sends the row to quarantine ("cast_failed:<col>").
+#   required    NULL/empty after trimming sends the row to quarantine ("null:<col>").
+#   enum        Allowed values. Severity is `enum_severity` for the table:
+#                 warn   -> counted in the quality report, row kept
+#                 reject -> row quarantined ("enum:<col>")
+#               Enums start as `warn` because the dictionary lists English labels and
+#               the data may use Spanish ones. Promote to `reject` once the report
+#               confirms the real vocabulary.
+#   drop: true  Column is not carried into silver (PII minimisation).
+#   fk          <table>.<column>. Orphans are FLAGGED (_fk_<col>_missing), never dropped.
+#   publish_values  true only for low-cardinality CATEGORICAL columns whose values are safe
+#               in committed reports (docs/pipeline/). Values of every other column (free
+#               text such as customer_text, description, merchant_name) are never written to
+#               reports; only counts are.
+#   same_owner_as  <column>. The referenced parent row must carry the same value in that
+#               column (e.g. a product referenced by a transaction must belong to the same
+#               customer). Violations are FLAGGED (_owner_mismatch_<col>) and reported.
+#
+# Table-level:
+#   pk              Primary key. Dedup keeps one row per PK (see dedup_order).
+#   dedup_order     SQL ORDER BY used to pick the surviving version (first wins).
+#   max_reject_rate Pipeline exits non-zero if quarantined/raw exceeds this.
+
+tables:
+  customers:
+    pk: customer_id
+    dedup_order: last_updated DESC NULLS LAST, _source_file DESC
+    max_reject_rate: 0.05
+    enum_severity: warn
+    columns:
+      customer_id:            {type: VARCHAR, required: true}
+      document_number:        {type: VARCHAR, drop: true}
+      document_type:          {type: VARCHAR, drop: true}
+      first_name:             {type: VARCHAR, drop: true}
+      last_name:              {type: VARCHAR, drop: true}
+      date_of_birth:          {type: DATE, drop: true}
+      gender:                 {type: VARCHAR, drop: true}
+      email:                  {type: VARCHAR, drop: true}
+      mobile_phone:           {type: VARCHAR, drop: true}
+      landline_phone:         {type: VARCHAR, drop: true}
+      address:                {type: VARCHAR, drop: true}
+      city:                   {type: VARCHAR, required: true}
+      state:                  {type: VARCHAR, required: true}
+      country:                {type: VARCHAR, required: true, enum: [México, Colombia, Argentina], publish_values: true}
+      postal_code:            {type: VARCHAR, drop: true}
+      detected_accent:        {type: VARCHAR, enum: [mexican, colombian, argentine, neutral], publish_values: true}
+      segment:                {type: VARCHAR, required: true, enum: [Premium, Plus, Basic, Student], publish_values: true}
+      credit_score:           {type: INTEGER, drop: true}
+      estimated_monthly_income: {type: "DECIMAL(12,2)", drop: true}
+      occupation:             {type: VARCHAR, drop: true}
+      marital_status:         {type: VARCHAR, drop: true}
+      education_level:        {type: VARCHAR, drop: true}
+      registration_date:      {type: TIMESTAMP, required: true}
+      registration_branch_id: {type: VARCHAR}
+      customer_status:        {type: VARCHAR, required: true, enum: [Active, Inactive, Suspended, Closed], publish_values: true}
+      last_updated:           {type: TIMESTAMP, required: true}
+      accepts_marketing:      {type: BOOLEAN}
+
+  products:
+    pk: product_id
+    dedup_order: last_updated DESC NULLS LAST, _source_file DESC
+    max_reject_rate: 0.05
+    enum_severity: warn
+    columns:
+      product_id:            {type: VARCHAR, required: true}
+      customer_id:           {type: VARCHAR, required: true, fk: customers.customer_id}
+      product_type:          {type: VARCHAR, required: true, publish_values: true}
+      product_number:        {type: VARCHAR, drop: true}
+      currency:              {type: VARCHAR, required: true, enum: [MXN, COP, ARS, USD], publish_values: true}
+      current_balance:       {type: "DECIMAL(15,2)", required: true}
+      credit_limit:          {type: "DECIMAL(15,2)"}
+      interest_rate:         {type: "DECIMAL(5,2)"}
+      opening_date:          {type: DATE, required: true}
+      expiration_date:       {type: DATE}
+      opening_branch_id:     {type: VARCHAR}
+      product_status:        {type: VARCHAR, required: true, enum: [Active, Blocked, Closed, Suspended], publish_values: true}
+      opening_channel:       {type: VARCHAR, publish_values: true}
+      has_linked_app:        {type: BOOLEAN}
+      days_past_due:         {type: INTEGER}
+      last_transaction_date: {type: TIMESTAMP}
+      last_updated:          {type: TIMESTAMP, required: true}
+
+  transactions:
+    pk: transaction_id
+    dedup_order: _partition_date DESC NULLS LAST, _source_file DESC
+    max_reject_rate: 0.05
+    enum_severity: warn
+    columns:
+      transaction_id:       {type: VARCHAR, required: true}
+      transaction_date:     {type: TIMESTAMP, required: true}
+      process_date:         {type: DATE, required: true}
+      product_id:           {type: VARCHAR, required: true, fk: products.product_id, same_owner_as: customer_id}
+      customer_id:          {type: VARCHAR, required: true, fk: customers.customer_id}
+      transaction_type:     {type: VARCHAR, required: true, publish_values: true}
+      transaction_category: {type: VARCHAR, publish_values: true}
+      amount:               {type: "DECIMAL(15,2)", required: true}
+      currency:             {type: VARCHAR, required: true, enum: [MXN, COP, ARS, USD], publish_values: true}
+      amount_usd:           {type: "DECIMAL(15,2)"}
+      channel:              {type: VARCHAR, required: true, publish_values: true}
+      branch_id:            {type: VARCHAR}
+      merchant_name:        {type: VARCHAR}
+      merchant_category:    {type: VARCHAR, publish_values: true}
+      transaction_country:  {type: VARCHAR, required: true, publish_values: true}
+      transaction_city:     {type: VARCHAR}
+      transaction_status:   {type: VARCHAR, required: true, enum: [Approved, Declined, Pending, Reversed], publish_values: true}
+      response_code:        {type: VARCHAR, publish_values: true}
+      is_fraud:             {type: BOOLEAN, required: true}
+      fraud_score:          {type: "DECIMAL(5,2)"}
+      latitude:             {type: "DECIMAL(10,7)", drop: true}
+      longitude:            {type: "DECIMAL(10,7)", drop: true}
+
+  call_center_interactions:
+    pk: interaction_id
+    dedup_order: _partition_date DESC NULLS LAST, _source_file DESC
+    max_reject_rate: 0.05
+    enum_severity: warn
+    columns:
+      interaction_id:           {type: VARCHAR, required: true}
+      interaction_date:         {type: TIMESTAMP, required: true}
+      process_date:             {type: DATE, required: true}
+      customer_id:              {type: VARCHAR, required: true, fk: customers.customer_id}
+      agent_id:                 {type: VARCHAR}
+      interaction_type:         {type: VARCHAR, required: true, publish_values: true}
+      channel:                  {type: VARCHAR, required: true, publish_values: true}
+      contact_reason:           {type: VARCHAR, required: true, publish_values: true}
+      reason_category:          {type: VARCHAR, required: true, publish_values: true}
+      duration_seconds:         {type: INTEGER}
+      wait_time_seconds:        {type: INTEGER}
+      was_resolved:             {type: BOOLEAN}
+      requires_followup:        {type: BOOLEAN, required: true}
+      detected_sentiment:       {type: VARCHAR, publish_values: true}
+      sentiment_score:          {type: "DECIMAL(3,2)"}
+      customer_detected_accent: {type: VARCHAR, publish_values: true}
+      agent_used_accent:        {type: VARCHAR, publish_values: true}
+      was_escalated:            {type: BOOLEAN, required: true}
+      mentioned_products:       {type: VARCHAR}
+      has_transcript:           {type: BOOLEAN, required: true}
+      has_recording:            {type: BOOLEAN, required: true}
+
+  call_transcripts:
+    pk: transcript_id
+    dedup_order: _partition_date DESC NULLS LAST, _source_file DESC
+    max_reject_rate: 0.05
+    enum_severity: warn
+    columns:
+      transcript_id:       {type: VARCHAR, required: true}
+      interaction_id:      {type: VARCHAR, required: true, fk: call_center_interactions.interaction_id}
+      process_date:        {type: DATE, required: true}
+      customer_id:         {type: VARCHAR, required: true, fk: customers.customer_id}
+      agent_id:            {type: VARCHAR}
+      full_text:           {type: VARCHAR, drop: true}
+      customer_text:       {type: VARCHAR}
+      agent_text:          {type: VARCHAR, drop: true}
+      detected_language:   {type: VARCHAR, required: true, publish_values: true}
+      detected_accent:     {type: VARCHAR, publish_values: true}
+      accent_confidence:   {type: "DECIMAL(3,2)"}
+      detected_keywords:   {type: VARCHAR}
+      mentioned_entities:  {type: VARCHAR, drop: true}
+      detected_intents:    {type: VARCHAR}
+      main_topics:         {type: VARCHAR}
+      transcription_model: {type: VARCHAR, publish_values: true}
+      audio_quality:       {type: VARCHAR, publish_values: true}
+      duration_seconds:    {type: INTEGER}
+
+  complaints:
+    pk: complaint_id
+    dedup_order: _partition_date DESC NULLS LAST, _source_file DESC
+    max_reject_rate: 0.05
+    enum_severity: warn
+    columns:
+      complaint_id:          {type: VARCHAR, required: true}
+      creation_date:         {type: TIMESTAMP, required: true}
+      process_date:          {type: DATE, required: true}
+      customer_id:           {type: VARCHAR, required: true, fk: customers.customer_id}
+      case_type:             {type: VARCHAR, required: true, publish_values: true}
+      category:              {type: VARCHAR, required: true, publish_values: true}
+      subcategory:           {type: VARCHAR, publish_values: true}
+      reception_channel:     {type: VARCHAR, required: true, publish_values: true}
+      affected_product_id:   {type: VARCHAR, fk: products.product_id, same_owner_as: customer_id}
+      related_branch_id:     {type: VARCHAR}
+      origin_interaction_id: {type: VARCHAR, fk: call_center_interactions.interaction_id}
+      description:           {type: VARCHAR, required: true}
+      claimed_amount:        {type: "DECIMAL(15,2)"}
+      currency:              {type: VARCHAR, publish_values: true}
+      priority:              {type: VARCHAR, required: true, publish_values: true}
+      status:                {type: VARCHAR, required: true, publish_values: true}
+      assigned_agent_id:     {type: VARCHAR}
+      assignment_date:       {type: TIMESTAMP}
+      first_response_date:   {type: TIMESTAMP}
+      resolution_date:       {type: TIMESTAMP}
+      closing_date:          {type: TIMESTAMP}
+      sla_breached:          {type: BOOLEAN, required: true}
+      resolution_days:       {type: INTEGER}
+      resolution:            {type: VARCHAR}
+      compensation_granted:  {type: "DECIMAL(15,2)"}
+      resolution_satisfaction: {type: INTEGER}
+      is_repeat_complainer:  {type: BOOLEAN}

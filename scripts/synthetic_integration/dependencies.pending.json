@@ -1,0 +1,78 @@
+{
+  "schema": "banking-synthetic-integration-preparation/v1",
+  "status": "held_source_preparation_only",
+  "execution_enabled": false,
+  "package": {
+    "head": "6ebeaf73b57e7d79c691e2e48763e2adc7928398",
+    "run_id": 36679668855,
+    "receipts_artifact_id": 11081194098,
+    "receipts_zip_sha256": "31a8ce432309d4154dc67f6a45ac83dcb6c382dc3c9fc495db20e9a8f3a84120",
+    "oci_artifact_id": 11080919734,
+    "oci_zip_sha256": "1853f64b4a732af88880862a6b79f2d655261b9ed6eddc2e90c72562e7699202",
+    "oci_tar_sha256": "ddf7cd40b2b6545ddfa458c235494789e52076747bffb52dd8ceb2b636cbd5a9",
+    "banking_source": "71ac0f020303abfd0073302a148752f0d2c9f23b",
+    "flujo_source": "51ff39fc5bac84cbbb49bbd2b21b5ab89de8b14b"
+  },
+  "present_relative_generated_fixture_source": {
+    "kind": "immutable_file_pin_not_new_implementation_head",
+    "pin_sha256": "7fbd438c1b58a7bfc68132f979f0bfbd2422f289b6b849522d50b79001d9a405",
+    "generator_sha256": "23cade81be79ccf70392602bbf3f7cf5c5724821c5f9106d7717cba2f59aabf1",
+    "source_cache_sha256": "1ddabccb0329ca7c6eb0d77c63563d2d1fb4fff6fe303aa350398c4f27b474f9",
+    "contracts_sha256": "98f0add581f437c79a119682a90723451722de025b6af867e892487d8693972a",
+    "reference_inputs_sha256": "a148cedb69aca1688bf06466aa2ae7524e3ec80f58899c47c74bec6fda415cea",
+    "reference_history_sha256": "91191bbb86f018079720ee981d9131b97ec62d5678efd84aab5be5b9d99a38f8",
+    "reference_coverage_blueprint_sha256": "3d05734ba0a7e816238211fa48f59324f4647a8b91474edeb5c91a2d5fd7e1da",
+    "independent_source_audit_sha256": "ee790a68399d6f2ff6a83a745d3d6650798dbf92ea49b080baf1e4b6658053ea",
+    "copied": "portable_source_and_original_pin_only",
+    "runtime_inputs": "regenerate_after_release_with_real_UTC_then_hash_independently",
+    "source_path": "scripts/synthetic_integration/dataset_source"
+  },
+  "frontend_selection_forwarding_fault_gate_source": {
+    "head": "36ae3fbfce3f5b1d5554b72a48928f55dc4bc277",
+    "status": "timing_fix_committed_and_merged; independent_static_review_and_148_plus_54_local_tests_passed; hosted_CI_never_started_billing_block",
+    "api_files_sha256": {
+      "frontend_driver.py": "bac1f4d26fe0051356e41030125732841e3b87b97e4ae7efabd04f38cb865861",
+      "frontend_fault.py": "19e114274b819b6a4789b1c37a5124af22ea4a0ee86095918411c825041dfe94",
+      "frontend_confirm_fault.py": "cb0f0cf6d48d4edae0a302e7163889f78604bb7165e2a736e80ce0fabd6ec9df",
+      "frontend_observers.py": "5ba83ec3f2ab5c1333dc7f82bf771001ced81191c3080130c979e322b43ff924"
+    },
+    "coverage_compatibility_audit_sha256": "b904a4e8c05594520738935039533345f75c8d7e2c2ad4eafc751e922cb05cd3",
+    "browser_static_build_and_truth_adapter": "deferred; api_only_checkpoint",
+    "ci_finding": "Fresh push/PR 14 jobs and merge-main 7 jobs failed before any steps: billing/spend-limit block, not green; no rerun requested",
+    "replacement_head": "36ae3fbfce3f5b1d5554b72a48928f55dc4bc277",
+    "helper_content_origin_head": "6baa44e3f0940d9bc316cd1808032f4b7f8a9315",
+    "merged_main": "c099b01e3b8affa6e0160cf3b9b4c24697641056",
+    "source_review_sha256": "100439044d98f0df552b483c58a40fd902b7bc43348037254845d56d50914afa",
+    "git_bundle_sha256": "370e87863e205d37a6fa0da1db9350c95f40bd539d1bb3a313f4d022b2e68a9e",
+    "publication_sha256": "d69c9edac573df9ccc00ad3c6a6dcb33a71e276fe757f791b3d7f6284d61d41a"
+  },
+  "two_clock_simulation_provider_source": {
+    "status": "deferred_not_required_for_first_checkpoint",
+    "implementation": null
+  },
+  "reviewed_fixture_bundle_artifact": null,
+  "supervising_root_integration_source_review": null,
+  "claims": {
+    "integration_runs": 0,
+    "http_calls": 0,
+    "mcp_tool_calls": 0,
+    "action_writes": 0,
+    "model_requests": 0,
+    "fixture_provider_calls": 0,
+    "external_provider_requests": 0
+  },
+  "surface": "api_only",
+  "pending_requirements": [
+    "required_hosted_CI_green_after_account_billing_block_is_resolved",
+    "actual_fixture_provider_graph_policy_and_adapter_source_review",
+    "private_bundle_source_head_manifest_and_artifact_digest",
+    "independent_root_review_of_exact_integration_head",
+    "separate_reviewed_revision_to_remove_preparation_hold"
+  ],
+  "scenario_phases": [
+    "stock-missing-coverage",
+    "stock-prepare-response-loss",
+    "authored-empty-history",
+    "authored-confirm-response-loss"
+  ]
+}
