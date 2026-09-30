@@ -81,17 +81,34 @@ Transport tests remain a separate fully mocked security/Service/SDK/TLS lane.
 ## Separate source dependency and acceptance work
 
 Frontend draft PR31 is pinned at
-`0ff868dc5be71ada6c83fc846cbc8dc4bbd3d549`, tree
-`a2f7867d95648758de5fdfabba40872ca2099c6d`. Its application and test blobs
-remain identical to independently reviewed `7d684c20d8f71a437854d6b40aafd049227c1899`;
-only its contract document and endpoint example changed. It owns the trusted host,
-signer and standard MCP client and is not folded into this bank/source branch.
-Its reviewed contract-v4 receipt is SHA256
-`b4ca7331f8baf11b4db1a573266a0407dd99c53ba7a6a25e152c240d69911505`.
+`fac397b4b56d12deb6c80a51de3c646e0916a7b5`, tree
+`e2d1de15cc42e668bfa0fbc15cc0a577884473d7`. Its host now includes generation
+continuity and Portuguese error fixes. It owns the trusted host, signer and
+standard MCP client and is not folded into this bank/source branch.
+Contract-v4 receipt SHA256
+`b4ca7331f8baf11b4db1a573266a0407dd99c53ba7a6a25e152c240d69911505`
+is a historical snapshot from before mandatory `ledger_generation`; it does
+not establish the current wire agreement.
+
+Three new mocked generation-delivery controls passed for frontend
+`7d2305afe84a71724a3fd762812bc577f41079a6` and bank
+`775eb89c3752df95c5f3dfbac23a00269e03d118`, receipt SHA256
+`628313a6737f524570f2808c3f2feb26082e2c8f4a0d48f5065755c417943ade`.
+Signer/security/Service/SDK/TLS and resource boundaries were fake. These controls
+do not prove actual authentication, transport, installation or current host
+durability. No old controls were rerun.
+
 The bank listener requires the frontend URL and verified certificate IP identity
 to match its explicit bind/port. The aligned example uses deliberately invalid
 IP/port placeholders; no effective network/peer/certificate configuration was
 chosen. No joined transport or installed graph is established here.
+
+Current human direction permits an isolated FLUJO hackathon branch, as in the
+original PR29; generic main remains general purpose. The active Slack gateway
+fix is owned by the supervisor in `flujo-app/flujo-slack-bot`, using existing
+generic endpoint IDs and `recovery.runId`. This package checkpoint still pins
+the stock FLUJO source above; branch permission does not establish runtime or
+package acceptance.
 
 Protected action/CAS/prepare-to-dispatch/RPC/assertion/readback joins and accepted
 guidance/fallback/context/provider provenance are still outstanding. Documentation,
