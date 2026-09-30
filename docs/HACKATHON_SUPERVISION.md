@@ -56,12 +56,27 @@ authorize the supervisor to send the submission email.
 ## Team completion target and contingency
 
 The team aims to finish the hackathon contribution by **October 3, 2026,
-23:59 UTC-5** (**October 4, 04:59 UTC**). Reserve October 4 and 5
-(UTC-5 calendar days) as a last-resort buffer for critical fixes, final
-verification and submission. Do not plan new scope for those days. The
-organizer's October 5 closing hour and timezone remain unconfirmed; submit
-before the actual organizer cutoff rather than assuming all of October 5 is
-available.
+23:59 UTC-5** (**October 4, 04:59 UTC**). "Finished" means a submission-ready,
+hackathon-winning standard of quality, not merely feature-complete code:
+
+- The complete Spanish and Portuguese customer journey is polished, coherent
+  and usable, including ambiguous requests, failures and human handoff.
+- Product behavior and claims are tested and verified against the deployed
+  end-to-end path, with reproducible evidence for safety, data, model quality
+  and performance. Fix material failures before calling the product ready.
+- The demonstration video is finished and ready to submit; the deployed demo,
+  slides and repository tell the same truthful, compelling story.
+- The repository is tidy and reproducible, with no stale or misleading claims,
+  stray artifacts or unresolved critical review findings. All submission
+  documents are accurate, polished and easy to digest.
+
+**The team's goal is to win this hackathon.** The SUPERVISOR should apply this
+quality bar to the October 3 target and report any unmet gate explicitly.
+Reserve October 4 and 5 (UTC-5 calendar days) as a last-resort buffer for
+critical fixes, final verification and submission. Do not plan new scope for
+those days. The organizer's October 5 closing hour and timezone remain
+unconfirmed; submit before the actual organizer cutoff rather than assuming
+all of October 5 is available.
 
 The user authorizes the **SUPERVISOR** to spin up additional agents when
 necessary, including testing and independent review agents, to find and close
@@ -70,6 +85,11 @@ missed setup or delivery gaps. The user reports unlimited usage for the next
 help meet the October 3 target. Coordinate assignments and verify results
 against the same product, safety and evidence gates in this guide. This
 staffing authorization does not change merge or submission authority below.
+
+**SUPERVISOR agent setting for new tasks:** Use **Sol 6.1** at **Very High** or
+**Max** reasoning effort. Use **High** only for exceptional, narrow tasks that
+do not need thorough work. **Never use Low or Medium effort**, including for
+new testing or review agents.
 
 The [delivery plan](HACKATHON_AUDIT_PLAN.md) supplies the selected roadmap. FLUJO,
 MCP, signed assertions, query/page limits, the 120-case evaluation target and the
