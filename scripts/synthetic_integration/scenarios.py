@@ -200,11 +200,12 @@ def run_stock(provider) -> dict:
         require(code == 200 and saved_handoff(provider, retry, questions=[], general=False) == original,
                 "stock_handoff_status_changed")
         unchanged(after, snapshot(provider))
+        before_denial = snapshot(provider)
         code, _ = browser.request("POST", "/api/action/confirm",
             {"transaction_reference": references[actor], "pending_handle": result["pending_handle"],
              "confirmed": False, "language": actor})
         require(code == 422, "false_confirmation_accepted")
-        unchanged(after, snapshot(provider))
+        denied_unchanged(before_denial, snapshot(provider))
         record(actor + "_stock_missing_coverage_handoff_status")
     browser = login("pt")
     provider.bind_general("pt", browser.cookie_header())
@@ -296,9 +297,10 @@ def run(provider) -> dict:
         denied_unchanged(pending, snapshot(provider))
         confirmation = {"transaction_reference": reference, "pending_handle": prepared["pending_handle"],
                         "confirmed": False, "language": actor}
+        before_denial = snapshot(provider)
         status, _ = browser.request("POST", "/api/action/confirm", confirmation)
         require(status == 422, "false_confirmation_accepted")
-        unchanged(before, snapshot(provider))
+        denied_unchanged(before_denial, snapshot(provider))
         confirmation["confirmed"] = True
         status, confirmed = browser.request("POST", "/api/action/confirm", confirmation)
         require(status == 200 and confirmed.get("state") == "intake_verified"

@@ -149,7 +149,11 @@ not observed25h operation, customer history or bank evidence.
 `dependencies.pending.json` identifies available file pins and unresolved slots.
 The frontend helper candidate is exact commit
 `6baa44e3f0940d9bc316cd1808032f4b7f8a9315`; the root's assigned static
-API/fault/observer scopes found no blocker. This is no runtime release. The four
+API/fault/observer scopes found no blocker. This is no runtime release.
+The candidate's Windows tests reported a collection-time expiry failure; a
+test-timing correction and new immutable head with all required CI checks green
+must replace this candidate before execution review. No frontend timing fix is
+treated as an observed runtime failure or as authorization to execute. The four
 API helper blob hashes are pinned in `contract.FRONTEND_FILES` and required at
 `fixture/frontend_helpers/frontend_driver.py`, `fixture/frontend_helpers/frontend_fault.py`,
 `fixture/frontend_helpers/frontend_confirm_fault.py` and `fixture/frontend_helpers/frontend_observers.py` in the
