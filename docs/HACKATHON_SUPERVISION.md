@@ -4,6 +4,33 @@ Baseline reviewed September 29, 2026. This guide applies the project supervisor'
 review mandate. It distinguishes organizer requirements, team decisions and
 verified implementation; it does not turn unfinished work into a completed claim.
 
+## SUPERVISOR action: Slack gateway and long-running work
+
+The owner reports that the Slack gateway times out on long-running tasks. Own
+and prioritize the gateway fix in its actual repository; this project PR is the
+request and acceptance contract, not a gateway implementation or proof of a fix.
+Keep the change generic to FLUJO and Slack, independent of banking.
+
+**A conversation error means FLUJO has actually put that conversation in its
+`ERROR` state.** Elapsed time in the gateway, an HTTP wait ending, or a Slack
+acknowledgement deadline does not establish that state. Do not invent a fixed
+task-duration rule and present it as a FLUJO conversation error. Preserve the
+identity and correlation of accepted work while it is queued or running, and
+resume observation and delivery after a gateway restart or transport break.
+Report real delivery failures separately from conversation state. If FLUJO
+itself enters `ERROR`, show that actual terminal state and its recorded reason;
+do not infer it from a local timer.
+
+Review the Slack event acknowledgement, job scheduler, FLUJO client, terminal
+state observation, and reply delivery together. The fix is complete when a
+long-running accepted task survives the former gateway cutoff and produces
+exactly one final reply in its originating Slack thread; an actual FLUJO
+`ERROR` produces a truthful error reply; and reconnect/restart does not launch
+a duplicate task or post a duplicate final reply. Run focused tests for these
+cases and verify the deployed path with recorded conversation state and Slack
+delivery evidence before reporting this resolved. Security/session limits that
+FLUJO actually enforces must remain explicit and separate from gateway guesses.
+
 ## Product focus
 
 The customer has one problem: **“I do not recognize this charge.”** The product
