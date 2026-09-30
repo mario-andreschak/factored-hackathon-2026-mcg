@@ -456,6 +456,7 @@ def run_prepare_loss(provider) -> dict:
             and committed["forwarded_faults"] == before["forwarded_faults"] + 1,
             "prepare_fault_must_follow_actual_pending_handoff_commit")
     identity = prepare_recovery_identity(provider, "es", cookie)
+    require(identity["host_request_id"] != browser_uuid, "browser_prepare_uuid_must_be_ignored")
     if "request_id" in first:
         require(first["request_id"] == identity["host_request_id"], "prepare_response_host_uuid_mismatch")
     original = provider.read_saved_handoff_by_request("es", identity["host_request_id"])

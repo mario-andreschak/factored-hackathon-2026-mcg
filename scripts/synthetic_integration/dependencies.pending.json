@@ -28,8 +28,8 @@
     "source_path": "scripts/synthetic_integration/dataset_source"
   },
   "frontend_selection_forwarding_fault_gate_source": {
-    "head": "6baa44e3f0940d9bc316cd1808032f4b7f8a9315",
-    "status": "static_scopes_reviewed; pending_all_green_test_timing_revision",
+    "head": "36ae3fbfce3f5b1d5554b72a48928f55dc4bc277",
+    "status": "timing_fix_committed_and_merged; independent_static_review_and_148_plus_54_local_tests_passed; hosted_CI_never_started_billing_block",
     "api_files_sha256": {
       "frontend_driver.py": "bac1f4d26fe0051356e41030125732841e3b87b97e4ae7efabd04f38cb865861",
       "frontend_fault.py": "19e114274b819b6a4789b1c37a5124af22ea4a0ee86095918411c825041dfe94",
@@ -38,8 +38,13 @@
     },
     "coverage_compatibility_audit_sha256": "b904a4e8c05594520738935039533345f75c8d7e2c2ad4eafc751e922cb05cd3",
     "browser_static_build_and_truth_adapter": "deferred; api_only_checkpoint",
-    "ci_finding": "Windows collection-time expiry in pure helper tests; frontend owns timing-only correction",
-    "replacement_head": null
+    "ci_finding": "Fresh push/PR 14 jobs and merge-main 7 jobs failed before any steps: billing/spend-limit block, not green; no rerun requested",
+    "replacement_head": "36ae3fbfce3f5b1d5554b72a48928f55dc4bc277",
+    "helper_content_origin_head": "6baa44e3f0940d9bc316cd1808032f4b7f8a9315",
+    "merged_main": "c099b01e3b8affa6e0160cf3b9b4c24697641056",
+    "source_review_sha256": "100439044d98f0df552b483c58a40fd902b7bc43348037254845d56d50914afa",
+    "git_bundle_sha256": "370e87863e205d37a6fa0da1db9350c95f40bd539d1bb3a313f4d022b2e68a9e",
+    "publication_sha256": "d69c9edac573df9ccc00ad3c6a6dcb33a71e276fe757f791b3d7f6284d61d41a"
   },
   "two_clock_simulation_provider_source": {
     "status": "deferred_not_required_for_first_checkpoint",
@@ -58,7 +63,7 @@
   },
   "surface": "api_only",
   "pending_requirements": [
-    "new_immutable_frontend_test_timing_revision_with_all_required_CI_green",
+    "required_hosted_CI_green_after_account_billing_block_is_resolved",
     "actual_fixture_provider_graph_policy_and_adapter_source_review",
     "private_bundle_source_head_manifest_and_artifact_digest",
     "independent_root_review_of_exact_integration_head",

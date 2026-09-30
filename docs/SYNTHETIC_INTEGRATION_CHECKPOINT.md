@@ -44,7 +44,7 @@ omission and makes no inherited healthcheck survival claim.
 The loaded raw config digest, original daemon ID and derived image ID are
 distinct records. Source copies and runtime use verified full image IDs. The
 derived Dockerfile's named base context uses the validated local OCI manifest
-digest (`oci-layout://…@sha256:…`). Before startup the harness verifies original
+digest (`oci-layout://â€¦@sha256:â€¦`). Before startup the harness verifies original
 bank/compiled FLUJO/launcher bytes, the derived layer prefix, controlled config
 changes, and all copied fixture/harness source. It then supplies a separate
 read-only release file. The image contains no baked authorization marker.
@@ -147,13 +147,21 @@ not observed25h operation, customer history or bank evidence.
 ## Pending exact review and provider contract
 
 `dependencies.pending.json` identifies available file pins and unresolved slots.
-The frontend helper candidate is exact commit
-`6baa44e3f0940d9bc316cd1808032f4b7f8a9315`; the root's assigned static
-API/fault/observer scopes found no blocker. This is no runtime release.
-The candidate's Windows tests reported a collection-time expiry failure; a
-test-timing correction and new immutable head with all required CI checks green
-must replace this candidate before execution review. No frontend timing fix is
-treated as an observed runtime failure or as authorization to execute. The four
+The corrected frontend validation source is exact commit
+`36ae3fbfce3f5b1d5554b72a48928f55dc4bc277`; the root's assigned static
+API/fault/observer scopes found no blocker. PR26 merged this source into main
+`c099b01e3b8affa6e0160cf3b9b4c24697641056` under ordinary source-only guards.
+Independent validation reported148 focused tests plus54 subtests passing.
+This is no runtime release.
+The previous `6baa44e` Windows tests reported a collection-time expiry failure.
+The committed correction changes only observer-test timing: future bounds are calculated at
+invocation. Helper and production files are byte-identical; real-clock guards,
+TTL and acceptance rules remain unchanged. The root's static delta review passed.
+All required CI checks must be green before execution review. GitHub currently
+blocks jobs before any steps run because of an account billing or spending limit;
+all14 fresh push/PR jobs and all7 merge-main jobs never started and are not green.
+This is separate from source-test results. No rerun is requested while blocked.
+The timing fix is no runtime proof or authorization to execute. The four
 API helper blob hashes are pinned in `contract.FRONTEND_FILES` and required at
 `fixture/frontend_helpers/frontend_driver.py`, `fixture/frontend_helpers/frontend_fault.py`,
 `fixture/frontend_helpers/frontend_confirm_fault.py` and `fixture/frontend_helpers/frontend_observers.py` in the
