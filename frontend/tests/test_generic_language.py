@@ -150,7 +150,14 @@ class GenericLanguageTests(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn(content, result.reply)
 
     async def test_deep_bounded_json_response_falls_back_without_recursion_error(self):
-        client, requests = self.client(completion(content="[" * 2000 + "0" + "]" * 2000))
+        # Exercise the outer parser: nested assistant content would be rejected
+        # by its 1024-byte gate before reaching JSON parsing.
+        raw = b"[" * 30000 + b"0" + b"]" * 30000
+        self.assertLess(len(raw), 64 * 1024)
+        with self.assertRaises(RecursionError):
+            json.loads(raw)
+        client, requests = self.client(lambda request: httpx.Response(200, content=raw,
+            headers={"content-type": "application/json"}, request=request))
         result = await client.guide("Explica", "es", facts=FACTS)
         self.assertFalse(result.model_output_accepted)
         self.assertEqual(result.reason, "invalid_response")
