@@ -1,0 +1,115 @@
+name: Private banking package preflight
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/banking-package-preflight.yml'
+      - 'Dockerfile.banking-package-preflight'
+      - 'scripts/package_preflight/**'
+      - 'tests/test_package_*.py'
+      - 'docs/BANKING_PACKAGE_PREFLIGHT.md'
+permissions:
+  contents: read
+concurrency:
+  group: banking-package-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  package:
+    # Private same-repository PRs only. No pull_request_target or secrets input.
+    if: >-
+      github.repository == 'mario-andreschak/factored-hackathon-2026-mcg' &&
+      github.event.repository.private == true &&
+      (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CANDIDATE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+      FLUJO_SOURCE_REVISION: 961fd13b823088c9f0f473cddefd962816a13bc2
+      BANK_SOURCE_REVISION: 529bcca2ae83a705e8c372a065602f3e27fa11da
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: banking
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: mario-andreschak/FLUJO
+          ref: 961fd13b823088c9f0f473cddefd962816a13bc2
+          path: flujo-source
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Pure source checks (no Docker or banking runtime)
+        working-directory: banking
+        run: |
+          python -B -m unittest discover -s scripts/package_preflight -p 'test_*.py' -v
+          python -B -m unittest discover -s tests -p 'test_package_*.py' -v
+      - name: Prepare exact source contexts
+        run: |
+          set -euo pipefail
+          echo "PACKAGE_EVIDENCE_DIR=$RUNNER_TEMP/package-evidence" >> "$GITHUB_ENV"
+          echo "PACKAGE_BASE_IMAGE=banking-preflight-flujo:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
+          echo "PACKAGE_FINAL_IMAGE=banking-preflight-final:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/package-evidence"
+          python -B banking/scripts/package_preflight/prepare_flujo.py --repo flujo-source --out "$RUNNER_TEMP/flujo-context" --manifest "$RUNNER_TEMP/package-evidence/flujo-source-context.json"
+          python -B banking/scripts/package_preflight/context.py --repo banking --output "$RUNNER_TEMP/bank-context" --candidate-head "$CANDIDATE_REVISION"
+          cp "$RUNNER_TEMP/bank-context/source-context-manifest.json" "$RUNNER_TEMP/package-evidence/banking-source-context.json"
+          sha256sum banking/Dockerfile.banking-package-preflight banking/.github/workflows/banking-package-preflight.yml banking/scripts/package_preflight/*.py banking/scripts/package_preflight/*.cjs > "$RUNNER_TEMP/package-evidence/packaging-inputs.sha256"
+      - name: Build the FULL pinned FLUJO runtime with the optional adapter
+        run: |
+          set -euo pipefail
+          docker version > "$PACKAGE_EVIDENCE_DIR/docker-version.txt"
+          docker build --builder default --target runtime --progress=plain \
+            --build-arg FLUJO_EXECUTION_ADAPTER_MODULE=/app/src/integrations/hackathon-banking/configuredAdapter.ts \
+            --build-arg FLUJO_APPLICATION_VERSION=3.46.1 \
+            --build-arg FLUJO_BUILD_REVISION="$FLUJO_SOURCE_REVISION" \
+            --tag "$PACKAGE_BASE_IMAGE" "$RUNNER_TEMP/flujo-context" \
+            2>&1 | tee "$PACKAGE_EVIDENCE_DIR/flujo-build.log"
+      - name: Extend that exact full image with the pinned Banking MCP
+        run: |
+          set -euo pipefail
+          docker build --builder default --progress=plain \
+            --build-arg FLUJO_IMAGE="$PACKAGE_BASE_IMAGE" \
+            --file banking/Dockerfile.banking-package-preflight \
+            --tag "$PACKAGE_FINAL_IMAGE" "$RUNNER_TEMP/bank-context" \
+            2>&1 | tee "$PACKAGE_EVIDENCE_DIR/banking-build.log"
+          docker image inspect "$PACKAGE_BASE_IMAGE" > "$RUNNER_TEMP/base-inspect.json"
+          docker image inspect "$PACKAGE_FINAL_IMAGE" > "$RUNNER_TEMP/final-inspect.json"
+          python -B banking/scripts/package_preflight/record_image.py \
+            --base-inspect "$RUNNER_TEMP/base-inspect.json" --final-inspect "$RUNNER_TEMP/final-inspect.json" \
+            --candidate-revision "$CANDIDATE_REVISION" --out "$PACKAGE_EVIDENCE_DIR/image-provenance.json"
+      - name: Inspect compiled routes and installed stdio inventory (fiction only)
+        run: |
+          set -euo pipefail
+          mkdir -p "$PACKAGE_EVIDENCE_DIR/runtime"
+          chmod 0777 "$PACKAGE_EVIDENCE_DIR/runtime"
+          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges \
+            --tmpfs /tmp:rw,nosuid,nodev,size=768m --env GITHUB_ACTIONS=true \
+            --mount "type=bind,src=$PACKAGE_EVIDENCE_DIR/runtime,dst=/evidence" \
+            --entrypoint /bin/sh "$PACKAGE_FINAL_IMAGE" -ec '
+              npm_config_cache=/tmp/package-npm-cache npm --offline --ignore-scripts ls --all --omit=dev --json > /evidence/node-dependencies.json
+              node /opt/package-preflight/verify_flujo.cjs --app-root /app --receipt-dir /evidence --expected-flujo-revision 961fd13b823088c9f0f473cddefd962816a13bc2
+              /opt/banking-mcp/.venv/bin/python /opt/package-preflight/verify_installed.py --banking-root /opt/banking-mcp --receipt-dir /evidence --expected-source-revision 529bcca2ae83a705e8c372a065602f3e27fa11da
+            ' 2>&1 | tee "$PACKAGE_EVIDENCE_DIR/inspection.log"
+      - name: Save private OCI candidate and content digests (no registry push)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends skopeo
+          skopeo --version > "$PACKAGE_EVIDENCE_DIR/skopeo-version.txt"
+          skopeo copy "docker-daemon:$PACKAGE_FINAL_IMAGE" "oci-archive:$PACKAGE_EVIDENCE_DIR/candidate.oci.tar:banking-preflight"
+          skopeo inspect --raw "oci-archive:$PACKAGE_EVIDENCE_DIR/candidate.oci.tar" > "$PACKAGE_EVIDENCE_DIR/oci-manifest.json"
+          cd "$PACKAGE_EVIDENCE_DIR"
+          find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+      - name: Preserve private evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: banking-package-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/package-evidence/
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: warn
