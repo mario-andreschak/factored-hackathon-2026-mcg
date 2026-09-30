@@ -4,11 +4,11 @@ Updated September 29, 2026, after four coordinated reviews and implementation.
 This replaces the earlier proposal. See [implementation and measurements](BANKING_MCP_IMPLEMENTATION.md)
 and [operator demo instructions](BANKING_OPERATOR_DEMO.md).
 
-**September 30 owner direction:** FLUJO is a two-year, generic product. Do not
-add banking routes or challenge-specific code to its repository. Keep banking
-behavior in this application, MCP or an external adapter. Audit the existing
-optional banking integration for extraction instead of expanding it. The
-[product boundary](FLUJO_PRODUCT_BOUNDARY.md) is the review gate for new work.
+**September 30 owner clarification:** The generic secure MCP hook/adapter is
+acceptable on FLUJO main. Banking and hackathon routes are not. Keep
+domain behavior in this application or MCP when possible; a separate FLUJO
+hackathon branch is acceptable if needed. The
+[product boundary](FLUJO_PRODUCT_BOUNDARY.md) is the review gate for main.
 
 ## Decisions
 
@@ -17,7 +17,7 @@ optional banking integration for extraction instead of expanding it. The
 - Use permanent graphical flows. Do not create a flow per customer.
 - Give organizers an explicit approved customer selector in operator mode.
 - Bind customer mode to a verified per-request principal, outside prompts, flow definitions, conversation metadata and model-visible arguments.
-- Keep shared FLUJO changes generic and optional. Banking policy belongs in this repo's external adapter; use ordinary `/v1/chat/completions`.
+- Keep FLUJO main generic and optional, including its secure MCP hook. Keep banking policy in the hackathon integration or MCP; use ordinary `/v1/chat/completions`. If necessary, isolate FLUJO-specific demo code on a separate branch.
 - Use the existing Sol and Luna models. Restricted customer runs use a separately pinned and tested CLI profile.
 
 ## Two modes, same read tools

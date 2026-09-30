@@ -4,10 +4,11 @@ This repository contains the data audit, DuckDB pipeline, classifier baseline, b
 
 ## FLUJO product boundary
 
-FLUJO is a long-lived, general-purpose product. This hackathon's banking
-workflow must use its generic interfaces; banking routes, policy and
-challenge-specific code belong in Savia, the banking MCP or a separately
-selected external adapter, not in the FLUJO repository. See the
+FLUJO is a long-lived, general-purpose product. Its generic secure MCP
+hook/adapter is appropriate on main. Banking and hackathon routes must not
+land on FLUJO main. Keep domain behavior in Savia or the banking MCP where
+possible; if FLUJO-specific integration is unavoidable, isolate it on a
+separate hackathon branch. See the
 [architecture boundary and review gate](docs/FLUJO_PRODUCT_BOUNDARY.md).
 
 ## Open the banking demo
