@@ -293,7 +293,7 @@ class Repository:
         con.read_parquet([str(p) for p in files]).create_view("transactions")
         # Bound parameters cannot appear in a CREATE VIEW in every supported DuckDB
         # version; create the relation with execute and materialize this one customer.
-        con.execute("""CREATE TEMP TABLE scoped AS SELECT t.* FROM transactions t
+        con.execute("""CREATE TEMP TABLE scoped AS SELECT t.*, p.product_type AS owned_product_type FROM transactions t
             JOIN products p ON p.product_id=t.product_id AND p.customer_id=t.customer_id
             JOIN customers c ON c.customer_id=t.customer_id
             WHERE t.customer_id=? AND t.ownership_valid""", [customer])
@@ -386,7 +386,7 @@ class Repository:
                                                   "Los números de cuenta se eliminaron en silver; se usa una referencia opaca.")},
         }
 
-    def _owned_transaction(self, profile_id: str, reference: str) -> tuple[dict, str] | None:
+    def _owned_transaction(self, profile_id: str, reference: str, *, action_context: bool = False) -> tuple[dict, str] | None:
         """Resolve a browser reference only inside this owner-scoped server."""
         if not isinstance(reference, str) or not re.fullmatch(r"txn_[a-f0-9]{24}", reference):
             return None
@@ -407,7 +407,8 @@ class Repository:
                     break
             if matched is None:
                 return None
-            rows = records(con.execute(f"SELECT {TRANSACTION_FIELDS} FROM scoped WHERE transaction_id=?", [matched]))
+            fields = TRANSACTION_FIELDS + (", owned_product_type" if action_context else "")
+            rows = records(con.execute(f"SELECT {fields} FROM scoped WHERE transaction_id=?", [matched]))
             if len(rows) != 1:
                 return None
             return rows[0], snapshot.build.name
@@ -422,8 +423,13 @@ class Repository:
 
     def action_target(self, profile_id: str, reference: str) -> dict | None:
         """Private target for FLUJO; raw IDs are never sent to the browser."""
-        resolved = self._owned_transaction(profile_id, reference)
+        resolved = self._owned_transaction(profile_id, reference, action_context=True)
         if not resolved:
             return None
         row, build = resolved
-        return {"transaction_id": row["transaction_id"], "snapshot": build}
+        transaction = {key: row[key] for key in
+                       ("occurred_at", "process_date", "type", "amount", "currency", "status", "merchant", "channel")}
+        if row["owned_product_type"] is not None:
+            transaction["product"] = row["owned_product_type"]
+        return {"transaction_id": row["transaction_id"], "snapshot": build,
+                "transaction": transaction}

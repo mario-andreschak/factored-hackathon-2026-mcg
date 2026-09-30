@@ -35,6 +35,14 @@ test('source-loaded snapshot function reproduces the published execution hash', 
   assert.equal(result.flow.nodes[0].data.properties.promptTemplate, result.inputs.prompt);
 });
 
+test('canonical customer prompt is the only source and its bytes are embedded unchanged', () => {
+  const canonical = path.resolve(__dirname, '../../resources/prompts/customer_v0.md');
+  assert.equal(result.inputs.provenance.canonicalPrompt, 'resources/prompts/customer_v0.md');
+  assert.equal(fs.existsSync(path.join(__dirname, 'prompt.md')), false, 'duplicate customer prompt must not return');
+  assert(fs.readFileSync(canonical).equals(result.inputs.promptBytes));
+  assert.equal(node(result.flow, 'start').data.properties.promptTemplate, fs.readFileSync(canonical, 'utf8'));
+});
+
 test('save metadata, configured model and registered server change the execution hash', () => {
   const saved = structuredClone(result.flow);
   saved.createdAt = Date.UTC(2026, 8, 29);

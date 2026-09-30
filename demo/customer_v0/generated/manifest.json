@@ -2,8 +2,9 @@
   "schema": "banking-customer-v0-source-artifact/v1",
   "scope": "source-only; not installed or evaluated with a model",
   "fragment": "customer-v0-readonly",
-  "fragmentVersion": "1.0.0",
-  "flujoCommit": "59444647c10b9ce72396a97557a47fb238a6121e",
+  "fragmentVersion": "1.1.0",
+  "canonicalPrompt": "resources/prompts/customer_v0.md",
+  "flujoCommit": "3037c1423f7d39ede4d4a9b50afae038e4dd7baa",
   "bindings": {
     "modelId": "existing-model-id",
     "bankServer": "existing-banking-server"
@@ -18,16 +19,16 @@
   ],
   "internalRouting": "FLUJO also exposes the internal Finish routing control tool",
   "sha256": {
-    "prompt": "d865102c9f691a3f2f36ae6f56be272805be12f2a5c63ffe5b991efb8de96a80",
-    "provenance": "721e7508cf349929aac9dc72c31c765c5cadfb8fc8772e51a84bb8fd3e232d4e",
-    "builder": "01ed69d64bd5a7accbf93865fb2b2b574f2bcd2f4b45bc688ca8827df7624203",
+    "prompt": "b245f06b0961472d16437a1dd316fcf40f431e9b6f1f3220a80f429c1e30e0a1",
+    "provenance": "8539090f4ff90b87f5f8da3c76024af3762869582659a150157ab70efd87acae",
+    "builder": "0f9213f789655167ae31f5bcf0ef5a6fc14e752cf61a7f09b485dddb5a3f72d6",
     "toolchainLock": "f74a6ece0c33189edf2b3dc9750e7d21dea50cf3df7eb016fa62abf367fc7cb7",
     "flujoPackageLock": "5c71477e67e43cfeee3d8dc86b5798ef35ca538481d04a43f2c9f3bbec500770",
-    "flowSpec": "0f1b371dca0b34b6a09ad80dd6c65a7a3b4464fdae83e6e58759e97ee6f8324a",
-    "compiledFlowBytes": "af516184efb09a601b3c8595115a9387904b18720b59550034eaac7c986a9866",
-    "compiledExecutionSnapshot": "95afaabb469211881cec8f14f21a228d099e38ff6e574b870aa114419c212c5b"
+    "flowSpec": "0be0e4627097f553ef9ee975aace060e35a9a113dcac45de9ac412c44a41fb8c",
+    "compiledFlowBytes": "db80623290c39cd2e8f00c9cb3a689b5f517882b365d0017edb7bb9892f2ce05",
+    "compiledExecutionSnapshot": "8a5a87def4d4208e839320b31272a4ddd327148754050d33bf34926392532549"
   },
-  "snapshotVersion": "sha256:95afaabb469211881cec8f14f21a228d099e38ff6e574b870aa114419c212c5b",
+  "snapshotVersion": "sha256:8a5a87def4d4208e839320b31272a4ddd327148754050d33bf34926392532549",
   "compileIssues": [],
   "validationIssues": [],
   "schemaCheck": "actual FLUJO FlowSnapshotSchema.parse",
@@ -39,7 +40,7 @@
   },
   "flujoSourceFiles": {
     "src/backend/services/flow/executionSnapshot.ts": "f80ab3d97fe43f510bbff1767c59c349bd9d040619ef58f663fb97fd2f7d3908",
-    "src/integrations/hackathon-banking/authority.ts": "a637363005fe4ba670ee6d3b364392877ba3afda75e11c299b734ac84b7b67b9",
+    "src/integrations/hackathon-banking/authority.ts": "4a4afccfa5e4f52801d90696f45ab492ac07233eb7f06e744548fd6750a8a8b9",
     "src/integrations/hackathon-banking/configuredAdapter.ts": "1f673111a0f971f8f85211db2578a2d733bb9c6c854357d2c5a4492f93aa78e1",
     "src/integrations/hackathon-banking/errors.ts": "e4c6a2eb3c87996cd0843c2d556d67a5be5777bc2174ca3d05722beff8163fb6",
     "src/integrations/hackathon-banking/graph.ts": "06f7994c67a817ad026b7db5064772796d3a7f822d53f280beb93fd3e91f8f86",
@@ -61,44 +62,74 @@
   },
   "promptSources": [
     {
-      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
       "path": "resources/prompts/generator_prompt_v3.yml",
-      "sha256": "1f8993372d50e25a334ce28527d525c9bbe1bceea34e44a82cc662e062ac0654"
+      "sha256": "e881edbf5be21fbbb191f42c4356a99ef9a2d4196de3a2929de5739079638027"
     },
     {
-      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
       "path": "resources/prompts/fallback_templates.yaml",
-      "sha256": "a8053e092b45d7a7acf240de750b01d05bf7f4c66172666bc989e66c3d09c08c"
+      "sha256": "dd6cf378c5ae026c986813b0e74b7391cf7e0e672977a400278aeb61cb10452d"
     },
     {
-      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
       "path": "contracts/v0_reconciliation.md",
-      "sha256": "8b594e766619f2a7d5e53472bcc203eba80eaec10a932fb0c97fc85a974b0264"
+      "sha256": "fa708b748bca88e1b4474379015f7f08a8340ee9e228372dbfd74b79c0ef6864"
     },
     {
-      "commit": "cab4c8749c1a12a672e0ee1ecfe5be379ac28778",
+      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
       "path": "contracts/policy_engine.md",
-      "sha256": "8a90ccd77159796323ab229d6b361b98e5e9bfda48b503372e462eeadb589513"
+      "sha256": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31"
     },
     {
-      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
       "path": "banking_mcp/service.py",
-      "sha256": "611f6ab844a5e3f8b0dca56ff61434fb32d1268f1e4b286c51017ee741976e4c"
+      "sha256": "2a829158a7ea96805bc09b01cc1ca8c13e7ed4e334d9eaf99a41f7385c134258"
     },
     {
-      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
       "path": "banking_mcp/repository.py",
-      "sha256": "9ae1f83a2d042dd4acb80ccface1553a1857546a3c95c175c9d5cc69a37d728f"
+      "sha256": "a1882aef706b094f47fdadb50dc44bf2a1f61aa7369f02bc36ea878249577d14"
     },
     {
-      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
       "path": "frontend/server/action.py",
-      "sha256": "241702f3b591705eea3de7fbafbe7eb62657ba24f583fa0ab40b932c7b7f6d27"
+      "sha256": "e13fc14ecc5af7f3ed1d558d0275cc3fcb1605a7e1780f5fba41716f0eecea27"
     },
     {
-      "commit": "3b11d24b7f0c51ffbb49142cbb405381a3b114d3",
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
       "path": "docs/SIMULATED_INTAKE_V0.md",
-      "sha256": "383efad856bfa0a7a34146a112875bf780f4006fb4e4203567f7732226a0df61"
+      "sha256": "bcd3791b12bc91e01f22fa16d0ec6e7fa22ce7872d9355eeedf2d3a781c028ac"
+    },
+    {
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
+      "path": "banking_mcp/actions.py",
+      "sha256": "31c660ad53723b650958e59dd4bb7de037b526ba2262f45c3a208cd16276208a"
+    },
+    {
+      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
+      "path": "docs/ISSUE21_DATA_AND_RECEIPTS.md",
+      "sha256": "b1963b438fc224159d31bf177eecd3c6898d3e0e2490fd669deac17b964f1d42"
+    },
+    {
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
+      "path": "frontend/server/app.py",
+      "sha256": "914a78e220eb9e1f2a2fa6f8e0b14f880e780fca719251a49f9c2e13ae9a980f"
+    },
+    {
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
+      "path": "frontend/server/chat.py",
+      "sha256": "03ee4047c52a0103d6647ac760f208d656a09329d9951a42f17b694e9f7bab81"
+    },
+    {
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
+      "path": "frontend/server/repository.py",
+      "sha256": "139203f805fa118e51f64e84ac3838eaffc4be0b5dbdfd97dafed11a1653b64f"
+    },
+    {
+      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
+      "path": "docs/CHARGE_JOURNEY_UI.md",
+      "sha256": "bf2f4c9c354bda037357be17b865e1aa49ab2d27bf5d4e3f7e84f91ea2259f1a"
     }
   ],
   "installation": "Saving changes metadata and hash. Hash and approve the final saved authoritative Flow separately."

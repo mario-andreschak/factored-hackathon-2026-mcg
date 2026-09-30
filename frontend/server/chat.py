@@ -25,14 +25,14 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from .review import review_reference
+from .action import (handoff_questions, matches_selected_transaction, normalize_handoff_questions,
+                     project_action_result)
 
 
 _CONVERSATION = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
 _PUBLIC_TRANSACTION = re.compile(r"^txn_[a-f0-9]{24}$")
 _PENDING_HANDLE = re.compile(r"^[A-Za-z0-9_-]{32,64}$")
 _REQUEST_ID = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
-_RECEIPT_ID = re.compile(r"^CMP-SBX-[A-Za-z0-9_-]{8}$")
-_HANDOFF_ID = re.compile(r"^HOF-[A-Za-z0-9_-]{8}$")
 _CUSTOMER_HANDOFF_REASONS = frozenset({"out_of_policy", "emergency", "customer_request",
                                        "clarification_exhausted"})
 _RECOVERABLE_HANDOFF_REASONS = _CUSTOMER_HANDOFF_REASONS | {
@@ -283,37 +283,74 @@ class ChatService:
         return row
 
     @staticmethod
+    def _general_handoff(packet: dict[str, Any]) -> bool:
+        return (packet.get("facts") == {} and packet.get("snapshot") is None
+                and packet.get("transaction_provenance") is None
+                and packet.get("transaction_currentness") == "not_applicable")
+
+    @staticmethod
     def _action_result(row: sqlite3.Row) -> dict[str, Any]:
         result = json.loads(row["result_json"])
         if not isinstance(result, dict):
             raise ChatError("action_invalid_state", 503, "No se pudo verificar la recepción simulada.")
+        # Only the authenticated durable row supplies the public target binding.
+        if row["target_reference"]:
+            result["target_reference"] = row["target_reference"]
+        else:
+            result.pop("target_reference", None)
+        result = project_action_result(result)
+        if (result.get("state") == "handoff_verified" and row["target_reference"] is None
+                and not result.get("pending_handle")
+                and not ChatService._general_handoff(result["handoff"])):
+            # No selected owner row binds transaction-bearing evidence here.
+            # Keep its immutable retry identity, but never unlock this request.
+            result = {"state": "handoff_unverified", **{key: result[key] for key in
+                ("reason", "request_id", "unanswered_questions", "prior_handoff") if key in result}}
         if row["target_reference"]:
             result["target_reference"] = row["target_reference"]
         return result
 
+    @classmethod
+    def _retained_evidence(cls, row: sqlite3.Row | None, target_reference: str | None) -> dict[str, Any]:
+        """Keep earlier readback for display; it never resolves the active intent."""
+        if not row or row["target_reference"] != target_reference:
+            return {}
+        prior = cls._action_result(row)
+        retained = {key: prior[key] for key in ("prior_receipt", "prior_handoff") if key in prior}
+        if (target_reference and prior.get("state") in {"intake_verified", "existing_case_verified"}
+                and cls._verified_terminal(prior)):
+            retained["prior_receipt"] = {"target_reference": target_reference, "receipt": prior["receipt"]}
+        if (target_reference is None and prior.get("state") == "handoff_verified"
+                and cls._verified_terminal(prior) and cls._general_handoff(prior["handoff"])):
+            retained["prior_handoff"] = {"target_reference": None, "handoff": prior["handoff"]}
+        return retained
+
     @staticmethod
     def _verified_terminal(result: dict[str, Any]) -> bool:
-        if result.get("state") == "intake_verified":
-            receipt = result.get("receipt")
-            return (isinstance(receipt, dict) and isinstance(receipt.get("id"), str)
-                    and bool(_RECEIPT_ID.fullmatch(receipt["id"])))
-        if result.get("state") == "handoff_verified":
-            handoff = result.get("handoff")
-            return (isinstance(handoff, dict) and isinstance(handoff.get("id"), str)
-                    and bool(_HANDOFF_ID.fullmatch(handoff["id"])))
-        return False
+        projected = project_action_result(result)
+        return (projected["state"] in {"intake_verified", "existing_case_verified", "handoff_verified"}
+                and projected["state"] == result.get("state"))
 
     @classmethod
-    def _safe_prepare_result(cls, result: dict[str, Any]) -> dict[str, Any]:
+    def _safe_prepare_result(cls, result: dict[str, Any], expected_snapshot: str | None = None,
+                             expected_transaction: dict[str, Any] | None = None) -> dict[str, Any]:
         """Only a verified worker result may resolve a saved prepare intent."""
-        if result.get("state") == "handoff_verified" and cls._verified_terminal(result):
-            return result
+        projected = project_action_result(result)
+        if projected.get("state") in {"handoff_verified", "existing_case_verified", "pending_confirmation"}:
+            if (not isinstance(projected.get("snapshot"), str)
+                    or projected.get("transaction") is None
+                    or (expected_snapshot is not None and projected["snapshot"] != expected_snapshot)
+                    or (expected_transaction is not None and not matches_selected_transaction(
+                        projected["transaction"], expected_transaction))):
+                return {"state": "prepare_unverified"}
+            if projected["state"] == "handoff_verified" and (
+                    projected["handoff"]["snapshot"] != projected["snapshot"]
+                    or projected["handoff"]["facts"] != projected["transaction"]
+                    or (result.get("reason") is not None and result["reason"] != projected["handoff"]["reason"])):
+                return {"state": "prepare_unverified"}
+            return projected
         if (result.get("state") == "handoff_unverified"
-                and result.get("reason") in _RECOVERABLE_HANDOFF_REASONS
-                and isinstance(result.get("pending_handle"), str)
-                and _PENDING_HANDLE.fullmatch(result["pending_handle"])):
-            return result
-        if (result.get("state") == "pending_confirmation"
+                and isinstance(result.get("reason"), str) and result["reason"] in _RECOVERABLE_HANDOFF_REASONS
                 and isinstance(result.get("pending_handle"), str)
                 and _PENDING_HANDLE.fullmatch(result["pending_handle"])):
             return result
@@ -347,6 +384,7 @@ class ChatService:
             result = dict(initial)
             if target_reference:
                 result["target_reference"] = target_reference
+            result.update(self._retained_evidence(row, target_reference))
             db.execute("""INSERT INTO action_status
                 (session_id,owner,expires,result_json,updated_at,action_id,target_reference,revision,
                  prepare_transaction_id,prepare_snapshot,prepare_conversation_id,
@@ -404,7 +442,20 @@ class ChatService:
             if not row or row["action_id"] != action_id or row["revision"] != revision:
                 raise ChatError("action_changed", 409,
                                 "La solicitud cambió. Actualiza su estado antes de continuar.")
-            saved = dict(result)
+            # Earlier proof comes only from this owner-bound saved row, never
+            # from an upstream response or a browser-selected wrapper.
+            result = {key: value for key, value in result.items() if key not in {"prior_receipt", "prior_handoff"}}
+            if row["target_reference"]:
+                result["target_reference"] = row["target_reference"]
+            else:
+                result.pop("target_reference", None)
+            saved = project_action_result(result)
+            saved.update(self._retained_evidence(row, row["target_reference"]))
+            if saved.get("state") in {"action_unverified", "handoff_unverified"}:
+                prior = self._action_result(row)
+                for field in ("snapshot", "transaction", "unanswered_questions"):
+                    if field in prior:
+                        saved.setdefault(field, prior[field])
             if row["target_reference"]:
                 saved["target_reference"] = row["target_reference"]
             retain_prepare = saved.get("state") in {"preparing", "prepare_unverified"}
@@ -497,7 +548,9 @@ class ChatService:
                      session_id, action_id, revision))
 
     async def action(self, customer_id: str, session_id: str, session_exp: int,
-                     operation: dict[str, Any], *, target_reference: str | None = None) -> dict[str, Any]:
+                     operation: dict[str, Any], *, target_reference: str | None = None,
+                     expected_snapshot: str | None = None,
+                     expected_transaction: dict[str, Any] | None = None) -> dict[str, Any]:
         """A trusted frontend control, separate from model text and tool arguments."""
         if not self._action_enabled:
             raise ChatError("action_unavailable", 503, "La recepción simulada no está habilitada.")
@@ -505,6 +558,12 @@ class ChatService:
         if kind not in {"prepare", "confirm", "handoff"}:
             raise ChatError("invalid_action", 400, "La solicitud no está disponible.")
         operation = dict(operation)
+        supplied_questions = operation.get("unansweredQuestions") if "unansweredQuestions" in operation else None
+        if kind == "handoff" and "unansweredQuestions" in operation:
+            supplied_questions = normalize_handoff_questions(supplied_questions)
+            if supplied_questions is None:
+                raise ChatError("invalid_action", 400, "La solicitud no está disponible.")
+            operation["unansweredQuestions"] = supplied_questions
         supplied_request_id = operation.get("requestId")
         if kind != "prepare" and supplied_request_id is not None and (not isinstance(supplied_request_id, str)
                 or not _REQUEST_ID.fullmatch(supplied_request_id)):
@@ -540,6 +599,8 @@ class ChatService:
         revision: int | None = None
         previous: sqlite3.Row | None = None
         confirm_handoff_retry = False
+        bound_snapshot: str | None = None
+        bound_transaction: dict[str, Any] | None = None
         if kind == "prepare":
             action_id, revision, previous = self._reserve_action(session_id, owner, session_exp,
                 target_reference, {"state": "preparing", "request_id": operation["requestId"]},
@@ -553,9 +614,21 @@ class ChatService:
             if (not current or current["target_reference"] != target_reference
                     or saved.get("pending_handle") != handle):
                 raise ChatError("action_mismatch", 409, "La solicitud no corresponde al movimiento seleccionado.")
+            bound_snapshot = saved.get("snapshot")
+            bound_transaction = saved.get("transaction")
+            if kind == "confirm" and saved.get("state") == "pending_confirmation" and (
+                    (expected_snapshot is not None and saved.get("snapshot") != expected_snapshot)
+                    or (expected_transaction is not None and not matches_selected_transaction(
+                        saved.get("transaction"), expected_transaction))):
+                raise ChatError("action_mismatch", 409,
+                                "El movimiento o la instantánea cambió. Revisa la solicitud guardada antes de continuar.")
             if kind == "confirm" and saved.get("state") == "intake_verified" and self._verified_terminal(saved):
                 return saved
             if kind == "handoff" and saved.get("state") == "handoff_verified" and self._verified_terminal(saved):
+                if ((saved.get("reason") or saved["handoff"]["reason"]) != operation["reason"]
+                        or (supplied_questions is not None and supplied_questions != saved["handoff"]["unanswered_questions"])
+                        or (supplied_request_id is not None and supplied_request_id != saved.get("request_id"))):
+                    raise ChatError("action_mismatch", 409, "La solicitud no corresponde a la revisión guardada.")
                 return saved
             retry = kind == "handoff" and (
                 saved.get("state") == "handoff_unverified" or
@@ -575,6 +648,10 @@ class ChatService:
                     operation["requestId"] = saved_request_id
                 else:
                     operation.pop("requestId", None)
+                questions = saved.get("unanswered_questions", [])
+                if handoff_questions(questions) is None or (supplied_questions is not None and supplied_questions != questions):
+                    raise ChatError("action_mismatch", 409, "Las preguntas no corresponden a la revisión guardada.")
+                operation["unansweredQuestions"] = list(questions)
                 confirm_handoff_retry = saved.get("state") == "action_unverified"
             elif kind == "handoff":
                 if saved.get("state") == "action_unverified":
@@ -591,8 +668,9 @@ class ChatService:
                 operation["requestId"] = (saved_request_id
                     if isinstance(saved_request_id, str) and _REQUEST_ID.fullmatch(saved_request_id)
                     else str(uuid.uuid4()))
+                operation.setdefault("unansweredQuestions", [])
             allowed = ({"pending_confirmation"} if kind == "confirm" else
-                       {"pending_confirmation", "action_unverified", "handoff_unverified"})
+                       {"pending_confirmation", "existing_case_verified", "action_unverified", "handoff_unverified"})
             if saved.get("state") not in allowed:
                 raise ChatError("action_in_progress", 409,
                                 "Primero revisa el estado de la solicitud anterior.")
@@ -601,18 +679,36 @@ class ChatService:
             uncertain = {"state": "action_unverified" if kind == "confirm" or confirm_handoff_retry
                          else "handoff_unverified",
                          "pending_handle": handle}
+            for field in ("snapshot", "transaction"):
+                if field in saved:
+                    uncertain[field] = saved[field]
             if confirm_handoff_retry:
                 uncertain["handoff"] = {"state": "handoff_unverified"}
             if request_id := operation.get("requestId"):
                 uncertain["request_id"] = request_id
             if reason := operation.get("reason"):
                 uncertain["reason"] = reason
+            if kind == "handoff":
+                uncertain["unanswered_questions"] = operation["unansweredQuestions"]
             _, revision = self._advance_action(session_id, owner, session_exp,
                                                action_id, revision, uncertain)
         else:
             # A general handoff has no transaction target or pending handle,
             # but still needs an identity before the upstream write begins.
             current, saved = self._current_action(session_id, owner, session_exp)
+            if (current and saved.get("state") == "handoff_verified"
+                    and not saved.get("pending_handle")
+                    and current["target_reference"] is None
+                    and supplied_request_id is not None
+                    and saved.get("request_id") == supplied_request_id
+                    and self._verified_terminal(saved)):
+                # This identity already has its complete readback. A replay
+                # must not reserve another row or replace its saved questions.
+                if ((saved.get("reason") or saved["handoff"]["reason"]) != operation["reason"]
+                        or (supplied_questions is not None
+                            and supplied_questions != saved["handoff"]["unanswered_questions"])):
+                    raise ChatError("action_mismatch", 409, "La solicitud no corresponde a la revisión guardada.")
+                return saved
             if (current and saved.get("state") == "handoff_unverified"
                     and not saved.get("pending_handle")
                     and current["target_reference"] is None
@@ -620,32 +716,64 @@ class ChatService:
                     and saved.get("request_id") == supplied_request_id):
                 action_id, revision = current["action_id"], current["revision"]
                 previous = current
+                questions = saved.get("unanswered_questions", [])
+                if handoff_questions(questions) is None or (supplied_questions is not None and supplied_questions != questions):
+                    raise ChatError("action_mismatch", 409, "Las preguntas no corresponden a la revisión guardada.")
+                operation["unansweredQuestions"] = list(questions)
                 _, revision = self._advance_action(session_id, owner, session_exp,
                     action_id, revision, {"state": "handoff_unverified",
                                           "reason": operation["reason"],
+                                          "unanswered_questions": operation["unansweredQuestions"],
                                           "request_id": supplied_request_id})
             else:
                 if operation["reason"] not in _CUSTOMER_HANDOFF_REASONS:
                     raise ChatError("action_mismatch", 409,
                                     "La solicitud no corresponde a una revisión pendiente.")
                 operation.setdefault("requestId", str(uuid.uuid4()))
+                operation.setdefault("unansweredQuestions", [])
                 initial = {"state": "handoff_unverified",
+                           "unanswered_questions": operation["unansweredQuestions"],
                            "request_id": operation["requestId"], "reason": operation["reason"]}
                 action_id, revision, previous = self._reserve_action(session_id, owner,
                                                                        session_exp, None, initial)
 
         payload = {"conversationId": conversation, **operation}
+        if kind == "handoff":
+            # The pinned FLUJO HTTP schema uses this snake_case wire field;
+            # the internal operation retains its frozen request representation.
+            payload["unanswered_questions"] = payload.pop("unansweredQuestions")
 
         def finish(result: dict[str, Any]) -> dict[str, Any]:
             nonlocal revision
+            projected = project_action_result(result)
+            if projected.get("state") == "intake_verified" and (
+                    not bound_snapshot or not bound_transaction
+                    or projected["receipt"]["snapshot"] != bound_snapshot
+                    or projected["receipt"]["transaction"] != bound_transaction):
+                projected = {"state": "action_unverified"}
+            packet_state = projected.get("handoff") if projected.get("state") == "action_unverified" else projected
+            packet = packet_state.get("handoff") if isinstance(packet_state, dict) else None
+            if isinstance(packet, dict) and packet_state.get("state") == "handoff_verified":
+                mismatched = (kind == "handoff" and (packet.get("reason") != operation["reason"]
+                    or packet.get("unanswered_questions") != operation["unansweredQuestions"]))
+                if handle:
+                    mismatched = mismatched or (not bound_snapshot or not bound_transaction
+                        or packet.get("snapshot") != bound_snapshot or packet.get("facts") != bound_transaction)
+                elif kind == "handoff":
+                    mismatched = mismatched or not self._general_handoff(packet)
+                if mismatched:
+                    projected = ({"state": "action_unverified", "handoff": {"state": "handoff_unverified"}}
+                                 if projected.get("state") == "action_unverified" else {"state": "handoff_unverified"})
             saved = ({"state": "action_unverified", "reason": "action_unverified",
-                      "handoff": result} if confirm_handoff_retry else dict(result))
+                      "handoff": projected} if confirm_handoff_retry else projected)
             if handle:
-                saved.setdefault("pending_handle", handle)
+                saved["pending_handle"] = handle
             if request_id := operation.get("requestId"):
-                saved.setdefault("request_id", request_id)
+                saved["request_id"] = request_id
             if reason := operation.get("reason"):
-                saved.setdefault("reason", reason)
+                saved["reason"] = reason
+            if kind == "handoff":
+                saved["unanswered_questions"] = list(operation["unansweredQuestions"])
             if action_id is not None and revision is not None:
                 saved, revision = self._advance_action(session_id, owner, session_exp,
                                                        action_id, revision, saved)
@@ -654,9 +782,10 @@ class ChatService:
             result = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
                                       payload, timeout_seconds=45)
             if kind == "prepare":
-                return finish(self._safe_prepare_result(result))
+                return finish(self._safe_prepare_result(result, operation["snapshot"], expected_transaction))
             if kind == "confirm" and result.get("state") == "handoff_unverified" and (
-                    result.get("reason") in {"high_risk", "missing_evidence", "action_unverified"}):
+                    isinstance(result.get("reason"), str) and result["reason"] in {
+                        "high_risk", "missing_evidence", "action_unverified"}):
                 return finish(result)
             if kind == "confirm" and result.get("state") == "action_unverified" and (
                     isinstance(result.get("handoff"), dict)):
@@ -744,7 +873,7 @@ class ChatService:
                     elif exc.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                         raise
                 else:
-                    recovered = self._safe_prepare_result(replayed)
+                    recovered = self._safe_prepare_result(replayed, payload["snapshot"])
                     recovered["request_id"] = saved["request_id"]
                     try:
                         result, _ = self._advance_action(session_id, owner, session_exp,
@@ -767,7 +896,9 @@ class ChatService:
                 if exc.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                     raise
             else:
-                if self._verified_terminal(receipt) and receipt.get("state") == "intake_verified":
+                if (self._verified_terminal(receipt) and receipt.get("state") == "intake_verified"
+                        and receipt["receipt"]["snapshot"] == saved.get("snapshot")
+                        and receipt["receipt"]["transaction"] == saved.get("transaction")):
                     try:
                         recovered, _ = self._advance_action(session_id, owner, session_exp,
                             row["action_id"], row["revision"],

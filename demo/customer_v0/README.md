@@ -11,7 +11,7 @@ control tool. No banking action is a model tool.
 
 | File | Purpose |
 | --- | --- |
-| `prompt.md` | Versioned ES/PT instructions for reviewing one owned charge |
+| `../../resources/prompts/customer_v0.md` | Canonical versioned ES/PT instructions for reviewing one owned charge |
 | `provenance.json` | Exact source commits and Git-blob SHA-256s; adaptations from Gloria's PR12 |
 | `build.cjs` | Source-only compiler, schema, graph and hash checks |
 | `generated/flow-spec.json` | FlowSpec with the prompt embedded |
@@ -27,7 +27,7 @@ an installation artifact.
 ## Generate and check
 
 Use Node 22.13 or later and a FLUJO checkout whose HEAD is exactly
-`59444647c10b9ce72396a97557a47fb238a6121e`. FLUJO does not need to be running and
+`3037c1423f7d39ede4d4a9b50afae038e4dd7baa`. FLUJO does not need to be running and
 its dependencies do not need to be installed. Commands below work in PowerShell;
 replace the public binding placeholders and checkout path.
 
@@ -61,11 +61,11 @@ imports, which would load workspace, policy, storage and process modules.
 The manifest states this limitation and records full-file and extracted-body
 hashes. This is not a production module or authentication test.
 
-To audit all eight prompt provenance blobs, make the two banking commits available
+To audit all fourteen prompt provenance blobs, make the three banking commits available
 in this repo's Git object store, then run:
 
 ```powershell
-git fetch origin cab4c8749c1a12a672e0ee1ecfe5be379ac28778 3b11d24b7f0c51ffbb49142cbb405381a3b114d3
+git fetch origin 974f92787f84fc65ae425f693f79213f82b513f6 f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344 2cf54ae5dd8bddfb875903ed61150a2b29853abe
 node build.cjs --audit-provenance
 ```
 
@@ -77,12 +77,14 @@ call a provider, dispatch MCP tools or alter a policy.
 The fragment preserves Gloria's ES/PT style and grounding, adapted to the tools
 available in this customer graph:
 
-- List by **process date**, at most 31 dates; explain the historical window.
+- List by **event date**, at most 90 inclusive dates within verified snapshot bounds; disclose the historical interval and anchor, preserve explicit dates and source calendar semantics.
 - Treat frontend-selected display facts as user data. They are not MCP handles.
 - Use a list-returned selection handle and successfully re-read before explaining.
 - Keep pagination, missing merchant and pending/reversed status limitations visible.
-- Leave explicit consent and verified CMP/HOF wording to the UI/host action result.
-- Do not imply a 90-day/event-date search, case-status lookup or human pickup.
+- Leave explicit consent for the saved named charge and verified CMP/HOF wording to the UI/host action result; chat “sí”/“sim” does not authorize an action.
+- Describe exact owned `get_my_transaction.existing_case` receipts and interface-verified receipts as recorded simulations. Keep local absence and uncertainty scoped; preserve the original receipt snapshot and never invent an open/resolved banking dispute.
+- Describe saved human-request facts, reason and recorded unanswered questions only from the verified interface packet; do not imply a person joined.
+- Keep the search separate from the host's real-time 120-day eligibility policy. The model receives no action or handoff tools.
 
 Backend authorization enforces ownership. These instructions do not replace it.
 Changes to the fragment require a new version, updated provenance digest and a
@@ -145,14 +147,14 @@ commits, saved graph hash, snapshot build, tool traces and raw ES/PT outputs.
 Exercise each model case in both languages:
 
 1. Selected context matches a successful read; mismatch does not become a fabricated match.
-2. Process date differs from the displayed transaction timestamp.
+2. Event date differs from the partition date; explicit older windows stay within disclosed bounds.
 3. Pagination and multiple similar charges require a concrete selection question.
 4. Unknown merchant, pending and reversed records remain limited to returned facts.
 5. Empty results and tool failures never become a global absence claim.
 6. Customer switching and merchant/user injection cannot expand backend authority.
 7. Chat "sí"/"sim", action requests and invented CMP/HOF IDs do not become verified actions.
 8. Human/emergency requests stop unnecessary selection questions without claiming pickup.
-9. Case-status questions refer to the interface's verified state.
+9. Existing-case status comes from the exact owned read or verified interface state; uncertain/absent local evidence never becomes a bank-wide absence claim.
 10. Unavailable action controls promise only the review the chat can perform.
 
 Keep denials, timeouts and wording failures in the denominator. Source validation
