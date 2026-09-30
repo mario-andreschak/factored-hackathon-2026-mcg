@@ -4,6 +4,16 @@ Baseline reviewed September 29, 2026. This guide applies the project supervisor'
 review mandate. It distinguishes organizer requirements, team decisions and
 verified implementation; it does not turn unfinished work into a completed claim.
 
+## FLUJO architecture boundary
+
+FLUJO is a general-purpose product. Review changes against the
+[product boundary](FLUJO_PRODUCT_BOUNDARY.md): banking or hackathon backend
+code, routes, dependencies, policy and domain adapters belong in this application
+and the banking MCP. Existing genuinely generic interfaces remain usable.
+Separate FLUJO branches, renamed routes and injected banking adapters do not
+create exceptions. FLUJO #534 restored the pre-#530 source tree; the previous
+worker/image and its banking state require separate migration and review.
+
 ## Product focus
 
 The customer has one problem: **“I do not recognize this charge.”** The product
