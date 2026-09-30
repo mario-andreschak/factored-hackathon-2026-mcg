@@ -47,6 +47,11 @@ session, conversation and snapshot. DuckDB connections close at shutdown.
 - [Slack PR #1](https://github.com/flujo-app/flujo-slack-bot/pull/1): bounded scheduler
   with durable claims and ordering within each conversation.
 
+The optional banking adapter above records the existing integration, not a
+precedent for new domain code in FLUJO. Under the September 30
+[product boundary](FLUJO_PRODUCT_BOUNDARY.md), audit it for extraction to an
+external adapter and keep future FLUJO changes generic.
+
 Customer requests use ordinary `/v1/chat/completions`. The trusted adapter verifies
 ingress before history reads, pins the approved graph, binds immutable ownership,
 limits references/tools/control routes, and keeps authority in runtime memory.

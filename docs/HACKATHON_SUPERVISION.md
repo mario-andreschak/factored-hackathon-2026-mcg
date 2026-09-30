@@ -4,6 +4,15 @@ Baseline reviewed September 29, 2026. This guide applies the project supervisor'
 review mandate. It distinguishes organizer requirements, team decisions and
 verified implementation; it does not turn unfinished work into a completed claim.
 
+## FLUJO architecture boundary
+
+FLUJO is the builder's two-year generic product effort.
+Review every proposed FLUJO change against the
+[product boundary](FLUJO_PRODUCT_BOUNDARY.md): no banking routes or
+hackathon-specific code in the FLUJO repository. Place banking behavior in
+this application, the banking MCP or an external adapter. A feature that
+works for the demo but pollutes shared FLUJO code fails this review gate.
+
 ## Product focus
 
 The customer has one problem: **“I do not recognize this charge.”** The product

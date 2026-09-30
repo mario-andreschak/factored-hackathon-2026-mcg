@@ -2,6 +2,14 @@
 
 This repository contains the data audit, DuckDB pipeline, classifier baseline, banking MCP and **Savia**, a customer-facing online banking demo for FLUJO-powered unrecognized-charge inquiries. Savia uses real organizer products and transactions from the published silver/gold snapshot. Names are fictional demo aliases. An opt-in simulated intake and verified human handoff prototype is described in [docs/SIMULATED_INTAKE_V0.md](docs/SIMULATED_INTAKE_V0.md); it does not submit a bank dispute or issue a refund.
 
+## FLUJO product boundary
+
+FLUJO is a long-lived, general-purpose product. This hackathon's banking
+workflow must use its generic interfaces; banking routes, policy and
+challenge-specific code belong in Savia, the banking MCP or a separately
+selected external adapter, not in the FLUJO repository. See the
+[architecture boundary and review gate](docs/FLUJO_PRODUCT_BOUNDARY.md).
+
 ## Open the banking demo
 
 The local Docker deployment is available at [localhost:43800](http://localhost:43800). Choose a Colombia, México or Argentina profile and enter the configured demo access code (local default: `2026`). Explore balances, accounts/cards, product details, transaction filters and CSV export, or ask the FLUJO assistant about a movement.
@@ -10,6 +18,7 @@ See [frontend setup and portable deployment](frontend/README.md) and [dataset, a
 
 ## Start here
 
+- [FLUJO product boundary for this hackathon](docs/FLUJO_PRODUCT_BOUNDARY.md)
 - [Data recovery review and local runbook (September 29)](docs/DATA_RECOVERY_2026-09-29.md)
 - [Current banking MCP implementation and measured limits](docs/BANKING_MCP_IMPLEMENTATION.md)
 - [Current operator demo](docs/BANKING_OPERATOR_DEMO.md)
