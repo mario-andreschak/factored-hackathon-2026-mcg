@@ -7,12 +7,14 @@ verified implementation; it does not turn unfinished work into a completed claim
 ## FLUJO architecture boundary
 
 FLUJO is a general-purpose product. Review changes against the
-[product boundary](FLUJO_PRODUCT_BOUNDARY.md): banking or hackathon backend
-code, routes, dependencies, policy and domain adapters belong in this application
-and the banking MCP. Existing genuinely generic interfaces remain usable.
-Separate FLUJO branches, renamed routes and injected banking adapters do not
-create exceptions. FLUJO #534 restored the pre-#530 source tree; the previous
-worker/image and its banking state require separate migration and review.
+[product boundary](FLUJO_PRODUCT_BOUNDARY.md): keep generic main and its default
+build free of banking or hackathon backend code, routes, dependencies, policy and
+domain adapters. Prefer this application and the banking MCP for domain work;
+the owner explicitly permits the dedicated `codex/hackathon-banking` branch for
+the reversed FLUJO integration. Existing generic interfaces remain usable.
+FLUJO #534 restored the pre-#530 source tree on main; preserving the separate
+branch does not upgrade the previous worker/image or reconcile its banking
+state. Follow the [deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md).
 
 ## Product focus
 
