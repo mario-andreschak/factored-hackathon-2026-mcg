@@ -280,7 +280,62 @@ def compatibility_diagnostic(runtime: dict, field: str) -> dict:
     return result
 
 
-def validate_raw_config(config: dict, daemon_config: dict, flujo: str, banking: str) -> dict:
+def base_inheritance(base: dict, final_layers: list[str], flujo: str) -> dict:
+    """Bind compatibility evidence to the observed complete public FLUJO base."""
+    insist(isinstance(base, dict) and base.get("Architecture") == "amd64"
+           and base.get("Os") == "linux", "unsupported_base_daemon_platform")
+    base_id = digest(base.get("Id"))
+    runtime = base.get("Config")
+    insist(safe_config(runtime) == PUBLIC_LAUNCHER, "unsafe_base_daemon_launcher")
+    expected_labels = {name: value for name, value in public_labels(flujo, "0" * 40).items()
+                       if not name.startswith("io.flujo.banking.")}
+    insist(runtime.get("Labels") == expected_labels, "base_daemon_source_labels_mismatch")
+    env = runtime.get("Env")
+    insist(isinstance(env, list) and len(env) <= 32
+           and all(isinstance(item, str) and len(item) <= 1024 and "=" in item for item in env),
+           "invalid_base_daemon_env")
+    names = [item.split("=", 1)[0] for item in env]
+    insist(len(names) == len(set(names))
+           and "FLUJO_BUILD_REVISION=" + flujo in env, "base_daemon_build_revision_mismatch")
+    rootfs = base.get("RootFS")
+    insist(isinstance(rootfs, dict) and rootfs.get("Type") == "layers"
+           and isinstance(rootfs.get("Layers"), list) and rootfs["Layers"], "invalid_base_daemon_rootfs")
+    layers = [digest(item) for item in rootfs["Layers"]]
+    insist(len(layers) < len(final_layers) and final_layers[:len(layers)] == layers,
+           "base_layers_not_strict_retained_prefix")
+    return {"daemon_base_image_id": base_id, "platform": {"os": "linux", "architecture": "amd64"},
+            "base_source_revision": flujo, "base_application_version": "3.46.1",
+            "base_build_revision_matches_source": True, "base_rootfs_diff_ids": layers,
+            "ordered_base_layers_retained": True, "final_image_extends_base": True,
+            "exact_public_base_launcher_verified": True}
+
+
+def args_escaped_compatibility(runtime: dict, final_runtime: dict, base: dict | None,
+                               inheritance: dict | None) -> dict:
+    """The true case is restricted to observed inherited Linux exec vectors."""
+    if "ArgsEscaped" not in runtime:
+        return {"mode": "absent", "raw_present": False}
+    value = runtime["ArgsEscaped"]
+    if value is False:
+        return {"mode": "literal_false", "raw_present": True, "raw_value": False}
+    if (type(value) is not bool or value is not True or inheritance is None
+            or base is None or type(base["Config"].get("ArgsEscaped")) is not bool
+            or base["Config"].get("ArgsEscaped") is not True
+            or type(final_runtime.get("ArgsEscaped")) is not bool
+            or final_runtime.get("ArgsEscaped") is not True):
+        raise OciError("unsupported_raw_config_args_escaped",
+                       safe_diagnostic=compatibility_diagnostic(runtime, "ArgsEscaped"))
+    insist(safe_config(runtime) == PUBLIC_LAUNCHER
+           and safe_config(final_runtime) == PUBLIC_LAUNCHER, "unsafe_args_escaped_launcher")
+    return {"mode": "observed_inherited_linux_exec_vector", "raw_present": True,
+            "raw_value": True, "daemon_base_value": True, "daemon_final_value": True,
+            "basis": "literal true in raw OCI and both inspected Linux/amd64 images; exact public exec vectors; "
+                     "complete FLUJO base source guards and strict retained ordered base-layer prefix",
+            "runtime_or_roundtrip_proof": False}
+
+
+def validate_raw_config(config: dict, daemon_config: dict, flujo: str, banking: str, *,
+                        base: dict | None = None, inheritance: dict | None = None) -> dict:
     """Validate exact runtime fields; public build provenance is the history basis.
 
     History commands are retained unredacted. They are bounded and typed, not
@@ -301,9 +356,7 @@ def validate_raw_config(config: dict, daemon_config: dict, flujo: str, banking: 
     if runtime.get("Volumes") not in (None, {}):
         raise OciError("unsupported_raw_config_volumes",
                        safe_diagnostic=compatibility_diagnostic(runtime, "Volumes"))
-    if runtime.get("ArgsEscaped", False) is not False:
-        raise OciError("unsupported_raw_config_args_escaped",
-                       safe_diagnostic=compatibility_diagnostic(runtime, "ArgsEscaped"))
+    args_escaped_compatibility(runtime, daemon_config, base, inheritance)
     if runtime.get("StopSignal") not in (None, "SIGTERM", "15"):
         raise OciError("unsupported_raw_config_stop_signal",
                        safe_diagnostic=compatibility_diagnostic(runtime, "StopSignal"))
@@ -367,7 +420,7 @@ def export_metadata(directory: Path, receipt_directory: Path, metadata: dict[str
 
 
 def verify(archive_path: Path, final: dict, *, candidate: str, flujo: str, banking: str,
-           metadata: dict[str, bytes] | None = None) -> dict:
+           metadata: dict[str, bytes] | None = None, base: dict | None = None) -> dict:
     revision(candidate)
     revision(flujo)
     revision(banking)
@@ -386,6 +439,7 @@ def verify(archive_path: Path, final: dict, *, candidate: str, flujo: str, banki
            and isinstance(daemon_rootfs.get("Layers"), list) and daemon_rootfs["Layers"],
            "invalid_daemon_rootfs")
     daemon_layers = [digest(item) for item in daemon_rootfs["Layers"]]
+    inheritance = base_inheritance(base, daemon_layers, flujo) if base is not None else None
     insist(not archive_path.is_symlink() and archive_path.is_file(), "archive_not_regular_file")
     with archive_path.open("rb") as archive_source:
         before = os.fstat(archive_source.fileno())
@@ -432,6 +486,7 @@ def verify(archive_path: Path, final: dict, *, candidate: str, flujo: str, banki
             image_config = config.get("config")
             exported_safe = safe_config(image_config)
             insist(exported_safe == daemon_safe, "exported_launcher_differs_from_inspected_image")
+            escaped = args_escaped_compatibility(image_config, daemon_config, base, inheritance)
             exported_labels = image_config.get("Labels", {})
             insist(isinstance(exported_labels, dict)
                    and all(exported_labels.get(key) == value for key, value in expected_labels.items()),
@@ -464,6 +519,7 @@ def verify(archive_path: Path, final: dict, *, candidate: str, flujo: str, banki
             "platform": {"os": "linux", "architecture": "amd64"},
             "verified_rootfs_diff_ids": diff_ids, "verified_layers": verified_layers,
             "safe_launcher_config": exported_safe,
+            "args_escaped_compatibility": escaped,
             "healthcheck": {"daemon_present": daemon_config.get("Healthcheck") is not None,
                             "oci_present": image_config.get("Healthcheck") is not None,
                             "retention_verified": False},
@@ -474,8 +530,11 @@ def verify(archive_path: Path, final: dict, *, candidate: str, flujo: str, banki
             "unproven": ["healthcheck_retention_in_oci", "image_load_or_roundtrip",
                          "deployment", "model_or_provider_readiness", "joined_runtime_acceptance",
                          "independent_base_or_dependency_certification", "bit_for_bit_reproducibility"]}
+    if inheritance is not None:
+        receipt["base_inheritance"] = inheritance
+        receipt["daemon_base_image_id"] = inheritance["daemon_base_image_id"]
     if metadata is not None:
-        safety = validate_raw_config(config, daemon_config, flujo, banking)
+        safety = validate_raw_config(config, daemon_config, flujo, banking, base=base, inheritance=inheritance)
         payloads = {METADATA_FILES["index"]: index_bytes, METADATA_FILES["manifest"]: manifest_bytes,
                     METADATA_FILES["config"]: config_bytes}
         receipt["raw_metadata"] = {"safety": safety, "files": [
@@ -489,10 +548,25 @@ def verify(archive_path: Path, final: dict, *, candidate: str, flujo: str, banki
     return receipt
 
 
+def read_inspect(path: Path) -> tuple[dict, bytes]:
+    insist(not path.is_symlink() and path.is_file() and path.stat().st_size <= MAX_JSON,
+           "inspect_not_regular_or_too_large")
+    content = path.read_bytes()
+    insist(len(content) <= MAX_JSON, "inspect_not_regular_or_too_large")
+    try:
+        value = json.loads(content, object_pairs_hook=unique_object, parse_constant=reject_constant)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise OciError("invalid_inspect_json") from None
+    insist(isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict),
+           "ambiguous_daemon_inspect")
+    return value[0], content
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive", required=True, type=Path)
     parser.add_argument("--final-inspect", required=True, type=Path)
+    parser.add_argument("--base-inspect", required=True, type=Path)
     parser.add_argument("--candidate-revision", required=True)
     parser.add_argument("--expected-flujo-revision", required=True)
     parser.add_argument("--expected-bank-revision", required=True)
@@ -503,14 +577,14 @@ def main(argv: list[str] | None = None) -> int:
         print("OCI bridge refused: remote_github_actions_linux_required")
         return 1
     try:
-        inspect_content = args.final_inspect.read_bytes()
-        inspected = json.loads(inspect_content, object_pairs_hook=unique_object, parse_constant=reject_constant)
-        insist(isinstance(inspected, list) and len(inspected) == 1, "ambiguous_daemon_inspect")
+        inspected, inspect_content = read_inspect(args.final_inspect)
+        base, base_content = read_inspect(args.base_inspect)
         metadata = {}
-        receipt = verify(args.archive, inspected[0], candidate=args.candidate_revision,
+        receipt = verify(args.archive, inspected, candidate=args.candidate_revision,
                          flujo=args.expected_flujo_revision, banking=args.expected_bank_revision,
-                         metadata=metadata)
+                         metadata=metadata, base=base)
         receipt["daemon_inspect_sha256"] = hashlib.sha256(inspect_content).hexdigest()
+        receipt["daemon_base_inspect_sha256"] = hashlib.sha256(base_content).hexdigest()
         export_metadata(args.metadata_dir, args.out.parent, metadata, receipt)
     except Exception as error:
         receipt = {"schema_version": 2, "checkpoint": CHECKPOINT,

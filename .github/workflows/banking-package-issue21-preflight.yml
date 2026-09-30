@@ -123,6 +123,7 @@ jobs:
           skopeo inspect --raw "oci-archive:$PACKAGE_EVIDENCE_DIR/candidate.oci.tar" > "$PACKAGE_EVIDENCE_DIR/oci-manifest.json"
           python -B banking/scripts/package_issue21_preflight/verify_oci.py \
             --archive "$PACKAGE_EVIDENCE_DIR/candidate.oci.tar" \
+            --base-inspect "$RUNNER_TEMP/base-after-cache.json" \
             --final-inspect "$RUNNER_TEMP/final-after-cache.json" \
             --candidate-revision "$CANDIDATE_REVISION" \
             --expected-flujo-revision "$FLUJO_SOURCE_REVISION" \

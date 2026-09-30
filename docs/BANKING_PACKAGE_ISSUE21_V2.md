@@ -96,7 +96,27 @@ reproducibility from source pins alone.
 Runtime-metadata failures identify the rejected field with safe structural
 diagnostics. Image receipts also record separate base/final observations of
 `ArgsEscaped`, `StopSignal` and `Volumes`; unknown values and volume paths are
-omitted. These observations do not change the OCI acceptance rules.
+omitted.
+
+The failed `3eab9877` checkpoint observed `ArgsEscaped: true` in both the full
+FLUJO base and final daemon image and in the exported OCI config. The verifier
+allows that exact boolean only with actual base/final inspection, Linux/amd64
+platform checks, the fixed public vector launcher, the pinned FLUJO base source
+and retained ordered base layers. A missing base, changed flag, coerced value
+or changed launcher fails. The raw flag and original bytes remain retained,
+with the base image identity and inheritance basis recorded separately.
+
+This is a narrow compatibility inference from the observed build and primary
+source semantics: [OCI v1.1.1](https://github.com/opencontainers/image-spec/blob/v1.1.1/config.md)
+defines this deprecated field for legacy Windows command lines;
+[BuildKit v0.20.2](https://github.com/moby/buildkit/blob/v0.20.2/frontend/dockerfile/dockerfile2llb/convert.go)
+sets it for `CMD`; [Moby v28.0.4 on Linux](https://github.com/moby/moby/blob/v28.0.4/daemon/oci_linux.go)
+constructs an argument vector, while its
+[Windows path](https://github.com/moby/moby/blob/v28.0.4/daemon/oci_windows.go)
+uses the flag. These references are explanatory, not an attestation that the
+runner uses those exact engine versions. This allowance does not prove an image
+load, roundtrip, application startup or deployment. Other runtime-metadata and
+annotation guards are unchanged. Earlier failed checkpoints remain failed.
 
 Only pure local source/helper checks are permitted:
 

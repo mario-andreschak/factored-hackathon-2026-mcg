@@ -121,6 +121,19 @@ class OciFixtures(unittest.TestCase):
         with self.assertRaisesRegex(verifier.OciError, "^" + code + "$"):
             self.check()
 
+    def inherited_true_fixture(self):
+        self.public_config()
+        self.config["config"]["ArgsEscaped"] = True
+        self.final["Config"] = copy.deepcopy(self.config["config"])
+        base = copy.deepcopy(self.final)
+        base["Id"] = "sha256:" + "e" * 64
+        base["RootFS"]["Layers"] = self.diff_ids[:1]
+        base["Config"]["Labels"] = {key: value for key, value in base["Config"]["Labels"].items()
+                                     if not key.startswith("io.flujo.banking.")}
+        base["Config"]["Env"] = [item for item in base["Config"]["Env"]
+                                  if not item.startswith(("PYTHONDONTWRITEBYTECODE=", "PYTHONUNBUFFERED="))]
+        return base
+
     def test_plain_and_gzip_layers_bridge_to_daemon_without_image_id_equivalence(self):
         self.write(self.files())
         receipt = self.check()
@@ -526,11 +539,152 @@ class OciFixtures(unittest.TestCase):
             self.write(self.files())
             self.assertEqual(self.check(metadata={})["status"], "passed")
 
+    def test_inherited_literal_true_linux_exec_vector_retains_exact_raw_flag_and_basis(self):
+        base = self.inherited_true_fixture()
+        self.write(self.files())
+        metadata = {}
+        receipt = self.check(metadata=metadata, base=base)
+        self.assertIs(json.loads(metadata["oci-config.json"])["config"]["ArgsEscaped"], True)
+        self.assertEqual(receipt["args_escaped_compatibility"]["mode"], "observed_inherited_linux_exec_vector")
+        for key in ("raw_value", "daemon_base_value", "daemon_final_value"):
+            self.assertIs(receipt["args_escaped_compatibility"][key], True)
+        self.assertFalse(receipt["args_escaped_compatibility"]["runtime_or_roundtrip_proof"])
+        self.assertEqual(receipt["daemon_base_image_id"], base["Id"])
+        self.assertEqual(receipt["base_inheritance"]["base_rootfs_diff_ids"], self.diff_ids[:1])
+        self.assertTrue(receipt["base_inheritance"]["ordered_base_layers_retained"])
+        self.assertEqual(self.check(base=base)["status"], "passed")
+
+    def test_true_requires_actual_base_and_final_literal_bools_not_coercible_values(self):
+        for location in ("raw", "base", "final"):
+            for value in (None, False, 1, 0, "true", [], {}):
+                with self.subTest(location=location, value=value):
+                    base = self.inherited_true_fixture()
+                    target = {"raw": self.config["config"], "base": base["Config"],
+                              "final": self.final["Config"]}[location]
+                    target["ArgsEscaped"] = value
+                    # Literal false remains accepted for the raw case.
+                    if location == "raw" and value is False:
+                        continue
+                    self.write(self.files())
+                    output = {}
+                    with self.assertRaisesRegex(verifier.OciError, "^unsupported_raw_config_args_escaped$"):
+                        self.check(metadata=output, base=base)
+                    self.assertEqual(output, {})
+        for location in ("base", "final"):
+            with self.subTest(missing=location):
+                base = self.inherited_true_fixture()
+                target = base["Config"] if location == "base" else self.final["Config"]
+                del target["ArgsEscaped"]
+                self.write(self.files())
+                with self.assertRaisesRegex(verifier.OciError, "^unsupported_raw_config_args_escaped$"):
+                    self.check(metadata={}, base=base)
+        self.inherited_true_fixture()
+        self.write(self.files())
+        with self.assertRaisesRegex(verifier.OciError, "^unsupported_raw_config_args_escaped$"):
+            self.check(metadata={})
+
+    def test_true_rejects_changed_launcher_in_raw_final_or_base(self):
+        for location in ("raw", "final", "base"):
+            for field, value in (("Cmd", ["node", "unreviewed.mjs"]),
+                                 ("Entrypoint", ["sh", "-c"]), ("User", "root"),
+                                 ("WorkingDir", "/unreviewed")):
+                with self.subTest(location=location, field=field):
+                    base = self.inherited_true_fixture()
+                    target = {"raw": self.config["config"], "base": base["Config"],
+                              "final": self.final["Config"]}[location]
+                    target[field] = value
+                    if location == "raw":
+                        self.final["Config"][field] = copy.deepcopy(value)
+                    self.write(self.files())
+                    output = {}
+                    with self.assertRaises(verifier.OciError):
+                        self.check(metadata=output, base=base)
+                    self.assertEqual(output, {})
+
+    def test_true_rejects_unsupported_base_or_final_platforms(self):
+        for location in ("base", "final", "raw"):
+            for field, value in (("Os", "windows"), ("Architecture", "arm64")):
+                with self.subTest(location=location, field=field):
+                    base = self.inherited_true_fixture()
+                    target = {"base": base, "final": self.final, "raw": self.config}[location]
+                    target[field.lower() if location == "raw" else field] = value
+                    self.write(self.files())
+                    output = {}
+                    with self.assertRaises(verifier.OciError):
+                        self.check(metadata=output, base=base)
+                    self.assertEqual(output, {})
+
+    def test_true_requires_base_source_version_build_revision_and_exact_layers(self):
+        mutations = [
+            (lambda base: base["Config"]["Labels"].__setitem__("org.opencontainers.image.revision", "f" * 40),
+             "base_daemon_source_labels_mismatch"),
+            (lambda base: base["Config"]["Labels"].__setitem__("io.flujo.application.version", "other"),
+             "base_daemon_source_labels_mismatch"),
+            (lambda base: base["Config"]["Env"].remove("FLUJO_BUILD_REVISION=" + self.flujo),
+             "base_daemon_build_revision_mismatch"),
+            (lambda base: base["Config"]["Env"].append("FLUJO_BUILD_REVISION=" + "f" * 40),
+             "base_daemon_build_revision_mismatch"),
+            (lambda base: base["RootFS"].__setitem__("Layers", []), "invalid_base_daemon_rootfs"),
+            (lambda base: base["RootFS"].__setitem__("Layers", self.diff_ids), "base_layers_not_strict_retained_prefix"),
+            (lambda base: base["RootFS"].__setitem__("Layers", self.diff_ids[1:]), "base_layers_not_strict_retained_prefix"),
+            (lambda base: base.__setitem__("Id", "not-a-digest"), "unsupported_or_invalid_digest"),
+        ]
+        for mutate, code in mutations:
+            with self.subTest(code=code):
+                base = self.inherited_true_fixture()
+                mutate(base)
+                self.write(self.files())
+                output = {}
+                with self.assertRaisesRegex(verifier.OciError, "^" + code + "$"):
+                    self.check(metadata=output, base=base)
+                self.assertEqual(output, {})
+
+    def test_inherited_true_still_rejects_unapproved_annotations_before_retention(self):
+        base = self.inherited_true_fixture()
+        self.write(self.annotation_files("manifest", {"credential": "fictional-secret"}))
+        output = {}
+        with self.assertRaisesRegex(verifier.OciError, "^unapproved_oci_annotations$"):
+            self.check(metadata=output, base=base)
+        self.assertEqual(output, {})
+
+    def test_inspect_reader_requires_one_object_and_rejects_duplicate_keys(self):
+        path = self.root / "fictional-inspect.json"
+        for contents, code in ((b"[]", "ambiguous_daemon_inspect"),
+                                (b"[{},{}]", "ambiguous_daemon_inspect"),
+                                (b"[null]", "ambiguous_daemon_inspect"),
+                                (b"{}", "ambiguous_daemon_inspect"),
+                                (b'[{"Config":{"ArgsEscaped":false,"ArgsEscaped":true}}]', "duplicate_json_key"),
+                                (b"[{\"Config\":NaN}]", "invalid_json_constant")):
+            with self.subTest(code=code, contents=contents):
+                path.write_bytes(contents)
+                with self.assertRaisesRegex(verifier.OciError, "^" + code + "$"):
+                    verifier.read_inspect(path)
+        contents = encoded([self.inherited_true_fixture()])
+        path.write_bytes(contents)
+        inspected, retained_bytes = verifier.read_inspect(path)
+        self.assertEqual(retained_bytes, contents)
+        self.assertEqual(inspected["Id"], "sha256:" + "e" * 64)
+
+    def test_inspect_reader_rejects_missing_and_bounded_oversize_inputs(self):
+        path = self.root / "missing-inspect.json"
+        with self.assertRaisesRegex(verifier.OciError, "^inspect_not_regular_or_too_large$"):
+            verifier.read_inspect(path)
+        path.write_bytes(b"[{}]")
+        with patch.object(verifier, "MAX_JSON", 3):
+            with self.assertRaisesRegex(verifier.OciError, "^inspect_not_regular_or_too_large$"):
+                verifier.read_inspect(path)
+
+    def test_raw_validator_cannot_allow_true_without_bound_inspect_evidence(self):
+        self.inherited_true_fixture()
+        with self.assertRaisesRegex(verifier.OciError, "^unsupported_raw_config_args_escaped$"):
+            verifier.validate_raw_config(self.config, self.final["Config"], self.flujo, self.banking)
+
     def test_local_main_refuses_before_reading_input_or_creating_receipt(self):
         output = self.root / "must-not-exist.json"
         with patch.dict("os.environ", {"GITHUB_ACTIONS": "false"}), \
                 patch.object(verifier, "verify") as verify:
             result = verifier.main(["--archive", str(self.path), "--final-inspect", "missing.json",
+                                    "--base-inspect", "also-missing.json",
                                     "--candidate-revision", self.candidate,
                                     "--expected-flujo-revision", self.flujo,
                                     "--expected-bank-revision", self.banking,
