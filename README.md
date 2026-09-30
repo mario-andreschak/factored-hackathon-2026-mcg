@@ -4,11 +4,14 @@ This repository contains the data audit, DuckDB pipeline, classifier baseline, b
 
 ## FLUJO product boundary
 
-FLUJO is a long-lived, general-purpose product. Use its existing generic
-interfaces without adding banking or hackathon backend code, routes, policy,
-dependencies or domain adapters. Keep that behavior in Savia and the banking
-MCP, including on demo branches and in build configuration. See the
-[architecture boundary and review gate](docs/FLUJO_PRODUCT_BOUNDARY.md).
+FLUJO is a long-lived, general-purpose product. Keep its main branch and default
+build free of banking or hackathon backend code, routes, policy and dependencies.
+Use existing generic interfaces; keep product-specific behavior in Savia and the
+banking MCP where possible. The owner-authorized FLUJO
+[`codex/hackathon-banking` branch](https://github.com/mario-andreschak/FLUJO/tree/codex/hackathon-banking)
+preserves the reversed hackathon integration separately from generic main.
+See the [architecture boundary and review gate](docs/FLUJO_PRODUCT_BOUNDARY.md)
+and [deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md).
 
 ## Open the banking demo
 
@@ -19,6 +22,7 @@ See [frontend setup and portable deployment](frontend/README.md) and [dataset, a
 ## Start here
 
 - [FLUJO product boundary for this hackathon](docs/FLUJO_PRODUCT_BOUNDARY.md)
+- [Dedicated FLUJO hackathon branch and deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md)
 - [Data recovery review and local runbook (September 29)](docs/DATA_RECOVERY_2026-09-29.md)
 - [Current banking MCP implementation and measured limits](docs/BANKING_MCP_IMPLEMENTATION.md)
 - [Current operator demo](docs/BANKING_OPERATOR_DEMO.md)
@@ -68,4 +72,4 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 
-The banking MCP uses Carlos's customer-sharded Parquet snapshots for lookup and conditional S3 read-back of a selected transaction. Customer reads require signed per-call authority outside model arguments. The former FLUJO banking adapter and in-worker stdio setup are historical integration evidence; #534 removed their domain source from FLUJO. The project-owned host/MCP migration is source work in progress, with generic FLUJO used for language handling over permitted display facts. The restoration merge did not upgrade the local worker, install the replacement or establish joined customer acceptance. Bank keys, raw record identifiers, selection/action capabilities and generic S3 credentials must not reach the language flow.
+The banking MCP uses Carlos's customer-sharded Parquet snapshots for lookup and conditional S3 read-back of a selected transaction. Customer reads require signed per-call authority outside model arguments. FLUJO #534 removed the banking adapter and in-worker integration from generic main; their combined source is now preserved on the dedicated hackathon branch. Existing measurements describe older revisions, not acceptance of a newly deployed branch. Project PRs #31/#32 are an unfinished host/MCP alternative and are not included in this branch. Neither the source restoration nor branch preservation upgraded the local worker or established joined customer acceptance. Bank keys, raw record identifiers, selection/action capabilities and generic S3 credentials must not reach the language flow.
