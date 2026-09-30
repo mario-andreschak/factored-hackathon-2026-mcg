@@ -14,3 +14,4 @@ frontend/dist/
 frontend/*.tsbuildinfo
 frontend/.state/
 frontend/test-results/
+demo/customer_v0/node_modules/
