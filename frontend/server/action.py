@@ -144,7 +144,7 @@ def verified_handoff(value: object) -> dict | None:
 def matches_selected_transaction(facts: object, selected: object) -> bool:
     """Compare host-resolved display fields, never unrelated opaque references."""
     facts = public_facts(facts)
-    if facts is None or not isinstance(selected, dict):
+    if facts is None or not isinstance(selected, dict) or "channel" not in selected:
         return False
     try:
         if (isinstance(selected.get("amount"), bool)
@@ -154,15 +154,19 @@ def matches_selected_transaction(facts: object, selected: object) -> bool:
             return False
     except (KeyError, ValueError, TypeError, AttributeError, InvalidOperation):
         return False
-    merchant, transaction_type = selected.get("merchant"), selected.get("type")
-    if any(value is not None and not isinstance(value, str) for value in (merchant, transaction_type)):
+    merchant, transaction_type, channel = selected.get("merchant"), selected.get("type"), selected.get("channel")
+    product = selected.get("product")
+    if any(value is not None and not isinstance(value, str) for value in (merchant, transaction_type, channel, product)):
         return False
     # Apply the same public display bounds as MCP Repository._visible to the
     # privately resolved owner row; the raw target identity remains server-only.
     return (selected.get("currency") == facts["currency"]
             and selected.get("status") == facts["status"]
+            and selected.get("process_date") == facts["process_date"]
             and ((merchant or "")[:160] or None) == facts["merchant"]
-            and (transaction_type or "")[:80] == facts["transaction_type"])
+            and (transaction_type or "")[:80] == facts["transaction_type"]
+            and (channel or "")[:80] == facts["channel"]
+            and ("product" not in selected or (product or "")[:80] == facts["product"]))
 
 
 def project_action_result(result: dict) -> dict:
@@ -209,6 +213,19 @@ def project_action_result(result: dict) -> dict:
     elif state == "action_unverified" and isinstance(result.get("handoff"), dict):
         nested = project_action_result(result["handoff"])
         public["handoff"] = nested if nested.get("state") == "handoff_verified" else {"state": "handoff_unverified"}
+    prior_receipt = result.get("prior_receipt")
+    if (isinstance(prior_receipt, dict) and set(prior_receipt) == {"target_reference", "receipt"}
+            and "target_reference" in public
+            and prior_receipt.get("target_reference") == public["target_reference"]):
+        receipt = verified_receipt(prior_receipt.get("receipt"))
+        if receipt:
+            public["prior_receipt"] = {"target_reference": public["target_reference"], "receipt": receipt}
+    prior_handoff = result.get("prior_handoff")
+    if (isinstance(prior_handoff, dict) and set(prior_handoff) == {"target_reference", "handoff"}
+            and prior_handoff.get("target_reference") is None and "target_reference" not in public):
+        packet = verified_handoff(prior_handoff.get("handoff"))
+        if packet and packet["snapshot"] is None:
+            public["prior_handoff"] = {"target_reference": None, "handoff": packet}
     return public
 
 
@@ -225,6 +242,8 @@ def render_action(result: dict, language: str) -> dict:
             "handoff": "Se guardó y verificó una solicitud de revisión humana. Folio: {id}. Aún no hay respuesta de una persona.",
             "handoff_unverified": "Se requiere revisión humana, pero no se pudo verificar que la solicitud se haya creado.",
             "action_unverified": "No se pudo verificar si se registró la recepción simulada. No vuelvas a confirmarla automáticamente.",
+            "followup_unverified": "No se pudo verificar la preparación del seguimiento. La recepción simulada anterior sigue verificada. La nueva solicitud continúa sin resolver y bloqueada.",
+            "followup_preparing": "Se está verificando la preparación del seguimiento. La recepción simulada anterior sigue verificada. La nueva solicitud continúa bloqueada.",
         },
         "pt": {
             "pending": "Confirme se deseja registrar uma solicitação simulada para esta cobrança. Isto não é reembolso nem resolução bancária.",
@@ -233,6 +252,8 @@ def render_action(result: dict, language: str) -> dict:
             "handoff": "Uma solicitação de análise humana foi salva e verificada. Protocolo: {id}. Ainda não houve resposta de uma pessoa.",
             "handoff_unverified": "É necessário atendimento humano, mas não foi possível verificar a criação da solicitação.",
             "action_unverified": "Não foi possível verificar se a solicitação simulada foi registrada. Não a confirme novamente automaticamente.",
+            "followup_unverified": "Não foi possível verificar a preparação do acompanhamento. A solicitação simulada anterior continua verificada. A nova solicitação permanece sem resolução e bloqueada.",
+            "followup_preparing": "A preparação do acompanhamento está sendo verificada. A solicitação simulada anterior continua verificada. A nova solicitação permanece bloqueada.",
         },
     }[language]
     handoff = result.get("handoff")
@@ -256,6 +277,8 @@ def render_action(result: dict, language: str) -> dict:
         message = texts["action_unverified"]
         message += " " + (texts["handoff"].format(id=handoff_id)
                           if verified_handoff else texts["handoff_unverified"])
+    elif state in {"preparing", "prepare_unverified"} and result.get("prior_receipt"):
+        message = texts["followup_preparing" if state == "preparing" else "followup_unverified"]
     else:
         message = texts["handoff_unverified"]
     return {**result, "language": language, "message": message}

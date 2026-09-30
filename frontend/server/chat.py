@@ -293,6 +293,11 @@ class ChatService:
         result = json.loads(row["result_json"])
         if not isinstance(result, dict):
             raise ChatError("action_invalid_state", 503, "No se pudo verificar la recepción simulada.")
+        # Only the authenticated durable row supplies the public target binding.
+        if row["target_reference"]:
+            result["target_reference"] = row["target_reference"]
+        else:
+            result.pop("target_reference", None)
         result = project_action_result(result)
         if (result.get("state") == "handoff_verified" and row["target_reference"] is None
                 and not result.get("pending_handle")
@@ -300,10 +305,25 @@ class ChatService:
             # No selected owner row binds transaction-bearing evidence here.
             # Keep its immutable retry identity, but never unlock this request.
             result = {"state": "handoff_unverified", **{key: result[key] for key in
-                ("reason", "request_id", "unanswered_questions") if key in result}}
+                ("reason", "request_id", "unanswered_questions", "prior_handoff") if key in result}}
         if row["target_reference"]:
             result["target_reference"] = row["target_reference"]
         return result
+
+    @classmethod
+    def _retained_evidence(cls, row: sqlite3.Row | None, target_reference: str | None) -> dict[str, Any]:
+        """Keep earlier readback for display; it never resolves the active intent."""
+        if not row or row["target_reference"] != target_reference:
+            return {}
+        prior = cls._action_result(row)
+        retained = {key: prior[key] for key in ("prior_receipt", "prior_handoff") if key in prior}
+        if (target_reference and prior.get("state") in {"intake_verified", "existing_case_verified"}
+                and cls._verified_terminal(prior)):
+            retained["prior_receipt"] = {"target_reference": target_reference, "receipt": prior["receipt"]}
+        if (target_reference is None and prior.get("state") == "handoff_verified"
+                and cls._verified_terminal(prior) and cls._general_handoff(prior["handoff"])):
+            retained["prior_handoff"] = {"target_reference": None, "handoff": prior["handoff"]}
+        return retained
 
     @staticmethod
     def _verified_terminal(result: dict[str, Any]) -> bool:
@@ -364,6 +384,7 @@ class ChatService:
             result = dict(initial)
             if target_reference:
                 result["target_reference"] = target_reference
+            result.update(self._retained_evidence(row, target_reference))
             db.execute("""INSERT INTO action_status
                 (session_id,owner,expires,result_json,updated_at,action_id,target_reference,revision,
                  prepare_transaction_id,prepare_snapshot,prepare_conversation_id,
@@ -421,7 +442,15 @@ class ChatService:
             if not row or row["action_id"] != action_id or row["revision"] != revision:
                 raise ChatError("action_changed", 409,
                                 "La solicitud cambió. Actualiza su estado antes de continuar.")
+            # Earlier proof comes only from this owner-bound saved row, never
+            # from an upstream response or a browser-selected wrapper.
+            result = {key: value for key, value in result.items() if key not in {"prior_receipt", "prior_handoff"}}
+            if row["target_reference"]:
+                result["target_reference"] = row["target_reference"]
+            else:
+                result.pop("target_reference", None)
             saved = project_action_result(result)
+            saved.update(self._retained_evidence(row, row["target_reference"]))
             if saved.get("state") in {"action_unverified", "handoff_unverified"}:
                 prior = self._action_result(row)
                 for field in ("snapshot", "transaction", "unanswered_questions"):

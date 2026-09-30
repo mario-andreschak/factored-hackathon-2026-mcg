@@ -372,6 +372,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(502, "FLUJO no pudo responder. Intenta nuevamente.") from None
 
     def render_action_result(result: dict, language: str):
+        from .action import project_action_result, render_action
+        result = project_action_result(result)
         if result.get("state") in {"preparing", "prepare_unverified"}:
             message = (
                 ({"es": "Se agotó la recuperación segura. La solicitud sigue sin resolver y bloqueada. La referencia visible no avisa al equipo ni indica que alguien la haya tomado.",
@@ -385,8 +387,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 if result["state"] == "preparing" else
                 {"es": "No se pudo verificar la preparación de esta solicitud. Consulta su estado para recuperarla.",
                  "pt": "Não foi possível verificar a preparação desta solicitação. Consulte o estado para recuperá-la."})
-            return {**result, "language": language, "message": message[language]}
-        from .action import render_action
+            rendered = message[language]
+            if result.get("prior_receipt"):
+                if result.get("recovery_exhausted"):
+                    rendered += (" La recepción simulada anterior sigue verificada; la preparación del seguimiento continúa sin verificar."
+                                 if language == "es" else
+                                 " A solicitação simulada anterior continua verificada; a preparação do acompanhamento permanece sem verificação.")
+                else:
+                    rendered = render_action(result, language)["message"]
+            return {**result, "language": language, "message": rendered}
         return render_action(result, language)
 
     async def run_action(request: Request, operation: dict, language: str,

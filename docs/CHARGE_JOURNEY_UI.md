@@ -13,7 +13,8 @@ insufficient. A different selection, changed facts or changed snapshot prevents
 confirmation. Hidden amounts must be revealed locally before confirming.
 
 The server resolves the public reference within the authenticated owner's records
-and compares the prepared facts against that same owned row. It never derives a
+and compares event date, partition date, amount/currency, status, merchant, type,
+channel and available product facts against that same owned row. It never derives a
 private transaction ID or an MCP selection handle from browser text.
 
 The customer prompt searches by the event's recorded calendar date, with at most
@@ -36,6 +37,13 @@ The same selected charge has no second intake/confirmation control.
 
 An explicit request for human help may use that same saved pending handle. It
 does not create another intake. Unresolved actions for another charge stay locked.
+
+After an intake is verified, a new human-help preparation retains the original
+receipt in `prior_receipt`, with its owner-bound public target and saved receipt.
+That read-only evidence survives an uncertain follow-up, refresh and restart.
+It is hidden under a different selected charge and never resolves or unlocks the
+new action. The ES/PT message keeps the earlier receipt verified while describing
+the new preparation as unresolved.
 
 ## Saved human request
 
@@ -67,6 +75,12 @@ then projects bounded public fields for the UI. The UI displays:
 General requests have no charge facts or charge provenance. Malformed, conflicting
 or unverified packets do not display a verified reference. Persisted projections
 retain the same evidence through refresh and restart.
+
+A deliberate new general request after a verified terminal result uses a fresh
+request UUID. A retry of an unresolved request keeps its existing UUID and frozen
+questions. The earlier verified general packet may remain in `prior_handoff` as
+read-only evidence, independently of the new request's outcome. It never seeds
+the new request ID or establishes that the new request was saved.
 
 ## Prompt and source checks
 

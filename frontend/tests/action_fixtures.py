@@ -1,15 +1,19 @@
 """Representative MCP public readback shapes for frontend boundary tests."""
-def action_facts(selected=None):
-    selected = selected or {"occurred_at": "2026-06-17T12:00:00", "amount": 150,
+def action_selected(**changes):
+    return {"occurred_at": "2026-06-17T12:00:00", "process_date": "2026-06-17", "amount": 150,
                             "currency": "COP", "status": "Approved", "merchant": None,
-                            "type": "Deposit", "channel": "App"}
+                            "type": "Deposit", "channel": "App", "product": "Cuenta Ahorro", **changes}
+
+
+def action_facts(selected=None):
+    selected = selected or action_selected()
     return {"transaction_reference": "txn_" + "a" * 12,
             "transaction_date": selected["occurred_at"],
             "process_date": selected.get("process_date", selected["occurred_at"][:10]),
             "amount": f'{selected["amount"]:.2f}', "currency": selected["currency"],
             "status": selected["status"], "merchant": selected["merchant"],
             "transaction_type": selected["type"], "channel": selected.get("channel", "App"),
-            "product": "Cuenta Ahorro"}
+            "product": selected.get("product") or ""}
 
 
 def action_receipt(receipt_id="CMP-SBX-abcdefgh", *, snapshot="test", selected=None):

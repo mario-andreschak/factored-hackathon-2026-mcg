@@ -279,7 +279,7 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         assert len(service.calls) == 4
 
 
-def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(settings):
+def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(settings, monkeypatch):
     settings.state_dir.mkdir(parents=True, exist_ok=True)
     signer = Ed25519PrivateKey.generate()
     key_file = settings.state_dir / "test-signer.pem"
@@ -301,8 +301,8 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         body = json.loads(request.content)
         actions.append(body)
         if body["operation"] == "prepare":
-            selected = repository.transaction("colombia", repository.reference(
-                "txn", "private-customer-co", body["transactionId"]))
+            selected = repository.action_target("colombia", repository.reference(
+                "txn", "private-customer-co", body["transactionId"]))["transaction"]
             handle = ("a" if len([item for item in actions if item["operation"] == "prepare"]) == 1 else "b") * 43
             prepared_transactions[handle] = selected
             return httpx.Response(200, json={"state": "pending_confirmation",
@@ -321,6 +321,13 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         client.app.state.chat_service = service
         refs = [entry["reference"] for entry in client.get("/api/overview").json()["transactions"]]
         first_ref, second_ref = refs[:2]
+        owned_context = client.app.state.repository.action_target("colombia", first_ref)
+        assert {"process_date", "channel", "product"} <= owned_context["transaction"].keys()
+        assert owned_context["transaction"]["process_date"] == "2026-06-17"
+        assert owned_context["transaction"]["channel"] == "App"
+        assert owned_context["transaction"]["product"] == "Cuenta Ahorro"
+        assert "owned_product_type" not in client.app.state.repository.transaction("colombia", first_ref)
+        assert all("owned_product_type" not in row for row in client.get("/api/overview").json()["transactions"])
         assert client.post("/api/chat/messages", json={"message": "Revisa mis movimientos"}).status_code == 200
         policy_spoof = client.post("/api/action/handoff", json={"reason": "high_risk",
             "transaction_reference": first_ref,
@@ -340,6 +347,21 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         second = client.post("/api/action/prepare", json={"transaction_reference": second_ref})
         assert second.status_code == 200 and second.json()["target_reference"] == second_ref
         calls_before_mismatch = len(actions)
+        original_target = client.app.state.repository.action_target
+        with service._connection() as db:
+            saved_pending = dict(db.execute("SELECT * FROM action_status").fetchone())
+        for field, changed in {"process_date": "2026-06-18", "channel": "Branch", "product": "Cuenta Corriente"}.items():
+            def drifted_target(profile_id, reference):
+                target = original_target(profile_id, reference)
+                return {**target, "transaction": {**target["transaction"], field: changed}} if target else None
+            with monkeypatch.context() as patcher:
+                patcher.setattr(client.app.state.repository, "action_target", drifted_target)
+                mismatch = client.post("/api/action/confirm", json={"transaction_reference": second_ref,
+                    "pending_handle": second.json()["pending_handle"], "confirmed": True})
+                assert mismatch.status_code == 409
+            assert len(actions) == calls_before_mismatch
+            with service._connection() as db:
+                assert dict(db.execute("SELECT * FROM action_status").fetchone()) == saved_pending
         for reference in (first_ref, second_ref):
             mismatch = client.post("/api/action/confirm", json={"transaction_reference": reference,
                 "pending_handle": first.json()["pending_handle"], "confirmed": True})
@@ -435,6 +457,32 @@ def test_handoff_api_normalizes_and_freezes_questions_through_lost_response_and_
             assert len(writes) == 3
             with service._connection() as db:
                 assert dict(db.execute("SELECT * FROM action_status").fetchone()) == saved_row
+
+
+def test_uncertain_followup_status_preserves_prior_receipt_and_truthful_copy(settings):
+    class PriorEvidenceService:
+        async def action_status(self, customer, session_id, expires):
+            assert customer == "private-customer-co"
+            return self.current
+
+    with TestClient(create_app(settings)) as client:
+        assert login(client).status_code == 200
+        own = client.get("/api/overview").json()["transactions"][0]["reference"]
+        selected = client.app.state.repository.action_target("colombia", own)["transaction"]
+        prior = {"target_reference": own, "receipt": action_receipt(snapshot="original-saved", selected=selected)}
+        service = PriorEvidenceService()
+        client.app.state.chat_service = service
+        for exhausted in (False, True):
+            service.current = {"state": "prepare_unverified", "target_reference": own, "prior_receipt": prior,
+                               "recovery_exhausted": exhausted}
+            for language, expected in (("es", "recepción simulada anterior sigue verificada"),
+                                       ("pt", "solicitação simulada anterior continua verificada")):
+                response = client.get("/api/action/status", params={"language": language})
+                assert response.status_code == 200
+                assert response.json()["state"] == "prepare_unverified"
+                assert response.json()["prior_receipt"] == prior
+                assert expected in response.json()["message"]
+                assert "receipt" not in response.json() and "handoff" not in response.json()
 
 
 def test_exhausted_action_status_localizes_review_reference_without_claiming_handoff(settings):

@@ -7,7 +7,7 @@ import pytest
 from frontend.server.action import (handoff_questions, matches_selected_transaction, project_action_result,
                                     public_facts, render_action)
 from frontend.server.chat import ChatService
-from frontend.tests.action_fixtures import action_facts, action_handoff, action_receipt
+from frontend.tests.action_fixtures import action_facts, action_handoff, action_receipt, action_selected
 
 
 def existing_case():
@@ -142,6 +142,44 @@ def test_saved_general_row_cannot_verify_an_unbound_transaction_packet():
                          "reason": result["reason"], "unanswered_questions": result["unanswered_questions"]}
 
 
+def test_prior_receipt_is_exact_readonly_evidence_bound_to_authoritative_row_target():
+    reference, other = "txn_" + "a" * 24, "txn_" + "b" * 24
+    result = {"state": "prepare_unverified", "target_reference": reference,
+              "prior_receipt": {"target_reference": reference, "receipt": action_receipt(snapshot="original-old")}}
+    projected = project_action_result(result)
+    assert projected == result and project_action_result(projected) == projected
+    assert not ChatService._verified_terminal(projected)
+    for language, expected in (("es", "recepción simulada anterior sigue verificada"),
+                               ("pt", "solicitação simulada anterior continua verificada")):
+        rendered = render_action(projected, language)
+        assert expected in rendered["message"]
+        assert "preparación del seguimiento" in rendered["message"] if language == "es" else "preparação do acompanhamento" in rendered["message"]
+    assert "prior_receipt" not in project_action_result({**result, "target_reference": other})
+    assert "prior_receipt" not in ChatService._action_result({
+        "result_json": json.dumps(result), "target_reference": other})
+    invalid = deepcopy(result)
+    invalid["prior_receipt"]["receipt"]["status"] = "resolved"
+    assert "prior_receipt" not in project_action_result(invalid)
+    # Earlier proof cannot stand in for a new terminal receipt.
+    assert not ChatService._verified_terminal({**result, "state": "intake_verified"})
+
+
+def test_prior_general_handoff_is_strict_readonly_evidence_and_never_terminal_authority():
+    raw = {"state": "handoff_unverified", "prior_handoff": {
+        "target_reference": None, "handoff": action_handoff(snapshot=None, questions=["Qual ajuda precisa?"])}}
+    result = project_action_result(raw)
+    assert result["prior_handoff"]["handoff"]["unanswered_questions"] == ["Qual ajuda precisa?"]
+    assert project_action_result(result) == result
+    assert not ChatService._verified_terminal(result)
+    assert not ChatService._verified_terminal({**result, "state": "handoff_verified"})
+    assert "prior_handoff" not in project_action_result({**raw, "target_reference": "txn_" + "a" * 24})
+    invalid = deepcopy(raw)
+    invalid["prior_handoff"]["handoff"] = action_handoff()
+    assert "prior_handoff" not in project_action_result(invalid)
+    assert "prior_handoff" not in ChatService._action_result({
+        "result_json": json.dumps(raw), "target_reference": "txn_" + "b" * 24})
+
+
 def test_pending_requires_complete_saved_charge_and_snapshot():
     raw = {"state": "pending_confirmation", "pending_handle": "a" * 43,
            "snapshot": "selected-build", "transaction": action_facts()}
@@ -154,14 +192,13 @@ def test_pending_requires_complete_saved_charge_and_snapshot():
 
 
 def test_display_comparison_ignores_unrelated_refs_but_rejects_changed_charge_fields():
-    selected = {"occurred_at": "2026-06-17T12:00:00", "amount": 150, "currency": "COP",
-                "status": "Approved", "merchant": None, "type": "Deposit",
-                "reference": "txn_" + "b" * 24}
+    selected = action_selected(reference="txn_" + "b" * 24)
     facts = action_facts()
     assert matches_selected_transaction(facts, selected)
     for field, value in {"amount": 151, "currency": "USD", "status": "Reversed",
                          "merchant": "Another merchant", "type": "Purchase",
-                         "occurred_at": "2026-06-18T12:00:00"}.items():
+                         "occurred_at": "2026-06-18T12:00:00", "process_date": "2026-06-18",
+                         "channel": "Branch", "product": "Tarjeta Crédito"}.items():
         assert not matches_selected_transaction(facts, {**selected, field: value})
     for field in ("transaction_type", "channel", "product"):
         assert public_facts({**facts, field: ""}) is not None
@@ -169,15 +206,16 @@ def test_display_comparison_ignores_unrelated_refs_but_rejects_changed_charge_fi
         assert public_facts({**facts, "amount": amount}) is None
 
 
-def test_display_comparison_uses_mcp_bounds_for_owned_merchant_and_type():
-    selected = {"occurred_at": "2026-06-17T12:00:00", "amount": 150, "currency": "COP",
-                "status": "Approved", "merchant": "Merchant " + "x" * 200, "type": "T" * 100}
-    facts = action_facts({**selected, "merchant": selected["merchant"][:160], "type": selected["type"][:80]})
+def test_display_comparison_uses_mcp_bounds_for_owned_display_fields():
+    selected = action_selected(merchant="Merchant " + "x" * 200, type="T" * 100,
+                               channel="C" * 100, product="P" * 100)
+    facts = action_facts({**selected, "merchant": selected["merchant"][:160], "type": selected["type"][:80],
+                         "channel": selected["channel"][:80], "product": selected["product"][:80]})
     assert matches_selected_transaction(facts, selected)
     assert not matches_selected_transaction(facts, {**selected, "merchant": "Other " + selected["merchant"]})
     assert not matches_selected_transaction(facts, {**selected, "amount": 999})
     for merchant in (None, ""):
-        empty = {**selected, "merchant": merchant, "type": None}
-        facts = action_facts({**empty, "merchant": None, "type": ""})
+        empty = {**selected, "merchant": merchant, "type": None, "channel": None, "product": None}
+        facts = action_facts({**empty, "merchant": None, "type": "", "channel": "", "product": ""})
         assert matches_selected_transaction(facts, empty)
     assert not matches_selected_transaction(facts, {**empty, "merchant": 123})

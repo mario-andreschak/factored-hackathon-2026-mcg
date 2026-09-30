@@ -144,4 +144,6 @@ export type ActionResult = {
   transaction?: ActionFacts;
   receipt?: IntakeReceipt;
   handoff?: HandoffPacket | { state?: string; handoff?: HandoffPacket };
+  prior_receipt?: { target_reference: string; receipt: IntakeReceipt };
+  prior_handoff?: { target_reference: null; handoff: HandoffPacket };
 };

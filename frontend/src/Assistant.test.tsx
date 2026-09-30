@@ -10,6 +10,7 @@ import {
 import { Assistant } from "./App";
 import type {
   ActionFacts,
+  ActionResult,
   HandoffPacket,
   IntakeReceipt,
   Transaction,
@@ -68,6 +69,15 @@ const handoff: HandoffPacket = {
   },
   human_responded: false,
   unanswered_questions: ["¿Puedes aclarar qué ocurrió con este cargo?"],
+};
+const generalHandoff: HandoffPacket = {
+  ...handoff,
+  reason: "customer_request",
+  snapshot: null,
+  facts: {},
+  transaction_currentness: "not_applicable",
+  transaction_provenance: null,
+  unanswered_questions: ["Pregunta guardada anterior?"],
 };
 
 const response = (body: unknown) =>
@@ -1103,6 +1113,353 @@ test("question limits prevent malformed explicit handoff without submitting", as
   fireEvent.change(input, { target: { value: "😊".repeat(241) } });
   expect(prefer.disabled).toBe(true);
   expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+});
+
+test.each(["es", "pt"])(
+  "%s retained previous receipt survives an uncertain follow-up without consent authority or relabeling",
+  async (language) => {
+    localStorage.setItem("flujo-bank-action-language", language);
+    const otherCharge = {
+      ...charge,
+      reference: "txn_cccccccccccccccccccccccc",
+      merchant: "Otro comercio",
+    };
+    const writes: Record<string, unknown>[] = [];
+    let saved: ActionResult = {
+      state: "intake_verified",
+      target_reference: charge.reference,
+      pending_handle: "b".repeat(43),
+      receipt,
+      ...preparedEvidence,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/api/chat/history")
+          return response({ active: false, messages: [] });
+        if (url.startsWith("/api/action/status")) return response(saved);
+        if (url === "/api/action/handoff") {
+          writes.push(JSON.parse(init!.body as string));
+          saved = {
+            state: "prepare_unverified",
+            target_reference: charge.reference,
+            request_id: "22222222-2222-4222-8222-222222222222",
+            prior_receipt: { target_reference: charge.reference, receipt },
+          };
+          return response(saved);
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    const props = {
+      open: true,
+      status: { available: true, sandbox_intake_available: true },
+      selected: charge,
+      transactions: [charge, otherCharge],
+      onSelectTransaction: vi.fn(),
+      hidden: false,
+      synthetic: true,
+      onClose: vi.fn(),
+      onExpired: vi.fn(),
+    };
+    let view = render(<Assistant {...props} />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name:
+          language === "pt"
+            ? "Prefiro análise humana"
+            : "Prefiero revisión humana",
+      }),
+    );
+    const previousLabel =
+      language === "pt"
+        ? "Comprovante local anterior"
+        : "Comprobante local anterior";
+    const previous = await screen.findByRole("region", { name: previousLabel });
+    expect(within(previous).getByText(receipt.id)).toBeTruthy();
+    expect(within(previous).getByText(charge.reference)).toBeTruthy();
+    expect(within(previous).getByText(receipt.snapshot)).toBeTruthy();
+    expect(within(previous).getByText(charge.merchant!)).toBeTruthy();
+    expect(previous.textContent).toContain(
+      language === "pt"
+        ? "Registro simulado anterior verificado"
+        : "Recepción simulada anterior verificada",
+    );
+    expect(previous.textContent).toContain(
+      language === "pt"
+        ? "Não confirma o resultado"
+        : "No confirma el resultado",
+    );
+    expect(previous.textContent).toContain(
+      language === "pt" ? "setembro" : "septiembre",
+    );
+    expect(screen.queryByRole("button", { name: /Confirmo/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: /Revisar (recepción|registro) simulad/,
+      }),
+    ).toBeNull();
+    view.rerender(<Assistant {...props} selected={otherCharge} />);
+    expect(screen.queryByRole("region", { name: previousLabel })).toBeNull();
+    expect(screen.queryByText(receipt.id)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Confirmo/ })).toBeNull();
+    view.rerender(<Assistant {...props} />);
+    expect(
+      screen.getByRole("region", { name: previousLabel }).textContent,
+    ).not.toContain(otherCharge.reference);
+    view.unmount();
+    view = render(<Assistant {...props} />);
+    expect(
+      within(
+        await screen.findByRole("region", { name: previousLabel }),
+      ).getByText(receipt.id),
+    ).toBeTruthy();
+    const nextLanguage = language === "pt" ? "es" : "pt";
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: nextLanguage },
+    });
+    expect(
+      within(
+        await screen.findByRole("region", {
+          name:
+            nextLanguage === "pt"
+              ? "Comprovante local anterior"
+              : "Comprobante local anterior",
+        }),
+      ).getByText(receipt.id),
+    ).toBeTruthy();
+    expect(writes).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /Confirmo/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: /Revisar (recepción|registro) simulad/,
+      }),
+    ).toBeNull();
+  },
+);
+
+test.each(["es", "pt"])(
+  "%s terminal general handoff reload and language change create a fresh request UUID and preserve prior evidence through retry",
+  async (language) => {
+    localStorage.setItem("flujo-bank-action-language", language);
+    const completedId = "11111111-1111-4111-8111-111111111111";
+    const writes: Record<string, unknown>[] = [];
+    const newQuestion = "¿Cuál es el próximo paso? ÁÉ 😊";
+    let saved: ActionResult = {
+      state: "handoff_verified",
+      request_id: completedId,
+      reason: "customer_request",
+      handoff: generalHandoff,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/api/chat/history")
+          return response({ active: false, messages: [] });
+        if (url.startsWith("/api/action/status")) return response(saved);
+        if (url === "/api/action/handoff") {
+          const body = JSON.parse(init!.body as string);
+          writes.push(body);
+          if (writes.length === 1) {
+            saved = {
+              state: "handoff_unverified",
+              request_id: body.request_id,
+              reason: "customer_request",
+              prior_handoff: {
+                target_reference: null,
+                handoff: generalHandoff,
+              },
+            };
+          } else {
+            saved = {
+              state: "handoff_verified",
+              request_id: body.request_id,
+              reason: "customer_request",
+              handoff: {
+                ...generalHandoff,
+                id: "HOF-ijklmnop",
+                unanswered_questions: [newQuestion],
+              },
+            };
+          }
+          return response(saved);
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    const props = {
+      open: true,
+      status: { available: true, sandbox_intake_available: true },
+      selected: null,
+      transactions: [charge],
+      onSelectTransaction: vi.fn(),
+      hidden: false,
+      synthetic: true,
+      onClose: vi.fn(),
+      onExpired: vi.fn(),
+    };
+    let view = render(<Assistant {...props} />);
+    await screen.findByText(generalHandoff.id);
+    const nextLanguage = language === "pt" ? "es" : "pt";
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: nextLanguage },
+    });
+    const prefer = await screen.findByRole("button", {
+      name:
+        nextLanguage === "pt"
+          ? "Prefiro análise humana"
+          : "Prefiero revisión humana",
+    });
+    await waitFor(() =>
+      expect((prefer as HTMLButtonElement).disabled).toBe(false),
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", {
+        name:
+          nextLanguage === "pt"
+            ? "Perguntas para a análise (opcional)"
+            : "Preguntas para la revisión (opcional)",
+      }),
+      { target: { value: newQuestion } },
+    );
+    expect(writes).toHaveLength(0);
+    fireEvent.click(prefer);
+    const previousLabel =
+      nextLanguage === "pt"
+        ? "Referência da análise anterior"
+        : "Referencia de revisión anterior";
+    const previous = await screen.findByRole("region", { name: previousLabel });
+    expect(writes[0].request_id).not.toBe(completedId);
+    expect(writes[0]).toEqual({
+      request_id: expect.any(String),
+      reason: "customer_request",
+      unanswered_questions: [newQuestion],
+      language: nextLanguage,
+    });
+    expect(within(previous).getByText(generalHandoff.id)).toBeTruthy();
+    expect(
+      within(previous).getByText(generalHandoff.unanswered_questions[0]),
+    ).toBeTruthy();
+    expect(within(previous).queryByText(newQuestion)).toBeNull();
+    expect(
+      screen.queryByRole("textbox", { name: /Preguntas para|Perguntas para/ }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: /Confirmo/ })).toBeNull();
+    view.unmount();
+    view = render(<Assistant {...props} />);
+    await screen.findByRole("region", { name: previousLabel });
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name:
+          nextLanguage === "pt"
+            ? "Verificar análise humana pendente"
+            : "Verificar revisión humana pendiente",
+      }),
+    );
+    await screen.findByText("HOF-ijklmnop");
+    expect(writes).toHaveLength(2);
+    expect(writes[1]).toEqual({
+      request_id: writes[0].request_id,
+      reason: "customer_request",
+      language: nextLanguage,
+    });
+  },
+);
+
+test.each([
+  { target_reference: "txn_cccccccccccccccccccccccc", receipt },
+  {
+    target_reference: charge.reference,
+    receipt: { ...receipt, status: "resolved" },
+  },
+  {
+    target_reference: charge.reference,
+    receipt: { ...receipt, simulated: false },
+  },
+])(
+  "mismatched or malformed retained receipt stays hidden and supplies no authority",
+  async (prior_receipt) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        const url = String(input);
+        if (url === "/api/chat/history")
+          return response({ active: false, messages: [] });
+        if (url.startsWith("/api/action/status"))
+          return response({
+            state: "prepare_unverified",
+            target_reference: charge.reference,
+            prior_receipt,
+          });
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    render(
+      <Assistant
+        open
+        status={{ available: true, sandbox_intake_available: true }}
+        selected={charge}
+        transactions={[charge]}
+        onSelectTransaction={vi.fn()}
+        hidden={false}
+        synthetic
+        onClose={vi.fn()}
+        onExpired={vi.fn()}
+      />,
+    );
+    await screen.findByRole("button", {
+      name: "Consultar estado de la solicitud",
+    });
+    expect(screen.queryByText(receipt.id)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Confirmo/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Revisar recepción simulada" }),
+    ).toBeNull();
+  },
+);
+
+test.each([
+  { target_reference: charge.reference, handoff: generalHandoff },
+  { target_reference: null, handoff },
+])("a nongeneral retained handoff stays hidden", async (prior_handoff) => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url === "/api/chat/history")
+        return response({ active: false, messages: [] });
+      if (url.startsWith("/api/action/status"))
+        return response({
+          state: "handoff_unverified",
+          request_id: "22222222-2222-4222-8222-222222222222",
+          reason: "customer_request",
+          prior_handoff,
+        });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: true }}
+      selected={null}
+      transactions={[charge]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  await screen.findByRole("button", {
+    name: "Verificar revisión humana pendiente",
+  });
+  expect(screen.queryByText(handoff.id)).toBeNull();
+  expect(
+    screen.queryByRole("region", { name: "Referencia de revisión anterior" }),
+  ).toBeNull();
 });
 
 test("exhausted recovery shows one opaque review code and the ES/PT sharing route", async () => {

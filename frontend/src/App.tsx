@@ -968,10 +968,18 @@ const actionCopy = {
     preparedEvidenceUnavailable:
       "No pudimos vincular los datos preparados con este cargo y snapshot. Consulta el estado antes de confirmar.",
     receiptLabel: "Comprobante local",
+    priorReceiptLabel: "Comprobante local anterior",
+    priorReceiptTitle: "Recepción simulada anterior verificada",
+    priorReceiptNote:
+      "Este es el registro simulado anterior. No confirma el resultado de una nueva solicitud.",
     savedReview: "Solicitud de revisión guardada",
     savedReviewNote:
       "El paquete de revisión está guardado. No hay respuesta humana registrada; esto no confirma que una persona haya tomado la solicitud.",
     handoffLabel: "Referencia de revisión",
+    priorHandoffLabel: "Referencia de revisión anterior",
+    priorHandoffTitle: "Solicitud general anterior guardada",
+    priorHandoffNote:
+      "Esta es la solicitud guardada anterior. No confirma el resultado de una nueva solicitud.",
     savedAt: "Registrado el",
     snapshot: "Snapshot histórico",
     servingSnapshot: "Snapshot de esta consulta",
@@ -1063,10 +1071,18 @@ const actionCopy = {
     preparedEvidenceUnavailable:
       "Não foi possível vincular os dados preparados a este lançamento e snapshot. Consulte o estado antes de confirmar.",
     receiptLabel: "Comprovante local",
+    priorReceiptLabel: "Comprovante local anterior",
+    priorReceiptTitle: "Registro simulado anterior verificado",
+    priorReceiptNote:
+      "Este é o registro simulado anterior. Não confirma o resultado de uma nova solicitação.",
     savedReview: "Solicitação de análise salva",
     savedReviewNote:
       "O pacote de análise está salvo. Não há resposta humana registrada; isso não confirma que uma pessoa assumiu a solicitação.",
     handoffLabel: "Referência da análise",
+    priorHandoffLabel: "Referência da análise anterior",
+    priorHandoffTitle: "Solicitação geral anterior salva",
+    priorHandoffNote:
+      "Esta é a solicitação salva anterior. Não confirma o resultado de uma nova solicitação.",
     savedAt: "Registrado em",
     snapshot: "Snapshot histórico",
     servingSnapshot: "Snapshot desta consulta",
@@ -1286,6 +1302,63 @@ function verifiedHandoff(action: ActionResult | null): HandoffPacket | null {
   return packet as HandoffPacket;
 }
 
+function priorReceiptForTarget(action: ActionResult | null, target?: string) {
+  const prior = action?.prior_receipt;
+  return record(prior) &&
+    typeof prior.target_reference === "string" &&
+    /^txn_[a-f0-9]{24}$/.test(prior.target_reference) &&
+    prior.target_reference === target &&
+    action?.target_reference === prior.target_reference &&
+    verifiedReceipt(prior.receipt)
+    ? prior
+    : null;
+}
+
+function priorGeneralHandoff(action: ActionResult | null) {
+  const prior = action?.prior_handoff;
+  if (
+    !record(prior) ||
+    prior.target_reference !== null ||
+    action?.target_reference
+  )
+    return null;
+  const packet = verifiedHandoff({
+    state: "handoff_verified",
+    handoff: prior.handoff,
+  });
+  return packet && !verifiedFacts(packet.facts) ? packet : null;
+}
+
+function retainedEvidence(
+  action: ActionResult | null,
+  target?: string,
+): Pick<ActionResult, "prior_receipt" | "prior_handoff"> {
+  const previousReceipt = priorReceiptForTarget(action, target);
+  const receipt =
+    (action?.state === "intake_verified" ||
+      action?.state === "existing_case_verified") &&
+    typeof target === "string" &&
+    /^txn_[a-f0-9]{24}$/.test(target) &&
+    action.target_reference === target &&
+    verifiedReceipt(action.receipt)
+      ? { target_reference: target, receipt: action.receipt }
+      : previousReceipt;
+  const currentPacket =
+    !target && !action?.target_reference ? verifiedHandoff(action) : null;
+  const packet =
+    currentPacket && !verifiedFacts(currentPacket.facts)
+      ? currentPacket
+      : !target
+        ? priorGeneralHandoff(action)
+        : null;
+  return {
+    ...(receipt ? { prior_receipt: receipt } : {}),
+    ...(packet
+      ? { prior_handoff: { target_reference: null, handoff: packet } }
+      : {}),
+  };
+}
+
 function evidenceAmount(
   facts: ActionFacts,
   language: ActionLanguage,
@@ -1373,17 +1446,23 @@ function ReceiptEvidence({
   servingSnapshot,
   language,
   hidden,
+  previous = false,
 }: {
   receipt: IntakeReceipt;
   targetReference: string;
   servingSnapshot?: string;
   language: ActionLanguage;
   hidden: boolean;
+  previous?: boolean;
 }) {
   const copy = actionCopy[language];
   return (
-    <section className="action-evidence" aria-label={copy.receiptLabel}>
-      <h4>{copy.existingCase}</h4>
+    <section
+      className={`action-evidence${previous ? " action-evidence-prior" : ""}`}
+      aria-label={previous ? copy.priorReceiptLabel : copy.receiptLabel}
+    >
+      <h4>{previous ? copy.priorReceiptTitle : copy.existingCase}</h4>
+      {previous && <p>{copy.priorReceiptNote}</p>}
       <p>
         <strong>{copy.receiptLabel}:</strong> <code>{receipt.id}</code>
       </p>
@@ -1429,16 +1508,22 @@ function HandoffEvidence({
   targetReference,
   language,
   hidden,
+  previous = false,
 }: {
   packet: HandoffPacket;
   targetReference?: string;
   language: ActionLanguage;
   hidden: boolean;
+  previous?: boolean;
 }) {
   const copy = actionCopy[language];
   return (
-    <section className="action-evidence" aria-label={copy.handoffLabel}>
-      <h4>{copy.savedReview}</h4>
+    <section
+      className={`action-evidence${previous ? " action-evidence-prior" : ""}`}
+      aria-label={previous ? copy.priorHandoffLabel : copy.handoffLabel}
+    >
+      <h4>{previous ? copy.priorHandoffTitle : copy.savedReview}</h4>
+      {previous && <p>{copy.priorHandoffNote}</p>}
       <p>
         <strong>{copy.handoffLabel}:</strong> <code>{packet.id}</code>
       </p>
@@ -1683,7 +1768,7 @@ export function Assistant({
                   return;
                 if (recovered.state !== "none") {
                   setAction(recovered);
-                  if (recovered.request_id)
+                  if (recovered.request_id && !actionIsTerminal(recovered))
                     setHandoffRequestId(recovered.request_id);
                 } else {
                   setAction((current) =>
@@ -1783,7 +1868,8 @@ export function Assistant({
       ) {
         if (recovered.state !== "none") {
           setAction(recovered);
-          if (recovered.request_id) setHandoffRequestId(recovered.request_id);
+          if (recovered.request_id && !actionIsTerminal(recovered))
+            setHandoffRequestId(recovered.request_id);
         } else {
           // A transiently empty status cannot prove a local uncertain write safe.
           setAction((current) =>
@@ -1886,6 +1972,7 @@ export function Assistant({
                   : current;
               }
               return {
+                ...retainedEvidence(current, requestedReference),
                 state:
                   path === "/api/action/prepare"
                     ? "prepare_unverified"
@@ -1962,6 +2049,8 @@ export function Assistant({
       ? action.receipt
       : null;
   const handoffPacket = verifiedHandoff(action);
+  const priorReceipt = priorReceiptForTarget(action, selected?.reference);
+  const priorHandoff = priorGeneralHandoff(action);
   const canRetryHandoff =
     actionReady &&
     (action?.state === "handoff_unverified" ||
@@ -2059,6 +2148,23 @@ export function Assistant({
               <HandoffEvidence
                 packet={handoffPacket}
                 targetReference={action?.target_reference}
+                language={actionLanguage}
+                hidden={hidden}
+              />
+            )}
+            {priorReceipt && priorReceipt.receipt.id !== receipt?.id && (
+              <ReceiptEvidence
+                previous
+                receipt={priorReceipt.receipt}
+                targetReference={priorReceipt.target_reference}
+                language={actionLanguage}
+                hidden={hidden}
+              />
+            )}
+            {priorHandoff && priorHandoff.id !== handoffPacket?.id && (
+              <HandoffEvidence
+                previous
+                packet={priorHandoff}
                 language={actionLanguage}
                 hidden={hidden}
               />
@@ -2264,7 +2370,12 @@ export function Assistant({
                       reason: "customer_request",
                       ...(needsFreshReceiptReview
                         ? {}
-                        : { request_id: handoffRequestId }),
+                        : {
+                            request_id:
+                              canStartAction && !selected
+                                ? crypto.randomUUID()
+                                : handoffRequestId,
+                          }),
                       unanswered_questions: handoffQuestions,
                       ...(canUsePendingTarget &&
                       action?.pending_handle &&
