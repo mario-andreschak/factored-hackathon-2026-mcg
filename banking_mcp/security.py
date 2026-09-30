@@ -86,7 +86,72 @@ class StateStore:
                 CREATE TABLE IF NOT EXISTS capabilities(
                     id TEXT PRIMARY KEY, kind TEXT NOT NULL, binding TEXT NOT NULL,
                     expires INTEGER NOT NULL, payload TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS action_pending(
+                    id TEXT PRIMARY KEY, binding TEXT NOT NULL, customer TEXT NOT NULL,
+                    transaction_id TEXT NOT NULL, snapshot TEXT NOT NULL,
+                    action TEXT NOT NULL, decision TEXT NOT NULL, reason TEXT,
+                    facts TEXT NOT NULL, expires INTEGER NOT NULL,
+                    evidence_digest TEXT, request_key TEXT, result_json TEXT);
+                CREATE TABLE IF NOT EXISTS sandbox_cases(
+                    id TEXT PRIMARY KEY, customer TEXT NOT NULL, transaction_id TEXT NOT NULL,
+                    action TEXT NOT NULL, snapshot TEXT NOT NULL, created_at REAL NOT NULL,
+                    facts TEXT NOT NULL, UNIQUE(customer, transaction_id, action));
+                CREATE INDEX IF NOT EXISTS sandbox_cases_recent ON sandbox_cases(customer, created_at);
+                CREATE TABLE IF NOT EXISTS sandbox_handoffs(
+                    id TEXT PRIMARY KEY, binding TEXT NOT NULL, customer TEXT NOT NULL,
+                    transaction_id TEXT, snapshot TEXT, reason TEXT NOT NULL,
+                    created_at INTEGER NOT NULL, facts TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL UNIQUE);
+                CREATE TABLE IF NOT EXISTS sandbox_ledger_identity(
+                    id INTEGER PRIMARY KEY CHECK(id=1), generation TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS sandbox_coverage(
+                    id INTEGER PRIMARY KEY CHECK(id=1), generation TEXT NOT NULL,
+                    coverage_start INTEGER NOT NULL, provenance_digest TEXT NOT NULL,
+                    attested_at INTEGER NOT NULL);
             """)
+            # Pending handles from an earlier local prototype schema must not
+            # become confirmable without the new pinned evidence check.
+            columns = {row[1] for row in db.execute("PRAGMA table_info(action_pending)")}
+            if "evidence_digest" not in columns:
+                db.execute("ALTER TABLE action_pending ADD COLUMN evidence_digest TEXT")
+            if "request_key" not in columns:
+                db.execute("ALTER TABLE action_pending ADD COLUMN request_key TEXT")
+            if "result_json" not in columns:
+                db.execute("ALTER TABLE action_pending ADD COLUMN result_json TEXT")
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS action_pending_request_key ON action_pending(request_key)")
+            db.execute("INSERT OR IGNORE INTO sandbox_ledger_identity VALUES (1, ?)",
+                       (secrets.token_hex(32),))
+
+    def attest_sandbox_coverage(self, start: int, provenance: str) -> None:
+        """Explicit trusted initialization; config alone never backdates a new DB."""
+        if (type(start) is not int or start <= 0 or start > int(time.time()) - 86400
+                or not isinstance(provenance, str) or not provenance.startswith("synthetic:")
+                or not 16 <= len(provenance) <= 160):
+            raise ValueError("invalid sandbox coverage attestation")
+        digest = hashlib.sha256(provenance.encode()).hexdigest()
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            identity = db.execute("SELECT generation FROM sandbox_ledger_identity WHERE id=1").fetchone()
+            if not identity or len(identity[0]) != 64:
+                raise BankError("risk_data_unavailable")
+            existing = db.execute("SELECT generation,coverage_start,provenance_digest FROM sandbox_coverage WHERE id=1").fetchone()
+            if existing:
+                if existing != (identity[0], start, digest):
+                    raise BankError("risk_data_unavailable")
+                return
+            db.execute("INSERT INTO sandbox_coverage VALUES (1,?,?,?,?)",
+                       (identity[0], start, digest, int(time.time())))
+
+    @staticmethod
+    def sandbox_coverage_complete(db: sqlite3.Connection, configured_start: int | None, now: float) -> bool:
+        if configured_start is None or configured_start > now - 86400:
+            return False
+        row = db.execute("""SELECT i.generation,c.generation,c.coverage_start,c.provenance_digest
+            FROM sandbox_ledger_identity i LEFT JOIN sandbox_coverage c ON c.id=1 WHERE i.id=1""").fetchone()
+        return bool(row and isinstance(row[0], str) and len(row[0]) == 64
+                    and row[1] == row[0] and type(row[2]) is int
+                    and row[2] == configured_start and isinstance(row[3], str)
+                    and len(row[3]) == 64)
 
     @contextmanager
     def connect(self):
@@ -146,7 +211,7 @@ class Authorizer:
     def __init__(self, config: Config, store: StateStore):
         self.config, self.store = config, store
 
-    def authorize(self, tool: str, args: dict, meta: dict | None) -> Principal:
+    def authorize(self, tool: str, args: dict, meta: dict | None, scope: str = "bank:read") -> Principal:
         if self.config.mode == "operator-test":
             customer, conversation = args.get("customer_id"), args.get("conversation_id")
             if (not isinstance(customer, str) or customer not in self.config.approved_customers
@@ -163,7 +228,7 @@ class Authorizer:
                                   "synthetic-demo", int(time.time()) + MAX_ASSERTION_TTL)
         else:
             token = (meta or {}).get(ASSERTION_META)
-            principal = self._verify(token, tool, args, TOKEN_TYPE, "bank:read")
+            principal = self._verify(token, tool, args, TOKEN_TYPE, scope)
         # Even a validly signed caller cannot change the mapped customer or conversation.
         for name, expected in (("customer_id", principal.customer), ("conversation_id", principal.conversation)):
             if name in args and args[name] != expected:

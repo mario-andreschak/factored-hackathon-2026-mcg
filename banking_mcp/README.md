@@ -3,7 +3,10 @@
 Carlos's PRs #1 and #2 provide the data pipeline and lookup library. This package
 adds the MCP server FLUJO can connect to. It serves the pipeline's validated,
 customer-sharded Parquet snapshot and can read a selected transaction back from S3.
-It is read-only: no dispute submission, refunds or bank mutations.
+The customer read tools remain read-only. Delegated mode also has host-only
+simulated intake and verified handoff tools; these make sandbox records only,
+never dispute submissions, refunds or bank mutations. See
+[the v0 contract](../docs/SIMULATED_INTAKE_V0.md).
 
 ## Available in local FLUJO
 
@@ -39,6 +42,14 @@ advertise shell, filesystem or generic S3 tools.
 | `banking_status` | None | Readiness and mode, without customer information |
 | `list_my_transactions` | Optional `customer_id`, `conversation_id`, `start_date`, `end_date`, `limit` (1–20), `cursor` | Masked transaction facts and opaque selection handles |
 | `get_my_transaction` | `selection_handle`, optional `customer_id`, `conversation_id`, `verify_source` | One previously selected transaction; optional conditional S3 read-back |
+| `prepare_unrecognized_charge` | Exact owned transaction ID and snapshot from the trusted host | Pending sandbox decision and private risk evidence |
+| `confirm_simulated_intake` | Pending handle and explicit host-confirmed `true` | Persisted simulated intake, if eligible |
+| `read_intake_receipt` | Pending handle | Independent receipt read-back after an uncertain write |
+| `create_verified_handoff` | Reason and optional pending handle | Persisted owner-bound human-review packet |
+| `read_verified_handoff` | Handoff ID | Independent packet read-back before naming the ID |
+
+The five action tools are advertised only in delegated mode and require distinct
+per-call scopes. They are absent from the synthetic and operator test registrations.
 
 Dates filter **process_date**, with at most 31 inclusive dates. Defaults use the
 latest 31 days present in the historical source, not the current calendar month.

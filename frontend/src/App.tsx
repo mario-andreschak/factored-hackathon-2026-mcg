@@ -920,10 +920,161 @@ function AssistantText({ text }: { text: string }) {
   );
 }
 
-function Assistant({
+type ActionResult = {
+  state: string;
+  message?: string;
+  pending_handle?: string;
+  request_id?: string;
+  reason?: string;
+  target_reference?: string;
+  recovery_exhausted?: boolean;
+  review_reference?: string;
+  handoff?: { state?: string };
+};
+
+type ActionLanguage = "es" | "pt";
+const ACTION_LANGUAGE_STORAGE = "flujo-bank-action-language";
+
+function savedActionLanguage(): ActionLanguage {
+  if (typeof window === "undefined") return "es";
+  try {
+    return window.localStorage.getItem(ACTION_LANGUAGE_STORAGE) === "pt"
+      ? "pt"
+      : "es";
+  } catch {
+    return "es";
+  }
+}
+
+const actionCopy = {
+  es: {
+    title: "¿No reconoces un cargo?",
+    disclosure:
+      "La recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.",
+    language: "Idioma de esta respuesta",
+    pendingCharge: "Solicitud pendiente para este cargo",
+    pendingReview: "Solicitud de revisión pendiente",
+    noCharge: "Revisión general sin cargo asociado.",
+    otherCharge:
+      "La solicitud anterior sigue vinculada al cargo indicado. El cargo que ves seleccionado no puede confirmarla ni reemplazarla.",
+    returnCharge: " Vuelve a ese cargo para continuar.",
+    checkOtherCharge: " Consulta su estado antes de realizar otra acción.",
+    backToCharge: "Volver al cargo pendiente",
+    verifyFirst:
+      "Verifica el estado de la solicitud antes de iniciar o confirmar otra acción.",
+    checkStatus: "Consultar estado de la solicitud",
+    reviewIntake: "Revisar recepción simulada",
+    confirmIntake: "Confirmo la recepción simulada para este cargo",
+    retryHandoff: "Verificar revisión humana pendiente",
+    preferHuman: "Prefiero revisión humana",
+    preparing: "Estamos verificando la preparación de esta solicitud.",
+    pendingConfirmation:
+      "La recepción simulada está preparada. Confirma solo si quieres registrarla para este cargo.",
+    intakeVerified: "La recepción simulada quedó verificada.",
+    handoffVerified: "La revisión humana quedó registrada.",
+    unverified:
+      "No pudimos verificar la solicitud anterior. Consulta su estado antes de continuar.",
+    recoveryExhausted:
+      "Se agotó la recuperación segura. La solicitud sigue sin resolver y bloqueada. La referencia visible no avisa al equipo ni indica que alguien la haya tomado.",
+    recoveryExhaustedWithoutReference:
+      "Se agotó la recuperación segura. La solicitud sigue sin resolver y bloqueada. Pide ayuda al equipo que te dio acceso a la demo.",
+    reviewReference: "Referencia para revisión",
+    shareReviewReference:
+      "Copia esta referencia y compártela con el equipo que te dio acceso a la demo.",
+    statusFailed: "No pudimos verificar el estado. Intenta de nuevo más tarde.",
+    initialStatusFailed:
+      "No pudimos verificar la solicitud anterior. Consulta su estado antes de iniciar otra.",
+    wrongCharge:
+      "La solicitud recibida corresponde a otro cargo. Consulta su estado antes de continuar.",
+    previousUnresolved:
+      "Hay una solicitud anterior sin resolver. Revisa el cargo indicado y consulta su estado antes de continuar.",
+    confirmUnverified:
+      "No pudimos verificar la confirmación. Consulta el estado; no la repitas.",
+    requestUnverified:
+      "No pudimos verificar la solicitud. Consulta su estado antes de iniciar otra.",
+    actionFailed:
+      "No pudimos verificar esta acción. Consulta el estado antes de volver a intentarlo.",
+    previousNotVerified:
+      "Aún no pudimos verificar la solicitud anterior. No inicies otra.",
+  },
+  pt: {
+    title: "Não reconhece uma cobrança?",
+    disclosure:
+      "O registro é uma simulação. Não bloqueia cartões, devolve dinheiro nem resolve uma contestação.",
+    language: "Idioma desta resposta",
+    pendingCharge: "Solicitação pendente para este lançamento",
+    pendingReview: "Solicitação de análise pendente",
+    noCharge: "Análise geral sem lançamento associado.",
+    otherCharge:
+      "A solicitação anterior continua vinculada ao lançamento indicado. O lançamento selecionado não pode confirmá-la nem substituí-la.",
+    returnCharge: " Volte a esse lançamento para continuar.",
+    checkOtherCharge: " Consulte o estado antes de realizar outra ação.",
+    backToCharge: "Voltar ao lançamento pendente",
+    verifyFirst:
+      "Verifique o estado da solicitação antes de iniciar ou confirmar outra ação.",
+    checkStatus: "Consultar estado da solicitação",
+    reviewIntake: "Revisar registro simulado",
+    confirmIntake: "Confirmo o registro simulado para este lançamento",
+    retryHandoff: "Verificar análise humana pendente",
+    preferHuman: "Prefiro análise humana",
+    preparing: "Estamos verificando a preparação desta solicitação.",
+    pendingConfirmation:
+      "O registro simulado está preparado. Confirme apenas se quiser registrá-lo para este lançamento.",
+    intakeVerified: "O registro simulado foi verificado.",
+    handoffVerified: "A análise humana foi registrada.",
+    unverified:
+      "Não foi possível verificar a solicitação anterior. Consulte o estado antes de continuar.",
+    recoveryExhausted:
+      "A recuperação segura se esgotou. A solicitação continua sem resolução e bloqueada. A referência visível não avisa a equipe nem indica que alguém assumiu o caso.",
+    recoveryExhaustedWithoutReference:
+      "A recuperação segura se esgotou. A solicitação continua sem resolução e bloqueada. Peça ajuda à equipe que lhe deu acesso à demonstração.",
+    reviewReference: "Referência para análise",
+    shareReviewReference:
+      "Copie esta referência e compartilhe com a equipe que lhe deu acesso à demonstração.",
+    statusFailed:
+      "Não foi possível verificar o estado. Tente novamente mais tarde.",
+    initialStatusFailed:
+      "Não foi possível verificar a solicitação anterior. Consulte o estado antes de iniciar outra.",
+    wrongCharge:
+      "A solicitação recebida corresponde a outro lançamento. Consulte o estado antes de continuar.",
+    previousUnresolved:
+      "Há uma solicitação anterior sem resolução. Confira o lançamento indicado e consulte o estado antes de continuar.",
+    confirmUnverified:
+      "Não foi possível verificar a confirmação. Consulte o estado; não a repita.",
+    requestUnverified:
+      "Não foi possível verificar a solicitação. Consulte o estado antes de iniciar outra.",
+    actionFailed:
+      "Não foi possível verificar esta ação. Consulte o estado antes de tentar novamente.",
+    previousNotVerified:
+      "Ainda não foi possível verificar a solicitação anterior. Não inicie outra.",
+  },
+} as const;
+
+function fallbackActionMessage(
+  action: ActionResult,
+  language: ActionLanguage,
+): string {
+  const copy = actionCopy[language];
+  if (action.recovery_exhausted)
+    return action.review_reference
+      ? copy.recoveryExhausted
+      : copy.recoveryExhaustedWithoutReference;
+  if (action.state === "preparing") return copy.preparing;
+  if (action.state === "pending_confirmation") return copy.pendingConfirmation;
+  if (action.state === "intake_verified") return copy.intakeVerified;
+  if (action.state === "handoff_verified") return copy.handoffVerified;
+  return copy.unverified;
+}
+
+const actionIsTerminal = (action: ActionResult | null) =>
+  action?.state === "intake_verified" || action?.state === "handoff_verified";
+
+export function Assistant({
   open,
   status,
   selected,
+  transactions,
+  onSelectTransaction,
   hidden,
   synthetic,
   onClose,
@@ -932,6 +1083,8 @@ function Assistant({
   open: boolean;
   status: ChatStatus;
   selected: Transaction | null;
+  transactions: Transaction[];
+  onSelectTransaction: (transaction: Transaction) => void;
   hidden: boolean;
   synthetic: boolean;
   onClose: () => void;
@@ -939,6 +1092,15 @@ function Assistant({
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]),
     [input, setInput] = useState(""),
+    [action, setAction] = useState<ActionResult | null>(null),
+    [actionReady, setActionReady] = useState(false),
+    [actionBusy, setActionBusy] = useState(false),
+    [actionStatusLoading, setActionStatusLoading] = useState(false),
+    [actionLanguage, setActionLanguage] =
+      useState<ActionLanguage>(savedActionLanguage),
+    [handoffRequestId, setHandoffRequestId] = useState<string>(() =>
+      crypto.randomUUID(),
+    ),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [historyReady, setHistoryReady] = useState(false),
@@ -946,10 +1108,27 @@ function Assistant({
     [historyAttempt, setHistoryAttempt] = useState(0);
   const end = useRef<HTMLDivElement>(null),
     controller = useRef<AbortController | null>(null),
-    alive = useRef(true);
+    alive = useRef(true),
+    actionLanguageRef = useRef(actionLanguage),
+    actionStatusSequence = useRef(0);
+  const copy = actionCopy[actionLanguage];
+  useEffect(() => {
+    actionLanguageRef.current = actionLanguage;
+    try {
+      window.localStorage.setItem(ACTION_LANGUAGE_STORAGE, actionLanguage);
+    } catch {
+      // Private browsing may deny storage; the current visit still works.
+    }
+  }, [actionLanguage]);
   useEffect(() => {
     if (open) end.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy, open]);
+  useEffect(() => {
+    // A pending action belongs to its original charge, even when the visitor
+    // opens another charge. Rotate only a completed or unused request ID.
+    if (!action || actionIsTerminal(action))
+      setHandoffRequestId(crypto.randomUUID());
+  }, [selected?.reference]);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -962,6 +1141,7 @@ function Assistant({
     const historyController = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     setHistoryReady(false);
+    setActionReady(false);
     setError("");
     function recover() {
       api<{ messages: ChatMessage[]; active: boolean; limited?: boolean }>(
@@ -976,6 +1156,53 @@ function Assistant({
           setHistoryLimited(Boolean(result.limited));
           setHistoryReady(true);
           setBusy(result.active);
+          if (!result.active && status.sandbox_intake_available) {
+            const requestedLanguage = actionLanguageRef.current;
+            const sequence = ++actionStatusSequence.current;
+            setActionStatusLoading(true);
+            api<ActionResult>(
+              `/api/action/status?language=${requestedLanguage}`,
+              {
+                signal: historyController.signal,
+              },
+            )
+              .then((recovered) => {
+                if (
+                  historyController.signal.aborted ||
+                  !alive.current ||
+                  sequence !== actionStatusSequence.current ||
+                  requestedLanguage !== actionLanguageRef.current
+                )
+                  return;
+                if (recovered.state !== "none") {
+                  setAction(recovered);
+                  if (recovered.request_id)
+                    setHandoffRequestId(recovered.request_id);
+                } else {
+                  setAction((current) =>
+                    current && !actionIsTerminal(current) ? current : null,
+                  );
+                }
+                setActionReady(true);
+              })
+              .catch(() => {
+                if (
+                  !historyController.signal.aborted &&
+                  alive.current &&
+                  sequence === actionStatusSequence.current &&
+                  requestedLanguage === actionLanguageRef.current
+                ) {
+                  setActionReady(false);
+                  setError(actionCopy[requestedLanguage].initialStatusFailed);
+                }
+              })
+              .finally(() => {
+                if (alive.current && sequence === actionStatusSequence.current)
+                  setActionStatusLoading(false);
+              });
+          } else if (!status.sandbox_intake_available) {
+            setActionReady(true);
+          }
           // A query admitted before a page refresh can finish in the server.
           // Recover its result rather than submitting that query a second time.
           if (result.active) timer = setTimeout(recover, 2000);
@@ -1033,6 +1260,190 @@ function Assistant({
       if (alive.current) setBusy(false);
     }
   }
+  async function loadActionStatus(
+    language: ActionLanguage = actionLanguageRef.current,
+  ) {
+    const sequence = ++actionStatusSequence.current;
+    setActionStatusLoading(true);
+    try {
+      const recovered = await api<ActionResult>(
+        `/api/action/status?language=${language}`,
+      );
+      if (
+        alive.current &&
+        sequence === actionStatusSequence.current &&
+        language === actionLanguageRef.current
+      ) {
+        if (recovered.state !== "none") {
+          setAction(recovered);
+          if (recovered.request_id) setHandoffRequestId(recovered.request_id);
+        } else {
+          // A transiently empty status cannot prove a local uncertain write safe.
+          setAction((current) =>
+            current && !actionIsTerminal(current) ? current : null,
+          );
+        }
+        setActionReady(true);
+      }
+      return recovered;
+    } finally {
+      if (alive.current && sequence === actionStatusSequence.current)
+        setActionStatusLoading(false);
+    }
+  }
+  function changeActionLanguage(language: ActionLanguage) {
+    if (language === actionLanguageRef.current) return;
+    actionLanguageRef.current = language;
+    setActionLanguage(language);
+    setAction((current) =>
+      current ? { ...current, message: undefined } : current,
+    );
+    setActionReady(false);
+    setError("");
+    void loadActionStatus(language).catch((e) => {
+      if (!alive.current || language !== actionLanguageRef.current) return;
+      if (e instanceof ApiError && e.status === 401) onExpired();
+      else {
+        setActionReady(false);
+        setError(actionCopy[language].statusFailed);
+      }
+    });
+  }
+  async function runAction(path: string, body: Record<string, unknown>) {
+    if (actionBusy || busy || !historyReady || !actionReady) return;
+    const requestedReference =
+      typeof body.transaction_reference === "string"
+        ? body.transaction_reference
+        : undefined;
+    const continuesPendingHandle =
+      typeof body.pending_handle === "string" &&
+      body.pending_handle === action?.pending_handle;
+    setActionBusy(true);
+    setError("");
+    try {
+      const result = await api<ActionResult>(path, {
+        method: "POST",
+        body: JSON.stringify({ ...body, language: actionLanguage }),
+      });
+      if (alive.current) {
+        if (
+          requestedReference &&
+          result.target_reference &&
+          result.target_reference !== requestedReference
+        ) {
+          // Keep the server's saved target visible; never relabel it with the
+          // newly selected charge when a response disagrees with the request.
+          setAction(result);
+          setActionReady(false);
+          setError(copy.wrongCharge);
+          return;
+        }
+        setAction({
+          ...result,
+          target_reference:
+            result.target_reference ??
+            requestedReference ??
+            (continuesPendingHandle ? action?.target_reference : undefined),
+        });
+        if (actionIsTerminal(result)) setHandoffRequestId(crypto.randomUUID());
+      }
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        onExpired();
+      } else if (alive.current) {
+        if (e instanceof ApiError && e.status === 409) {
+          // The server keeps the original pending charge. Recover that target
+          // instead of replacing it with the newly selected charge.
+          setActionReady(false);
+          try {
+            await loadActionStatus();
+          } catch {
+            setActionReady(false);
+          }
+          setError(copy.previousUnresolved);
+        } else {
+          const uncertain =
+            !(e instanceof ApiError) ||
+            e.status >= 500 ||
+            path === "/api/action/confirm";
+          if (uncertain) {
+            setActionReady(false);
+            setAction((current) => {
+              if (current && !actionIsTerminal(current)) {
+                return path === "/api/action/confirm"
+                  ? {
+                      ...current,
+                      state: "action_unverified",
+                      message: copy.confirmUnverified,
+                    }
+                  : current;
+              }
+              return {
+                state:
+                  path === "/api/action/prepare"
+                    ? "prepare_unverified"
+                    : "handoff_unverified",
+                target_reference: requestedReference,
+                request_id:
+                  typeof body.request_id === "string"
+                    ? body.request_id
+                    : undefined,
+                message: copy.requestUnverified,
+              };
+            });
+          }
+          setError(copy.actionFailed);
+        }
+      }
+    } finally {
+      if (alive.current) setActionBusy(false);
+    }
+  }
+  async function refreshAction() {
+    if (actionBusy || actionStatusLoading || busy || !historyReady) return;
+    setActionBusy(true);
+    try {
+      const recovered = await loadActionStatus();
+      if (alive.current && recovered.state !== "none") {
+        setError("");
+      } else if (alive.current && action && !actionIsTerminal(action)) {
+        setActionReady(false);
+        setError(copy.previousNotVerified);
+      }
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) onExpired();
+      else if (alive.current) {
+        setActionReady(false);
+        setError(copy.statusFailed);
+      }
+    } finally {
+      if (alive.current) setActionBusy(false);
+    }
+  }
+  const actionBlocksNewCharge =
+    action !== null && action.state !== "none" && !actionIsTerminal(action);
+  const actionTarget = transactions.find(
+    (transaction) => transaction.reference === action?.target_reference,
+  );
+  const selectedIsActionTarget =
+    Boolean(actionTarget) && selected?.reference === action?.target_reference;
+  const canUsePendingTarget =
+    actionReady && selectedIsActionTarget && Boolean(action?.pending_handle);
+  const canStartAction = actionReady && !actionBlocksNewCharge;
+  const canRetryHandoff =
+    actionReady &&
+    (action?.state === "handoff_unverified" ||
+      (action?.state === "action_unverified" &&
+        action.handoff?.state === "handoff_unverified" &&
+        action.reason === "action_unverified")) &&
+    Boolean(action.reason) &&
+    (action.target_reference
+      ? canUsePendingTarget
+      : Boolean(action.request_id) && !action.pending_handle);
+  const canRequestHandoff =
+    canStartAction ||
+    (canUsePendingTarget && action?.state === "pending_confirmation") ||
+    canRetryHandoff;
   // Closing the dialog keeps this authenticated component alive. A running
   // query can finish and its visible transcript will be here on reopening.
   if (!open) return null;
@@ -1046,7 +1457,11 @@ function Assistant({
           <strong>Un poco de claridad, cuando la necesitas.</strong>
           <span>
             {status.available
-              ? "Conectado a FLUJO · Consulta de solo lectura"
+              ? status.sandbox_intake_available
+                ? actionLanguage === "pt"
+                  ? "Conectado ao FLUJO · Registro simulado disponível após confirmação"
+                  : "Conectado a FLUJO · Recepción simulada disponible tras confirmación"
+                : "Conectado a FLUJO · Consulta de solo lectura"
               : "El asistente no está disponible ahora"}
           </span>
         </div>
@@ -1065,6 +1480,158 @@ function Assistant({
           <CheckCheck size={18} />
         </div>
       )}
+      {status.sandbox_intake_available &&
+        historyReady &&
+        (messages.length > 0 || action) && (
+          <div className="action-panel">
+            <strong>{copy.title}</strong>
+            <p>{copy.disclosure}</p>
+            <label>
+              {copy.language}
+              <select
+                value={actionLanguage}
+                disabled={actionBusy || busy}
+                onChange={(e) =>
+                  changeActionLanguage(e.target.value as ActionLanguage)
+                }
+              >
+                <option value="es">Español</option>
+                <option value="pt">Português</option>
+              </select>
+            </label>
+            {action && (
+              <p role="status" className="action-result">
+                {action.message ||
+                  fallbackActionMessage(action, actionLanguage)}
+              </p>
+            )}
+            {action?.recovery_exhausted && action.review_reference && (
+              <p className="action-result">
+                <strong>{copy.reviewReference}:</strong>{" "}
+                <code>{action.review_reference}</code>
+                <br />
+                {copy.shareReviewReference}
+              </p>
+            )}
+            {actionBlocksNewCharge && (
+              <div className="chat-selection" role="status">
+                {actionTarget && <TxIcon transaction={actionTarget} />}
+                <span>
+                  <strong>
+                    {action?.target_reference
+                      ? copy.pendingCharge
+                      : copy.pendingReview}
+                  </strong>
+                  <small>
+                    {actionTarget
+                      ? `${label(actionTarget)} · ${date(actionTarget.occurred_at)} · ${money(actionTarget.amount, actionTarget.currency, hidden)} ${actionTarget.currency}`
+                      : action?.target_reference || copy.noCharge}
+                  </small>
+                </span>
+              </div>
+            )}
+            {actionBlocksNewCharge &&
+              action?.target_reference &&
+              !selectedIsActionTarget && (
+                <p className="modal-disclosure">
+                  {copy.otherCharge}
+                  {actionTarget ? copy.returnCharge : copy.checkOtherCharge}
+                </p>
+              )}
+            {actionBlocksNewCharge &&
+              actionTarget &&
+              !selectedIsActionTarget && (
+                <button
+                  type="button"
+                  className="button outline"
+                  onClick={() => onSelectTransaction(actionTarget)}
+                >
+                  {copy.backToCharge}
+                </button>
+              )}
+            {!actionReady && (
+              <p className="modal-disclosure">{copy.verifyFirst}</p>
+            )}
+            <button
+              type="button"
+              className="button outline"
+              disabled={actionBusy || actionStatusLoading || busy}
+              onClick={refreshAction}
+            >
+              {copy.checkStatus}
+            </button>
+            {selected && canStartAction && (
+              <button
+                type="button"
+                className="button outline"
+                disabled={actionBusy || busy}
+                onClick={() =>
+                  runAction("/api/action/prepare", {
+                    transaction_reference: selected.reference,
+                    request_id: handoffRequestId,
+                  })
+                }
+              >
+                {copy.reviewIntake}
+              </button>
+            )}
+            {action?.state === "pending_confirmation" &&
+              canUsePendingTarget && (
+                <button
+                  type="button"
+                  className="button primary"
+                  disabled={actionBusy || busy}
+                  onClick={() =>
+                    runAction("/api/action/confirm", {
+                      pending_handle: action.pending_handle,
+                      transaction_reference: action.target_reference,
+                      confirmed: true,
+                    })
+                  }
+                >
+                  {copy.confirmIntake}
+                </button>
+              )}
+            {canRequestHandoff && (
+              <button
+                type="button"
+                className="button outline"
+                disabled={actionBusy || busy}
+                onClick={() => {
+                  if (canRetryHandoff && action?.reason) {
+                    runAction("/api/action/handoff", {
+                      reason: action.reason,
+                      ...(action.request_id
+                        ? { request_id: action.request_id }
+                        : {}),
+                      ...(action.pending_handle
+                        ? { pending_handle: action.pending_handle }
+                        : {}),
+                      ...(action.target_reference
+                        ? { transaction_reference: action.target_reference }
+                        : {}),
+                    });
+                    return;
+                  }
+                  runAction("/api/action/handoff", {
+                    reason: "customer_request",
+                    request_id: handoffRequestId,
+                    ...(canUsePendingTarget && action?.pending_handle
+                      ? {
+                          pending_handle: action.pending_handle,
+                          transaction_reference: action.target_reference,
+                        }
+                      : selected
+                        ? { transaction_reference: selected.reference }
+                        : {}),
+                  });
+                }}
+              >
+                {canRetryHandoff ? copy.retryHandoff : copy.preferHuman}
+              </button>
+            )}
+          </div>
+        )}
       <div className="chat-messages" aria-live="polite">
         {historyLimited && (
           <p className="modal-disclosure">
@@ -2094,6 +2661,8 @@ export default function App() {
         open={assistant}
         status={chatStatus}
         selected={chatSelection}
+        transactions={transactions}
+        onSelectTransaction={setChatSelection}
         hidden={hidden}
         synthetic={synthetic}
         onClose={closeAssistant}

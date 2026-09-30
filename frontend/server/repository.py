@@ -386,8 +386,8 @@ class Repository:
                                                   "Los números de cuenta se eliminaron en silver; se usa una referencia opaca.")},
         }
 
-    def transaction(self, profile_id: str, reference: str) -> dict | None:
-        """Resolve an owned reference independently of any display page or filter."""
+    def _owned_transaction(self, profile_id: str, reference: str) -> tuple[dict, str] | None:
+        """Resolve a browser reference only inside this owner-scoped server."""
         if not isinstance(reference, str) or not re.fullmatch(r"txn_[a-f0-9]{24}", reference):
             return None
         snapshot = self.snapshot()
@@ -410,4 +410,20 @@ class Repository:
             rows = records(con.execute(f"SELECT {TRANSACTION_FIELDS} FROM scoped WHERE transaction_id=?", [matched]))
             if len(rows) != 1:
                 return None
-            return self._public_transaction(rows[0], customer)
+            return rows[0], snapshot.build.name
+
+    def transaction(self, profile_id: str, reference: str) -> dict | None:
+        """Resolve an owned reference independently of any display page or filter."""
+        resolved = self._owned_transaction(profile_id, reference)
+        if not resolved:
+            return None
+        row, _ = resolved
+        return self._public_transaction(row, self.state.customer(profile_id))
+
+    def action_target(self, profile_id: str, reference: str) -> dict | None:
+        """Private target for FLUJO; raw IDs are never sent to the browser."""
+        resolved = self._owned_transaction(profile_id, reference)
+        if not resolved:
+            return None
+        row, build = resolved
+        return {"transaction_id": row["transaction_id"], "snapshot": build}
