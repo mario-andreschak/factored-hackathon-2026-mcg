@@ -1,0 +1,238 @@
+graph:
+  name: transaction_resolution_workflow
+  description: 'Transaction Disputes: entender → evidenciar → decidir (determinista)
+    → actuar → verificar → responder'
+  graph_selector: v3
+  state_class: ChatStateDict
+  nodes:
+  - name: decode_session
+    handler: decode_session_node
+    llm: false
+    description: Valida la sesión de confianza; fija customer_id, authenticated y
+      expired
+    enabled: true
+  - name: get_history
+    handler: get_conversation_history_node
+    llm: false
+    description: Carga el histórico y el workflow_state previo
+    enabled: true
+  - name: rewrite_decompose
+    handler: rewrite_decompose_node
+    llm: true
+    prompt: rewrite_decompose_prompt
+    enabled: true
+  - name: detect_attack
+    handler: detect_attack_node
+    llm: true
+    prompt: attack_detection_prompt
+    enabled: true
+  - name: detect_context
+    handler: detect_context_node
+    llm: true
+    prompt: context_detection_prompt
+    description: Emoción + idioma
+    enabled: true
+  - name: merge_parallel
+    handler: merge_parallel_node
+    llm: false
+    enabled: true
+  - name: resolve_clarification
+    handler: resolve_clarification_node
+    llm: true
+    prompt: clarification_resolution_prompt
+    enabled: true
+  - name: detect_intent
+    handler: detect_intent_node
+    llm: true
+    prompt: intent_detection_prompt
+    enabled: true
+  - name: load_customer_context
+    handler: load_customer_context_node
+    llm: false
+    description: Con sesión válida carga perfil; solo monedas se proyectan a slots.
+      Nunca otros datos privados.
+    enabled: true
+  - name: extract_slots
+    handler: extract_slots_node
+    llm: true
+    prompt: slot_extraction_prompt
+    enabled: true
+  - name: run_tools
+    handler: run_tools_node
+    llm: false
+    description: Herramientas de lectura según intent/slots; reintentos acotados
+    enabled: true
+  - name: retrieve_policy
+    handler: retrieve_policy_node
+    llm: false
+    description: RAG solo sobre resources/policies
+    enabled: true
+  - name: policy_engine
+    handler: policy_engine_node
+    llm: false
+    description: Reglas R0–R18 → response_mode
+    enabled: true
+  - name: execute_action
+    handler: execute_action_node
+    llm: false
+    description: create_complaint con idempotency_key
+    enabled: true
+  - name: verify_action
+    handler: verify_action_node
+    llm: false
+    description: get_complaint; fija action.verified
+    enabled: true
+  - name: generate_handoff_summary
+    handler: generate_handoff_summary_node
+    llm: true
+    prompt: handoff_summary_prompt
+    enabled: true
+  - name: create_handoff
+    handler: create_handoff_node
+    llm: false
+    description: Guarda el paquete y verifica que existe
+    enabled: true
+  - name: generate
+    handler: generate_node
+    llm: true
+    prompt: generator_prompt_v3
+    enabled: true
+  - name: validate_response
+    handler: validate_response_node
+    llm: false
+    description: Validaciones deterministas (Paso 11)
+    enabled: true
+  - name: safe_fallback
+    handler: safe_fallback_node
+    llm: false
+    description: Plantilla fija por response_mode e idioma
+    enabled: true
+  - name: persist
+    handler: persist_node
+    llm: false
+    description: Guarda turno, estado y trace
+    enabled: true
+  edges:
+  - from: START
+    to: decode_session
+  - from: decode_session
+    to: get_history
+  - from: get_history
+    to: rewrite_decompose
+  - from: get_history
+    to: detect_attack
+  - from: get_history
+    to: detect_context
+  - from: rewrite_decompose
+    to: merge_parallel
+  - from: detect_attack
+    to: merge_parallel
+  - from: detect_context
+    to: merge_parallel
+  - from: run_tools
+    to: retrieve_policy
+  - from: retrieve_policy
+    to: policy_engine
+  - from: execute_action
+    to: verify_action
+  - from: verify_action
+    to: policy_engine
+  - from: generate_handoff_summary
+    to: create_handoff
+  - from: create_handoff
+    to: generate
+  - from: safe_fallback
+    to: persist
+  - from: persist
+    to: END
+  - from: load_customer_context
+    to: extract_slots
+  conditional_edges:
+  - from: merge_parallel
+    condition_function: route_after_merge
+    description: Barrera de las tres ramas. Sesión inválida, ataque o referencia ajena
+      del preprocesador => policy_engine; pending vigente => resolve_clarification;
+      resto => detect_intent.
+    mapping:
+      policy_engine: policy_engine
+      resolve_clarification: resolve_clarification
+      detect_intent: detect_intent
+  - from: resolve_clarification
+    condition_function: route_after_clarification
+    description: NEW_REQUEST limpia pending => detect_intent; SELECTED/CONFIRMED válidos
+      => run_tools para releer target y política; DENIED/UNCLEAR => policy_engine.
+    mapping:
+      detect_intent: detect_intent
+      run_tools: run_tools
+      policy_engine: policy_engine
+  - from: detect_intent
+    condition_function: route_after_intent
+    description: DISPUTE/INQUIRY/STATUS => load_customer_context; resto => policy_engine.
+      Consultas independientes se procesan serialmente.
+    mapping:
+      load_customer_context: load_customer_context
+      policy_engine: policy_engine
+  - from: extract_slots
+    condition_function: route_after_slots
+    description: Referencia ajena, fallo de perfil o criterios insuficientes => policy_engine;
+      resto => run_tools. Guardas repetidos en herramientas.
+    mapping:
+      policy_engine: policy_engine
+      run_tools: run_tools
+  - from: policy_engine
+    condition_function: route_after_policy
+    description: Autorización fresca y action_attempted=false => execute_action; handoff.required
+      y no intentado => generate_handoff_summary (incluye ACTION_UNVERIFIED); resto
+      => generate.
+    mapping:
+      execute_action: execute_action
+      generate_handoff_summary: generate_handoff_summary
+      generate: generate
+  - from: generate
+    condition_function: route_after_generate
+    description: Error de LLM o grounding_violation → safe_fallback; si no → validate_response
+    mapping:
+      validate_response: validate_response
+      safe_fallback: safe_fallback
+  - from: validate_response
+    condition_function: route_after_validation
+    description: OK → persist; falla con reintento disponible → generate; falla sin
+      reintentos → safe_fallback
+    mapping:
+      persist: persist
+      generate: generate
+      safe_fallback: safe_fallback
+  runtime:
+    llm_retries: 1
+    tool_retries: 2
+    node_timeout_seconds: 20
+    trace_enabled: true
+    parallel_barriers:
+      merge_parallel:
+      - rewrite_decompose
+      - detect_attack
+      - detect_context
+    response_validation_retries: 1
+
+# Flujo:
+# START -> decode_session -> get_history -> [rewrite | attack | context]
+#   -> merge_parallel (barrera) -> clarification? -> intent -> load_customer_context
+#   -> slots -> run_tools -> retrieve_policy -> policy_engine
+#   -> execute_action -> verify_action -> policy_engine
+#   -> handoff_summary -> create_handoff -> generate
+#   -> generate -> validate_response -> persist -> END
+#                      | retry generate / safe_fallback -> persist
+#
+# condition_function -> campos leídos
+# route_after_merge -> session.*, turn.attack, turn.unauthorized_reference, workflow_state.pending
+# route_after_clarification -> turn.clarification, workflow_state.pending
+# route_after_intent -> turn.intent
+# route_after_slots -> turn.slots, tool_results.get_customer_profile, workflow_state.search_criteria_present
+# route_after_policy -> workflow_state.action, action_attempted, handoff.required, handoff_attempted, policy_decision
+# route_after_generate -> salida JSON, grounding_violation, errores del adaptador
+# route_after_validation -> turn.validation_errors, turn.validation_attempts
+#
+# La barrera exige las tres salidas del mismo turn_id; tres aristas no bastan por sí solas.
+# El loader debe implementar parallel_barriers o traducirlo a una arista conjunta de fan-in.
+# Fallos LLM de entrada: fail closed, jamás asumir clasificación segura; ir a fallback/TOOL_ERROR.
+# create_handoff falla sin bucle; mantiene created=false. execute_action siempre fija action_attempted.
