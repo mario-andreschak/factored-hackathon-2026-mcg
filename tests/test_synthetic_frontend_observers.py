@@ -180,10 +180,13 @@ def test_real_clock_trusted_ed25519_assertion_callback(fixture):
     {"session_id": "foreign-session"}, {"session_exp": 1}, {"scope": ["bank:write"]},
     {"scope": ["bank:read", "bank:write"]}, {"extra_claim": "not-allowed"},
     {"iat": 1, "nbf": 1, "exp": 100},
-    {"iat": int(time.time()) + 1000, "nbf": int(time.time()) + 1000, "exp": int(time.time()) + 1100},
-    {"exp": int(time.time()) + 500}, {"nbf": 1}, {"iat": True},
+    {"iat": lambda now: now + 1000, "nbf": lambda now: now + 1000, "exp": lambda now: now + 1100},
+    {"exp": lambda now: now + 500}, {"nbf": 1}, {"iat": True},
 ])
 def test_signature_claim_identity_and_time_failures_never_become_verified(fixture, overrides):
+    # Relative claims must stay invalid even when collection precedes this test by minutes.
+    now = int(time.time())
+    overrides = {name: value(now) if callable(value) else value for name, value in overrides.items()}
     token, headers = assertion(fixture, **overrides)
     with pytest.raises(module.ObservationRejected):
         run(fixture["observer"].identity_verifier(headers))
@@ -276,9 +279,10 @@ def test_revoked_actual_mcp_session_rejects_fault(fixture):
 @pytest.mark.parametrize("field,value", [
     ("binding", "foreign-binding"), ("customer", "foreign-customer"), ("transaction_id", "foreign-charge"),
     ("snapshot", "foreign-snapshot"), ("reason", "customer_request"), ("idempotency_key", "foreign-key"),
-    ("facts", "{}"), ("packet_json", "{}"), ("created_at", int(time.time()) + 1000),
+    ("facts", "{}"), ("packet_json", "{}"), ("created_at", lambda now: now + 1000),
 ])
 def test_handoff_requires_exact_actual_packet_record(fixture, field, value):
+    value = value(int(time.time())) if callable(value) else value
     update(fixture["paths"].mcp_state_db, "sandbox_handoffs", field, value)
     with pytest.raises(module.ObservationRejected):
         commit(fixture)
@@ -367,9 +371,10 @@ def test_readonly_authored_phase_proves_exact_artifact_and_existing_attestation_
     assert before == fixture["paths"].mcp_state_db.read_bytes()
 
 
-@pytest.mark.parametrize("field,value", [("generation", "f" * 64), ("coverage_start", 1), ("provenance_digest", "wrong-digest"), ("attested_at", int(time.time()) + 1000)])
+@pytest.mark.parametrize("field,value", [("generation", "f" * 64), ("coverage_start", 1), ("provenance_digest", "wrong-digest"), ("attested_at", lambda now: now + 1000)])
 def test_attested_phase_wrong_ledger_correlations_rejected(fixture, field, value):
     inputs = authored_phase(fixture)
+    value = value(int(time.time())) if callable(value) else value
     update(fixture["paths"].mcp_state_db, "sandbox_coverage", field, value)
     with pytest.raises(module.ObservationRejected):
         fixture["observer"].verify_attested_phase(**inputs)
