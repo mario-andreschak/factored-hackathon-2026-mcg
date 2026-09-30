@@ -25,6 +25,15 @@ reviewed host source revision. An admission callback checks owner, expiry,
 revocation and bank context after the handshake, immediately before signing,
 and before returning evidence.
 
+The private listener proposed in [backend PR #32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32) requires `bank.base_url` to use
+`https://<approved-private-IPv4>:<configured-port>`. The literal IP and explicit
+port must match the listener's configured bind address and expected `Host`
+header. Its TLS certificate must include that same IP in its Subject Alternative
+Name, and the mounted approved CA/certificate must verify it. This listener
+rejects DNS aliases. Certificate identity verification remains enabled. The
+example uses deliberately invalid IP/port placeholders and supplies no working
+endpoint; actual network, peer allowlist and TLS alignment remain review gates.
+
 The host persists an independent bank context UUID and a namespaced bank session
 binding. Generic language conversation IDs cannot select or replace either one.
 The host retains prepare UUID/CAS replay bounds and the exact private target tuple

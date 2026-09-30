@@ -7,7 +7,7 @@
     "action_enabled": false,
     "principal_customers": {"REPLACE_APPROVED_SUBJECT": "REPLACE_APPROVED_CUSTOMER"},
     "bank": {
-      "base_url": "https://banking-mcp:8000",
+      "base_url": "https://REPLACE_APPROVED_PRIVATE_IPV4:REPLACE_APPROVED_PORT",
       "ca_file": "/banking-config/bank-ca.pem",
       "service_token": "REPLACE_WITH_PRIVATE_BANK_SERVICE_TOKEN",
       "issuer": "REPLACE_WITH_APPROVED_HOST_ISSUER",
