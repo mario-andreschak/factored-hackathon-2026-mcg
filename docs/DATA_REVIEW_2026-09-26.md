@@ -4,6 +4,8 @@
 
 **Later implementation decision (2026-09-27):** the [banking MCP S3 plan](BANKING_MCP_S3_PLAN.md) replaces the private indexed-extract proposal below with bounded direct reads of the source S3 daily CSVs. The measured findings in this review are unchanged.
 
+**Channel follow-up (2026-09-30):** [Organizers' and participants' replies on transcript labels, access documents, date semantics, and evaluation](CHANNEL_DATA_CLARIFICATIONS_2026-09-30.md) add context without changing the measured data defects below.
+
 ## Scope and reproducibility
 
 I connected directly to S3 with the read-only credentials in the local `S3credentials.env` and streamed CSVs through `boto3`. The bucket inventory contains **13 table families, 7,671 objects, and 5.35 GB**. I read **every object** in six decision-relevant families: `customers`, `products`, `call_center_interactions`, `complaints`, `call_transcripts`, and `transactions`. The four daily families each cover **1,097 partitions** from 2023-06-17 through 2026-06-17. The script is [scripts/profile_s3.py](../scripts/profile_s3.py); its aggregate-only output is [DATA_PROFILE_AGGREGATES_2026-09-26.json](DATA_PROFILE_AGGREGATES_2026-09-26.json). Neither file contains bucket identifiers, credentials, raw records, or customer IDs. The scan used only S3 list and get operations.
