@@ -9,6 +9,7 @@ import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 
 import jwt
 import pytest
@@ -22,6 +23,16 @@ from banking_mcp.server import create_http_app
 from banking_mcp.service import Service
 from pipeline.__main__ import main
 from pipeline.fixture import cid, write_base
+
+
+ACTION_TEST_NOW = datetime(2026, 9, 29, 12, tzinfo=timezone.utc).timestamp()
+ACTION_TEST_WALL_ORIGIN = time.time()
+
+
+def fixed_action_clock(service, wall_origin=ACTION_TEST_WALL_ORIGIN):
+    # The synthetic transactions are dated June 1-2, 2026. Keep action
+    # eligibility deterministic while authentication still uses wall time.
+    service.actions.clock = lambda: ACTION_TEST_NOW + (time.time() - wall_origin)
 
 
 @pytest.fixture(scope="module")
@@ -42,6 +53,7 @@ def bank(dataset, tmp_path):
                     principal_customers={"alice": cid(3), "bob": cid(4)},
                     synthetic_evidence_file=evidence_file)
     service = Service(config)
+    fixed_action_clock(service)
     snapshot = service.repository.snapshot()
     manifest = json.loads((snapshot.build / "snapshot.json").read_text())
     targets = {target for subject in ("alice", "bob")
@@ -89,8 +101,9 @@ def owned_action_target(bank, subject="alice"):
     return snapshot.id, [r["transaction_id"] for r in rows]
 
 
-def _confirm_in_process(config_json, handle, ready, barrier, results):
+def _confirm_in_process(config_json, handle, ready, barrier, results, wall_origin):
     service = Service(Config.model_validate_json(config_json))
+    fixed_action_clock(service, wall_origin)
     principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     try:
         ready.wait(timeout=15)
@@ -104,8 +117,9 @@ def _confirm_in_process(config_json, handle, ready, barrier, results):
         service.close()
 
 
-def _handoff_in_process(config_json, request_id, ready, barrier, results):
+def _handoff_in_process(config_json, request_id, ready, barrier, results, wall_origin):
     service = Service(Config.model_validate_json(config_json))
+    fixed_action_clock(service, wall_origin)
     principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     try:
         ready.wait(timeout=15)
@@ -117,8 +131,9 @@ def _handoff_in_process(config_json, request_id, ready, barrier, results):
         service.close()
 
 
-def _prepare_in_process(config_json, transaction_id, build, request_id, barrier, results):
+def _prepare_in_process(config_json, transaction_id, build, request_id, barrier, results, wall_origin):
     service = Service(Config.model_validate_json(config_json))
+    fixed_action_clock(service, wall_origin)
     principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     try:
         barrier.wait(timeout=15)
@@ -132,7 +147,7 @@ def _prepare_in_process(config_json, transaction_id, build, request_id, barrier,
 def test_simulated_intake_requires_coverage_confirmation_and_readback(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
-    service.actions.coverage_start = int(time.time()) - 90000
+    service.actions.coverage_start = int(service.actions.clock()) - 90000
     service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
     pending = action_call(bank, "prepare_unrecognized_charge",
                           {"transaction_id": targets[0], "snapshot": build})
@@ -193,6 +208,7 @@ def test_prepare_request_replays_after_lost_response_and_restart(bank):
     args = {"transaction_id": targets[0], "snapshot": build, "request_id": request_id}
     original = action_call(bank, "prepare_unrecognized_charge", args)
     restarted = Service(service.config)
+    fixed_action_clock(restarted)
     try:
         assert action_call((restarted, key), "prepare_unrecognized_charge", args) == original
         with pytest.raises(BankError, match="invalid_arguments"):
@@ -216,7 +232,8 @@ def test_prepare_same_request_serializes_across_processes_and_scopes_binding(ban
     ctx = multiprocessing.get_context("spawn")
     barrier, results = ctx.Barrier(2), ctx.Queue()
     children = [ctx.Process(target=_prepare_in_process,
-                args=(service.config.model_dump_json(), targets[0], build, request_id, barrier, results))
+                args=(service.config.model_dump_json(), targets[0], build, request_id, barrier, results,
+                      ACTION_TEST_WALL_ORIGIN))
                 for _ in range(2)]
     for child in children:
         child.start()
@@ -282,7 +299,8 @@ def test_revocation_winning_handoff_writer_prevents_packet(bank):
     ctx = multiprocessing.get_context("spawn")
     ready, barrier, results = ctx.Barrier(2), ctx.Barrier(2), ctx.Queue()
     child = ctx.Process(target=_handoff_in_process,
-                        args=(service.config.model_dump_json(), str(uuid.uuid4()), ready, barrier, results))
+                        args=(service.config.model_dump_json(), str(uuid.uuid4()), ready, barrier, results,
+                              ACTION_TEST_WALL_ORIGIN))
     child.start()
     ready.wait(timeout=15)
     with service.store.connect() as db:
@@ -299,7 +317,7 @@ def test_revocation_winning_handoff_writer_prevents_packet(bank):
 def test_sandbox_coverage_requires_same_persisted_ledger_generation(bank, tmp_path):
     service = bank[0]
     build, targets = owned_action_target(bank)
-    start = int(time.time()) - 90000
+    start = int(service.actions.clock()) - 90000
     service.actions.coverage_start = start
     service.store.attest_sandbox_coverage(start, "synthetic:verified-empty-ledger")
     complete = action_call(bank, "prepare_unrecognized_charge",
@@ -307,6 +325,7 @@ def test_sandbox_coverage_requires_same_persisted_ledger_generation(bank, tmp_pa
     assert complete["decision"] == "intake" and complete["risk"]["unrecognized_count_24h"] == 1
     reset = Service(service.config.model_copy(update={"state_db": tmp_path / "replacement.db",
         "sandbox_report_coverage_start": start})), bank[1]
+    fixed_action_clock(reset[0])
     replaced = action_call(reset, "prepare_unrecognized_charge",
                            {"transaction_id": targets[0], "snapshot": build})
     assert replaced["decision"] == "handoff" and replaced["reason"] == "missing_evidence"
@@ -321,7 +340,7 @@ def test_sandbox_coverage_requires_same_persisted_ledger_generation(bank, tmp_pa
 def test_missing_or_high_synthetic_signals_never_clear_intake(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
-    start = int(time.time()) - 90000
+    start = int(service.actions.clock()) - 90000
     service.actions.coverage_start = start
     service.store.attest_sandbox_coverage(start, "synthetic:signals-ledger")
     evidence_file = service.actions.evidence_file
@@ -342,7 +361,7 @@ def test_action_risk_threshold_and_duplicate_report(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
     assert len(set(targets)) >= 3
-    service.actions.coverage_start = int(time.time()) - 90000
+    service.actions.coverage_start = int(service.actions.clock()) - 90000
     service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
     decisions = []
     for target in targets[:2]:
@@ -369,7 +388,7 @@ def test_action_risk_threshold_and_duplicate_report(bank):
 
 def test_action_foreign_target_and_snapshot_swap_denied(bank):
     build, targets = owned_action_target(bank, "bob")
-    bank[0].actions.coverage_start = int(time.time()) - 90000
+    bank[0].actions.coverage_start = int(bank[0].actions.clock()) - 90000
     bank[0].store.attest_sandbox_coverage(bank[0].actions.coverage_start, "synthetic:bank-test-ledger")
     with pytest.raises(BankError, match="reference_unavailable"):
         action_call(bank, "prepare_unrecognized_charge",
@@ -382,7 +401,7 @@ def test_action_foreign_target_and_snapshot_swap_denied(bank):
 def test_action_concurrent_confirmation_and_expired_pending_readback(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
-    service.actions.coverage_start = int(time.time()) - 90000
+    service.actions.coverage_start = int(service.actions.clock()) - 90000
     service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
     pending = action_call(bank, "prepare_unrecognized_charge",
                           {"transaction_id": targets[0], "snapshot": build})["pending_handle"]
@@ -401,7 +420,7 @@ def test_action_concurrent_confirmation_and_expired_pending_readback(bank):
 def test_cross_process_distinct_confirmations_serialize_r16_threshold(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
-    start = int(time.time()) - 90000
+    start = int(service.actions.clock()) - 90000
     service.actions.coverage_start = start
     service.store.attest_sandbox_coverage(start, "synthetic:cross-process-ledger")
     prior = action_call(bank, "prepare_unrecognized_charge",
@@ -414,7 +433,8 @@ def test_cross_process_distinct_confirmations_serialize_r16_threshold(bank):
     ready, barrier, results = ctx.Barrier(3), ctx.Barrier(3), ctx.Queue()
     config_json = service.config.model_copy(update={"sandbox_report_coverage_start": start}).model_dump_json()
     children = [ctx.Process(target=_confirm_in_process,
-                            args=(config_json, item["pending_handle"], ready, barrier, results)) for item in pending]
+                            args=(config_json, item["pending_handle"], ready, barrier, results,
+                                  ACTION_TEST_WALL_ORIGIN)) for item in pending]
     for child in children:
         child.start()
     ready.wait(timeout=15)
@@ -436,7 +456,7 @@ def test_cross_process_distinct_confirmations_serialize_r16_threshold(bank):
 def test_revoke_winning_during_target_recheck_prevents_case_insert(bank, monkeypatch):
     service = bank[0]
     build, targets = owned_action_target(bank)
-    start = int(time.time()) - 90000
+    start = int(service.actions.clock()) - 90000
     service.actions.coverage_start = start
     service.store.attest_sandbox_coverage(start, "synthetic:revoke-race-ledger")
     pending = action_call(bank, "prepare_unrecognized_charge",
@@ -464,7 +484,7 @@ def test_action_r16_utc_window_lower_boundary_and_incomplete_ledger(bank):
     service = bank[0]
     build, targets = owned_action_target(bank)
     assert len(set(targets)) >= 3
-    frozen = time.time()
+    frozen = service.actions.clock()
     service.actions.clock = lambda: frozen
     service.actions.coverage_start = int(frozen - 90000)
     service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
@@ -490,6 +510,24 @@ def test_action_r16_utc_window_lower_boundary_and_incomplete_ledger(bank):
                               {"transaction_id": targets[2], "snapshot": build})
     assert unavailable["risk"]["unrecognized_count_24h"] is None
     assert unavailable["reason"] == "missing_evidence"
+
+
+def test_action_age_boundary_routes_day_121_to_handoff(bank):
+    service = bank[0]
+    build, targets = owned_action_target(bank)
+    boundary = datetime(2026, 9, 30, tzinfo=timezone.utc).timestamp()
+    service.actions.clock = lambda: boundary
+    service.actions.coverage_start = int(boundary) - 90000
+    service.store.attest_sandbox_coverage(service.actions.coverage_start,
+                                           "synthetic:age-boundary-ledger")
+    within = action_call(bank, "prepare_unrecognized_charge",
+                         {"transaction_id": targets[0], "snapshot": build})
+    expired = action_call(bank, "prepare_unrecognized_charge",
+                          {"transaction_id": targets[1], "snapshot": build})
+    assert within["transaction"]["transaction_date"].startswith("2026-06-02")
+    assert within["decision"] == "intake" and within["reason"] is None
+    assert expired["transaction"]["transaction_date"].startswith("2026-06-01")
+    assert expired["decision"] == "handoff" and expired["reason"] == "out_of_policy"
 
 
 def test_operator_mode_cannot_invoke_or_advertise_action_tools(operator):

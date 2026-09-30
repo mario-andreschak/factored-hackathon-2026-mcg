@@ -353,6 +353,33 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
                    for operation in actions)
 
 
+def test_exhausted_action_status_localizes_review_reference_without_claiming_handoff(settings):
+    reference = "rev_" + "a" * 24
+
+    class ExhaustedService:
+        async def action_status(self, customer, session_id, expires):
+            assert customer == "private-customer-co"
+            return {"state": "prepare_unverified", "recovery_exhausted": True,
+                    "review_reference": reference, "target_reference": "txn_" + "b" * 24}
+
+    with TestClient(create_app(settings)) as client:
+        assert login(client).status_code == 200
+        client.app.state.chat_service = ExhaustedService()
+        es = client.get("/api/action/status?language=es")
+        pt = client.get("/api/action/status?language=pt")
+        assert es.status_code == pt.status_code == 200
+        for response in (es, pt):
+            assert response.json()["state"] == "prepare_unverified"
+            assert response.json()["recovery_exhausted"] is True
+            assert response.json()["review_reference"] == reference
+            assert "handoff" not in response.json()
+            assert "private-customer-co" not in response.text
+        assert "sigue sin resolver y bloqueada" in es.json()["message"]
+        assert "no avisa al equipo" in es.json()["message"]
+        assert "sem resolução e bloqueada" in pt.json()["message"]
+        assert "não avisa a equipe" in pt.json()["message"]
+
+
 def test_secure_cookie_origin_and_custom_demo_code(settings):
     settings = replace(settings,secure_cookie=True,public_origin="https://bank.example",demo_code="private-code")
     with TestClient(create_app(settings),base_url="https://bank.example") as client:

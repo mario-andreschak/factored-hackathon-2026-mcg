@@ -24,6 +24,8 @@ import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
+from .review import review_reference
+
 
 _CONVERSATION = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
 _PUBLIC_TRANSACTION = re.compile(r"^txn_[a-f0-9]{24}$")
@@ -781,6 +783,8 @@ class ChatService:
                 and (latest_row["prepare_recovery_attempts"] >= _PREPARE_RECOVERY_MAX_ATTEMPTS
                      or int(time.time()) + _PREPARE_RECOVERY_TIMEOUT >= latest_row["prepare_recovery_deadline"])):
             latest["recovery_exhausted"] = True
+            if reference := review_reference(latest_row["action_id"]):
+                latest["review_reference"] = reference
         return latest if latest else {"state": "none"}
 
     @staticmethod

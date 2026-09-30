@@ -109,6 +109,19 @@ def test_silver_and_gold_rerun_without_source(ws):
     assert m["tables"]["transactions"]["bronze"]["rows"] == 69   # carried from the previous manifest
 
 
+@pytest.mark.parametrize("stages", [["silver", "gold"], ["gold"]])
+def test_default_source_derived_stages_need_no_s3_credentials(ws, monkeypatch, stages):
+    run(ws)
+    from pipeline import __main__ as cli
+    monkeypatch.setattr(cli, "load_env", lambda _: (_ for _ in ()).throw(
+        AssertionError("offline stages must not read credentials")))
+    code = main(["run", "--stage", *stages, "--out", str(ws / "out"),
+                 "--reports", str(ws / "reports"), "--env", str(ws / "missing.env")])
+    manifest = json.loads((ws / "reports" / "manifest.json").read_text(encoding="utf-8"))
+    assert code == 0
+    assert manifest["source"] == (ws / "src").as_posix()
+
+
 def test_lookup_enforces_ownership_and_isolation(ws):
     run(ws)
     gold = gold_dir(ws)
@@ -287,6 +300,7 @@ def test_source_added_during_ingestion_fails_before_publication(ws, monkeypatch)
 def test_gold_only_uses_published_lineage_not_latest_bronze_report(ws):
     run(ws)
     previous = gold_dir(ws).parent
+    old_manifest = json.loads((previous / "manifest.json").read_text(encoding="utf-8"))
     old_inventory = json.loads((previous / "source_objects.json").read_text(encoding="utf-8"))
     write_late_batch(ws / "src")
     run(ws, "--stage", "bronze")
@@ -296,6 +310,8 @@ def test_gold_only_uses_published_lineage_not_latest_bronze_report(ws):
     new_inventory = json.loads((gold_dir(ws).parent / "source_objects.json").read_text(encoding="utf-8"))
     assert new_inventory == old_inventory
     assert manifest["source_fingerprint"] == old_inventory["fingerprint"]
+    assert manifest["tables"]["transactions"] == old_manifest["tables"]["transactions"]
+    assert manifest["silver_build_id"] == old_manifest["silver_build_id"]
     rows = get_customer_transactions(gold_dir(ws), cid(6), limit=100)
     assert "TXN00000951" not in _customer_ids(rows)
 
@@ -313,12 +329,218 @@ def test_gold_only_migrates_legacy_inventory_without_claiming_read_validation(ws
     snapshot.pop("source_validation")
     snapshot_path.write_text(json.dumps(snapshot), encoding="utf-8")
     (ws / "out" / "bronze" / "source_objects.json").unlink()
+    (build / "manifest.json").unlink()       # original snapshots had no pinned quality metrics
     shutil.rmtree(ws / "src")
     code, _ = run(ws, "--stage", "gold", "--tables", "customers", "products", "transactions")
     migrated = json.loads((gold_dir(ws).parent / "snapshot.json").read_text(encoding="utf-8"))
     assert code == 0 and migrated["gold_files"]
     assert migrated["source_validation"] == "legacy_inventory"
-    assert migrated["source_fingerprint"] == snapshot["source_fingerprint"]
+    new_inventory = json.loads((gold_dir(ws).parent / "source_objects.json").read_text(encoding="utf-8"))
+    assert set(new_inventory["tables"]) == {"customers", "products", "transactions"}
+    assert migrated["source_fingerprint"] == new_inventory["fingerprint"]
+    assert migrated["source_fingerprint"] != snapshot["source_fingerprint"]
+    manifest = json.loads((gold_dir(ws).parent / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["silver_contracts_sha256_12"] is None
+    assert all(not v for v in manifest["tables"].values())
+
+
+@pytest.mark.parametrize("selection, message", [
+    (["--stage", "bronze", "gold"], "require the silver stage"),
+    (["--tables", "customers"], "publishing gold requires"),
+    (["--tables", "unknown"], "unknown tables"),
+    (["--tables", "customers", "customers"], "select each table only once"),
+    (["--tables", "customers", "products", "transactions", "call_transcripts"],
+     "omit parent dependencies"),
+])
+def test_invalid_stage_or_table_selection_never_mutates_landing_or_current(ws, selection, message):
+    run(ws)
+    before = gold_dir(ws)
+    marker = (ws / "out" / "bronze" / "source_objects.json").read_bytes()
+    builds = set((ws / "out" / "builds").iterdir())
+    with pytest.raises(ValueError, match=message):
+        run(ws, *selection)
+    assert gold_dir(ws) == before
+    assert (ws / "out" / "bronze" / "source_objects.json").read_bytes() == marker
+    assert set((ws / "out" / "builds").iterdir()) == builds
+
+
+def test_gold_only_honors_selected_tables_and_pins_matching_quality_manifest(ws):
+    run(ws)
+    previous = gold_dir(ws).parent
+    original = json.loads((previous / "manifest.json").read_text(encoding="utf-8"))
+    # The mutable report is deliberately unrelated to this serving snapshot.
+    (ws / "reports" / "manifest.json").write_text('{"tables": {}, "source_fingerprint": "wrong"}')
+    code, manifest = run(ws, "--stage", "gold", "--tables", "customers", "products", "transactions")
+    build = gold_dir(ws).parent
+    selected = {"customers", "products", "transactions"}
+    assert code == 0
+    assert {p.stem for p in (build / "silver").glob("*.parquet")} == selected
+    assert set(manifest["tables"]) == selected
+    assert not (build / "gold" / "classifier_dataset.parquet").exists()
+    assert not (build / "gold" / "contact_demand.parquet").exists()
+    assert manifest["tables"]["transactions"] == original["tables"]["transactions"]
+    assert json.loads((build / "manifest.json").read_text(encoding="utf-8")) == manifest
+    inventory = json.loads((build / "source_objects.json").read_text(encoding="utf-8"))
+    assert set(inventory["tables"]) == selected
+    assert manifest["source_fingerprint"] == inventory["fingerprint"]
+
+
+def test_subset_bronze_inventory_cannot_label_stale_unselected_tables(ws):
+    run(ws)
+    before = gold_dir(ws)
+    run(ws, "--stage", "bronze", "--tables", "customers")
+    with pytest.raises(RuntimeError, match="source inventory does not cover requested tables"):
+        run(ws, "--stage", "silver", "gold", "--tables", "customers", "products", "transactions")
+    assert gold_dir(ws) == before
+
+
+def test_silver_uses_landing_statistics_even_when_mutable_report_is_unrelated(ws):
+    run(ws)
+    write_late_batch(ws / "src")
+    _, landed = run(ws, "--stage", "bronze")
+    (ws / "reports" / "manifest.json").write_text('{"tables": {}, "source_fingerprint": "wrong"}')
+    _, rebuilt = run(ws, "--stage", "silver", "gold")
+    assert rebuilt["tables"]["transactions"]["bronze"] == landed["tables"]["transactions"]["bronze"]
+    assert rebuilt["tables"]["transactions"]["silver"]["raw_rows"] == 72
+
+
+def test_existing_validated_bronze_without_local_statistics_is_recounted(ws):
+    _, landed = run(ws, "--stage", "bronze")
+    (ws / "out" / "bronze" / "manifest.json").unlink()
+    (ws / "reports" / "manifest.json").write_text('{"tables": {}, "source_fingerprint": "wrong"}')
+    _, rebuilt = run(ws, "--stage", "silver", "gold")
+    for table, stats in rebuilt["tables"].items():
+        assert stats["bronze"]["rows"] == landed["tables"][table]["bronze"]["rows"]
+        assert stats["bronze"]["rows"] == stats["silver"]["raw_rows"]
+        assert stats["bronze"]["source_fingerprint"] == landed["tables"][table]["bronze"]["source_fingerprint"]
+
+
+def test_aggregate_quality_and_lineage_are_pinned_before_publication(ws, monkeypatch):
+    from pipeline import __main__ as cli
+    original = cli.publish
+    observed = []
+
+    def check_ready(out, build_id):
+        build = out / "builds" / build_id
+        manifest = json.loads((build / "manifest.json").read_text(encoding="utf-8"))
+        snapshot = json.loads((build / "snapshot.json").read_text(encoding="utf-8"))
+        inventory = json.loads((build / "source_objects.json").read_text(encoding="utf-8"))
+        assert manifest["run_id"] == snapshot["build_id"] == build_id
+        assert manifest["source_fingerprint"] == snapshot["source_fingerprint"] == inventory["fingerprint"]
+        assert manifest["source_validation"] == snapshot["source_validation"]
+        assert (build / "quality_report.md").is_file()
+        assert manifest["tables"]["transactions"]["silver"]["reconciles"]
+        observed.append(build_id)
+        original(out, build_id)
+
+    monkeypatch.setattr(cli, "publish", check_ready)
+    code, _ = run(ws)
+    assert code == 0 and observed == [gold_dir(ws).parent.name]
+
+
+def test_missing_banking_output_is_never_published(ws, monkeypatch):
+    from pipeline import gold
+    run(ws)
+    before = gold_dir(ws)
+    monkeypatch.setattr(gold, "run", lambda *args: None)
+    with pytest.raises(RuntimeError, match="gold did not produce the banking serving output"):
+        run(ws, "--stage", "gold")
+    assert gold_dir(ws) == before
+
+
+def test_same_root_writer_is_rejected_before_mutation_and_other_roots_work(ws, monkeypatch):
+    import threading
+    from pipeline import bronze
+    from pipeline.writer import LOCK_FILENAME
+    run(ws)
+    before = gold_dir(ws)
+    marker_path = ws / "out" / "bronze" / "source_objects.json"
+    marker = marker_path.read_bytes()
+    original = bronze.run
+    entered, release = threading.Event(), threading.Event()
+    failures = []
+
+    def blocked(settings, *args):
+        if settings.out_dir.resolve() == (ws / "out").resolve():
+            entered.set()
+            assert release.wait(timeout=20), "test writer was never released"
+        original(settings, *args)
+
+    def first_writer():
+        try:
+            run(ws)
+        except BaseException as exc:
+            failures.append(exc)
+
+    monkeypatch.setattr(bronze, "run", blocked)
+    thread = threading.Thread(target=first_writer)
+    thread.start()
+    try:
+        assert entered.wait(timeout=10)
+        with pytest.raises(RuntimeError, match="output is locked by another writer"):
+            run(ws)
+        assert gold_dir(ws) == before
+        assert marker_path.read_bytes() == marker
+        assert (ws / "out" / LOCK_FILENAME).is_file()
+        # A separate destination has its own landing, reports and writer lock.
+        assert main(["run", "--stage", "bronze", "--source", str(ws / "src"),
+                     "--out", str(ws / "other-out"), "--reports", str(ws / "other-reports")]) == 0
+        assert not (ws / "other-out" / LOCK_FILENAME).exists()
+    finally:
+        release.set()
+        thread.join(timeout=20)
+    assert not thread.is_alive() and failures == []
+    assert not (ws / "out" / LOCK_FILENAME).exists()
+
+
+def test_failed_writer_releases_its_lock(ws, monkeypatch):
+    from pipeline import bronze
+    from pipeline.writer import LOCK_FILENAME
+    run(ws)
+    before = gold_dir(ws)
+
+    def fail(*args):
+        assert (ws / "out" / LOCK_FILENAME).is_file()
+        raise RuntimeError("synthetic landing failure")
+
+    monkeypatch.setattr(bronze, "run", fail)
+    with pytest.raises(RuntimeError, match="synthetic landing failure"):
+        run(ws)
+    assert not (ws / "out" / LOCK_FILENAME).exists()
+    assert gold_dir(ws) == before
+
+
+def test_stale_writer_lock_is_never_automatically_removed(ws):
+    from pipeline.writer import LOCK_FILENAME
+    run(ws)
+    before = gold_dir(ws)
+    lock = ws / "out" / LOCK_FILENAME
+    lock.write_text('{"pid": 0, "started_at": "2000-01-01T00:00:00Z"}', encoding="utf-8")
+    content = lock.read_bytes()
+    with pytest.raises(RuntimeError, match="Confirm that the writer has stopped"):
+        run(ws, "--stage", "gold")
+    assert lock.read_bytes() == content
+    assert gold_dir(ws) == before
+
+
+def test_writer_lock_is_held_until_final_report_finishes(ws, monkeypatch):
+    from pipeline import report
+    from pipeline.writer import LOCK_FILENAME
+    original = report.write
+    observed = []
+
+    def check_lock(path, *args):
+        assert (ws / "out" / LOCK_FILENAME).is_file()
+        if path == ws / "reports":
+            with pytest.raises(RuntimeError, match="output is locked by another writer"):
+                run(ws, "--stage", "gold")
+            observed.append(path)
+        original(path, *args)
+
+    monkeypatch.setattr(report, "write", check_lock)
+    run(ws)
+    assert observed == [ws / "reports"]
+    assert not (ws / "out" / LOCK_FILENAME).exists()
 
 
 def test_publications_never_delete_a_pinned_reader_snapshot(ws):

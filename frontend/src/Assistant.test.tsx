@@ -164,3 +164,70 @@ test("Portuguese consent and saved status survive refresh without submitting an 
     confirmed: true,
   });
 });
+
+test("exhausted recovery shows one opaque review code and the ES/PT sharing route", async () => {
+  const reviewReference = "rev_1234567890abcdef12345678";
+  const calls: string[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      calls.push(`${init?.method || "GET"} ${url}`);
+      if (url === "/api/chat/history")
+        return response({
+          active: false,
+          messages: [{ role: "assistant", text: "Consulta anterior" }],
+        });
+      if (url.startsWith("/api/action/status")) {
+        const language = new URL(url, "http://localhost").searchParams.get(
+          "language",
+        );
+        return response({
+          state: "prepare_unverified",
+          recovery_exhausted: true,
+          review_reference: reviewReference,
+          target_reference: charge.reference,
+          message:
+            language === "pt"
+              ? "A solicitação continua sem resolução e bloqueada; a referência não avisa a equipe."
+              : "La solicitud sigue sin resolver y bloqueada; la referencia no avisa al equipo.",
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: true }}
+      selected={charge}
+      transactions={[charge]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  await screen.findByText(reviewReference);
+  expect(screen.getByText(/Copia esta referencia y compártela/)).toBeTruthy();
+  expect(screen.getByText(/sigue sin resolver y bloqueada/)).toBeTruthy();
+  expect(
+    screen.queryByRole("button", { name: /Confirmo la recepción/ }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Revisar recepción simulada" }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Prefiero revisión humana" }),
+  ).toBeNull();
+
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "pt" } });
+  await screen.findByText(/A solicitação continua sem resolução e bloqueada/);
+  expect(screen.getByText(reviewReference)).toBeTruthy();
+  expect(screen.getByText(/Copie esta referência e compartilhe/)).toBeTruthy();
+  expect(screen.getByText(/não avisa a equipe/)).toBeTruthy();
+  expect(calls).toContain("GET /api/action/status?language=pt");
+  expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+});
