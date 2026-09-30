@@ -4,16 +4,15 @@ This repository contains the data audit, DuckDB pipeline, classifier baseline, b
 
 ## FLUJO product boundary
 
-FLUJO is a long-lived, general-purpose product. Its generic secure MCP
-hook/adapter is appropriate on main. Banking and hackathon routes must not
-land on FLUJO main. Keep domain behavior in Savia or the banking MCP where
-possible; if FLUJO-specific integration is unavoidable, isolate it on a
-separate hackathon branch. See the
+FLUJO is a long-lived, general-purpose product. Use its existing generic
+interfaces without adding banking or hackathon backend code, routes, policy,
+dependencies or domain adapters. Keep that behavior in Savia and the banking
+MCP, including on demo branches and in build configuration. See the
 [architecture boundary and review gate](docs/FLUJO_PRODUCT_BOUNDARY.md).
 
 ## Open the banking demo
 
-The local Docker deployment is available at [localhost:43800](http://localhost:43800). Choose a Colombia, México or Argentina profile and enter the configured demo access code (local default: `2026`). Explore balances, accounts/cards, product details, transaction filters and CSV export, or ask the FLUJO assistant about a movement.
+The local Docker deployment is described at [localhost:43800](http://localhost:43800). For the local organizer-data demo, choose a Colombia, México or Argentina profile and enter the configured access code; there is no shared default code. External fictional invitations use their separately bound owner access. See the setup guide for the active mode and release limits. Explore balances, accounts/cards, product details, transaction filters and CSV export, or ask about a movement.
 
 See [frontend setup and portable deployment](frontend/README.md) and [dataset, architecture and verification evidence](docs/ONLINE_BANKING_FRONTEND.md). The frontend runs alongside the existing FLUJO worker; its image contains neither customer rows nor service credentials.
 
@@ -69,4 +68,4 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 
-FLUJO remains the workflow backend. The banking MCP uses Carlos's customer-sharded Parquet snapshots for lookup and conditional S3 read-back for a selected transaction. Real customer reads require signed per-call authority outside model arguments; the FLUJO identity-hook PR implements verified runtime authority. The MCP runs as stdio inside the existing FLUJO container. A separate synthetic demo is usable now for graphical flow development. The customer-facing agent must not receive generic S3 tools or credentials. This serving path updates the earlier direct-S3 proposal.
+The banking MCP uses Carlos's customer-sharded Parquet snapshots for lookup and conditional S3 read-back of a selected transaction. Customer reads require signed per-call authority outside model arguments. The former FLUJO banking adapter and in-worker stdio setup are historical integration evidence; #534 removed their domain source from FLUJO. The project-owned host/MCP migration is source work in progress, with generic FLUJO used for language handling over permitted display facts. The restoration merge did not upgrade the local worker, install the replacement or establish joined customer acceptance. Bank keys, raw record identifiers, selection/action capabilities and generic S3 credentials must not reach the language flow.
