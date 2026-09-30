@@ -14,7 +14,7 @@ import sys
 import time
 import types
 import uuid
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -244,13 +244,13 @@ def test_quarantine_blocks_actions_reads_and_admission_with_no_mutation(bank):
 
 def test_same_generation_older_attested_backup_cannot_clear_external_quarantine(bank):
     backup_path = bank.root / "fictional-earlier-backup.db"
-    with sqlite3.connect(bank.store.path) as source, sqlite3.connect(backup_path) as backup:
+    with closing(sqlite3.connect(bank.store.path)) as source, closing(sqlite3.connect(backup_path)) as backup:
         source.backup(backup)
     pending = prepare(bank)
     bank.actions.confirm(bank.owner, pending["pending_handle"], True)
     # All connections are closed. Copy the older fictional DB into the target
     # via SQLite backup; external approval is independently OFF at reopen.
-    with sqlite3.connect(backup_path) as source, sqlite3.connect(bank.store.path) as restored:
+    with closing(sqlite3.connect(backup_path)) as source, closing(sqlite3.connect(bank.store.path)) as restored:
         source.backup(restored)
     quarantined = bank.security.StateStore(bank.store.path, ledger_continuity_approved=False)
     actions = bank.make_actions(quarantined)
