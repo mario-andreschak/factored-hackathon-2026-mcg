@@ -3,7 +3,9 @@
 > **Current direction:** [the coordinated September 28 plan](BANKING_MCP_NEXT_STEPS.md)
 > supersedes this audit's banking-specific ingress and per-chat direct-S3 proposals.
 > Challenge requirements and data findings remain evidence; implementation status
-> and delivery dates below are historical planning context.
+> and delivery dates below are historical planning context. Do not implement
+> its banking-specific FLUJO ingress; see the
+> [FLUJO product boundary](FLUJO_PRODUCT_BOUNDARY.md).
 
 **Prepared:** 2026-09-25; **updated after direct S3 full-table profiling:** 2026-09-26. **Recommendation:** build a **verified unrecognized-charge inquiry and simulated dispute-intake assistant** using FLUJO as the orchestrator and a small, purpose-built banking sandbox behind MCP. The outcome we automate is a correctly answered transaction inquiry or a **verified dispute-intake receipt**. We do not claim that opening a case resolves the underlying dispute. The measured full-table evidence, method, and revised decisions are in [DATA_REVIEW_2026-09-26.md](DATA_REVIEW_2026-09-26.md).
 
