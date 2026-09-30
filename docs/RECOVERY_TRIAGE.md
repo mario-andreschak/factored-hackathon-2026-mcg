@@ -77,13 +77,24 @@ possible without any authorization call.
 
 Pending evidence must match the saved binding, customer, private transaction,
 snapshot and action. Its stored result must agree with its decision/reason/facts.
+The reader recognizes strict `legacy_prepare/v0` and `current_prepare/v1`
+schemas. Current records also require a valid `existing_case` projection; an
+`existing_case` decision requires a verified receipt with status `received`.
+Unknown extra fields are rejected. These saved fields are historical evidence,
+not a fresh authorization or proof of consent for the lost request.
 The frontend's `txn_24hex` reference and MCP's `txn_12hex` fact reference are
 different schemes and are not compared to each other.
 
 Only a HOF packet under that **exact original request key** is eligible; its
 binding, customer, transaction, snapshot, reason and facts must match the saved
-pending decision. An exact packet reports `exact_handoff_packet_evidence` and
-its opaque HOF reference. A HOF packet can outlive the pending TTL, so
+pending decision. Current records also require the saved packet's exact charge
+facts, provenance, reason, bounded unanswered questions and
+`human_responded: false`. An exact current packet reports
+`exact_handoff_packet_evidence` and its opaque HOF reference. A missing or invalid
+current packet reports `handoff_packet_unverified`, with no HOF reference.
+Legacy facts-only rows report `historical_handoff_row_evidence` and
+`historical_request_matched_row`; they do not prove a verified current packet.
+A HOF packet can outlive the pending TTL, so
 `pending_expired` and the summary's `pending_expired_count` remain separate.
 This is persisted historical packet evidence, not live pickup or consent.
 

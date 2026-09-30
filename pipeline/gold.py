@@ -13,7 +13,7 @@ import time
 from contextlib import closing
 from dataclasses import replace
 
-from .common import TXN_BUCKETS, Settings, connect, sql_bucket, sql_path
+from .common import TXN_BUCKETS, Settings, connect, sql_bucket, sql_path, transaction_event_dates
 
 # Classifier split: customers are hashed into 10 folds; time holdout on top of that.
 # test  = folds 0-1 AND on/after TIME_HOLDOUT   (unseen customers, future period)
@@ -68,7 +68,9 @@ def _run(con, settings: Settings, run_id: str, stats: dict) -> None:
             f"FROM read_parquet('{sql_path(out)}/**/*.parquet')").fetchone()
         g["transactions_by_customer"] = {"rows": rows, "ownership_valid_rows": valid,
                                          "buckets": TXN_BUCKETS,
-                                         "seconds": round(time.perf_counter() - t0, 1)}
+                                         "seconds": round(time.perf_counter() - t0, 1),
+                                         "transaction_event_dates": transaction_event_dates(
+                                             con, list(out.rglob("*.parquet")))}
         print(f"gold    transactions_by_customer   {rows:>11,} rows ({valid:,} ownership-valid)", flush=True)
 
     if have("call_center_interactions") and have("customers"):

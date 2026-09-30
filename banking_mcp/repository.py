@@ -14,13 +14,15 @@ from pathlib import Path
 
 import duckdb
 
-from pipeline.common import bucket_for, load_env, sql_path
+from pipeline.bronze import fingerprint
+from pipeline.common import bucket_for, load_env, sql_path, transaction_event_dates
 from .config import Config
 from .security import BankError, Principal, StateStore
 
 BUILD_ID = re.compile(r"[A-Za-z0-9_-]{1,96}")
 SOURCE_KEY = re.compile(r"transactions/year=\d{4}/month=\d{2}/day=\d{2}/[^/]+\.csv")
 MAX_SOURCE_BYTES = 8 * 1024 * 1024
+SEARCH_CALENDAR_DAYS = 90
 FIELDS = ("transaction_id", "product_id", "transaction_date", "process_date", "amount", "currency",
           "transaction_status", "merchant_name", "transaction_type", "channel", "_source_file", "_row_hash")
 
@@ -64,18 +66,72 @@ class Snapshot:
         finally:
             cur.close()
         lineage = build / "source_objects.json"
-        self.objects = {}
-        if lineage.is_file():
-            for table in json.loads(lineage.read_text(encoding="utf-8"))["tables"].values():
-                self.objects.update({o["key"]: o for o in table["objects"]})
-        days = []
-        for key in self.objects:
-            if SOURCE_KEY.fullmatch(key):
-                days.append(date.fromisoformat("-".join(re.search(
-                    r"year=(\d{4})/month=(\d{2})/day=(\d{2})", key).groups())))
-        if not days:
+        inventory = json.loads(lineage.read_text(encoding="utf-8"))
+        if not isinstance(inventory, dict):
             raise BankError("dataset_unavailable")
-        self.first_date, self.last_date = min(days), max(days)
+        tables = inventory.get("tables")
+        if not isinstance(tables, dict) or not {"customers", "products", "transactions"}.issubset(tables):
+            raise BankError("dataset_unavailable")
+        self.objects = {}
+        for name, table in tables.items():
+            if not isinstance(name, str) or not isinstance(table, dict) or not isinstance(table.get("objects"), list):
+                raise BankError("dataset_unavailable")
+            objects = table["objects"]
+            for obj in objects:
+                if (not isinstance(obj, dict) or not isinstance(obj.get("key"), str)
+                    or type(obj.get("bytes")) is not int or obj["bytes"] < 0
+                    or not isinstance(obj.get("etag"), str) or not obj["etag"]
+                    or obj["key"] in self.objects
+                    or obj["key"].split("/")[0].removesuffix(".csv") != name):
+                    raise BankError("dataset_unavailable")
+                self.objects[obj["key"]] = obj
+            if table.get("fingerprint") != fingerprint(objects):
+                raise BankError("dataset_unavailable")
+        self.source_fingerprint = fingerprint(list(self.objects.values()))
+        if (inventory.get("fingerprint") != self.source_fingerprint
+            or manifest.get("source_fingerprint") != self.source_fingerprint
+            or manifest.get("source_validation") != inventory.get("source_validation", "legacy_inventory")
+            or not {"customers.csv", "products.csv"}.issubset(self.objects)):
+            raise BankError("dataset_unavailable")
+        quality = json.loads((build / "manifest.json").read_text(encoding="utf-8"))
+        if (not isinstance(quality, dict) or quality.get("run_id") != self.id or quality.get("source_fingerprint") != self.source_fingerprint
+            or quality.get("source_validation") != manifest.get("source_validation")
+            or quality.get("published") is not True or quality.get("contract_failures") != []):
+            raise BankError("dataset_unavailable")
+        cur = con.cursor()
+        try:
+            serving = sorted(file for bucket in self.bucket_files.values() for file in bucket)
+            paths = "[" + ", ".join(f"'{sql_path(p)}'" for p in serving) + "]"
+            # An ownership flag alone cannot justify the snapshot-wide anchor.
+            # Repeat the customer/product relationship before deriving its range.
+            bad_owners = cur.execute(
+                f"SELECT count(*) FROM read_parquet({paths}) t "
+                f"LEFT JOIN read_parquet('{sql_path(build / 'silver' / 'customers.parquet')}') c "
+                "ON c.customer_id=t.customer_id "
+                f"LEFT JOIN read_parquet('{sql_path(build / 'silver' / 'products.parquet')}') p "
+                "ON p.product_id=t.product_id WHERE t.ownership_valid "
+                "AND (c.customer_id IS NULL OR p.product_id IS NULL OR p.customer_id IS DISTINCT FROM t.customer_id)"
+            ).fetchone()[0]
+            source_keys = [r[0] for r in cur.execute(
+                f"SELECT DISTINCT _source_file FROM read_parquet({paths}) WHERE ownership_valid").fetchall()]
+            if bad_owners or any(not isinstance(key, str) or not SOURCE_KEY.fullmatch(key)
+                                 or key not in self.objects for key in source_keys):
+                raise BankError("dataset_unavailable")
+            dates = transaction_event_dates(cur, serving)
+        finally:
+            cur.close()
+        if not dates["ownership_valid_rows"] or dates["missing_event_dates"] or not dates["first"] or not dates["last"]:
+            raise BankError("dataset_unavailable")
+        # Legacy pinned snapshots can derive this from their validated serving
+        # rows. A supplied aggregate must describe those same rows and lineage.
+        recorded = manifest.get("transaction_event_dates")
+        if recorded is not None and (not isinstance(recorded, dict)
+            or type(recorded.get("ownership_valid_rows")) is not int
+            or type(recorded.get("missing_event_dates")) is not int
+            or recorded != {**dates, "source_fingerprint": self.source_fingerprint}):
+            raise BankError("dataset_unavailable")
+        self.first_date, self.last_date = date.fromisoformat(dates["first"]), date.fromisoformat(dates["last"])
+        self.event_dates = {key: dates[key] for key in ("first", "last", "basis", "calendar")}
 
 
 class Repository:
@@ -109,8 +165,24 @@ class Repository:
                 if self._snapshot is None or self._snapshot.id != build_id:
                     self._snapshot = Snapshot(build, self.con)
                 return self._snapshot
-        except (OSError, ValueError, KeyError, duckdb.Error):
+        except (OSError, ValueError, KeyError, TypeError, duckdb.Error):
             raise BankError("dataset_unavailable") from None
+
+    def assert_current_snapshot(self, expected_build: str) -> None:
+        """Recheck the published pointer immediately before a local write.
+
+        This is a point-in-time check. Saved receipts retain their original
+        snapshot; a later publication does not rewrite their provenance.
+        No Parquet, S3 or provider work runs under the SQLite writer gate.
+        """
+        try:
+            current = (self.config.data_dir / "CURRENT").read_text(encoding="utf-8").strip()
+            if not BUILD_ID.fullmatch(current):
+                raise BankError("dataset_unavailable")
+        except (OSError, UnicodeError):
+            raise BankError("dataset_unavailable") from None
+        if current != expected_build:
+            raise BankError("snapshot_changed")
 
     def _rows(self, snapshot: Snapshot, principal: Principal, where: str, params: list,
               limit: int) -> list[dict]:
@@ -144,6 +216,9 @@ class Repository:
         # Repeat owner checks independently of the materialized ownership_valid flag.
         if any(snapshot.products.get(r["product_id"], (None,))[0] != principal.customer for r in rows):
             raise BankError("data_quality_error")
+        if any(not isinstance(r["transaction_date"], datetime) or not isinstance(r["process_date"], date)
+               for r in rows):
+            raise BankError("data_quality_error")
         return rows
 
     def _visible(self, row: dict, snapshot: Snapshot) -> dict:
@@ -164,14 +239,31 @@ class Repository:
     def list_transactions(self, principal: Principal, start_date: str | None, end_date: str | None,
                           limit: int, cursor: str | None) -> dict:
         snapshot = self.snapshot()
-        start = date.fromisoformat(start_date) if start_date else max(snapshot.first_date, snapshot.last_date - timedelta(days=30))
-        end = date.fromisoformat(end_date) if end_date else snapshot.last_date
-        if end < start or (end - start).days > 30 or start < snapshot.first_date or end > snapshot.last_date:
+        # A partial request needs clarification. Only omission of both dates
+        # chooses the snapshot default; explicit dates are never shifted.
+        if (start_date is None) != (end_date is None):
             raise BankError("invalid_date_window")
-        where, params = "process_date BETWEEN ? AND ?", [start, end]
+        try:
+            for value in (start_date, end_date):
+                if value is not None and (not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value)):
+                    raise ValueError("calendar date required")
+            if start_date is None:
+                start = max(snapshot.first_date, snapshot.last_date - timedelta(days=SEARCH_CALENDAR_DAYS - 1))
+                end = snapshot.last_date
+            else:
+                start, end = date.fromisoformat(start_date), date.fromisoformat(end_date)
+        except ValueError:
+            raise BankError("invalid_date_window") from None
+        except OverflowError:
+            raise BankError("dataset_unavailable") from None
+        if (end < start or (end - start).days >= SEARCH_CALENDAR_DAYS
+            or start < snapshot.first_date or end > snapshot.last_date):
+            raise BankError("invalid_date_window")
+        where, params = "transaction_date::DATE BETWEEN ? AND ?", [start, end]
         if cursor:
             data = self.store.get(cursor, "cursor", principal)
-            if data["build"] != snapshot.id or data["start"] != start.isoformat() or data["end"] != end.isoformat():
+            if (data["build"] != snapshot.id or data["start"] != start.isoformat() or data["end"] != end.isoformat()
+                or data.get("basis") != "transaction_date" or data.get("anchor") != snapshot.last_date.isoformat()):
                 raise BankError("reference_unavailable")
             where += " AND (transaction_date < ?::TIMESTAMP OR (transaction_date = ?::TIMESTAMP AND transaction_id < ?))"
             params += [data["date"], data["date"], data["id"]]
@@ -185,9 +277,13 @@ class Repository:
             last = rows[limit - 1]
             next_cursor = self.store.put("cursor", principal, {
                 "build": snapshot.id, "start": start.isoformat(), "end": end.isoformat(),
+                "basis": "transaction_date", "anchor": snapshot.last_date.isoformat(),
                 "date": last["transaction_date"].isoformat(), "id": last["transaction_id"]})
         return {"transactions": items, "next_cursor": next_cursor,
-                "date_window": {"start": start.isoformat(), "end": end.isoformat(), "basis": "process_date"},
+                "date_window": {"start": start.isoformat(), "end": end.isoformat(), "basis": "transaction_date",
+                                "calendar": "source_timestamp_calendar_date", "anchor": snapshot.last_date.isoformat(),
+                                "max_calendar_days": SEARCH_CALENDAR_DAYS},
+                "snapshot_event_dates": dict(snapshot.event_dates),
                 "snapshot": snapshot.id, "freshness": "derived_snapshot", "read_only": True}
 
     def get_transaction(self, principal: Principal, handle: str, verify_source: bool) -> dict:
