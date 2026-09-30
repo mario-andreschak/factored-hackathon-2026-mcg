@@ -1,0 +1,19 @@
+# Optional integration with the already running FLUJO worker. This override
+# joins its network; it does not recreate the worker or grant Docker access.
+services:
+  frontend:
+    networks:
+      - default
+      - flujo
+    volumes:
+      - type: bind
+        source: ${BANKING_SIGNER_FILE:?Set BANKING_SIGNER_FILE to the existing private frontend signer}
+        target: /banking-config/frontend-signer.pem
+        read_only: true
+        bind:
+          create_host_path: false
+
+networks:
+  flujo:
+    external: true
+    name: ${FLUJO_NETWORK:-flujo-slack_default}

@@ -1,0 +1,43 @@
+name: hackathon-banking
+
+services:
+  frontend:
+    image: ${BANKING_IMAGE:-hackathon-banking-frontend:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:${BANKING_PORT:-43800}:8080"
+    environment:
+      BANKING_DATA_DIR: /banking-data
+      BANKING_CONFIG_FILE: /banking-config/frontend.json
+      BANKING_STATE_DIR: /banking-state
+      BANKING_PUBLIC_ORIGIN: ${BANKING_PUBLIC_ORIGIN:-http://localhost:43800}
+      BANKING_COOKIE_SECURE: ${BANKING_COOKIE_SECURE:-0}
+    volumes:
+      - type: bind
+        source: ${BANKING_DATA_DIR:?Set BANKING_DATA_DIR to the existing dataset directory}
+        target: /banking-data
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${BANKING_CONFIG_FILE:?Set BANKING_CONFIG_FILE to the private frontend.json file}
+        target: /banking-config/frontend.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - banking-frontend-state:/banking-state
+    read_only: true
+    tmpfs:
+      - /tmp:size=384m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 15s
+
+volumes:
+  banking-frontend-state:

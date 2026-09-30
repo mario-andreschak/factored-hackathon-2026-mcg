@@ -20,3 +20,39 @@ jobs:
       - run: python -m pip install -r requirements-mcp.txt -r requirements-ml.txt
       - run: python -m pytest -q tests scripts/banking_acceptance_load_test.py
       - run: python -m compileall -q banking_mcp pipeline demo scripts
+  frontend-api:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: frontend/requirements.txt
+      # The frontend and MCP are separate services with independent dependency
+      # pins. Test each service in the environment used by its own container.
+      - run: python -m pip install -r frontend/requirements.txt pytest
+      - run: python -m pip check
+      - run: python -m pytest -q frontend/tests
+      - run: python -m compileall -q frontend/server
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run format:check
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend

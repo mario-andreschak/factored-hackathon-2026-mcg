@@ -1,6 +1,12 @@
 # Factored AI & Data Hackathon 2026 — MCG
 
-This repository contains our data audit, DuckDB data pipeline, classifier baseline and read-only banking MCP for a FLUJO-powered **unrecognized-charge inquiry and simulated dispute-intake** workflow. The MCP is connected to local FLUJO; authenticated frontend integration and dispute intake remain to be implemented.
+This repository contains the data audit, DuckDB pipeline, classifier baseline, read-only banking MCP and **Savia**, a customer-facing online banking demo for FLUJO-powered unrecognized-charge inquiries. Savia uses real organizer products and transactions from the published silver/gold snapshot. Names are fictional demo aliases; banking actions and complaint submission remain unimplemented customer features.
+
+## Open the banking demo
+
+The local Docker deployment is available at [localhost:43800](http://localhost:43800). Choose a Colombia, México or Argentina profile and enter the configured demo access code (local default: `2026`). Explore balances, accounts/cards, product details, transaction filters and CSV export, or ask the FLUJO assistant about a movement.
+
+See [frontend setup and portable deployment](frontend/README.md) and [dataset, architecture and verification evidence](docs/ONLINE_BANKING_FRONTEND.md). The frontend runs alongside the existing FLUJO worker; its image contains neither customer rows nor service credentials.
 
 ## Start here
 
@@ -47,6 +53,7 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | `scripts/` | Reproducible profiling and FLUJO review probes |
 | `pipeline/` | DuckDB ingestion, ownership validation and customer-sharded snapshot outputs |
 | `banking_mcp/` | Read-only MCP server with verified per-call authority and bounded transaction reads |
+| `frontend/` | Savia React UI, authenticated snapshot API, FLUJO customer chat and portable Docker deployment |
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 
