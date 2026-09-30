@@ -295,8 +295,14 @@ digest, real TTL/JTI/replay, owner/session/conversation and durable revocation.
 `/internal/revoke` keeps its separate typed signed assertion and exact response.
 There is no direct action shortcut. Client-selected identifiers or tool
 annotations are not authority. The agreed frontend contract is
-`frontend-direct-mcp-contract/v1`, source receipt SHA256
-`ed513567f91a5acd75540b2ce8b700898fcba9b3dd3b01fc285b54f09149a76f`.
+`frontend-direct-mcp-contract/v3`, source receipt SHA256
+`674c99164cea5927bae17516572a07bac04257ea943a81da800c1737a9f926f0`,
+for the separately reviewed frontend draft PR31 at
+`7d684c20d8f71a437854d6b40aafd049227c1899`. This bank transport draft
+does not include that frontend branch or claim integrated acceptance. Its DNS
+example URL must be replaced by the matching literal-IP URL and approved IP
+certificate identity before this listener can accept it. Do not disable TLS or
+relax the listener's peer/Host gates to make an example connect.
 
 The frontend independently owns portal selection→raw ID/snapshot resolution,
 host UUID/CAS and consent, retry/recovery and exact receipt/HOF readback. MCP's

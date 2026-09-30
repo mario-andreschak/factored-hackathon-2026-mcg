@@ -22,6 +22,20 @@ as its package.
 
 ## Runtime gates still open
 
+The focused v0 plan prefers a stock remote HTTP language adapter only when the
+human's existing permitted model is already configured and usable through that
+adapter. Restored FLUJO source supports OpenAI, Gemini and Anthropic HTTP
+adapters; that source capability does not establish an available account, model
+binding, permission or live connection. No new provider, account, payment or key
+configuration is part of this source draft. The model placeholder remains a
+declaration. Review the actual saved model and empty bank-tool graph/catalog,
+minimized facts, endpoint/server authentication and network boundary before use.
+
+If permitted existing HTTP model access is unavailable, native CLI acceptance
+remains held. A privileged setuid launcher or native-tool wrapper is not supplied
+as a v0 feature. Bank process identity, one-child lifecycle and file isolation
+still require a reviewed package under either language-provider path.
+
 A language graph without MCP nodes does not confine FLUJO's ordinary native
 Codex process. The restored adapter does not select its restricted execution
 profile for an ordinary language flow; the CLI inherits FLUJO's environment and
@@ -51,3 +65,22 @@ currently exposed through the MCP result contract. Endpoint and signer pins
 alone cannot verify continuity of that ledger. State reset or replacement with
 pending or uncertain operations requires explicit reconciliation; it must not
 silently become a fresh prepare or confirmation.
+
+## Separate source dependency and acceptance work
+
+Frontend draft PR31 is pinned at
+`7d684c20d8f71a437854d6b40aafd049227c1899`, tree
+`8c8f32a4c34b35f6e7f7392a46ca32f83076859b`. It owns the trusted host,
+signer and standard MCP client and is not folded into this bank/source branch.
+Its reviewed contract-v3 receipt is SHA256
+`674c99164cea5927bae17516572a07bac04257ea943a81da800c1737a9f926f0`.
+The bank listener requires the frontend URL and verified certificate IP identity
+to match its explicit bind/port; the frontend's DNS example is not that effective
+configuration. No joined transport or installed graph is established here.
+
+Protected action/CAS/prepare-to-dispatch/RPC/assertion/readback joins and accepted
+guidance/fallback/context/provider provenance are still outstanding. Documentation,
+source hashes and fake tests do not capture those events. Recovery exhaustion and
+independent held-out/human ES/PT comparison also remain open. Preserve historical
+evaluation/scorer packets, PR28 and their pins; source-only compilation does not
+adapt or rescore them.
