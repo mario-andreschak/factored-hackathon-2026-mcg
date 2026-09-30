@@ -15,6 +15,7 @@ See [frontend setup and portable deployment](frontend/README.md) and [dataset, a
 - [Current operator demo](docs/BANKING_OPERATOR_DEMO.md)
 - [Hackathon audit and delivery plan](docs/HACKATHON_AUDIT_PLAN.md)
 - [Direct S3 data review](docs/DATA_REVIEW_2026-09-26.md)
+- [Channel clarifications on dataset quality (September 30)](docs/CHANNEL_DATA_CLARIFICATIONS_2026-09-30.md)
 - [Banking MCP direct S3 plan](docs/BANKING_MCP_S3_PLAN.md)
 - [FLUJO customer-bound banking run design](docs/FLUJO_BANKING_RUN_AUTH.md)
 - [FLUJO proposal review, alternatives and executed evidence](docs/FLUJO_BANKING_RUN_AUTH_REVIEW.md)
