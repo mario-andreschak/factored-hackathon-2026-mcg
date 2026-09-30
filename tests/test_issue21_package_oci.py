@@ -420,6 +420,112 @@ class OciFixtures(unittest.TestCase):
         with self.assertRaisesRegex(verifier.OciError, "^metadata_directory_must_be_fresh_receipt_child$"):
             verifier.export_metadata(self.root / ".." / "unexpected-export", self.root, metadata, receipt)
 
+    def annotation_files(self, location, value, *, absent=False):
+        def set_field(target):
+            if absent:
+                target.pop("annotations", None)
+            else:
+                target["annotations"] = value
+        def transform_index(index):
+            if location == "index":
+                set_field(index)
+            elif location == "selected_descriptor":
+                set_field(index["manifests"][0])
+        def transform_manifest(manifest):
+            if location == "manifest":
+                set_field(manifest)
+            elif location == "config_descriptor":
+                set_field(manifest["config"])
+            elif location == "layer_descriptor":
+                set_field(manifest["layers"][0])
+        return self.files(index_transform=transform_index, manifest_transform=transform_manifest)
+
+    def test_absent_and_empty_annotations_are_allowed_at_every_reviewed_location(self):
+        self.public_config()
+        for location in ("index", "manifest", "selected_descriptor", "config_descriptor", "layer_descriptor"):
+            for absent in (True, False):
+                with self.subTest(location=location, absent=absent):
+                    self.write(self.annotation_files(location, {}, absent=absent))
+                    metadata = {}
+                    receipt = self.check(metadata=metadata)
+                    self.assertEqual(receipt["status"], "passed")
+                    self.assertEqual(len(metadata), 3)
+
+    def test_only_selected_image_descriptor_accepts_exact_public_reference(self):
+        self.public_config()
+        reference = {"org.opencontainers.image.ref.name": "banking-preflight"}
+        self.write(self.annotation_files("selected_descriptor", reference))
+        metadata = {}
+        self.assertEqual(self.check(metadata=metadata)["status"], "passed")
+        self.assertEqual(json.loads(metadata["oci-index.json"])["manifests"][0]["annotations"], reference)
+        for location in ("index", "manifest", "config_descriptor", "layer_descriptor"):
+            with self.subTest(location=location):
+                self.write(self.annotation_files(location, reference))
+                output = {}
+                with self.assertRaisesRegex(verifier.OciError, "^unapproved_oci_annotations$"):
+                    self.check(metadata=output)
+                self.assertEqual(output, {})
+
+    def test_foreign_or_invalid_annotations_fail_before_raw_retention_at_every_location(self):
+        self.public_config()
+        invalid = [None, "fictional-secret", [], 1, {"credential": "fictional-secret"},
+                   {"org.opencontainers.image.ref.name": "unreviewed-reference"},
+                   {"org.opencontainers.image.ref.name": "banking-preflight", "extra": "fictional-secret"},
+                   {"org.opencontainers.image.ref.name": ["banking-preflight"]}]
+        for location in ("index", "manifest", "selected_descriptor", "config_descriptor", "layer_descriptor"):
+            for value in invalid:
+                with self.subTest(location=location, value=value):
+                    self.write(self.annotation_files(location, value))
+                    output = {}
+                    with self.assertRaisesRegex(verifier.OciError, "^unapproved_oci_annotations$"):
+                        self.check(metadata=output)
+                    self.assertEqual(output, {})
+                    self.assertFalse((self.root / "oci-metadata").exists())
+
+    def test_compatibility_failure_diagnostics_do_not_echo_sensitive_values(self):
+        cases = [("Volumes", {"/private/fictional-secret": {}}, "unsupported_raw_config_volumes",
+                  {"field": "Volumes", "present": True, "value_type": "object", "empty_object": False}),
+                 ("ArgsEscaped", True, "unsupported_raw_config_args_escaped",
+                  {"field": "ArgsEscaped", "present": True, "value_type": "boolean", "boolean": True}),
+                 ("ArgsEscaped", None, "unsupported_raw_config_args_escaped",
+                  {"field": "ArgsEscaped", "present": True, "value_type": "null", "null": True}),
+                 ("ArgsEscaped", "fictional-secret", "unsupported_raw_config_args_escaped",
+                  {"field": "ArgsEscaped", "present": True, "value_type": "string"}),
+                 ("StopSignal", "", "unsupported_raw_config_stop_signal",
+                  {"field": "StopSignal", "present": True, "value_type": "string", "blank": True}),
+                 ("StopSignal", "SIGQUIT", "unsupported_raw_config_stop_signal",
+                  {"field": "StopSignal", "present": True, "value_type": "string", "recognized_unix_signal": "SIGQUIT"}),
+                 ("StopSignal", "fictional-secret", "unsupported_raw_config_stop_signal",
+                  {"field": "StopSignal", "present": True, "value_type": "string"})]
+        for field, value, code, expected in cases:
+            with self.subTest(field=field, value=value):
+                self.public_config()
+                self.config["config"][field] = value
+                self.final["Config"] = copy.deepcopy(self.config["config"])
+                self.write(self.files())
+                output = {}
+                with self.assertRaisesRegex(verifier.OciError, "^" + code + "$") as found:
+                    self.check(metadata=output)
+                self.assertEqual(found.exception.safe_diagnostic, expected)
+                self.assertNotIn("fictional-secret", json.dumps(found.exception.safe_diagnostic))
+                self.assertEqual(output, {})
+
+    def test_compatibility_accepted_values_are_unchanged(self):
+        for field, accepted in (("Volumes", (None, {})), ("ArgsEscaped", (False,)),
+                                ("StopSignal", (None, "SIGTERM", "15"))):
+            for value in accepted:
+                with self.subTest(field=field, value=value):
+                    self.public_config()
+                    self.config["config"][field] = value
+                    self.final["Config"] = copy.deepcopy(self.config["config"])
+                    self.write(self.files())
+                    self.assertEqual(self.check(metadata={})["status"], "passed")
+            self.public_config()
+            self.config["config"].pop(field, None)
+            self.final["Config"] = copy.deepcopy(self.config["config"])
+            self.write(self.files())
+            self.assertEqual(self.check(metadata={})["status"], "passed")
+
     def test_local_main_refuses_before_reading_input_or_creating_receipt(self):
         output = self.root / "must-not-exist.json"
         with patch.dict("os.environ", {"GITHUB_ACTIONS": "false"}), \

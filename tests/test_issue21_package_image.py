@@ -1,5 +1,6 @@
 """Pure provenance checks. No Docker, banking imports or services."""
 import importlib.util
+import json
 from pathlib import Path
 import unittest
 
@@ -56,6 +57,83 @@ class FullBaseProvenance(unittest.TestCase):
                 final["Config"][key] = "changed"
                 with self.assertRaises(ValueError):
                     IMAGE.record(base, final, "a" * 40)
+
+    def test_daemon_observations_keep_exact_public_values_per_image(self):
+        base, final = self.pair()
+        base["Config"].update(ArgsEscaped=True, StopSignal="SIGTERM", Volumes=None)
+        final["Config"].update(ArgsEscaped=False, StopSignal="15", Volumes={})
+        receipt = IMAGE.record(base, final, "a" * 40)
+        self.assertEqual(receipt["baseDaemonCompatibility"], {
+            "ArgsEscaped": {"type": "bool", "value": True},
+            "StopSignal": {"type": "str", "value": "SIGTERM"},
+            "Volumes": {"type": "NoneType", "state": "null"}})
+        self.assertEqual(receipt["finalDaemonCompatibility"], {
+            "ArgsEscaped": {"type": "bool", "value": False},
+            "StopSignal": {"type": "str", "value": "15"},
+            "Volumes": {"type": "dict", "state": "empty", "count": 0}})
+        self.assertEqual(json.dumps(receipt), json.dumps(IMAGE.record(base, final, "a" * 40)))
+
+    def test_missing_observations_are_distinct_from_explicit_null(self):
+        base, final = self.pair()
+        final["Config"].update(ArgsEscaped=None, StopSignal=None, Volumes=None)
+        receipt = IMAGE.record(base, final, "a" * 40)
+        self.assertEqual(receipt["baseDaemonCompatibility"], {
+            key: {"type": "missing"} for key in ("ArgsEscaped", "StopSignal", "Volumes")})
+        self.assertEqual(receipt["finalDaemonCompatibility"]["ArgsEscaped"],
+            {"type": "NoneType", "value": None})
+        self.assertEqual(receipt["finalDaemonCompatibility"]["StopSignal"],
+            {"type": "NoneType", "value": None})
+
+    def test_empty_stop_signal_is_retained(self):
+        base, final = self.pair()
+        final["Config"]["StopSignal"] = ""
+        self.assertEqual(IMAGE.record(base, final, "a" * 40)["finalDaemonCompatibility"]["StopSignal"],
+            {"type": "str", "value": ""})
+
+    def test_unknown_values_and_volume_paths_are_never_exported(self):
+        base, final = self.pair()
+        final["Config"].update(ArgsEscaped="PRIVATE_FLAG_SENTINEL", StopSignal="PRIVATE_SIGNAL_SENTINEL",
+            Volumes={"/private/volume-sentinel": {"secret": "PRIVATE_VOLUME_SENTINEL"}})
+        final["Config"]["Env"].append("PRIVATE_ENV_SENTINEL=secret")
+        receipt = IMAGE.record(base, final, "a" * 40)
+        self.assertEqual(receipt["finalDaemonCompatibility"], {
+            "ArgsEscaped": {"type": "str"},
+            "StopSignal": {"type": "str", "review": "unreviewed"},
+            "Volumes": {"type": "dict", "state": "nonempty", "count": 1}})
+        serialized = json.dumps(receipt)
+        for secret in ("PRIVATE_FLAG_SENTINEL", "PRIVATE_SIGNAL_SENTINEL", "volume-sentinel",
+                "PRIVATE_VOLUME_SENTINEL", "PRIVATE_ENV_SENTINEL"):
+            self.assertNotIn(secret, serialized)
+
+    def test_non_boolean_args_escaped_is_not_coerced(self):
+        for value, name in ((0, "int"), (1, "int"), ([], "list"), ({}, "dict")):
+            with self.subTest(value=value):
+                base, final = self.pair()
+                final["Config"]["ArgsEscaped"] = value
+                observation = IMAGE.record(base, final, "a" * 40)["finalDaemonCompatibility"]["ArgsEscaped"]
+                self.assertEqual(observation, {"type": name})
+
+    def test_unreviewed_stop_signal_types_do_not_leak_values(self):
+        for value, name in ((15, "int"), (True, "bool"), (["PRIVATE_SIGNAL_SENTINEL"], "list"),
+                ({"secret": "PRIVATE_SIGNAL_SENTINEL"}, "dict")):
+            with self.subTest(type=name):
+                base, final = self.pair()
+                final["Config"]["StopSignal"] = value
+                receipt = IMAGE.record(base, final, "a" * 40)
+                self.assertEqual(receipt["finalDaemonCompatibility"]["StopSignal"],
+                    {"type": name, "review": "unreviewed"})
+                self.assertNotIn("PRIVATE_SIGNAL_SENTINEL", json.dumps(receipt))
+
+    def test_volume_container_summary_and_unreviewed_type_are_safe(self):
+        for value, expected in (([], {"type": "list", "state": "empty", "count": 0}),
+                (["/private/volume-sentinel"], {"type": "list", "state": "nonempty", "count": 1}),
+                ("/private/volume-sentinel", {"type": "str", "state": "unreviewed"})):
+            with self.subTest(type=expected["type"], state=expected["state"]):
+                base, final = self.pair()
+                final["Config"]["Volumes"] = value
+                receipt = IMAGE.record(base, final, "a" * 40)
+                self.assertEqual(receipt["finalDaemonCompatibility"]["Volumes"], expected)
+                self.assertNotIn("volume-sentinel", json.dumps(receipt))
 
 
 if __name__ == "__main__":

@@ -41,6 +41,10 @@ HISTORY_SAFETY_BASIS = (
 class OciError(ValueError):
     """Fixed error codes; never expose arbitrary archive/config contents."""
 
+    def __init__(self, code: str, *, safe_diagnostic: dict | None = None):
+        super().__init__(code)
+        self.safe_diagnostic = safe_diagnostic
+
 
 def insist(condition: bool, code: str) -> None:
     if not condition:
@@ -126,7 +130,18 @@ def read_json(archive: tarfile.TarFile, entries: dict, name: str) -> tuple[dict,
     return json_object(content), content
 
 
-def descriptor(value: object, media_types: set[str], *, platform_allowed: bool = False) -> dict:
+def approved_annotations(value: dict, *, public_reference_allowed: bool = False) -> None:
+    if "annotations" not in value:
+        return
+    annotations = value["annotations"]
+    allowed = {"org.opencontainers.image.ref.name": "banking-preflight"}
+    insist(isinstance(annotations, dict)
+           and (annotations == {} or (public_reference_allowed and annotations == allowed)),
+           "unapproved_oci_annotations")
+
+
+def descriptor(value: object, media_types: set[str], *, platform_allowed: bool = False,
+               public_reference_allowed: bool = False) -> dict:
     insist(isinstance(value, dict), "invalid_descriptor")
     allowed = {"mediaType", "digest", "size", "annotations"}
     if platform_allowed:
@@ -138,10 +153,7 @@ def descriptor(value: object, media_types: set[str], *, platform_allowed: bool =
     if "platform" in value:
         insist(value["platform"] == {"architecture": "amd64", "os": "linux"},
                "unsupported_platform")
-    if "annotations" in value:
-        insist(isinstance(value["annotations"], dict)
-               and all(isinstance(key, str) and isinstance(item, str)
-                       for key, item in value["annotations"].items()), "invalid_annotations")
+    approved_annotations(value, public_reference_allowed=public_reference_allowed)
     return value
 
 
@@ -243,6 +255,31 @@ def public_env(value: object, flujo: str) -> dict:
     return result
 
 
+def compatibility_diagnostic(runtime: dict, field: str) -> dict:
+    """Report only public scalar/structural facts, never arbitrary config text."""
+    value = runtime.get(field)
+    kinds = {type(None): "null", bool: "boolean", str: "string", dict: "object", list: "array",
+             int: "integer", float: "number"}
+    result = {"field": field, "present": field in runtime, "value_type": kinds.get(type(value), "other")}
+    if value is None:
+        result["null"] = True
+    elif type(value) is bool:
+        result["boolean"] = value
+    elif type(value) is dict:
+        result["empty_object"] = not value
+    elif field == "StopSignal" and type(value) is str:
+        signals = {"SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP", "SIGABRT", "SIGBUS", "SIGFPE",
+                   "SIGKILL", "SIGUSR1", "SIGSEGV", "SIGUSR2", "SIGPIPE", "SIGALRM", "SIGTERM",
+                   "SIGSTKFLT", "SIGCHLD", "SIGCONT", "SIGSTOP", "SIGTSTP", "SIGTTIN", "SIGTTOU",
+                   "SIGURG", "SIGXCPU", "SIGXFSZ", "SIGVTALRM", "SIGPROF", "SIGWINCH", "SIGIO",
+                   "SIGPWR", "SIGSYS", "SIGRTMIN", "SIGRTMAX"}
+        if value == "":
+            result["blank"] = True
+        elif value in signals:
+            result["recognized_unix_signal"] = value
+    return result
+
+
 def validate_raw_config(config: dict, daemon_config: dict, flujo: str, banking: str) -> dict:
     """Validate exact runtime fields; public build provenance is the history basis.
 
@@ -261,8 +298,15 @@ def validate_raw_config(config: dict, daemon_config: dict, flujo: str, banking: 
     expected_labels = public_labels(flujo, banking)
     insist(runtime.get("Labels") == expected_labels and daemon_config.get("Labels") == expected_labels,
            "unsafe_raw_config_labels")
-    insist(runtime.get("Volumes") in (None, {}) and runtime.get("ArgsEscaped", False) is False
-           and runtime.get("StopSignal") in (None, "SIGTERM", "15"), "unsupported_raw_runtime_config_values")
+    if runtime.get("Volumes") not in (None, {}):
+        raise OciError("unsupported_raw_config_volumes",
+                       safe_diagnostic=compatibility_diagnostic(runtime, "Volumes"))
+    if runtime.get("ArgsEscaped", False) is not False:
+        raise OciError("unsupported_raw_config_args_escaped",
+                       safe_diagnostic=compatibility_diagnostic(runtime, "ArgsEscaped"))
+    if runtime.get("StopSignal") not in (None, "SIGTERM", "15"):
+        raise OciError("unsupported_raw_config_stop_signal",
+                       safe_diagnostic=compatibility_diagnostic(runtime, "StopSignal"))
     ports = runtime.get("ExposedPorts")
     insist(ports is None or ports == {"4200/tcp": {}, "4201/tcp": {}}, "unsafe_raw_config_ports")
     healthcheck = runtime.get("Healthcheck")
@@ -362,14 +406,17 @@ def verify(archive_path: Path, final: dict, *, candidate: str, flujo: str, banki
                    and index.get("mediaType", INDEX_TYPE) == INDEX_TYPE
                    and not set(index) - {"schemaVersion", "mediaType", "manifests", "annotations"},
                    "unsupported_index")
+            approved_annotations(index)
             manifests = index.get("manifests")
             insist(isinstance(manifests, list) and len(manifests) == 1, "ambiguous_manifest_inventory")
-            selected = descriptor(manifests[0], {MANIFEST_TYPE}, platform_allowed=True)
+            selected = descriptor(manifests[0], {MANIFEST_TYPE}, platform_allowed=True,
+                                  public_reference_allowed=True)
             manifest, manifest_bytes = descriptor_json(archive, entries, selected)
             insist(type(manifest.get("schemaVersion")) is int and manifest["schemaVersion"] == 2
                    and manifest.get("mediaType") == MANIFEST_TYPE
                    and not set(manifest) - {"schemaVersion", "mediaType", "config", "layers", "annotations"},
                    "unsupported_manifest")
+            approved_annotations(manifest)
             config_descriptor = descriptor(manifest.get("config"), {CONFIG_TYPE})
             config, config_bytes = descriptor_json(archive, entries, config_descriptor)
             insist(config.get("architecture") == "amd64" and config.get("os") == "linux"
@@ -470,6 +517,8 @@ def main(argv: list[str] | None = None) -> int:
                    "proof_kind": "verified_oci_export_bridge", "status": "failed",
                    "failure": str(error) if isinstance(error, OciError) else "verification_failed",
                    "exception_type": type(error).__name__}
+        if isinstance(error, OciError) and error.safe_diagnostic is not None:
+            receipt["failure_diagnostic"] = error.safe_diagnostic
     args.out.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     print("OCI export bridge " + receipt["status"] + ". No image load or runtime acceptance.")
     return 0 if receipt["status"] == "passed" else 1

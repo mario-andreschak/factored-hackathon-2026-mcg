@@ -8,6 +8,35 @@ FLUJO = "51ff39fc5bac84cbbb49bbd2b21b5ab89de8b14b"
 BANKING = "71ac0f020303abfd0073302a148752f0d2c9f23b"
 CHECKPOINT = "banking-package-issue21/v2"
 SAFE_RUNTIME_FIELDS = ("Cmd", "Entrypoint", "WorkingDir", "User", "Healthcheck")
+PUBLIC_STOP_SIGNALS = frozenset(("", "SIGTERM", "15"))
+
+
+def daemon_compatibility_observations(config: dict) -> dict:
+    """Observe a small safe subset, without deciding OCI compatibility."""
+    observations = {}
+    for key in ("ArgsEscaped", "StopSignal", "Volumes"):
+        if key not in config:
+            observations[key] = {"type": "missing"}
+            continue
+        value = config[key]
+        observation = {"type": type(value).__name__}
+        if key == "ArgsEscaped":
+            if value is None or type(value) is bool:
+                observation["value"] = value
+        elif key == "StopSignal":
+            if value is None or (type(value) is str and value in PUBLIC_STOP_SIGNALS):
+                observation["value"] = value
+            else:
+                observation["review"] = "unreviewed"
+        elif value is None:
+            observation["state"] = "null"
+        elif type(value) in (dict, list):
+            observation["state"] = "nonempty" if value else "empty"
+            observation["count"] = len(value)
+        else:
+            observation["state"] = "unreviewed"
+        observations[key] = observation
+    return observations
 
 
 def record(base: dict, final: dict, candidate: str) -> dict:
@@ -40,6 +69,8 @@ def record(base: dict, final: dict, candidate: str) -> dict:
         "baseLayersRetained": True, "launcherRetained": True,
         "baseRuntime": {key: base["Config"].get(key) for key in SAFE_RUNTIME_FIELDS},
         "finalRuntime": {key: final["Config"].get(key) for key in SAFE_RUNTIME_FIELDS},
+        "baseDaemonCompatibility": daemon_compatibility_observations(base["Config"]),
+        "finalDaemonCompatibility": daemon_compatibility_observations(final["Config"]),
         "repoDigests": final.get("RepoDigests", []),
         "imageIdentityScope": "Docker daemon images only; not OCI config identity or archive Healthcheck preservation",
         "scope": "private packaging only; no deployment, model readiness or joined acceptance"}

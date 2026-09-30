@@ -66,6 +66,9 @@ joined browser-to-worker acceptance claim.
    bytes with descriptor sizes and hashes in the small artifact. Reject
    unexpected environment entries before retaining raw config; never redact
    it while claiming the original digest.
+   Reject foreign OCI annotations. Only the selected image descriptor may carry
+   the exact public `org.opencontainers.image.ref.name=banking-preflight`;
+   all other annotation maps must be absent or empty.
 
 ## Boundaries and artifacts
 
@@ -89,6 +92,11 @@ Failures retain the evidence produced before the failed step and remain failed
 or incomplete checkpoints. Dependency ranges and build installers still resolve
 at build time; recorded bytes identify the observed build, not bit-for-bit
 reproducibility from source pins alone.
+
+Runtime-metadata failures identify the rejected field with safe structural
+diagnostics. Image receipts also record separate base/final observations of
+`ArgsEscaped`, `StopSignal` and `Volumes`; unknown values and volume paths are
+omitted. These observations do not change the OCI acceptance rules.
 
 Only pure local source/helper checks are permitted:
 
