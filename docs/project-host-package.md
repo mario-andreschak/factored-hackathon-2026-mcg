@@ -69,14 +69,17 @@ silently become a fresh prepare or confirmation.
 ## Separate source dependency and acceptance work
 
 Frontend draft PR31 is pinned at
-`7d684c20d8f71a437854d6b40aafd049227c1899`, tree
-`8c8f32a4c34b35f6e7f7392a46ca32f83076859b`. It owns the trusted host,
+`0ff868dc5be71ada6c83fc846cbc8dc4bbd3d549`, tree
+`a2f7867d95648758de5fdfabba40872ca2099c6d`. Its application and test blobs
+remain identical to independently reviewed `7d684c20d8f71a437854d6b40aafd049227c1899`;
+only its contract document and endpoint example changed. It owns the trusted host,
 signer and standard MCP client and is not folded into this bank/source branch.
-Its reviewed contract-v3 receipt is SHA256
-`674c99164cea5927bae17516572a07bac04257ea943a81da800c1737a9f926f0`.
+Its reviewed contract-v4 receipt is SHA256
+`b4ca7331f8baf11b4db1a573266a0407dd99c53ba7a6a25e152c240d69911505`.
 The bank listener requires the frontend URL and verified certificate IP identity
-to match its explicit bind/port; the frontend's DNS example is not that effective
-configuration. No joined transport or installed graph is established here.
+to match its explicit bind/port. The aligned example uses deliberately invalid
+IP/port placeholders; no effective network/peer/certificate configuration was
+chosen. No joined transport or installed graph is established here.
 
 Protected action/CAS/prepare-to-dispatch/RPC/assertion/readback joins and accepted
 guidance/fallback/context/provider provenance are still outstanding. Documentation,
