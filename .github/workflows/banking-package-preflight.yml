@@ -104,12 +104,22 @@ jobs:
           skopeo inspect --raw "oci-archive:$PACKAGE_EVIDENCE_DIR/candidate.oci.tar" > "$PACKAGE_EVIDENCE_DIR/oci-manifest.json"
           cd "$PACKAGE_EVIDENCE_DIR"
           find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
-      - name: Preserve private evidence, including failures
+      - name: Preserve small private receipts and logs, including failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: banking-package-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/package-evidence/
-          retention-days: 3
-          compression-level: 0
+          name: banking-package-receipts-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/package-evidence/
+            !${{ runner.temp }}/package-evidence/candidate.oci.tar
+          retention-days: 7
+          compression-level: 6
           if-no-files-found: warn
+      - name: Preserve private OCI separately (no registry publication)
+        uses: actions/upload-artifact@v4
+        with:
+          name: banking-package-oci-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/package-evidence/candidate.oci.tar
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error

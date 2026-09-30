@@ -50,17 +50,21 @@ pulling an arbitrary registry/base image.
 
 ## Evidence
 
-The private Actions artifact contains source-context manifests, exact image IDs
+The small private Actions artifact contains source-context manifests, exact image IDs
 and layer identities, installed Python dependency/source/import inventories,
 compiled application hashes and adapter provenance, installed Node dependency
 inventory, stdio tool/schema inventory,
-build/inspection logs and a candidate OCI archive with its manifest and digests.
-Failed runs preserve the evidence produced before failure. No registry publication
-occurs. Artifacts expire after three days; retain needed receipts privately.
+build/inspection logs, the OCI manifest and archive digest. The candidate OCI
+archive is a separate private artifact, so receipt review needs no image download
+or local Docker. Failed runs preserve the evidence produced before failure.
+No registry publication occurs. Both artifacts expire after seven days; retain
+needed receipts privately.
 
 Node/Debian/uv installers and broad Python requirement ranges resolve during the
 build. Recorded image/content and installed dependency digests identify this
 observed build; the source pin is not a bit-for-bit reproducibility claim.
+Python dependency RECORD hashes identify the installed inventory, not downloaded
+wheel bytes. The OCI manifest/archive digests identify the actual image bytes.
 
 The normal FLUJO Dockerfile may install its ordinary toolchain. This workflow adds
 no dedicated restricted Codex binary and makes no restricted model readiness
@@ -83,7 +87,8 @@ python -B -m unittest discover -s tests -p 'test_package_*.py' -v
 ```
 
 Do not execute the installed-runtime verifier locally. Its banking imports and
-stdio child are guarded for Linux GitHub Actions.
+stdio child have a Linux/GITHUB_ACTIONS accidental-use guard. The actual evidence
+boundary is the hosted run in the private repository, not that environment flag.
 
 This preflight leaves main, existing workers, saved graphs, protected policies,
 datasets and action flags unchanged. Draft customer flow PR #17 is not part of
