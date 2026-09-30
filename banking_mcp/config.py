@@ -23,6 +23,9 @@ class Config(BaseModel):
     # An operator attests when the SANDBOX report ledger became complete. This
     # never represents bank-wide historical reporting coverage.
     sandbox_report_coverage_start: int | None = Field(default=None, ge=1)
+    # Trusted deployment approval, outside SQLite backups. Restore/import or
+    # uncertain volume continuity requires pause/drain and explicit reconciliation.
+    ledger_continuity_approved: bool = Field(default=False, strict=True)
     synthetic_evidence_file: Path | None = None
     max_active_reads: int = Field(default=8, ge=1, le=32)
     max_queued_reads: int = Field(default=512, ge=1, le=1024)

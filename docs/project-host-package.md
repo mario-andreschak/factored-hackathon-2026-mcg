@@ -60,11 +60,23 @@ authorized acceptance. This draft neither starts a listener nor claims they
 are solved.
 
 The bank's existing `sandbox_ledger_identity.generation` persists across restart
-with the same durable database. It changes with a new database, but is not
-currently exposed through the MCP result contract. Endpoint and signer pins
-alone cannot verify continuity of that ledger. State reset or replacement with
-pending or uncertain operations requires explicit reconciliation; it must not
-silently become a fresh prepare or confirmation.
+with the same durable database. Both existing JWT profiles now require its
+64 lowercase hex `ledger_generation`; delegated bindings retain it and the
+actual row is checked before authority mutation and inside action/readback
+transactions. The frozen Config's `ledger_continuity_approved` defaults OFF
+outside SQLite backups. A matching-generation older backup cannot prove
+continuity: trusted restore/import/replacement must pause/drain and quarantine
+before reopening, then explicitly reconcile pending/uncertain/acknowledged and
+revoked state, rotate the existing row, re-attest coverage, retire old authority
+and adopt a new host pin. No new discovery/reset endpoint or automatic adoption
+is supplied. See [the bank contract](../banking_mcp/README.md#ledger-continuity-source-contract).
+
+The corrected-source component tests use only temporary fictional SQLite,
+fixture Principals and a fake Repository. Config/JWT are replaced before source
+execution and JWT use/Authorizer construction are forbidden. These tests cover
+generation fences and selected actual SQLite transactions; they do not prove
+token/HTTP verification, transport, deployment, capacity or operator restore.
+Transport tests remain a separate fully mocked security/Service/SDK/TLS lane.
 
 ## Separate source dependency and acceptance work
 

@@ -158,6 +158,7 @@ sub: verified auth subject, mapped privately to a dataset customer
 iat, nbf, exp: integer seconds; nbf == iat; lifetime <= 60 seconds
 jti: new random unique ID for every attempted call
 session_id, conversation_id, run_id, graph_revision: trusted runtime context
+ledger_generation: mandatory existing ledger identity, exactly 64 lowercase hex characters
 tool: exact called banking tool name
 scope: ["bank:read"]
 args_sha256: hex SHA-256 of RFC 8785 canonical JSON of the raw business arguments
@@ -171,6 +172,49 @@ command. It is not an MCP tool. Authority never appears in argv or environment.
 The MCP independently verifies the assertion and revokes its shared SQLite session;
 existing processes consult that store before returning reads. Multiple FLUJO replicas
 need shared fenced identity, replay and reference storage.
+
+### Ledger continuity source contract
+
+Both `bank-mcp+jwt` and `bank-revoke+jwt` require the existing fourteen claims
+plus `ledger_generation`, with no extra claims. The verified Principal retains
+the generation; delegated capability, pending and handoff bindings include it.
+The standard tool arguments, `_meta` key and token/header profiles stay the same.
+The host must explicitly pin the actual private ledger generation in durable
+policy/session context and each revocation intent. Missing legacy pins and
+mismatches are never automatically adopted. `banking_status` is informational
+health, not proof of generation or continuity; no discovery endpoint is added.
+
+The frozen Config's strict boolean `ledger_continuity_approved` defaults to
+`false`. It is trusted configuration outside the SQLite backup. Delegated calls
+with missing, malformed or mismatched generation fail `authorization_denied`;
+matching calls under quarantine fail `action_unverified`. The bank checks actual
+persisted generation before session/JTI mutations, at entry and exit of each
+action/capability/readback transaction, and at final currentness fences.
+Read transactions use `BEGIN`; writes use `BEGIN IMMEDIATE`. No repository or
+provider work is moved under the writer lock.
+
+Private matching-generation revoke remains available during quarantine: atomic
+`StateStore.admit(principal, jti, revocation=True)` records the deny and replay
+nonce without creating a new session. Mismatched revoke changes no session,
+replay or revoke state. The host uses the intent's original durable generation,
+retains its local deny and leaves mismatched remote revocation unconfirmed.
+Raw store mutation helpers require versioned authority in delegated stores;
+operator/synthetic profiles retain their existing unversioned read bindings.
+
+Generation equality cannot detect an older already-attested backup: identity,
+coverage, cases, receipts and deny/replay rows can all roll back together. A
+trusted restore/import/replacement or uncertain volume continuity must first
+pause and drain, then set approval OFF outside that backup before reopening.
+Reopening an existing ledger with a missing/damaged identity never generates or
+attests a replacement identity. A fresh ledger gets its one existing identity
+but remains quarantined and unattested.
+
+Only explicit operator reconciliation of pending, uncertain, acknowledged and
+revoked state can release quarantine. It must rotate the existing identity row,
+invalidate old coverage and re-attest, retire old sessions/capabilities, and
+explicitly adopt the new host pin. There is no automatic clear, timestamp/hash
+heuristic, second generation ledger or reset/clear endpoint. This source change
+does not implement or establish the operational restore/reconciliation procedure.
 
 ## S3 and snapshot freshness
 
@@ -323,11 +367,10 @@ the corrected architecture. No observer/adapter injection into FLUJO is permitte
 Separating the bank UID alone does not isolate another customer's generic FLUJO
 conversation logs or environment from a native CLI sharing FLUJO's node UID.
 Exact native filesystem, exec, MCP/catalog and network confinement remains open.
-The existing durable sandbox ledger generation survives same-database restart,
-but it is not exposed by this MCP contract. Endpoint/certificate/signer pins do
-not prove continuity after ledger replacement. Reset/replacement with pending or
-uncertain operations requires reviewed generation binding and reconciliation;
-this source does not manufacture that binding or permit automatic replay.
+The existing durable sandbox ledger generation survives same-database restart.
+The signed generation and external continuity gate described above fence
+delegated access; endpoint/certificate/signer pins alone do not prove continuity.
+Operational reconciliation and deployment acceptance remain held.
 
 ### Register in FLUJO
 
@@ -346,13 +389,26 @@ streams.
 
 ## Verification and capacity
 
-Run `python -m pytest -q tests/test_banking_mcp.py tests/test_pipeline.py`.
-Tests cover argument tampering, forged/expired/replayed assertions, revocation during
+For the continuity source correction, 32 selected component tests passed in
+`tests/test_banking_ledger_continuity_source.py`. They load inspected security and
+Actions source with Config/JWT boundaries replaced before import, prohibit
+Authorizer construction/JWT use, and use only temporary fictional SQLite and a
+fake Repository. They cover denied authority mutations, generation rotation
+between closed transactions, committed attempt uncertainty, restored-backup
+quarantine, matching/mismatched revoke and independent persisted receipt reads.
+The binding serializer is a deterministic callback, not RFC8785/crypto proof.
+No Service, transport, SDK, worker, shared state or network runs in this lane.
+
+Earlier runtime suites (`tests/test_banking_mcp.py`, `tests/test_pipeline.py`)
+cover argument tampering, forged/expired/replayed assertions, revocation during
 reads, private handles/cursors, restart persistence, owner rechecks, changed snapshots,
 HTTP service/host/origin checks, conditional S3 verification and 500 interleaved
 synthetic reads. Operator tests cover missing/unknown selectors, unresolved correlation,
 A/B selection, foreign customer/thread handles, parallel calls and an actual shared
-stdio child. Snapshot inventory and connection shutdown are tested independently.
+stdio child. Those suites were not rerun for this correction; their legacy grant
+and policy fixtures need migration to the mandatory generation contract before
+later authorized runtime testing. Snapshot inventory and connection shutdown
+were tested independently in earlier work.
 See [earlier local integration evidence](../docs/BANKING_MCP_IMPLEMENTATION.md);
 those deployed checks predate the new operator contract.
 
