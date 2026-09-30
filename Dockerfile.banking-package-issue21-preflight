@@ -1,0 +1,20 @@
+# This is used only by the private remote packaging workflow. The base is the
+# COMPLETE pinned FLUJO Dockerfile build, never an existing worker/builder image.
+ARG FLUJO_IMAGE
+FROM ${FLUJO_IMAGE}
+USER root
+WORKDIR /opt/banking-mcp
+COPY bank-runtime/ ./
+RUN python3 -m venv .venv \
+    && .venv/bin/python -m pip install --no-cache-dir -r requirements-mcp.txt \
+    && .venv/bin/python -m pip check
+COPY packaging/ /opt/package-preflight/
+COPY source-context-manifest.json /opt/package-preflight/source-context-manifest.json
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+LABEL io.flujo.banking.source.revision="71ac0f020303abfd0073302a148752f0d2c9f23b" \
+      io.flujo.banking.package.scope="private-remote-preflight-no-model-no-action" \
+      io.flujo.banking.package.checkpoint="banking-package-issue21/v2"
+WORKDIR /app
+USER node
+# Inherit launcher/healthcheck/toolchains from the exact full FLUJO image.
+# CI overrides the entrypoint for inspection, without launching the app.
