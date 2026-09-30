@@ -2,5 +2,6 @@
 -r requirements-s3.txt
 duckdb==1.5.5
 mcp==1.30.0
+uvicorn==0.54.0
 PyJWT[crypto]==2.15.0
 rfc8785==0.1.4

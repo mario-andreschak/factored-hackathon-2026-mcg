@@ -4,7 +4,7 @@ permissions:
   contents: read
 jobs:
   customer-flow-source:
-    name: Customer flow source (${{ matrix.os }})
+    name: Customer language flow source (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: mario-andreschak/FLUJO
-          ref: 3037c1423f7d39ede4d4a9b50afae038e4dd7baa
+          ref: 3fccc557df97aba0e96ce28a8e6eebaa8e71d7d9
           path: .source-flujo
       - uses: actions/setup-node@v4
         with:
@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: demo/customer_v0/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: demo/customer_v0
-      - run: git fetch origin 974f92787f84fc65ae425f693f79213f82b513f6 f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344 2cf54ae5dd8bddfb875903ed61150a2b29853abe
+      - run: git fetch origin 33a07442bca62fdd438472610285dd8c427241e0
       - run: node build.cjs --audit-provenance
         working-directory: demo/customer_v0
       # Compile/validate Git blobs only. No FLUJO server, provider or MCP process.

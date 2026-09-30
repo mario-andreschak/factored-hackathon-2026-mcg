@@ -235,6 +235,79 @@ The default `serve` transport is stdio. HTTP remains an optional standalone tran
 it is not used by this FLUJO deployment. `Dockerfile.banking-mcp` is an optional
 standalone server image, not the worker installation path.
 
+### Optional private project host companion (source preparation)
+
+The source supports a companion standard MCP HTTP transport in the **same bank
+process** while FLUJO retains its ordinary stdio registration. Both transports
+share one original `Service`, `Authorizer`, state store, admission semaphore and
+event loop. One outer owner closes the Service after both transports drain.
+This does not load banking code into FLUJO or attach another client to its pipe.
+
+The companion is disabled by default. Its project-only config fields are
+`private_host_bind`, `private_host_port`, `private_host_clients`,
+`private_host_cert_file` and `private_host_key_file`. Enabling it
+requires delegated mode, an explicit literal IPv4 loopback/RFC1918 interface,
+port1024–65535, and one to16 distinct explicit private caller IPv4 addresses.
+All fields must be configured together. Wildcard/public/DNS binds and
+partial configurations fail closed. `--transport` must remain `stdio`.
+The existing standalone `streamable-http` mode stays separate.
+
+Do not assume loopback crosses frontend/worker network namespaces. A deployment
+must review actual fixed private interface/peer addresses, reachability and the
+absence of host port publication. No forwarding sidecar, second banking child or
+remote FLUJO registration is supplied. The companion accepts only configured
+peer addresses and the exact bind-address Host header; Origin-bearing requests,
+duplicate Authorization headers and forwarded identity are rejected.
+
+Private TCP always uses TLS. The certificate and key must be absolute, unlinked,
+single-link regular files owned by the bank process UID with mode0400. The host
+client must verify/pin the expected bank certificate and target identity; trusting
+only a bearer on a private IP is insufficient because another process could
+replace a listener and collect signed calls or forge results. No HTTP or
+verification-disabled fallback is supplied by this companion. Frontend trust
+configuration must be reviewed alongside the listener; it is not established
+by this server source alone.
+
+Before constructing the Service or opening a listener, the CLI holds an
+exclusive nonblocking POSIX lock in the bank-owned0700 state directory. The
+lock is a single-link owned0600 regular file, opened without following links.
+Duplicate invocations fail closed without replacing an endpoint or Service.
+The lock remains held through shutdown. Default stdio uses no companion lock.
+
+The host uses the existing standard stateless JSON `/mcp` initialize, initialized
+notification and `tools/call` protocol. A service bearer gates the transport;
+customer authority is the fresh signed `com.flujo.bank/assertion` in actual MCP
+request `_meta`. Original bank checks retain exact tool/scope/RFC8785 argument
+digest, real TTL/JTI/replay, owner/session/conversation and durable revocation.
+`/internal/revoke` keeps its separate typed signed assertion and exact response.
+There is no direct action shortcut. Client-selected identifiers or tool
+annotations are not authority. The agreed frontend contract is
+`frontend-direct-mcp-contract/v1`, source receipt SHA256
+`ed513567f91a5acd75540b2ce8b700898fcba9b3dd3b01fc285b54f09149a76f`.
+
+The frontend independently owns portal selection→raw ID/snapshot resolution,
+host UUID/CAS and consent, retry/recovery and exact receipt/HOF readback. MCP's
+txn12 projection is unchanged and is neither the portal txn24 reference nor a
+selection handle. Host-run provenance is separate from FLUJO's language run.
+Only minimized verified display facts may reach generic language chat.
+
+**No activation or runtime acceptance is claimed.** The stock native model CLI
+and bank child can share UID/environment access. An empty graph tool list,
+read-only mount or neutral cwd does not establish bank-secret/data isolation.
+Bank config/data/state/signing/bearer authority must be inaccessible to the model
+identity through reviewed OS process/file isolation, and absent from its inherited
+environment. Private network and UID launch/EOF/parent-death behavior also remain
+deployment gates. Historical51ff/6ebe/b774 package evidence does not transfer to
+the corrected architecture. No observer/adapter injection into FLUJO is permitted.
+Separating the bank UID alone does not isolate another customer's generic FLUJO
+conversation logs or environment from a native CLI sharing FLUJO's node UID.
+Exact native filesystem, exec, MCP/catalog and network confinement remains open.
+The existing durable sandbox ledger generation survives same-database restart,
+but it is not exposed by this MCP contract. Endpoint/certificate/signer pins do
+not prove continuity after ledger replacement. Reset/replacement with pending or
+uncertain operations requires reviewed generation binding and reconciliation;
+this source does not manufacture that binding or permit automatic replay.
+
 ### Register in FLUJO
 
 For the existing Linux FLUJO container, after installing code and mounts:
