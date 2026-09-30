@@ -53,6 +53,24 @@ a deployed tool link, **4–6 slides** and a short mandatory demonstration video
 submitted to `hackathon.admin@factored.ai`. Preparing these artifacts does not
 authorize the supervisor to send the submission email.
 
+## Team completion target and contingency
+
+The team aims to finish the hackathon contribution by **October 3, 2026,
+23:59 UTC-5** (**October 4, 04:59 UTC**). Reserve October 4 and 5
+(UTC-5 calendar days) as a last-resort buffer for critical fixes, final
+verification and submission. Do not plan new scope for those days. The
+organizer's October 5 closing hour and timezone remain unconfirmed; submit
+before the actual organizer cutoff rather than assuming all of October 5 is
+available.
+
+The user authorizes the **SUPERVISOR** to spin up additional agents when
+necessary, including testing and independent review agents, to find and close
+missed setup or delivery gaps. The user reports unlimited usage for the next
+24 hours from this September 30 request, so prioritize parallel work that can
+help meet the October 3 target. Coordinate assignments and verify results
+against the same product, safety and evidence gates in this guide. This
+staffing authorization does not change merge or submission authority below.
+
 The [delivery plan](HACKATHON_AUDIT_PLAN.md) supplies the selected roadmap. FLUJO,
 MCP, signed assertions, query/page limits, the 120-case evaluation target and the
 500-customer capacity target are **team choices**, not organizer mandates. Agents,
