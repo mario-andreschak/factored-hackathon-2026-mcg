@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import hashlib
 import json
 import os
 import threading
@@ -54,6 +55,7 @@ class FixtureProvider:
         self.port, self.token = port, token
         self.calls = 0
         self.rejections = 0
+        self.accepted_routing = {}  # private in-memory IDs/hashes, never prompts or credentials
         self.lock = threading.Lock()
         self.server = self.thread = None
 
@@ -85,11 +87,23 @@ class FixtureProvider:
                     result, status = {"error": {"message": "Fixture request rejected."}}, 400
                     streaming = False
                 raw = stream_chunks(result) if streaming else json.dumps(result, separators=(",", ":")).encode()
-                self.send_response(status)
-                self.send_header("Content-Type", "text/event-stream" if streaming else "application/json")
-                self.send_header("Content-Length", str(len(raw)))
-                self.end_headers()
-                self.wfile.write(raw)
+                try:
+                    self.send_response(status)
+                    self.send_header("Content-Type", "text/event-stream" if streaming else "application/json")
+                    self.send_header("Content-Length", str(len(raw)))
+                    self.end_headers()
+                    self.wfile.write(raw)
+                    self.wfile.flush()
+                    if status == 200:
+                        call = result["choices"][0]["message"]["tool_calls"][0]
+                        with parent.lock:
+                            parent.accepted_routing[call["id"]] = {
+                                "function": call["function"]["name"],
+                                "arguments_sha256": hashlib.sha256(call["function"]["arguments"].encode()).hexdigest(),
+                                "wire_sha256": hashlib.sha256(raw).hexdigest()}
+                except OSError:
+                    with parent.lock:
+                        parent.rejections += 1
 
         self.server = ThreadingHTTPServer(("127.0.0.1", self.port), Handler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)

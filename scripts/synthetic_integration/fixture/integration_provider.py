@@ -12,6 +12,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import signal
@@ -24,7 +25,8 @@ import zipfile
 from contract import require, require_runtime_release, strict_json
 from dataset import scoped_path
 from deterministic_provider import FixtureProvider
-from observer_adapter import LedgerAdapter, canonical, one, read_db, token_from_cookie, transport_counts
+from observer_adapter import (LedgerAdapter, canonical, one, read_db, token_from_cookie, transport_counts,
+                              UUID4, complete_bootstrap_log, verify_bootstrap_records)
 
 FIXTURE_ROOT = Path("/opt/integration/fixture")
 FRONT_PORT, WORKER_PORT, MODEL_PORT, SANDBOX_PORT = 8200, 4200, 8202, 8203
@@ -59,6 +61,7 @@ class Provider:
         self.worker = self.front_thread = self.front_server = self.model = None
         self.loop = self.app = None
         self.generations = set()
+        self.bootstrap_receipts = {}  # private minimal validated projections only
 
     def _guard(self):
         return require_runtime_release(dict(os.environ))
@@ -102,7 +105,7 @@ class Provider:
         code, result = browser.request("POST", "/api/auth/login", self.credentials("es"))
         require(code == 200 and result.get("authenticated") is True, "initial_fixture_login")
         self.bind_selection("es", browser.cookie_header(), "normal")
-        require(self.model.calls > 0, "ordinary_flow_provider_not_called")
+        require(self.bootstrap_receipts, "ordinary_flow_bootstrap_not_verified")
 
     def _configure(self):
         from cryptography.hazmat.primitives import serialization
@@ -300,15 +303,22 @@ class Provider:
         body = {"message": "Consulta sintética." if actor == "es" else "Consulta sintética em português."}
         if reference is not None:
             body["transaction_reference"] = reference
-        calls_before = self.model.calls
-        code, _ = self._private_http(self.frontend_origin, "POST", "/api/chat/messages", body, {"Cookie": cookie})
-        require(code == 200 and self.model.calls > calls_before, "per_session_ordinary_chat_bootstrap")
+        with read_db(paths.frontend_chat_db) as db:
+            require(db.execute("SELECT count(*) FROM chat_sessions WHERE session_id=?", (session.session_id,)).fetchone()[0] == 0,
+                    "fresh_bootstrap_session_required")
+        with self.model.lock:
+            issued_before = set(self.model.accepted_routing)
+        code, reply = self._private_http(self.frontend_origin, "POST", "/api/chat/messages", body, {"Cookie": cookie})
+        require(code == 200 and reply.get("mode") == "flujo" and reply.get("status") == "completed",
+                "per_session_completed_ordinary_chat_bootstrap")
         with read_db(paths.frontend_chat_db) as db:
             row = one(db, "SELECT * FROM chat_sessions WHERE session_id=?", (session.session_id,))
         owner = frontend_owner(self.template["frontendIssuer"], profile["customer"], self.model_name)
         require(row["owner"] == owner and row["subject"] == row["customer_id"] == profile["customer"]
                 and row["expires"] == session.session_exp and row["revoked"] == 0
                 and isinstance(row["conversation_id"], str), "actual_chat_session_binding")
+        self._verify_bootstrap(session.session_id, row["conversation_id"], issued_before,
+                               reply=reply, subject=profile["customer"])
         scope = FixtureScope(fixture_id=self.phase, source_fingerprint=self.metadata["source_fingerprint"],
                     profile_id=profile["profile"], worker_origin=self.worker_origin, issuer=self.template["frontendIssuer"],
                     subject=profile["customer"], frontend_session_id=session.session_id, frontend_session_exp=session.session_exp,
@@ -329,6 +339,44 @@ class Provider:
         self.contexts[session.session_id] = context
         self.latest[actor] = context
         return context
+
+    def _verify_bootstrap(self, session_id, conversation, issued_before, *, reply, subject):
+        self._guard()
+        require(isinstance(conversation, str) and re.fullmatch(UUID4, conversation) is not None,
+                "bootstrap_conversation_invalid")
+        workspace = self.root / "flujo-data/workspaces" / self.template["workspace"] / "db"
+        state_path = workspace / "conversations" / (conversation + ".json")
+        log_path = workspace / "conversation-logs" / (conversation + ".jsonl")
+        # Exact stock BankingStore.filename('owners', conversation), read only.
+        owner_path = self.root / "adapter-state" / hashlib.sha256(self.deployment.encode()).hexdigest() / "owners" / (
+            hashlib.sha256(conversation.encode()).hexdigest() + ".json")
+        expected_owner = {"issuer": self.template["frontendIssuer"], "subject": subject, "graph": self.graph_hash,
+                          "deployment": self.deployment, "workspace": self.template["workspace"]}
+        deadline = time.monotonic() + 3
+        # Stock log appends can still be flushing after the synchronous response.
+        # Poll the actual read-only files; never write or fabricate terminal state.
+        while True:
+            try:
+                for path in (state_path, log_path, owner_path):
+                    scoped_path(path)
+                state_raw, log_raw, owner_raw = state_path.read_bytes(), log_path.read_bytes(), owner_path.read_bytes()
+                require(len(state_raw) <= 4 * 1024 * 1024 and len(owner_raw) <= 4096, "bootstrap_private_record_limit")
+                events = complete_bootstrap_log(log_raw)
+                with self.model.lock:
+                    require(self.model.rejections == 0, "bootstrap_provider_rejected_or_send_failed")
+                    issued = {key: value for key, value in self.model.accepted_routing.items() if key not in issued_before}
+                if events and any(event.get("type") == "run:done" for event in events) and issued:
+                    break
+            except FileNotFoundError:
+                pass  # actual stock files may not yet exist while appends flush
+            require(time.monotonic() < deadline, "bootstrap_terminal_log_not_flushed")
+            time.sleep(0.05)
+        proof = verify_bootstrap_records(strict_json(state_raw), events, graph=self.graph,
+                    conversation=conversation, accepted_routing=issued, reply=reply, provider_rejections=self.model.rejections,
+                    owner=strict_json(owner_raw), expected_owner=expected_owner)
+        self.bootstrap_receipts[session_id] = {**proof, "state_sha256": hashlib.sha256(state_raw).hexdigest(),
+                                               "log_sha256": hashlib.sha256(log_raw).hexdigest(),
+                                               "owner_sha256": hashlib.sha256(owner_raw).hexdigest()}
 
     def _context(self, actor, cookie):
         self._guard()

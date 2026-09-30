@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 import hashlib
 import json
+import re
 from pathlib import Path
 import sqlite3
 import time
@@ -15,6 +16,93 @@ from dataset import scoped_path
 TOOL_NAMES = frozenset({"banking_status", "list_my_transactions", "get_my_transaction",
     "prepare_unrecognized_charge", "confirm_simulated_intake", "read_intake_receipt",
     "create_verified_handoff", "read_verified_handoff"})
+UUID4 = r"[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}"
+
+
+def complete_bootstrap_log(raw: bytes) -> list[dict] | None:
+    """Wait on partial stock appends; reject malformed complete records."""
+    require(len(raw) <= 4 * 1024 * 1024, "bootstrap_private_record_limit")
+    if not raw or not raw.endswith(b"\n"):
+        return None
+    return [strict_json(line) for line in raw.splitlines()]
+
+
+def verify_bootstrap_records(state: dict, events: list[dict], *, graph: dict, conversation: str,
+                             accepted_routing: dict, reply: dict, provider_rejections: int,
+                             owner: dict, expected_owner: dict) -> dict:
+    """Validate independent stock conversation/log records against issued routing.
+
+    Callers must obtain these by read-only reads of the actual worker workspace,
+    after the cookie-bound frontend chat response. Fixture call counts alone do
+    not establish runFlow or Finish admission.
+    """
+    require(reply.get("mode") == "flujo" and reply.get("status") == "completed"
+            and type(provider_rejections) is int and provider_rejections == 0, "bootstrap_frontend_completed_required")
+    require(owner == expected_owner and set(owner) == {"issuer", "subject", "graph", "deployment", "workspace"},
+            "bootstrap_stock_owner_required")
+    require(isinstance(conversation, str) and re.fullmatch(UUID4, conversation) is not None
+            and state.get("conversationId") == conversation and state.get("flowId") == graph["id"]
+            and state.get("flowSnapshot") == graph and state.get("status") == "completed"
+            and state.get("currentNodeId") == "finish" and state.get("source") == "api"
+            and state.get("executionExtensionOwned") is True and not state.get("lastError")
+            and not state.get("isCancelled") and not state.get("capped"), "bootstrap_terminal_state_required")
+    run_id = state.get("logicalRunId")
+    recovery = state.get("recovery", {})
+    require(isinstance(run_id, str) and re.fullmatch(UUID4, run_id) is not None
+            and recovery.get("runId") == run_id and recovery.get("classification") == "completed",
+            "bootstrap_completed_run_required")
+    require(len(accepted_routing) == 1, "bootstrap_one_accepted_routing_required")
+    issued_id, issued = next(iter(accepted_routing.items()))
+    require(issued.get("function") == "handoff_to_finish"
+            and issued.get("arguments_sha256") == hashlib.sha256(b"{}").hexdigest()
+            and isinstance(issued.get("wire_sha256"), str)
+            and re.fullmatch(r"[a-f0-9]{64}", issued["wire_sha256"]) is not None, "bootstrap_issued_routing_invalid")
+    calls = [call for message in state.get("messages", []) if message.get("role") == "assistant"
+             for call in message.get("tool_calls", []) if call.get("id") == issued_id]
+    require(len(calls) == 1 and calls[0].get("type") == "function"
+            and calls[0].get("function", {}).get("name") == "handoff_to_finish"
+            and strict_json(calls[0]["function"].get("arguments", "")) == {}, "bootstrap_consumed_routing_required")
+    results = [message for message in state.get("messages", []) if message.get("role") == "tool"
+               and message.get("tool_call_id") == issued_id]
+    require(len(results) == 1 and strict_json(results[0].get("content", "")) == {
+                "status": "Handoff processed", "targetNodeId": "finish"}, "bootstrap_routing_result_required")
+    require(events and all(event.get("conversationId") == conversation and type(event.get("seq")) is int
+            and event["seq"] >= 0 for event in events)
+            and all(after["seq"] > before["seq"] for before, after in zip(events, events[1:])),
+            "bootstrap_event_identity_or_order")
+    starts = [i for i, event in enumerate(events) if event.get("type") == "run:start"]
+    require(len(starts) == 1 and events[starts[0]].get("flowId") == graph["id"], "bootstrap_normal_run_start_required")
+    run_events = events[starts[0]:]
+    require(not any(event.get("type") == "error" for event in run_events), "bootstrap_run_error")
+    nodes = [(event["type"], event.get("node", {}).get("nodeId")) for event in run_events
+             if event.get("type") in {"node:enter", "node:exit"}]
+    require(nodes == [(kind, node) for node in ("start", "process", "finish") for kind in ("node:enter", "node:exit")],
+            "bootstrap_start_process_finish_required")
+    exits = [event for event in run_events if event.get("type") == "node:exit"
+             and event.get("node", {}).get("nodeId") == "finish"]
+    done = [event for event in run_events if event.get("type") == "run:done"]
+    require(len(exits) == len(done) == 1 and exits[0].get("action") == "FINAL_RESPONSE"
+            and done[0].get("status") == "completed" and done[0]["seq"] > exits[0]["seq"],
+            "bootstrap_finish_completion_required")
+    transitions = [event for event in run_events if event.get("type") == "recovery:transition"]
+    terminal = [event for event in transitions if event.get("recovery", {}).get("classification") == "completed"]
+    require([event.get("recovery", {}).get("classification") for event in transitions] == ["running", "completed"]
+            and all(event.get("recovery", {}).get("runId") == run_id for event in transitions)
+            and len(terminal) == 1 and exits[0]["seq"] < terminal[0]["seq"] < done[0]["seq"],
+            "bootstrap_same_run_terminal_transition_required")
+    handoffs = [event for event in run_events if event.get("type") == "handoff"
+                and event.get("from", {}).get("nodeId") == "process"]
+    process_exit = next(event for event in run_events if event.get("type") == "node:exit"
+                        and event.get("node", {}).get("nodeId") == "process")
+    finish_enter = next(event for event in run_events if event.get("type") == "node:enter"
+                        and event.get("node", {}).get("nodeId") == "finish")
+    require(len(handoffs) == 1 and handoffs[0].get("toNodeId") == "finish"
+            and handoffs[0].get("edgeId") == "process-finish"
+            and process_exit["seq"] < handoffs[0]["seq"] < finish_enter["seq"],
+            "bootstrap_finish_handoff_required")
+    return {"status": "completed", "finish_verified": True, "logical_run_sha256": hashlib.sha256(run_id.encode()).hexdigest(),
+            "conversation_sha256": hashlib.sha256(conversation.encode()).hexdigest(),
+            "routing_wire_sha256": issued["wire_sha256"], "finish_sequence": exits[0]["seq"], "done_sequence": done[0]["seq"]}
 
 
 def token_from_cookie(header: str) -> str:

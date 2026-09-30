@@ -13,7 +13,8 @@ import re
 import subprocess
 import zipfile
 
-from contract import BANK, DATASET_FILES, FIXTURE_PIN_SHA, FRONTEND_FILES, FRONTEND_GATE_HEAD, require, safe_path
+from contract import (BANK, DATASET_FILES, FIXTURE_PIN_SHA, FRONTEND_FILES, FRONTEND_GATE_HEAD,
+                      require, safe_path, validate_remote, strict_json)
 
 FIXTURE_FILES = ("deterministic_provider.py", "dispatch_observer.cjs", "fixture_setup.py", "flow-snapshot.json",
                  "integration_provider.py", "observer_adapter.py", "policy-template.json")
@@ -76,9 +77,10 @@ def publish_source(files: dict[str, bytes], manifest: dict, destination: Path) -
             info.compress_type = zipfile.ZIP_DEFLATED
             archive.writestr(info, raw)
     (destination / "source-manifest.json").write_bytes(manifest_raw)
-    identities = {"schema": "private-synthetic-source-review/v1", "source_head": manifest["source_head"],
+    identities = {"schema": "private-synthetic-source-review/v2", "source_head": manifest["source_head"],
                   "execution_enabled": False, "runtime_claims": 0, "hosted_artifact": None,
-                  "files": len(files), "zip_sha256": hashlib.sha256(zip_path.read_bytes()).hexdigest(),
+                  "files": len(files), "inner_preview_zip_sha256": hashlib.sha256(zip_path.read_bytes()).hexdigest(),
+                  "digest_scope": "local_preview_zip_not_github_artifact_archive",
                   "manifest_sha256": hashlib.sha256(manifest_raw).hexdigest(),
                   **{field: manifest["files"]["fixture/" + filename] for filename, field in (
                       ("flow-snapshot.json", "graph_sha256"), ("policy-template.json", "policy_template_sha256"),
@@ -88,6 +90,47 @@ def publish_source(files: dict[str, bytes], manifest: dict, destination: Path) -
                       ("observer_adapter.py", "observer_adapter_sha256"))}}
     (destination / "source-review.json").write_text(json.dumps(identities, indent=2) + "\n", encoding="utf-8", newline="\n")
     return identities
+
+
+def hosted_publication(preview: dict, env: dict[str, str]) -> dict:
+    """Metadata only: label actual upload outputs separately from local ZIP bytes.
+
+    This receipt records producer outputs. The runtime consumer still verifies
+    the completed successful run, actual GitHub artifact metadata and downloaded
+    outer ZIP independently; this function grants no execution authorization.
+    """
+    validate_remote(env)
+    require(preview.get("schema") == "private-synthetic-source-review/v2"
+            and preview.get("digest_scope") == "local_preview_zip_not_github_artifact_archive"
+            and "zip_sha256" not in preview and preview.get("hosted_artifact") is None
+            and preview.get("source_head") == env.get("GITHUB_SHA")
+            and re.fullmatch(r"[a-f0-9]{40}", preview["source_head"]) is not None,
+            "preview_source_identity_required")
+    for key in ("inner_preview_zip_sha256", "manifest_sha256"):
+        require(isinstance(preview.get(key), str) and re.fullmatch(r"[a-f0-9]{64}", preview[key]) is not None,
+                "preview_digest_required")
+    for key in ("GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT", "SOURCE_ARTIFACT_ID"):
+        require(re.fullmatch(r"[1-9][0-9]*", env.get(key, "")) is not None, "source_publication_id_required")
+    outer_digest = env.get("SOURCE_ARTIFACT_DIGEST", "")
+    require(re.fullmatch(r"[a-f0-9]{64}", outer_digest) is not None, "outer_artifact_digest_required")
+    return {"schema": "private-synthetic-hosted-source-publication/v1", "execution_enabled": False,
+            "source_head": preview["source_head"], "run_id": int(env["GITHUB_RUN_ID"]),
+            "run_attempt": int(env["GITHUB_RUN_ATTEMPT"]), "run_conclusion_independently_verified": False,
+            "inner_preview_zip_sha256": preview["inner_preview_zip_sha256"],
+            "manifest_sha256": preview["manifest_sha256"],
+            "outer_github_artifact": {"artifact_id": int(env["SOURCE_ARTIFACT_ID"]),
+                "zip_sha256": outer_digest, "digest_scope": "github_downloadable_artifact_archive",
+                "name": "private-synthetic-source-" + preview["source_head"]},
+            "checkpoint_bundle_zip_sha256_source": "outer_github_artifact.zip_sha256",
+            "independent_artifact_metadata_and_download_verification_required": True}
+
+
+def record_hosted_publication(directory: Path, env: dict[str, str]) -> None:
+    validate_remote(env)
+    preview = strict_json((directory / "source-review.json").read_bytes())
+    result = hosted_publication(preview, env)
+    with (directory / "hosted-publication.json").open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(json.dumps(result, indent=2) + "\n")
 
 
 if __name__ == "__main__":

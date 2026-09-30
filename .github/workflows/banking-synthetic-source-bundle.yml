@@ -31,9 +31,26 @@ jobs:
         run: python -B scripts/synthetic_integration/assemble_source.py --repo "$GITHUB_WORKSPACE" --frontend-repo "$GITHUB_WORKSPACE/frontend-source" --source-head "$GITHUB_SHA" --output "$RUNNER_TEMP/source-review"
       - name: Extract exact code inventory for the outer GitHub artifact
         run: python -B -c 'import os,sys; from pathlib import Path; sys.path.insert(0,"scripts/synthetic_integration"); from contract import extract_zip; root=Path(os.environ["RUNNER_TEMP"]); extract_zip(root/"source-review/private-source-review.zip",root/"fixture-source",max_bytes=64*1024*1024)'
-      - uses: actions/upload-artifact@v4
+      - name: Upload outer GitHub source artifact
+        id: source_artifact
+        uses: actions/upload-artifact@v4
         with:
           name: private-synthetic-source-${{ github.sha }}
           path: ${{ runner.temp }}/fixture-source/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Record outer artifact outputs separately from inner preview digest
+        env:
+          SOURCE_ARTIFACT_ID: ${{ steps.source_artifact.outputs.artifact-id }}
+          SOURCE_ARTIFACT_DIGEST: ${{ steps.source_artifact.outputs.artifact-digest }}
+        run: python -B -c 'import os,sys; from pathlib import Path; sys.path.insert(0,"scripts/synthetic_integration"); from assemble_source import record_hosted_publication; record_hosted_publication(Path(os.environ["RUNNER_TEMP"])/"source-review",dict(os.environ))'
+      - name: Preserve source review and publication receipts separately
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-synthetic-source-receipts-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/source-review/source-review.json
+            ${{ runner.temp }}/source-review/source-manifest.json
+            ${{ runner.temp }}/source-review/hosted-publication.json
           retention-days: 7
           if-no-files-found: error

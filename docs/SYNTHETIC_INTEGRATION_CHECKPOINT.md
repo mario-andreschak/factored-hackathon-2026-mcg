@@ -260,6 +260,18 @@ nothing; the bank registration uses the existing canonical interpreter/source.
 The original frontend lifespan service is retained, including its revocation
 worker. Each later login must bootstrap via real `/api/chat/messages` and its
 unchanged Cookie header; observers receive only the exactly parsed session token.
+Bootstrap admission requires the frontend's `mode: flujo`, `status: completed`
+reply and zero fixture-provider rejections. Independent read-only stock records
+must bind the durable BankingStore owner to the configured issuer, fictional
+customer, graph, deployment and workspace, and bind the saved conversation's
+logical run to its completed recovery transition. The single fresh run must
+record Start, Process, the authored Process-to-Finish handoff, Finish's
+`FINAL_RESPONSE`, and a later completed `run:done`. The assistant routing call and
+its saved `Handoff processed` tool result must match the exact routing call ID
+actually emitted by the fixture provider. Call counts alone cannot satisfy this
+gate. Stock sequence0 and gaps are valid; partial/not-yet-created log records
+are polled read-only until a bounded deadline. Private receipts retain only
+record hashes and the minimal validated projection, never raw owner/session data.
 Restart retains the same auth/config/keys/demo code, frontend databases, bank
 ledger generation/coverage, FLUJO workspace/conversations, provider, journals and
 observer confirmation baselines, and attaches wrappers to the new lifespan service.
@@ -278,8 +290,16 @@ closure, unchanged frontend production API/requirements, four pinned36ae helpers
 four original DATASET files and seven fixture files. It produces a deterministic
 private code-only ZIP, exact source-manifest and review receipt. No keys, databases,
 Parquet, generated runtime data, successful rows or unit doubles enter this ZIP.
-Its local ZIP is a review artifact, not a hosted successful bundle or execution
-release. The remaining required slice is independent exact-source review of this
+The v2 receipt labels the local ZIP `inner_preview_zip_sha256` with scope
+`local_preview_zip_not_github_artifact_archive`. GitHub upload creates a separate
+outer archive; its actual output digest is recorded as
+`outer_github_artifact.zip_sha256` in a separate hosted publication receipt.
+The code artifact contains exactly47 code files plus `source-manifest.json`;
+the three review/manifest/publication receipts are uploaded separately. A future
+checkpoint's `bundle.zip_sha256` must use the downloadable outer artifact digest.
+The consumer independently verifies successful run/head/artifact metadata and
+downloaded bytes; publication outputs alone grant no runtime authorization.
+The local ZIP remains source review evidence. The remaining required slice is independent exact-source review of this
 instrumentation/assembly, a private successful hosted source artifact with actual
 run/artifact/digest identities, required CI after billing is resolved, and a
 separately reviewed hold-removal revision. No runtime behavior has been verified.

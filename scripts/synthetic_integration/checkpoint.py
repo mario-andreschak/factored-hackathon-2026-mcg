@@ -21,6 +21,8 @@ def require_execution_release() -> None:
 
 def prepare_bundle(review: dict, root: Path) -> Path:
     bundle = review["bundle"]
+    # zip_sha256 is GitHub's downloadable OUTER artifact ZIP digest. The
+    # producer's separately labeled inner preview ZIP digest is not this value.
     run = api(f"/repos/{contract.REPOSITORY}/actions/runs/{bundle['run_id']}")
     require(run.get("head_sha") == bundle["source_head"] and run.get("status") == "completed"
             and run.get("conclusion") == "success", "fixture_bundle_source_run_required")

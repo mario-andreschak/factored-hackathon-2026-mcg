@@ -1,5 +1,6 @@
 """Pure source/protocol gates. No app/server/pipeline/StateStore is started."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -12,7 +13,8 @@ import contract
 import deterministic_provider as model
 import integration_provider as integration
 import fixture_setup
-from observer_adapter import token_from_cookie, transport_counts
+from assemble_source import hosted_publication
+from observer_adapter import complete_bootstrap_log, token_from_cookie, transport_counts, verify_bootstrap_records
 
 
 def request(stream=False):
@@ -33,7 +35,126 @@ def encoded(rows):
     return b"".join(json.dumps(row).encode() + b"\n" for row in rows)
 
 
+def bootstrap_records():
+    # Validator unit inputs only. Never loaded into a worker or used as runtime evidence.
+    conversation, run = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "bbbbbbbb-bbbb-4bbb-9bbb-bbbbbbbbbbbb"
+    graph = json.loads((ROOT / "scripts/synthetic_integration/fixture/flow-snapshot.json").read_bytes())
+    owner = {"issuer": "fixture", "subject": "fictional-owner", "graph": "c" * 64,
+             "deployment": "fixture", "workspace": "synthetic-checkpoint"}
+    issued = {"call_fixture": {"function": "handoff_to_finish", "arguments_sha256": hashlib.sha256(b"{}").hexdigest(),
+                              "wire_sha256": "d" * 64}}
+    state = {"conversationId": conversation, "flowId": graph["id"], "flowSnapshot": graph, "status": "completed",
+             "currentNodeId": "finish", "source": "api", "executionExtensionOwned": True, "logicalRunId": run,
+             "recovery": {"runId": run, "classification": "completed"}, "messages": [
+                 {"role": "assistant", "tool_calls": [{"id": "call_fixture", "type": "function",
+                     "function": {"name": "handoff_to_finish", "arguments": "{}"}}]},
+                 {"role": "tool", "tool_call_id": "call_fixture", "content": json.dumps({
+                     "status": "Handoff processed", "targetNodeId": "finish"})}]}
+    rows = [{"type": "run:start", "flowId": graph["id"]},
+            {"type": "recovery:transition", "recovery": {"runId": run, "classification": "running"}},
+            {"type": "node:enter", "node": {"nodeId": "start"}},
+            {"type": "node:exit", "node": {"nodeId": "start"}, "action": "start-process"},
+            {"type": "node:enter", "node": {"nodeId": "process"}},
+            {"type": "node:exit", "node": {"nodeId": "process"}, "action": "process-finish"},
+            {"type": "handoff", "from": {"nodeId": "process"}, "toNodeId": "finish", "edgeId": "process-finish"},
+            {"type": "node:enter", "node": {"nodeId": "finish"}},
+            {"type": "node:exit", "node": {"nodeId": "finish"}, "action": "FINAL_RESPONSE"},
+            {"type": "recovery:transition", "recovery": {"runId": run, "classification": "completed"}},
+            {"type": "run:done", "status": "completed"}]
+    # Durable seq starts at zero; nonpersisted events can leave gaps.
+    rows = [{**row, "conversationId": conversation, "seq": i * 2} for i, row in enumerate(rows)]
+    return state, rows, {"graph": graph, "conversation": conversation, "accepted_routing": issued,
+        "reply": {"mode": "flujo", "status": "completed"}, "provider_rejections": 0,
+        "owner": owner, "expected_owner": copy.deepcopy(owner)}
+
+
 class FixtureSourceTests(unittest.TestCase):
+    def test_bootstrap_requires_correlated_completed_finish(self):
+        state, rows, arguments = bootstrap_records()
+        proof = verify_bootstrap_records(state, rows, **arguments)
+        self.assertTrue(proof["finish_verified"])
+        self.assertEqual(proof["status"], "completed")
+        self.assertEqual(proof["routing_wire_sha256"], "d" * 64)
+        self.assertNotIn("conversationId", proof)
+        self.assertNotIn("subject", proof)
+
+    def test_bootstrap_waiting_rejected_even_with_accepted_provider(self):
+        state, rows, arguments = bootstrap_records()
+        for bad in ({**arguments, "reply": {"mode": "flujo", "status": "waiting_for_input"}},
+                    {**arguments, "reply": {"mode": "preview", "status": "completed"}},
+                    {**arguments, "provider_rejections": 1}):
+            with self.assertRaises(contract.CheckpointError):
+                verify_bootstrap_records(state, rows, **bad)
+        with self.assertRaises(contract.CheckpointError):
+            verify_bootstrap_records({**state, "status": "waiting_for_input"}, rows, **arguments)
+
+    def test_bootstrap_provider_acceptance_without_finish_rejected(self):
+        state, rows, arguments = bootstrap_records()
+        for omitted in ("node:enter", "node:exit", "handoff", "recovery:transition", "run:done"):
+            incomplete = [row for row in rows if row["type"] != omitted]
+            with self.assertRaises(contract.CheckpointError):
+                verify_bootstrap_records(state, incomplete, **arguments)
+        without_finish = [row for row in rows if not (
+            row["type"] in {"node:enter", "node:exit"} and row.get("node", {}).get("nodeId") == "finish")]
+        with self.assertRaises(contract.CheckpointError):
+            verify_bootstrap_records(state, without_finish, **arguments)
+        without_result = {**state, "messages": state["messages"][:1]}
+        with self.assertRaises(contract.CheckpointError):
+            verify_bootstrap_records(without_result, rows, **arguments)
+        wrong_result = copy.deepcopy(state)
+        wrong_result["messages"][-1]["content"] = json.dumps({"status": "Handoff processed", "targetNodeId": "other"})
+        with self.assertRaises(contract.CheckpointError):
+            verify_bootstrap_records(wrong_result, rows, **arguments)
+
+    def test_bootstrap_foreign_owner_run_conversation_and_route_rejected(self):
+        state, rows, arguments = bootstrap_records()
+        changed = copy.deepcopy(rows)
+        changed[-2]["recovery"]["runId"] = "cccccccc-cccc-4ccc-accc-cccccccccccc"
+        other_conversation = copy.deepcopy(rows)
+        other_conversation[-1]["conversationId"] = "cccccccc-cccc-4ccc-accc-cccccccccccc"
+        wrong_route = copy.deepcopy(rows)
+        wrong_route[6]["edgeId"] = "other-edge"
+        bad_finish = copy.deepcopy(rows)
+        bad_finish[8]["action"] = "WAIT_FOR_INPUT"
+        repeated_seq = copy.deepcopy(rows)
+        repeated_seq[-1]["seq"] = repeated_seq[-2]["seq"]
+        for altered in (changed, other_conversation, wrong_route, bad_finish, repeated_seq):
+            with self.assertRaises(contract.CheckpointError):
+                verify_bootstrap_records(state, altered, **arguments)
+        for bad in ({**arguments, "owner": {**arguments["owner"], "subject": "foreign"}},
+                    {**arguments, "accepted_routing": {}}, {**arguments, "conversation": "-" * 36}):
+            with self.assertRaises(contract.CheckpointError):
+                verify_bootstrap_records(state, rows, **bad)
+
+    def test_bootstrap_partial_append_waits_before_json_parsing(self):
+        _, rows, _ = bootstrap_records()
+        raw = encoded(rows)
+        self.assertIsNone(complete_bootstrap_log(b""))
+        self.assertIsNone(complete_bootstrap_log(raw + b'{"type":'))
+        self.assertEqual(complete_bootstrap_log(raw), rows)
+        with self.assertRaises(contract.CheckpointError):
+            complete_bootstrap_log(raw + b'{"type":\n')
+
+    def test_inner_preview_and_outer_artifact_digests_are_distinct_fields(self):
+        preview = {"schema": "private-synthetic-source-review/v2", "source_head": "a" * 40,
+                   "digest_scope": "local_preview_zip_not_github_artifact_archive", "hosted_artifact": None,
+                   "inner_preview_zip_sha256": "b" * 64, "manifest_sha256": "c" * 64}
+        env = {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted", "RUNNER_OS": "Linux",
+               "GITHUB_REPOSITORY": contract.REPOSITORY, "GITHUB_SHA": "a" * 40,
+               "GITHUB_RUN_ID": "12", "GITHUB_RUN_ATTEMPT": "1", "SOURCE_ARTIFACT_ID": "34",
+               "SOURCE_ARTIFACT_DIGEST": "d" * 64}
+        recorded = hosted_publication(preview, env)
+        self.assertEqual(recorded["inner_preview_zip_sha256"], "b" * 64)
+        self.assertEqual(recorded["outer_github_artifact"]["zip_sha256"], "d" * 64)
+        self.assertEqual(recorded["checkpoint_bundle_zip_sha256_source"], "outer_github_artifact.zip_sha256")
+        self.assertFalse(recorded["run_conclusion_independently_verified"])
+        for bad in ({**preview, "zip_sha256": "b" * 64}, {**preview, "source_head": "e" * 40},
+                    {**preview, "digest_scope": "github_downloadable_artifact_archive"}):
+            with self.assertRaises(contract.CheckpointError):
+                hosted_publication(bad, env)
+        with self.assertRaises(contract.CheckpointError):
+            hosted_publication(preview, {**env, "SOURCE_ARTIFACT_DIGEST": ""})
+
     def test_finish_only_wire_and_sse(self):
         for streaming in (False, True):
             result = model.completion(request(streaming))
