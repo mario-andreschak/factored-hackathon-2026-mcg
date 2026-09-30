@@ -36,6 +36,10 @@ pulling an arbitrary registry/base image.
 - Builds and disposable inspection containers run on GitHub-hosted CI, never on
   the user's machine. There is no local Docker build/pull/container or new local
   FLUJO/MCP instance.
+- To budget for Skopeo's temporary Docker tar plus the OCI archive, the disposable
+  hosted runner removes its unused Android/.NET SDK directories before building,
+  then reclaims unreferenced builder cache after inspection. Named image layers
+  remain intact. Disk usage and reclamation are recorded; no local cleanup runs.
 - Inspection has no network, a read-only root filesystem and no capabilities.
   It overrides the launcher; it does not start the FLUJO HTTP server.
 - It parses compiled route JavaScript as data to verify the selected adapter. It

@@ -54,6 +54,12 @@ jobs:
           echo "PACKAGE_BASE_IMAGE=banking-preflight-flujo:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
           echo "PACKAGE_FINAL_IMAGE=banking-preflight-final:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/package-evidence"
+          df -h > "$RUNNER_TEMP/package-evidence/disk-before-cleanup.txt"
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          # Fixed unused SDK directories on this disposable hosted runner only.
+          # The Python/Node/Git/Docker toolchains and both source checkouts remain.
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+          df -h > "$RUNNER_TEMP/package-evidence/disk-after-cleanup.txt"
           python -B banking/scripts/package_preflight/prepare_flujo.py --repo flujo-source --out "$RUNNER_TEMP/flujo-context" --manifest "$RUNNER_TEMP/package-evidence/flujo-source-context.json"
           python -B banking/scripts/package_preflight/context.py --repo banking --output "$RUNNER_TEMP/bank-context" --candidate-head "$CANDIDATE_REVISION"
           cp "$RUNNER_TEMP/bank-context/source-context-manifest.json" "$RUNNER_TEMP/package-evidence/banking-source-context.json"
@@ -97,6 +103,18 @@ jobs:
       - name: Save private OCI candidate and content digests (no registry push)
         run: |
           set -euo pipefail
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          docker system df -v > "$PACKAGE_EVIDENCE_DIR/docker-disk-before-export.txt"
+          # The named base/final images remain; only unreferenced builder cache
+          # is reclaimed. Skopeo stages a Docker tar in addition to the OCI output.
+          docker builder prune --all --force > "$PACKAGE_EVIDENCE_DIR/build-cache-reclaimed.txt"
+          df -h > "$PACKAGE_EVIDENCE_DIR/disk-before-export.txt"
+          docker image inspect "$PACKAGE_BASE_IMAGE" > "$RUNNER_TEMP/base-after-cache.json"
+          docker image inspect "$PACKAGE_FINAL_IMAGE" > "$RUNNER_TEMP/final-after-cache.json"
+          python -B banking/scripts/package_preflight/record_image.py \
+            --base-inspect "$RUNNER_TEMP/base-after-cache.json" --final-inspect "$RUNNER_TEMP/final-after-cache.json" \
+            --candidate-revision "$CANDIDATE_REVISION" --out "$PACKAGE_EVIDENCE_DIR/image-after-cache-reclamation.json"
+          python -c 'import json,os,pathlib; d=pathlib.Path(os.environ["PACKAGE_EVIDENCE_DIR"]); a=json.loads((d/"image-provenance.json").read_text()); b=json.loads((d/"image-after-cache-reclamation.json").read_text()); assert a==b, "Image identity changed during cache reclamation"'
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends skopeo
           skopeo --version > "$PACKAGE_EVIDENCE_DIR/skopeo-version.txt"
