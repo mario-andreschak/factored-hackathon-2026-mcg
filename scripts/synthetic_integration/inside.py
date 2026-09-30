@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 
 from contract import CheckpointError, require, require_runtime_release
-from scenarios import run, run_stock, run_confirm_loss
+from scenarios import run, run_stock, run_confirm_loss, run_prepare_loss
 
 
 def main() -> int:
@@ -23,7 +23,8 @@ def main() -> int:
         factory = importlib.import_module("integration_provider").Provider
         mode = os.environ.get("SCENARIO_MODE")
         require(mode == "stock-and-authored-coverage", "scenario_mode_invalid")
-        for phase, probes in (("stock-missing-coverage", run_stock), ("authored-empty-history", run),
+        for phase, probes in (("stock-missing-coverage", run_stock), ("stock-prepare-response-loss", run_prepare_loss),
+                              ("authored-empty-history", run),
                               ("authored-confirm-response-loss", run_confirm_loss)):
             active_phase = phase
             provider = factory(root / phase, phase=phase)

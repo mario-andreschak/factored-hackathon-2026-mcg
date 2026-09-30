@@ -232,28 +232,6 @@ def run_stock(provider) -> dict:
             "stock_handoff_restart_readback")
     unchanged(after, snapshot(provider))
     record("stock_general_handoff_questions_retry_restart")
-    fault_browser = login("pt")
-    provider.bind_general("pt", fault_browser.cookie_header())
-    body = {"reason": "customer_request", "request_id": str(uuid.uuid4()),
-            "language": "pt", "unanswered_questions": ["Qual revisão falta?"]}
-    before = snapshot(provider)
-    provider.arm_response_loss("pt", fault_browser.cookie_header(), "handoff", body["request_id"])
-    _, lost = fault_browser.request("POST", "/api/action/handoff", body)
-    committed = snapshot(provider)
-    require(committed["handoffs"] == before["handoffs"] + 1
-            and committed["forwarded_faults"] == before["forwarded_faults"] + 1,
-            "fault_must_follow_real_handoff")
-    original = provider.read_saved_handoff_by_request("pt", body["request_id"])
-    consumed_fault(provider, "pt", "handoff", body["request_id"], handoff_id=original["id"])
-    if lost.get("state") == "handoff_verified":
-        require(saved_handoff(provider, lost, questions=body["unanswered_questions"], general=True) == original,
-                "automatic_handoff_recovery_changed_packet")
-    code, recovered = fault_browser.request("POST", "/api/action/handoff", body)
-    require(code == 200 and saved_handoff(provider, recovered,
-                questions=body["unanswered_questions"], general=True) == original,
-            "lost_handoff_retry_changed_packet")
-    unchanged(committed, snapshot(provider))
-    record("stock_lost_handoff_response_same_uuid_recovery")
     return {"schema": "banking-synthetic-assembly-observations/v1",
             "proof_kind": "deterministic_fixture_provider_stock_boundaries",
             "scenarios": observations, "final_counts": snapshot(provider),
@@ -420,3 +398,82 @@ def run_confirm_loss(provider) -> dict:
             "proof_kind": "deterministic_fixture_provider_api_assembly_safety",
             "scenarios": [{"scenario": "lost_confirm_response_read_only_recovery_restart_logout", "status": "passed"}],
             "final_counts": snapshot(provider)}
+
+
+PREPARE_RECOVERY_FIELDS = {"host_request_id", "action_id", "revision", "conversation_sha256",
+    "pending_handle_sha256", "pending_identity_count", "handoff_id", "handoff_packet_sha256",
+    "ledger_generation", "target_matches", "completed_upstream", "consumed"}
+
+
+def prepare_recovery_identity(provider, actor: str, cookie: str) -> dict:
+    observed = provider.read_prepare_recovery(actor, cookie)
+    import re
+    require(set(observed) == PREPARE_RECOVERY_FIELDS
+            and all(observed[k] is True for k in ("target_matches", "completed_upstream", "consumed"))
+            and type(observed["pending_identity_count"]) is int and observed["pending_identity_count"] == 1
+            and type(observed["revision"]) is int and observed["revision"] >= 1
+            and all(isinstance(observed[k], str) and re.fullmatch(r"[a-f0-9]{64}", observed[k])
+                    for k in ("conversation_sha256", "pending_handle_sha256", "handoff_packet_sha256", "ledger_generation"))
+            and all(isinstance(observed[k], str) and re.fullmatch(
+                    r"[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}", observed[k])
+                    for k in ("host_request_id", "action_id"))
+            and isinstance(observed["handoff_id"], str)
+            and re.fullmatch(r"HOF-[A-Za-z0-9_-]{8}", observed["handoff_id"]),
+            "actual_host_prepare_and_consumed_commit_required")
+    return observed
+
+
+def compare_prepare_recovery(before: dict, after: dict) -> None:
+    from consume_package import typed_equal
+    require(all(typed_equal(before[k], after[k]) for k in PREPARE_RECOVERY_FIELDS - {"revision"})
+            and type(after["revision"]) is int and after["revision"] >= before["revision"],
+            "prepare_recovery_changed_saved_identity")
+
+
+def run_prepare_loss(provider) -> dict:
+    """Fresh stock phase. Recover the actual host UUID; never POST another prepare."""
+    initial = snapshot(provider)
+    require(initial["cases"] == initial["receipts"] == initial["handoffs"] == initial["pending"] == 0,
+            "preloaded_action_evidence_forbidden")
+    require(initial["fixture_provider_calls"] > 0, "ordinary_runflow_bootstrap_required")
+    coverage(provider, complete=False)
+    browser = Browser(provider.frontend_origin)
+    code, logged = browser.request("POST", "/api/auth/login", provider.credentials("es"))
+    require(code == 200 and logged.get("authenticated") is True, "fixture_login_failed")
+    reference = provider.bind_selection("es", browser.cookie_header(), "normal")
+    cookie = browser.cookie_header()
+    before = snapshot(provider)
+    provider.arm_response_loss("es", cookie, "prepare", None)
+    browser_uuid = str(uuid.uuid4())
+    _, first = browser.request("POST", "/api/action/prepare",
+        {"transaction_reference": reference, "request_id": browser_uuid, "language": "es"})
+    committed = snapshot(provider)
+    require(committed["cases"] == committed["receipts"] == 0
+            and committed["pending"] == before["pending"] + 1
+            and committed["handoffs"] == before["handoffs"] + 1
+            and committed["forwarded_faults"] == before["forwarded_faults"] + 1,
+            "prepare_fault_must_follow_actual_pending_handoff_commit")
+    identity = prepare_recovery_identity(provider, "es", cookie)
+    if "request_id" in first:
+        require(first["request_id"] == identity["host_request_id"], "prepare_response_host_uuid_mismatch")
+    original = provider.read_saved_handoff_by_request("es", identity["host_request_id"])
+    require(original["id"] == identity["handoff_id"], "prepare_drop_handoff_identity")
+    provider.restart_preserving_state()
+    compare_prepare_recovery(identity, prepare_recovery_identity(provider, "es", cookie))
+    code, recovered = browser.request("GET", "/api/action/status?language=es")
+    require(code == 200 and recovered.get("state") == "handoff_verified"
+            and recovered.get("request_id") == identity["host_request_id"]
+            and saved_handoff(provider, recovered, questions=[], general=False) == original,
+            "lost_prepare_status_recovery_failed")
+    compare_prepare_recovery(identity, prepare_recovery_identity(provider, "es", cookie))
+    after = snapshot(provider)
+    unchanged(committed, after)
+    require(after["pending"] == committed["pending"]
+            and after["forwarded_faults"] == committed["forwarded_faults"]
+            and after["tool_calls"].get("confirm_simulated_intake", 0)
+                == committed["tool_calls"].get("confirm_simulated_intake", 0),
+            "prepare_recovery_added_pending_drop_or_confirmation")
+    return {"schema": "banking-synthetic-assembly-observations/v1",
+            "proof_kind": "deterministic_fixture_provider_stock_boundaries",
+            "scenarios": [{"scenario": "lost_prepare_host_uuid_status_recovery_restart", "status": "passed"}],
+            "final_counts": after}

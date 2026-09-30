@@ -85,14 +85,22 @@ locally for this preparation.
    with default empty questions and zero intake. Status readback preserves the
    saved packet. Anonymous/foreign denials must preserve pending counts and MCP
    dispatch counts as well as case/receipt/HOF counts. General PT handoff tests
-   explicit UUID retry, frozen questions, conflict, restart and a correlated
-   completed upstream response drop followed by same-UUID recovery.
-2. **Authored empty past:** a separate fresh ledger uses only
+   explicit UUID retry, frozen questions, conflict and restart.
+2. **Lost prepare response:** another fresh stock generation uses ES normal.
+   The reviewed prepare transport verifies and consumes the actual completed
+   upstream prepare, persisted pending row and selected missing-coverage HOF.
+   The runner requires exactly one pending/HOF increase, zero case/receipt,
+   one consumed drop and actual host UUID/action identity. Restart retains the
+   consumed journal and existing session. GET status must recover the same host
+   UUID, pending handle hash, conversation hash, ledger generation and saved HOF
+   packet hash. The host revision may advance. No fresh POST prepare, confirmation,
+   additional pending identity or HOF is allowed during recovery.
+3. **Authored empty past:** a separate fresh ledger uses only
    `StateStore.attest_sandbox_coverage(start, provenance)`. ES/PT normal prepare,
    false consent rejection, true consent, independent actual receipt read,
    confirm retry, and new-host-intent existing-case readback. General handoff
    question/retry conflicts are separate from selected missing-coverage defaults.
-3. **Lost confirmation response:** another fresh attested ledger uses the real
+4. **Lost confirmation response:** another fresh attested ledger uses the real
    ES normal charge. A private gate forwards and consumes exactly one real
    completed confirmation, verifies its actual new saved receipt, then drops the
    response. The runner requires one case/receipt increase, one confirmation
@@ -103,10 +111,10 @@ locally for this preparation.
 The browser's prepare UUID does not choose the host idempotency key. The frontend
 ignores it and mints a trusted UUID before persisting intent. An unresolved second
 prepare returns409; status recovery retains its pending handle. A prepare after
-a terminal result is a new host identity. The future lost-prepare probe must
+a terminal result is a new host identity. The lost-prepare probe must
 correlate the observed host UUID with actual persisted state and recover through
-the reviewed fault/status path. This probe and its corrected frontend source
-remain explicit pending dependencies; fresh repeated POSTs are not retry proof.
+the reviewed fault/status path. Its actual provider/observer adapter still needs
+source review; fresh repeated POSTs are not retry proof.
 
 ## Coverage initialization contract
 
@@ -139,6 +147,20 @@ not observed25h operation, customer history or bank evidence.
 ## Pending exact review and provider contract
 
 `dependencies.pending.json` identifies available file pins and unresolved slots.
+The frontend helper candidate is exact commit
+`6baa44e3f0940d9bc316cd1808032f4b7f8a9315`; the root's assigned static
+API/fault/observer scopes found no blocker. This is no runtime release. The four
+API helper blob hashes are pinned in `contract.FRONTEND_FILES` and required at
+`fixture/frontend_helpers/frontend_driver.py`, `fixture/frontend_helpers/frontend_fault.py`,
+`fixture/frontend_helpers/frontend_confirm_fault.py` and `fixture/frontend_helpers/frontend_observers.py` in the
+future private bundle. Browser helpers/build/truth adapters are excluded from
+the first API checkpoint. The derived frontend environment adds the helpers'
+required `rfc8785==0.1.4`, matching the installed banking requirement; the
+frontend's separate pinned PyJWT version remains in its own environment.
+The helper directory is a Python namespace package so its reviewed relative
+imports work unchanged; PYTHONPATH includes its parent and the frontend package
+parent. The pure source coverage compatibility audit hash is
+`b904a4e8c05594520738935039533345f75c8d7e2c2ad4eafc751e922cb05cd3`.
 Before releasing execution, root must review an exact committed integration head,
 corrected committed frontend selection/forwarding/observer source, the real
 fixture provider/graph/policy, and a private successful bundle artifact with
@@ -150,7 +172,7 @@ The provider is currently absent. Required interface methods are `start/stop`,
 `credentials(es|pt)`, `bind_selection(actor,cookie,"normal")`, `bind_general`,
 `observe`, `read_coverage`, `read_risk_by_request(actor,host_uuid)`, independent
 saved receipt/HOF reads (including by general request UUID), `arm_response_loss`,
-`read_consumed_fault`, and `restart_preserving_state`. Selection/bootstrap must
+`read_consumed_fault`, `read_prepare_recovery`, and `restart_preserving_state`. Selection/bootstrap must
 use ordinary authenticated frontend paths and actual repository facts. No seeded
 conversation IDs, fabricated MCP/HTTP returns, direct-MCP scenario shortcuts,
 signature bypass, client-controlled identity/upstream/fault or guard bypass is
@@ -164,6 +186,12 @@ generation_matches,complete}`. The completed fault marker is exactly
 all flags are strict booleans, receipt/HOF matches actual independently saved
 evidence, and the target is matched internally. Raw cookies, capabilities,
 signed bodies, policy secrets and full response logs must never be retained.
+`read_prepare_recovery` must join the reviewed consumed journal, actual host
+intent and saved bank pending/HOF. Its exact field inventory is
+`PREPARE_RECOVERY_FIELDS`: host/action UUIDs and revision, conversation/capability/
+packet hashes, one pending identity, saved HOF ID, current generation and strict
+target/completed-upstream/consumed flags. It exposes no raw pending capability or
+cookie. Declared values alone cannot satisfy that adapter's source review.
 
 ## Isolation, retained evidence and limits
 

@@ -61,6 +61,8 @@ def prepare_bundle(review: dict, root: Path) -> Path:
     for relative, digest in contract.DATASET_FILES.items():
         require(files.get("fixture/dataset_source/" + relative) == digest,
                 "dataset_portable_source_binding")
+    for relative, digest in contract.FRONTEND_FILES.items():
+        require(files.get("fixture/frontend_helpers/" + relative) == digest, "frontend_helper_source_binding")
     require({"fixture/integration_provider.py", "banking/requirements-mcp.txt",
              "fixture/flow-snapshot.json", "fixture/policy-template.json",
              "fixture/deterministic_provider.py",
@@ -108,7 +110,8 @@ def validate_derived(image: dict, restored: dict, raw: dict, bridge: dict, revie
         return result
     env = env_map(raw["Env"])
     env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONUNBUFFERED="1",
-               PYTHONPATH="/opt/integration/fixture", SCENARIO_MODE=review["scenario_mode"])
+               PYTHONPATH="/opt/integration/harness:/opt/integration/fixture:/opt/fixture-front",
+               SCENARIO_MODE=review["scenario_mode"])
     require(env_map(runtime["Env"]) == env, "derived_environment_mismatch")
     expected["Env"] = runtime["Env"]  # mapped equality checked without ordering assumptions
     check_runtime_config(runtime, expected, bridge)

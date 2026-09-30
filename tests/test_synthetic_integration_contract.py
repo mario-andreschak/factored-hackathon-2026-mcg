@@ -26,7 +26,7 @@ ENV = {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted",
 def review():
     return {"schema": "banking-synthetic-integration-review/v1", "reviewed_head": "a" * 40,
             "root_review": "approved", "scenario_mode": "stock-and-authored-coverage",
-            "fixture_pin_sha256": c.FIXTURE_PIN_SHA, "frontend_gate_source": "b" * 40,
+            "fixture_pin_sha256": c.FIXTURE_PIN_SHA, "frontend_gate_source": c.FRONTEND_GATE_HEAD,
             "bundle": {"artifact_id": 17, "run_id": 18, "source_head": "d" * 40,
                        **{key: "e" * 64 for key in ("zip_sha256", "manifest_sha256", "graph_sha256",
                                "policy_template_sha256", "fixture_provider_sha256")}}}
@@ -103,6 +103,7 @@ class SourceGates(unittest.TestCase):
         c.validate_review(review(), "a" * 40)
         self.reject(c.validate_review, review(), "f" * 40)
         for field, wrong in (("fixture_pin_sha256", c.BANK), ("frontend_gate_source", None),
+                             ("frontend_gate_source", "b" * 40),
                              ("root_review", "pending"), ("scenario_mode", "future-clock")):
             bad = review()
             bad[field] = wrong
@@ -156,7 +157,7 @@ class SourceGates(unittest.TestCase):
                    "root_review": "approved", "package_head": c.PACKAGE_HEAD,
                    "restored_image_id": "sha256:" + "1" * 64, "derived_image_id": "sha256:" + "2" * 64,
                    "artifact_content_verified": True, "derived_source_verified": True,
-                   "fixture_pin_sha256": c.FIXTURE_PIN_SHA, "frontend_gate_source": "b" * 40,
+                   "fixture_pin_sha256": c.FIXTURE_PIN_SHA, "frontend_gate_source": c.FRONTEND_GATE_HEAD,
                    "bundle_source_head": "d" * 40, "bundle_manifest_sha256": "e" * 64}
         with patch.object(c, "PREPARATION_ONLY", False):
             c.require_runtime_release(ENV, release)
@@ -199,9 +200,10 @@ class SourceGates(unittest.TestCase):
                           Cmd=[], WorkingDir="/opt/integration/harness")
         configured["Labels"].update({"io.flujo.integration.scope": "derived-fictional-no-model-assembly",
                 "io.flujo.integration.fixture.source": c.FIXTURE_PIN_SHA,
-                "io.flujo.integration.frontend.source": "b" * 40})
+                "io.flujo.integration.frontend.source": c.FRONTEND_GATE_HEAD})
         configured["Env"] += ["PYTHONDONTWRITEBYTECODE=1", "PYTHONUNBUFFERED=1",
-                              "PYTHONPATH=/opt/integration/fixture", "SCENARIO_MODE=stock-and-authored-coverage"]
+                              "PYTHONPATH=/opt/integration/harness:/opt/integration/fixture:/opt/fixture-front",
+                              "SCENARIO_MODE=stock-and-authored-coverage"]
         image = {"Os": "linux", "Architecture": "amd64", "Id": "sha256:" + "1" * 64,
                  "RootFS": {"Layers": ["sha256:" + "2" * 64, "sha256:" + "3" * 64]}, "Config": configured}
         restored = {"rootfs_diff_ids": image["RootFS"]["Layers"][:1]}
@@ -294,6 +296,25 @@ class SourceGates(unittest.TestCase):
         scenarios.coverage(Provider(), complete=False)
         observed["complete"] = True
         self.reject(scenarios.coverage, Provider(), complete=False)
+
+    def test_prepare_recovery_retains_actual_host_identity(self):
+        observed = {"host_request_id": "11111111-1111-4111-8111-111111111111",
+                    "action_id": "22222222-2222-4222-8222-222222222222", "revision": 1,
+                    "conversation_sha256": "1" * 64, "pending_handle_sha256": "2" * 64,
+                    "pending_identity_count": 1, "handoff_id": "HOF-abcd1234",
+                    "handoff_packet_sha256": "3" * 64, "ledger_generation": "4" * 64,
+                    "target_matches": True, "completed_upstream": True, "consumed": True}
+        class Provider:
+            def read_prepare_recovery(self, *args):
+                return observed
+        before = scenarios.prepare_recovery_identity(Provider(), "es", "private-cookie")
+        scenarios.compare_prepare_recovery(before, {**before, "revision": 2})
+        for field, wrong in (("host_request_id", "33333333-3333-4333-8333-333333333333"),
+                             ("pending_handle_sha256", "5" * 64), ("ledger_generation", "6" * 64),
+                             ("handoff_packet_sha256", "7" * 64), ("revision", 0)):
+            self.reject(scenarios.compare_prepare_recovery, before, {**before, field: wrong})
+        observed["pending_identity_count"] = 2
+        self.reject(scenarios.prepare_recovery_identity, Provider(), "es", "private-cookie")
 
 
 if __name__ == "__main__":

@@ -21,6 +21,13 @@ OCI_ZIP_SHA = "1853f64b4a732af88880862a6b79f2d655261b9ed6eddc2e90c72562e7699202"
 OCI_TAR_SHA = "ddf7cd40b2b6545ddfa458c235494789e52076747bffb52dd8ceb2b636cbd5a9"
 OCI_TAR_BYTES = 1867014144
 FIXTURE_PIN_SHA = "7fbd438c1b58a7bfc68132f979f0bfbd2422f289b6b849522d50b79001d9a405"
+FRONTEND_GATE_HEAD = "6baa44e3f0940d9bc316cd1808032f4b7f8a9315"
+FRONTEND_FILES = {
+    "frontend_driver.py": "bac1f4d26fe0051356e41030125732841e3b87b97e4ae7efabd04f38cb865861",
+    "frontend_fault.py": "19e114274b819b6a4789b1c37a5124af22ea4a0ee86095918411c825041dfe94",
+    "frontend_confirm_fault.py": "cb0f0cf6d48d4edae0a302e7163889f78604bb7165e2a736e80ce0fabd6ec9df",
+    "frontend_observers.py": "5ba83ec3f2ab5c1333dc7f82bf771001ced81191c3080130c979e322b43ff924",
+}
 DATASET_FILES = {
     "fixture_pin.json": FIXTURE_PIN_SHA,
     "generate_fixture.py": "23cade81be79ccf70392602bbf3f7cf5c5724821c5f9106d7717cba2f59aabf1",
@@ -141,6 +148,7 @@ def require_runtime_release(env: dict[str, str], release: dict | None = None) ->
             and all(isinstance(release[k], str) and re.fullmatch(r"sha256:[a-f0-9]{64}", release[k])
                     for k in ("restored_image_id", "derived_image_id"))
             and release["fixture_pin_sha256"] == FIXTURE_PIN_SHA
+            and release["frontend_gate_source"] == FRONTEND_GATE_HEAD
             and isinstance(release["bundle_manifest_sha256"], str)
             and re.fullmatch(r"[a-f0-9]{64}", release["bundle_manifest_sha256"])
             and all(isinstance(release[k], str) and re.fullmatch(r"[a-f0-9]{40}", release[k])
@@ -155,8 +163,7 @@ def validate_review(review: dict, head: str) -> dict:
             and review["reviewed_head"] == head and re.fullmatch(r"[a-f0-9]{40}", head)
             and review["root_review"] == "approved", "exact_source_review_required")
     require(review["fixture_pin_sha256"] == FIXTURE_PIN_SHA, "dataset_file_pin_required")
-    require(isinstance(review["frontend_gate_source"], str)
-            and re.fullmatch(r"[a-f0-9]{40}", review["frontend_gate_source"]),
+    require(review["frontend_gate_source"] == FRONTEND_GATE_HEAD,
             "reviewed_dependency_required")
     require(review["scenario_mode"] == "stock-and-authored-coverage",
             "scenario_mode_invalid")

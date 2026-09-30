@@ -27,7 +27,18 @@
     "runtime_inputs": "regenerate_after_release_with_real_UTC_then_hash_independently",
     "source_path": "scripts/synthetic_integration/dataset_source"
   },
-  "frontend_selection_forwarding_fault_gate_source": null,
+  "frontend_selection_forwarding_fault_gate_source": {
+    "head": "6baa44e3f0940d9bc316cd1808032f4b7f8a9315",
+    "status": "immutable_helper_source_assigned_scopes_reviewed; not_runtime_release",
+    "api_files_sha256": {
+      "frontend_driver.py": "bac1f4d26fe0051356e41030125732841e3b87b97e4ae7efabd04f38cb865861",
+      "frontend_fault.py": "19e114274b819b6a4789b1c37a5124af22ea4a0ee86095918411c825041dfe94",
+      "frontend_confirm_fault.py": "cb0f0cf6d48d4edae0a302e7163889f78604bb7165e2a736e80ce0fabd6ec9df",
+      "frontend_observers.py": "5ba83ec3f2ab5c1333dc7f82bf771001ced81191c3080130c979e322b43ff924"
+    },
+    "coverage_compatibility_audit_sha256": "b904a4e8c05594520738935039533345f75c8d7e2c2ad4eafc751e922cb05cd3",
+    "browser_static_build_and_truth_adapter": "deferred; api_only_checkpoint"
+  },
   "two_clock_simulation_provider_source": {
     "status": "deferred_not_required_for_first_checkpoint",
     "implementation": null
@@ -45,10 +56,15 @@
   },
   "surface": "api_only",
   "pending_requirements": [
-    "corrected_committed_frontend_gate_and_real_fixture_provider",
+    "actual_fixture_provider_graph_policy_and_adapter_source_review",
     "private_bundle_source_head_manifest_and_artifact_digest",
     "independent_root_review_of_exact_integration_head",
-    "separate_reviewed_revision_to_remove_preparation_hold",
-    "lost_prepare_recovery_probe_correlating_actual_host_minted_UUID"
+    "separate_reviewed_revision_to_remove_preparation_hold"
+  ],
+  "scenario_phases": [
+    "stock-missing-coverage",
+    "stock-prepare-response-loss",
+    "authored-empty-history",
+    "authored-confirm-response-loss"
   ]
 }
