@@ -72,6 +72,7 @@ class BankContext:
     operation_id: str
     host_revision: str
     session_expires: int
+    ledger_generation: str
     admission_check: Callable[[], None] | None = field(default=None, repr=False, compare=False)
 
     def __post_init__(self):
@@ -80,6 +81,8 @@ class BankContext:
                 or not isinstance(self.host_revision, str)
                 or re.fullmatch(r"[a-f0-9]{40}", self.host_revision) is None
                 or type(self.session_expires) is not int or self.session_expires <= 0
+                or not isinstance(self.ledger_generation, str)
+                or re.fullmatch(r"[a-f0-9]{64}", self.ledger_generation) is None
                 or (self.admission_check is not None and
                     (not callable(self.admission_check) or inspect.iscoroutinefunction(self.admission_check)))):
             raise ValueError("invalid_bank_context")
@@ -193,6 +196,7 @@ class BankRPC:
             "iat": now, "nbf": now, "exp": expires, "jti": str(uuid.uuid4()),
             "session_id": context.session_id, "conversation_id": context.conversation_id,
             "run_id": context.operation_id, "graph_revision": context.host_revision,
+            "ledger_generation": context.ledger_generation,
             "tool": tool, "scope": [scope], "args_sha256": hashlib.sha256(rfc8785.dumps(args)).hexdigest()},
             self._key, algorithm="EdDSA", headers={"typ": token_type, "kid": self._kid})
 

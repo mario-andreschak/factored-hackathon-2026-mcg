@@ -80,6 +80,7 @@ class Settings:
         if self.chat.get("mode") == "host-direct-mcp/v1":
             policy["bank_host_mode"] = "host-direct-mcp/v1"
             policy["bank_namespace"] = self.chat.get("namespace")
+            policy["bank_ledger_generation"] = self.chat.get("ledger_generation")
         if self.auth_mode == "invite":
             policy.update(invites=self.invites, profiles=self.profiles, expected_snapshot=self.expected_snapshot,
                           public_origin=self.public_origin, secure_cookie=self.secure_cookie)

@@ -22,22 +22,22 @@ class BankController:
         self._workflow_admitted = False
 
     async def _call(self, tool, args, context, *, timeout_seconds):
-        if self.before_call:
-            self.before_call()
         may_write = tool in {"prepare_unrecognized_charge", "confirm_simulated_intake", "create_verified_handoff"}
         try:
+            if self.before_call:
+                self.before_call()
             result = await self.rpc.call(tool, args, context, timeout_seconds=timeout_seconds)
+            if may_write:
+                self._workflow_admitted = True
+            if self.before_call:
+                self.before_call()
+            return validate_action_result(tool, result)
         except BankRPCError as exc:
             if self._workflow_admitted and not exc.possibly_sent:
                 raise BankRPCError(exc.code, possibly_sent=True) from None
             if may_write and exc.possibly_sent:
                 self._workflow_admitted = True
             raise
-        if may_write:
-            self._workflow_admitted = True
-        if self.before_call:
-            self.before_call()
-        return validate_action_result(tool, result)
 
     async def _receipt(self, handle: str, context: BankContext, timeout: float) -> dict:
         read = await self._call("read_intake_receipt", {"pending_handle": handle},
@@ -83,7 +83,7 @@ class BankController:
                 return {"state": "handoff_unverified", "reason": reason}
             return {"state": "handoff_verified", "handoff": packet}
         except BankRPCError as exc:
-            if exc.code in {"authorization_denied", "authorization_required", "reference_unavailable"} or (
+            if exc.code in {"authorization_denied", "authorization_required", "reference_unavailable", "action_unverified"} or (
                     exc.code == "server_busy" and not exc.possibly_sent):
                 raise
             return {"state": "handoff_unverified", "reason": reason}
@@ -116,7 +116,9 @@ class BankController:
                 expected = verified_receipt(existing.get("receipt")) if isinstance(existing, dict) else None
                 try:
                     read = await self._receipt(handle, context, timeout_seconds)
-                except BankRPCError:
+                except BankRPCError as exc:
+                    if exc.code in {"authorization_denied", "action_unverified"}:
+                        raise
                     return {**public, "state": "prepare_unverified"}
                 if (not isinstance(existing, dict) or existing.get("state") != "verified"
                         or expected is None or read.get("receipt") != expected
@@ -140,7 +142,7 @@ class BankController:
                     "pending_handle": payload["pendingHandle"], "confirmed": True}, context,
                     timeout_seconds=timeout_seconds)
             except BankRPCError as exc:
-                if exc.code in {"authorization_denied", "authorization_required", "reference_unavailable", "server_busy"}:
+                if exc.code in {"authorization_denied", "authorization_required", "reference_unavailable", "server_busy", "action_unverified"}:
                     raise
                 if exc.code in {"risk_data_unavailable", "handoff_required", "snapshot_changed"}:
                     policy_reason = "high_risk" if exc.code == "handoff_required" else "missing_evidence"
@@ -152,7 +154,7 @@ class BankController:
                     return {"state": "handoff_unverified", "reason": policy_reason}
                 return result
             except BankRPCError as exc:
-                if exc.code in {"authorization_denied", "authorization_required", "reference_unavailable"}:
+                if exc.code in {"authorization_denied", "authorization_required", "reference_unavailable", "action_unverified"}:
                     raise
                 return {"state": "action_unverified"}
         if operation == "receipt":

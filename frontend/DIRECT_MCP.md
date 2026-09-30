@@ -22,8 +22,10 @@ of final arguments and singleton tool scope. They expire within 60 seconds and
 before the real frontend session and call deadline. The legacy claim names
 `run_id` and `graph_revision` carry the actual host operation UUID and configured
 reviewed host source revision. An admission callback checks owner, expiry,
-revocation and bank context after the handshake, immediately before signing,
-and before returning evidence.
+revocation, the original ledger generation, action enablement and continuity
+approval after the handshake, immediately before signing, and before returning
+evidence. Both assertion profiles require `ledger_generation`, exactly 64
+lowercase hexadecimal characters from the existing bank ledger identity.
 
 The private listener proposed in [backend PR #32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32) requires `bank.base_url` to use
 `https://<approved-private-IPv4>:<configured-port>`. The literal IP and explicit
@@ -51,7 +53,10 @@ Logout persists local denial and the bank revocation outbox before deleting the
 portal session. Fresh `bank-revoke+jwt` assertions go only to private
 `/internal/revoke`; exact acknowledgement establishes confirmed delivery. Failed
 delivery remains visible/retryable until session expiry. Grant TTL never exceeds
-that expiry, so the existing expiry boundary is retained. Revocation is never a
+that expiry, so the existing expiry boundary is retained. The outbox retains its
+original ledger generation. Matching-generation revocation may add denial while
+the ledger is quarantined; a mismatch remains unconfirmed and never gets re-signed
+against a replacement generation. Revocation is never a
 model tool. The generic worker may finish a minimized language request after logout;
 the host suppresses its result and transcript.
 
@@ -74,8 +79,11 @@ This schema must be used by the separately reviewed generic graph. A no-tool gra
 alone does not attest operating-system/file/network isolation of a model process.
 
 Configuration uses `direct-mcp.config.example.json`. Its placeholders deliberately
-fail validation. Keep `action_enabled: false` until the integrated candidate is
-reviewed. Replace the host revision with the actual reviewed deployed source
+fail validation. Keep `action_enabled: false` and `ledger_continuity_approved: false`
+until the integrated candidate is reviewed. The latter defaults to false in both
+the host and bank configuration. Set `chat.ledger_generation` only through approved
+private offline configuration; browser or model responses cannot adopt it.
+Replace the host revision with the actual reviewed deployed source
 commit; configure the matching public key and principal mapping in MCP. Bank and
 language credentials are independent. Neither key nor private configuration belongs
 in source control or the generic worker's model context.
@@ -87,21 +95,49 @@ old volume and reconcile it under its original authority before selecting isolat
 state for this candidate. Changing the bank issuer, namespace, audience or approved
 principal mapping also requires explicit state isolation/reconciliation. The host
 also pins the bank endpoint, key ID, public signer fingerprint and TLS trust
-fingerprint. Bank database reset/replacement remains held: these pins do not prove
-the actual persisted bank ledger generation. A preflight observation alone would
-not fence replacement between operations. Generation verification needs a reviewed
-atomic MCP contract; never invent it from endpoint/path/policy or treat missing
-receipt on a replacement ledger as proof of absence on the original ledger.
+fingerprint, plus the expected ledger generation in the immutable durable bank
+policy, sessions and revocation intents. Nonempty direct-host state without this
+pin is refused before migration or outbox repair. Missing, malformed or changed
+pins require explicit reconciliation; old handles, request UUIDs, counters and
+revocation intents are preserved. This source contract has no automatic adoption
+or reset endpoint. Generation/continuity errors use a fixed blocked path and do
+not trigger confirm, handoff or receipt follow-ups in the same workflow. A proven
+pre-dispatch denial can release only its matching prepare-recovery reservation;
+the original action remains locked. A possibly admitted operation retains both
+its uncertainty and retry count, including a later callback failure in that
+workflow.
+
+The bank checks the signed generation before session/JTI mutations, inside its
+state transactions and at final result fences. Host callbacks also recheck the
+action and continuity flags for already admitted work. Final-fence rejection can
+follow a durable write: the host keeps the original locked intent and never treats
+it as a rollback or definitely absent receipt. Integrated transaction behavior
+still requires the bank's independently reviewed implementation.
+
+An older attested database restore can retain the same generation and coverage
+while losing later cases. Equality alone cannot detect that rollback. Trusted
+restore/import/replacement or uncertainty must pause and drain work and set the
+external `ledger_continuity_approved` configuration false before reopening.
+No request or startup heuristic clears it. Reopening requires explicit operator
+reconciliation, rotation of the existing generation, coverage invalidation and
+re-attestation, retirement of old sessions/capabilities, and explicit host adoption.
+There is no new HTTP rotation/reconciliation API. Preserve and reconcile old
+state before selecting isolated host state. A fresh unattested ledger already
+blocks eligible intake under the bank's existing coverage rule; do not interpret
+its missing receipt as evidence about the original ledger.
 Changing only generic language configuration resets its locally versioned context,
 shows an explicit customer notice and keeps bank inquiry/handles/revocation stable.
 The host reserves a generic UUID before dispatch and retains it through malformed
 output or timeout, independently of whether language output was accepted.
 
-Inspected local validation is restricted to temporary SQLite/generated keys and
-recording fakes or HTTPX MockTransport. No local HTTP server, browser, model, MCP
-process, Docker, dataset pipeline, application build or publisher is needed for
-these tests. Legacy ingress tests and frozen end-to-end proof packets cannot attest
-this new architecture; integrated endpoint/assembly/runtime validation is pending.
+Earlier validation at the prior source pin used temporary SQLite/generated keys
+and recording fakes; it is historical evidence for that pin. This continuity
+correction permits inspected frontend in-memory callbacks with external resources
+replaced before source execution. No application import/start, real key/TLS/SDK,
+host SQLite, listener, browser, model, Docker or build is exercised. Such checks
+establish field/control ordering, not durable recovery or runtime deployment.
+Legacy ingress tests and frozen end-to-end proof packets cannot attest this new
+architecture; integrated endpoint/assembly/runtime validation is pending.
 
 
 Evaluation evidence also remains pending. The host operation UUID is signed but

@@ -4,6 +4,8 @@
     "mode": "host-direct-mcp/v1",
     "namespace": "REPLACE_WITH_A_NEW_STABLE_DEPLOYMENT_NAMESPACE",
     "host_revision": "REPLACE_WITH_REVIEWED_HOST_COMMIT",
+    "ledger_generation": "REPLACE_WITH_APPROVED_EXISTING_LEDGER_GENERATION_64_LOWERCASE_HEX",
+    "ledger_continuity_approved": false,
     "action_enabled": false,
     "principal_customers": {"REPLACE_APPROVED_SUBJECT": "REPLACE_APPROVED_CUSTOMER"},
     "bank": {
