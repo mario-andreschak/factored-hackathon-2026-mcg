@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
   ArrowDownLeft,
@@ -268,7 +275,7 @@ export function Login({
     [busy, setBusy] = useState(false),
     [error, setError] = useState<LoginError>("");
   const copy = loginCopy[locale];
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.lang = locale === "pt" ? "pt-BR" : "es";
     document.title =
       locale === "pt"
@@ -3070,7 +3077,7 @@ export default function App() {
     [loginNotice, setLoginNotice] = useState<"" | "session-revoke-unconfirmed">(
       "",
     );
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (authenticated !== true) return;
     document.documentElement.lang =
       actionLanguagePreference === "pt" ? "pt-BR" : "es";
