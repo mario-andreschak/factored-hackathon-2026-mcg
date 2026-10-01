@@ -75,7 +75,7 @@ _HUMAN_SERVICE_CLAIM = re.compile(
     r"\b(?:esta siendo (?:atendid[ao]|analizad[ao]|revisad[ao])|esta sendo (?:atendid[ao]|analisad[ao])|te contactaran?|te atenderan?|te responderan?|entrara(?:o)? em contato|vai entrar em contato|vao entrar em contato|sera(?:s)? atendid[ao]|recibiras atencion humana|recebera atendimento humano)\b"
 )
 _HANDOFF_CREATED_CLAIM = re.compile(r"\b(?:derivacion|encaminhamento)\s+(?:ya |ja )?(?:esta|fue|foi|ha sido|quedo)\s+(?:confirmad[ao]|completad[ao]|concluid[ao]|realizad[ao]|cread[ao]|criad[ao]|registrad[ao]|guardad[ao])\b")
-_HANDOFF_LIMITATION = re.compile(r"(?:aun |todavia |ainda )?(?:no puedo|no podemos|nao posso|nao podemos) confirmar(?: aqui)?(?: (?:la derivacion|el encaminhamento|o encaminhamento)| que (?:la derivacion|o encaminhamento) (?:este|esta|fue|foi) (?:completada|confirmada|concluido|confirmado))")
+_HANDOFF_LIMITATION = re.compile(r"(?:aun |todavia |ainda )?(?:no puedo|no podemos|nao posso|nao podemos) confirmar(?: aqui)?(?: (?:la derivacion|el encaminhamento|o encaminhamento)| que (?:la derivacion|o encaminhamento) (?:este|esta|fue|foi) (?:completada|confirmada|concluido|confirmado|realizada|realizado))")
 _ATTRIBUTION = re.compile(r"\b(?:el cliente|la cliente|cliente|la persona|el usuario|la usuaria)\b.*\b(?:afirma|se[nñ]ala|dice|indica|declara|refiere|relata|manifiesta|comenta|reporta|sostiene|solicita|expresa|cree|alega|informa|asegura)\b|\bseg[uú]n (?:el cliente|la cliente|la persona|el usuario|la usuaria)\b", re.I)
 
 # This finite grammar checks advice, not intent. The configured model remains

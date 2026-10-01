@@ -423,6 +423,34 @@ def test_processing_uncertainty_does_not_assert_an_active_operation(language, te
 
 
 @pytest.mark.parametrize("language,text", [
+    ("pt", "Sinto muito que você esteja em perigo. Sua situação precisa de atendimento humano. Ainda não posso confirmar que o encaminhamento foi realizado."),
+    ("es", "Tu solicitud necesita atención humana. Aún no puedo confirmar que la derivación fue realizada."),
+])
+def test_native_handoff_uncertainty_does_not_assert_completion(language, text):
+    assert validate_response(response(text, language), inputs("HANDOFF", language)) == []
+
+
+@pytest.mark.parametrize("suffix", [
+    " e o encaminhamento foi realizado.",
+    ". O encaminhamento foi realizado.",
+    "; o encaminhamento foi realizado.",
+    ", mas o encaminhamento foi realizado.",
+])
+def test_negative_handoff_uncertainty_cannot_launder_completion(suffix):
+    text = "Ainda não posso confirmar que o encaminhamento foi realizado" + suffix
+    assert "handoff_success_unverified" in validate_response(response(text, "pt"), inputs("HANDOFF", "pt"))
+
+
+def test_native_emergency_contact_advice_remains_unsupported_after_handoff_uncertainty():
+    text = (
+        "Sinto muito que você esteja em perigo. Você precisa de atendimento humano, "
+        "mas ainda não posso confirmar o encaminhamento. Se o perigo for imediato, "
+        "procure um local seguro e ligue para o serviço de emergência da sua região."
+    )
+    assert "unsupported_operation_guidance" in validate_response(response(text, "pt"), inputs("HANDOFF", "pt"))
+
+
+@pytest.mark.parametrize("language,text", [
     ("es", "La solicitud **CMP-SBX-Case_123** fue procesada y su registro fue verificado."),
     ("pt", "A solicitação **CMP-SBX-Case_123** foi processada e seu registro foi verificado."),
 ])
