@@ -216,6 +216,9 @@ def _receipt_facts_match(facts: dict, target: dict) -> bool:
     if (facts.get("currency") != target.get("currency") or
             facts.get("status") != target.get("transaction_status", target.get("status")) or fact_date != target_date):
         return False
+    if ("transaction_reference" in facts and "transaction_reference" in target and
+            facts["transaction_reference"] != target["transaction_reference"]):
+        return False
     for fact, aliases in (("process_date", ("process_date",)), ("merchant", ("merchant_name", "merchant")),
                           ("transaction_type", ("transaction_type", "type")), ("channel", ("channel",)),
                           ("product", ("product", "product_type"))):
@@ -263,7 +266,7 @@ def _scoped_receipt(state: dict, result_id: str) -> bool:
     native = status.get("receipt")
     if canonical is None and native is None:
         return False
-    if canonical is not None:
+    if "action" in status:
         receipt = canonical.get("receipt", {}) if isinstance(canonical, dict) else {}
         if (not isinstance(canonical, dict) or not isinstance(receipt, dict) or
                 canonical.get("name") != "CREATE_COMPLAINT" or canonical.get("authorized") is not True or
@@ -278,7 +281,7 @@ def _scoped_receipt(state: dict, result_id: str) -> bool:
                      ("transaction_id", "target_transaction_id"))) or
                     "transaction" in projection and not _receipt_facts_match(projection["transaction"], target)):
                 return False
-    if native is not None:
+    if "receipt" in status:
         # The same deterministic shape validator is used for portal readback.
         from frontend.server.action import verified_receipt
         native = verified_receipt(native)
@@ -286,6 +289,11 @@ def _scoped_receipt(state: dict, result_id: str) -> bool:
             return False
         if not _receipt_facts_match(native["transaction"], target):
             return False
+        if isinstance(canonical, dict):
+            for projection in (canonical, canonical["receipt"]):
+                if ("transaction" in projection and
+                        not _receipt_facts_match(projection["transaction"], native["transaction"])):
+                    return False
     return isinstance(result_id, str) and bool(re.fullmatch(r"CMP-SBX-[A-Za-z0-9_-]{8}", result_id))
 
 

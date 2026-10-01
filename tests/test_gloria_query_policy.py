@@ -147,6 +147,24 @@ def test_malformed_native_receipt_cannot_be_rescued_by_valid_canonical_receipt()
     assert decide(state)["response_mode"] == "ACTION_UNVERIFIED"
 
 
+@pytest.mark.parametrize("field", ["action", "receipt"])
+def test_explicitly_null_receipt_representation_cannot_be_rescued_by_another(field):
+    state, _, _ = scoped_done(native=True)
+    state["tool_results"]["host_action_status"][field] = None
+    assert decide(state)["response_mode"] == "ACTION_UNVERIFIED"
+
+
+@pytest.mark.parametrize("projection", ["action", "receipt"])
+def test_native_display_reference_contradiction_between_receipt_projections_rejects_completion(projection):
+    state, _, _ = scoped_done(native=True)
+    status = state["tool_results"]["host_action_status"]
+    canonical = status["action"] if projection == "action" else status["action"]["receipt"]
+    canonical["transaction"] = deepcopy(status["receipt"]["transaction"])
+    assert decide(state)["response_mode"] == "ACTION_DONE"
+    canonical["transaction"]["transaction_reference"] = "txn_" + "b" * 12
+    assert decide(state)["response_mode"] == "ACTION_UNVERIFIED"
+
+
 @pytest.mark.parametrize("projection", ["action", "receipt"])
 @pytest.mark.parametrize("conflict", ["amount", "snapshot", "target_reference"])
 def test_native_receipt_does_not_rescue_contradictory_optional_canonical_facts(projection, conflict):

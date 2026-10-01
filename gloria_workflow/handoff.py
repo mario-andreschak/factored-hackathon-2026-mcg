@@ -172,7 +172,7 @@ def assemble_handoff_packet(state: dict, native: dict, *, binding: TrustedBindin
         proof = status.get("binding", {}) if isinstance(status, dict) else {}
         canonical = status.get("action") if isinstance(status, dict) else None
         canonical_ok = True
-        if canonical is not None:
+        if "action" in status:
             canonical_receipt = canonical.get("receipt", {}) if isinstance(canonical, dict) else {}
             canonical_ok = bool(receipt and isinstance(canonical, dict) and isinstance(canonical_receipt, dict) and
                 canonical.get("name") == "CREATE_COMPLAINT" and canonical.get("result_id") == receipt["id"] and

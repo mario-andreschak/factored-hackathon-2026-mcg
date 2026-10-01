@@ -490,7 +490,8 @@ def intake_fixture():
 
 
 @pytest.mark.parametrize("conflict", ["lineage_snapshot", "lineage_hash", "status_snapshot", "status_hash",
-                                     "canonical_id", "canonical_amount", "error_envelope"])
+                                     "canonical_id", "canonical_amount", "error_envelope", "null_action",
+                                     "null_canonical_receipt", "canonical_reference", "canonical_action_reference"])
 def test_every_intake_representation_must_match_before_becoming_verified_handoff_evidence(conflict):
     state, native = intake_fixture()
     before = deepcopy(state)
@@ -504,6 +505,12 @@ def test_every_intake_representation_must_match_before_becoming_verified_handoff
     elif conflict == "status_hash": status["snapshot_hash"] = "other"
     elif conflict == "canonical_id": status["action"]["result_id"] = "CMP-SBX-Other001"
     elif conflict == "error_envelope": status["status"] = "error"
+    elif conflict == "null_action": status["action"] = None
+    elif conflict == "null_canonical_receipt": status["action"]["receipt"] = None
+    elif conflict in {"canonical_reference", "canonical_action_reference"}:
+        projection = status["action"] if conflict == "canonical_action_reference" else status["action"]["receipt"]
+        projection["transaction"] = deepcopy(native["facts"])
+        projection["transaction"]["transaction_reference"] = "txn_" + "f" * 12
     else:
         status["action"]["receipt"]["transaction"] = deepcopy(native["facts"])
         status["action"]["receipt"]["transaction"]["amount"] = "999.00"
