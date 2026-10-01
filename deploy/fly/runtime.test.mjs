@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { runtimeCommands, runtimeEnvironment, supervise } from './runtime.mjs';
+import { runtimeCommands, runtimeEnvironment, supervise, transitionEvidenceFiles } from './runtime.mjs';
 const fixture = { FLUJO_FLY_PASSWORD: 'main-private-password-123456', FLUJO_SNAPSHOT_CONTROL_TOKEN: 'private-control-token',
   FLUJO_WORKER_SNAPSHOT_KEY: 'forbidden-worker-snapshot-secret', FLUJO_BANKING_CONFIG: 'forbidden-policy',
   AWS_SECRET_ACCESS_KEY: 'forbidden-aws-key', BANKING_SERVICE_TOKEN: 'forbidden-bank-token',
@@ -31,6 +31,23 @@ test('runtime grants each child only its approved credentials and UID', () => {
 test('development access expires without interrupting primary children', () => {
   const env = runtimeEnvironment(fixture, Date.parse(fixture.FLUJO_DEV_UI_EXPIRES_AT));
   assert.equal(env.dev, undefined); assert.equal(runtimeCommands(env).length, 3);
+});
+test('retained transition proofs stay in bank-only storage with pinned archive paths', () => {
+  const root = '/data/native-transition-evidence';
+  const saved = { archive_path: '/data/banking-state/legacy-bank-before-native.sqlite3', operator_proof: {
+    path: root + '/operator.json', coverage_proof_path: root + '/coverage.json',
+    lease_artifact: { path: root + '/lease.json' }, authority_artifact: { path: root + '/authority.json' },
+    obligation_artifacts: [{ path: root + '/revoke.json' }],
+    archives: { frontend: { path: root + '/frontend.tar' }, worker: { path: root + '/worker.tar' } },
+  } };
+  assert.equal(transitionEvidenceFiles(saved).length, 8);
+  for (const unsafe of ['/data/private/operator.json', root + '/../operator.json', root + '/./operator.json',
+    '/data/native-authority/control/operator.json', null]) {
+    const changed = structuredClone(saved); changed.operator_proof.path = unsafe;
+    assert.throws(() => transitionEvidenceFiles(changed), /bank-only/);
+  }
+  const moved = structuredClone(saved); moved.archive_path = root + '/bank.sqlite3';
+  assert.throws(() => transitionEvidenceFiles(moved), /Incomplete/);
 });
 test('a failed service terminates its sibling process group', { skip: process.platform === 'win32' }, async () => {
   const started = Date.now();

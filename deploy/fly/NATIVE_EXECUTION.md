@@ -19,11 +19,26 @@ owner of banking configuration, dataset and banking/workflow state.
 | `/data/native-flujo` | Worker UID1000 | Independent native-worker configuration/runtime |
 | Bank configuration, dataset and state | UID10001, primary GID10001; private parents | Never add the native-reader group to banking data |
 | `/opt/native` | Root, no group/world write | Immutable execution/profile inputs |
+| `/data/native-transition-evidence` | Root, bank GID10001; directories0550/files0440 | Retained transition proofs and frontend/worker archives; never native-reader GID10002 |
 
 Bank UID10001 and worker UID1000 have supplementary group10002. This reader
 group grants no directory mutation on application controls. No existing banking
 ledger or legacy worker data is automatically initialized or migrated by this
 adapter.
+
+Before planning production adoption, copy the verified operator, coverage,
+lease, authority and obligation proofs plus the sealed legacy frontend/worker
+archives into `/data/native-transition-evidence`. Record those final absolute
+paths in the operator evidence used by plan/apply. The bank archive remains at
+`/data/banking-state/legacy-bank-before-native.sqlite3`; bootstrap seals it
+root:10001,0440. Saved receipt paths cannot be moved after migration. The banking
+user must verify the actual retained receipt before activation and after restart;
+the verifier reopens every proof/archive. Legacy `/data/private` and `/data/flujo`
+stay root-only. Missing, writable, linked or misplaced proof files deny startup.
+The bank archive file is read-only, but its banking-owned parent permits pathname
+replacement by that user; the root-owned receipt pins its bytes and the verifier
+rejects any replacement with different content. Bootstrap excludes this archive
+from ordinary writable bank-state ownership updates, including on restart.
 
 Install the selected FLUJO model with id `dispute-native-model`, provider `codex`,
 adapter `codex-cli`, model name `gpt-6-sol`, and the independently qualified
