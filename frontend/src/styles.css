@@ -2064,6 +2064,20 @@ button svg {
   text-align: center;
   margin-top: 13px;
 }
+.assistant-language {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border, #d7ddd9);
+  font-size: 11px;
+}
+.assistant-language select {
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
 .assistant-status {
   display: flex;
   align-items: center;

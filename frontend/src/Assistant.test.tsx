@@ -301,12 +301,22 @@ test.each([
     expect(summary!.textContent).toContain("42");
 
     fireEvent.change(
-      screen.getByRole("textbox", { name: "Mensaje para el asistente" }),
+      screen.getByRole("textbox", {
+        name:
+          language === "pt"
+            ? "Mensagem para o assistente"
+            : "Mensaje para el asistente",
+      }),
       { target: { value: yes } },
     );
     fireEvent.submit(
       screen
-        .getByRole("textbox", { name: "Mensaje para el asistente" })
+        .getByRole("textbox", {
+          name:
+            language === "pt"
+              ? "Mensagem para o assistente"
+              : "Mensaje para el asistente",
+        })
         .closest("form")!,
     );
     await screen.findByText("Consulta de solo lectura.");
@@ -1527,4 +1537,98 @@ test("exhausted recovery shows one opaque review code and the ES/PT sharing rout
   expect(screen.getByText(/não avisa a equipe/)).toBeTruthy();
   expect(calls).toContain("GET /api/action/status?language=pt");
   expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+});
+
+test("Portuguese is selectable before history loads and stays available when chat is unavailable", async () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal("fetch", fetchMock);
+  const props = {
+    open: true,
+    status: { available: false, sandbox_intake_available: false },
+    selected: null,
+    transactions: [],
+    onSelectTransaction: vi.fn(),
+    hidden: false,
+    synthetic: true,
+    onClose: vi.fn(),
+    onExpired: vi.fn(),
+  };
+  render(<Assistant {...props} />);
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    {
+      target: { value: "pt" },
+    },
+  );
+  const dialog = screen.getByRole("dialog", { name: "Seu assistente Savia" });
+  expect(within(dialog).getByRole("button", { name: "Fechar" })).toBeTruthy();
+  expect(
+    screen.getByRole("combobox", { name: "Idioma da interface" }),
+  ).toBeTruthy();
+  expect(
+    screen.getByText("O assistente não está disponível agora"),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole("heading", { name: "Vamos entender seus lançamentos." }),
+  ).toBeTruthy();
+  expect(
+    screen
+      .getByRole("button", { name: "Mostre meus lançamentos recentes" })
+      .hasAttribute("disabled"),
+  ).toBe(true);
+  expect(dialog.querySelector("h2")?.getAttribute("lang")).toBe("pt-BR");
+  expect(
+    screen
+      .getByRole("textbox", { name: "Mensagem para o assistente" })
+      .getAttribute("lang"),
+  ).toBe("pt-BR");
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+test("Portuguese recovery copy permits retry while server transcript remains unlabelled", async () => {
+  let historyAttempts = 0;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      if (String(input) !== "/api/chat/history")
+        throw new Error(`Unexpected request: ${input}`);
+      historyAttempts += 1;
+      if (historyAttempts === 1) throw new Error("temporary failure");
+      return response({
+        active: false,
+        messages: [
+          { role: "assistant", text: "Respuesta guardada en español" },
+        ],
+      });
+    }),
+  );
+  render(
+    <Assistant
+      open={true}
+      status={{ available: true, sandbox_intake_available: false }}
+      selected={null}
+      transactions={[]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic={true}
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  await screen.findByRole("button", { name: "Recuperar conversación" });
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    { target: { value: "pt" } },
+  );
+  const retry = screen.getByRole("button", { name: "Recuperar conversa" });
+  expect(screen.getByRole("alert").textContent).toContain(
+    "Não foi possível recuperar sua conversa",
+  );
+  fireEvent.click(retry);
+  const transcript = await screen.findByText("Respuesta guardada en español");
+  expect(transcript.closest(".chat-message")?.getAttribute("lang")).toBeNull();
+  expect(
+    screen.getByRole("dialog", { name: "Seu assistente Savia" }),
+  ).toBeTruthy();
+  expect(historyAttempts).toBe(2);
 });

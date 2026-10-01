@@ -694,12 +694,17 @@ function Modal({
   onClose,
   children,
   wide = false,
+  titleLang,
+  closeLabel = "Cerrar",
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
+  titleLang?: string;
+  closeLabel?: string;
 }) {
+  const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current!;
@@ -714,14 +719,22 @@ function Modal({
   return (
     <dialog
       ref={dialog}
+      aria-labelledby={titleId}
       className={`modal ${wide ? "wide" : ""}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="modal-top">
-        <h2>{title}</h2>
-        <button className="icon-button" onClick={onClose} aria-label="Cerrar">
+        <h2 id={titleId} lang={titleLang}>
+          {title}
+        </h2>
+        <button
+          className="icon-button"
+          onClick={onClose}
+          aria-label={closeLabel}
+          lang={titleLang}
+        >
           <X size={21} />
         </button>
       </div>
@@ -926,6 +939,90 @@ function AssistantText({ text }: { text: string }) {
 
 type ActionLanguage = "es" | "pt";
 const ACTION_LANGUAGE_STORAGE = "flujo-bank-action-language";
+const assistantCopy = {
+  es: {
+    title: "Tu asistente Savia",
+    close: "Cerrar",
+    language: "Idioma de la interfaz",
+    tagline: "Un poco de claridad, cuando la necesitas.",
+    connectedIntake:
+      "Conectado a FLUJO · Recepción simulada disponible tras confirmación",
+    connectedReadOnly: "Conectado a FLUJO · Consulta de solo lectura",
+    unavailable: "El asistente no está disponible ahora",
+    historyLimited:
+      "Mostramos los mensajes más recientes. El asistente mantiene el contexto de esta conversación.",
+    recovering: "Recuperando tu conversación…",
+    welcome: "Vamos a entender tus movimientos.",
+    selectedHelp:
+      "Puedes preguntarme por este movimiento, su estado o los siguientes pasos si no lo reconoces.",
+    generalHelp:
+      "Consulta tus movimientos y aclara una operación usando los datos de tu perfil.",
+    selectedPrompts: [
+      "¿Qué significa el estado de este movimiento?",
+      "No reconozco este cargo. ¿Qué puedo hacer?",
+    ],
+    generalPrompts: [
+      "Muéstrame mis movimientos recientes",
+      "¿Cómo puedo consultar un cargo que no reconozco?",
+    ],
+    you: "Tú",
+    thinking: "Consultando tus datos con FLUJO…",
+    recover: "Recuperar conversación",
+    historyError:
+      "No pudimos recuperar tu conversación. Vuelve a intentar antes de enviar una consulta.",
+    sendError:
+      "La consulta no pudo completarse. Puedes intentar de nuevo; tu historial sigue disponible.",
+    messageLabel: "Mensaje para el asistente",
+    messagePlaceholder: "Escribe tu consulta…",
+    disconnectedPlaceholder: "Asistente temporalmente desconectado",
+    sendLabel: "Enviar mensaje",
+    syntheticDisclosure:
+      "Las respuestas usan un escenario sintético del equipo. Una respuesta del asistente no confirma un caso ni una acción bancaria.",
+    dataDisclosure:
+      "Las respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+  },
+  pt: {
+    title: "Seu assistente Savia",
+    close: "Fechar",
+    language: "Idioma da interface",
+    tagline: "Um pouco de clareza quando você precisa.",
+    connectedIntake:
+      "Conectado ao FLUJO · Registro simulado disponível após confirmação",
+    connectedReadOnly: "Conectado ao FLUJO · Consulta somente de leitura",
+    unavailable: "O assistente não está disponível agora",
+    historyLimited:
+      "Mostramos as mensagens mais recentes. O assistente mantém o contexto desta conversa.",
+    recovering: "Recuperando sua conversa…",
+    welcome: "Vamos entender seus lançamentos.",
+    selectedHelp:
+      "Você pode perguntar sobre este lançamento, seu estado ou os próximos passos caso não o reconheça.",
+    generalHelp:
+      "Consulte seus lançamentos e esclareça uma operação usando os dados do seu perfil.",
+    selectedPrompts: [
+      "O que significa o estado deste lançamento?",
+      "Não reconheço esta cobrança. O que posso fazer?",
+    ],
+    generalPrompts: [
+      "Mostre meus lançamentos recentes",
+      "Como posso consultar uma cobrança que não reconheço?",
+    ],
+    you: "Você",
+    thinking: "Consultando seus dados com o FLUJO…",
+    recover: "Recuperar conversa",
+    historyError:
+      "Não foi possível recuperar sua conversa. Tente novamente antes de enviar uma pergunta.",
+    sendError:
+      "Não foi possível concluir a consulta. Você pode tentar novamente; seu histórico continua disponível.",
+    messageLabel: "Mensagem para o assistente",
+    messagePlaceholder: "Escreva sua pergunta…",
+    disconnectedPlaceholder: "Assistente temporariamente desconectado",
+    sendLabel: "Enviar mensagem",
+    syntheticDisclosure:
+      "As respostas usam um cenário sintético da equipe. Uma resposta do assistente não confirma um caso nem uma ação bancária.",
+    dataDisclosure:
+      "As respostas se baseiam no conjunto de dados do hackathon. Casos e ações bancárias exigem atendimento humano.",
+  },
+} as const;
 
 function savedActionLanguage(): ActionLanguage {
   if (typeof window === "undefined") return "es";
@@ -1695,6 +1792,8 @@ export function Assistant({
     actionLanguageRef = useRef(actionLanguage),
     actionStatusSequence = useRef(0);
   const copy = actionCopy[actionLanguage];
+  const ui = assistantCopy[actionLanguage];
+  const uiLang = actionLanguage === "pt" ? "pt-BR" : "es";
   useEffect(() => {
     actionLanguageRef.current = actionLanguage;
     try {
@@ -1805,9 +1904,7 @@ export function Assistant({
           else {
             setHistoryReady(false);
             setBusy(false);
-            setError(
-              "No pudimos recuperar tu conversación. Vuelve a intentar antes de enviar una consulta.",
-            );
+            setError(assistantCopy[actionLanguageRef.current].historyError);
           }
         });
     }
@@ -1845,9 +1942,7 @@ export function Assistant({
         return;
       }
       if (e instanceof Error && e.name !== "AbortError")
-        setError(
-          "La consulta no pudo completarse. Puedes intentar de nuevo; tu historial sigue disponible.",
-        );
+        setError(assistantCopy[actionLanguageRef.current].sendError);
     } finally {
       if (alive.current) setBusy(false);
     }
@@ -1885,12 +1980,27 @@ export function Assistant({
     }
   }
   function changeActionLanguage(language: ActionLanguage) {
-    if (language === actionLanguageRef.current) return;
+    const previousLanguage = actionLanguageRef.current;
+    if (language === previousLanguage) return;
     actionLanguageRef.current = language;
     setActionLanguage(language);
     setAction((current) =>
       current ? { ...current, message: undefined } : current,
     );
+    if (
+      !status.available ||
+      !status.sandbox_intake_available ||
+      !historyReady
+    ) {
+      setError((current) =>
+        current === assistantCopy[previousLanguage].historyError
+          ? assistantCopy[language].historyError
+          : current === assistantCopy[previousLanguage].sendError
+            ? assistantCopy[language].sendError
+            : current,
+      );
+      return;
+    }
     setActionReady(false);
     setError("");
     void loadActionStatus(language).catch((e) => {
@@ -2078,21 +2188,42 @@ export function Assistant({
   // query can finish and its visible transcript will be here on reopening.
   if (!open) return null;
   return (
-    <Modal title="Tu asistente Savia" onClose={onClose} wide>
-      <div className="assistant-status">
+    <Modal
+      title={ui.title}
+      titleLang={uiLang}
+      closeLabel={ui.close}
+      onClose={onClose}
+      wide
+    >
+      <label className="assistant-language" lang={uiLang}>
+        <span>{ui.language}</span>
+        <select
+          value={actionLanguage}
+          disabled={actionBusy || busy}
+          onChange={(e) =>
+            changeActionLanguage(e.target.value as ActionLanguage)
+          }
+        >
+          <option value="es" lang="es">
+            Español
+          </option>
+          <option value="pt" lang="pt-BR">
+            Português
+          </option>
+        </select>
+      </label>
+      <div className="assistant-status" lang={uiLang}>
         <span className="assistant-orb">
           <Sparkles size={18} />
         </span>
         <div>
-          <strong>Un poco de claridad, cuando la necesitas.</strong>
+          <strong>{ui.tagline}</strong>
           <span>
             {status.available
               ? status.sandbox_intake_available
-                ? actionLanguage === "pt"
-                  ? "Conectado ao FLUJO · Registro simulado disponível após confirmação"
-                  : "Conectado a FLUJO · Recepción simulada disponible tras confirmación"
-                : "Conectado a FLUJO · Consulta de solo lectura"
-              : "El asistente no está disponible ahora"}
+                ? ui.connectedIntake
+                : ui.connectedReadOnly
+              : ui.unavailable}
           </span>
         </div>
       </div>
@@ -2114,21 +2245,8 @@ export function Assistant({
         historyReady &&
         (messages.length > 0 || action) && (
           <div className="action-panel">
-            <strong>{copy.title}</strong>
-            <p>{copy.disclosure}</p>
-            <label>
-              {copy.language}
-              <select
-                value={actionLanguage}
-                disabled={actionBusy || busy}
-                onChange={(e) =>
-                  changeActionLanguage(e.target.value as ActionLanguage)
-                }
-              >
-                <option value="es">Español</option>
-                <option value="pt">Português</option>
-              </select>
-            </label>
+            <strong lang={uiLang}>{copy.title}</strong>
+            <p lang={uiLang}>{copy.disclosure}</p>
             {action && (
               <p role="status" className="action-result">
                 {action.message ||
@@ -2398,51 +2516,41 @@ export function Assistant({
         )}
       <div className="chat-messages" aria-live="polite">
         {historyLimited && (
-          <p className="modal-disclosure">
-            Mostramos los mensajes más recientes. El asistente mantiene el
-            contexto de esta conversación.
+          <p className="modal-disclosure" lang={uiLang}>
+            {ui.historyLimited}
           </p>
         )}
         {status.available && !historyReady && !error ? (
-          <div className="chat-thinking">
+          <div className="chat-thinking" lang={uiLang}>
             <LoaderCircle size={16} className="spin" />
-            Recuperando tu conversación…
+            {ui.recovering}
           </div>
         ) : messages.length === 0 && !busy ? (
-          <div className="chat-welcome">
+          <div className="chat-welcome" lang={uiLang}>
             <MessageCircle size={30} />
-            <h3>Vamos a entender tus movimientos.</h3>
-            <p>
-              {selected
-                ? "Puedes preguntarme por este movimiento, su estado o los siguientes pasos si no lo reconoces."
-                : "Consulta tus movimientos y aclara una operación usando los datos de tu perfil."}
-            </p>
+            <h3>{ui.welcome}</h3>
+            <p>{selected ? ui.selectedHelp : ui.generalHelp}</p>
             <div className="chat-prompts">
-              {(selected
-                ? [
-                    "¿Qué significa el estado de este movimiento?",
-                    "No reconozco este cargo. ¿Qué puedo hacer?",
-                  ]
-                : [
-                    "Muéstrame mis movimientos recientes",
-                    "¿Cómo puedo consultar un cargo que no reconozco?",
-                  ]
-              ).map((text) => (
-                <button
-                  key={text}
-                  disabled={!status.available || !historyReady}
-                  onClick={() => send(text)}
-                >
-                  {text}
-                  <ArrowUpRight size={16} />
-                </button>
-              ))}
+              {(selected ? ui.selectedPrompts : ui.generalPrompts).map(
+                (text) => (
+                  <button
+                    key={text}
+                    disabled={!status.available || !historyReady}
+                    onClick={() => send(text)}
+                  >
+                    {text}
+                    <ArrowUpRight size={16} />
+                  </button>
+                ),
+              )}
             </div>
           </div>
         ) : (
           messages.map((m, i) => (
             <div key={i} className={`chat-message ${m.role}`}>
-              <span>{m.role === "assistant" ? "Savia" : "Tú"}</span>
+              <span lang={uiLang}>
+                {m.role === "assistant" ? "Savia" : ui.you}
+              </span>
               {m.selection && (
                 <div className="chat-message-selection">
                   <CreditCard size={14} />
@@ -2462,20 +2570,20 @@ export function Assistant({
           ))
         )}
         {busy && (
-          <div className="chat-thinking">
+          <div className="chat-thinking" lang={uiLang}>
             <LoaderCircle size={16} className="spin" />
-            Consultando tus datos con FLUJO…
+            {ui.thinking}
           </div>
         )}
         {error && (
-          <div role="alert" className="form-error">
+          <div role="alert" className="form-error" lang={uiLang}>
             <p>{error}</p>
             {!historyReady && (
               <button
                 className="button outline"
                 onClick={() => setHistoryAttempt((attempt) => attempt + 1)}
               >
-                Recuperar conversación
+                {ui.recover}
               </button>
             )}
           </div>
@@ -2490,28 +2598,28 @@ export function Assistant({
         }}
       >
         <input
-          aria-label="Mensaje para el asistente"
+          aria-label={ui.messageLabel}
+          lang={uiLang}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={
             status.available
-              ? "Escribe tu consulta…"
-              : "Asistente temporalmente desconectado"
+              ? ui.messagePlaceholder
+              : ui.disconnectedPlaceholder
           }
           maxLength={2000}
           disabled={!status.available || !historyReady || busy}
         />
         <button
-          aria-label="Enviar mensaje"
+          aria-label={ui.sendLabel}
+          lang={uiLang}
           disabled={!status.available || !historyReady || busy || !input.trim()}
         >
           <Send size={19} />
         </button>
       </form>
-      <p className="modal-disclosure">
-        {synthetic
-          ? "Las respuestas usan un escenario sintético del equipo. Una respuesta del asistente no confirma un caso ni una acción bancaria."
-          : "Las respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana."}
+      <p className="modal-disclosure" lang={uiLang}>
+        {synthetic ? ui.syntheticDisclosure : ui.dataDisclosure}
       </p>
     </Modal>
   );
