@@ -17,11 +17,15 @@ async function directory(filename, uid, gid, mode) {
   if (!stat.isDirectory() || stat.isSymbolicLink() || await fs.realpath(filename) !== filename) throw Error('Unsafe runtime directory.');
   await fs.chown(filename, uid, gid); await fs.chmod(filename, mode);
 }
-async function privateBytes(filename) {
+async function privateBytes(filename, uid = 0) {
   const stat = await fs.lstat(filename);
   if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1 || stat.size > 16 * 1024 * 1024
+    || stat.uid !== uid || (stat.mode & 0o022) !== 0
     || await fs.realpath(filename) !== filename) throw Error('Unsafe private runtime input.');
-  return fs.readFile(filename);
+  const bytes = await fs.readFile(filename), after = await fs.lstat(filename);
+  if (stat.ino !== after.ino || stat.dev !== after.dev || stat.size !== bytes.length
+    || stat.mtimeMs !== after.mtimeMs || stat.ctimeMs !== after.ctimeMs) throw Error('Private runtime input changed during bootstrap.');
+  return bytes;
 }
 async function publish(filename, bytes, uid, gid, mode) {
   const temporary = path.join(path.dirname(filename), '.bootstrap-' + randomUUID());
@@ -45,6 +49,9 @@ async function sealTree(root, uid, gid, directoryMode, fileMode) {
 }
 export async function bootstrap() {
   if (process.platform !== 'linux' || process.getuid() !== 0) throw Error('Linux root bootstrap required.');
+  const privateParent = await fs.lstat('/data/private');
+  if (!privateParent.isDirectory() || privateParent.isSymbolicLink() || privateParent.uid !== 0
+    || (privateParent.mode & 0o777) !== 0o700) throw Error('Private input parent is not sealed.');
   // The source-owned transition validator in run_dispute rechecks this receipt
   // against the retained ledger before creating the new application.
   const receipt = await privateBytes(PRIVATE + '/transition-receipt.json');
@@ -72,9 +79,14 @@ export async function bootstrap() {
   await publish(CONTROL + '/native-profile.json', await fs.readFile('/opt/native/native-profile.json'), 0, 10002, 0o440);
   try { await fs.lstat(CONTROL + '/admissions.json'); }
   catch (error) { if (error.code !== 'ENOENT') throw error; await publish(CONTROL + '/admissions.json', Buffer.from('[]\n'), 10001, 10002, 0o640); }
+  const admissionsPath = CONTROL + '/admissions.json', admissionMetadata = await fs.lstat(admissionsPath);
+  if (!admissionMetadata.isFile() || admissionMetadata.isSymbolicLink() || admissionMetadata.nlink !== 1
+    || admissionMetadata.uid !== 10001 || admissionMetadata.gid !== 10002
+    || (admissionMetadata.mode & 0o7777) !== 0o640 || await fs.realpath(admissionsPath) !== admissionsPath
+    || !Array.isArray(JSON.parse(await privateBytes(admissionsPath, 10001)))) throw Error('Unsafe retained native admissions.');
   // Retain existing tombstones and admissions on restart; never reset them.
   await directory('/run/native-login', 0, 1000, 0o750);
-  const login = await privateBytes('/data/flujo/workspaces/default-workspace/db/codex-runtime/auth.json');
+  const login = await privateBytes('/data/flujo/workspaces/default-workspace/db/codex-runtime/auth.json', 1000);
   await publish('/run/native-login/auth.json', login, 0, 1000, 0o440);
   await publish('/run/native-login/config.toml', Buffer.from('cli_auth_credentials_store = "file"\n'), 0, 1000, 0o440);
   // Retained legacy transcripts and worker authority remain private archives.
@@ -124,7 +136,7 @@ export function runtimeCommands({ worker, frontend, gateway, dev } = runtimeEnvi
     { name: 'native worker', command: '/usr/sbin/gosu', args: ['node', 'node', 'scripts/launch-next.mjs', 'start', '-p', '4200', '-H', '127.0.0.1'], cwd: '/app', env: worker },
     { name: 'joined banking application', command: '/usr/sbin/gosu', args: ['banking', '/opt/joined/.venv/bin/python', '/opt/joined/scripts/run_dispute.py',
       '--state-dir', '/data/banking-state', '--bank-config-file', '/run/dispute/bank-config.json', '--native-url', 'http://127.0.0.1:4200',
-      '--native-authority-dir', CONTROL, '--transition-receipt', '/run/dispute/transition-receipt.json',
+      '--native-authority-dir', CONTROL, '--transition-receipt', '/run/dispute/transition-receipt.json', '--application-source-root', '/opt/joined',
       '--native-reader-group', '10002', '--port', '8082', '--enable-simulated-intake'], cwd: '/opt/joined', env: frontend },
     { name: 'public gateway', command: '/usr/sbin/gosu', args: ['node', 'node', '/opt/savia/fly/gateway.mjs'], cwd: '/app', env: gateway },
   ];

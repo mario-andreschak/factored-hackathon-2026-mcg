@@ -23,6 +23,9 @@ test('runtime grants each child only its approved credentials and UID', () => {
   const commands = runtimeCommands(env);
   assert.equal(commands[0].args[0], 'node'); assert.equal(commands[1].args[0], 'banking');
   assert.equal(commands.filter(item => item.name.includes('banking')).length, 1);
+  const bankArgs = commands[1].args;
+  assert.equal(bankArgs[bankArgs.indexOf('--application-source-root') + 1], '/opt/joined');
+  assert.equal(bankArgs.includes('--source-root'), false);
   assert.equal(commands.some(item => item.args.join(' ').includes('banking_mcp stdio')), false);
 });
 test('development access expires without interrupting primary children', () => {
