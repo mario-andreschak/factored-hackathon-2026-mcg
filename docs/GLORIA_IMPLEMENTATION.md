@@ -93,3 +93,42 @@ test against the frozen release, with any model/provider cost measured.
 
 The 60-minute iteration is a source checkpoint. The complete deployed objective
 remains unfinished and the supervisor pauses at the agreed deadline.
+
+## Frozen qualification
+
+Core source is committed at `6bee817dc74d414153cd714c9f6b4a7f2ca3e06e`;
+the generated bridge is committed at `2aa64e1`. Documentation and qualification
+reports added afterward do not change protected executable source.
+
+| Checks | Result |
+| --- | --- |
+| Prompts, responses, policy, state, independent acceptance and host integration | 508 passed in 10.36 seconds |
+| Banking MCP, case/handoff receipt/schema, owned projection and prior receipts | 161 passed in 61.82 seconds |
+| Existing frontend chat/history/revocation/action evidence | 99 passed plus 19 subtests in 16.03 seconds |
+| Source-only graph compiler/schema/hash qualification | 10 passed in 26.58 seconds; build check passed |
+| Independent acceptance alone, with unchanged source hashes | 91 passed in 2.45 seconds |
+
+The first four rows are disjoint: 778 checks and 19 subtests. The separate
+91-case row is included in the core total. The original dirty checkouts and
+remote hackathon main at `29543041b1b2462483502ca8e8d6620be530335a` were preserved.
+
+The frozen real configured-model run passed four synthetic expected mode and
+language cases: ES dispute, PT dispute, PT active misuse, and ES human request.
+Intent/amount/currency/merchant and yesterday's event date agree with the two
+invented dispute fixtures. Handoff responses explicitly say creation is
+unconfirmed, and neither assistance case made bank reads. Source hashes were
+identical before and after. Latencies were 28.058, 35.128, 61.425 and 31.424
+seconds. The PT emergency recovered a slot-extraction timeout; these are
+development routing observations, not a clean-stage or speed claim.
+
+The 25 returned model calls report 371,171 prompt tokens and 1,257 completion
+tokens in total. The timed-out call has no captured provider usage. Cost remains
+unknown; latency and prompt size require investigation before activation.
+The report is `docs/qualification/gloria-real-model-2026-10-01.json` and the
+independent source capture is `gloria-acceptance-2026-10-01.json` beside it.
+
+Execution graph hash:
+`c61410b09a88ca43a175f7111b9200ccf9bf557976750781321301b8ec1ec5ac`.
+Its metadata retains `installed=false`, `actionsEnabled=false` and example
+bindings. Regenerate the artifact in the target checkout before qualification;
+its file hashes identify the source bytes actually checked.
