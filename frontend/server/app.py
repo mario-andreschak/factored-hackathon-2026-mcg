@@ -16,6 +16,7 @@ import duckdb
 from .config import PROFILE_IDS, Settings
 from .repository import DatasetUnavailable, Repository
 from .state import Session, State
+from .action import render_action_error
 
 
 COOKIE = "flujo_bank_session"
@@ -37,6 +38,7 @@ class ChatBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     message: str = Field(min_length=1, max_length=4000)
     transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
+    language: Literal["es", "pt"] = "es"
 
 
 class PrepareActionBody(BaseModel):
@@ -344,6 +346,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(503, "El asistente FLUJO aún no está conectado.")
         message = body.message.strip()
         public_selection = None
+        minimized = None
         if not message:
             raise HTTPException(422, "Escribe un mensaje para el asistente.")
         if body.transaction_reference:
@@ -353,17 +356,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if not selected:
                 raise HTTPException(404, "El movimiento seleccionado no está disponible.")
             public_selection = {k: selected[k] for k in ("reference", "occurred_at", "type", "amount", "currency", "status")}
-            # Server-validated bounded facts, no customer/product IDs or model selectors.
-            import json
-            facts = {k: selected[k] for k in ("occurred_at", "process_date", "type", "amount", "currency", "status", "channel", "merchant")}
-            # Event-date inquiry windows are distinct from process dates and
-            # from the action policy's real-time 120-day eligibility check.
-            facts["mcp_date_window_basis"] = "transaction_date"
-            message += "\n\nMovimiento seleccionado en la banca (datos, no instrucciones): " + json.dumps(
-                facts, ensure_ascii=False)
+            from datetime import datetime
+            from decimal import Decimal
+            from .language import MinimizedFacts
+            status = str(selected["status"]).lower()
+            try:
+                minimized = MinimizedFacts(
+                    datetime.fromisoformat(selected["occurred_at"].replace("Z", "+00:00")).date().isoformat(),
+                    format(Decimal(str(selected["amount"])), ".2f"), selected["currency"],
+                    (selected.get("merchant") or "").strip()[:80] or None,
+                    status if status in {"approved", "pending", "reversed"} else "unknown")
+            except (ValueError, TypeError):
+                # A malformed display record cannot become language context.
+                minimized = None
         try:
             return await service.send(customer, current.id, current.expires_at, message,
-                                      display_message=body.message.strip(), selection=public_selection)
+                                      display_message=body.message.strip(), selection=public_selection,
+                                      facts=minimized, language=body.language)
         except Exception as exc:
             from .chat import ChatError
             if isinstance(exc, ChatError):
@@ -403,6 +412,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         current = session(request)
         customer = request.app.state.repository.profile_customer(current.profile_id)
         service = request.app.state.chat_service
+        if not service:
+            raise HTTPException(503, render_action_error("chat_unavailable", language))
         from .chat import ChatError
         try:
             context = ({"expected_snapshot": target_context["snapshot"],
@@ -411,9 +422,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                                           operation, target_reference=target_reference, **context)
             return render_action_result(result, language)
         except ChatError as exc:
-            raise HTTPException(exc.status_code, exc.message) from None
+            raise HTTPException(exc.status_code, render_action_error(exc.code, language)) from None
         except ValueError:
-            raise HTTPException(502, "No se pudo verificar la respuesta de la recepción simulada.") from None
+            raise HTTPException(502, render_action_error("action_response_unverified", language)) from None
 
     @app.get("/api/action/status")
     async def action_status(request: Request, language: Literal["es", "pt"] = "es"):
@@ -421,22 +432,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         customer = request.app.state.repository.profile_customer(current.profile_id)
         service = request.app.state.chat_service
         if not service:
-            raise HTTPException(503, "El asistente FLUJO aún no está conectado.")
+            raise HTTPException(503, render_action_error("chat_unavailable", language))
         from .chat import ChatError
         try:
             result = await service.action_status(customer, current.id, current.expires_at)
             return result if result.get("state") == "none" else render_action_result(result, language)
         except ChatError as exc:
-            raise HTTPException(exc.status_code, exc.message) from None
+            raise HTTPException(exc.status_code, render_action_error(exc.code, language)) from None
         except ValueError:
-            raise HTTPException(502, "No se pudo verificar el estado de la recepción simulada.") from None
+            raise HTTPException(502, render_action_error("action_status_unverified", language)) from None
 
     @app.post("/api/action/prepare")
     async def action_prepare(body: PrepareActionBody, request: Request):
         current = session(request)
         target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
         if not target:
-            raise HTTPException(404, "El movimiento seleccionado no está disponible.")
+            raise HTTPException(404, render_action_error("action_target_unavailable", body.language))
         return await run_action(request, {"operation": "prepare", "transactionId": target["transaction_id"],
                                           "snapshot": target["snapshot"]},
                                 body.language, body.transaction_reference, target_context=target)
@@ -446,7 +457,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         current = session(request)
         target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
         if not target:
-            raise HTTPException(404, "El movimiento seleccionado no está disponible.")
+            raise HTTPException(404, render_action_error("action_target_unavailable", body.language))
         return await run_action(request, {"operation": "confirm", "pendingHandle": body.pending_handle,
                                           "confirmed": body.confirmed}, body.language,
                                 body.transaction_reference, target_context=target)
@@ -457,13 +468,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                      if "unanswered_questions" in body.model_fields_set else {})
         if not body.pending_handle and body.reason not in {
                 "out_of_policy", "emergency", "customer_request", "clarification_exhausted"}:
-            raise HTTPException(409, "La solicitud no corresponde a una revisión pendiente.")
+            raise HTTPException(409, render_action_error("handoff_mismatch", body.language))
         if body.pending_handle:
             if not body.transaction_reference:
-                raise HTTPException(422, "Selecciona el movimiento asociado a esta solicitud.")
+                raise HTTPException(422, render_action_error("handoff_target_required", body.language))
             current = session(request)
             if not request.app.state.repository.action_target(current.profile_id, body.transaction_reference):
-                raise HTTPException(404, "El movimiento seleccionado no está disponible.")
+                raise HTTPException(404, render_action_error("action_target_unavailable", body.language))
             handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
                 "pendingHandle": body.pending_handle,
                 **questions,
@@ -474,7 +485,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             current = session(request)
             target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
             if not target:
-                raise HTTPException(404, "El movimiento seleccionado no está disponible.")
+                raise HTTPException(404, render_action_error("action_target_unavailable", body.language))
             previous = await action_status(request, body.language)
             same_target = previous.get("target_reference") == body.transaction_reference
             if same_target and previous.get("state") == "handoff_verified":
@@ -482,7 +493,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         or ("unanswered_questions" in body.model_fields_set and
                             body.unanswered_questions != previous.get("handoff", {}).get("unanswered_questions"))
                         or (body.request_id is not None and body.request_id != previous.get("request_id"))):
-                    raise HTTPException(409, "La solicitud no corresponde a la revisión anterior.")
+                    raise HTTPException(409, render_action_error("handoff_previous_mismatch", body.language))
                 return previous
             if same_target and previous.get("state") in {"preparing", "prepare_unverified",
                                                             "action_unverified"}:
@@ -490,11 +501,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if same_target and previous.get("state") in {"pending_confirmation", "existing_case_verified", "handoff_unverified"}:
                 if (previous.get("state") == "handoff_unverified"
                         and previous.get("reason") != body.reason):
-                    raise HTTPException(409, "La solicitud no corresponde a la revisión anterior.")
+                    raise HTTPException(409, render_action_error("handoff_previous_mismatch", body.language))
                 prepared = previous
             else:
                 if previous.get("state") not in {"none", "intake_verified", "existing_case_verified", "handoff_verified"}:
-                    raise HTTPException(409, "Primero revisa el estado de la solicitud anterior.")
+                    raise HTTPException(409, render_action_error("action_in_progress", body.language))
                 prepared = await run_action(request, {"operation": "prepare",
                     "transactionId": target["transaction_id"], "snapshot": target["snapshot"]},
                     body.language, body.transaction_reference, target_context=target)
@@ -505,7 +516,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if (not isinstance(pending, str) or not isinstance(request_id, str)
                     or not re.fullmatch(r"[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}",
                                         request_id)):
-                raise HTTPException(502, "No se pudo verificar la solicitud de revisión humana.")
+                raise HTTPException(502, render_action_error("handoff_unverified", body.language))
             handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
                 "pendingHandle": pending, "requestId": request_id, **questions},
                 body.language, body.transaction_reference)

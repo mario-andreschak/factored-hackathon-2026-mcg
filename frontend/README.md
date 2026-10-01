@@ -6,6 +6,11 @@ products and transactions come from Carlos's published silver and
 customer-sharded gold Parquet snapshot; names are fictional aliases. The isolated
 synthetic invitation preview below uses only generated fictional data.
 
+The direct MCP source candidate is documented in [DIRECT_MCP.md](DIRECT_MCP.md).
+Bank authority now belongs to this host; FLUJO provides bounded generic language
+guidance. Legacy worker-bound state requires explicit reconciliation and isolated
+state. This candidate has not been built or deployed; runtime remains held.
+
 The browser loads every owned transaction page before exposing local search,
 filters or CSV export. Each API page is limited to 500 rows; offsets and snapshot
 checks prevent an older transaction from silently disappearing. Selected chat
@@ -13,10 +18,11 @@ references resolve against the complete ownership-checked history.
 
 Movement dates and month views use the transaction event timestamp; CSV exports
 include both event and processing dates.
-The banking MCP filters its list start/end dates by processing date. In the
+The banking MCP filters its list start/end dates by transaction event date. In the
 published snapshot, 1,106,307 of 4,425,008 events fall on the next calendar
 day; the latest processing date is June 17, 2026, while the latest event is
-June 18, 2026. Selected-transaction chat context includes both dates.
+June 18, 2026. Transaction details and exports include both dates; generic
+language receives only the selected event date.
 
 Closing the assistant preserves its messages and any running query. Completed
 public exchanges are stored in the application state volume and restored after
@@ -25,38 +31,28 @@ without resubmitting it. History is bound to the authenticated customer session;
 logout or a new login never restores another session's messages. Restored history
 can show only recent exchanges, with an explicit notice when limited.
 
-When FLUJO chat is configured, logout records a local deny and a durable worker
-revocation intent before clearing the browser session. A background loop retries
-failed or lost worker responses with fresh signed assertions until the session
-expires. `/healthz` reports aggregate `chat_revocations`: `pending` means
-queued but unconfirmed, `retrying` means a leased attempt is underway,
-`confirmed` means the worker acknowledged it, and `expired_unconfirmed` means
-the assertion lifetime ended without acknowledgement. The top-level `ok`
-status confirms dataset availability only; inspect these counts and
-`retry_worker_running` separately. `unresolved` counts active pre-upgrade chat
-records whose approved identity cannot yet be recovered; `legacy_expired_unknown`
-counts the same records after their assertion expires. No customer or session IDs
-appear there. An auth-policy rotation queues admitted session revocations before
-it invalidates browser cookies; failure to queue stops startup.
-Before changing the FLUJO issuer, model, or customer/subject mapping, let
-admitted work finish and confirm pending revocations with the worker under the
-old configuration, or retain that configuration until those sessions expire.
-Retry assertions use the current configuration, so an incompatible change can
-leave an intent `expired_unconfirmed`; queueing alone is not worker
-acknowledgement. A signing key rotation can use fresh assertions only while
-the worker trusts the new key and the issuer and subject mapping remain stable.
+When direct host chat is configured, logout records local denial and a durable
+bank MCP revocation intent before clearing the browser session. Fresh signed
+revocations use the private bank transport, never generic completions. Health
+reports aggregate delivery counts; queued intents do not establish acknowledgement.
+See [DIRECT_MCP.md](DIRECT_MCP.md) for exact action, signing, replay and state rules.
+Legacy worker-owned volumes are refused, never automatically transplanted.
 
 ## Run beside the existing FLUJO worker
 
 Run the following in this `frontend/` directory. Use absolute paths to the
 existing dataset and private configuration; neither is copied into the image.
-The configuration includes the approved profile mappings and optional FLUJO
-chat credentials. Never commit it.
+The configuration includes approved profile mappings and optional direct bank
+host/generic language credentials. Never commit it. Use
+`direct-mcp.config.example.json` for the new architecture; its placeholders require
+reviewed private bindings. Migration runtime is held until integration and provider
+isolation review are complete. The commands below describe later operation.
 
 ```powershell
 $env:BANKING_DATA_DIR = 'C:/Users/Moe/Documents/GitHub/factored-hackathon-2026/data'
 $env:BANKING_CONFIG_FILE = 'C:/Users/Moe/Documents/GitHub/factored-hackathon-2026/private/banking-frontend/frontend.json'
 $env:BANKING_SIGNER_FILE = 'C:/Users/Moe/Documents/GitHub/factored-hackathon-2026/private/banking-mcp/frontend-signer.pem'
+$env:BANKING_CA_FILE = 'C:/Users/Moe/Documents/GitHub/factored-hackathon-2026/private/banking-mcp/bank-ca.pem'
 docker compose -f compose.yaml -f compose.flujo.yaml up -d --build --wait
 ```
 
@@ -154,12 +150,13 @@ commit or publish either file.
 
 Open [the synthetic preview](http://localhost:43801) and use one invitation
 from the private codes file. The login page offers no customer selector; the
-server derives the one allowed persona from the invitation. This is a standalone,
-read-only banking data preview: there is no chat, no joined FLUJO/MCP runtime,
-no model or action execution, and no verified assisted case handoff. Charge
-review shows owned fictional source facts and marks assisted review unavailable.
-Preparing files or launching this standalone native service does not qualify
-the end-to-end unrecognized-charge journey.
+server derives the one allowed persona from the invitation. This standalone,
+read-only data preview has no attached FLUJO worker, model or banking action.
+Charge review shows owned fictional facts and marks assisted review unavailable;
+it does not establish a verified case handoff. The direct-host/MCP source
+candidate needs an isolated host, private transport and generic guidance flow
+qualified together. Historical worker-ingress action proof does not validate
+that candidate.
 Invite mode refuses to start if its state directory contains any earlier chat
 sessions or transcripts, including expired ones.
 External candidate configurations require an exact HTTPS origin, Secure
@@ -183,8 +180,9 @@ dataset tree at `/banking-data` read-only, the private config at
 The dataset tree must include `CURRENT`, `builds/<CURRENT>/snapshot.json`, all
 manifest-listed gold files, and silver `customers.parquet` and `products.parquet`.
 The API does not need the bronze download or S3 credentials.
-FLUJO chat additionally requires a private upstream URL, execution credential
-and frontend signing key with matching worker policy.
+Direct assisted review requires the private MCP transport, approved bank host
+signer/principal mapping and separate generic language credential/flow. Bank
+assertions are never sent to the worker. See [DIRECT_MCP.md](DIRECT_MCP.md).
 
 Set `BANKING_PUBLIC_ORIGIN` to the HTTPS public origin and
 `BANKING_COOKIE_SECURE=1`. If changing the local port, set `BANKING_PORT` and
@@ -201,9 +199,10 @@ read-only banking inquiries.
 Snapshot
 timestamps establish dataset lineage, not live-bank synchronization.
 
-The first upgrade from a frontend without saved public chat history resets those
-legacy worker conversation bindings once, so the restored interface cannot hide
-old context behind a new welcome screen. Later restarts preserve saved exchanges.
+The direct host migration refuses any legacy worker-bound chat, action, transcript
+or revocation rows before mutation. Preserve and reconcile the old authority/state
+explicitly, then use isolated state. Direct-host restarts preserve the independent
+bank context and generic language conversation.
 
 ## Local development
 

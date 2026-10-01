@@ -16,6 +16,68 @@ _FACT_LIMITS = {"transaction_reference": 16, "transaction_date": 40, "process_da
                 "amount": 64, "currency": 8, "status": 80, "merchant": 160,
                 "transaction_type": 80, "channel": 80, "product": 80}
 
+_ACTION_ERROR_MESSAGES = {
+    "es": {
+        "authorization_denied": "La conexión segura no está disponible.",
+        "action_unavailable": "La recepción simulada no está habilitada.",
+        "action_unverified": "La continuidad de la solicitud requiere revisión.",
+        "session_mismatch": "La sesión del asistente no está disponible.",
+        "session_expired": "Tu sesión expiró. Vuelve a ingresar.",
+        "action_invalid_state": "No se pudo verificar la recepción simulada.",
+        "action_in_progress": "Primero revisa el estado de la solicitud anterior.",
+        "action_changed": "La solicitud cambió. Actualiza su estado antes de continuar.",
+        "invalid_action": "La solicitud no está disponible.",
+        "confirmation_required": "Confirma explícitamente la solicitud.",
+        "action_target_required": "Selecciona el mismo movimiento antes de continuar.",
+        "chat_busy": "El servicio está ocupado. Inténtalo en un momento.",
+        "inquiry_required": "Primero consulta el movimiento con Savia para iniciar una conversación segura.",
+        "action_mismatch": "La solicitud no corresponde al movimiento o la revisión guardada.",
+        "chat_unavailable": "El asistente no está disponible para esta sesión.",
+        "chat_authorization_failed": "La conexión segura no está disponible.",
+        "chat_upstream_failed": "No se pudo verificar la solicitud.",
+        "action_response_unverified": "No se pudo verificar la respuesta de la recepción simulada.",
+        "action_status_unverified": "No se pudo verificar el estado de la recepción simulada.",
+        "action_target_unavailable": "El movimiento seleccionado no está disponible.",
+        "handoff_mismatch": "La solicitud no corresponde a una revisión pendiente.",
+        "handoff_target_required": "Selecciona el movimiento asociado a esta solicitud.",
+        "handoff_previous_mismatch": "La solicitud no corresponde a la revisión anterior.",
+        "handoff_unverified": "No se pudo verificar la solicitud de revisión humana.",
+    },
+    "pt": {
+        "authorization_denied": "A conexão segura não está disponível.",
+        "action_unavailable": "A solicitação simulada não está habilitada.",
+        "action_unverified": "A continuidade da solicitação requer revisão.",
+        "session_mismatch": "A sessão do assistente não está disponível.",
+        "session_expired": "Sua sessão expirou. Entre novamente.",
+        "action_invalid_state": "Não foi possível verificar a solicitação simulada.",
+        "action_in_progress": "Primeiro consulte o estado da solicitação anterior.",
+        "action_changed": "A solicitação mudou. Atualize o estado antes de continuar.",
+        "invalid_action": "A solicitação não está disponível.",
+        "confirmation_required": "Confirme explicitamente a solicitação.",
+        "action_target_required": "Selecione o mesmo lançamento antes de continuar.",
+        "chat_busy": "O serviço está ocupado. Tente novamente em instantes.",
+        "inquiry_required": "Primeiro consulte o lançamento com Savia para iniciar uma conversa segura.",
+        "action_mismatch": "A solicitação não corresponde ao lançamento ou à revisão salva.",
+        "chat_unavailable": "O assistente não está disponível para esta sessão.",
+        "chat_authorization_failed": "A conexão segura não está disponível.",
+        "chat_upstream_failed": "Não foi possível verificar a solicitação.",
+        "action_response_unverified": "Não foi possível verificar a resposta da solicitação simulada.",
+        "action_status_unverified": "Não foi possível verificar o estado da solicitação simulada.",
+        "action_target_unavailable": "O lançamento selecionado não está disponível.",
+        "handoff_mismatch": "A solicitação não corresponde a uma revisão pendente.",
+        "handoff_target_required": "Selecione o lançamento associado a esta solicitação.",
+        "handoff_previous_mismatch": "A solicitação não corresponde à revisão anterior.",
+        "handoff_unverified": "Não foi possível verificar a solicitação de revisão humana.",
+    },
+}
+
+
+def render_action_error(code: object, language: object) -> str:
+    """Localize fixed API errors without exposing exception text or bank facts."""
+    locale = language if isinstance(language, str) and language in {"es", "pt"} else "es"
+    messages = _ACTION_ERROR_MESSAGES[locale]
+    return messages.get(code if isinstance(code, str) else "", messages["chat_upstream_failed"])
+
 
 def handoff_questions(value: object) -> list[str] | None:
     if (not isinstance(value, list) or len(value) > 8

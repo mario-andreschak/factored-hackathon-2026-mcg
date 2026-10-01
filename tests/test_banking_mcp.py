@@ -18,11 +18,12 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from starlette.testclient import TestClient
 
 from banking_mcp.config import Config
-from banking_mcp.security import ASSERTION_META, TOKEN_TYPE, BankError, Principal, StateStore, arguments_digest
+from banking_mcp.security import ASSERTION_META, TOKEN_TYPE, BankError, StateStore, arguments_digest
 from banking_mcp.server import create_http_app
 from banking_mcp.service import Service
 from pipeline.__main__ import main
 from pipeline.fixture import cid, write_base
+from tests.banking_authority_fixtures import ledger_generation, principal_for
 
 
 ACTION_TEST_NOW = datetime(2026, 9, 29, 12, tzinfo=timezone.utc).timestamp()
@@ -51,7 +52,7 @@ def bank(dataset, tmp_path):
     config = Config(data_dir=dataset / "out", state_db=tmp_path / "state.db", service_token="x" * 48,
                     public_keys={"test": key.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()},
                     principal_customers={"alice": cid(3), "bob": cid(4)},
-                    synthetic_evidence_file=evidence_file)
+                    synthetic_evidence_file=evidence_file, ledger_continuity_approved=True)
     service = Service(config)
     fixed_action_clock(service)
     snapshot = service.repository.snapshot()
@@ -74,7 +75,8 @@ def assertion(bank, tool_name, args, subject="alice", **overrides):
               "iat": now, "nbf": now, "exp": now + 60, "jti": str(uuid.uuid4()),
               "session_id": "session-" + subject, "conversation_id": "conversation-" + subject,
               "run_id": str(uuid.uuid4()), "graph_revision": "v1", "tool": tool_name,
-              "scope": ["bank:read"], "args_sha256": arguments_digest(args), **overrides}
+              "scope": ["bank:read"], "args_sha256": arguments_digest(args),
+              "ledger_generation": ledger_generation(service.store), **overrides}
     return {ASSERTION_META: jwt.encode(claims, key, algorithm="EdDSA", headers={"kid": "test", "typ": TOKEN_TYPE})}
 
 
@@ -91,10 +93,9 @@ def action_call(bank, tool, args, subject="alice"):
 
 
 def owned_action_target(bank, subject="alice"):
-    from banking_mcp.security import Principal
     service = bank[0]
     customer = service.config.principal_customers[subject]
-    principal = Principal(subject, customer, "session-" + subject,
+    principal = principal_for(service.store, subject, customer, "session-" + subject,
                           "conversation-" + subject, int(time.time()) + 60)
     snapshot = service.repository.snapshot()
     rows = service.repository._rows(snapshot, principal, "transaction_status='Approved'", [], 20)
@@ -104,7 +105,7 @@ def owned_action_target(bank, subject="alice"):
 def _confirm_in_process(config_json, handle, ready, barrier, results, wall_origin):
     service = Service(Config.model_validate_json(config_json))
     fixed_action_clock(service, wall_origin)
-    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    principal = principal_for(service.store, "alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     try:
         ready.wait(timeout=15)
         barrier.wait(timeout=15)
@@ -120,7 +121,7 @@ def _confirm_in_process(config_json, handle, ready, barrier, results, wall_origi
 def _handoff_in_process(config_json, request_id, ready, barrier, results, wall_origin):
     service = Service(Config.model_validate_json(config_json))
     fixed_action_clock(service, wall_origin)
-    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    principal = principal_for(service.store, "alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     try:
         ready.wait(timeout=15)
         barrier.wait(timeout=15)
@@ -134,7 +135,7 @@ def _handoff_in_process(config_json, request_id, ready, barrier, results, wall_o
 def _prepare_in_process(config_json, transaction_id, build, request_id, barrier, results, wall_origin):
     service = Service(Config.model_validate_json(config_json))
     fixed_action_clock(service, wall_origin)
-    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    principal = principal_for(service.store, "alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     try:
         barrier.wait(timeout=15)
         results.put(service.actions.prepare(principal, transaction_id, build, request_id))
@@ -142,6 +143,60 @@ def _prepare_in_process(config_json, transaction_id, build, request_id, barrier,
         results.put({"error": exc.code})
     finally:
         service.close()
+
+
+def authority_state(store):
+    with store.connect() as db:
+        return {table: db.execute("SELECT * FROM " + table).fetchall() for table in (
+            "sandbox_ledger_identity", "sandbox_coverage", "sessions", "replays", "revoked",
+            "capabilities", "action_pending", "sandbox_cases", "sandbox_case_receipts", "sandbox_handoffs")}
+
+
+@pytest.mark.parametrize("generation", ["omitted", None, "", "A" * 64, "d" * 63, "g" * 64, "different"])
+@pytest.mark.parametrize("revocation", [False, True])
+def test_signed_missing_malformed_or_foreign_generation_denies_without_mutation(bank, generation, revocation, monkeypatch):
+    service, key = bank
+    tool, scope, token_type = (("revoke_session", "bank:revoke", "bank-revoke+jwt") if revocation else
+                               ("list_my_transactions", "bank:read", TOKEN_TYPE))
+    claims = jwt.decode(assertion(bank, tool, {}, scope=[scope])[ASSERTION_META], options={"verify_signature": False})
+    if generation == "omitted":
+        claims.pop("ledger_generation")
+    elif generation == "different":
+        current = claims["ledger_generation"]
+        claims["ledger_generation"] = ("0" if current[0] != "0" else "1") + current[1:]
+    else:
+        claims["ledger_generation"] = generation
+    token = jwt.encode(claims, key, algorithm="EdDSA", headers={"kid": "test", "typ": token_type})
+    before = authority_state(service.store)
+    monkeypatch.setattr(service.repository, "list_transactions", lambda *_: pytest.fail("denied authority touched dataset"))
+    with pytest.raises(BankError, match="^authorization_denied$"):
+        if revocation:
+            service.auth.revoke_assertion(token)
+        else:
+            service.execute(tool, {}, {ASSERTION_META: token})
+    assert authority_state(service.store) == before
+
+
+def test_missing_continuity_approval_denies_signed_admission_but_allows_matching_revocation(bank, monkeypatch):
+    service, key = bank
+    config_values = json.loads(service.config.model_dump_json())
+    config_values.pop("ledger_continuity_approved")
+    quarantined = Service(Config.model_validate(config_values))
+    assert quarantined.config.ledger_continuity_approved is False
+    try:
+        before = authority_state(quarantined.store)
+        monkeypatch.setattr(quarantined.repository, "list_transactions", lambda *_: pytest.fail("quarantine touched dataset"))
+        with pytest.raises(BankError, match="^action_unverified$"):
+            call((quarantined, key))
+        assert authority_state(quarantined.store) == before
+        quarantined.auth.revoke_assertion(revoke_token((quarantined, key)))
+        after = authority_state(quarantined.store)
+        assert after["revoked"] == [("session-alice",)]
+        assert not after["sessions"] and len(after["replays"]) == 1
+        assert {name: rows for name, rows in after.items() if name not in {"revoked", "replays"}} == {
+            name: rows for name, rows in before.items() if name not in {"revoked", "replays"}}
+    finally:
+        quarantined.close()
 
 
 def test_simulated_intake_requires_coverage_confirmation_and_readback(bank):
@@ -244,11 +299,11 @@ def test_prepare_same_request_serializes_across_processes_and_scopes_binding(ban
     assert first == second and len(first["pending_handle"]) == 43
     with service.store.connect() as db:
         assert db.execute("SELECT count(*) FROM action_pending WHERE request_key IS NOT NULL").fetchone()[0] == 1
-    different_session = Principal("alice", cid(3), "session-other", "conversation-alice", int(time.time()) + 60)
-    different_conversation = Principal("alice", cid(3), "session-alice", "conversation-other", int(time.time()) + 60)
+    different_session = principal_for(service.store, "alice", cid(3), "session-other", "conversation-alice", int(time.time()) + 60)
+    different_conversation = principal_for(service.store, "alice", cid(3), "session-alice", "conversation-other", int(time.time()) + 60)
     for principal in (different_session, different_conversation):
         assert service.actions.prepare(principal, targets[0], build, request_id)["pending_handle"] != first["pending_handle"]
-    foreign = Principal("bob", cid(4), "session-bob", "conversation-bob", int(time.time()) + 60)
+    foreign = principal_for(service.store, "bob", cid(4), "session-bob", "conversation-bob", int(time.time()) + 60)
     with pytest.raises(BankError, match="reference_unavailable"):
         service.actions.prepare(foreign, targets[0], build, request_id)
     with pytest.raises(BankError, match="invalid_arguments"):
@@ -261,11 +316,12 @@ def test_prepare_denies_expired_and_revoked_bindings_before_insert(bank):
     with pytest.raises(BankError, match="invalid_arguments"):
         call(bank, "prepare_unrecognized_charge", {"transaction_id": targets[0], "snapshot": build},
              scope=["bank:prepare"])
-    expired = Principal("alice", cid(3), "session-expired", "conversation-alice", int(time.time()) - 1)
+    expired = principal_for(service.store, "alice", cid(3), "session-expired", "conversation-alice", int(time.time()) - 1)
     with pytest.raises(BankError, match="authorization_denied"):
         service.actions.prepare(expired, targets[0], build, str(uuid.uuid4()))
-    service.store.revoke("session-alice")
-    revoked = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    service.store.revoke("session-alice", principal=principal_for(
+        service.store, "alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60))
+    revoked = principal_for(service.store, "alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     with pytest.raises(BankError, match="authorization_denied"):
         service.actions.prepare(revoked, targets[0], build, str(uuid.uuid4()))
     with service.store.connect() as db:
@@ -465,7 +521,7 @@ def test_revoke_winning_during_target_recheck_prevents_case_insert(bank, monkeyp
     service.store.attest_sandbox_coverage(start, "synthetic:revoke-race-ledger")
     pending = action_call(bank, "prepare_unrecognized_charge",
                           {"transaction_id": targets[0], "snapshot": build})
-    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
+    principal = principal_for(service.store, "alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     entered, release = threading.Event(), threading.Event()
     original = service.repository.owned_transaction_id
     def held(*args):
@@ -476,7 +532,7 @@ def test_revoke_winning_during_target_recheck_prevents_case_insert(bank, monkeyp
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(service.actions.confirm, principal, pending["pending_handle"], True)
         assert entered.wait(10)
-        service.store.revoke("session-alice")
+        service.store.revoke("session-alice", principal=principal)
         release.set()
         with pytest.raises(BankError, match="authorization_denied"):
             future.result(timeout=10)
@@ -802,7 +858,8 @@ def test_revoke_before_and_after_read(bank, monkeypatch):
     original = bank[0].repository.list_transactions
     def revoke_during(*args, **kwargs):
         result = original(*args, **kwargs)
-        bank[0].store.revoke("session-alice")
+        bank[0].store.revoke("session-alice", principal=principal_for(
+            bank[0].store, "alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60))
         return result
     monkeypatch.setattr(bank[0].repository, "list_transactions", revoke_during)
     with pytest.raises(BankError, match="authorization_denied"):
@@ -906,13 +963,15 @@ def test_500_interleaved_reads_preserve_customer_isolation(bank):
 def test_concurrent_replay_consumption_across_store_instances_has_one_winner(tmp_path):
     import threading
     path = tmp_path / "shared.db"
-    stores = [StateStore(path) for _ in range(16)]
+    stores = [StateStore(path, ledger_continuity_approved=True) for _ in range(16)]
+    principal = principal_for(stores[0], "alice", cid(3), "session-alice", "conversation-alice",
+                              int(time.time()) + 60)
     start = threading.Barrier(len(stores))
 
     def one(store):
         start.wait(timeout=10)
         try:
-            store.consume("same-jti", int(time.time()) + 60)
+            store.consume("same-jti", principal.expires, principal=principal)
             return True
         except BankError as exc:
             assert exc.code == "authorization_denied"
@@ -922,18 +981,19 @@ def test_concurrent_replay_consumption_across_store_instances_has_one_winner(tmp
         assert sum(pool.map(one, stores)) == 1
     # A fresh store cannot replay the winner either.
     with pytest.raises(BankError, match="authorization_denied"):
-        StateStore(path).consume("same-jti", int(time.time()) + 60)
+        StateStore(path, ledger_continuity_approved=True).consume(
+            "same-jti", principal.expires, principal=principal)
 
 
 def test_concurrent_session_binding_and_revocation_across_store_instances(tmp_path):
     import threading
     path = tmp_path / "shared.db"
-    stores = [StateStore(path) for _ in range(16)]
+    stores = [StateStore(path, ledger_continuity_approved=True) for _ in range(16)]
     start = threading.Barrier(len(stores))
 
     def one(i):
         subject = "alice" if i % 2 == 0 else "bob"
-        principal = Principal(subject, cid(3 if i % 2 == 0 else 4), "shared-session",
+        principal = principal_for(stores[i], subject, cid(3 if i % 2 == 0 else 4), "shared-session",
                               f"conversation-{subject}", int(time.time()) + 60)
         start.wait(timeout=10)
         try:
@@ -946,7 +1006,10 @@ def test_concurrent_session_binding_and_revocation_across_store_instances(tmp_pa
     with ThreadPoolExecutor(max_workers=len(stores)) as pool:
         accepted = [subject for subject in pool.map(one, range(len(stores))) if subject]
     assert len(accepted) == 8 and len(set(accepted)) == 1
-    stores[0].revoke("shared-session")
+    subject = accepted[0]
+    principal = principal_for(stores[0], subject, cid(3 if subject == "alice" else 4),
+                              "shared-session", f"conversation-{subject}", int(time.time()) + 60)
+    stores[0].revoke("shared-session", principal=principal)
     assert all(store.is_revoked("shared-session") for store in stores)
     assert StateStore(path).is_revoked("shared-session")
 
@@ -955,13 +1018,15 @@ def test_external_sqlite_writer_contention_does_not_drop_replay_or_revocation(tm
     import sqlite3
     import threading
     path = tmp_path / "shared.db"
-    store = StateStore(path)
+    store = StateStore(path, ledger_continuity_approved=True)
+    principal = principal_for(store, "alice", cid(3), "contended-session", "conversation-alice",
+                              int(time.time()) + 60)
     started = threading.Event()
 
     def consume_and_revoke():
         started.set()
-        store.consume("contended-jti", int(time.time()) + 60)
-        store.revoke("contended-session")
+        store.consume("contended-jti", principal.expires, principal=principal)
+        store.revoke("contended-session", principal=principal)
 
     # A raw connection is outside our process gate, like the private revoke CLI.
     external = sqlite3.connect(path)
@@ -980,19 +1045,24 @@ def test_external_sqlite_writer_contention_does_not_drop_replay_or_revocation(tm
         external.close()
     assert store.is_revoked("external-session") and store.is_revoked("contended-session")
     with pytest.raises(BankError, match="authorization_denied"):
-        store.consume("contended-jti", int(time.time()) + 60)
+        store.consume("contended-jti", principal.expires, principal=principal)
 
 
 def test_authority_expiring_during_state_wait_is_denied(bank, monkeypatch):
     now = int(time.time())
-    principal = Principal("alice", cid(3), "session-alice", "conversation-alice", now + 60)
+    principal = principal_for(bank[0].store, "alice", cid(3), "session-alice", "conversation-alice", now + 60)
 
-    def delayed_revocation_read(session):
-        assert session == "session-alice"
-        monkeypatch.setattr("banking_mcp.security.time.time", lambda: now + 61)
-        return False
+    from contextlib import contextmanager
+    connect = bank[0].store.connect
+    @contextmanager
+    def delayed_connection():
+        with connect() as db:
+            # Authority now reads revocation within the SQLite transaction.
+            # Model a wait ending after expiry at that actual boundary.
+            monkeypatch.setattr("banking_mcp.security.time.time", lambda: now + 61)
+            yield db
 
-    monkeypatch.setattr(bank[0].store, "is_revoked", delayed_revocation_read)
+    monkeypatch.setattr(bank[0].store, "connect", delayed_connection)
     with pytest.raises(BankError, match="authorization_denied"):
         bank[0].auth.assert_current(principal)
 
