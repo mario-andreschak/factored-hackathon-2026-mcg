@@ -206,6 +206,115 @@ test.each([
   },
 );
 
+test("assistant selection and transcript metadata follow ES to PT to ES without changing the charge", async () => {
+  const selected: Transaction = {
+    ...charge,
+    reference: "txn_locale_switch_123456789abc",
+    occurred_at: "2026-09-20",
+    type: "Withdrawal",
+    merchant: null,
+    amount: 1234.5,
+  };
+  const original = { ...selected };
+  const onSelectTransaction = vi.fn();
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input) === "/api/chat/history")
+      return response({
+        active: false,
+        messages: [
+          {
+            role: "user",
+            text: "Consulta de prueba",
+            selection: {
+              reference: selected.reference,
+              occurred_at: selected.occurred_at,
+              type: selected.type,
+              amount: selected.amount,
+              currency: selected.currency,
+              status: selected.status,
+            },
+          },
+        ],
+      });
+    throw new Error(`Unexpected request: ${input}`);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  const props = {
+    open: true,
+    status: { available: true, sandbox_intake_available: false },
+    selected,
+    transactions: [selected],
+    onSelectTransaction,
+    hidden: false,
+    synthetic: true,
+    onClose: vi.fn(),
+    onExpired: vi.fn(),
+    initialLanguage: "es" as const,
+  };
+  const view = render(<Assistant {...props} />);
+  await screen.findByText("Consulta de prueba");
+  const summary = document.querySelector(".chat-selection")!;
+  const transcript = document.querySelector(".chat-message-selection")!;
+  const checkMetadata = (
+    type: string,
+    expectedDate: string,
+    expectedAmount: string,
+    excludedAmount: string,
+    hidden = false,
+  ) => {
+    expect(summary.querySelector("strong")?.textContent).toBe(type);
+    for (const surface of [summary, transcript]) {
+      expect(surface.textContent).toContain(expectedDate);
+      expect(surface.textContent).toContain(type);
+      expect(surface.textContent?.match(/COP/g)).toHaveLength(1);
+      if (hidden) {
+        expect(surface.textContent).toContain("•••••• COP");
+        expect(surface.textContent).not.toContain(expectedAmount);
+        expect(surface.textContent).not.toContain(excludedAmount);
+      } else {
+        expect(surface.textContent).toContain(expectedAmount);
+        expect(surface.textContent).not.toContain(excludedAmount);
+        expect(surface.textContent).not.toContain("••••••");
+      }
+    }
+  };
+  checkMetadata("Retiro", "20 sep 2026", "1,234.50", "1.234,50");
+
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    {
+      target: { value: "pt" },
+    },
+  );
+  checkMetadata("Saque", "20 de setembro de 2026", "1.234,50", "1,234.50");
+
+  view.rerender(<Assistant {...props} hidden />);
+  checkMetadata(
+    "Saque",
+    "20 de setembro de 2026",
+    "1.234,50",
+    "1,234.50",
+    true,
+  );
+
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma da interface" }),
+    {
+      target: { value: "es" },
+    },
+  );
+  checkMetadata("Retiro", "20 sep 2026", "1,234.50", "1.234,50", true);
+
+  view.rerender(<Assistant {...props} hidden={false} />);
+  checkMetadata("Retiro", "20 sep 2026", "1,234.50", "1.234,50");
+  expect(selected).toEqual(original);
+  expect(selected.reference).toBe(original.reference);
+  expect(onSelectTransaction).not.toHaveBeenCalled();
+  expect(fetchMock.mock.calls.map(([input]) => String(input))).toEqual([
+    "/api/chat/history",
+  ]);
+});
+
 test.each([
   ["es", "charge", "Mensaje para el asistente", "Consulta para continuar"],
   ["pt", "general", "Mensagem para o assistente", "Consulta a continuar"],

@@ -2792,13 +2792,12 @@ export function Assistant({
             </strong>
             <small>
               {portalDate(selected.occurred_at, actionLanguage)} ·{" "}
-              {portalMoney(
+              {portalBalance(
                 selected.amount,
                 selected.currency,
                 hidden,
                 actionLanguage,
-              )}{" "}
-              {selected.currency}
+              )}
             </small>
           </span>
           <CheckCheck size={18} />
@@ -3123,7 +3122,7 @@ export function Assistant({
                   <span>
                     {portalType(m.selection.type, actionLanguage)} ·{" "}
                     {portalDate(m.selection.occurred_at, actionLanguage)} ·{" "}
-                    {portalMoney(
+                    {portalBalance(
                       m.selection.amount,
                       m.selection.currency,
                       hidden,
