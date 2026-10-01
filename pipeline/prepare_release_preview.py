@@ -30,6 +30,7 @@ def prepare(root: Path, origin: str = "http://localhost:43801") -> tuple[Path, P
         raise ValueError("preview origin must be an exact loopback HTTP origin with a port")
 
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    root.chmod(0o700)
     root = root.resolve()
     # The exclusive marker also refuses a concurrent call that passed the
     # initial emptiness check. A failed build remains visibly incomplete, and
@@ -66,13 +67,16 @@ def main() -> None:
     print(f"Reports: {config.parent.parent / 'reports'}")
     print(f"Private configuration: {config}")
     print(f"Private invitation codes: {codes} (keep private)")
-    print("To run the existing standalone preview from frontend/:")
+    print("Next: install frontend Python dependencies, build its npm assets, and create")
+    print("a private state directory under this preview root. Run uvicorn from frontend/")
+    print("as the same host user so it can read the private configuration:")
     print(f"  BANKING_DATA_DIR = {config.parent.parent / 'snapshot'}")
     print(f"  BANKING_CONFIG_FILE = {config}")
-    print(f"  BANKING_PORT = {urlsplit(args.origin).port}")
+    print(f"  BANKING_STATE_DIR = {config.parent.parent / 'state'}")
     print(f"  BANKING_PUBLIC_ORIGIN = {args.origin}")
-    print("  docker compose -p savia-synthetic -f compose.yaml up -d --build --wait")
-    print("See frontend/README.md for shell-specific environment commands and limits.")
+    host = "::1" if urlsplit(args.origin).hostname == "::1" else "127.0.0.1"
+    print(f"  python -m uvicorn server.app:app --host {host} --port {urlsplit(args.origin).port}")
+    print("See frontend/README.md for exact POSIX and PowerShell commands.")
 
 
 if __name__ == "__main__":

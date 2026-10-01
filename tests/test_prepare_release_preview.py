@@ -6,11 +6,13 @@ import hashlib
 import json
 import os
 import stat
+import sys
 
 import duckdb
 import pytest
 
 from pipeline.common import current_build, sql_path
+from pipeline import prepare_release_preview as preview_module
 from pipeline.prepare_release_preview import prepare
 from pipeline.prototype_fixture import MARKER, PERSONAS, PUBLISHED_MARKER
 
@@ -40,6 +42,7 @@ def test_fresh_preview_has_matching_provenance_private_owner_invites_and_no_over
             for profile, code in codes.items()} == config["invites"]
     assert all(code not in config_path.read_text(encoding="utf-8") for code in codes.values())
     if os.name == "posix":
+        assert stat.S_IMODE(root.stat().st_mode) == 0o700
         assert stat.S_IMODE(config_path.parent.stat().st_mode) == 0o700
         assert stat.S_IMODE(config_path.stat().st_mode) == 0o600
         assert stat.S_IMODE(codes_path.stat().st_mode) == 0o600
@@ -71,3 +74,30 @@ def test_fresh_preview_has_matching_provenance_private_owner_invites_and_no_over
         prepare(occupied)
     assert sentinel.read_text(encoding="utf-8") == "keep"
     assert list(occupied.iterdir()) == [sentinel]
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permission bits")
+def test_existing_empty_preview_root_becomes_private(tmp_path):
+    root = tmp_path / "empty"
+    root.mkdir()
+    root.chmod(0o755)
+    config, codes = prepare(root)
+    assert stat.S_IMODE(root.stat().st_mode) == 0o700
+    assert stat.S_IMODE(config.stat().st_mode) == 0o600
+    assert stat.S_IMODE(codes.stat().st_mode) == 0o600
+
+
+def test_cli_recommends_native_same_user_preview_without_compose(monkeypatch, capsys, tmp_path):
+    root = tmp_path / "preview"
+    config = root / "secrets" / "frontend.json"
+    codes = root / "secrets" / "invite-codes.json"
+    monkeypatch.setattr(preview_module, "prepare", lambda output, origin: (config, codes))
+    monkeypatch.setattr(sys, "argv", ["prepare_release_preview", str(root)])
+
+    preview_module.main()
+
+    output = capsys.readouterr().out
+    assert "BANKING_STATE_DIR" in output
+    assert "same host user" in output
+    assert "uvicorn server.app:app --host 127.0.0.1 --port 43801" in output
+    assert "docker compose" not in output.lower()
