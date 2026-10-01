@@ -429,13 +429,16 @@ def _safe_inputs(stage, inputs):
 
 
 class StageAdapters:
-    def __init__(self, model: Model, *, timeout_seconds=15, prompt_dir=None, max_output_chars=50000):
+    def __init__(self, model: Model, *, timeout_seconds=15, prompt_dir=None, max_output_chars=50000, batch_preflight=False):
         if not callable(model):
             raise TypeError("model must be an async callable")
         if type(timeout_seconds) not in (int, float) or not math.isfinite(timeout_seconds) or not 0 < timeout_seconds <= 120:
             raise ValueError("timeout_seconds must be finite and in (0,120]")
         if type(max_output_chars) is not int or not 1 <= max_output_chars <= 200000:
             raise ValueError("max_output_chars must be in [1,200000]")
+        if type(batch_preflight) is not bool:
+            raise ValueError("batch_preflight must be boolean")
+        self.batch_preflight = batch_preflight
         self.model, self.timeout_seconds, self.max_output_chars = model, timeout_seconds, max_output_chars
         self.specs = {}
         self.output_schemas = dict(SCHEMAS)
@@ -472,7 +475,7 @@ class StageAdapters:
     async def from_state(self, stage: str, state: Mapping, **overrides):
         return await self.run(stage, self.build_inputs(stage, state, **overrides))
 
-    async def run(self, stage: str, inputs: Mapping, *, correction: str | None = None) -> dict:
+    def _prepare(self, stage: str, inputs: Mapping, *, correction: str | None = None):
         if stage not in self.specs:
             raise StageError(stage, "input", ("stage.unknown",))
         spec = self.specs[stage]
@@ -503,6 +506,10 @@ class StageAdapters:
             if not isinstance(correction, str) or len(correction) > 2000:
                 raise StageError(stage, "input", ("correction.size",))
             system += "\n\n[Corrección de validación del host]\n" + correction
+        return inputs, system, user
+
+    async def run(self, stage: str, inputs: Mapping, *, correction: str | None = None) -> dict:
+        inputs, system, user = self._prepare(stage, inputs, correction=correction)
         try:
             response = self.model(stage, system, user)
             if not inspect.isawaitable(response):
@@ -512,6 +519,9 @@ class StageAdapters:
             raise StageError(stage, "timeout") from None
         except Exception:
             raise StageError(stage, "model_error") from None
+        return self._validate(stage, raw, inputs)
+
+    def _validate(self, stage, raw, inputs):
         output = _parse_json(stage, raw, self.max_output_chars)
         errors = schema_errors(output, self.output_schemas[stage])
         if not errors:
@@ -519,6 +529,56 @@ class StageAdapters:
         if errors:
             raise StageError(stage, "schema", errors)
         return output
+
+    async def run_parallel(self, inputs_by_stage: Mapping, *, use_batch=None):
+        """Explicit same-turn preflight barrier, optionally one provider call.
+
+        Results are keyed by logical stage; StageError values are fail-closed
+        branch results for the runtime barrier. The runtime must never advance
+        on a failed branch. No calls from other turns are queued or coalesced.
+        Individual gather remains available for ordinary injected callables.
+        """
+        stages = ("rewrite_decompose", "detect_attack", "detect_context")
+        if not isinstance(inputs_by_stage, Mapping) or set(inputs_by_stage) != set(stages):
+            raise StageError("preflight_batch", "input", ("input.preflight_stages",))
+        if use_batch is None:
+            use_batch = self.batch_preflight
+        if type(use_batch) is not bool:
+            raise StageError("preflight_batch", "input", ("input.batch_option",))
+        prepared = {}
+        try:
+            for stage in stages:
+                prepared[stage] = self._prepare(stage, inputs_by_stage[stage])
+            questions = {values[0]["user_question"] for values in prepared.values()}
+            if len(questions) != 1 or prepared["rewrite_decompose"][0]["historic_conversation"] != prepared["detect_context"][0]["historic_conversation"]:
+                raise StageError("preflight_batch", "input", ("input.same_turn_scope",))
+        except StageError as exc:
+            return {stage: StageError(stage, exc.code, exc.errors) for stage in stages}
+        batch = getattr(self.model, "batch", None)
+        if not use_batch or not callable(batch):
+            outputs = await asyncio.gather(*(self.run(stage, inputs_by_stage[stage]) for stage in stages), return_exceptions=True)
+            for output in outputs:
+                if isinstance(output, asyncio.CancelledError):
+                    raise output
+            return {stage: output if isinstance(output, (dict, StageError)) else StageError(stage, "model_error") for stage, output in zip(stages, outputs)}
+        try:
+            pending = batch([(stage, prepared[stage][1], prepared[stage][2]) for stage in stages])
+            if not inspect.isawaitable(pending):
+                raise TypeError()
+            raw = await asyncio.wait_for(pending, timeout=self.timeout_seconds)
+            if not isinstance(raw, Mapping) or set(raw) != set(stages):
+                raise ValueError()
+        except TimeoutError:
+            return {stage: StageError(stage, "timeout") for stage in stages}
+        except Exception:
+            return {stage: StageError(stage, "model_error") for stage in stages}
+        outputs = {}
+        for stage in stages:
+            try:
+                outputs[stage] = self._validate(stage, raw[stage], prepared[stage][0])
+            except StageError as exc:
+                outputs[stage] = exc
+        return outputs
 
     @staticmethod
     def _check_inputs(stage, inputs):
