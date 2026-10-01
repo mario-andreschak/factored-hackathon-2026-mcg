@@ -2,9 +2,12 @@
 import asyncio
 from contextlib import contextmanager
 import ctypes
+import inspect
 import json
 import os
 from pathlib import Path
+import re
+import shlex
 import tempfile
 import threading
 import time
@@ -13,7 +16,32 @@ from unittest.mock import patch
 
 from scripts.native_gloria_qualification import NativeGloriaPort, BOUNDARY_CASES, CAPABILITY_CASES, public_report
 from scripts.native_gloria_qualification import digest
+from scripts.native_gloria_qualification import prepare
 from scripts.native_gloria_qualification import REVOCATION_CASES, REVOCATION_FENCE_CASES
+
+
+class NativeImageSourceClosureTests(unittest.TestCase):
+    def test_hashed_dependency_sources_are_copied_without_installing_bank_provenance(self):
+        root = Path(__file__).resolve().parents[1]
+        requirements = set(re.findall(r'ROOT / "([^"\n]*requirements[^"\n]*\.txt)"', inspect.getsource(prepare)))
+        self.assertIn("requirements-mcp.txt", requirements)
+        placements = {}
+        install_commands = []
+        for line in (root / "scripts/native_gloria_qualification.Dockerfile").read_text().splitlines():
+            words = shlex.split(line)
+            if words and words[0] == "COPY":
+                sources, destination = words[1:-1], words[-1]
+                for source in sources:
+                    if source.startswith("qualification/"):
+                        relative = source.removeprefix("qualification/")
+                        target = destination + Path(source).name if destination.endswith("/") else destination
+                        placements[relative] = target
+            if line.startswith("RUN ") and "pip install" in line:
+                install_commands.append(line)
+        for relative in requirements:
+            with self.subTest(source=relative):
+                self.assertEqual(placements.get(relative), "/tmp/" + relative)
+        self.assertEqual(install_commands, ["RUN python3 -m pip install --no-cache-dir -r /tmp/requirements-gloria.txt"])
 
 
 class PublicQualificationReportTests(unittest.TestCase):
