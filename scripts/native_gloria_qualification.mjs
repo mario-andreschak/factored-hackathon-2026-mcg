@@ -18,6 +18,11 @@ for (const key of Object.keys(opts)) assert(['--flujo-root', '--context', '--ima
 assert(opts['--flujo-root'] && opts['--context'] && opts['--output'], 'Required: --flujo-root --context --output');
 const context = path.resolve(opts['--context']);
 const sourceContext = JSON.parse(fs.readFileSync(path.join(context, 'source-manifest.json')));
+for (const [relative, checksum] of Object.entries(sourceContext.application_files)) {
+  const source = path.resolve(REPO_ROOT, relative), stat = fs.lstatSync(source);
+  assert(source.startsWith(REPO_ROOT + path.sep) && stat.isFile() && !stat.isSymbolicLink(), 'application_source_not_regular');
+  assert.equal(sha(fs.readFileSync(source)), checksum, `application_context_source_drift:${relative}`);
+}
 const binary = sourceContext.native_binary;
 assert(binary && ['0.153.3', '0.157.1'].includes(binary.version), 'Qualified context must pin a native binary');
 const image = opts['--image'] ?? 'codex-gloria-native-qualification:0ba622-v1';
@@ -56,6 +61,7 @@ const request = async (route, body, token, method = 'POST') => {
 };
 const report = { schema: 'gloria-installed-native-qualification/v1', sourceOnly: false,
   flujoRevision: '0ba62296520a505e6d71eddf5aa650691f3dc311', image, installed: false,
+  externalManifestSha256: sha(fs.readFileSync(path.join(context, 'source-manifest.json'))),
   innerStages: 'protected ephemeral native language graphs; real provider',
   bankData: 'public synthetic development fixture; no host writes', model: modelName,
   nativeProfile: JSON.parse(fs.readFileSync(path.join(admitted, 'native-profile.json'))), cases,
@@ -63,6 +69,9 @@ const report = { schema: 'gloria-installed-native-qualification/v1', sourceOnly:
 let started = false;
 try {
   report.imageIdentity = JSON.parse(docker(['image', 'inspect', image, '--format', '{{json .Id}}']));
+  report.imageCredentialAudit = JSON.parse(docker(['run', '--rm', '--entrypoint', '/usr/bin/python3', image, '-c',
+    'import json,pathlib; paths=["/app/.env","/app/.env.local","/qualification/.env","/root/.codex/auth.json","/app/.codex/auth.json"]; print(json.dumps({"checked":len(paths),"credential_files_present":sum(pathlib.Path(p).exists() for p in paths)}))']));
+  assert.equal(report.imageCredentialAudit.credential_files_present, 0, 'image_contains_credential_file');
   docker(['run', '-d', '--name', name, '--label', 'io.flujo.gloria.scope=isolated-qualification',
     '-p', `127.0.0.1:${port}:4200`, '--mount', `type=bind,source=${state},target=/runtime/data`,
     '--mount', `type=bind,source=${admitted},target=/qualification/runtime`,

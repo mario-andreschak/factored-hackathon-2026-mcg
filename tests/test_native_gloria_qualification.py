@@ -6,7 +6,51 @@ import tempfile
 import time
 import unittest
 
-from scripts.native_gloria_qualification import NativeGloriaPort
+from scripts.native_gloria_qualification import NativeGloriaPort, BOUNDARY_CASES, public_report
+
+
+class PublicQualificationReportTests(unittest.TestCase):
+    def report_fixture(self):
+        checksum = "a" * 64
+        return {"pass": True, "installed": True, "flujoRevision": "0" * 40,
+                "imageIdentity": "sha256:" + checksum, "externalManifestSha256": checksum,
+                "imageCredentialAudit": {"checked": 5, "credential_files_present": 0},
+                "sourceContext": {"application_revision": "1" * 40,
+                    "application_files": {"gloria_workflow/tool.py": checksum},
+                    "flujo_files": {"package-lock.json": checksum}},
+                "installedSourceHashes": {"pass": True, "manifest_sha256": checksum,
+                    "application_files": 1, "flujo_files": 1},
+                "nativeProfile": {"verifiedCliVersion": "0.157.1", "verifiedCliSha256": checksum,
+                    "verifiedModelCatalogSha256": checksum, "private_path": "PRIVATE_MARKER"},
+                "installedModel": {"id": "gloria-native-model", "name": "gpt-6-sol", "provider": "codex",
+                    "adapter": "codex-cli", "reasoningEffort": "low", "ApiKey": "PRIVATE_MARKER"},
+                "cases": [{"case": name, "pass": True, "httpStatus": 200, "seconds": 1,
+                    "private_response": "PRIVATE_MARKER", "bank_calls": ["PRIVATE_MARKER"],
+                    "model_observations": [{"stage": "detect_intent", "status": "ok", "latency_ms": 1,
+                        "model_content": "PRIVATE_MARKER"}]} for name in sorted(BOUNDARY_CASES)],
+                "nativeCapabilityProbes": {"bridgeSourceSha256": checksum, "fixtureSha256": checksum,
+                    "cases": [{"model": "gpt-6-sol", "tool": "inventory", "passed": True,
+                               "private_output": "PRIVATE_MARKER"} for _ in range(14)]},
+                "admissions": [{"token": "PRIVATE_MARKER"}]}
+
+    def test_public_report_excludes_private_payloads_and_retains_measurements(self):
+        published = public_report(self.report_fixture())
+        self.assertNotIn("PRIVATE_MARKER", json.dumps(published))
+        self.assertEqual(published["boundary_cases"]["count"], 14)
+        self.assertEqual(published["native_capability_probes"]["count"], 14)
+        self.assertEqual(published["boundary_cases"]["cases"][0]["bank_read_count"], 1)
+        self.assertTrue(published["installed_source_equality"]["manifest_equals_external_context"])
+
+    def test_incomplete_or_source_drift_report_cannot_be_published(self):
+        for mutate in (lambda value: value["cases"].pop(),
+                       lambda value: value["nativeCapabilityProbes"]["cases"].pop(),
+                       lambda value: value.update({"pass": False}),
+                       lambda value: value["installedSourceHashes"].update(manifest_sha256="b" * 64),
+                       lambda value: value["imageCredentialAudit"].update(credential_files_present=1)):
+            fixture = self.report_fixture()
+            mutate(fixture)
+            with self.assertRaises(ValueError):
+                public_report(fixture)
 
 
 class NativeHostAdmissionTests(unittest.IsolatedAsyncioTestCase):

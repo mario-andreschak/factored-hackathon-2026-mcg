@@ -157,6 +157,7 @@ def prepare(flujo_root: Path, context: Path, catalog: Path, native_binary=None, 
              ROOT / "scripts/native_gloria_qualification.ts", ROOT / "scripts/native_gloria_qualification.py",
              ROOT / "scripts/native_gloria_qualification.mjs", ROOT / "scripts/native_gloria_qualification.Dockerfile",
              ROOT / "scripts/build_gloria_graph.mjs", ROOT / "graph_config_v3.yaml",
+             ROOT / "resources/gloria_workflow.flow.json",
              ROOT / "scripts/native_gloria_compatibility_probe.mjs",
              ROOT / "scripts/native_gloria_capability_probe.mjs", ROOT / "scripts/native_gloria_bridge_loader.mjs",
              ROOT / "scripts/qualify_gloria.py", ROOT / "requirements-gloria.txt", ROOT / "requirements-pipeline.txt",
@@ -168,6 +169,8 @@ def prepare(flujo_root: Path, context: Path, catalog: Path, native_binary=None, 
         paths.extend((ROOT / directory).glob(suffix))
     paths.append(ROOT / "resources/prompts/fallback_templates.yaml")
     for source in paths:
+        if not source.is_file() or source.is_symlink() or not source.resolve().is_relative_to(ROOT.resolve()):
+            raise ValueError("Public application source must be an owned regular file")
         relative = source.relative_to(ROOT)
         destination = qualification / (relative.name if relative.parts[0] == "scripts" else relative)
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -183,6 +186,7 @@ def prepare(flujo_root: Path, context: Path, catalog: Path, native_binary=None, 
             raise ValueError("catalog has native capabilities")
     (context / "catalog.json").write_bytes(catalog_data)
     report = {"schema": "gloria-native-source-context/v1", "flujo_revision": PIN,
+              "application_revision": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
               "flujo_files": files, "application_files": copied, "catalog_sha256": digest(catalog_data),
               "credential_files": 0, "runtime_installed": False}
     if native_binary is not None:
@@ -271,6 +275,76 @@ def verify_image(manifest: Path):
             "manifest_sha256": digest(manifest.read_bytes())}
 
 
+BOUNDARY_CASES = {
+    "normal_es", "normal_es_transport_replay", "restart_transport_replay",
+    "restart_foreign_conversation", "restart_foreign_session_same_owner",
+    "normal_pt", "normal_pt_transport_replay", "timeout", "timeout_transport_replay",
+    "slow_body_concurrent_replay", "concurrent_replay", "concurrent_replay_transport_replay",
+    "poison_state", "poison_state_transport_replay",
+}
+
+
+def public_report(report):
+    """Publish an allowlisted successful attestation, never private payloads."""
+    cases, probes = report.get("cases", []), report.get("nativeCapabilityProbes", {}).get("cases", [])
+    installed, source = report.get("installedSourceHashes", {}), report.get("sourceContext", {})
+    audit, native = report.get("imageCredentialAudit", {}), report.get("nativeProfile", {})
+    if (report.get("pass") is not True or report.get("installed") is not True
+            or len(cases) != 14 or {item.get("case") for item in cases} != BOUNDARY_CASES
+            or not all(item.get("pass") is True for item in cases)
+            or len(probes) != 14 or not all(item.get("passed") is True for item in probes)
+            or installed.get("pass") is not True or audit.get("credential_files_present") != 0
+            or not report.get("externalManifestSha256")
+            or installed.get("manifest_sha256") != report["externalManifestSha256"]
+            or installed.get("application_files") != len(source.get("application_files", {}))
+            or installed.get("flujo_files") != len(source.get("flujo_files", {}))):
+        raise ValueError("Only complete, source-matched installed qualification can be published")
+    boundary = []
+    for item in cases:
+        selected = {key: item[key] for key in ("case", "httpStatus", "seconds", "pass", "graphHash",
+                    "exactValidatedProjectionCaptured", "language", "rule_ids", "safe_fallback_used",
+                    "noProviderOrMcpBeforeDenial") if key in item}
+        if "bank_calls" in item:
+            selected["bank_read_count"] = len(item["bank_calls"])
+        if "model_observations" in item:
+            selected["stage_outcomes"] = [{key: observation[key] for key in ("stage", "status", "latency_ms")
+                                            if key in observation} for observation in item["model_observations"]]
+        boundary.append(selected)
+    return {
+        "schema": "gloria-native-release-qualification/v1",
+        "qualified_utc": datetime.now(timezone.utc).isoformat(),
+        "pass": True, "installed": True,
+        "scope": "Isolated local worker; public synthetic development bank fixture; no host writes",
+        "shared_workers_changed": False, "model_relay_authoritative": False,
+        "pins": {"flujo_revision": report["flujoRevision"],
+                 "application_revision": source["application_revision"],
+                 "image_sha256": report["imageIdentity"],
+                 "source_manifest_sha256": report["externalManifestSha256"],
+                 "package_lock_sha256": source["flujo_files"]["package-lock.json"],
+                 "native_version": native["verifiedCliVersion"],
+                 "native_binary_sha256": native["verifiedCliSha256"],
+                 "catalog_sha256": native["verifiedModelCatalogSha256"],
+                 "application_source_hashes": source["application_files"]},
+        "installed_source_equality": {"pass": True, "manifest_equals_external_context": True,
+                                      "flujo_files": installed["flujo_files"],
+                                      "application_files": installed["application_files"]},
+        "credential_file_audit": {"image_files_checked": audit["checked"],
+                                  "credential_files_present": 0, "credential_material_published": False},
+        "configured_model": {key: report["installedModel"][key]
+                             for key in ("id", "name", "provider", "adapter", "reasoningEffort")},
+        "native_capability_probes": {
+            "scope": "Installed native binary and production tool bridge; synthetic upstream responses",
+            "bridge_source_sha256": report["nativeCapabilityProbes"]["bridgeSourceSha256"],
+            "fixture_sha256": report["nativeCapabilityProbes"]["fixtureSha256"],
+            "count": 14,
+            "cases": [{key: item[key] for key in ("model", "tool", "passed", "bridgeSafe",
+                       "markerExists", "foreignChanged", "foreignLeaked", "rogueCalled") if key in item}
+                      for item in probes]},
+        "boundary_cases": {"scope": "Actual configured provider, saved graphs and per-turn registered MCP",
+                           "count": 14, "cases": boundary},
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stdio", action="store_true")
@@ -281,8 +355,17 @@ def main():
     parser.add_argument("--verify-image", type=Path)
     parser.add_argument("--native-binary", type=Path)
     parser.add_argument("--native-version")
+    parser.add_argument("--publish-report", type=Path)
+    parser.add_argument("--public-output", type=Path)
     args = parser.parse_args()
-    if args.verify_image:
+    if args.publish_report:
+        if not args.public_output:
+            parser.error("public-output required")
+        public = public_report(json.loads(args.publish_report.read_text(encoding="utf-8")))
+        args.public_output.parent.mkdir(parents=True, exist_ok=True)
+        args.public_output.write_text(json.dumps(public, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({"published": True, "boundary_cases": 14, "capability_probes": 14}))
+    elif args.verify_image:
         report = verify_image(args.verify_image)
         print(json.dumps(report))
         raise SystemExit(0 if report["pass"] else 1)

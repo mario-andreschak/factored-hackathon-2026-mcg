@@ -84,7 +84,8 @@ a previously inspected restricted catalog and the exact verified native binary:
 ```powershell
 python scripts/native_gloria_qualification.py --flujo-root <clean-pinned-checkout> --context private/native-gloria-final --catalog <restricted-catalog.json> --native-binary <verified-linux-binary> --native-version 0.157.1
 docker build -t codex-gloria-native-qualification:final private/native-gloria-final
-node scripts/native_gloria_qualification.mjs --flujo-root <pinned-git-repo-with-authoring-dependencies> --context private/native-gloria-final --image codex-gloria-native-qualification:final --output docs/qualification/gloria-native-final.json --retain-runtime true
+node scripts/native_gloria_qualification.mjs --flujo-root <pinned-git-repo-with-authoring-dependencies> --context private/native-gloria-final --image codex-gloria-native-qualification:final --output private/native-gloria-final-result.json --retain-runtime true
+python scripts/native_gloria_qualification.py --publish-report private/native-gloria-final-result.json --public-output docs/qualification/gloria-native-release-2026-10-01.json
 python -m unittest tests.test_gloria_graph tests.test_native_gloria_qualification -q
 ```
 
@@ -95,13 +96,16 @@ public source, canonical policy/prompts and the verified native binary. Login
 is transferred at runtime into a separate readonly mount and never baked into
 the image or published report.
 
-The runner checks in-image source hashes and exact context-manifest SHA before
+The runner checks host source bytes, in-image source hashes and exact context-manifest SHA before
 any provider call. It installs/readbacks the model, actual MCP server and saved
 graph, then checks ES/PT normal turns, cancellation fallback with zero bank
 reads, transport replay, restart replay, foreign owner/session, poisoned
 native state and slow-body concurrent replay. Full synthetic diagnostics stay
 under ignored `private/`; public reports contain only reviewed projections and
-redacted measurements.
+redacted measurements. Publication requires all fourteen capability and fourteen
+boundary cases to pass, installed source equality and an image credential-file
+audit. The public allowlist excludes private paths, admissions, tokens, raw
+model content and responses; incomplete qualifications cannot be published.
 
 `--retain-runtime true` retains a successful qualification for joined HTTP
 tests. `--serve-only true --retain-runtime diagnostic` starts a separately
