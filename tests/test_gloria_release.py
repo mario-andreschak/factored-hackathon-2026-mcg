@@ -140,15 +140,26 @@ def test_new_target_after_verified_terminal_does_not_inherit_prior_receipt(tmp_p
 
 @pytest.mark.parametrize("transplant", ["query_id", "request_id", "pending_handle"])
 def test_same_target_snapshot_cannot_share_authority_between_query_capsules(transplant):
-    state = policy_state()
-    state["runtime"].update(query_scope_id="q_release_A", active_query_id="q_release_A")
+    from gloria_workflow.state import (TrustedBinding, new_state, begin_turn,
+                                      start_query_batch, activate_query_scope)
+    trusted = TrustedBinding(**binding())
+    base = begin_turn(new_state(trusted, now=NOW), trusted, turn_id="scoped-proof",
+                      user_question="Dos solicitudes sobre el mismo movimiento.", now=NOW)
+    base = start_query_batch(base, [dict(query_text="Primera solicitud", domain="TRANSACTION_DISPUTE"),
+                                   dict(query_text="Segunda solicitud", domain="TRANSACTION_DISPUTE")])
+    query_a, query_b = base["runtime"]["query_scope_order"]
+    state = activate_query_scope(base, trusted, query_a, now=NOW)
+    facts = policy_state()
+    state["workflow_state"], state["tool_results"] = deepcopy(facts["workflow_state"]), deepcopy(facts["tool_results"])
+    state["runtime"]["query_scope_id"] = query_a
     status = native_host_receipt()
-    status.update(query_id="q_release_A", request_id=str(uuid.uuid4()), pending_handle="a"*43)
+    status.update(query_id=query_a, request_id=str(uuid.uuid4()), pending_handle="a"*43)
     state["tool_results"]["host_action_status"] = status
     workflow = state["workflow_state"]
     workflow["pending"].update(type="awaiting_confirmation", target_transaction_id=workflow["transaction_id"],
         snapshot_id=SNAPSHOT, snapshot_hash=SNAPSHOT, request_id=status["request_id"],
-        host_pending_handle=status["pending_handle"], intent="TRANSACTION_DISPUTE", proposed_action="CREATE_COMPLAINT")
+        host_pending_handle=status["pending_handle"], intent="TRANSACTION_DISPUTE", proposed_action="CREATE_COMPLAINT",
+        query_id=query_a)
     result_id = status["receipt"]["id"]
     workflow.update(action_attempted=True, action_outcome="verified")
     workflow["action"].update(name="CREATE_COMPLAINT", authorized=True, executed=True,
@@ -157,7 +168,11 @@ def test_same_target_snapshot_cannot_share_authority_between_query_capsules(tran
     # All identity/target/snapshot facts stay equal. Only the per-query proof is
     # transplanted: target equality is not a consent or execution event.
     if transplant == "query_id":
-        state["runtime"].update(query_scope_id="q_release_B", active_query_id="q_release_B")
+        sibling = activate_query_scope(base, trusted, query_b, now=NOW)
+        sibling["workflow_state"], sibling["tool_results"] = deepcopy(workflow), deepcopy(state["tool_results"])
+        sibling["workflow_state"]["pending"]["query_id"] = query_b
+        sibling["runtime"]["query_scope_id"] = query_b
+        state = sibling
     elif transplant == "request_id": workflow["pending"]["request_id"] = str(uuid.uuid4())
     else: workflow["pending"]["host_pending_handle"] = "b"*43
     assert decide(state)["response_mode"] != "ACTION_DONE"
