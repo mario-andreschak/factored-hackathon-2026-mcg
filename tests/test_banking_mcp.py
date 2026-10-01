@@ -1143,9 +1143,11 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
     from mcp.client.stdio import stdio_client
     service, _ = bank
     build, targets = owned_action_target(bank)
-    # June 2 is outside the real 120-day window after September 30. This
-    # remains a regression for the child fixture as the wall date advances.
-    assert (datetime.now(timezone.utc).date() - datetime(2026, 6, 2, tzinfo=timezone.utc).date()).days > 120
+    # The child action clock is synthetic; the 120-day policy boundary must
+    # not depend on the wall date used by authentication and revocation.
+    action_day = datetime.fromtimestamp(ACTION_TEST_NOW, timezone.utc).date()
+    assert (action_day - datetime(2026, 6, 2, tzinfo=timezone.utc).date()).days == 119
+    assert (action_day - datetime(2026, 5, 31, tzinfo=timezone.utc).date()).days == 121
     config = tmp_path / "bank.json"
     config.write_text(service.config.model_dump_json())
     repo = Path(__file__).resolve().parents[1]
