@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { useState } from "react";
 import {
   act,
   cleanup,
@@ -116,6 +117,125 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+
+test.each([
+  ["es", "charge", "Mensaje para el asistente", "Consulta para continuar"],
+  ["pt", "general", "Mensagem para o assistente", "Consulta a continuar"],
+] as const)(
+  "%s parent reopen to %s clears an incompatible hidden query before sending",
+  async (language, destination, messageLabel, queryLabel) => {
+    const queryId = "q_" + "a".repeat(32);
+    const previousMessage =
+      language === "pt"
+        ? "Consulta anterior em português"
+        : "Consulta anterior";
+    const message =
+      language === "pt" ? "E esta consulta?" : "¿Y esta consulta?";
+    const otherCharge: Transaction = {
+      ...charge,
+      reference: "txn_bbbbbbbbbbbbbbbbbbbbbbbb",
+      merchant: language === "pt" ? "Outra loja" : "Otra tienda",
+    };
+    const chatPosts: Record<string, unknown>[] = [];
+    const onExpired = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/api/chat/history")
+          return response({
+            active: false,
+            messages: [{ role: "assistant", text: previousMessage }],
+            queries: [
+              {
+                query_id: queryId,
+                label: "Compra anterior",
+                transaction_reference: charge.reference,
+              },
+            ],
+            active_query_id: queryId,
+          });
+        if (url === "/api/chat/messages") {
+          chatPosts.push(JSON.parse(init!.body as string));
+          return response({
+            reply: language === "pt" ? "Resposta atual." : "Respuesta actual.",
+          });
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+
+    function Parent() {
+      const [open, setOpen] = useState(true);
+      const [selected, setSelected] = useState<Transaction | null>(charge);
+      return (
+        <>
+          <button
+            onClick={() => {
+              setOpen(false);
+              setSelected(null);
+            }}
+          >
+            Close from parent
+          </button>
+          <button
+            onClick={() => {
+              setSelected(destination === "charge" ? otherCharge : null);
+              setOpen(true);
+            }}
+          >
+            Reopen from parent
+          </button>
+          <Assistant
+            open={open}
+            status={{ available: true, sandbox_intake_available: false }}
+            selected={selected}
+            transactions={[charge, otherCharge]}
+            onSelectTransaction={setSelected}
+            hidden={false}
+            synthetic
+            onClose={() => {
+              setOpen(false);
+              setSelected(null);
+            }}
+            onExpired={onExpired}
+            initialLanguage={language}
+          />
+        </>
+      );
+    }
+
+    render(<Parent />);
+    await screen.findByText(previousMessage);
+    expect(document.querySelector(".chat-selection")?.textContent).toContain(
+      charge.merchant,
+    );
+    expect(screen.queryByRole("combobox", { name: queryLabel })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close from parent" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reopen from parent" }));
+    const visibleSelection = document.querySelector(".chat-selection");
+    if (destination === "charge") {
+      expect(visibleSelection?.textContent).toContain(otherCharge.merchant);
+      expect(visibleSelection?.textContent).not.toContain(charge.merchant);
+    } else {
+      expect(visibleSelection).toBeNull();
+    }
+    expect(screen.queryByRole("combobox", { name: queryLabel })).toBeNull();
+
+    const input = screen.getByRole("textbox", { name: messageLabel });
+    fireEvent.change(input, { target: { value: message } });
+    fireEvent.submit(input.closest("form")!);
+    await waitFor(() => expect(chatPosts).toHaveLength(1));
+    expect(chatPosts[0]).toEqual({
+      message,
+      language,
+      ...(destination === "charge"
+        ? { transaction_reference: otherCharge.reference }
+        : {}),
+    });
+  },
+);
 
 test("restored null-reference query clears the stale charge on chat submit", async () => {
   const first = "q_" + "a".repeat(32),

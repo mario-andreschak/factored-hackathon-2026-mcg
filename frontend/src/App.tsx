@@ -2244,12 +2244,27 @@ export function Assistant({
     controller = useRef<AbortController | null>(null),
     activeQueryIdRef = useRef<string | null>(null),
     selectionOverrideRef = useRef<Transaction | null | undefined>(undefined),
+    selectedReferenceRef = useRef(selected?.reference || null),
     alive = useRef(true),
     actionLanguageRef = useRef(actionLanguage),
     actionStatusSequence = useRef(0);
   const copy = actionCopy[actionLanguage];
   const ui = assistantCopy[actionLanguage];
   const uiLang = actionLanguage === "pt" ? "pt-BR" : "es";
+  selectedReferenceRef.current = selected?.reference || null;
+  function compatibleQueryId(
+    queryId: string | null,
+    scopes: typeof queryScopes,
+  ): string | null {
+    const query = scopes.find((item) => item.query_id === queryId);
+    const reference =
+      selectionOverrideRef.current === undefined
+        ? selectedReferenceRef.current
+        : selectionOverrideRef.current?.reference || null;
+    return query && (query.transaction_reference || null) === reference
+      ? queryId
+      : null;
+  }
   useEffect(() => {
     actionLanguageRef.current = actionLanguage;
     try {
@@ -2259,9 +2274,21 @@ export function Assistant({
     }
   }, [actionLanguage]);
   useEffect(() => {
-    // Parent selection updates are authoritative after a query switch settles.
+    // Parent navigation is authoritative. A query selected in this dialog remains
+    // active only when the parent's new charge matches its saved reference.
     selectionOverrideRef.current = undefined;
-  }, [selected]);
+    const query = queryScopes.find(
+      (item) => item.query_id === activeQueryIdRef.current,
+    );
+    if (
+      activeQueryIdRef.current &&
+      (!query ||
+        (query.transaction_reference || null) !== (selected?.reference || null))
+    ) {
+      activeQueryIdRef.current = null;
+      setActiveQueryId(null);
+    }
+  }, [selected?.reference]);
   useEffect(() => {
     if (open) end.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy, open]);
@@ -2308,7 +2335,10 @@ export function Assistant({
           if (historyController.signal.aborted || !alive.current) return;
           setMessages(result.messages);
           setQueryScopes(result.queries || []);
-          activeQueryIdRef.current = result.active_query_id || null;
+          activeQueryIdRef.current = compatibleQueryId(
+            result.active_query_id || null,
+            result.queries || [],
+          );
           setActiveQueryId(activeQueryIdRef.current);
           setHistoryLimited(Boolean(result.limited));
           setHistoryReady(true);
@@ -2382,7 +2412,14 @@ export function Assistant({
   }, [status.available, historyAttempt, onExpired]);
   async function send(text: string) {
     if (!text.trim() || busy || !status.available || !historyReady) return;
-    const queryScopeId = activeQueryIdRef.current;
+    const queryScopeId = compatibleQueryId(
+      activeQueryIdRef.current,
+      queryScopes,
+    );
+    if (queryScopeId !== activeQueryIdRef.current) {
+      activeQueryIdRef.current = queryScopeId;
+      setActiveQueryId(queryScopeId);
+    }
     const scopedReference = queryScopeId
       ? queryScopes.find((query) => query.query_id === queryScopeId)
           ?.transaction_reference
@@ -2427,7 +2464,10 @@ export function Assistant({
       if (!alive.current || controller.current.signal.aborted) return;
       setMessages((m) => [...m, { role: "assistant", text: result.reply }]);
       setQueryScopes(result.queries || []);
-      activeQueryIdRef.current = result.active_query_id || null;
+      activeQueryIdRef.current = compatibleQueryId(
+        result.active_query_id || null,
+        result.queries || [],
+      );
       setActiveQueryId(activeQueryIdRef.current);
     } catch (e) {
       if (!alive.current) return;
