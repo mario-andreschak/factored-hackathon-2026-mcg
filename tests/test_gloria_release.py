@@ -10,6 +10,8 @@ import asyncio
 import csv
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -552,6 +554,11 @@ def release_source(tmp_path_factory):
                                 merchant_name="Fictional Other Merchant")
                     twin["transaction_date"] = (datetime_from_text(target["transaction_date"]) + timedelta(seconds=60)).isoformat(sep=" ")
                     rows.append(twin)
+                    usd = deepcopy(target)
+                    usd.update(transaction_id="SYNTH-MX-USD-PROBE", amount="143.50", currency="USD",
+                        transaction_date=(NOW-timedelta(days=10)).replace(tzinfo=None).isoformat(sep=" "),
+                        process_date=(NOW-timedelta(days=10)).date().isoformat(), merchant_name="Fictional USD Merchant")
+                    rows.append(usd)
             return rows
         rewrite_csv(path, events)
     for path in (source / "complaints").rglob("*.csv"):
@@ -584,10 +591,19 @@ def complete_reads(release_source, tmp_path):
     source = release_source
     signer = Ed25519PrivateKey.generate()
     public = signer.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo).decode()
+    rate_rows = set()
+    for path in (source.source / "transactions").rglob("*.csv"):
+        with path.open(encoding="utf-8-sig", newline="") as stream:
+            rate_rows.update((row["transaction_date"][:10], row["currency"]) for row in csv.DictReader(stream))
+    # These declared fictional rates exercise source lookup, never market prices.
+    rates = tmp_path / "event-rates.csv"
+    rates.write_text("date,currency,usd_rate\n" + "".join(
+        f"{day},{currency},{'0.0001' if currency == 'COP' else '0.05'}\n" for day, currency in sorted(rate_rows)), encoding="utf-8")
     service = Service(Config(data_dir=source.data, state_db=tmp_path / "bank.sqlite",
         service_token="fictional-release-token-"*3, public_keys={"release": public},
         principal_customers={"release-subject": source.person.customer_id,
                             "other-release-subject": "SYNTH-CO-001"},
+        event_rates_file=rates, event_rates_sha256=hashlib.sha256(rates.read_bytes()).hexdigest(),
         sandbox_report_coverage_start=int(NOW.timestamp())-90000))
     service.store.attest_sandbox_coverage(int(NOW.timestamp())-90000, "synthetic:release-complete-empty-ledger")
     public_state = State(tmp_path / "public-state")
@@ -604,6 +620,76 @@ def complete_reads(release_source, tmp_path):
 
 def read(port, name, **args):
     return asyncio.run(port.read(name, args))
+
+
+def configure_rates(port, content):
+    from banking_mcp.config import Config
+    values = port.service.config.model_dump()
+    values.update(event_rates_file=None, event_rates_sha256=None)
+    if content is not None:
+        location = port.service.store.path.parent / "independent-rates.csv"
+        location.write_bytes(content)
+        values.update(event_rates_file=location, event_rates_sha256=hashlib.sha256(content).hexdigest())
+    port.service.config = Config(**values)
+
+
+def test_nonusd_risk_uses_exact_event_date_rate_and_preserves_native_display(complete_reads):
+    day = complete_reads.source.target["transaction_date"][:10]
+    tomorrow = (datetime.fromisoformat(day)+timedelta(days=1)).date().isoformat()
+    currency = complete_reads.source.target["currency"]
+    configure_rates(complete_reads, f"date,currency,usd_rate\n{day},{currency},0.05\n{tomorrow},{currency},9\n2026-09-30,{currency},8\n".encode())
+    result = read(complete_reads.reads, "get_transaction", transaction_id=complete_reads.reference)
+    expected = abs(Decimal(complete_reads.source.target["amount"]))*Decimal("0.05")
+    assert result["status"] == "ok" and result["source_verified"] is True
+    assert result["risk_data_complete"] is True
+    assert result["risk_signals"]["amount_usd"] == pytest.approx(float(expected))
+    assert result["risk_signals"]["amount_usd"] != float(complete_reads.source.target["amount_usd"])
+    assert result["risk_signals"]["amount_usd_provenance"] == dict(source="pinned_event_rates", date=day,
+        currency=currency, rates_sha256=complete_reads.service.config.event_rates_sha256)
+    assert Decimal(str(result["transaction"]["amount"])) == Decimal(complete_reads.source.target["amount"])
+    assert result["transaction"]["currency"] == currency
+    assert "amount_usd" not in result["transaction"]
+
+
+@pytest.mark.parametrize("corruption", ["absent", "missing_file", "wrong_date", "wrong_currency", "hash", "duplicate",
+    "header", "bad_date", "zero", "negative", "nan", "infinity", "overflow", "unrelated_bad_row", "oversized"])
+def test_missing_or_invalid_event_rate_cannot_use_observed_source_usd(complete_reads, corruption):
+    day, currency = (complete_reads.source.target[key] for key in ("transaction_date", "currency"))
+    day = day[:10]
+    content = f"date,currency,usd_rate\n{day},{currency},0.05\n"
+    if corruption == "wrong_date": content = content.replace(day, "2026-01-01")
+    elif corruption == "wrong_currency": content = content.replace(currency, "EUR")
+    elif corruption == "duplicate": content += f"{day},{currency},0.05\n"
+    elif corruption == "header": content = content.replace("date,currency,usd_rate", "currency,date,usd_rate")
+    elif corruption == "bad_date": content = content.replace(day, "2026-02-30")
+    elif corruption in {"zero", "negative", "nan", "infinity", "overflow"}:
+        content = content.replace("0.05", {"zero":"0", "negative":"-1", "nan":"NaN", "infinity":"Infinity", "overflow":"1e1000000"}[corruption])
+    elif corruption == "unrelated_bad_row": content += "2026-01-01,EUR,-1\n"
+    elif corruption == "oversized": content += " "*(4*1024*1024)
+    configure_rates(complete_reads, None if corruption == "absent" else content.encode())
+    if corruption == "missing_file": complete_reads.service.config.event_rates_file.unlink()
+    elif corruption == "hash":
+        path = complete_reads.service.config.event_rates_file
+        path.write_bytes(path.read_bytes()+b"\n")
+    result = read(complete_reads.reads, "get_transaction", transaction_id=complete_reads.reference)
+    assert result["status"] == "ok" and result["source_verified"] is True
+    assert result["risk_data_complete"] is False
+    assert result["risk_signals"]["amount_usd"] is None
+    assert result["risk_signals"]["amount_usd_provenance"] == dict(source="unavailable", date=day, currency=currency)
+    assert result["transaction"]["currency"] == currency
+
+
+@pytest.mark.parametrize("rate_source", ["absent", "corrupt"])
+def test_source_verified_usd_uses_native_amount_without_fx_lookup(complete_reads, rate_source):
+    configure_rates(complete_reads, None if rate_source == "absent" else b"malformed unrelated FX file")
+    reference = complete_reads.repository.reference("txn", complete_reads.principal.customer, "SYNTH-MX-USD-PROBE")
+    result = read(complete_reads.reads, "get_transaction", transaction_id=reference)
+    assert result["status"] == "ok" and result["source_verified"] is True
+    assert result["risk_data_complete"] is True
+    assert result["risk_signals"]["amount_usd"] == 143.50
+    assert result["risk_signals"]["amount_usd_provenance"] == dict(source="exact_usd",
+        date=(NOW-timedelta(days=10)).date().isoformat(), currency="USD")
+    assert result["transaction"]["amount"] == "143.50" and result["transaction"]["currency"] == "USD"
 
 
 def test_complete_profile_uses_owned_source_product_details(complete_reads):
@@ -803,11 +889,12 @@ def test_native_tool_closure_keeps_selection_and_identity_in_trusted_context():
     assert runner.calls[0][2]["selection"]["reference"] == "txn_"+"a"*24
 
 
+@pytest.mark.parametrize("missing_fx", [False, True])
 @pytest.mark.parametrize("language,message,followup", [
     ("es", "No reconozco la compra de mi tarjeta de 2026-09-12.", "¿Cuál es el estado de esta solicitud?"),
     ("pt", "Não reconheço a compra do meu cartão de 2026-09-12.", "Qual é o estado desta solicitação?"),
 ])
-def test_actual_frontend_workflow_source_and_portal_receipt_join(complete_reads, tmp_path, language, message, followup):
+def test_actual_frontend_workflow_source_and_portal_receipt_join(complete_reads, tmp_path, language, message, followup, missing_fx):
     from fastapi.testclient import TestClient
     from frontend.server.app import create_app
     from frontend.server.config import Settings
@@ -816,6 +903,7 @@ def test_actual_frontend_workflow_source_and_portal_receipt_join(complete_reads,
     from tests.test_gloria_acceptance import ScriptedModel
     raw_target, customer = "SYNTH-CO-TX-014", "SYNTH-CO-001"
     bank = complete_reads.service
+    if missing_fx: configure_rates(complete_reads, None)
     # This owner has complete closed history and no invented exact-case link.
     snapshot = bank.repository.snapshot()
     from banking_mcp.security import Principal
@@ -852,7 +940,23 @@ def test_actual_frontend_workflow_source_and_portal_receipt_join(complete_reads,
         inquiry = client.post("/api/chat", json=dict(message=message, transaction_reference=reference))
         assert inquiry.status_code == 200, inquiry.text
         assert inquiry.json()["mode"] == "gloria"
+        with factory.store._connect() as db:
+            saved = json.loads(db.execute("SELECT state_json FROM gloria_conversations").fetchone()[0])
+        assert mode(saved) == ("HANDOFF" if missing_fx else "CONFIRM_ACTION")
+        assert complete_reads.service.config.event_rates_sha256 is None or all(
+            complete_reads.service.config.event_rates_sha256 not in user for _, _, user in model.calls)
         prepared = client.post("/api/action/prepare", json=dict(transaction_reference=reference, language=language))
+        if missing_fx:
+            assert saved["workflow_state"]["policy_decision"]["reason_code"] == "missing_evidence"
+            assert prepared.status_code == 200, prepared.text
+            assert prepared.json()["state"] == "handoff_verified"
+            assert prepared.json()["reason"] == "missing_evidence"
+            assert prepared.json()["handoff"]["human_responded"] is False
+            assert "receipt" not in prepared.json()
+            with bank.store.connect() as db:
+                assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 0
+                assert db.execute("SELECT count(*) FROM action_pending WHERE decision='intake' AND confirmation_state='prepared'").fetchone()[0] == 0
+            return
         assert prepared.status_code == 200, prepared.text
         assert prepared.json()["state"] == "pending_confirmation", prepared.json()
         pending = prepared.json()["pending_handle"]

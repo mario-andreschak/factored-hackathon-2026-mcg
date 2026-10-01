@@ -40,6 +40,17 @@ private selector rejection, pinned-source mutation, sandbox attestation, and
 verified receipt integrity in the exact half-open 24-hour window. Direct SQLite
 fixture inserts represent newly invented sandbox receipts, never live actions.
 
+Fictional event-date currency rates are separately pinned by exact file hash.
+The release probes require the correct date/currency lookup independently of
+the transaction source's observed USD amount. Missing files or keys, changed
+bytes, duplicate keys, malformed fields, nonpositive/nonfinite/extreme rates,
+invalid unrelated rows and oversized files leave USD risk unknown. USD source
+transactions retain exact native magnitude without a rate lookup. Native
+amount/currency remain the customer display facts; rates, conversion provenance
+and their hash stay private. Actual ES/PT HTTP cases with missing rates route to
+human review without an intake receipt or confirmable intake preparation; a
+saved review request does not mean a person has responded.
+
 The actual bank subset reached 23 passing assertions against a development
 integration checkout after its owners repaired profile and duplicate projection.
 That checkout was changing during implementation; this checkpoint is useful
