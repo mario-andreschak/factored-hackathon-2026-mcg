@@ -1404,6 +1404,8 @@ const assistantCopy = {
       "No pudimos recuperar tu conversación. Vuelve a intentar antes de enviar una consulta.",
     sendError:
       "La consulta no pudo completarse. Puedes intentar de nuevo; tu historial sigue disponible.",
+    queryChargeMismatch:
+      "Esta consulta corresponde a otro movimiento. Elige la consulta de este movimiento antes de continuar.",
     messageLabel: "Mensaje para el asistente",
     messagePlaceholder: "Escribe tu consulta…",
     disconnectedPlaceholder: "Asistente temporalmente desconectado",
@@ -1445,6 +1447,8 @@ const assistantCopy = {
       "Não foi possível recuperar sua conversa. Tente novamente antes de enviar uma pergunta.",
     sendError:
       "Não foi possível concluir a consulta. Você pode tentar novamente; seu histórico continua disponível.",
+    queryChargeMismatch:
+      "Esta consulta corresponde a outro lançamento. Escolha a consulta deste lançamento antes de continuar.",
     messageLabel: "Mensagem para o assistente",
     messagePlaceholder: "Escreva sua pergunta…",
     disconnectedPlaceholder: "Assistente temporariamente desconectado",
@@ -2201,7 +2205,7 @@ export function Assistant({
   status: ChatStatus;
   selected: Transaction | null;
   transactions: Transaction[];
-  onSelectTransaction: (transaction: Transaction) => void;
+  onSelectTransaction: (transaction: Transaction | null) => void;
   hidden: boolean;
   synthetic: boolean;
   onClose: () => void;
@@ -2238,6 +2242,8 @@ export function Assistant({
   const consentSummaryId = useId();
   const end = useRef<HTMLDivElement>(null),
     controller = useRef<AbortController | null>(null),
+    activeQueryIdRef = useRef<string | null>(null),
+    selectionOverrideRef = useRef<Transaction | null | undefined>(undefined),
     alive = useRef(true),
     actionLanguageRef = useRef(actionLanguage),
     actionStatusSequence = useRef(0);
@@ -2252,6 +2258,10 @@ export function Assistant({
       // Private browsing may deny storage; the current visit still works.
     }
   }, [actionLanguage]);
+  useEffect(() => {
+    // Parent selection updates are authoritative after a query switch settles.
+    selectionOverrideRef.current = undefined;
+  }, [selected]);
   useEffect(() => {
     if (open) end.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy, open]);
@@ -2298,7 +2308,8 @@ export function Assistant({
           if (historyController.signal.aborted || !alive.current) return;
           setMessages(result.messages);
           setQueryScopes(result.queries || []);
-          setActiveQueryId(result.active_query_id || null);
+          activeQueryIdRef.current = result.active_query_id || null;
+          setActiveQueryId(activeQueryIdRef.current);
           setHistoryLimited(Boolean(result.limited));
           setHistoryReady(true);
           setBusy(result.active);
@@ -2371,11 +2382,28 @@ export function Assistant({
   }, [status.available, historyAttempt, onExpired]);
   async function send(text: string) {
     if (!text.trim() || busy || !status.available || !historyReady) return;
+    const queryScopeId = activeQueryIdRef.current;
+    const scopedReference = queryScopeId
+      ? queryScopes.find((query) => query.query_id === queryScopeId)
+          ?.transaction_reference
+      : undefined;
+    const chatSelection = queryScopeId
+      ? transactions.find((item) => item.reference === scopedReference)
+      : selectionOverrideRef.current === undefined
+        ? selected
+        : selectionOverrideRef.current;
+    const requestReference = queryScopeId
+      ? scopedReference
+      : chatSelection?.reference;
     setInput("");
     setError("");
     setMessages((m) => [
       ...m,
-      { role: "user", text, ...(selected ? { selection: selected } : {}) },
+      {
+        role: "user",
+        text,
+        ...(chatSelection ? { selection: chatSelection } : {}),
+      },
     ]);
     setBusy(true);
     controller.current = new AbortController();
@@ -2390,14 +2418,17 @@ export function Assistant({
         body: JSON.stringify({
           message: text,
           language: actionLanguageRef.current,
-          ...(selected ? { transaction_reference: selected.reference } : {}),
-          ...(activeQueryId ? { query_scope_id: activeQueryId } : {}),
+          ...(requestReference
+            ? { transaction_reference: requestReference }
+            : {}),
+          ...(queryScopeId ? { query_scope_id: queryScopeId } : {}),
         }),
       });
       if (!alive.current || controller.current.signal.aborted) return;
       setMessages((m) => [...m, { role: "assistant", text: result.reply }]);
       setQueryScopes(result.queries || []);
-      setActiveQueryId(result.active_query_id || null);
+      activeQueryIdRef.current = result.active_query_id || null;
+      setActiveQueryId(activeQueryIdRef.current);
     } catch (e) {
       if (!alive.current) return;
       if (e instanceof ApiError && e.status === 401) {
@@ -2485,6 +2516,17 @@ export function Assistant({
     const continuesPendingHandle =
       typeof body.pending_handle === "string" &&
       body.pending_handle === action?.pending_handle;
+    const queryScopeId = activeQueryIdRef.current;
+    if (
+      !continuesPendingHandle &&
+      queryScopeId &&
+      requestedReference &&
+      queryScopes.find((query) => query.query_id === queryScopeId)
+        ?.transaction_reference !== requestedReference
+    ) {
+      setError(assistantCopy[actionLanguageRef.current].queryChargeMismatch);
+      return;
+    }
     setActionBusy(true);
     setError("");
     try {
@@ -2493,11 +2535,11 @@ export function Assistant({
         body: JSON.stringify({
           ...body,
           language: actionLanguage,
-          ...((continuesPendingHandle ? action?.query_id : activeQueryId)
+          ...((continuesPendingHandle ? action?.query_id : queryScopeId)
             ? {
                 query_scope_id: continuesPendingHandle
                   ? action?.query_id
-                  : activeQueryId,
+                  : queryScopeId,
               }
             : {}),
         }),
@@ -3084,14 +3126,17 @@ export function Assistant({
             value={activeQueryId || ""}
             disabled={busy || actionBusy}
             onChange={(e) => {
-              setActiveQueryId(e.target.value || null);
+              const queryScopeId = e.target.value || null;
+              activeQueryIdRef.current = queryScopeId;
+              setActiveQueryId(queryScopeId);
               const reference = queryScopes.find(
-                (query) => query.query_id === e.target.value,
+                (query) => query.query_id === queryScopeId,
               )?.transaction_reference;
               const transaction = transactions.find(
                 (item) => item.reference === reference,
               );
-              if (transaction) onSelectTransaction(transaction);
+              selectionOverrideRef.current = transaction || null;
+              onSelectTransaction(transaction || null);
             }}
           >
             <option value="">

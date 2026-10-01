@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -116,7 +117,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("restored request selection sends only its server scope and never confirms through chat", async () => {
+test("restored null-reference query clears the stale charge on chat submit", async () => {
   const first = "q_" + "a".repeat(32),
     second = "q_" + "b".repeat(32);
   const queries = [
@@ -153,10 +154,160 @@ test("restored request selection sends only its server scope and never confirms 
       throw new Error(`Unexpected request: ${url}`);
     }),
   );
+  const onSelectTransaction = vi.fn();
   render(
     <Assistant
       open
       status={{ available: true, sandbox_intake_available: false }}
+      selected={charge}
+      transactions={[charge]}
+      onSelectTransaction={onSelectTransaction}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  const choice = await screen.findByRole("combobox", {
+    name: "Consulta para continuar",
+  });
+  fireEvent.change(choice, { target: { value: second } });
+  expect(onSelectTransaction).toHaveBeenCalledWith(null);
+  const input = screen.getByRole("textbox", {
+    name: "Mensaje para el asistente",
+  });
+  fireEvent.change(input, { target: { value: "sí" } });
+  fireEvent.submit(input.closest("form")!);
+  await screen.findByText("Estado verificado.");
+  expect(
+    JSON.parse(calls.find((call) => call.url === "/api/chat/messages")!.body!),
+  ).toEqual({
+    message: "sí",
+    language: "es",
+    query_scope_id: second,
+  });
+  expect(calls.some((call) => call.url.startsWith("/api/action/"))).toBe(false);
+  expect(document.body.textContent).not.toContain(first);
+  expect(document.body.textContent).not.toContain(second);
+});
+
+test("rapid Portuguese query switch submits its different charge reference", async () => {
+  localStorage.setItem("flujo-bank-action-language", "pt");
+  const first = "q_" + "a".repeat(32);
+  const second = "q_" + "b".repeat(32);
+  const otherCharge = {
+    ...charge,
+    reference: "txn_bbbbbbbbbbbbbbbbbbbbbbbb",
+    merchant: "Outra loja",
+  };
+  const queries = [
+    {
+      query_id: first,
+      label: "Compra no Mercado Central",
+      transaction_reference: charge.reference,
+    },
+    {
+      query_id: second,
+      label: "Compra em outra loja",
+      transaction_reference: otherCharge.reference,
+    },
+  ];
+  const calls: Record<string, unknown>[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/chat/history")
+        return response({
+          messages: [],
+          active: false,
+          queries,
+          active_query_id: first,
+        });
+      if (url === "/api/chat/messages") {
+        calls.push(JSON.parse(init!.body as string));
+        return response({
+          reply: "Consulta concluída.",
+          queries,
+          active_query_id: second,
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  const onSelectTransaction = vi.fn();
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: false }}
+      selected={charge}
+      transactions={[charge, otherCharge]}
+      onSelectTransaction={onSelectTransaction}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  const choice = await screen.findByRole("combobox", {
+    name: "Consulta a continuar",
+  });
+  const message = screen.getByRole("textbox", {
+    name: "Mensagem para o assistente",
+  });
+  fireEvent.change(message, { target: { value: "E esta compra?" } });
+  act(() => {
+    fireEvent.change(choice, { target: { value: second } });
+    fireEvent.submit(message.closest("form")!);
+  });
+  await screen.findByText("Consulta concluída.");
+  expect(onSelectTransaction).toHaveBeenCalledWith(otherCharge);
+  expect(calls).toEqual([
+    {
+      message: "E esta compra?",
+      language: "pt",
+      transaction_reference: otherCharge.reference,
+      query_scope_id: second,
+    },
+  ]);
+});
+
+test("mismatched stored query blocks a stale charge action before POST", async () => {
+  const first = "q_" + "a".repeat(32);
+  const second = "q_" + "b".repeat(32);
+  const calls: { url: string; method: string }[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      calls.push({ url, method: init?.method || "GET" });
+      if (url === "/api/chat/history")
+        return response({
+          active: false,
+          messages: [{ role: "assistant", text: "Consulta anterior" }],
+          queries: [
+            {
+              query_id: first,
+              label: "Cargo inicial",
+              transaction_reference: charge.reference,
+            },
+            {
+              query_id: second,
+              label: "Consulta general",
+              transaction_reference: null,
+            },
+          ],
+          active_query_id: first,
+        });
+      if (url.startsWith("/api/action/status"))
+        return response({ state: "none" });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: true }}
       selected={charge}
       transactions={[charge]}
       onSelectTransaction={vi.fn()}
@@ -169,24 +320,23 @@ test("restored request selection sends only its server scope and never confirms 
   const choice = await screen.findByRole("combobox", {
     name: "Consulta para continuar",
   });
-  fireEvent.change(choice, { target: { value: second } });
-  const input = screen.getByRole("textbox", {
-    name: "Mensaje para el asistente",
+  const prepare = await screen.findByRole("button", {
+    name: "Revisar recepción simulada",
   });
-  fireEvent.change(input, { target: { value: "sí" } });
-  fireEvent.submit(input.closest("form")!);
-  await screen.findByText("Estado verificado.");
+  act(() => {
+    fireEvent.change(choice, { target: { value: second } });
+    fireEvent.click(prepare);
+  });
   expect(
-    JSON.parse(calls.find((call) => call.url === "/api/chat/messages")!.body!),
-  ).toEqual({
-    message: "sí",
-    language: "es",
-    transaction_reference: charge.reference,
-    query_scope_id: second,
-  });
-  expect(calls.some((call) => call.url.startsWith("/api/action/"))).toBe(false);
-  expect(document.body.textContent).not.toContain(first);
-  expect(document.body.textContent).not.toContain(second);
+    await screen.findByText(
+      "Esta consulta corresponde a otro movimiento. Elige la consulta de este movimiento antes de continuar.",
+    ),
+  ).toBeTruthy();
+  expect(
+    calls.filter(
+      ({ url, method }) => url.startsWith("/api/action/") && method === "POST",
+    ),
+  ).toHaveLength(0);
 });
 
 test("Portuguese consent and saved status survive refresh without submitting an action", async () => {
