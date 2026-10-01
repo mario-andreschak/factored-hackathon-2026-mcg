@@ -38,7 +38,15 @@ _CURRENCIES = set("COP USD EUR BRL MXN ARS CLP PEN UYU PYG BOB VES GBP CAD AUD C
 _STATUS_WORDS = {"approved", "declined", "denied", "reversed", "pending", "settled", "failed", "open", "closed", "escalated", "cancelled", "canceled", "received", "in process", "resolved", "aprobado", "rechazado", "abierto", "cerrado", "recibido", "aprovado", "recusado", "rejeitado", "aberto", "fechado", "recebido"}
 _PRIVATE = re.compile(r"\b(?:customer_id|session_id|conversation_id|risk_signals|fraud_score|amount_usd|unrecognized_count_24h|idempotency_key|pending_handle|selection_handle|request_id|authorization_expires_at|trusted_confirmation|service_token|stack\s*trace|traceback|umbral(?:es)?|limiar(?:es)?)\b", re.I)
 _TOOLS = re.compile(r"\b(?:get_my_transaction|list_my_transactions|search_transactions|get_transaction|get_related_complaints|create_complaint|confirm_simulated_intake|prepare_unrecognized_charge|read_intake_receipt|create_verified_handoff|read_verified_handoff|execute_action|verify_action)\b", re.I)
-_PROCESSING = re.compile(r"\b(?:fue procesad[ao]|foi processad[ao]|ya proces[eé]|j[aá] processei)\b")
+_PROCESSING = re.compile(r"\b(?:fue procesad[ao]|foi processad[ao]|ya procese|ja processei)\b")
+_ACTIVE_PROCESSING = re.compile(
+    r"\b(?:(?:se )?esta (?:siendo )?proces(?:ando|ad[ao])|"
+    r"(?:se )?esta (?:sendo )?process(?:ando|ad[ao])|"
+    r"est(?:oy|amos) procesando|est(?:ou|amos) processando)\b|"
+    r"\b(?:solicitud|reclamo|reclamacion|caso|accion|solicitacao|reclamacao|pedido|acao)"
+    r"(?: (?:simulad[ao]|local|de prueba|do teste))? (?:ya |ja |ahora |agora )?"
+    r"(?:esta|se encuentra|se encontra) (?:en (?:proceso|procesamiento)|em (?:processo|processamento))\b"
+)
 _ADDITIONAL_SUCCESS = re.compile(r"\b(?:fue cread[ao]|qued[oó] registrad[ao]|he registrado|se ha registrado|ya est[aá] registrad[ao]|j[aá] est[aá] registrad[ao]|se registr[oó]|se cadastrou|foi cadastrada)\b")
 _HANDOFF_SUCCESS = re.compile(r"\b(?:deriv[eé]|transfer[ií]|encaminhei|encaminhamos|ha sido derivad[ao]|se ha derivad[ao]|fue derivad[ao]|foi encaminhad[ao]|derivaci[oó]n creada|encaminhamento criado)\b")
 _HANDOFF_NOUN = re.compile(r"\b(?:atenci[oó]n humana|atendimento humano|derivaci[oó]n|encaminhamento|asesor(?:a)?|atendente|agente humano)\b")
@@ -641,7 +649,12 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
         if handoff_claim:
             if not handoff_ok or mode not in {"HANDOFF", "ACTION_UNVERIFIED"} or _normalized(str(handoff_id)) not in sentence:
                 errors.append("handoff_success_unverified")
-    if _PROCESSING.search(normalized) and _mapping(workflow.get("action")).get("executed") is not True:
+    processing_text = _guidance_text(_mask_display_ids(message))
+    # An execution flag proves a past attempt. The current projection contains
+    # no ongoing worker/status evidence, so it cannot support active processing.
+    if _ACTIVE_PROCESSING.search(processing_text):
+        errors.append("processing_unverified")
+    if _PROCESSING.search(processing_text) and _mapping(workflow.get("action")).get("executed") is not True:
         errors.append("processing_unverified")
     if mode in {"SMALL_TALK", "OUT_OF_SCOPE", "BLOCKED", "AUTH_REQUIRED"} and (_ID_HINT.search(message) or _DATE.search(message) or _NUMBER.search(message)):
         errors.append("facts_not_allowed_in_mode")

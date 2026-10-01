@@ -386,6 +386,54 @@ def test_processing_requires_execution_evidence(text):
     assert validate_response(response(text), data) == []
 
 
+@pytest.mark.parametrize("language,text", [
+    ("es", "Ya se está procesando la solicitud."),
+    ("es", "Tu solicitud está en proceso."),
+    ("es", "La solicitud está siendo procesada."),
+    ("es", "Estamos procesando el reclamo."),
+    ("es", "Tu solicitud simulada ya está en procesamiento."),
+    ("pt", "A solicitação está sendo processada."),
+    ("pt", "Já está processando a solicitação."),
+    ("pt", "Estamos processando a solicitação."),
+    ("pt", "Sua solicitação está em processamento."),
+    ("pt", "Seu pedido já está em processo."),
+])
+@pytest.mark.parametrize("prefix", ["", "Responder en este chat no autoriza ni registra la solicitud. "])
+def test_present_processing_claims_require_execution_even_after_true_limitation(language, text, prefix):
+    data = inputs("CONFIRM_ACTION", language)
+    data.update(clean_query=text, historic_conversation=text)
+    assert "processing_unverified" in validate_response(response(prefix + text, language), data)
+
+
+@pytest.mark.parametrize("language,text", [
+    ("es", "Tu solicitud **CMP-SBX-Case_123** está en proceso."),
+    ("pt", "Sua solicitação **CMP-SBX-Case_123** está em processamento."),
+])
+def test_completed_execution_receipt_does_not_prove_current_processing(language, text):
+    data = verified_action(inputs("ACTION_DONE", language))
+    assert "processing_unverified" in validate_response(response(text, language), data)
+
+
+@pytest.mark.parametrize("language,text", [
+    ("es", "No puedo confirmar el procesamiento de la solicitud."),
+    ("pt", "Não posso confirmar o processamento da solicitação."),
+])
+def test_processing_uncertainty_does_not_assert_an_active_operation(language, text):
+    assert validate_response(response(text, language), inputs("ACTION_UNVERIFIED", language)) == []
+
+
+@pytest.mark.parametrize("language,text", [
+    ("es", "La solicitud **CMP-SBX-Case_123** fue procesada y su registro fue verificado."),
+    ("pt", "A solicitação **CMP-SBX-Case_123** foi processada e seu registro foi verificado."),
+])
+def test_grounded_action_done_preserves_factual_processing_with_receipt(language, text):
+    data = verified_action(inputs("ACTION_DONE", language))
+    assert validate_response(response(text, language), data) == []
+    data["workflow_state"]["action"]["executed"] = False
+    errors = validate_response(response(text, language), data)
+    assert {"action_receipt_unverified", "processing_unverified"} <= set(errors)
+
+
 def test_customer_text_history_and_pending_labels_never_authorize_facts():
     data = inputs()
     invented = "TRX-INVENTED 8888.88 USD 2025-01-01"
