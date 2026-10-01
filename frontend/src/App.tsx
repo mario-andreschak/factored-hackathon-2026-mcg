@@ -261,15 +261,21 @@ export function Login({
   notice,
   initialLanguage = savedActionLanguage(),
   onLanguageChange,
+  hasExplicitLanguageChoice,
+  onExplicitLanguageChoice,
 }: {
   onLogin: (mode: "demo" | "invite") => void;
   notice: "" | "session-revoke-unconfirmed";
   initialLanguage?: ActionLanguage;
   onLanguageChange?: (language: ActionLanguage) => void;
+  hasExplicitLanguageChoice?: boolean;
+  onExplicitLanguageChoice?: () => void;
 }) {
   const [locale, setLocale] = useState<ActionLanguage>(initialLanguage);
   // A choice made here wins over the selected profile for the whole visit.
-  const chosenLocale = useRef(storedActionLanguage() !== null);
+  const chosenLocale = useRef(
+    hasExplicitLanguageChoice ?? storedActionLanguage() !== null,
+  );
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [mode, setMode] = useState<"loading" | "demo" | "invite">("loading"),
     [profileId, setProfileId] = useState(""),
@@ -290,6 +296,7 @@ export function Login({
   }, [locale]);
   function changeLocale(next: ActionLanguage) {
     chosenLocale.current = true;
+    onExplicitLanguageChoice?.();
     setLocale(next);
     onLanguageChange?.(next);
     try {
@@ -317,12 +324,12 @@ export function Login({
   useEffect(() => {
     // Opening a Portuguese profile shows the portal in Portuguese without
     // overriding or persisting a language the visitor picked themselves.
-    if (chosenLocale.current) return;
+    if (chosenLocale.current || hasExplicitLanguageChoice) return;
     if (selectedLanguage !== "es" && selectedLanguage !== "pt") return;
     if (selectedLanguage === locale) return;
     setLocale(selectedLanguage);
     onLanguageChange?.(selectedLanguage);
-  }, [selectedLanguage, locale, onLanguageChange]);
+  }, [selectedLanguage, locale, onLanguageChange, hasExplicitLanguageChoice]);
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -2242,6 +2249,7 @@ export function Assistant({
   onExpired,
   initialLanguage = savedActionLanguage(),
   onLanguageChange,
+  onExplicitLanguageChoice,
 }: {
   open: boolean;
   status: ChatStatus;
@@ -2254,6 +2262,7 @@ export function Assistant({
   onExpired: () => void;
   initialLanguage?: ActionLanguage;
   onLanguageChange?: (language: ActionLanguage) => void;
+  onExplicitLanguageChoice?: () => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]),
     [queryScopes, setQueryScopes] = useState<
@@ -2309,11 +2318,6 @@ export function Assistant({
   }
   useEffect(() => {
     actionLanguageRef.current = actionLanguage;
-    try {
-      window.localStorage.setItem(ACTION_LANGUAGE_STORAGE, actionLanguage);
-    } catch {
-      // Private browsing may deny storage; the current visit still works.
-    }
   }, [actionLanguage]);
   useEffect(() => {
     // Parent navigation is authoritative. A query selected in this dialog remains
@@ -2556,6 +2560,12 @@ export function Assistant({
     }
   }
   function changeActionLanguage(language: ActionLanguage) {
+    onExplicitLanguageChoice?.();
+    try {
+      window.localStorage.setItem(ACTION_LANGUAGE_STORAGE, language);
+    } catch {
+      // The explicit choice still wins during this visit without storage.
+    }
     const previousLanguage = actionLanguageRef.current;
     if (language === previousLanguage) return;
     actionLanguageRef.current = language;
@@ -3285,6 +3295,9 @@ export default function App() {
     [toast, setToast] = useState(""),
     [actionLanguagePreference, setActionLanguagePreference] =
       useState<ActionLanguage>(savedActionLanguage),
+    [hasExplicitLanguageChoice, setHasExplicitLanguageChoice] = useState(
+      () => storedActionLanguage() !== null,
+    ),
     [loginNotice, setLoginNotice] = useState<"" | "session-revoke-unconfirmed">(
       "",
     );
@@ -3301,6 +3314,10 @@ export default function App() {
     };
   }, [authenticated, actionLanguagePreference]);
   const dataController = useRef<AbortController | null>(null);
+  const rememberLanguageChoice = useCallback(
+    () => setHasExplicitLanguageChoice(true),
+    [],
+  );
   const expired = useCallback(() => {
     dataController.current?.abort();
     setAuthenticated(false);
@@ -3456,6 +3473,8 @@ export default function App() {
         notice={loginNotice}
         initialLanguage={actionLanguagePreference}
         onLanguageChange={setActionLanguagePreference}
+        hasExplicitLanguageChoice={hasExplicitLanguageChoice}
+        onExplicitLanguageChoice={rememberLanguageChoice}
       />
     );
   if (authenticated === null)
@@ -4414,6 +4433,7 @@ export default function App() {
         onExpired={expired}
         initialLanguage={actionLanguagePreference}
         onLanguageChange={setActionLanguagePreference}
+        onExplicitLanguageChoice={rememberLanguageChoice}
       />
       {info && (
         <Modal

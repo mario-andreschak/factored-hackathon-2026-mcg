@@ -261,6 +261,7 @@ const syntheticOverview = {
     country: "BR",
     segment: "demo",
     primary_currency: "BRL",
+    language: "es" as const,
   },
   products: [],
   transactions: [],
@@ -377,10 +378,33 @@ test("Assistant language returns to Login during the same storage-denied visit",
   const language = await screen.findByRole("combobox", {
     name: "Idioma de acesso",
   });
+  // Wait for the real response shape's Spanish profile default to arrive.
+  await screen.findByRole("button", { name: /Bia Demo/ });
   expect((language as HTMLSelectElement).value).toBe("pt");
   expect(
     screen.getByText(/O Assistente usa o idioma escolhido aqui/),
   ).toBeTruthy();
+});
+
+test("a sign-in language choice survives logout when storage is denied and profiles declare Spanish", async () => {
+  denyStorageAndServeDemo();
+  render(<App />);
+  const language = await screen.findByRole("combobox", {
+    name: "Idioma de acceso",
+  });
+  await screen.findByRole("button", { name: /Bia Demo/ });
+  fireEvent.change(language, { target: { value: "pt" } });
+  await enterDemo();
+  fireEvent.click(screen.getByRole("button", { name: "Encerrar sessão" }));
+  await screen.findByRole("button", { name: /Bia Demo/ });
+  expect(
+    (
+      screen.getByRole("combobox", {
+        name: "Idioma de acesso",
+      }) as HTMLSelectElement
+    ).value,
+  ).toBe("pt");
+  expect(document.documentElement.lang).toBe("pt-BR");
 });
 
 const portalCharge = {
@@ -1041,4 +1065,113 @@ test("a stored language choice is not overridden by a Portuguese profile", async
   await screen.findByRole("group", { name: "Elige un perfil de demostración" });
   expect(screen.getByText("Perfil en portugués")).toBeTruthy();
   expect(document.documentElement.lang).toBe("es");
+});
+
+function serveProfileLanguagePortal() {
+  const profiles = [
+    {
+      id: "colombia",
+      alias: "Ana Demo",
+      country: "Colombia",
+      segment: "demo",
+      primary_currency: "COP",
+      language: "es" as const,
+      descriptions: { es: "Tu día a día", pt: "Seu dia a dia" },
+    },
+    {
+      id: "mexico",
+      alias: "Bia Demo",
+      country: "México",
+      segment: "demo",
+      primary_currency: "USD",
+      language: "pt" as const,
+      descriptions: { es: "Perfil en portugués", pt: "Perfil em português" },
+    },
+  ];
+  let activeProfile = profiles[0];
+  vi.stubGlobal("scrollTo", vi.fn());
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/auth/me") return reply({}, 401);
+      if (url === "/api/auth/profiles")
+        return reply({ mode: "demo", profiles });
+      if (url === "/api/auth/login") {
+        const { profile } = JSON.parse(String(init?.body));
+        const selected = profiles.find((item) => item.id === profile);
+        if (!selected) throw new Error(`Unexpected profile: ${profile}`);
+        activeProfile = selected;
+        return reply({ profile: activeProfile });
+      }
+      if (url === "/api/auth/logout") return reply({}, 204);
+      if (url === "/api/overview")
+        return reply({ ...syntheticOverview, profile: activeProfile });
+      if (url === "/api/chat/status") return reply({ available: false });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+}
+
+test("a profile language stays unpersisted through the portal and Assistant, logout and a new visit", async () => {
+  serveProfileLanguagePortal();
+  const view = render(<App />);
+  await screen.findByRole("group", { name: "Elige un perfil de demostración" });
+  fireEvent.click(screen.getByRole("button", { name: /Bia Demo/ }));
+  await enterDemo();
+  expect(document.documentElement.lang).toBe("pt-BR");
+  // Assistant mounts even while closed; neither that mount nor opening it is
+  // an explicit choice that can persist the profile's default language.
+  expect(localStorage.getItem("flujo-bank-action-language")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: /^Assistente/ }));
+  expect(
+    (
+      screen.getByRole("combobox", {
+        name: "Idioma da interface",
+      }) as HTMLSelectElement
+    ).value,
+  ).toBe("pt");
+  expect(localStorage.getItem("flujo-bank-action-language")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Encerrar sessão" }));
+  // The first profile defaults to Spanish after logout; no explicit preference
+  // should stop it from applying when profiles finish loading again.
+  await screen.findByRole("group", { name: "Elige un perfil de demostración" });
+  expect(
+    (
+      screen.getByRole("combobox", {
+        name: "Idioma de acceso",
+      }) as HTMLSelectElement
+    ).value,
+  ).toBe("es");
+  expect(localStorage.getItem("flujo-bank-action-language")).toBeNull();
+  view.unmount();
+  render(<App />);
+  await screen.findByRole("group", { name: "Elige un perfil de demostración" });
+  expect(document.documentElement.lang).toBe("es");
+  expect(localStorage.getItem("flujo-bank-action-language")).toBeNull();
+});
+
+test("an explicit Assistant language choice persists and wins over a profile after logout", async () => {
+  serveProfileLanguagePortal();
+  render(<App />);
+  await enterDemo();
+  expect(localStorage.getItem("flujo-bank-action-language")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: /^Asistente/ }));
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    { target: { value: "pt" } },
+  );
+  expect(localStorage.getItem("flujo-bank-action-language")).toBe("pt");
+  fireEvent.click(screen.getByRole("button", { name: "Encerrar sessão" }));
+  await screen.findByRole("button", { name: /Ana Demo/ });
+  expect(
+    (
+      screen.getByRole("combobox", {
+        name: "Idioma de acesso",
+      }) as HTMLSelectElement
+    ).value,
+  ).toBe("pt");
+  fireEvent.click(screen.getByRole("button", { name: /Bia Demo/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Ana Demo/ }));
+  expect(document.documentElement.lang).toBe("pt-BR");
 });
