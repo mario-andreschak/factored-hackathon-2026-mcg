@@ -83,7 +83,7 @@ try {
   assert.equal(report.installedSourceHashes.manifest_sha256, sha(fs.readFileSync(path.join(context, 'source-manifest.json'))), 'installed_manifest_differs_from_context');
   assert.equal(docker(['exec', name, binary.installed_path, '--version']).trim(), 'codex-cli ' + binary.version, 'installed_native_version_drift');
   report.revocationFenceProbes = JSON.parse(docker(['exec', name, 'node', '/qualification/native_gloria_revocation_probe.mjs',
-    '/qualification/native_gloria_qualification.ts', '/app']));
+    '/app/gloria-qualification-adapter.ts', '/app']));
   assert(report.revocationFenceProbes.pass, 'installed_revocation_fences_failed');
   assert.equal(report.revocationFenceProbes.adapterSourceSha256, sourceContext.application_files['scripts/native_gloria_qualification.ts']);
   assert.equal(report.revocationFenceProbes.fixtureSha256, sourceContext.application_files['scripts/native_gloria_revocation_probe.mjs']);
