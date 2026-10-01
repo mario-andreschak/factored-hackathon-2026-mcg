@@ -47,6 +47,17 @@ for gap closure and is not substituted for a final frozen-source run. The
 native closure case additionally requires a validated host selection to survive
 the MCP bridge without expanding its model input schema.
 
+The joined ES/PT cases additionally enter through the real `create_app` HTTP
+routes: fictional login, server-validated selected transaction, actual typed
+language adapters and workflow, authoritative source reads, private
+`BankingActionHost` on the same ledger, portal confirmation and subsequent
+workflow receipt rendering. They assert one saved case after confirmation
+replay. A scripted model supplies classifications only; it does not supply
+identity, bank evidence, action admission or receipts. These cases exposed a
+first-turn admission ordering issue that source-read and spy-workflow tests
+alone did not exercise: the bank port requires the trusted conversation to be
+persisted before the workflow begins its reads.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or

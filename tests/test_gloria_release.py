@@ -668,3 +668,80 @@ def test_native_tool_closure_keeps_selection_and_identity_in_trusted_context():
     asyncio.run(server.call_tool("gloria_run_turn", dict(message="original")))
     assert runner.calls[0][0]["customer_id"] == binding()["customer_id"]
     assert runner.calls[0][2]["selection"]["reference"] == "txn_"+"a"*24
+
+
+@pytest.mark.parametrize("language,message,followup", [
+    ("es", "No reconozco la compra de mi tarjeta de 2026-09-12.", "¿Cuál es el estado de esta solicitud?"),
+    ("pt", "Não reconheço a compra do meu cartão de 2026-09-12.", "Qual é o estado desta solicitação?"),
+])
+def test_actual_frontend_workflow_source_and_portal_receipt_join(complete_reads, tmp_path, language, message, followup):
+    from fastapi.testclient import TestClient
+    from frontend.server.app import create_app
+    from frontend.server.config import Settings
+    from gloria_workflow.action_host import BankingActionHost
+    from gloria_workflow.host import GloriaHostFactory
+    from tests.test_gloria_acceptance import ScriptedModel
+    raw_target, customer = "SYNTH-CO-TX-014", "SYNTH-CO-001"
+    bank = complete_reads.service
+    # This owner has complete closed history and no invented exact-case link.
+    snapshot = bank.repository.snapshot()
+    from banking_mcp.security import Principal
+    principal = Principal("other-release-subject", customer, "fixture-session", "fixture-conversation", int(time.time())+3600)
+    _, raw = bank.repository.owned_transaction_id(principal, raw_target, snapshot.id)
+    slots = {key: None for key in ("amount", "currency", "currency_raw", "date_from", "date_to",
+        "date_expression", "merchant", "transaction_type", "channel", "city", "country", "transaction_id",
+        "complaint_id", "product_hint", "product_last4")}
+    slots.update(amount=float(raw["amount"]), currency=raw["currency"], date_from="2026-09-12", date_to="2026-09-12",
+                 amount_is_approximate=False, foreign_customer_reference=False)
+    model = ScriptedModel(message, language=language, raw_overrides={
+        "extract_slots": json.dumps(slots),
+        "resolve_clarification": json.dumps(dict(resolution_type="UNCLEAR", selected_ref=None))})
+    factory = GloriaHostFactory(model, tmp_path / "joined-workflow.sqlite", bank_service=bank,
+                                source_root=complete_reads.source.source)
+    backend = BankingActionHost(bank, factory.store, source_root=complete_reads.source.source)
+    key = Ed25519PrivateKey.generate()
+    signer = tmp_path / "joined-signer.pem"
+    signer.write_bytes(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+                                         serialization.NoEncryption()))
+    config = dict(base_url="http://flujo:4200", model="flow-Gloria",
+        execution_token="fictional-joined-execution", frontend_signing_key_file=str(signer),
+        frontend_kid="release", frontend_issuer="release", frontend_audience="flujo-banking-ingress",
+        principal_customers=dict(bank.config.principal_customers), action_enabled=True)
+    settings = Settings(data_dir=complete_reads.source.data, state_dir=tmp_path / "joined-frontend",
+        static_dir=tmp_path / "dist", demo_code="fictional-release-code", chat=config,
+        profiles={"mexico": dict(customer_id="SYNTH-MX-001"), "colombia": dict(customer_id=customer),
+                  "argentina": dict(customer_id="SYNTH-AR-001")})
+    app = create_app(settings, gloria_factory=factory, bank_backend=backend)
+    with TestClient(app) as client:
+        app.state.chat_service._transport = httpx.MockTransport(lambda _: pytest.fail("joined path attempted network transport"))
+        assert client.post("/api/auth/login", json=dict(profile="colombia", code=settings.demo_code)).status_code == 200
+        reference = app.state.repository.reference("txn", customer, raw_target)
+        inquiry = client.post("/api/chat", json=dict(message=message, transaction_reference=reference))
+        assert inquiry.status_code == 200, inquiry.text
+        assert inquiry.json()["mode"] == "gloria"
+        prepared = client.post("/api/action/prepare", json=dict(transaction_reference=reference, language=language))
+        assert prepared.status_code == 200, prepared.text
+        assert prepared.json()["state"] == "pending_confirmation", prepared.json()
+        pending = prepared.json()["pending_handle"]
+        rejected = client.post("/api/action/confirm", json=dict(transaction_reference=reference,
+            pending_handle=pending, confirmed=False, language=language))
+        assert rejected.status_code == 422
+        confirmed = client.post("/api/action/confirm", json=dict(transaction_reference=reference,
+            pending_handle=pending, confirmed=True, language=language))
+        assert confirmed.status_code == 200, confirmed.text
+        assert confirmed.json()["state"] == "intake_verified", confirmed.json()
+        receipt = confirmed.json()["receipt"]
+        assert receipt["simulated"] is True and receipt["snapshot"] == snapshot.id
+        assert receipt["transaction"]["amount"] == f'{raw["amount"]:.2f}'
+        model.message = followup
+        report = client.post("/api/chat", json=dict(message=followup))
+        assert report.status_code == 200, report.text
+        assert receipt["id"] in report.json()["reply"]
+        assert ("reclamo" if language == "es" else "reclamação") in report.json()["reply"].casefold()
+        with bank.store.connect() as db:
+            assert db.execute("SELECT count(*) FROM sandbox_cases WHERE customer=?", (customer,)).fetchone()[0] == 1
+        replay = client.post("/api/action/confirm", json=dict(transaction_reference=reference,
+            pending_handle=pending, confirmed=True, language=language))
+        assert replay.status_code == 200 and replay.json()["receipt"] == receipt
+        with bank.store.connect() as db:
+            assert db.execute("SELECT count(*) FROM sandbox_cases WHERE customer=?", (customer,)).fetchone()[0] == 1
