@@ -688,13 +688,21 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
             {"operation": "confirm", "pendingHandle": prepared["pending_handle"], "confirmed": True},
             target_reference=reference)
         self.assertEqual((uncertain["state"], uncertain["reason"]), ("handoff_unverified", "high_risk"))
-        self.assertNotIn("request_id", uncertain)
+        self.assertEqual(uncertain["request_id"], prepared["request_id"])
         verified = await enabled.action("customer-a", self.session_a, self.expiry,
             {"operation": "handoff", "pendingHandle": prepared["pending_handle"], "reason": "high_risk"},
             target_reference=reference)
         self.assertEqual(verified["state"], "handoff_verified")
-        self.assertNotIn("requestId", writes[-1])
+        self.assertEqual(verified["request_id"], prepared["request_id"])
+        self.assertEqual(writes[-1]["requestId"], prepared["request_id"])
         self.assertEqual(writes[-1]["pendingHandle"], prepared["pending_handle"])
+        before_replay = len(writes)
+        replayed = await enabled.action("customer-a", self.session_a, self.expiry,
+            {"operation": "handoff", "pendingHandle": prepared["pending_handle"], "reason": "high_risk"},
+            target_reference=reference)
+        self.assertEqual(replayed["handoff"]["id"], verified["handoff"]["id"])
+        self.assertEqual(replayed["request_id"], prepared["request_id"])
+        self.assertEqual(len(writes), before_replay)
 
     async def test_lost_confirm_does_not_guess_a_second_handoff_reason(self):
         enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
