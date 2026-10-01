@@ -55,6 +55,173 @@ _CONTACT_REQUEST = re.compile(r"\b(?:tel[eé]fono|telefone|celular|whatsapp|corr
 _NARRATIVE_IMPLEMENTATION = re.compile(r"(?:https?://|s3://|\b[a-z]:[\\/]|/users/|/home/|```)|\b(?:curl|wget|powershell|cmd\.exe|exec_command|access[_ -]?key|secret[_ -]?key)\b", re.I)
 _ATTRIBUTION = re.compile(r"\b(?:el cliente|la cliente|cliente|la persona|el usuario|la usuaria)\b.*\b(?:afirma|se[nñ]ala|dice|indica|declara|refiere|relata|manifiesta|comenta|reporta|sostiene|solicita|expresa|cree|alega|informa|asegura)\b|\bseg[uú]n (?:el cliente|la cliente|la persona|el usuario|la usuaria)\b", re.I)
 
+# This finite grammar checks advice, not intent. The configured model remains
+# responsible for all eight language stages. Operation mentions and a citation
+# are not permission to invent a customer instruction or a banking capability.
+_BLOCK_OPERATION = re.compile(r"\b(?:bloque\w*|congel\w*|suspend\w*|desativ\w*|desactiv\w*|inativ\w*|inactiv\w*|inhabil\w*|deshabil\w*|desabil\w*|paus\w*|deslig\w*|deten\w*|interrump\w*)\b")
+_REFUND_OPERATION = re.compile(r"\b(?:reembols\w*|estorn\w*|devol\w*|reintegr\w*|restitu\w*|ressarc\w*|contracargo\w*|chargeback\w*)\b")
+_DIRECTIVE = re.compile(r"\b(?:recomiend\w*|recomend\w*|aconsej\w*|aconselh\w*|debes|debe|deberias|deberia|deve|deveria|puedes|puede|pode|poderia|conviene|conveniente|prudente|necesario|necessario|preferible|mejor|melhor|solicita\w*|solicite\w*|pide|pida|pedir|pedi\w*|peca|exige\w*)\b")
+_REFUND_EFFECT = re.compile(r"\b(?:recib\w*|receb\w*|obt\w*|garant\w*|aprob\w*|aprov\w*|confirm\w*|sera\w*|listo|pronto|posible|possivel|disponible|disponivel|devolver\w*|reembolsar\w*|estornar\w*|reintegrar\w*|ressarcir\w*)\b")
+_CONTACT_OPERATION = re.compile(r"\b(?:contact\w*|contat\w*|comunicat\w*|comuniqu\w*|llama\w*|llame\w*|ligue\w*|ligar|telefone\w*|telefonear|acude|acuda|acudir|dirigete|dirij\w*|entre em contato|entrar em contato|(?:habla|hable|hablar) con|(?:fale|falar) com)\b")
+_CHANNEL = re.compile(r"\b(?:canal\w*|emisor\w*|emissor\w*|banco\w*|bancari\w*|app|aplicacion\w*|aplicativo\w*|web|sitio|site|pagina|portal|whatsapp|telefono|telefone|email|correo|agencia|sucursal|central|soporte|suporte)\b|https?://")
+_CHANNEL_ACTION = re.compile(r"\b(?:usa|use|usar|utiliza\w*|utilize\w*|accede\w*|acceda\w*|acessa\w*|acesse\w*|abre|abra|abrir|entra|entre|ingresa\w*|ingrese\w*|ve|va|vaya|vayas|escribe\w*|escriba\w*|escreva\w*|procure\w*|visita\w*|visite\w*|hazlo|hagalo|faca|faz|fazer|realiza\w*|realize\w*|efetue\w*)\b")
+_NEW_FINANCIAL_OPERATION = re.compile(r"\b(?:transfiere|transfiera|transfira|transferir|transferiremos|transferirei|paga|pague|pagar|pagare|pagarei|deposita|deposite|depositar|retira|retire|saca|saque|cancela|cancele|cancelar|ejecuta|ejecute|execute|executar|presenta|presente|apresenta|apresente|cambia|cambie|altera|altere|elimina|elimine|remove|remova|interrompa|deja|deje|deixa|deixe|evita|evite|realiza|realice|realize|efectua|efectue|efetue|haz|haga|faca|inicia|inicie|programa|programe)\b")
+_FINANCIAL_OBJECT = re.compile(r"\b(?:dinero|dinheiro|fondos|fundos|saldo|pago\w*|pagamento\w*|deposito\w*|retiro\w*|saque\w*|transferencia\w*|transacao\w*|cuenta\w*|conta\w*|operacion\w*|operacao\w*|denuncia\w*|tarjeta\w*|cartao|cartoes|compra\w*|cargo\w*|cobranca\w*|contrasena\w*|senha\w*|reclamo\w*|reclamacao\w*)\b")
+_CREATE_REQUEST = re.compile(r"\b(?:registra(?:r|s|mos|re|ras|remos|rei|ra|ran)?|registre(?:s|mos|i|m)?|crea(?:r|s|mos|re|ras|remos|ra|ran)?|cria(?:r|s|mos|rei|remos|ra)?|cree(?:s|mos|n)?|abrir|abre|abra|abriremos|abrirei)\b")
+_REQUEST_OBJECT = re.compile(r"\b(?:reclamo\w*|reclamacion\w*|reclamacao\w*|solicitud\w*|solicitacao\w*|disputa\w*|contestacion\w*|contestacao\w*|caso\w*|pedido\w*)\b")
+_PORTAL_CONTROL = re.compile(r"\b(?:control (?:explicito de |de )?confirmacion (?:explicita )?del portal|controle (?:explicito de |de )confirmacao (?:explicita )?do portal|control explicito del portal|controle explicito do portal)\b")
+_LOGIN = re.compile(r"\b(?:inici(?:a|ar|e|ar de nuevo) sesion|volver a iniciar sesion|vuelve a iniciar sesion|entre novamente|entrar novamente|faca login|inicie sessao|iniciar sessao)\b")
+_HUMAN_REVIEW = re.compile(r"\b(?:revision humana|atencion humana|revisao humana|atendimento humano)\b")
+_CHAT_CONFIRMATION = re.compile(r"\b(?:(?:responde|responda|responder|contesta|conteste|diga|di|escribe|escriba|escreva) (?:con |com |apenas |simplemente |simplesmente )?(?:un |um )?(?:si|sim|acepto|confirmo)|(?:confirma|confirme) (?:aqui|por chat|no chat|en el chat))\b")
+_HANDOFF_PROMISE = re.compile(r"\b(?:(?:vou|vamos|voy a|vamos a|iremos|te voy a|vou te) (?:encaminhar|derivar|transferir)|derivare|derivaremos|encaminharei|encaminharemos)\b")
+_BANK_CONFIRMATION = re.compile(r"\b(?:confirma|confirme|confirmar) (?:el |la |o |a |un |una |um |uma )?(?:pago\w*|pagamento\w*|transferencia\w*|saldo|cuenta\w*|conta\w*|tarjeta\w*|cartao|cartoes)\b")
+_SENSITIVE_REQUEST = re.compile(r"\b(?:envia|envie|enviame|envienos|enviar|dame|proporciona|proporcione|comparte|comparta|compartilha|compartilhe|compartir|compartilhar|diga|informe|ingresa|introduce|digite|escribe|escriba|escreva|manda|mande|necesito|preciso|quero)\b")
+_NEGATIVE_SHARING = re.compile(r"^(?:no|nao) (?:compartas|comparta|compartilhe|envies|envie|informes|informe|digas|diga|escribas|escreva|entregues|forneca)\b")
+_SCOPE_LIMITATION = re.compile(
+    r"(?:no puedo|no podemos|nao posso|nao podemos) (?:bloquear (?:tu |su |seu |o seu )?(?:tarjetas?|cartao|cartoes)(?: (?:ni|nem) (?:garantizar|garantir|prometer) (?:un |um )?(?:reembolso|devolucion|devolucao|estorno))?|"
+    r"(?:garantizar|garantir|prometer|confirmar)(?:te|le)? (?:un |una |um |uma |el |la |o |a )?"
+    r"(?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao|estorno)(?: (?:ni|o|e|ou) (?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao|estorno))*(?: del cargo|da cobranca)?)|"
+    r"(?:este prototipo|el prototipo|este asistente|el asistente|o prototipo|o assistente) (?:no|nao) (?:bloquea tarjetas|bloqueia cartoes|"
+    r"determina fraude ni garantiza bloqueo o reembolso|determina fraude nem garante bloqueio ou reembolso)|"
+    r"(?:no (?:se )?garantiza|no garantizamos|nao (?:se )?garante|nao garantimos) (?:un |um |o |el )?(?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao)(?: (?:ni|o|e|ou) (?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao))*"
+)
+_POLICY_INSTRUCTION_RULES = {
+    "portal_confirmation": {"dispute-03": "control explicito del portal"},
+    "trusted_login": {"verification-01": "una sesion expirada exige iniciar sesion de nuevo"},
+    "human_review": {"handoff-01": "pueden requerir revision humana", "dispute-02": "un dato faltante requiere aclaracion o revision", "fraud-02": "un riesgo activo en curso requiere revision inmediata"},
+}
+
+
+def _guidance_text(value: str) -> str:
+    """Normalize display markup/Unicode without allowing invisible obfuscation."""
+    value = _normalized(value)
+    value = "".join(char for char in unicodedata.normalize("NFD", value) if unicodedata.category(char) not in {"Mn", "Cf"})
+    value = re.sub(r"[*_`<>«»\"“”]", "", value)
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _sentences(text: str) -> list[str]:
+    return [part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if part.strip()]
+
+
+def _source_text(value: str) -> str:
+    # Source evidence comparison keeps accents, case, markup and format
+    # characters. Detection normalization is deliberately a separate operation.
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFC", value)).strip()
+
+
+@lru_cache(maxsize=1)
+def _canonical_policy_sentences() -> dict[str, set[str]]:
+    result = {}
+    names = ("transaction_dispute_policy.md", "human_handoff_policy.md", "fraud_escalation_policy.md", "customer_verification_policy.md", "complaint_handling_policy.md")
+    for name in names:
+        text = (_ROOT / "resources/policies" / name).read_text(encoding="utf-8")
+        parts = re.split(r"<!-- chunk_id:\s*([A-Za-z0-9_-]+)\s*-->", text)
+        for index in range(1, len(parts), 2):
+            body = parts[index + 1].split("\n##", 1)[0].strip()
+            result[parts[index]] = {_source_text(sentence) for sentence in _sentences(body)}
+    return result
+
+
+def _policy_instructions(inputs: Mapping, cited_chunks: object) -> set[str]:
+    """Only exact retrieved canonical source sentences can support guidance.
+
+    A familiar ID, arbitrary text, a prohibition, or an injected instruction
+    field never establishes support. Source-only instruction capabilities are
+    deliberately finite: current policies authorize no block/refund/contact or
+    money-moving operation. Citation is required when using retrieved policy.
+    """
+    import json
+    context = inputs.get("policy_context")
+    if isinstance(context, str):
+        try:
+            context = json.loads(context)
+        except ValueError:
+            return set()
+    if isinstance(context, Mapping):
+        context = context.get("chunks", [context] if "chunk_id" in context else [])
+    if not isinstance(context, list) or not isinstance(cited_chunks, list):
+        return set()
+    cited = {item for item in cited_chunks if isinstance(item, str)}
+    try:
+        canonical = _canonical_policy_sentences()
+    except (OSError, ValueError):
+        return set()
+    instructions = set()
+    for chunk in context:
+        if not isinstance(chunk, Mapping) or not isinstance(chunk.get("chunk_id"), str) or chunk.get("chunk_id") not in cited:
+            continue
+        identifier = chunk["chunk_id"]
+        texts = [chunk[key] for key in ("text", "content") if isinstance(chunk.get(key), str)]
+        sentences = [_source_text(sentence) for text in texts for sentence in _sentences(text)]
+        if not sentences or any(sentence not in canonical.get(identifier, set()) for sentence in sentences):
+            continue
+        for instruction, sources in _POLICY_INSTRUCTION_RULES.items():
+            marker = sources.get(identifier)
+            if marker and any(marker in _guidance_text(sentence) for sentence in sentences):
+                instructions.add(instruction)
+    return instructions
+
+
+def _recommendation_errors(message: str, inputs: Mapping, cited_chunks: object) -> list[str]:
+    """Reject unsupported operational directions clause by clause, fail closed."""
+    # Identifier spelling is checked separately; a base64 suffix resembling a
+    # verb is not customer advice. Preserve all remaining sentence boundaries.
+    masked = message
+    for token, start, end in reversed(list(_tokens(message))):
+        if _ID.fullmatch(token):
+            masked = masked[:start] + " " * (end - start) + masked[end:]
+    sentences = [_guidance_text(sentence) for sentence in _sentences(masked)]
+    mode = _mode(inputs)
+    instructions = _policy_instructions(inputs, cited_chunks)
+    errors = []
+    # Separate contrasts, quoted statements, conditionals and bullets. A safe
+    # first clause cannot launder a different operation later in the message.
+    clauses = [(sentence, clause) for sentence in sentences for clause in re.split(r"[.!?;,]+|\b(?:pero|sin embargo|mas|porem|contudo|aunque|embora)\b", sentence)]
+    for sentence, raw_clause in clauses:
+        clause = raw_clause.strip(" :-()")
+        if not clause:
+            continue
+        if _SCOPE_LIMITATION.fullmatch(clause):
+            continue
+        sensitive_verbs = list(_SENSITIVE_REQUEST.finditer(clause))
+        if _SECRET_TEXT.search(clause) and sensitive_verbs:
+            if not (_NEGATIVE_SHARING.search(clause) and len(sensitive_verbs) == 1):
+                errors.append("credential_request")
+        if _CHAT_CONFIRMATION.search(clause) or _HANDOFF_PROMISE.search(clause) or _BANK_CONFIRMATION.search(clause):
+            errors.append("unsupported_operation_guidance")
+        if _BLOCK_OPERATION.search(clause):
+            errors.append("unsupported_operation_guidance")
+        if _REFUND_OPERATION.search(clause) and (_DIRECTIVE.search(clause) or _REFUND_EFFECT.search(clause)):
+            errors.append("unsupported_operation_guidance")
+        if _CONTACT_OPERATION.search(clause):
+            errors.append("unsupported_operation_guidance")
+        if _NEW_FINANCIAL_OPERATION.search(clause) and _FINANCIAL_OBJECT.search(clause):
+            errors.append("unsupported_operation_guidance")
+        creates_request = bool(_CREATE_REQUEST.search(clause) and _REQUEST_OBJECT.search(clause))
+        uses_channel = bool(_CHANNEL.search(clause) and (_CHANNEL_ACTION.search(clause) or _DIRECTIVE.search(clause) or re.search(r"\b(?:confirma|confirme|confirmar)\b", clause)))
+        portal = bool(_PORTAL_CONTROL.search(clause))
+        # Conditional setup and control instructions often occupy separate
+        # comma-delimited clauses; support is checked against this sentence.
+        portal_allowed = (mode == "CONFIRM_ACTION" or "portal_confirmation" in instructions) and bool(_PORTAL_CONTROL.search(sentence))
+        conditional_intake = bool(re.search(r"\b(?:si (?:deseas|quiere|quieres)|se (?:quiser|voce quiser)|para registrar|antes de registrar)\b", clause))
+        conditional_intake = conditional_intake and bool(re.search(r"\b(?:solicitud simulada|solicitacao simulada|reclamo simulado|reclamacao simulada)\b", clause))
+        if creates_request and not re.fullmatch(r"no se crea otro(?: reclamo)?|nao (?:se cria|sera criada) outra(?: reclamacao)?", clause):
+            if not (portal_allowed and conditional_intake):
+                errors.append("recommendation_unverified")
+        if uses_channel:
+            login_allowed = mode == "AUTH_REQUIRED" and bool(_LOGIN.search(clause)) and bool(re.search(r"\b(?:canal de confianza|canal de confianca)\b", clause))
+            if not ((portal and portal_allowed) or login_allowed):
+                errors.append("recommendation_unverified")
+        if _LOGIN.search(clause) and mode != "AUTH_REQUIRED" and "trusted_login" not in instructions:
+            errors.append("recommendation_unverified")
+        if re.search(r"\b(?:confirma|confirme)\b", clause) and _FINANCIAL_OBJECT.search(clause) and not portal_allowed:
+            errors.append("recommendation_unverified")
+        if _HUMAN_REVIEW.search(clause) and (_DIRECTIVE.search(clause) or re.search(r"\b(?:necesita|necessaria|necesaria|necessario|necesario|requiere|requer|precisa)\b", clause)):
+            if mode not in {"HANDOFF", "ACTION_UNVERIFIED", "OUT_OF_POLICY", "TOOL_ERROR"} and "human_review" not in instructions:
+                errors.append("recommendation_unverified")
+    return list(dict.fromkeys(errors))
+
 
 def _mapping(value: object) -> Mapping:
     return value if isinstance(value, Mapping) else {}
@@ -298,6 +465,7 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
         errors.append("private_or_implementation_detail")
     if _UNSUPPORTED_PROMISE.search(normalized):
         errors.append("unsupported_action_or_promise")
+    errors.extend(_recommendation_errors(message, generator_input, candidate.get("chunk_ids")))
     for match in _DATE.finditer(message):
         ignored_spans.append(match.span())
         if _date_key(match.group()) not in facts["dates"]:
@@ -395,6 +563,45 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
     if generator_input.get("language") == "other" and not ("español" in normalized and "portugués" in normalized):
         errors.append("language_availability_missing")
     return list(dict.fromkeys(errors))
+
+
+def combine_responses(parts: list[Mapping], language: str, active_query_index: int = 0) -> dict:
+    """Join independently grounded responses without inventing any new text.
+
+    The caller must validate every part against its own query inputs first.
+    Composition checks the closed output shape only; it never pools bank facts
+    from different queries to make an ungrounded part appear valid. The active
+    query index is a range check and does not alter customer-facing text.
+    """
+    if not isinstance(parts, list) or not 1 <= len(parts) <= 8 or not isinstance(language, str) or language not in {"es", "pt"}:
+        raise ValueError("invalid_response_composition")
+    if type(active_query_index) is not int or not 0 <= active_query_index < len(parts):
+        raise ValueError("invalid_response_composition")
+    for part in parts:
+        if not isinstance(part, Mapping) or set(part) != _FIELDS:
+            raise ValueError("invalid_response_part")
+        if not isinstance(part["message"], str) or not part["message"].strip() or len(part["message"]) > 12000:
+            raise ValueError("invalid_response_part")
+        if part["language"] != language or type(part["grounding_violation"]) is not int or part["grounding_violation"] != 0:
+            raise ValueError("invalid_response_part")
+        for key, maximum in (("arquetipos", 3), ("chunk_ids", 30), ("data_sources", 30)):
+            if not isinstance(part[key], list) or len(part[key]) > maximum or any(not isinstance(item, str) for item in part[key]):
+                raise ValueError("invalid_response_part")
+            if key != "arquetipos" and any(len(item) > 160 for item in part[key]):
+                raise ValueError("invalid_response_part")
+        if any(item not in _ARCHETYPES for item in part["arquetipos"]):
+            raise ValueError("invalid_response_part")
+    response = {
+        "message": "\n\n".join(part["message"] for part in parts),
+        "language": language,
+        "arquetipos": list(dict.fromkeys(item for part in parts for item in part["arquetipos"])),
+        "chunk_ids": list(dict.fromkeys(item for part in parts for item in part["chunk_ids"])),
+        "data_sources": list(dict.fromkeys(item for part in parts for item in part["data_sources"])),
+        "grounding_violation": 0,
+    }
+    if len(response["message"]) > 12000 or len(response["chunk_ids"]) > 30 or len(response["data_sources"]) > 30:
+        raise ValueError("response_composition_overflow")
+    return response
 
 
 def validate_handoff_summary(candidate: Mapping, inputs: Mapping) -> list[str]:
