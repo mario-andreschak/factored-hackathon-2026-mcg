@@ -90,6 +90,7 @@ def application_source_hashes(root: Path = ROOT) -> dict[str, str]:
                      "scripts/native_gloria_qualification.mjs", "contracts/tools.md",
                      "contracts/state_schema.md", "contracts/policy_engine.md", "resources/prompts/fallback_templates.yaml",
                      "pipeline/contracts.yaml",
+                     "pipeline/contracts.yaml",
                      "requirements-gloria.txt", "requirements-pipeline.txt", "frontend/requirements.txt"):
         path = root / relative
         if path.is_file():
@@ -503,6 +504,15 @@ def _intake_scenario(fixture, native_url, authority_dir, profile, language, *, p
                 _expect(receipt.get("transaction", {}).get("amount") == f"{float(target['amount']):.2f}" and
                         receipt.get("transaction", {}).get("currency") == target["currency"], "receipt.source_facts")
                 _expect(_case_count(bank, customer) == 1, "receipt.exactly_one_case")
+                with bank.store.connect() as db:
+                    saved_case = db.execute("SELECT id,customer,transaction_id,snapshot FROM sandbox_cases WHERE id=?",
+                                            (receipt["id"],)).fetchone()
+                    saved_receipt = db.execute("SELECT receipt_json FROM sandbox_case_receipts WHERE case_id=?",
+                                               (receipt["id"],)).fetchone()
+                _expect(saved_case is not None and tuple(saved_case) == (receipt["id"], customer,
+                        target["transaction_id"], receipt["snapshot"]), "receipt.saved_owner_target_snapshot")
+                _expect(saved_receipt is not None and json.loads(saved_receipt[0]) == receipt,
+                        "receipt.saved_readback")
                 outcome.update(receipt_id_hash=fixture.hash_id(receipt["id"]),
                                snapshot_id_hash=fixture.hash_id(receipt["snapshot"]))
                 cookies = httpx.Cookies(client.cookies)
