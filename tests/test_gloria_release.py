@@ -151,6 +151,7 @@ def test_same_target_snapshot_cannot_share_authority_between_query_capsules(tran
     state = activate_query_scope(base, trusted, query_a, now=NOW)
     facts = policy_state()
     state["workflow_state"], state["tool_results"] = deepcopy(facts["workflow_state"]), deepcopy(facts["tool_results"])
+    state["tool_results"]["get_transaction"].update(snapshot_id=SNAPSHOT, snapshot_hash=SNAPSHOT)
     state["runtime"]["query_scope_id"] = query_a
     status = native_host_receipt()
     status.update(query_id=query_a, request_id=str(uuid.uuid4()), pending_handle="a"*43)
@@ -196,9 +197,15 @@ class SeparateQueries(ObservedStages):
                                  dict(query_text=QUERY_B, domain="TRANSACTION_INQUIRY")])
         if stage == "extract_slots":
             query = inputs["clean_query"]
-            self.slots = (dict(amount=25.50, currency="USD", merchant="Fictional Orchid", transaction_id=TARGET_A)
-                          if query == QUERY_A else
-                          dict(amount=84, currency="EUR", merchant="Fictional Cedar", transaction_id=TARGET_B))
+            if query == QUERY_A:
+                self.slots = dict(amount=25.50, currency="USD", merchant="Fictional Orchid", transaction_id=TARGET_A)
+            elif query == QUERY_B:
+                self.slots = dict(amount=84, currency="EUR", merchant="Fictional Cedar", transaction_id=TARGET_B)
+            else:
+                # The original-text extraction is an ownership-only barrier.
+                # Deliberately poisonous blended slots must never reach a query.
+                assert query == QUERY_A + " " + QUERY_B
+                self.slots = dict(amount=999, currency="JPY", transaction_id="TRX-GLOBAL_GUARD")
         return await super().run(stage, inputs, correction=correction)
 
 
@@ -229,7 +236,7 @@ def test_multiquery_targets_snapshots_and_pending_are_independent(tmp_path, lang
     state = asyncio.run(runner.run(binding(), QUERY_A + " " + QUERY_B, turn_id="multi"))
     assert not any(error.get("code") == "multiple_queries_need_separate_turns" for error in state["runtime"]["node_errors"])
     extracts = [inputs["clean_query"] for name, inputs in stages.calls if name == "extract_slots"]
-    assert extracts == [QUERY_A, QUERY_B]
+    assert extracts == [QUERY_A, QUERY_B, QUERY_A + " " + QUERY_B]
     searches = [args["slots"] for name, args in bank.calls if name == "search_transactions"]
     assert [(s["transaction_id"], s["amount"], s["currency"]) for s in searches] == [(TARGET_A, 25.50, "USD"), (TARGET_B, 84, "EUR")]
     rereads = [args for name, args in bank.calls if name == "get_transaction"]
@@ -243,8 +250,10 @@ def test_multiquery_targets_snapshots_and_pending_are_independent(tmp_path, lang
         other = TARGET_B if target == TARGET_A else TARGET_A
         assert other not in repr(inputs["structured_data"])
         assert not inputs["workflow_state"]["action"]["authorized"]
-    assert generated[0]["workflow_state"]["pending"]["target_transaction_id"] == TARGET_A
-    assert generated[1]["workflow_state"]["pending"]["type"] == "none"
+    capsules = [state["runtime"]["query_scopes"][query_id] for query_id in state["runtime"]["query_scope_order"]]
+    assert capsules[0]["workflow_state"]["pending"]["target_transaction_id"] == TARGET_A
+    assert capsules[0]["workflow_state"]["pending"]["query_id"] == capsules[0]["query_id"]
+    assert capsules[1]["workflow_state"]["pending"]["type"] == "none"
 
 
 def test_replayed_turn_cannot_change_selected_query_scope_before_reads(tmp_path):
