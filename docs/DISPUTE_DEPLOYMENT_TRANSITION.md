@@ -85,7 +85,10 @@ Apply rechecks the exact plan, archives the old bank SQLite rows in
 `legacy-bank-before-native.sqlite3`, adds the current additive tables and a
 new `secrets.token_hex(32)` generation in one SQLite transaction, and records
 the separately proved coverage. It writes a no-overwrite receipt, verifies
-the result, then atomically publishes the generation pin. A crash before
+the result, then atomically publishes the generation pin. Publication fsyncs
+the file on both platforms and the parent directory on POSIX; Windows does
+not offer a portable directory fsync, so the Fly owner must still qualify
+actual retained-volume durability and restart behavior. A crash before
 receipt/pin leaves an explicit manual recovery block; it never silently
 re-adopts or seeds a pin. Apply and verify never restore a stale bank snapshot.
 Later native sessions, replays, cases, receipts, and revocations may change

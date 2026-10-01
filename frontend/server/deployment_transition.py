@@ -244,6 +244,21 @@ def _proof(evidence_path: Path, *, bank_path: Path, source: dict, ledger: dict,
                          for key in ("frontend", "worker")}}
 
 
+def _fsync_parent_directory(path: Path, *, platform_name: str | None = None) -> None:
+    # Windows has no portable directory descriptor/fsync. Its file fsync and
+    # no-overwrite hard-link publication remain mandatory.
+    platform_name = os.name if platform_name is None else platform_name
+    if platform_name == "nt":
+        return
+    if platform_name != "posix":
+        raise OSError("unsupported platform for transition durability")
+    parent = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(parent)
+    finally:
+        os.close(parent)
+
+
 def _atomic_new(path: Path, data: bytes, *, mode=0o600):
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists() or path.is_symlink():
@@ -256,11 +271,7 @@ def _atomic_new(path: Path, data: bytes, *, mode=0o600):
             stream.flush()
             os.fsync(stream.fileno())
         os.link(temporary, path)
-        parent = os.open(path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-        try:
-            os.fsync(parent)
-        finally:
-            os.close(parent)
+        _fsync_parent_directory(path.parent)
     finally:
         Path(temporary).unlink(missing_ok=True)
 
@@ -329,7 +340,10 @@ def _archive_bank(db: sqlite3.Connection, path: Path) -> str:
         if _ledger(Path(temporary), legacy=True) != _ledger(Path(db.execute("PRAGMA database_list").fetchone()[2]), legacy=True):
             raise ValueError("bank backup not equivalent")
         os.chmod(temporary, 0o600)
-        with open(temporary, "rb") as stream:
+        # Windows requires a writable descriptor for FlushFileBuffers/fsync.
+        # This is our completed private backup tempfile; opening r+b does not
+        # rewrite the SQLite snapshot before no-overwrite publication.
+        with open(temporary, "r+b") as stream:
             os.fsync(stream.fileno())
         os.link(temporary, path)
         return _file_hash(path)
