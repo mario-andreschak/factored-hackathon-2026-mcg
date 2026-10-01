@@ -111,6 +111,32 @@ def test_present_processing_claim_requires_an_execution_receipt(language, claim)
         "present processing was claimed without any execution or receipt"
 
 
+@pytest.mark.parametrize("suffix,safe", [
+    ("", True),
+    ("; o encaminhamento foi realizado.", False),
+    (" Um atendente já respondeu.", False),
+])
+def test_handoff_uncertainty_preserves_the_exact_negative_scope(suffix, safe):
+    inputs = dict(response_mode="HANDOFF", language="pt", clean_query="Preciso de revisão humana.",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
+        workflow_state=dict(action=dict(authorized=False, executed=False, verified=False, result_id=None),
+            handoff=dict(created=False, handoff_id=None)),
+        policy_context=retrieve_policy("HUMAN_REQUEST", human_required=True))
+    text = "Ainda não posso confirmar que o encaminhamento foi realizado." + suffix
+    errors = validate_response(response(text, "pt"), inputs)
+    assert (errors == []) is safe, "truthful uncertainty must not grant a completed handoff or human response"
+
+
+def test_captured_emergency_contact_advice_remains_unsupported():
+    inputs = dict(response_mode="HANDOFF", language="pt", clean_query="Estou em perigo agora.",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
+        workflow_state=dict(action=dict(authorized=False, executed=False, verified=False, result_id=None),
+            handoff=dict(created=False, handoff_id=None)),
+        policy_context=retrieve_policy("HUMAN_REQUEST", human_required=True))
+    text = "Se o perigo for imediato, procure um local seguro e ligue para o serviço de emergência da sua região."
+    assert "unsupported_operation_guidance" in validate_response(response(text, "pt"), inputs)
+
+
 @pytest.mark.parametrize("language,message", [
     ("es", "Si lo deseas, bloquea tu tarjeta por precaución."),
     ("pt", "Se desejar, bloqueie seu cartão por precaução."),

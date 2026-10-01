@@ -144,6 +144,37 @@ that chat cannot register the request. The frozen 185-case checkpoint remains
 historical evidence; the expanded 189-case suite and actual native qualification
 require a corrected, frozen source candidate.
 
+The corrected frozen candidate then passed **189/189** cases in 66.34 seconds at
+acceptance checkout `1f0d96b7962427ad1961209d54a3289a7ffb2c8b`, merging integration
+candidate `b0fcbba`. All 76 graph-protected hashes matched the saved artifact.
+Git HEAD, 79 source hashes and both test-file hashes were unchanged before and
+after execution; the checkout stayed clean and its source bytes still matched
+integration afterward. The sorted source-map SHA256 was
+`63c0d669659b9426499ec2d3a998590ba5be0b40705afd671004b492c549b04b`.
+The four new false-progress claims reject; verified past-tense receipt notices
+and truthful negative portal limitations remain usable. This is the final
+local boundary checkpoint for that candidate, with actual provider/native
+qualification still recorded separately.
+
+The first complete guarded-source native run passed **1/4** scenarios in
+245,605 ms. Both ES/PT intake chats returned HTTP 502 with a pre-workflow
+`PermissionError`; no model call, durable turn or intake write was reached in
+either case. Spanish human review passed without fallback and saved a verified
+review request without claiming a human response. Portuguese emergency review
+reached the correct policy mode and reason, but its repair's truthful uncertainty
+sentence was incorrectly rejected as completed handoff success. Its first
+unsourced emergency-contact advice remains rejected.
+
+All 69 harness source hashes and the external 79-file host capture, both tests
+and installed native manifest stayed unchanged. Git HEAD changed through an
+unrelated merge while those source bytes remained equal. The run observed 15
+successful model attempts and 112,334 reported tokens; provider cost stayed
+unknown. It is retained in
+`docs/qualification/gloria-joined-native-diagnostic-2026-10-01.json`, separate
+from the final qualification path. Four additional independent cases cover the
+truthful PT uncertainty and rejection of added success, human-response and
+unsupported contact claims; the expanded suite has 193 cases.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or
