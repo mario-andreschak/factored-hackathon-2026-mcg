@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Literal
 
 
 def make_run_turn_tool(workflow, binding, expected_message, turn_id, *, selection=None, query_scope_id=None):
@@ -17,6 +18,9 @@ def make_run_turn_tool(workflow, binding, expected_message, turn_id, *, selectio
             **({"query_scope_id": query_scope_id} if query_scope_id is not None else {}))
         return {"response": state["response"]["message"], "language": state["response"]["language"], "rule_ids": state["workflow_state"]["policy_decision"]["rule_ids"], "turn_id": state["turn"]["turn_id"]}
 
+    # Publish the admitted message as a const in the per-turn MCP schema. The
+    # runtime equality check remains the authority even for non-schema clients.
+    gloria_run_turn.__annotations__["message"] = Literal[expected_message]
     return gloria_run_turn
 
 

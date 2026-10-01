@@ -106,6 +106,7 @@ def test_registered_gloria_tool_rejects_model_rewritten_turn():
     assert [item.name for item in tools] == ["gloria_run_turn"]
     schema = tools[0].inputSchema
     assert set(schema["properties"]) == {"message"}
+    assert schema["properties"]["message"]["const"] == "original"
 
 
 def test_direct_model_port_has_no_tools_persistence_or_banking_assertion():

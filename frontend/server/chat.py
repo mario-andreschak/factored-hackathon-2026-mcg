@@ -314,8 +314,6 @@ class ChatService:
             result["query_id"] = row["query_scope_id"]
         if "query_snapshot_hash" in row.keys() and row["query_snapshot_hash"]:
             result["snapshot_hash"] = row["query_snapshot_hash"]
-        if result.get("state") == "intake_verified":
-            result["snapshot"] = result["receipt"]["snapshot"]
         if (result.get("state") == "handoff_verified" and row["target_reference"] is None
                 and not result.get("pending_handle")
                 and not ChatService._general_handoff(result["handoff"])):
@@ -739,6 +737,10 @@ class ChatService:
             # A general handoff has no transaction target or pending handle,
             # but still needs an identity before the upstream write begins.
             current, saved = self._current_action(session_id, owner, session_exp)
+            if (current and not saved.get("pending_handle") and current["target_reference"] is None
+                    and supplied_request_id is not None and saved.get("request_id") == supplied_request_id
+                    and current["query_scope_id"] != query_scope_id):
+                raise ChatError("action_mismatch", 409, "La solicitud no corresponde a esta consulta.")
             if (current and saved.get("state") == "handoff_verified"
                     and not saved.get("pending_handle")
                     and current["target_reference"] is None
@@ -1167,6 +1169,7 @@ class ChatService:
                 reply = state["response"]["message"]
                 cancellation = state.get("runtime", {}).get("host_cancellation_requested")
                 signals = cancellation if isinstance(cancellation, list) else [cancellation] if cancellation else []
+                signals.extend(state.get("runtime", {}).get("host_cancellation_queue", []))
                 for capsule in state.get("runtime", {}).get("query_scopes", {}).values():
                     signal = capsule.get("runtime", {}).get("host_cancellation_requested")
                     if signal:

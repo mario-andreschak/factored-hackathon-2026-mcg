@@ -377,7 +377,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
                         current.id, current.expires_at) if request.app.state.gloria_factory else None)
             return await service.send(customer, current.id, current.expires_at, message,
                                       display_message=body.message.strip(), selection=public_selection,
-                                      query_scope_id=body.query_scope_id,
+                                      **({"query_scope_id": body.query_scope_id} if body.query_scope_id else {}),
                                       **({"workflow": workflow} if workflow is not None else {}))
         except Exception as exc:
             from .chat import ChatError
@@ -428,7 +428,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
                         "expected_transaction": target_context["transaction"]} if target_context else {})
             result = await service.action(customer, current.id, current.expires_at,
                                           operation, target_reference=target_reference,
-                                          query_scope_id=query_scope_id, **context)
+                                          **({"query_scope_id": query_scope_id} if query_scope_id else {}), **context)
             return render_action_result(result, language)
         except ChatError as exc:
             raise HTTPException(exc.status_code, exc.message) from None

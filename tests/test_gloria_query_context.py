@@ -5,7 +5,7 @@ import pytest
 
 from gloria_workflow.host import GloriaHostFactory, RepositoryBank
 from gloria_workflow.state import TrustedBinding, new_state, start_query_batch, StateError
-from tests.test_gloria_host import admitted, TrustedWorkflowSpy
+from tests.test_gloria_host import admitted, TrustedWorkflowSpy, ChatError
 
 
 def registry(admitted, tmp_path):
@@ -39,15 +39,17 @@ def test_corrupt_or_revoked_admission_never_releases_owned_registry(admitted, tm
     chat, sid, expiry, factory, *_ = registry(admitted, tmp_path)
     with chat._connection() as db:
         db.execute(f"UPDATE chat_sessions SET {field}=? WHERE session_id=?", (value, sid))
-    with pytest.raises(ValueError, match="session unavailable"):
+    with pytest.raises(ChatError) as error:
         factory.query_context(chat, "customer-a", sid, expiry)
+    assert error.value.code == "session_mismatch"
 
 
 def test_registry_cannot_be_loaded_for_other_customer_or_changed_expiry(admitted, tmp_path):
     chat, sid, expiry, factory, *_ = registry(admitted, tmp_path)
     for customer, selected_expiry in (("customer-b", expiry), ("customer-a", expiry + 1)):
-        with pytest.raises(ValueError, match="session unavailable"):
+        with pytest.raises(ChatError) as error:
             factory.query_context(chat, customer, sid, selected_expiry)
+        assert error.value.code == "session_mismatch"
 
 
 def test_revocation_during_registry_read_blocks_projection(admitted, tmp_path, monkeypatch):
@@ -58,12 +60,13 @@ def test_revocation_during_registry_read_blocks_projection(admitted, tmp_path, m
         chat.queue_revoke("customer-a", sid, expiry)
         return state
     monkeypatch.setattr(factory.store, "load", revoking)
-    with pytest.raises(ValueError, match="session unavailable"):
+    with pytest.raises(ChatError) as error:
         factory.query_context(chat, "customer-a", sid, expiry)
+    assert error.value.code == "session_mismatch"
 
 
-def test_missing_session_blocks_even_empty_registry(admitted, tmp_path):
+def test_fresh_login_reload_is_empty_without_loading_unbound_registry(admitted, tmp_path, monkeypatch):
     chat, sid, expiry = admitted
     factory = GloriaHostFactory(None, tmp_path / "gloria.sqlite3")
-    with pytest.raises(ValueError, match="session unavailable"):
-        factory.query_context(chat, "customer-a", sid, expiry)
+    monkeypatch.setattr(factory.store, "load", lambda _: pytest.fail("unbound login must not read history"))
+    assert factory.query_context(chat, "customer-a", sid, expiry) == {"queries": [], "active_query_id": None}

@@ -196,6 +196,20 @@ replace the shared FLUJO worker, change its graph, or enable portal actions.
 
     def query_context(self, chat, customer, sid, expiry):
         """Readonly public registry projection for the exact admitted session."""
+        from frontend.server.chat import ChatError
+        try:
+            return self._query_context(chat, customer, sid, expiry)
+        except (ValueError, TypeError, KeyError):
+            raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.") from None
+
+    def _query_context(self, chat, customer, sid, expiry):
+        chat._identity(customer, sid, expiry)
+        with chat._connection() as db:
+            row = db.execute("SELECT 1 FROM chat_sessions WHERE session_id=?", (sid,)).fetchone()
+        # Login precedes the first admitted turn; no conversation/registry has
+        # been created yet. Never load durable state without a bound row.
+        if row is None:
+            return {"queries": [], "active_query_id": None}
         _, owner, conversation = _admitted_session(chat, customer, sid, expiry)
         binding = TrustedBinding(owner=owner, customer_id=customer, session_id=sid,
             conversation_id=conversation, expires_at=expiry)
