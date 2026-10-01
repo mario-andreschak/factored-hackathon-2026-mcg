@@ -9,6 +9,7 @@ from tests.test_gloria_acceptance import (
     NOW, SNAPSHOT, TRANSACTION_ID, OTHER_TRANSACTION_ID, ObservedStages,
     ObservedBank, binding, transaction, workflow, run_workflow, canonical_host_receipt,
     native_host_receipt, COMPLAINT_ID,
+    policy_state,
 )
 
 
@@ -305,4 +306,52 @@ def test_preprocessing_is_once_per_turn_and_generation_has_one_repair_per_scope(
     assert sum(name == "generate" for name, _ in stages.calls) == 4
     assert result["response"]["language"] == language
     assert all(scope["turn"]["language"] == language for scope in capsule_states(result))
+
+
+@pytest.mark.parametrize("conflict", ["status_verified", "handoff_target", "receipt_snapshot"])
+def test_canonical_handoff_rejects_explicit_contradictory_proof(tmp_path, conflict):
+    runner, _, _ = workflow(tmp_path)
+    state = policy_state()
+    state["tool_results"]["get_transaction"]["snapshot_id"] = SNAPSHOT
+    status = canonical_host_receipt(unknown=True, handoff=True)
+    if conflict == "status_verified":
+        status["verified"] = False
+    elif conflict == "handoff_target":
+        status["handoff"]["target_reference"] = OTHER_TRANSACTION_ID
+    else:
+        status["handoff"]["receipt"]["snapshot"] = "another-serving-build"
+    runner._host_evidence(state, status, TrustedBinding(**binding()))
+    assert state["workflow_state"]["handoff"]["created"] is False
+    assert state["workflow_state"]["handoff"]["handoff_id"] is None
+
+
+def test_canonical_handoff_accepts_absent_optional_projection_fields(tmp_path):
+    runner, _, _ = workflow(tmp_path)
+    state = policy_state()
+    state["tool_results"]["get_transaction"]["snapshot_id"] = SNAPSHOT
+    runner._host_evidence(state, canonical_host_receipt(unknown=True, handoff=True), TrustedBinding(**binding()))
+    assert state["workflow_state"]["handoff"]["created"] is True
+
+
+def test_pending_untouched_sibling_keeps_its_own_nonempty_prompt(tmp_path):
+    stages = MultiStages(domains=["TRANSACTION_DISPUTE"] * 2,
+        resolution={"resolution_type": "CONFIRMED", "selected_ref": None})
+    runner, _, bank = workflow(tmp_path, stages, ScopedBank())
+    initial = run_workflow(runner, ORIGINAL, turn_id="two-pending")
+    original_first = capsule_states(initial)[0]
+    before = len(stages.calls)
+    result = run_workflow(runner, "sí", turn_id="continue-second",
+        query_scope_id=initial["runtime"]["query_scope_order"][1])
+    first, second = capsule_states(result)
+    assert first["response"]["message"].strip()
+    assert "25.5" in first["response"]["message"]
+    assert "77" not in first["response"]["message"]
+    assert "Consulta 1:\n\n" not in result["response"]["message"]
+    assert first["workflow_state"]["pending"]["target_transaction_id"] == original_first["workflow_state"]["pending"]["target_transaction_id"]
+    assert first["workflow_state"]["pending"].get("confirmed") is not True
+    assert first["workflow_state"]["trusted_confirmation"]["verified"] is False
+    assert first["workflow_state"]["action"]["authorized"] is False
+    assert first["tool_results"] == {}
+    assert sum(name == "generate" for name, _ in stages.calls[before:]) <= 2
+    assert all(name in bank.reads for name, _ in bank.calls)
 

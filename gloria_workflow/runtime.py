@@ -420,9 +420,20 @@ class Workflow:
             and re.fullmatch(r"HOF-[A-Za-z0-9_-]{8}", canonical_handoff["handoff_id"])
             and canonical_handoff_receipt.get("verified") is True
             and canonical_handoff_receipt.get("handoff_id") == canonical_handoff["handoff_id"])
+        if canonical_handoff_valid:
+            for projection in (canonical_handoff, canonical_handoff_receipt):
+                for key, expected in (("snapshot", snapshot), ("snapshot_id", snapshot),
+                                      ("target_reference", target), ("transaction_id", target)):
+                    if key in projection and projection[key] != expected:
+                        canonical_handoff_valid = False
+                if "transaction" in projection and not self._receipt_matches_target(
+                        projection, state["tool_results"].get("get_transaction", {}).get("transaction", {})):
+                    canonical_handoff_valid = False
         native_handoff_present = isinstance(raw_handoff, dict) and any(key in raw_handoff for key in ("id", "facts", "packet", "human_responded"))
         canonical_handoff_present = isinstance(canonical_handoff, dict) and any(key in canonical_handoff for key in ("created", "handoff_id", "receipt"))
-        handoff_agrees = (not native_handoff_present or handoff_matches) and (not canonical_handoff_present or canonical_handoff_valid)
+        handoff_agrees = (status.get("verified", True) is True
+            and (not native_handoff_present or handoff_matches)
+            and (not canonical_handoff_present or canonical_handoff_valid))
         if native_handoff_present and canonical_handoff_present:
             handoff_agrees = bool(handoff_agrees and handoff["id"] == canonical_handoff["handoff_id"])
         if status.get("state") in {"handoff_verified", "action_unverified"} and handoff and matches_request and handoff_matches and handoff_agrees:
@@ -945,6 +956,24 @@ class Workflow:
                 state["runtime"]["query_scopes"][sibling_id] = deepcopy(old_capsule)
                 sibling = activate_query_scope(state, binding, sibling_id, now=self.clock(), fresh=False)
                 sibling = await self._refresh_replay(sibling, binding)
+                state = checkpoint_query_scope(sibling)
+            else:
+                # begin_turn clears every response. An untouched pending scope
+                # still needs its own bounded prompt in the combined reply;
+                # it receives no model call, fresh consent or sibling facts.
+                sibling = activate_query_scope(state, binding, sibling_id, now=self.clock(), fresh=False)
+                display = deepcopy(sibling)
+                display["turn"].update(intent=old_capsule["intent"], clean_query=old_capsule["query_text"],
+                    language=original["turn"]["language"], effective_language=original["turn"]["effective_language"])
+                old_pending = old_capsule["workflow_state"].get("pending", {})
+                current_pending = sibling["workflow_state"].get("pending", {})
+                if (current_pending.get("type") != "none" and current_pending.get("type") == old_pending.get("type")
+                        and all(current_pending.get(key) == old_pending.get(key)
+                            for key in ("target_transaction_id", "snapshot_id", "snapshot_hash"))):
+                    # Prior selected facts are display-only for the unchanged
+                    # owned pending. Current evidence remains cleared.
+                    display["tool_results"] = deepcopy(old_capsule.get("tool_results", {}))
+                sibling["response"] = fallback_response(self._generator_input(display, ""))
                 state = checkpoint_query_scope(sibling)
         return self._compose_batch(state, original, history_items)
 
