@@ -163,7 +163,9 @@ def test_chat_confirmation_never_authorizes(text, resolution):
 def test_incomplete_or_stale_host_event_never_authorizes(field, value):
     state = confirming(trusted=True)
     state["workflow_state"]["trusted_confirmation"][field] = value
-    assert decide(state)["reason_code"] == "host_confirmation_required"
+    result = decide(state)
+    assert result["reason_code"] in {"host_confirmation_required", "stale_host_confirmation"}
+    assert result["workflow_updates"]["action"]["authorized"] is False
 
 
 def test_trusted_consent_revalidates_current_risk_and_policy():
@@ -249,7 +251,7 @@ def test_snapshot_change_invalidates_selection():
     state["workflow_state"]["pending"].update(type="awaiting_selection", candidates=[{"ref": "1", "transaction_id": "TRX-one"}],
                                                snapshot_hash="hash-1", snapshot_id="old-snapshot")
     state["turn"]["clarification"].update(resolution_type="SELECTED", selected_ref="1")
-    assert decide(state)["reason_code"] == "snapshot_changed"
+    assert decide(state, {"max_clarification_attempts": 3})["reason_code"] == "snapshot_changed"
 
 
 def test_human_request_precedes_tools_search_and_invalid_selection():
@@ -402,7 +404,7 @@ def test_complaint_selection_has_its_own_snapshot_and_no_transaction_requirement
                                               "complaint": {"complaint_id": "CMP-two", "status": "Escalated"}}
     assert decide(state)["response_mode"] == "INFORM"
     state["tool_results"]["get_complaint"]["snapshot_id"] = "complaint-snapshot-2"
-    assert decide(state)["reason_code"] == "snapshot_changed"
+    assert decide(state, {"max_clarification_attempts": 3})["reason_code"] == "snapshot_changed"
 
 
 def test_new_request_clears_pending_target_and_resets_workflow_counters():

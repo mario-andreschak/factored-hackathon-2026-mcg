@@ -108,9 +108,11 @@ def _decision(config: dict, rule: str, mode: str, reason: str,
 def _increment(state: dict, key: str) -> tuple[int, dict]:
     counters = deepcopy(state.get("workflow_state", {}).get("counters", {}))
     turn_id = state.get("turn", {}).get("turn_id")
-    if turn_id and counters.get("last_counted_turn_id") != turn_id:
+    counted = counters.setdefault("counted_turn_ids", {})
+    if turn_id and counted.get(key) != turn_id:
         counters[key] = _count(counters.get(key)) + 1
         counters["last_counted_turn_id"] = turn_id
+        counted[key] = turn_id
     return _count(counters.get(key)), counters
 
 
@@ -213,7 +215,7 @@ def _persistent_duplicate(state: dict, transaction: dict) -> bool:
             signals.get("duplicate_signal") == "persistent" or
             signals.get("possible_duplicate_of") not in (None, False, "") or
             signals.get("conflicting_duplicate") is True or
-            any(flag in {"possible_duplicate_of", "conflicting_duplicate"} for flag in flags if isinstance(flag, str)))
+            any(flag in {"possible_duplicate", "possible_duplicate_of", "conflicting_duplicate"} for flag in flags if isinstance(flag, str)))
 
 
 def _risk(state: dict, config: dict, now: datetime | None) -> tuple[bool, bool, int | None]:
@@ -234,9 +236,11 @@ def _risk(state: dict, config: dict, now: datetime | None) -> tuple[bool, bool, 
     count = prior + 1 if covered else None
     # A trusted private aggregate is permitted by the canonical contract; its
     # producer attests current ledger generation/window and excludes this target.
-    if not covered and workflow.get("risk_data_complete") is True:
-        aggregate = workflow.get("unrecognized_count_24h")
-        if type(aggregate) is int and aggregate >= 1:
+    private = results.get("get_related_complaints", {}).get("private_aggregate", {})
+    if not report and private.get("coverage_complete") is True and private.get("generation_verified") is True:
+        aggregate = private.get("unrecognized_count_24h")
+        if (type(aggregate) is int and aggregate >= 1 and private.get("scope") == "prototype_sandbox_cases" and
+                parse_timestamp(private.get("verified_at")) == now):
             count = aggregate
             covered = True
     thresholds = config["high_risk"]
@@ -275,6 +279,8 @@ def _selection_pending(state: dict, candidates: list, candidate_type: str, confi
 
 def _complaint_snapshot(listing: dict) -> str:
     """Fingerprint only an owned, complete trusted list, independent of transactions."""
+    if isinstance(listing.get("snapshot_hash"), str) and listing["snapshot_hash"]:
+        return listing["snapshot_hash"]
     return hashlib.sha256(json.dumps({"snapshot_id": listing.get("snapshot_id"),
         "complaints": listing.get("complaints", [])}, sort_keys=True, ensure_ascii=False,
         allow_nan=False, separators=(",", ":")).encode()).hexdigest()
@@ -303,11 +309,11 @@ def decide(state: dict, config: dict | None = None) -> dict:
     attack = turn.get("attack", {})
     if attack.get("deceptive") == 1 or attack.get("inappropriate") == 1:
         return _decision(cfg, "R1", "BLOCKED", "unsafe_request",
-                         updates={"action": {"authorized": False}}, security_event=True)
+                         updates={"action": {"authorized": False}}, security_event=True, clear_pending=True)
     slots = turn.get("slots", {})
     if turn.get("unauthorized_reference") is True or slots.get("foreign_customer_reference") is True:
         return _decision(cfg, "R2", "BLOCKED", "unauthorized_reference",
-                         updates={"action": {"authorized": False}}, security_event=True)
+                         updates={"action": {"authorized": False}}, security_event=True, clear_pending=True)
     # An attempted action remains terminal/recoverable even if its UI pending
     # was cleared, expired, or a new model intent has been classified.
     action = workflow.get("action", {})
@@ -343,7 +349,7 @@ def decide(state: dict, config: dict | None = None) -> dict:
                         "pending_expired", missing=["transaction"], clear_pending=True, clear_target=True)
     selected = pending.get("type") == "awaiting_selection" and resolution == "SELECTED"
     if turn.get("human_requested") is True or turn.get("intent") == "HUMAN_REQUEST" or turn.get("emotional_context") == "Emergencia":
-        return _decision(cfg, "R8", "HANDOFF", "emergency" if turn.get("emotional_context") == "Emergencia" else "customer_request")
+        return _decision(cfg, "R8", "HANDOFF", "emergency" if turn.get("emotional_context") == "Emergencia" else "customer_request", clear_pending=trusted)
     if selected:
         ref = turn.get("clarification", {}).get("selected_ref")
         candidate = next((item for item in pending.get("candidates", [])
@@ -361,9 +367,16 @@ def decide(state: dict, config: dict | None = None) -> dict:
             current_snapshot = complaint.get("snapshot_id", complaint.get("snapshot"))
             if current_snapshot is not None and current_snapshot != pending.get("snapshot_id"):
                 return _clarify(state, cfg, "R5", "snapshot_changed", clear_pending=True)
+            if complaint.get("snapshot_hash") is not None and complaint.get("snapshot_hash") != pending.get("snapshot_hash"):
+                return _clarify(state, cfg, "R5", "snapshot_changed", clear_pending=True)
             if complaint.get("status") != "ok" or (complaint.get("complaint") or {}).get("complaint_id") != complaint_id:
                 return _decision(cfg, "R5", "CLARIFY", "selected_complaint_revalidation",
                                  next_step="read_complaint", selected_complaint_id=complaint_id)
+            local = deepcopy(state)
+            local["turn"]["intent"] = "COMPLAINT_STATUS"
+            result = _complaints(local, cfg)
+            result["selection_consumed"] = True
+            return result
         else:
             transaction_id = candidate.get("transaction_id")
             reread = results.get("get_transaction", {})
@@ -388,10 +401,9 @@ def decide(state: dict, config: dict | None = None) -> dict:
                                                transaction_identified=True, pending=empty_pending())
             result["selection_consumed"] = True
             return result
-    # Human/emergency detection is local and wins even over an unclear pending.
-    if turn.get("human_requested") is True or turn.get("intent") == "HUMAN_REQUEST" or turn.get("emotional_context") == "Emergencia":
-        return _decision(cfg, "R8", "HANDOFF", "emergency" if turn.get("emotional_context") == "Emergencia" else "customer_request")
     if pending.get("type") == "awaiting_confirmation" and not trusted:
+        if workflow.get("trusted_confirmation", {}).get("verified") is True:
+            return _clarify(state, cfg, "R3", "stale_host_confirmation", clear_pending=True, clear_target=True)
         return _clarify(state, cfg, "R3", "host_confirmation_required", next_step="await_host_confirmation")
     if pending.get("type") == "awaiting_selection" and not selected:
         return _clarify(state, cfg, "R5", "selection_required")
@@ -402,7 +414,12 @@ def decide(state: dict, config: dict | None = None) -> dict:
         return _decision(cfg, "R6", "SMALL_TALK", "small_talk")
     if not active and turn.get("intent") == "OOD":
         return _decision(cfg, "R7", "OUT_OF_SCOPE", "out_of_scope")
-    return _business(state, cfg, trusted=trusted, now=now, today=today)
+    result = _business(state, cfg, trusted=trusted, now=now, today=today)
+    if trusted and result["reason_code"] != "host_consent_verified":
+        result["clear_pending"] = True
+        result["workflow_updates"]["trusted_confirmation"] = empty_confirmation()
+        result["workflow_updates"].setdefault("action", {})["authorized"] = False
+    return result
 
 
 def _business(state: dict, cfg: dict, *, trusted: bool, now: datetime | None,
@@ -422,7 +439,7 @@ def _business(state: dict, cfg: dict, *, trusted: bool, now: datetime | None,
               if isinstance(result, dict) and result.get("status") == "error"]
     if errors or failed:
         retry = next(((name, result) for name, result in failed
-                      if result.get("retryable") is True and result.get("retries_exhausted") is not True and
+                      if (result.get("retryable") is True or result.get("error", {}).get("retryable") is True) and result.get("retries_exhausted") is not True and
                       _count(result.get("retry_count")) < cfg["tool_retries"]), None)
         if retry and not errors:
             return _decision(cfg, "R9", "TOOL_ERROR", "tool_retry", next_step="retry_tool", tool_name=retry[0])
@@ -560,6 +577,7 @@ def _complaints(state: dict, cfg: dict) -> dict:
                   for i, item in enumerate(complaints)]
     pending = _selection_pending(state, candidates, "complaint", cfg)
     digest = _complaint_snapshot(listing)
-    pending.update(snapshot_hash=digest, snapshot_id=listing.get("snapshot_id", digest), intent="COMPLAINT_STATUS")
+    pending.update(snapshot_hash=digest, snapshot_id=listing.get("snapshot_id") or listing.get("snapshot_hash") or digest,
+                   intent="COMPLAINT_STATUS")
     return _clarify(state, cfg, "R18", "multiple_complaints", pending=pending, workflow_intent="COMPLAINT_STATUS",
                     complaint_snapshot_hash=digest)

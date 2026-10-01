@@ -6,6 +6,7 @@ Neither this module nor the policy engine executes a banking action.
 from __future__ import annotations
 
 from copy import deepcopy
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -14,7 +15,7 @@ import math
 from pathlib import Path
 import re
 import sqlite3
-from typing import Any
+from typing import Any, Iterator
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 try:
@@ -192,7 +193,12 @@ def cancel_pending(state: dict, *, clear_target: bool = False) -> dict:
 
 def reset_workflow(state: dict) -> dict:
     """Start a distinct request; uncertain writes must first be recovered by the host."""
-    if state["workflow_state"].get("action_outcome") in {"unknown", "executed"}:
+    workflow = state["workflow_state"]
+    action = workflow.get("action", {})
+    outcome = workflow.get("action_outcome")
+    verified_done = outcome == "verified" and action.get("executed") is True and action.get("verified") is True and action.get("result_id")
+    confirmed_no_write = outcome == "failed" and action.get("executed") is not True
+    if outcome in {"unknown", "executed"} or workflow.get("action_attempted") is True and not (verified_done or confirmed_no_write):
         raise StateError("action_recovery_required")
     result = cancel_pending(state, clear_target=True)
     result["workflow_state"] = empty_workflow()
@@ -310,6 +316,8 @@ def record_tool_result(state: dict, name: str, result: dict, *, tool_retries: in
     """Bound retries per call; policy counts exhausted failures once per turn."""
     if not isinstance(name, str) or not name or not isinstance(result, dict):
         raise StateError("invalid_tool_result")
+    if type(tool_retries) is not int or tool_retries < 0:
+        raise StateError("invalid_tool_retries")
     updated = deepcopy(state)
     attempts = updated["runtime"].setdefault("tool_attempts", {})
     attempts[name] = attempts.get(name, 0) + 1
@@ -348,10 +356,15 @@ class ConversationStore:
                 input_digest TEXT NOT NULL, state_json TEXT NOT NULL,
                 PRIMARY KEY(owner, customer, session, conversation, turn_id))""")
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
         db = sqlite3.connect(str(self.path), timeout=10)
-        db.execute("PRAGMA busy_timeout=10000")
-        return db
+        try:
+            db.execute("PRAGMA busy_timeout=10000")
+            with db:
+                yield db
+        finally:
+            db.close()
 
     def _loaded(self, binding: TrustedBinding, payload: str, revision: int,
                 now: datetime) -> dict:
@@ -439,6 +452,10 @@ class ConversationStore:
         digest = digest or hashlib.sha256(turn["user_question"].encode("utf-8")).hexdigest()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            session = db.execute("""SELECT expires FROM gloria_conversations
+                WHERE owner=? AND customer=? AND session=? AND conversation=?""", binding.key()).fetchone()
+            if session and session[0] != parse_timestamp(binding.expires_at).timestamp():
+                raise StateError("session_expiry_changed")
             existing = db.execute("""SELECT input_digest,state_json FROM gloria_turns
                 WHERE owner=? AND customer=? AND session=? AND conversation=? AND turn_id=?""",
                                   (*binding.key(), turn_id)).fetchone()
