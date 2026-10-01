@@ -95,6 +95,7 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | `pipeline/` | DuckDB ingestion, ownership validation and customer-sharded snapshot outputs |
 | `banking_mcp/` | Read-only MCP server with verified per-call authority and bounded transaction reads |
 | `frontend/` | Savia React UI, authenticated snapshot API, FLUJO customer chat and portable Docker deployment |
+| `analytics/` | Offline, metadata-only agent behaviour analytics from Savia/Gloria state |
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 
