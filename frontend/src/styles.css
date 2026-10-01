@@ -3742,6 +3742,38 @@ button svg {
     flex-wrap: wrap;
   }
 
+  .chart-bars {
+    height: 151px;
+  }
+  .chart-month > span {
+    height: 30px;
+    padding-top: 7px;
+    font-size: 12px;
+    line-height: 1.25;
+    color: #4b6044;
+  }
+  .product-name {
+    font-size: 14px;
+  }
+  .product-ref,
+  .product-card-bottom small,
+  .product-card .badge {
+    font-size: 12px;
+  }
+  .spending-groups > div,
+  .spending-groups strong,
+  .spending-panel .data-footnote,
+  .donut small,
+  .donut span {
+    font-size: 12px;
+  }
+  .spending-groups > div > span {
+    overflow-wrap: anywhere;
+  }
+  .spending-groups strong {
+    flex-shrink: 0;
+  }
+
   .transaction-table .table-heading {
     display: none;
   }
@@ -3826,5 +3858,11 @@ button svg {
   }
   .modal .mono {
     font-size: 12px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .filters > label:not(:first-child) {
+    flex-basis: 100%;
   }
 }
