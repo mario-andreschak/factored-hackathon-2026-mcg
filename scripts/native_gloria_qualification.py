@@ -40,6 +40,31 @@ class NativeGloriaPort:
         self.workflow_factory = workflow_factory
         self.base_url, self.authority_dir, self.timeout = base_url, Path(authority_dir), timeout
 
+    def _revoke_stage(self, stage_token):
+        # A registry reader may prevent replacement on Windows. Publish an
+        # independent monotonic denial before attempting registry cleanup.
+        directory = self.authority_dir / "revocations"
+        directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        location = directory / (digest(stage_token.encode()) + ".revoked")
+        try:
+            descriptor = os.open(location, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            # Presence is a monotonic denial; repeated cancellation/revocation
+            # never restores authority or skips the independent cleanup.
+            pass
+        else:
+            with os.fdopen(descriptor, "wb") as output:
+                output.write(b"revoked\n")
+                output.flush()
+                os.fsync(output.fileno())
+        if os.name == "posix":
+            for parent in (directory, self.authority_dir):
+                directory_descriptor = os.open(parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+                try:
+                    os.fsync(directory_descriptor)
+                finally:
+                    os.close(directory_descriptor)
+
     @contextmanager
     def _edit_admissions(self):
         location = self.authority_dir / "admissions.json"
@@ -118,6 +143,7 @@ class NativeGloriaPort:
         if not isinstance(message, str) or not message or len(message) > 4096 or not isinstance(turn_id, str):
             raise ValueError("native admitted turn required")
         expiry = min(time.time() * 1000 + 600000, parse_timestamp(trusted.expires_at).timestamp() * 1000)
+        (self.authority_dir / "revocations").mkdir(mode=0o700, parents=True, exist_ok=True)
         record = {"mode": "language_only", "token": secrets.token_hex(24), "stageToken": secrets.token_hex(24),
                   "owner": trusted.owner, "conversation": trusted.conversation_id,
                   "runId": str(uuid.uuid4()), "turnId": turn_id, "message": message,
@@ -132,8 +158,11 @@ class NativeGloriaPort:
             result = await workflow.run(deepcopy(binding), message, turn_id=turn_id, selection=deepcopy(selection), **kwargs)
             return result
         finally:
-            with self._edit_admissions() as records:
-                records[:] = [item for item in records if item.get("stageToken") != record["stageToken"]]
+            try:
+                self._revoke_stage(record["stageToken"])
+            finally:
+                with self._edit_admissions() as records:
+                    records[:] = [item for item in records if item.get("stageToken") != record["stageToken"]]
 
 
 def digest(data):
@@ -172,6 +201,7 @@ def prepare(flujo_root: Path, context: Path, catalog: Path, native_binary=None, 
              ROOT / "resources/gloria_workflow.flow.json",
              ROOT / "scripts/native_gloria_compatibility_probe.mjs",
              ROOT / "scripts/native_gloria_capability_probe.mjs", ROOT / "scripts/native_gloria_bridge_loader.mjs",
+             ROOT / "scripts/native_gloria_revocation_probe.mjs",
              ROOT / "scripts/qualify_gloria.py", ROOT / "requirements-gloria.txt", ROOT / "requirements-pipeline.txt",
              ROOT / "requirements-s3.txt", ROOT / "frontend/requirements.txt"]
     for directory, suffix in (("gloria_workflow", "*.py"), ("resources/prompts", "*.yml"),
@@ -297,6 +327,80 @@ BOUNDARY_CASES = {
 CAPABILITY_CASES = {(model, tool) for model in ("gpt-6-sol", "gpt-6-luna")
                     for tool in ("inventory", "approved_mcp", "read_mcp_resource", "rogue_namespace",
                                  "mcp__rogue__rogue_access", "apply_patch_foreign", "functions_exec")}
+REVOCATION_CASES = {"initial_stage_revocation", "revocation_during_body_await", "foreign_marker_preserves_sibling",
+                    "cancelled_cleanup_late_callback"}
+REVOCATION_FENCE_CASES = {"initial_revocation_blocks_registry_read", "revocation_after_registry_await",
+                        "foreign_marker_preserves_sibling", "unexpected_marker_io_denied",
+                        "unavailable_authority_directory_denied"}
+
+
+async def probe_cancel_cleanup(base_url, authority_dir):
+    """Zero-provider installed callback probe with a real Windows sharing denial."""
+    import asyncio
+    import ctypes
+    from ctypes import wintypes
+    import httpx
+    if os.name != "nt":
+        raise ValueError("Real Windows delete-sharing qualification required")
+    directory = Path(authority_dir)
+    location, events = directory / "admissions.json", directory / "events.jsonl"
+    before = events.read_bytes() if events.exists() else b""
+    sibling_tokens = {item.get("stageToken") for item in json.loads(location.read_text(encoding="utf-8"))}
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+        wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    kernel.CreateFileW.restype = wintypes.HANDLE
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel.CloseHandle.restype = wintypes.BOOL
+    handle, own, model = None, None, None
+    turn = str(uuid.uuid4())
+    class Workflow:
+        async def run(self, *_args, **_kwargs):
+            nonlocal handle, own
+            own = next(item for item in json.loads(location.read_text(encoding="utf-8")) if item.get("turnId") == turn)
+            handle = kernel.CreateFileW(str(location), 0x80000000, 1, None, 3, 0x80, None)
+            if handle == ctypes.c_void_p(-1).value:
+                raise OSError("Windows sharing fixture unavailable")
+            raise asyncio.CancelledError()
+    def factory(admitted_model):
+        nonlocal model
+        model = admitted_model
+        return Workflow()
+    port = NativeGloriaPort(factory, base_url, directory)
+    cleanup_failed = False
+    began = time.monotonic()
+    try:
+        try:
+            await port.run({"owner": "synthetic-cancel-owner", "customer_id": "public-synthetic",
+                "session_id": str(uuid.uuid4()), "conversation_id": str(uuid.uuid4()),
+                "expires_at": time.time() + 60}, "Original synthetic callback", turn_id=turn)
+        except PermissionError:
+            cleanup_failed = True
+    finally:
+        if handle is not None and handle != ctypes.c_void_p(-1).value:
+            kernel.CloseHandle(handle)
+    if own is None or model is None:
+        raise ValueError("Cancellation fixture did not admit a turn")
+    retained = json.loads(location.read_text(encoding="utf-8"))
+    marker_exists = (directory / "revocations" / (digest(own["stageToken"].encode()) + ".revoked")).is_file()
+    async with httpx.AsyncClient(trust_env=False, timeout=10) as client:
+        late = await client.post(base_url + "/v1/chat/completions",
+            headers={"Authorization": "Bearer " + model._token},
+            json={"model": "model-gloria-native-model", "messages": [{"role": "system", "content": "Return JSON only."},
+                {"role": "user", "content": "Original synthetic callback"}], "stream": False})
+    revoked_denial = late.status_code == 403 and late.json().get("error") == "gloria_stage_revoked"
+    unchanged = before == (events.read_bytes() if events.exists() else b"")
+    siblings_preserved = sibling_tokens <= {item.get("stageToken") for item in retained}
+    stale_record = any(item.get("stageToken") == own["stageToken"] and item["expires"] > time.time() * 1000 for item in retained)
+    with port._edit_admissions() as records:
+        records[:] = [item for item in records if item.get("stageToken") != own["stageToken"]]
+    return {"case": "cancelled_cleanup_late_callback", "pass": cleanup_failed and marker_exists and stale_record
+            and siblings_preserved and revoked_denial and unchanged,
+            "httpStatus": late.status_code, "seconds": round(time.monotonic() - began, 3),
+            "registryCleanupDenied": cleanup_failed, "revocationMarkerPresent": marker_exists,
+            "staleOwnRecordDenied": stale_record and revoked_denial,
+            "siblingsPreserved": siblings_preserved, "noProviderOrMcpBeforeDenial": unchanged,
+            "sharingFixture": "actual Windows reader without delete sharing"}
 
 
 def public_report(report):
@@ -304,11 +408,19 @@ def public_report(report):
     cases, probes = report.get("cases", []), report.get("nativeCapabilityProbes", {}).get("cases", [])
     installed, source = report.get("installedSourceHashes", {}), report.get("sourceContext", {})
     audit, native = report.get("imageCredentialAudit", {}), report.get("nativeProfile", {})
+    revocations = report.get("revocationProbes", {}).get("cases", [])
+    fences = report.get("revocationFenceProbes", {}).get("cases", [])
     if (report.get("pass") is not True or report.get("installed") is not True
             or len(cases) != 14 or {item.get("case") for item in cases} != BOUNDARY_CASES
             or not all(item.get("pass") is True for item in cases)
             or len(probes) != 14 or {(item.get("model"), item.get("tool")) for item in probes} != CAPABILITY_CASES
             or not all(item.get("passed") is True for item in probes)
+            or len(revocations) != len(REVOCATION_CASES) or {item.get("case") for item in revocations} != REVOCATION_CASES
+            or not all(item.get("pass") is True and item.get("noProviderOrMcpBeforeDenial") is True for item in revocations)
+            or len(fences) != len(REVOCATION_FENCE_CASES) or {item.get("case") for item in fences} != REVOCATION_FENCE_CASES
+            or not all(item.get("pass") is True and item.get("provider_calls") == 0 for item in fences)
+            or report.get("revocationFenceProbes", {}).get("adapterSourceSha256") != source.get("application_files", {}).get("scripts/native_gloria_qualification.ts")
+            or report.get("revocationFenceProbes", {}).get("fixtureSha256") != source.get("application_files", {}).get("scripts/native_gloria_revocation_probe.mjs")
             or installed.get("pass") is not True or audit.get("credential_files_present") != 0
             or not report.get("externalManifestSha256")
             or installed.get("manifest_sha256") != report["externalManifestSha256"]
@@ -358,6 +470,14 @@ def public_report(report):
                       for item in probes]},
         "boundary_cases": {"scope": "Actual configured provider, saved graphs and per-turn registered MCP",
                            "count": 14, "cases": boundary},
+        "revocation_probes": {"scope": "Installed no-provider stage denial and real Windows cancellation cleanup sharing",
+                              "count": len(revocations), "cases": [{key: item[key] for key in ("case", "pass", "httpStatus",
+                                  "seconds", "noProviderOrMcpBeforeDenial", "registryCleanupDenied", "revocationMarkerPresent",
+                                  "staleOwnRecordDenied", "siblingsPreserved", "sharingFixture") if key in item} for item in revocations]},
+        "revocation_fence_probes": {"scope": "Exact installed adapter declarations, deferred registry read, zero provider execution",
+                                   "adapter_source_sha256": report["revocationFenceProbes"]["adapterSourceSha256"],
+                                   "fixture_sha256": report["revocationFenceProbes"]["fixtureSha256"],
+                                   "count": len(fences), "cases": [{key: item[key] for key in ("case", "pass", "provider_calls")} for item in fences]},
     }
 
 
@@ -373,8 +493,16 @@ def main():
     parser.add_argument("--native-version")
     parser.add_argument("--publish-report", type=Path)
     parser.add_argument("--public-output", type=Path)
+    parser.add_argument("--probe-cancel-cleanup", action="store_true")
+    parser.add_argument("--base-url")
+    parser.add_argument("--authority-dir", type=Path)
     args = parser.parse_args()
-    if args.publish_report:
+    if args.probe_cancel_cleanup:
+        if not args.base_url or not args.authority_dir:
+            parser.error("base-url and authority-dir required")
+        import asyncio
+        print(json.dumps(asyncio.run(probe_cancel_cleanup(args.base_url, args.authority_dir))))
+    elif args.publish_report:
         if not args.public_output:
             parser.error("public-output required")
         public = public_report(json.loads(args.publish_report.read_text(encoding="utf-8")))

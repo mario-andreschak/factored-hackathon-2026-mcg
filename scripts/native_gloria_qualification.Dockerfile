@@ -24,6 +24,7 @@ COPY qualification/graph_config_v3.yaml /qualification/graph_config_v3.yaml
 COPY qualification/native_gloria_qualification.py /qualification/native_gloria_qualification.py
 COPY qualification/qualify_gloria.py /qualification/qualify_gloria.py
 COPY qualification/native_gloria_capability_probe.mjs qualification/native_gloria_bridge_loader.mjs qualification/native_gloria_compatibility_probe.mjs /qualification/
+COPY qualification/native_gloria_revocation_probe.mjs /qualification/
 COPY qualification/build_gloria_graph.mjs qualification/native_gloria_qualification.mjs qualification/native_gloria_qualification.Dockerfile /qualification/
 COPY qualification/bin /qualification/bin
 RUN chmod 0555 /qualification/bin/codex

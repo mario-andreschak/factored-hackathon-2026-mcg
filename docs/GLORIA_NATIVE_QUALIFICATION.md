@@ -70,8 +70,13 @@ the application call; they never become model/tool arguments. The returned
 state contains the application's validated response. ChatService consumes
 this state directly, avoiding outer model paraphrasing.
 
-The host creates a private language-only admission for the turn and removes it
-in `finally`. Registry edits use a kernel lock released after process death,
+The host creates a private language-only admission for the turn and revokes it
+in `finally` before removing its registry record. Revocation publishes an
+independent fsynced 0600 marker named by the stage token's SHA256. The worker
+checks that marker before and after admission/body awaits and at every execution
+fence. Unexpected marker I/O denies execution. A permanent registry sharing
+conflict therefore leaves a denied record; it cannot extend stage authority.
+Markers are private, monotonic and scoped to one stage token. Registry edits use a kernel lock released after process death,
 0600 temporary files, atomic replacement and POSIX directory fsync. An old
 marker cannot prevent restart. Windows replacement retries transient reader
 sharing conflicts for at most five seconds while retaining the writer lock and
@@ -106,8 +111,11 @@ reads, transport replay, restart replay, foreign owner/session, poisoned
 native state and slow-body concurrent replay. Full synthetic diagnostics stay
 under ignored `private/`; public reports contain only reviewed projections and
 redacted measurements. Publication requires all fourteen capability and fourteen
-boundary cases to pass, installed source equality and an image credential-file
-audit. The public allowlist excludes private paths, admissions, tokens, raw
+boundary cases to pass, four installed no-provider revocation probes, five exact
+adapter fence probes, installed source equality and an image credential-file
+audit. The cancellation probe uses an actual Windows reader denying delete
+sharing, then verifies that a late callback is denied despite its retained
+registry record and that sibling admissions survive. The public allowlist excludes private paths, admissions, tokens, raw
 model content and responses; incomplete qualifications cannot be published.
 
 `--retain-runtime true` retains a successful qualification for joined HTTP

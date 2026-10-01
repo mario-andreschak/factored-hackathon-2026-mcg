@@ -1,7 +1,7 @@
 /** Isolated qualification adapter selected only in the dedicated test image. */
 import { createHash, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { mkdirSync, writeFileSync, readFileSync, renameSync, existsSync, openSync, fsyncSync, closeSync, appendFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, renameSync, existsSync, openSync, fsyncSync, closeSync, appendFileSync, lstatSync } from 'node:fs';
 import { timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { NextRequest } from 'next/server';
@@ -44,10 +44,33 @@ const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 const fail = (code = 'gloria_qualification_denied'): never => { throw new ExecutionExtensionError(code); };
 const equal = (a: string, b: string) => timingSafeEqual(Buffer.from(sha(a)), Buffer.from(sha(b)));
 async function admissions(): Promise<Admission[]> { return JSON.parse(await readFile(path.join(ROOT, 'admissions.json'), 'utf8')); }
+function assertNotRevokedToken(token: string) {
+  const directory = path.join(ROOT, 'revocations');
+  try {
+    if (!lstatSync(directory).isDirectory()) fail('gloria_revocation_unavailable');
+  } catch (error) {
+    fail('gloria_revocation_unavailable');
+  }
+  try {
+    lstatSync(path.join(directory, sha(token) + '.revoked'));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      // Require the authority directory itself to remain readable and real.
+      try { if (!lstatSync(directory).isDirectory()) fail('gloria_revocation_unavailable'); }
+      catch { fail('gloria_revocation_unavailable'); }
+      return;
+    }
+    fail('gloria_revocation_unavailable');
+  }
+  fail('gloria_stage_revoked');
+}
+const assertNotRevoked = (run: Admission) => assertNotRevokedToken(run.stageToken);
 async function current(value: object, expected?: { conversationId?: string; runId?: string; graphHash?: string }) {
   const run = value as Admission;
+  assertNotRevoked(run);
   const active = (await admissions()).some(item => item.token === run.token && item.stageToken === run.stageToken
     && item.turnId === run.turnId && item.owner === run.owner && item.expires === run.expires && item.bindingFingerprint === run.bindingFingerprint);
+  assertNotRevoked(run);
   if (!active || !runs.has(value) || run.expires <= Date.now() || run.signal?.aborted
     || (expected?.conversationId && expected.conversationId !== run.conversation)
     || (expected?.runId && expected.runId !== run.runId)
@@ -69,11 +92,14 @@ export const configuredExecutionAdapter: ExecutionExtensionAdapter = {
       if (request.method !== 'POST' || new URL(request.url).search || request.headers.has('x-workspace')
         || request.headers.has('x-flujo-workspace')) fail();
       const bearer = request.headers.get('authorization')?.replace(/^Bearer /, '') ?? '';
+      assertNotRevokedToken(bearer);
       const records = await admissions();
       const stage = records.find(item => item.stageToken && equal(item.stageToken, bearer));
       const record = stage ?? records.find(item => equal(item.token, bearer));
       if (!record || !/^[a-f0-9]{64}$/.test(record.bindingFingerprint) || record.expires <= Date.now() || (!stage && ledger().consumed.includes(sha(record.token)))) fail();
+      assertNotRevoked(record);
       const body = await request.json();
+      assertNotRevoked(record);
       if (stage) {
         if (stage.mode === 'language_only') {
           own(stage.conversation, stage);

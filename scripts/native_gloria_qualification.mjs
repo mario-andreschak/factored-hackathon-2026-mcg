@@ -35,7 +35,7 @@ const port = Number(opts['--port'] ?? 43921);
 assert(Number.isInteger(port) && port > 1024 && port < 65536, 'Expected private loopback port');
 const runtime = path.join(REPO_ROOT, 'private', `native-gloria-run-${randomUUID()}`);
 const state = path.join(runtime, 'data'), auth = path.join(runtime, 'auth'), admitted = path.join(runtime, 'admitted');
-for (const directory of [state, auth, admitted, path.join(admitted, 'turns'), path.join(admitted, 'captured'), path.join(admitted, 'observed')]) fs.mkdirSync(directory, { recursive: true });
+for (const directory of [state, auth, admitted, path.join(admitted, 'turns'), path.join(admitted, 'captured'), path.join(admitted, 'observed'), path.join(admitted, 'revocations')]) fs.mkdirSync(directory, { recursive: true });
 const authHome = path.resolve(opts['--auth-home'] ?? process.env.CODEX_HOME ?? path.join(os.homedir(), '.codex'));
 const config = fs.existsSync(path.join(authHome, 'config.toml')) ? fs.readFileSync(path.join(authHome, 'config.toml'), 'utf8') : '';
 const store = /^\s*cli_auth_credentials_store\s*=\s*"([^"]+)"/m.exec(config)?.[1];
@@ -82,6 +82,11 @@ try {
   assert(report.installedSourceHashes.pass, 'installed_source_hash_drift');
   assert.equal(report.installedSourceHashes.manifest_sha256, sha(fs.readFileSync(path.join(context, 'source-manifest.json'))), 'installed_manifest_differs_from_context');
   assert.equal(docker(['exec', name, binary.installed_path, '--version']).trim(), 'codex-cli ' + binary.version, 'installed_native_version_drift');
+  report.revocationFenceProbes = JSON.parse(docker(['exec', name, 'node', '/qualification/native_gloria_revocation_probe.mjs',
+    '/qualification/native_gloria_qualification.ts', '/app']));
+  assert(report.revocationFenceProbes.pass, 'installed_revocation_fences_failed');
+  assert.equal(report.revocationFenceProbes.adapterSourceSha256, sourceContext.application_files['scripts/native_gloria_qualification.ts']);
+  assert.equal(report.revocationFenceProbes.fixtureSha256, sourceContext.application_files['scripts/native_gloria_revocation_probe.mjs']);
   const forcedOutput = docker(['exec', name, 'node', '/qualification/native_gloria_capability_probe.mjs', binary.installed_path,
     '/qualification/runtime/model-catalog.json', '-', '/app']);
   fs.writeFileSync(path.join(runtime, 'native-forced-probes-private.jsonl'), forcedOutput);
@@ -113,6 +118,48 @@ try {
   assert.equal(installedModel.status, 201, 'configured_model_installation_failed');
   report.installedModel = (await request('/api/model', undefined, undefined, 'GET')).data.find(item => item.id === model.id);
   assert.equal(report.installedModel?.adapter, model.adapter);
+  const revocationCases = [];
+  const eventsBytes = () => fs.existsSync(path.join(admitted, 'events.jsonl')) ? fs.readFileSync(path.join(admitted, 'events.jsonl')) : Buffer.alloc(0);
+  const revoke = stageToken => {
+    const descriptor = fs.openSync(path.join(admitted, 'revocations', sha(stageToken) + '.revoked'), 'wx', 0o600);
+    try { fs.writeFileSync(descriptor, 'revoked\n'); fs.fsyncSync(descriptor); } finally { fs.closeSync(descriptor); }
+  };
+  const revocationAdmission = () => ({ mode: 'language_only', token: randomBytes(24).toString('hex'),
+    stageToken: randomBytes(24).toString('hex'), owner: 'synthetic-revocation-owner', conversation: randomUUID(),
+    turnId: randomUUID(), runId: randomUUID(), message: 'Original synthetic callback', expires: Date.now() + 60000,
+    server: 'gloria-language-only', graphHash: '', flowId: '', bindingFingerprint: sha(randomBytes(32)) });
+  const marked = revocationAdmission(), duringBody = revocationAdmission(), sibling = revocationAdmission();
+  admissions.push(marked, duringBody, sibling);
+  fs.writeFileSync(path.join(admitted, 'admissions.json'), JSON.stringify(admissions), { mode: 0o600 });
+  revoke(marked.stageToken);
+  let before = eventsBytes();
+  const initiallyDenied = await request('/v1/chat/completions', {}, marked.stageToken);
+  let unchanged = before.equals(eventsBytes());
+  revocationCases.push({ case: 'initial_stage_revocation', httpStatus: initiallyDenied.status,
+    noProviderOrMcpBeforeDenial: unchanged, pass: initiallyDenied.status === 403 && initiallyDenied.data.error === 'gloria_stage_revoked' && unchanged });
+  const stageBody = JSON.stringify({ model: 'model-gloria-native-model', messages: [{ role: 'system', content: 'Return JSON only.' },
+    { role: 'user', content: 'Original synthetic callback' }], stream: false });
+  let finishBody;
+  const slowBody = new ReadableStream({ start(controller) {
+    controller.enqueue(new TextEncoder().encode(stageBody.slice(0, 10)));
+    finishBody = () => { controller.enqueue(new TextEncoder().encode(stageBody.slice(10))); controller.close(); };
+  } });
+  before = eventsBytes();
+  const pendingBody = fetch(endpoint + '/v1/chat/completions', { method: 'POST', headers: {
+    'content-type': 'application/json', authorization: 'Bearer ' + duringBody.stageToken }, body: slowBody, duplex: 'half' });
+  await new Promise(resolve => setTimeout(resolve, 200)); revoke(duringBody.stageToken); finishBody();
+  const bodyDenied = await pendingBody; const bodyDeniedData = await bodyDenied.json(); unchanged = before.equals(eventsBytes());
+  revocationCases.push({ case: 'revocation_during_body_await', httpStatus: bodyDenied.status,
+    noProviderOrMcpBeforeDenial: unchanged, pass: bodyDenied.status === 403 && bodyDeniedData.error === 'gloria_stage_revoked' && unchanged });
+  before = eventsBytes();
+  const siblingMalformed = await request('/v1/chat/completions', {}, sibling.stageToken); unchanged = before.equals(eventsBytes());
+  revocationCases.push({ case: 'foreign_marker_preserves_sibling', httpStatus: siblingMalformed.status,
+    noProviderOrMcpBeforeDenial: unchanged, pass: siblingMalformed.status === 403 && siblingMalformed.data.error === 'gloria_stage_request_denied' && unchanged });
+  const cancelledCleanup = JSON.parse(execFileSync('python', [path.join(REPO_ROOT, 'scripts/native_gloria_qualification.py'),
+    '--probe-cancel-cleanup', '--base-url', endpoint, '--authority-dir', admitted], { encoding: 'utf8', timeout: 20000 }));
+  revocationCases.push(cancelledCleanup);
+  report.revocationProbes = { cases: revocationCases };
+  assert(revocationCases.every(item => item.pass), 'installed_revocation_denial_failed');
   const owner = 'synthetic-owner-A', conversation = randomUUID();
   const definitions = opts['--serve-only'] === 'true' ? [] : [
     { name: 'normal_es', message: 'No reconozco una compra de 27.25 USD en Loja Teste ayer.', expectedLanguage: 'es', expectedRule: 'R17', owner, conversation, turnId: randomUUID() },
@@ -198,7 +245,7 @@ try {
     }
   }
   report.installed = true;
-  report.pass = cases.length > 0 && cases.every(item => item.pass);
+  report.pass = cases.length > 0 && cases.every(item => item.pass) && revocationCases.every(item => item.pass);
   report.readyForHostQualification = Boolean(opts['--serve-only'] === 'true');
 } catch (error) {
   report.pass = false; report.failure = error instanceof Error ? error.message : 'qualification_failed';
