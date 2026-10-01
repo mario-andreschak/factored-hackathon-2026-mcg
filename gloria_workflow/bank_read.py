@@ -52,6 +52,31 @@ def _norm(value):
                             if not unicodedata.combining(c)).casefold().split())
 
 
+_PRODUCT_WORDS = {
+    "tarjeta": "card", "tarjetas": "card", "cartao": "card", "cartoes": "card",
+    "cuenta": "account", "cuentas": "account", "conta": "account", "contas": "account",
+    "credito": "credit", "debito": "debit",
+    "ahorro": "savings", "ahorros": "savings", "poupanca": "savings",
+    "corriente": "current", "corrientes": "current", "corrente": "current", "correntes": "current",
+}
+_PRODUCT_CONNECTORS = {"de", "del", "do", "da", "la", "el", "o", "a"}
+
+
+def _product_features(value):
+    words = [word for word in re.findall(r"\w+", _norm(value)) if word not in _PRODUCT_CONNECTORS]
+    if not words or any(word not in _PRODUCT_WORDS for word in words):
+        return None
+    return frozenset(_PRODUCT_WORDS[word] for word in words)
+
+
+def _matches_product_hint(hint, product_type):
+    # Translate only recognized ES/PT product words. Keep every supplied type
+    # qualifier: a debit hint cannot select a credit card, and unknown words
+    # cannot be discarded to turn an unavailable product into a sole match.
+    requested, available = _product_features(hint), _product_features(product_type)
+    return requested is not None and available is not None and requested <= available
+
+
 def _number(value, *, maximum=None, signed=False):
     try:
         if value in (None, "") or isinstance(value, bool):
@@ -502,7 +527,7 @@ class OwnedBankReads:
                 if slots.get("merchant") and _norm(slots["merchant"]) not in _norm(row.get("merchant_name")):
                     continue
                 product = products[row["product_id"]]
-                if slots.get("product_hint") and _norm(slots["product_hint"]) not in _norm(product["product_type"]):
+                if slots.get("product_hint") and not _matches_product_hint(slots["product_hint"], product["product_type"]):
                     continue
                 if slots.get("product_last4") and slots["product_last4"] != product["product_last4"]:
                     continue

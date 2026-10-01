@@ -163,6 +163,40 @@ def test_all_declared_filters_apply_before_total_and_sole_selection(bank, slots,
     assert result["search_context"]["coverage_complete"] is True
 
 
+@pytest.mark.parametrize("product_type,hints", [
+    ("Tarjeta Crédito", [("tarjeta", 1), ("cartão", 1), ("cartão de crédito", 1),
+                        ("crédito", 1), ("tarjeta de débito", 0), ("débito", 0), ("conta", 0)]),
+    ("Cartão Crédito", [("tarjeta crédito", 1), ("cartão", 1), ("crédito", 1),
+                       ("cartão de débito", 0), ("cuenta", 0)]),
+    ("Tarjeta Débito", [("cartão de débito", 1), ("tarjeta", 1), ("débito", 1),
+                       ("crédito", 0), ("tarjeta crédito", 0), ("conta", 0)]),
+    ("Cartão Débito", [("tarjeta de débito", 1), ("cartão", 1), ("débito", 1),
+                      ("cartão de crédito", 0), ("cuenta", 0)]),
+    ("Cuenta Ahorro", [("cuenta", 1), ("conta", 1), ("conta poupança", 1),
+                      ("cuenta de ahorros", 1), ("poupança", 1), ("conta corrente", 0), ("cartão", 0)]),
+    ("Conta Poupança", [("cuenta ahorro", 1), ("conta", 1), ("ahorro", 1),
+                       ("cuenta corriente", 0), ("tarjeta", 0)]),
+    ("Cuenta Corriente", [("conta corrente", 1), ("cuenta", 1), ("corrente", 1),
+                         ("poupança", 0), ("cuenta ahorro", 0), ("cartão", 0)]),
+    ("Conta Corrente", [("cuenta corriente", 1), ("conta", 1), ("corriente", 1),
+                       ("conta poupança", 0), ("tarjeta", 0)]),
+])
+def test_owned_product_filters_translate_es_pt_without_dropping_qualifiers(bank, product_type, hints):
+    rewrite_csv(bank.source / "products.csv", lambda row: row.update(product_type=product_type)
+                if row["customer_id"] == bank.principal.customer else None)
+    republish(bank)
+    # A wrong or unknown hint must reject the otherwise sole amount candidate.
+    for hint, count in hints + [("cartão dragón", 0), ("cuenta imposible", 0), ("de", 0), ("1234", 0)]:
+        result = read(bank, "search_transactions", slots={"amount": 143.50, "product_hint": hint})
+        assert result["status"] == "ok", (hint, result)
+        assert result["match_count"] == count, (product_type, hint, result)
+        assert len(result["candidates"]) == count
+        assert result["search_context"]["coverage_complete"] is True
+        if count:
+            assert result["candidates"][0]["transaction_id"] == ref(bank)
+            assert result["candidates"][0]["product_type"] == product_type
+
+
 @pytest.mark.parametrize("reference", ["txn_" + "f" * 24, "TXN00000043"])
 def test_unknown_and_raw_identifiers_never_select_an_owned_target(bank, reference):
     assert read(bank, "get_transaction", transaction_id=reference) == {"status": "error", "code": "reference_unavailable"}
