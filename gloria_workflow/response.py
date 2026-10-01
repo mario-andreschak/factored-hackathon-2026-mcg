@@ -33,7 +33,7 @@ _ARCHETYPES = {"Guía Clara", "Acompañamiento", "Orientación a la solución"}
 _ID = re.compile(r"(?:(?:TRX|CMP|HOF)-[A-Za-z0-9_-]+|(?:txn|rev)_[A-Za-z0-9_-]+)\Z")
 _ID_HINT = re.compile(r"(?:TRX|CMP|HOF)-|(?:txn|rev)_", re.I)
 _DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?\b|\b\d{1,2}/\d{1,2}/\d{4}\b")
-_NUMBER = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+|[ \u00a0\u202f]\d{3}(?!\d))*")
+_NUMBER = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+|[ \u00a0\u202f]\d{3}(?!\d))*(?:[eE][-+]?\d+)?")
 _CURRENCIES = set("COP USD EUR BRL MXN ARS CLP PEN UYU PYG BOB VES GBP CAD AUD CHF JPY CNY INR KRW SEK NOK DKK NZD ZAR HKD SGD AED SAR TRY RUB CRC DOP GTQ HNL NIO PAB BZD CUP".split())
 _STATUS_WORDS = {"approved", "declined", "denied", "reversed", "pending", "settled", "failed", "open", "closed", "escalated", "cancelled", "canceled", "received", "in process", "resolved", "aprobado", "rechazado", "abierto", "cerrado", "recibido", "aprovado", "recusado", "rejeitado", "aberto", "fechado", "recebido"}
 _PRIVATE = re.compile(r"\b(?:customer_id|session_id|conversation_id|risk_signals|fraud_score|amount_usd|unrecognized_count_24h|idempotency_key|pending_handle|selection_handle|request_id|authorization_expires_at|trusted_confirmation|service_token|stack\s*trace|traceback|umbral(?:es)?|limiar(?:es)?)\b", re.I)
@@ -48,6 +48,12 @@ _FACT_KEYS = {"transaction_id", "complaint_id", "transaction_reference", "amount
 _SKIP_KEYS = {"text", "description", "label", "merchant", "merchant_name", "clean_query", "historic_conversation", "customer_stated_claims", "risk_signals", "error", "receipt", "action", "handoff", "existing_case"}
 _MONTHS = {"enero": 1, "janeiro": 1, "febrero": 2, "fevereiro": 2, "marzo": 3, "marco": 3, "março": 3, "abril": 4, "mayo": 5, "maio": 5, "junio": 6, "junho": 6, "julio": 7, "julho": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "setembro": 9, "octubre": 10, "outubro": 10, "noviembre": 11, "novembro": 11, "diciembre": 12, "dezembro": 12}
 _NAMED_DATE = re.compile(r"\b(\d{1,2})\s+de\s+(" + "|".join(_MONTHS) + r")\s+de\s+(\d{4})\b", re.I)
+_NARRATIVE_FIELDS = {"request_summary", "customer_language", "customer_stated_claims", "suggested_open_questions"}
+_CONTACT_VALUE = re.compile(r"\bCLI-[\w-]+|[\w.%+-]+@[\w.-]+\.[a-z]{2,}|(?<!\w)\+\d[\d ()-]{6,}\d", re.I)
+_SECRET_TEXT = re.compile(r"\b(?:contrase[nñ]a|senha|password|pin|cvv|cvc|otp|api[_ -]?key|bearer|credencial(?:es)?|token secreto|documento de identidad|c[eé]dula|cpf|dni|pasaporte|c[oó]digo de (?:acceso|seguridad|verificaci[oó]n)|c[oó]digo (?:sms|otp)|n[uú]mero (?:completo )?de (?:tarjeta|cuenta|documento|cart[aã]o|conta))\b", re.I)
+_CONTACT_REQUEST = re.compile(r"\b(?:tel[eé]fono|telefone|celular|whatsapp|correo electr[oó]nico|e-?mail|direcci[oó]n postal|n[uú]mero de contacto)\b", re.I)
+_NARRATIVE_IMPLEMENTATION = re.compile(r"(?:https?://|s3://|\b[a-z]:[\\/]|/users/|/home/|```)|\b(?:curl|wget|powershell|cmd\.exe|exec_command|access[_ -]?key|secret[_ -]?key)\b", re.I)
+_ATTRIBUTION = re.compile(r"\b(?:el cliente|la cliente|cliente|la persona|el usuario|la usuaria)\b.*\b(?:afirma|se[nñ]ala|dice|indica|declara|refiere|relata|manifiesta|comenta|reporta|sostiene|solicita|expresa|cree|alega|informa|asegura)\b|\bseg[uú]n (?:el cliente|la cliente|la persona|el usuario|la usuaria)\b", re.I)
 
 
 def _mapping(value: object) -> Mapping:
@@ -308,6 +314,20 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
             errors.append("date_unverified")
     for match in _NAMED_DATE.finditer(message):
         ignored_spans.append(match.span())
+    # Prefixes without a separator (USD100) are common money notation. Mark the
+    # complete amount span so a fractional suffix is not parsed a second time.
+    compact_money = re.compile(r"\b([A-Z]{3})([-+]?\d+(?:[.,]\d+)*(?:[eE][-+]?\d+)?)\b", re.I)
+    for match in compact_money.finditer(message):
+        if any(start <= match.start() and match.end() <= end for start, end in ignored_spans):
+            continue
+        if not match[1].isupper() and match[1].upper() not in _CURRENCIES:
+            continue
+        currency = match[1].upper()
+        if currency not in facts["currencies"]:
+            errors.append("currency_unverified")
+        if not _decimals(match[2]).intersection({amount for amount, code in facts["amount_currency"] if code == currency}):
+            errors.append("amount_unverified")
+        ignored_spans.append(match.span())
     for match in _NUMBER.finditer(message):
         if any(start <= match.start() and match.end() <= end for start, end in ignored_spans):
             continue
@@ -327,8 +347,10 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
                 errors.append("amount_unverified")
         elif not numbers.intersection(facts["amounts"] | facts["numbers"]):
             errors.append("number_unverified")
-    for token in re.findall(r"\b[A-Z]{3}\b", message, re.I):
-        currency = token.upper()
+    for match in re.finditer(r"\b[A-Z]{3}\b", message, re.I):
+        if any(start <= match.start() and match.end() <= end for start, end in ignored_spans):
+            continue
+        currency = match.group().upper()
         if currency in _CURRENCIES and currency not in facts["currencies"]:
             errors.append("currency_unverified")
     for match in re.finditer(r"\*\*([^*\n]+)\*\*", message):
@@ -372,6 +394,67 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
         errors.append("facts_not_allowed_in_mode")
     if generator_input.get("language") == "other" and not ("español" in normalized and "portugués" in normalized):
         errors.append("language_availability_missing")
+    return list(dict.fromkeys(errors))
+
+
+def validate_handoff_summary(candidate: Mapping, inputs: Mapping) -> list[str]:
+    """Validate the narrative-only handoff stage without deciding escalation.
+
+    Receipt evidence is still required for completed-action claims. Narrative
+    text may omit result IDs because the host constructs evidence separately.
+    Unverified numbers/dates/IDs in client claims are conservatively rejected,
+    even when attributed; cleaned chat and history are never factual authority.
+    """
+    if not isinstance(candidate, Mapping):
+        return ["handoff_schema"]
+    errors = []
+    if set(candidate) != _NARRATIVE_FIELDS:
+        errors.append("handoff_schema")
+    summary = candidate.get("request_summary")
+    if not isinstance(summary, str) or not summary.strip() or len(summary) > 2000:
+        errors.append("request_summary_schema")
+        summary = ""
+    if not isinstance(candidate.get("customer_language"), str) or candidate.get("customer_language") not in {"es", "pt", "other"} or candidate.get("customer_language") != inputs.get("language"):
+        errors.append("customer_language_mismatch")
+    sentences = [sentence for sentence in re.split(r"(?<=[.!?])(?:\s+|$)", summary) if sentence.strip()]
+    if len(sentences) > 3:
+        errors.append("request_summary_sentence_limit")
+    language_marker = {"es": r"\b(?:espa[nñ]ol|espa[nñ]ola|castellano|castellana|idioma\s*[:=]\s*es)\b", "pt": r"\b(?:portugu[eé]s|portuguesa|idioma\s*[:=]\s*pt)\b", "other": r"\b(?:otro idioma|idioma distinto|idioma no disponible|idioma\s*[:=]\s*other)\b"}
+    expected_language = inputs.get("language")
+    if isinstance(expected_language, str) and expected_language in language_marker and not re.search(language_marker[expected_language], _normalized(summary)):
+        errors.append("customer_language_description_missing")
+    texts = [("request_summary", summary)]
+    for key, maximum, size in (("customer_stated_claims", 20, 1000), ("suggested_open_questions", 4, 240)):
+        items = candidate.get(key)
+        if not isinstance(items, list) or any(not isinstance(item, str) or not item.strip() or len(item) > size for item in items):
+            errors.append(key + "_schema")
+            continue
+        if len(items) > maximum:
+            errors.append(key + "_limit")
+        for item in items:
+            texts.append((key, item))
+            if key == "customer_stated_claims" and not _ATTRIBUTION.search(_normalized(item)):
+                errors.append("customer_claim_not_attributed")
+            if key == "suggested_open_questions" and (not item.rstrip().endswith("?") or item.count("?") != 1):
+                errors.append("question_format")
+    narrative_input = {**inputs, "response_mode": "HANDOFF", "language": "es"}
+    action_verified = _action(inputs)[0]
+    handoff_verified = _handoff(inputs)[0]
+    for field, text in texts:
+        generated = {"message": text, "language": "es", "arquetipos": [], "chunk_ids": [], "data_sources": [], "grounding_violation": 0}
+        for error in validate_response(generated, narrative_input):
+            if error == "action_success_unverified" and action_verified:
+                continue
+            if error == "handoff_success_unverified" and handoff_verified:
+                continue
+            errors.append(error)
+        normalized = _normalized(text)
+        if _CONTACT_VALUE.search(normalized) or _SECRET_TEXT.search(normalized) or any("cli-" in _normalized(token) for token, _, _ in _tokens(text)):
+            errors.append("handoff_private_or_credentials")
+        if _NARRATIVE_IMPLEMENTATION.search(normalized):
+            errors.append("handoff_implementation_detail")
+        if field == "suggested_open_questions" and _CONTACT_REQUEST.search(normalized):
+            errors.append("handoff_private_contact_request")
     return list(dict.fromkeys(errors))
 
 

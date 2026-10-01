@@ -334,3 +334,18 @@ def test_slot_adapter_loads_executable_schema_from_canonical_yaml():
     assert schema["additionalProperties"] is False
     assert schema["properties"]["transaction_id"]["pattern"] == "^(?:TRX-[A-Z0-9]+|txn_[a-f0-9]{12})$"
     assert adapter.specs["extract_slots"].version == "2.1.0"
+
+
+@pytest.mark.parametrize("updates", [
+    {"request_summary": "Cliente de habla portuguesa tiene el reclamo CMP-INVENTED."},
+    {"request_summary": "Cliente de habla portuguesa tiene un cargo de 999 EUR."},
+    {"request_summary": "Cliente de habla portuguesa con ID CLI-SECRET solicita revisión."},
+    {"suggested_open_questions": ["¿Cuál es su contraseña?"]},
+])
+def test_handoff_adapter_rejects_model_facts_and_secret_requests_before_packet_merge(updates):
+    async def model(*_):
+        return json.dumps({**OUTPUTS["generate_handoff_summary"], **updates})
+    adapter = StageAdapters(model)
+    with pytest.raises(StageError) as caught:
+        asyncio.run(adapter.from_state("generate_handoff_summary", STATE))
+    assert caught.value.code == "schema"

@@ -233,6 +233,8 @@ def _semantic_errors(stage, output, inputs):
     elif stage == "generate_handoff_summary":
         if output["customer_language"] != inputs["language"]:
             errors.append("output.customer_language.input")
+        from .response import validate_handoff_summary
+        errors.extend(validate_handoff_summary(output, inputs))
     elif stage == "generate":
         if output["language"] != ("pt" if inputs["language"] == "pt" else "es"):
             errors.append("output.language.input")

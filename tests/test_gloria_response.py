@@ -3,7 +3,7 @@ import copy
 
 import pytest
 
-from gloria_workflow.response import fallback_response, validate_response
+from gloria_workflow.response import fallback_response, validate_handoff_summary, validate_response
 
 
 def inputs(mode="INFORM", language="es"):
@@ -283,3 +283,94 @@ def test_validator_rejects_extra_keys_nonmapping_and_missing_fields():
     assert "response_schema" in validate_response(response(extra="invented"), inputs())
     assert validate_response(None, inputs()) == ["response_schema"]
     assert "response_schema" in validate_response({}, inputs())
+
+
+@pytest.mark.parametrize("text", ["COP9999", "usd1234.56", "ZZZ1234.56", "1234.56e9 COP"])
+def test_compact_and_exponent_money_notation_does_not_hide_invention(text):
+    assert {"amount_unverified", "currency_unverified"}.intersection(validate_response(response(text), inputs()))
+
+
+@pytest.mark.parametrize("text", ["COP1234.56", "cop1234.56", "1.23456e3 COP"])
+def test_known_compact_and_exponent_money_notation(text):
+    assert validate_response(response(text), inputs()) == []
+
+
+def test_currency_like_tokens_inside_exact_known_id_are_not_money():
+    data = inputs()
+    data["workflow_state"]["transaction_id"] = "TRX-USD123-COP"
+    assert validate_response(response("**TRX-USD123-COP**"), data) == []
+
+
+def narrative(**changes):
+    return {"request_summary": "Cliente de habla española solicita revisar una compra que afirma no reconocer.", "customer_language": "es", "customer_stated_claims": ["El cliente afirma no reconocer una compra."], "suggested_open_questions": ["¿Qué necesita revisar?"], **changes}
+
+
+def test_canonical_handoff_narrative_passes_without_action_or_result_id():
+    assert validate_handoff_summary(narrative(), inputs()) == []
+    data = verified_action(inputs())
+    assert validate_handoff_summary(narrative(), data) == []
+    assert validate_handoff_summary(narrative(request_summary="Cliente de habla española solicita revisión. El reclamo fue registrado en el entorno de prueba."), data) == []
+
+
+def test_canonical_portuguese_customer_keeps_spanish_narrative():
+    data = inputs(language="pt")
+    candidate = narrative(request_summary="Cliente de habla portuguesa solicita revisar una compra que afirma no reconocer.", customer_language="pt")
+    assert validate_handoff_summary(candidate, data) == []
+    candidate["customer_language"] = "es"
+    assert "customer_language_mismatch" in validate_handoff_summary(candidate, data)
+
+
+@pytest.mark.parametrize("text, code", [("El cliente afirma que la compra costó 7777.77 COP.", "amount_unverified"), ("El cliente afirma que ocurrió el 2025-01-01.", "date_unverified"), ("El cliente afirma que tiene TRX-INVENTED.", "id_unverified"), ("El cliente afirma que tiene txn_invented.", "id_unverified"), ("El cliente afirma que tiene rev_invented.", "id_unverified")])
+def test_handoff_claims_do_not_promote_unverified_chat_facts(text, code):
+    data = inputs()
+    data["clean_query"] = text
+    data["historic_conversation"] = text
+    assert code in validate_handoff_summary(narrative(customer_stated_claims=[text]), data)
+
+
+@pytest.mark.parametrize("field", ["request_summary", "customer_stated_claims", "suggested_open_questions"])
+@pytest.mark.parametrize("text", ["CLI-PRIVATE123", "éCLI-PRIVATE123", "persona@example.test", "+57 300 123 4567", "contraseña bancaria", "CVV", "código de verificación"])
+def test_handoff_never_contains_private_contact_identifiers_or_credentials(field, text):
+    candidate = narrative()
+    candidate[field] = text if field == "request_summary" else [text + ("?" if field == "suggested_open_questions" else "")]
+    assert "handoff_private_or_credentials" in validate_handoff_summary(candidate, inputs())
+
+
+@pytest.mark.parametrize("question", ["¿Cuál es su teléfono?", "¿Cuál es su correo electrónico?", "¿Cuál es su número de tarjeta?", "¿Cuál es su contraseña?", "¿Cuál es su PIN?", "¿Cuál es su OTP?", "¿Cuál es su documento de identidad?"])
+def test_handoff_questions_cannot_request_private_values(question):
+    errors = validate_handoff_summary(narrative(suggested_open_questions=[question]), inputs())
+    assert {"handoff_private_or_credentials", "handoff_private_contact_request"}.intersection(errors)
+
+
+@pytest.mark.parametrize("text", ["curl http://example.test", "C:/Users/private/file", "s3://private-bucket/record", "powershell", "```secret```"])
+def test_handoff_cannot_emit_commands_source_paths_or_private_urls(text):
+    assert "handoff_implementation_detail" in validate_handoff_summary(narrative(suggested_open_questions=[text + "?"]), inputs())
+
+
+def test_handoff_completed_action_and_handoff_claims_require_receipts():
+    action = narrative(request_summary="Cliente de habla española solicita revisión. El reclamo fue registrado.")
+    assert "action_success_unverified" in validate_handoff_summary(action, inputs())
+    assert validate_handoff_summary(action, verified_action(inputs())) == []
+    handoff = narrative(request_summary="Cliente de habla española solicita revisión. La atención humana fue registrada.")
+    assert "handoff_success_unverified" in validate_handoff_summary(handoff, inputs())
+    assert validate_handoff_summary(handoff, verified_handoff(inputs())) == []
+
+
+def test_handoff_claims_require_explicit_customer_attribution():
+    assert "customer_claim_not_attributed" in validate_handoff_summary(narrative(customer_stated_claims=["Ocurrió fraude en la transacción."]), inputs())
+    assert validate_handoff_summary(narrative(customer_stated_claims=["Según el cliente, no reconoce la compra."]), inputs()) == []
+
+
+def test_handoff_narrative_schema_sentence_and_question_limits():
+    assert validate_handoff_summary(None, inputs()) == ["handoff_schema"]
+    assert "handoff_schema" in validate_handoff_summary(narrative(extra="not allowed"), inputs())
+    assert "customer_language_mismatch" in validate_handoff_summary(narrative(customer_language=[]), inputs())
+    assert "request_summary_sentence_limit" in validate_handoff_summary(narrative(request_summary="Cliente de habla española. Solicita revisión. No reconoce la compra. Necesita atención."), inputs())
+    assert "suggested_open_questions_limit" in validate_handoff_summary(narrative(suggested_open_questions=["¿Qué necesita revisar?"] * 5), inputs())
+    assert "question_format" in validate_handoff_summary(narrative(suggested_open_questions=["¿Qué necesita revisar? ¿Qué ocurrió?"]), inputs())
+    assert "customer_language_description_missing" in validate_handoff_summary(narrative(request_summary="Cliente solicita revisar una compra."), inputs())
+
+
+def test_handoff_verified_display_amounts_and_dates_remain_available():
+    candidate = narrative(request_summary="Cliente de habla española solicita revisar **TRX-FICTIONAL_A**, de **2026-09-29**, por **1234.56 COP**.")
+    assert validate_handoff_summary(candidate, inputs()) == []
