@@ -3,7 +3,9 @@
 Updated September 30, 2026, following the owner's request to preserve the
 reversed hackathon PRs on a separate FLUJO branch. This replaces the earlier
 categorical ban on separate hackathon branches; generic main remains protected
-from domain additions.
+from domain additions. Project repository status in the table below was
+rechecked October 1, 2026; the historical worker and FLUJO branch pins retain
+their separate evidence dates.
 
 ## Which source belongs in which deployment
 
@@ -12,7 +14,7 @@ from domain additions.
 | [FLUJO main](https://github.com/mario-andreschak/FLUJO/tree/main) | General-purpose FLUJO. At `3fccc557df97aba0e96ce28a8e6eebaa8e71d7d9`, its tree is `780c2cf42266f8e55ff1917c137b196ee97df959`, exactly the generic pre-#530 tree of `45e37a5127027070858eca086675ca7675d59f3d`. Generic MCP/execution hooks remain; the hackathon integration is absent. |
 | [FLUJO `codex/hackathon-banking`](https://github.com/mario-andreschak/FLUJO/tree/codex/hackathon-banking) | Dedicated hackathon source. Starts from the combined pre-restoration commit `51ff39fc5bac84cbbb49bbd2b21b5ab89de8b14b`, tree `b754c1cae7def51ab9a1343c1726a63c30d2c53a`, which includes #530/#532/#533. Added branch deployment documentation does not alter that application source. |
 | Existing local worker | Still source `153a039185b1d303fb0853f1d4935980388a1903`, image `sha256:f99c1998c60a69ea6572685b77ef80a74cb4834486b0fcd2455ff6dc7c9be2b8`. Neither main restoration nor branch preservation upgrades this worker. Its older evidence cannot be relabeled as current-branch acceptance. |
-| Project draft PRs [#31](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/31) / [#32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32) | Unfinished project-owned host/MCP alternative. Not merged into this project or included in the preserved FLUJO branch. Source review and release gates remain separate. |
+| Project PRs [#31](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/31) / [#32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32) | Merged project-owned host/direct-MCP source at observed project main `e967e7e795e6ceef0aebc1f076fa0443d996a236` and included in the local release integration `af3b22d044835edd6a6d99c00add2be4449a3ff3`. It is separate from the preserved FLUJO branch. Source integration is not joined runtime or deployment acceptance. |
 
 The initially published hackathon branch head is
 [`0ba62296520a505e6d71eddf5aa650691f3dc311`](https://github.com/mario-andreschak/FLUJO/commit/0ba62296520a505e6d71eddf5aa650691f3dc311),
