@@ -88,6 +88,9 @@ confirmation replay, logout revocation, and human/emergency review. Its report
 includes before/after source hashes, salted identifier hashes, request/stage
 latency and observed usage; unavailable usage/cost stays null. Public reports
 exclude request bodies, replies, cookies, signing material and raw identity.
+Bounded returned stage text is retained separately under the generated private
+fixture directory for diagnosis. Only its salted hash and host validation codes
+enter the public report; the observer delegates the same native model calls.
 
 Fixture publication alone can be reproduced without a worker or provider:
 
