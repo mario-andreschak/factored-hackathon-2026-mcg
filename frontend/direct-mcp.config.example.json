@@ -1,0 +1,28 @@
+{
+  "demo_code": "",
+  "chat": {
+    "mode": "host-direct-mcp/v1",
+    "namespace": "REPLACE_WITH_A_NEW_STABLE_DEPLOYMENT_NAMESPACE",
+    "host_revision": "REPLACE_WITH_REVIEWED_HOST_COMMIT",
+    "ledger_generation": "REPLACE_WITH_APPROVED_EXISTING_LEDGER_GENERATION_64_LOWERCASE_HEX",
+    "ledger_continuity_approved": false,
+    "action_enabled": false,
+    "principal_customers": {"REPLACE_APPROVED_SUBJECT": "REPLACE_APPROVED_CUSTOMER"},
+    "bank": {
+      "base_url": "https://REPLACE_APPROVED_PRIVATE_IPV4:REPLACE_APPROVED_PORT",
+      "ca_file": "/banking-config/bank-ca.pem",
+      "service_token": "REPLACE_WITH_PRIVATE_BANK_SERVICE_TOKEN",
+      "issuer": "REPLACE_WITH_APPROVED_HOST_ISSUER",
+      "audience": "banking-mcp",
+      "kid": "REPLACE_WITH_APPROVED_HOST_KEY_ID",
+      "signing_key_file": "/banking-config/frontend-signer.pem"
+    },
+    "language": {
+      "base_url": "http://flujo:4200",
+      "flow_id": "REPLACE_WITH_REVIEWED_GENERIC_FLOW_UUID",
+      "flow_name": "REPLACE_WITH_REVIEWED_GENERIC_FLOW_NAME",
+      "service_token": "REPLACE_WITH_SEPARATE_GENERIC_EXECUTION_TOKEN",
+      "timeout_seconds": 45
+    }
+  }
+}

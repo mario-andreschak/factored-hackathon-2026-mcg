@@ -124,7 +124,7 @@ export function canonicalManifest(repoRoot, yaml) {
     'scripts/native_gloria_compatibility_probe.mjs']) sourceHashes[relative] = sourceDigest(repoRoot, relative);
   const fixed = ['.gitattributes', 'pipeline/contracts.yaml', 'config/policy_rules.yaml', 'contracts/policy_engine.md', 'contracts/state_schema.md',
     'contracts/tools.md', 'contracts/v0_reconciliation.md', 'resources/prompts/fallback_templates.yaml',
-    'requirements-gloria.txt', 'frontend/requirements.txt', 'requirements-pipeline.txt', 'requirements-s3.txt',
+    'requirements-gloria.txt', 'requirements-mcp.txt', 'frontend/requirements.txt', 'requirements-pipeline.txt', 'requirements-s3.txt',
     'banking_mcp/actions.py', 'banking_mcp/service.py', 'frontend/server/action.py',
     'frontend/server/chat.py', 'frontend/server/app.py'];
   const stages = graph.nodes.map(node => {

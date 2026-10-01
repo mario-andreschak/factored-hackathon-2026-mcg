@@ -149,7 +149,7 @@ def test_confirm_second_writer_gate_rechecks_receipt_corrupted_after_attempt_mar
                 with super().connect() as db:
                     db.execute("DELETE FROM sandbox_case_receipts WHERE case_id=?", (prior["id"],))
 
-    local.actions.store = CorruptAfterAttempt(local.store.path)
+    local.actions.store = CorruptAfterAttempt(local.store.path, ledger_continuity_approved=True)
     with pytest.raises(BankError, match="risk_data_unavailable"):
         local.actions.confirm(local.owner, pending["pending_handle"], True)
     with local.store.connect() as db:

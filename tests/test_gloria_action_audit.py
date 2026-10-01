@@ -89,7 +89,8 @@ def two_scopes(joined):
     state = finish_query_batch(state)
     joined.backend.workflow_store.save(binding, state,
         expected_revision=previous["runtime"]["store_revision"])
-    principal = Principal(subject, joined.customer, joined.sid, binding.conversation_id, joined.expiry)
+    principal = Principal(subject, joined.customer, joined.sid, binding.conversation_id, joined.expiry,
+                          joined.backend.ledger_generation)
     return order, principal, owner, binding.conversation_id
 
 
@@ -187,7 +188,7 @@ def test_bank_revocation_after_evidence_read_is_rechecked_before_intake(joined, 
     original = joined.bank.service.actions._action_evidence
     def evidence_then_revoke(*args):
         evidence = original(*args)
-        joined.bank.service.store.revoke(joined.sid)
+        joined.bank.service.store.revoke(joined.sid, principal=args[0])
         return evidence
     monkeypatch.setattr(joined.bank.service.actions, "_action_evidence", evidence_then_revoke)
     with pytest.raises(ChatError):
@@ -235,7 +236,8 @@ def test_public_handoff_same_target_completed_other_scope_requires_fresh_prepara
     prepared = prepare_public(public)
     binding = public.binding
     subject, _ = public.chat._identity(binding.customer_id, binding.session_id, binding.expires_at)
-    principal = Principal(subject, binding.customer_id, binding.session_id, binding.conversation_id, binding.expires_at)
+    principal = Principal(subject, binding.customer_id, binding.session_id, binding.conversation_id, binding.expires_at,
+                          public.backend.ledger_generation)
     native = public.bank.service.actions.handoff(principal, "customer_request", prepared["pending_handle"],
         prepared["request_id"], [])
     current, _ = public.chat._current_action(binding.session_id, binding.owner, binding.expires_at)

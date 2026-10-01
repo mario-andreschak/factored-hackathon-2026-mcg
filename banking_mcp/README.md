@@ -158,6 +158,7 @@ sub: verified auth subject, mapped privately to a dataset customer
 iat, nbf, exp: integer seconds; nbf == iat; lifetime <= 60 seconds
 jti: new random unique ID for every attempted call
 session_id, conversation_id, run_id, graph_revision: trusted runtime context
+ledger_generation: mandatory existing ledger identity, exactly 64 lowercase hex characters
 tool: exact called banking tool name
 scope: ["bank:read"]
 args_sha256: hex SHA-256 of RFC 8785 canonical JSON of the raw business arguments
@@ -171,6 +172,49 @@ command. It is not an MCP tool. Authority never appears in argv or environment.
 The MCP independently verifies the assertion and revokes its shared SQLite session;
 existing processes consult that store before returning reads. Multiple FLUJO replicas
 need shared fenced identity, replay and reference storage.
+
+### Ledger continuity source contract
+
+Both `bank-mcp+jwt` and `bank-revoke+jwt` require the existing fourteen claims
+plus `ledger_generation`, with no extra claims. The verified Principal retains
+the generation; delegated capability, pending and handoff bindings include it.
+The standard tool arguments, `_meta` key and token/header profiles stay the same.
+The host must explicitly pin the actual private ledger generation in durable
+policy/session context and each revocation intent. Missing legacy pins and
+mismatches are never automatically adopted. `banking_status` is informational
+health, not proof of generation or continuity; no discovery endpoint is added.
+
+The frozen Config's strict boolean `ledger_continuity_approved` defaults to
+`false`. It is trusted configuration outside the SQLite backup. Delegated calls
+with missing, malformed or mismatched generation fail `authorization_denied`;
+matching calls under quarantine fail `action_unverified`. The bank checks actual
+persisted generation before session/JTI mutations, at entry and exit of each
+action/capability/readback transaction, and at final currentness fences.
+Read transactions use `BEGIN`; writes use `BEGIN IMMEDIATE`. No repository or
+provider work is moved under the writer lock.
+
+Private matching-generation revoke remains available during quarantine: atomic
+`StateStore.admit(principal, jti, revocation=True)` records the deny and replay
+nonce without creating a new session. Mismatched revoke changes no session,
+replay or revoke state. The host uses the intent's original durable generation,
+retains its local deny and leaves mismatched remote revocation unconfirmed.
+Raw store mutation helpers require versioned authority in delegated stores;
+operator/synthetic profiles retain their existing unversioned read bindings.
+
+Generation equality cannot detect an older already-attested backup: identity,
+coverage, cases, receipts and deny/replay rows can all roll back together. A
+trusted restore/import/replacement or uncertain volume continuity must first
+pause and drain, then set approval OFF outside that backup before reopening.
+Reopening an existing ledger with a missing/damaged identity never generates or
+attests a replacement identity. A fresh ledger gets its one existing identity
+but remains quarantined and unattested.
+
+Only explicit operator reconciliation of pending, uncertain, acknowledged and
+revoked state can release quarantine. It must rotate the existing identity row,
+invalidate old coverage and re-attest, retire old sessions/capabilities, and
+explicitly adopt the new host pin. There is no automatic clear, timestamp/hash
+heuristic, second generation ledger or reset/clear endpoint. This source change
+does not implement or establish the operational restore/reconciliation procedure.
 
 ## S3 and snapshot freshness
 
@@ -235,6 +279,99 @@ The default `serve` transport is stdio. HTTP remains an optional standalone tran
 it is not used by this FLUJO deployment. `Dockerfile.banking-mcp` is an optional
 standalone server image, not the worker installation path.
 
+### Optional private project host companion (source preparation)
+
+The source supports a companion standard MCP HTTP transport in the **same bank
+process** while FLUJO retains its ordinary stdio registration. Both transports
+share one original `Service`, `Authorizer`, state store, admission semaphore and
+event loop. One outer owner closes the Service after both transports drain.
+This does not load banking code into FLUJO or attach another client to its pipe.
+
+The companion is disabled by default. Its project-only config fields are
+`private_host_bind`, `private_host_port`, `private_host_clients`,
+`private_host_cert_file` and `private_host_key_file`. Enabling it
+requires delegated mode, an explicit literal IPv4 loopback/RFC1918 interface,
+port1024–65535, and one to16 distinct explicit private caller IPv4 addresses.
+All fields must be configured together. Wildcard/public/DNS binds and
+partial configurations fail closed. `--transport` must remain `stdio`.
+The existing standalone `streamable-http` mode stays separate.
+
+Do not assume loopback crosses frontend/worker network namespaces. A deployment
+must review actual fixed private interface/peer addresses, reachability and the
+absence of host port publication. No forwarding sidecar, second banking child or
+remote FLUJO registration is supplied. The companion accepts only configured
+peer addresses and the exact bind-address Host header; Origin-bearing requests,
+duplicate Authorization headers and forwarded identity are rejected.
+
+Private TCP always uses TLS. The certificate and key must be absolute, unlinked,
+single-link regular files owned by the bank process UID with mode0400. The host
+client must verify/pin the expected bank certificate and target identity; trusting
+only a bearer on a private IP is insufficient because another process could
+replace a listener and collect signed calls or forge results. No HTTP or
+verification-disabled fallback is supplied by this companion. Frontend trust
+configuration must be reviewed alongside the listener; it is not established
+by this server source alone.
+The matching host base URL is `https://<private_host_bind>:<private_host_port>`.
+Its trusted certificate must contain that literal IPv4 identity in the IP subject
+alternative name. A DNS-name URL produces a different Host header and is rejected;
+DNS-based configuration examples are not a working contract for this listener.
+
+Before constructing the Service or opening a listener, the CLI holds an
+exclusive nonblocking POSIX lock in the bank-owned0700 state directory. The
+lock is a single-link owned0600 regular file, opened without following links.
+Duplicate invocations fail closed without replacing an endpoint or Service.
+The lock remains held through shutdown. Default stdio uses no companion lock.
+
+Companion mode requires POSIX pipe/socket stdin and stdout. It supplies the MCP
+SDK with cancellable nonblocking text streams, bounded to65536 bytes per incoming
+line, so an idle open parent pipe cannot hold shutdown in a blocking reader
+thread. The SDK still parses and serializes standard MCP messages. Descriptor
+flags are restored after its tasks drain; the child does not close parent-owned
+stdio handles. Default stdio retains the SDK's original stream behavior. Fake
+checks cover this wiring; live EOF, signals and parent-death behavior remain
+deployment acceptance gates.
+
+The host uses the existing standard stateless JSON `/mcp` initialize, initialized
+notification and `tools/call` protocol. A service bearer gates the transport;
+customer authority is the fresh signed `com.flujo.bank/assertion` in actual MCP
+request `_meta`. Original bank checks retain exact tool/scope/RFC8785 argument
+digest, real TTL/JTI/replay, owner/session/conversation and durable revocation.
+`/internal/revoke` keeps its separate typed signed assertion and exact response.
+There is no direct action shortcut. Client-selected identifiers or tool
+annotations are not authority. The agreed frontend contract is
+`frontend-direct-mcp-contract/v4`, source receipt SHA256
+`b4ca7331f8baf11b4db1a573266a0407dd99c53ba7a6a25e152c240d69911505`,
+for the separately reviewed frontend draft PR31 at
+`0ff868dc5be71ada6c83fc846cbc8dc4bbd3d549`. That documentation-only successor
+retains the application/test blobs reviewed at `7d684c20d8f71a437854d6b40aafd049227c1899`.
+This bank transport draft does not include that frontend branch or claim integrated
+acceptance. Its aligned example contains deliberately invalid IP/port placeholders;
+the actual private endpoint, peer allowlist and approved matching certificate IP
+identity remain deployment review gates. Do not disable TLS or relax the listener's
+peer/Host gates to make an example connect.
+
+The frontend independently owns portal selection→raw ID/snapshot resolution,
+host UUID/CAS and consent, retry/recovery and exact receipt/HOF readback. MCP's
+txn12 projection is unchanged and is neither the portal txn24 reference nor a
+selection handle. Host-run provenance is separate from FLUJO's language run.
+Only minimized verified display facts may reach generic language chat.
+
+**No activation or runtime acceptance is claimed.** The stock native model CLI
+and bank child can share UID/environment access. An empty graph tool list,
+read-only mount or neutral cwd does not establish bank-secret/data isolation.
+Bank config/data/state/signing/bearer authority must be inaccessible to the model
+identity through reviewed OS process/file isolation, and absent from its inherited
+environment. Private network and UID launch/EOF/parent-death behavior also remain
+deployment gates. Historical51ff/6ebe/b774 package evidence does not transfer to
+the corrected architecture. No observer/adapter injection into FLUJO is permitted.
+Separating the bank UID alone does not isolate another customer's generic FLUJO
+conversation logs or environment from a native CLI sharing FLUJO's node UID.
+Exact native filesystem, exec, MCP/catalog and network confinement remains open.
+The existing durable sandbox ledger generation survives same-database restart.
+The signed generation and external continuity gate described above fence
+delegated access; endpoint/certificate/signer pins alone do not prove continuity.
+Operational reconciliation and deployment acceptance remain held.
+
 ### Register in FLUJO
 
 For the existing Linux FLUJO container, after installing code and mounts:
@@ -252,13 +389,26 @@ streams.
 
 ## Verification and capacity
 
-Run `python -m pytest -q tests/test_banking_mcp.py tests/test_pipeline.py`.
-Tests cover argument tampering, forged/expired/replayed assertions, revocation during
+For the continuity source correction, 32 selected component tests passed in
+`tests/test_banking_ledger_continuity_source.py`. They load inspected security and
+Actions source with Config/JWT boundaries replaced before import, prohibit
+Authorizer construction/JWT use, and use only temporary fictional SQLite and a
+fake Repository. They cover denied authority mutations, generation rotation
+between closed transactions, committed attempt uncertainty, restored-backup
+quarantine, matching/mismatched revoke and independent persisted receipt reads.
+The binding serializer is a deterministic callback, not RFC8785/crypto proof.
+No Service, transport, SDK, worker, shared state or network runs in this lane.
+
+Earlier runtime suites (`tests/test_banking_mcp.py`, `tests/test_pipeline.py`)
+cover argument tampering, forged/expired/replayed assertions, revocation during
 reads, private handles/cursors, restart persistence, owner rechecks, changed snapshots,
 HTTP service/host/origin checks, conditional S3 verification and 500 interleaved
 synthetic reads. Operator tests cover missing/unknown selectors, unresolved correlation,
 A/B selection, foreign customer/thread handles, parallel calls and an actual shared
-stdio child. Snapshot inventory and connection shutdown are tested independently.
+stdio child. Those suites were not rerun for this correction; their legacy grant
+and policy fixtures need migration to the mandatory generation contract before
+later authorized runtime testing. Snapshot inventory and connection shutdown
+were tested independently in earlier work.
 See [earlier local integration evidence](../docs/BANKING_MCP_IMPLEMENTATION.md);
 those deployed checks predate the new operator contract.
 

@@ -25,7 +25,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from frontend.server.chat import ChatError, ChatService
+from frontend.server.gloria_chat import ChatError, GloriaChatService as ChatService
 from frontend.server.app import ConfirmActionBody
 from frontend.tests.action_fixtures import action_facts, action_receipt, action_selected
 from gloria_workflow.host import RepositoryBank
@@ -847,13 +847,17 @@ def complete_reads(release_source, tmp_path):
         principal_customers={"release-subject": source.person.customer_id,
                             "other-release-subject": "SYNTH-CO-001"},
         event_rates_file=rates, event_rates_sha256=hashlib.sha256(rates.read_bytes()).hexdigest(),
-        sandbox_report_coverage_start=int(NOW.timestamp())-90000))
+        sandbox_report_coverage_start=int(NOW.timestamp())-90000, ledger_continuity_approved=True))
+    from gloria_workflow.bank_read import pin_bank_generation
+    pin_bank_generation(service)
     service.store.attest_sandbox_coverage(int(NOW.timestamp())-90000, "synthetic:release-complete-empty-ledger")
     public_state = State(tmp_path / "public-state")
     settings = Settings(data_dir=source.data, state_dir=tmp_path / "public-state", static_dir=tmp_path / "static",
         demo_code="fictional-code", profiles={source.person.profile: dict(customer_id=source.person.customer_id)})
     repository = Repository(settings, public_state)
-    principal = Principal("release-subject", source.person.customer_id, "release-session", "release-conversation", int(time.time())+3600)
+    from tests.banking_authority_fixtures import principal_for
+    principal = principal_for(service.store, "release-subject", source.person.customer_id,
+                              "release-session", "release-conversation", int(time.time())+3600)
     reads = OwnedBankReads(service, repository, principal, source_root=source.source, clock=lambda: NOW.timestamp())
     ref = repository.reference("txn", principal.customer, source.target["transaction_id"])
     yield SimpleNamespace(reads=reads, service=service, repository=repository, principal=principal,
@@ -1160,7 +1164,8 @@ def test_actual_frontend_workflow_source_and_portal_receipt_join(complete_reads,
     # This owner has complete closed history and no invented exact-case link.
     snapshot = bank.repository.snapshot()
     from banking_mcp.security import Principal
-    principal = Principal("other-release-subject", customer, "fixture-session", "fixture-conversation", int(time.time())+3600)
+    principal = Principal("other-release-subject", customer, "fixture-session", "fixture-conversation",
+                          int(time.time())+3600, bank._gloria_ledger_generation)
     _, raw = bank.repository.owned_transaction_id(principal, raw_target, snapshot.id)
     slots = {key: None for key in ("amount", "currency", "currency_raw", "date_from", "date_to",
         "date_expression", "merchant", "transaction_type", "channel", "city", "country", "transaction_id",

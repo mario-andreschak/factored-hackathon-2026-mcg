@@ -202,7 +202,7 @@ def prepare(flujo_root: Path, context: Path, catalog: Path, native_binary=None, 
              ROOT / "scripts/native_gloria_compatibility_probe.mjs",
              ROOT / "scripts/native_gloria_capability_probe.mjs", ROOT / "scripts/native_gloria_bridge_loader.mjs",
              ROOT / "scripts/native_gloria_revocation_probe.mjs",
-             ROOT / "scripts/qualify_gloria.py", ROOT / "requirements-gloria.txt", ROOT / "requirements-pipeline.txt",
+             ROOT / "scripts/qualify_gloria.py", ROOT / "requirements-gloria.txt", ROOT / "requirements-mcp.txt", ROOT / "requirements-pipeline.txt",
              ROOT / "requirements-s3.txt", ROOT / "frontend/requirements.txt"]
     for directory, suffix in (("gloria_workflow", "*.py"), ("resources/prompts", "*.yml"),
                               ("resources/policies", "*.md"), ("config", "*.yaml"),

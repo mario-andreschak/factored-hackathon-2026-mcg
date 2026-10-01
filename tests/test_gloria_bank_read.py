@@ -6,8 +6,10 @@ import csv
 from datetime import datetime, timezone
 import json
 import hashlib
+import os
 from pathlib import Path
 import shutil
+import stat
 import time
 from types import SimpleNamespace
 import uuid
@@ -22,7 +24,8 @@ from banking_mcp.service import Service
 from frontend.server.config import Settings
 from frontend.server.repository import Repository as PublicRepository
 from frontend.server.state import State
-from gloria_workflow.bank_read import OwnedBankReads, assert_bank_principal
+from gloria_workflow.bank_read import OwnedBankReads, assert_bank_principal, pin_bank_generation
+from tests.banking_authority_fixtures import principal_for
 from pipeline.__main__ import main
 from pipeline.fixture import cid, write_base
 
@@ -70,14 +73,16 @@ def bank(dataset, tmp_path):
     config = Config(data_dir=data, state_db=tmp_path / "ledger.sqlite3", service_token="synthetic-read-fixture-secret" * 2,
                     public_keys={"fixture": pem}, principal_customers={"subject-a": cid(3), "subject-b": cid(4)},
                     sandbox_report_coverage_start=int(now[0]) - 90000, synthetic_evidence_file=evidence,
-                    event_rates_file=rates, event_rates_sha256=hashlib.sha256(rates.read_bytes()).hexdigest())
+                    event_rates_file=rates, event_rates_sha256=hashlib.sha256(rates.read_bytes()).hexdigest(),
+                    ledger_continuity_approved=True)
     service = Service(config)
+    pin_bank_generation(service)
     service.actions.clock = lambda: now[0]
     service.store.attest_sandbox_coverage(config.sandbox_report_coverage_start, "synthetic:gloria-bank-read-fixture")
     state = State(tmp_path / "frontend")
     state.bind("mexico", cid(3))
     public = PublicRepository(Settings(data_dir=data, state_dir=tmp_path / "frontend", static_dir=tmp_path / "static"), state)
-    principal = Principal("subject-a", cid(3), str(uuid.uuid4()), str(uuid.uuid4()), int(time.time()) + 3600)
+    principal = principal_for(service.store, "subject-a", cid(3), str(uuid.uuid4()), str(uuid.uuid4()), int(time.time()) + 3600)
     adapter = OwnedBankReads(service, public, principal, source_root=source, clock=lambda: now[0])
     snapshot = service.repository.snapshot()
     rows = adapter._owned_rows(snapshot)
@@ -214,6 +219,177 @@ def test_model_identity_arguments_are_rejected_before_repository(bank, monkeypat
     assert read(bank, "search_transactions", customer_id=cid(4), slots={}) == {"status": "error", "code": "authorization_denied"}
 
 
+def test_durable_startup_generation_reuses_the_same_pin_on_restart(bank):
+    restarted = Service(bank.service.config)
+    try:
+        assert pin_bank_generation(restarted) == bank.principal.ledger_generation
+        assert_bank_principal(restarted, bank.principal)
+    finally:
+        restarted.close()
+
+
+def test_trusted_first_pin_is_atomically_published_without_partial_file(bank, tmp_path, monkeypatch):
+    import gloria_workflow.bank_read as adapter_module
+    root = tmp_path / "new-private-instance"
+    root.mkdir(mode=0o700)
+    fresh = Service(bank.service.config.model_copy(update={"state_db": root / "bank.sqlite3"}))
+    observed, link = [], adapter_module.os.link
+
+    def inspect_publication(source, destination):
+        assert not Path(destination).exists()
+        complete = json.loads(Path(source).read_text(encoding="utf-8"))
+        assert complete["schema"] == "gloria-bank-generation/v1"
+        observed.append(complete)
+        return link(source, destination)
+
+    monkeypatch.setattr(adapter_module.os, "link", inspect_publication)
+    try:
+        generation = pin_bank_generation(fresh)
+        location = root / "gloria-bank-generation.json"
+        assert json.loads(location.read_text()) == observed[0]
+        assert generation == observed[0]["ledger_generation"]
+        assert len(observed) == 1 and not list(root.glob(".gloria-bank-generation-*.tmp"))
+        assert location.stat().st_nlink == 1 and not location.is_symlink()
+        if os.name == "posix":
+            assert stat.S_IMODE(location.stat().st_mode) == 0o600
+            assert location.stat().st_uid == os.geteuid()
+        # A second trusted component reuses the pin; it never republishes it.
+        assert pin_bank_generation(fresh) == generation and len(observed) == 1
+    finally:
+        fresh.close()
+
+
+@pytest.mark.parametrize("retained", ["frontend-chat.sqlite3", "gloria-workflow.sqlite3", "custom-history.sqlite3"])
+def test_missing_pin_cannot_adopt_empty_new_ledger_beside_retained_state(bank, tmp_path, retained):
+    from gloria_workflow.host import GloriaHostFactory
+    from gloria_workflow.state import ConversationStore, TrustedBinding, new_state
+    root = tmp_path / "replacement-private-instance"
+    root.mkdir(mode=0o700)
+    state_path = root / retained
+    binding = TrustedBinding(owner="fictional-owner", customer_id=bank.principal.customer,
+        session_id=str(uuid.uuid4()), conversation_id=str(uuid.uuid4()), expires_at=int(time.time()) + 3600)
+    # Persist real application bindings. The replacement bank ledger
+    # deliberately has no admission rows, so the external state guard matters.
+    chat = None
+    if retained == "frontend-chat.sqlite3":
+        from frontend.server.gloria_chat import GloriaChatService
+        key = Ed25519PrivateKey.generate()
+        signer = root / "generated-signer.pem"
+        signer.write_bytes(key.private_bytes(serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
+        chat = GloriaChatService(dict(base_url="http://flujo:4200", model="flow-Gloria",
+            execution_token="fictional-generation-test-execution", frontend_signing_key_file=str(signer),
+            frontend_kid="fixture", frontend_issuer="fixture", frontend_audience="flujo-banking-ingress",
+            principal_customers={"subject-a": binding.customer_id}), root)
+        class Inquiry:
+            async def run(self, *args, **kwargs):
+                return {"response": {"message": "Consulta registrada."}, "workflow_state": {"pending": {"type": "none"}}}
+        asyncio.run(chat.send(binding.customer_id, binding.session_id, binding.expires_at,
+                              "Consulta", workflow=Inquiry()))
+        assert chat.has_active_session(binding.session_id, binding.expires_at)
+    else:
+        ConversationStore(state_path).save(binding, new_state(binding))
+    replacement = Service(bank.service.config.model_copy(update={"state_db": root / "bank.sqlite3"}))
+    try:
+        with replacement.store.connect() as db:
+            assert db.execute("SELECT count(*) FROM sessions").fetchone()[0] == 0
+        with pytest.raises(BankError, match="^action_unverified$"):
+            GloriaHostFactory(None, state_path, bank_service=replacement)
+        assert not (root / "gloria-bank-generation.json").exists()
+        if chat is not None:
+            assert chat.has_active_session(binding.session_id, binding.expires_at)
+        else:
+            assert ConversationStore(state_path).load(binding) is not None
+    finally:
+        replacement.close()
+
+
+def test_default_continuity_denies_first_pin_without_admission_mutation(bank, tmp_path):
+    root = tmp_path / "unapproved-instance"
+    root.mkdir(mode=0o700)
+    values = bank.service.config.model_dump()
+    values.pop("ledger_continuity_approved")
+    values["state_db"] = root / "bank.sqlite3"
+    config = Config(**values)
+    assert config.ledger_continuity_approved is False
+    denied = Service(config)
+    try:
+        with pytest.raises(BankError, match="^action_unverified$"):
+            pin_bank_generation(denied)
+        assert not (root / "gloria-bank-generation.json").exists()
+        with denied.store.connect() as db:
+            assert db.execute("SELECT count(*) FROM sessions").fetchone()[0] == 0
+            assert db.execute("SELECT count(*) FROM action_pending").fetchone()[0] == 0
+    finally:
+        denied.close()
+
+
+def test_atomic_first_pin_cannot_overwrite_an_existing_competing_pin(bank, tmp_path, monkeypatch):
+    import gloria_workflow.bank_read as adapter_module
+    root = tmp_path / "competing-private-instance"
+    root.mkdir(mode=0o700)
+    fresh = Service(bank.service.config.model_copy(update={"state_db": root / "bank.sqlite3"}))
+    link, competing = adapter_module.os.link, {}
+
+    def competing_publication(source, destination):
+        document = json.loads(Path(source).read_text(encoding="utf-8"))
+        document["ledger_generation"] = "f" * 64 if document["ledger_generation"] != "f" * 64 else "e" * 64
+        competing.update(document)
+        descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(document, stream, sort_keys=True)
+        return link(source, destination)
+
+    monkeypatch.setattr(adapter_module.os, "link", competing_publication)
+    try:
+        with pytest.raises(BankError, match="^authorization_denied$"):
+            pin_bank_generation(fresh)
+        assert json.loads((root / "gloria-bank-generation.json").read_text()) == competing
+        assert not list(root.glob(".gloria-bank-generation-*.tmp"))
+        assert not hasattr(fresh, "_gloria_ledger_generation")
+    finally:
+        fresh.close()
+
+
+def test_replacement_generation_is_not_adopted_by_running_host_or_restart(bank):
+    original = bank.principal.ledger_generation
+    location = bank.service.config.state_db.parent / "gloria-bank-generation.json"
+    saved = location.read_bytes()
+    with bank.service.store.connect() as db:
+        db.execute("UPDATE sandbox_ledger_identity SET generation=? WHERE id=1", ("f" * 64,))
+    assert pin_bank_generation(bank.service) == original
+    assert read(bank, "get_transaction", transaction_id=ref(bank)) == {"status": "error", "code": "authorization_denied"}
+    restarted = Service(bank.service.config)
+    try:
+        with pytest.raises(BankError, match="^authorization_denied$"):
+            pin_bank_generation(restarted)
+        assert location.read_bytes() == saved
+    finally:
+        restarted.close()
+
+
+def test_lost_generation_pin_beside_existing_admissions_cannot_be_regenerated(bank):
+    location = bank.service.config.state_db.parent / "gloria-bank-generation.json"
+    location.unlink()
+    restarted = Service(bank.service.config)
+    try:
+        with pytest.raises(BankError, match="^action_unverified$"):
+            pin_bank_generation(restarted)
+        assert not location.exists()
+    finally:
+        restarted.close()
+
+
+def test_existing_pin_does_not_substitute_missing_external_continuity_approval(bank):
+    config = bank.service.config.model_copy(update={"ledger_continuity_approved": False})
+    restarted = Service(config)
+    try:
+        with pytest.raises(BankError, match="^action_unverified$"):
+            pin_bank_generation(restarted)
+    finally:
+        restarted.close()
+
+
 def test_pinned_source_mutation_prevents_verified_target(bank):
     path = next((bank.source / "transactions/year=2026/month=06/day=02").glob("*.csv"))
     rewrite_csv(path, lambda row: row.update(amount="99999.00") if row["transaction_id"] == "TXN00000043" else None)
@@ -274,7 +450,7 @@ def test_revocation_after_private_work_blocks_return(bank, monkeypatch):
     original = bank.adapter._products
     def revoke(*args):
         result = original(*args)
-        bank.service.store.revoke(bank.principal.session)
+        bank.service.store.revoke(bank.principal.session, principal=bank.principal)
         return result
     monkeypatch.setattr(bank.adapter, "_products", revoke)
     assert read(bank, "get_transaction", transaction_id=ref(bank)) == {"status": "error", "code": "authorization_denied"}

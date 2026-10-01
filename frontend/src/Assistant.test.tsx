@@ -177,6 +177,7 @@ test("restored request selection sends only its server scope and never confirms 
     JSON.parse(calls.find((call) => call.url === "/api/chat/messages")!.body!),
   ).toEqual({
     message: "sí",
+    language: "es",
     transaction_reference: charge.reference,
     query_scope_id: second,
   });
@@ -390,7 +391,11 @@ test.each([
     ).toHaveLength(0);
     expect(
       JSON.parse(calls.find(({ url }) => url === "/api/chat/messages")!.body!),
-    ).toEqual({ message: yes, transaction_reference: charge.reference });
+    ).toEqual({
+      message: yes,
+      language,
+      transaction_reference: charge.reference,
+    });
 
     view.rerender(<Assistant {...props} selected={similarCharge} />);
     expect(

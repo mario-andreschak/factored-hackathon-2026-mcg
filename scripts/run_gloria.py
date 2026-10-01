@@ -50,14 +50,19 @@ def application(settings, bank_config, state, native_url, authority_dir, *, sour
         raise ValueError("frontend and bank require the same explicit delegated customer mapping")
     if not (authority_dir / "admissions.json").is_file() or not (authority_dir / "native-profile.json").is_file():
         raise ValueError("installed isolated native authority directory required")
-    state.mkdir(parents=True, exist_ok=True)
+    state.mkdir(parents=True, exist_ok=True, mode=0o700)
     bank = Service(bank_config)
-    factory = NativeHostFactory(state / "gloria-workflow.sqlite3", bank, native_url, authority_dir,
-        source_root=source_root, batch_preflight=batch_preflight)
-    backend = BankingActionHost(bank, factory.store, source_root=source_root)
-    configured = replace(settings, state_dir=state,
-        chat={**settings.chat, "action_enabled": enable_simulated_intake})
-    return create_app(configured, gloria_factory=factory, bank_backend=backend), bank
+    try:
+        factory = NativeHostFactory(state / "gloria-workflow.sqlite3", bank, native_url, authority_dir,
+            source_root=source_root, batch_preflight=batch_preflight)
+        backend = BankingActionHost(bank, factory.store, source_root=source_root)
+        configured = replace(settings, state_dir=state,
+            chat={**settings.chat, "mode": "gloria-host/v1", "ledger_generation": factory.ledger_generation,
+                  "action_enabled": enable_simulated_intake})
+        return create_app(configured, gloria_factory=factory, bank_backend=backend), bank
+    except BaseException:
+        bank.close()
+        raise
 
 
 def main():

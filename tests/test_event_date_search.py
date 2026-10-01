@@ -55,7 +55,7 @@ def event_dataset(tmp_path_factory):
 def repository(event_dataset, tmp_path):
     config = Config(mode="operator-test", data_dir=event_dataset, state_db=tmp_path / "state.sqlite",
                     service_token="fiction-only-token-" + "x" * 32, approved_customers={cid(3), cid(4)})
-    repo = Repository(config, StateStore(config.state_db))
+    repo = Repository(config, StateStore(config.state_db, require_ledger_generation=False))
     yield repo
     repo.close()
 
@@ -115,7 +115,7 @@ def test_short_snapshot_default_starts_at_first_actual_event_date(tmp_path):
                  "--tables", "customers", "products", "transactions"]) == 0
     config = Config(mode="operator-test", data_dir=output, state_db=tmp_path / "state.sqlite",
                     service_token="fiction-only-token-" + "x" * 32, approved_customers={cid(3), cid(4)})
-    repo = Repository(config, StateStore(config.state_db))
+    repo = Repository(config, StateStore(config.state_db, require_ledger_generation=False))
     try:
         result = search(repo)
         assert result["date_window"]["start"] == result["snapshot_event_dates"]["first"] == "2026-06-01"
@@ -200,7 +200,7 @@ def copied_repository(event_dataset, tmp_path):
     shutil.copytree(event_dataset, output)
     config = Config(mode="operator-test", data_dir=output, state_db=tmp_path / "state.sqlite",
                     service_token="fiction-only-token-" + "x" * 32, approved_customers={cid(3), cid(4)})
-    return Repository(config, StateStore(config.state_db)), current_build(output)
+    return Repository(config, StateStore(config.state_db, require_ledger_generation=False)), current_build(output)
 
 
 def read_json(path):

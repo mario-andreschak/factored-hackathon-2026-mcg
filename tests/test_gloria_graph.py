@@ -32,7 +32,7 @@ class GloriaManifestFreshnessTests(unittest.TestCase):
                     for path in (REPO / directory).glob("*.py")}
         required.update(path.relative_to(REPO).as_posix()
                         for path in (REPO / "resources/policies").glob("*.md"))
-        required.update({".gitattributes", "pipeline/contracts.yaml", "requirements-gloria.txt"})
+        required.update({".gitattributes", "pipeline/contracts.yaml", "requirements-gloria.txt", "requirements-mcp.txt"})
         self.assertFalse(required - set(sources), "New protected source requires graph regeneration")
         for relative, expected in sources.items():
             with self.subTest(source=relative):
@@ -113,6 +113,7 @@ class GloriaGraphTests(unittest.TestCase):
         self.assertIn("contracts/state_schema.md", sources)
         self.assertIn("resources/prompts/fallback_templates.yaml", sources)
         self.assertIn("requirements-gloria.txt", sources)
+        self.assertIn("requirements-mcp.txt", sources)
         self.assertIn("banking_mcp/actions.py", sources)
         self.assertIn("banking_mcp/service.py", sources)
         self.assertIn("banking_mcp/config.py", sources)
@@ -230,7 +231,7 @@ try {
  }
  const unchanged=build(process.argv[1],DEFAULT_BINDINGS,root);
  assert.equal(unchanged.report.graphHash,original.report.graphHash);
- const cases=['resources/policies/transaction_dispute_policy.md','requirements-gloria.txt',
+ const cases=['resources/policies/transaction_dispute_policy.md','requirements-gloria.txt','requirements-mcp.txt',
   'banking_mcp/actions.py','banking_mcp/security.py','pipeline/common.py',
   'frontend/server/chat.py','frontend/server/app.py','scripts/native_gloria_qualification.py'];
  for(const relative of cases) {
@@ -256,7 +257,7 @@ try {
 """
         result = node_run("--input-type=module", "-e", code, str(FLUJO))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout), {"mutations": 8, "modelIndependent": True})
+        self.assertEqual(json.loads(result.stdout), {"mutations": 9, "modelIndependent": True})
 
 
 if __name__ == "__main__":

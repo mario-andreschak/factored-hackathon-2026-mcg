@@ -1,4 +1,7 @@
-# Optional integration with the already running FLUJO worker. This override
+# Optional private network integration for the generic worker and bank MCP.
+# Bank signing authority stays in the frontend host; this does not configure
+# the MCP transport, migrate state, or attest model-process isolation.
+# This override
 # joins its network; it does not recreate the worker or grant Docker access.
 services:
   frontend:
@@ -7,8 +10,14 @@ services:
       - flujo
     volumes:
       - type: bind
-        source: ${BANKING_SIGNER_FILE:?Set BANKING_SIGNER_FILE to the existing private frontend signer}
+        source: ${BANKING_SIGNER_FILE:?Set BANKING_SIGNER_FILE to the approved private bank host signer}
         target: /banking-config/frontend-signer.pem
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${BANKING_CA_FILE:?Set BANKING_CA_FILE to the approved public bank TLS CA or certificate}
+        target: /banking-config/bank-ca.pem
         read_only: true
         bind:
           create_host_path: false

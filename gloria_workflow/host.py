@@ -13,7 +13,7 @@ import json
 from .runtime import Workflow
 from .prompts import StageAdapters
 from .state import ConversationStore, TrustedBinding
-from .bank_read import OwnedBankReads
+from .bank_read import OwnedBankReads, pin_bank_generation, pinned_bank_generation
 from banking_mcp.security import Principal
 
 
@@ -37,6 +37,7 @@ class RepositoryBank:
         self.customer = repository.profile_customer(profile_id)
         self.source_reader = source_reader
         self.bank_service, self.source_root = bank_service, source_root
+        self.ledger_generation = pinned_bank_generation(bank_service) if bank_service is not None else None
         self.bank_reads = None
         self._binding = None
 
@@ -51,7 +52,8 @@ class RepositoryBank:
         self._binding = context
         self._current()
         if self.bank_service is not None:
-            principal = Principal(subject, self.customer, self.session_id, context["conversation_id"], self.session_exp)
+            principal = Principal(subject, self.customer, self.session_id, context["conversation_id"], self.session_exp,
+                                  self.ledger_generation)
             self.bank_reads = OwnedBankReads(self.bank_service, self.repository, principal,
                 source_root=self.source_root, guard=self._current)
 
@@ -184,6 +186,8 @@ Construct with a configured model callable. Creating this factory does not
 replace the shared FLUJO worker, change its graph, or enable portal actions.
 """
     def __init__(self, model, state_path, *, source_reader=None, bank_service=None, source_root=None):
+        self.ledger_generation = (pin_bank_generation(bank_service, retained_state_paths=(state_path,))
+                                  if bank_service is not None else None)
         self.model, self.store = model, ConversationStore(state_path)
         self.source_reader = source_reader
         self.bank_service, self.source_root = bank_service, source_root

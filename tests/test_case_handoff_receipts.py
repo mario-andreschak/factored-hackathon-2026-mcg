@@ -17,7 +17,8 @@ from types import SimpleNamespace
 import pytest
 
 from banking_mcp.actions import ACTION, HANDOFF_PACKET_SCHEMA, Actions
-from banking_mcp.security import BankError, Principal, StateStore
+from banking_mcp.security import BankError, StateStore
+from tests.banking_authority_fixtures import principal_for
 
 
 class FictionalRepository:
@@ -80,7 +81,7 @@ class DelayAfterAttemptStore(StateStore):
 
 
 def _confirm_case_process(path, repository, coverage_start, evidence, principal, handle, now, barrier, results):
-    actions = Actions(DelayAfterAttemptStore(path), repository, coverage_start, evidence,
+    actions = Actions(DelayAfterAttemptStore(path, ledger_continuity_approved=True), repository, coverage_start, evidence,
                       "fictional-prepare-secret" * 3)
     actions.clock = lambda: now
     try:
@@ -93,7 +94,7 @@ def _confirm_case_process(path, repository, coverage_start, evidence, principal,
 @pytest.fixture
 def local(tmp_path):
     now = time.time() - 5
-    store = StateStore(tmp_path / "state.db")
+    store = StateStore(tmp_path / "state.db", ledger_continuity_approved=True)
     repository = FictionalRepository(tmp_path, now)
     evidence = tmp_path / "fictional-evidence.json"
     evidence.write_text(json.dumps({"build_id": repository.snapshot_info.id,
@@ -104,7 +105,7 @@ def local(tmp_path):
     store.attest_sandbox_coverage(coverage_start, "synthetic:issue21-fictional-local-ledger")
     actions = Actions(store, repository, coverage_start, evidence, "fictional-prepare-secret" * 3)
     actions.clock = lambda: now
-    owner = Principal("fictional-sub-A", "fictional-owner-A", "session-A", "conversation-A",
+    owner = principal_for(store, "fictional-sub-A", "fictional-owner-A", "session-A", "conversation-A",
                       int(time.time()) + 600)
     return SimpleNamespace(actions=actions, store=store, repository=repository, evidence=evidence,
                            owner=owner, now=now, root=tmp_path)
@@ -142,7 +143,7 @@ def test_persisted_exact_case_is_read_back_across_restart_without_another_case(l
     with local.store.connect() as db:
         saved = json.loads(db.execute("SELECT receipt_json FROM sandbox_case_receipts").fetchone()[0])
     assert saved == receipt["receipt"]
-    restarted = Actions(StateStore(local.store.path), local.repository, None, None,
+    restarted = Actions(StateStore(local.store.path, ledger_continuity_approved=True), local.repository, None, None,
                         "fictional-prepare-secret" * 3)
     restarted.clock = local.actions.clock
     projection = restarted.local_case_status(local.owner, "fixture-charge-A", local.repository.snapshot_info.id)
@@ -164,13 +165,13 @@ def test_persisted_exact_case_is_read_back_across_restart_without_another_case(l
 
 def test_case_read_is_owner_bound_and_receipt_handle_remains_session_bound(local):
     pending, receipt = create_case(local)
-    foreign = Principal("fictional-sub-B", "fictional-owner-B", "session-B", "conversation-B",
+    foreign = principal_for(local.store, "fictional-sub-B", "fictional-owner-B", "session-B", "conversation-B",
                         int(time.time()) + 600)
     with pytest.raises(BankError, match="reference_unavailable"):
         local.actions.local_case_status(foreign, "fixture-charge-A", local.repository.snapshot_info.id)
     with pytest.raises(BankError, match="reference_unavailable"):
         local.actions.receipt(foreign, pending["pending_handle"])
-    same_owner = Principal(local.owner.subject, local.owner.customer, "new-session", "new-conversation",
+    same_owner = principal_for(local.store, local.owner.subject, local.owner.customer, "new-session", "new-conversation",
                            int(time.time()) + 600)
     assert local.actions.local_case_status(same_owner, "fixture-charge-A", local.repository.snapshot_info.id)["receipt"] == receipt["receipt"]
     with pytest.raises(BankError, match="reference_unavailable"):
@@ -230,7 +231,7 @@ def test_missing_receipt_after_unresolved_intake_including_expiry_is_not_no_matc
 def test_database_read_failure_never_becomes_not_found(local):
     class FailedStore:
         @contextmanager
-        def connect(self):
+        def authority(self, _principal):
             raise sqlite3.OperationalError("fictional read unavailable")
             yield
     local.actions.store = FailedStore()
@@ -245,7 +246,7 @@ def test_new_intake_keeps_120_day_real_wall_eligibility_and_explicit_consent(loc
     assert old["decision"] == "handoff" and old["reason"] == "out_of_policy"
     with pytest.raises(BankError, match="confirmation_required"):
         local.actions.confirm(local.owner, old["pending_handle"], False)
-    expired = Principal(local.owner.subject, local.owner.customer, local.owner.session,
+    expired = principal_for(local.store, local.owner.subject, local.owner.customer, local.owner.session,
                         local.owner.conversation, int(time.time()) - 1)
     with pytest.raises(BankError, match="authorization_denied"):
         local.actions.local_case_status(expired, "fixture-charge-A", local.repository.snapshot_info.id)
@@ -304,7 +305,7 @@ def test_handoff_rejects_unbounded_or_wrongly_typed_questions_before_write(local
 
 def test_selected_handoff_rechecks_current_owned_facts_and_foreign_handles(local):
     pending = prepare(local)
-    foreign = Principal("fictional-sub-B", "fictional-owner-B", "session-B", "conversation-B", int(time.time()) + 600)
+    foreign = principal_for(local.store, "fictional-sub-B", "fictional-owner-B", "session-B", "conversation-B", int(time.time()) + 600)
     with pytest.raises(BankError, match="reference_unavailable"):
         local.actions.handoff(foreign, "customer_request", pending["pending_handle"], str(uuid.uuid4()))
     local.repository.rows["fixture-charge-A"]["transaction_status"] = "Reversed"
@@ -353,7 +354,7 @@ def test_missing_handoff_durable_readback_does_not_return_created(local, monkeyp
 def test_case_association_survives_new_snapshot_and_conversation_without_second_case(local):
     pending, saved = create_case(local)
     local.repository.snapshot_info.id = "fictional-new-snapshot"
-    new_owner = Principal(local.owner.subject, local.owner.customer, "next-session", "next-conversation",
+    new_owner = principal_for(local.store, local.owner.subject, local.owner.customer, "next-session", "next-conversation",
                           int(time.time()) + 600)
     projection = local.actions.local_case_status(new_owner, "fixture-charge-A", "fictional-new-snapshot")
     assert projection["state"] == "verified" and projection["receipt"] == saved["receipt"]
@@ -521,7 +522,7 @@ def test_corrupt_pending_intent_never_becomes_clean_local_absence(local, corrupt
 
 def test_two_threads_confirm_same_handle_read_one_case_after_committed_marker(local):
     pending = prepare(local)
-    local.actions.store = DelayAfterAttemptStore(local.store.path)
+    local.actions.store = DelayAfterAttemptStore(local.store.path, ledger_continuity_approved=True)
     barrier = threading.Barrier(2)
     def confirm_together():
         barrier.wait(timeout=5)
@@ -595,17 +596,20 @@ def test_receipt_wait_checks_fresh_revocation_without_case_write(local, monkeypa
     with local.store.connect() as db:
         db.execute("UPDATE action_pending SET confirmation_state='attempted'")
     poll_started = threading.Event()
-    original = local.actions._assert_action_authorized
-    checks = []
-    def observe_authorization(db, principal):
-        original(db, principal)
-        checks.append(True)
-        if len(checks) >= 2:
-            poll_started.set()
-    monkeypatch.setattr(local.actions, "_assert_action_authorized", observe_authorization)
+    revoke_completed = threading.Event()
+    sleep = time.sleep
+    def pause_after_closed_receipt_read(seconds):
+        # The receipt poll must release its SQLite connection before waiting.
+        # Finish revocation here so the next real authority fence observes it.
+        assert 0 < seconds <= .05
+        poll_started.set()
+        assert revoke_completed.wait(timeout=5)
+        sleep(seconds)
+    monkeypatch.setattr("banking_mcp.actions.time.sleep", pause_after_closed_receipt_read)
     def revoke_during_poll():
         assert poll_started.wait(timeout=5)
-        local.store.revoke(local.owner.session)
+        local.store.revoke(local.owner.session, principal=local.owner)
+        revoke_completed.set()
     with ThreadPoolExecutor(max_workers=1) as executor:
         revoke = executor.submit(revoke_during_poll)
         with pytest.raises(BankError, match="authorization_denied"):

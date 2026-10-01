@@ -75,6 +75,13 @@ class Settings:
 
     def auth_fingerprint(self) -> str:
         policy = {"auth_mode": self.auth_mode}
+        # Retire pre-migration portal cookies before a new host bank binding can
+        # be admitted. Generic language graph/name changes do not rotate bank identity.
+        host_mode = self.chat.get("mode")
+        if host_mode in {"host-direct-mcp/v1", "gloria-host/v1"}:
+            policy["bank_host_mode"] = host_mode
+            policy["bank_namespace"] = self.chat.get("namespace")
+            policy["bank_ledger_generation"] = self.chat.get("ledger_generation")
         if self.auth_mode == "invite":
             policy.update(invites=self.invites, profiles=self.profiles, expected_snapshot=self.expected_snapshot,
                           public_origin=self.public_origin, secure_cookie=self.secure_cookie)

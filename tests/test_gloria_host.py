@@ -12,7 +12,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import httpx
 import pytest
 
-from frontend.server.chat import ChatService, ChatError
+from frontend.server.chat import ChatError
+from frontend.server.gloria_chat import GloriaChatService as ChatService
 from frontend.tests.action_fixtures import action_receipt
 from gloria_workflow.host import RepositoryBank
 from gloria_workflow.model import FlujoModel

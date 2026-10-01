@@ -352,7 +352,8 @@ def build_application(fixture: Fixture, native_url: str, authority_dir: str | Pa
     bank_config = Config(data_dir=fixture.data, state_db=state / "bank.sqlite3",
         service_token=fixture.service_token, public_keys={"qualification": fixture.public_key},
         principal_customers=fixture.subject_customers, sandbox_report_coverage_start=coverage,
-        event_rates_file=fixture.rates, event_rates_sha256=fixture.rates_sha256)
+        event_rates_file=fixture.rates, event_rates_sha256=fixture.rates_sha256,
+        ledger_continuity_approved=True)
     app, bank = application(settings, bank_config, state, native_url, Path(authority_dir),
         source_root=fixture.source, enable_simulated_intake=True)
     bank.store.attest_sandbox_coverage(coverage, "synthetic:joined-gloria-generated-ledger")
@@ -382,7 +383,9 @@ def build_application(fixture: Fixture, native_url: str, authority_dir: str | Pa
     # create_app receives the same owner sources, durable store and action bridge
     # as application(); only its private workflow factory gains the observer.
     backend = BankingActionHost(bank, native_factory.store, source_root=fixture.source)
-    app = create_app(replace(settings, state_dir=state), gloria_factory=observed_factory, bank_backend=backend)
+    app = create_app(replace(settings, state_dir=state,
+        chat={**settings.chat, "mode": "gloria-host/v1", "ledger_generation": native_factory.ledger_generation}),
+        gloria_factory=observed_factory, bank_backend=backend)
     return app, bank
 
 
