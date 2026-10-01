@@ -174,7 +174,8 @@ def test_captured_human_request_restatement_does_not_grant_contact_guidance(extr
         clean_query="É uma emergência. Estou em perigo agora e preciso falar com um atendente humano.",
         historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
         workflow_state=dict(action=dict(authorized=False, executed=False, verified=False, result_id=None),
-            handoff=dict(required=True, created=False, handoff_id=None)),
+            handoff=dict(required=True, created=False, handoff_id=None, reason_code="emergency"),
+            policy_decision=dict(response_mode="HANDOFF", reason_code="emergency")),
         policy_context=retrieve_policy("HUMAN_REQUEST", human_required=True))
     text = ("Entendo que é uma emergência e que você precisa falar com um atendente humano. "
             "Sua solicitação precisa de atendimento humano, mas ainda não posso confirmar o encaminhamento."
