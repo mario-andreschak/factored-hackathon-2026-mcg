@@ -194,7 +194,7 @@ const loginCopy = {
     submitting: "Iniciando sesión…",
     trust: "Sesión privada · Demostración con datos sintéticos",
     inviteDisclosure:
-      "Prototipo con datos sintéticos creados por el equipo. Cada invitación abre un único perfil ficticio.",
+      "Prototipo con datos sintéticos para la demostración. Cada invitación abre un único perfil ficticio.",
     demoDisclosure:
       "Experiencia de demostración con los datos sintéticos del hackathon. Los nombres son alias; los productos y movimientos provienen del dataset.",
     footer: "Tu dinero, en calma.",
@@ -233,12 +233,12 @@ const loginCopy = {
     submitting: "Entrando…",
     trust: "Sessão privada · Demonstração com dados sintéticos",
     inviteDisclosure:
-      "Protótipo com dados sintéticos criados pela equipe. Cada convite abre um único perfil fictício.",
+      "Protótipo com dados sintéticos para a demonstração. Cada convite abre um único perfil fictício.",
     demoDisclosure:
       "Experiência de demonstração com dados sintéticos do hackathon. Os nomes são apelidos; os produtos e lançamentos vêm do conjunto de dados.",
     footer: "Seu dinheiro, com tranquilidade.",
     portalLanguageNotice:
-      "Após entrar, a navegação e a consulta de movimentos estarão em português. Início, produtos, seus detalhes e as informações da demonstração continuam em espanhol; o Assistente segue o idioma escolhido aqui.",
+      "Após entrar, a navegação, os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português. O Assistente usa o idioma escolhido aqui. Nomes e campos vindos da origem permanecem como recebidos.",
     sessionNotice:
       "O acesso deste navegador foi removido, mas não foi possível confirmar o encerramento completo da sessão e do Assistente. Peça ajuda antes de usar outra conta.",
     errors: {
@@ -530,8 +530,10 @@ function ProductCard({
   hidden,
   onSelect,
   index = 0,
+  language = "es",
 }: {
   product: Product;
+  language?: ActionLanguage;
   hidden: boolean;
   onSelect: () => void;
   index?: number;
@@ -541,6 +543,7 @@ function ProductCard({
   return (
     <button
       className={`product-card product-tone-${index % 3}`}
+      lang={language === "pt" ? "pt-BR" : "es"}
       onClick={onSelect}
     >
       <div className="product-card-top">
@@ -555,17 +558,27 @@ function ProductCard({
         </span>
         <ChevronRight size={18} />
       </div>
-      <span className="product-name">{productShort(product.type)}</span>
+      <span className="product-name">
+        {portalProduct(product.type, language)}
+      </span>
       <span className="product-ref">
         Ref. {product.reference.slice(-6).toUpperCase()} <span>·</span>{" "}
         {product.currency}
       </span>
       <div className="product-card-bottom">
         <span>
-          <small>{credit ? "Saldo del producto" : "Saldo en cuenta"}</small>
-          <strong>{money(product.balance, product.currency, hidden)}</strong>
+          <small>
+            {language === "pt"
+              ? "Saldo do produto"
+              : credit
+                ? "Saldo del producto"
+                : "Saldo en cuenta"}
+          </small>
+          <strong>
+            {portalMoney(product.balance, product.currency, hidden, language)}
+          </strong>
         </span>
-        <Badge status={product.status} />
+        <Badge status={product.status} language={language} />
       </div>
     </button>
   );
@@ -576,14 +589,20 @@ function BankingCard({
   alias,
   hidden,
   onClick,
+  language = "es",
 }: {
   product: Product;
+  language?: ActionLanguage;
   alias: string;
   hidden: boolean;
   onClick: () => void;
 }) {
   return (
-    <button className="banking-card" onClick={onClick}>
+    <button
+      className="banking-card"
+      lang={language === "pt" ? "pt-BR" : "es"}
+      onClick={onClick}
+    >
       <div className="bank-card-brand">
         <span>savia.</span>
         <span>{product.currency}</span>
@@ -595,8 +614,10 @@ function BankingCard({
         <span />
       </span>
       <div className="bank-card-details">
-        <span>{productShort(product.type)}</span>
-        <strong>{money(product.balance, product.currency, hidden)}</strong>
+        <span>{portalProduct(product.type, language)}</span>
+        <strong>
+          {portalMoney(product.balance, product.currency, hidden, language)}
+        </strong>
       </div>
       <div className="bank-card-bottom">
         <span>{alias.toUpperCase()}</span>
@@ -611,8 +632,10 @@ function ActivityChart({
   currency,
   asOf,
   hidden,
+  language = "es",
 }: {
   data: Overview;
+  language?: ActionLanguage;
   currency: string;
   asOf: string;
   hidden: boolean;
@@ -629,7 +652,10 @@ function ActivityChart({
     return {
       key,
       name: d
-        .toLocaleDateString("es-MX", { month: "short", timeZone: "UTC" })
+        .toLocaleDateString(language === "pt" ? "pt-BR" : "es-MX", {
+          month: "short",
+          timeZone: "UTC",
+        })
         .replace(".", ""),
       inflow: match?.inflow || 0,
       outflow: match?.outflow || 0,
@@ -641,7 +667,11 @@ function ActivityChart({
       <div
         className="chart-bars"
         role="img"
-        aria-label={`Entradas y salidas identificadas en ${currency} durante seis meses. Solo operaciones aprobadas.`}
+        aria-label={
+          language === "pt"
+            ? `Entradas e saídas identificadas em ${currency} durante seis meses. Somente operações aprovadas.`
+            : `Entradas y salidas identificadas en ${currency} durante seis meses. Solo operaciones aprobadas.`
+        }
       >
         {months.map((m) => (
           <div className="chart-month" key={m.key}>
@@ -650,7 +680,7 @@ function ActivityChart({
               title={
                 hidden
                   ? m.key
-                  : `${m.key} · Entradas: ${money(m.inflow, currency)} · Salidas: ${money(m.outflow, currency)}`
+                  : `${m.key} · Entradas: ${portalMoney(m.inflow, currency, false, language)} · ${language === "pt" ? "Saídas" : "Salidas"}: ${portalMoney(m.outflow, currency, false, language)}`
               }
             >
               <div
@@ -679,9 +709,11 @@ function ActivityChart({
         </span>
         <span>
           <i className="outflow" />
-          Salidas
+          {language === "pt" ? "Saídas" : "Salidas"}
         </span>
-        <span>{currency} · Aprobados</span>
+        <span>
+          {currency} · {language === "pt" ? "Aprovados" : "Aprobados"}
+        </span>
       </div>
     </div>
   );
@@ -691,11 +723,14 @@ function Spending({
   data,
   currency,
   hidden,
+  language = "es",
 }: {
   data: Overview;
+  language?: ActionLanguage;
   currency: string;
   hidden: boolean;
 }) {
+  const pt = language === "pt";
   const items = data.transactions.filter(
     (t) =>
       t.currency === currency &&
@@ -705,6 +740,7 @@ function Spending({
   const groups = Object.entries(
     items.reduce<Record<string, number>>((g, t) => {
       const k =
+        (pt ? ptCategories[t.category || ""] : undefined) ||
         categoryNames[t.category || ""] ||
         t.category ||
         typeNames[t.type] ||
@@ -726,11 +762,13 @@ function Spending({
   return (
     <section className="panel spending-panel">
       <div className="panel-title">
-        <h3>En qué se mueve</h3>
+        <h3>{pt ? "Para onde vai" : "En qué se mueve"}</h3>
         <span className="currency-tag">{currency}</span>
       </div>
       <p className="panel-subtitle">
-        Salidas identificadas · Historial disponible
+        {pt
+          ? "Saídas identificadas · Histórico disponível"
+          : "Salidas identificadas · Historial disponible"}
       </p>
       {total ? (
         <>
@@ -739,12 +777,21 @@ function Spending({
               className="donut"
               style={{ background: `conic-gradient(${segments})` }}
               role="img"
-              aria-label="Distribución de salidas por categoría"
+              aria-label={
+                pt
+                  ? "Distribuição das saídas por categoria"
+                  : "Distribución de salidas por categoría"
+              }
             >
               <div>
-                <small>Total de salidas</small>
-                <strong>{money(total, currency, hidden)}</strong>
-                <span>{items.length} movimientos</span>
+                <small>{pt ? "Total de saídas" : "Total de salidas"}</small>
+                <strong>
+                  {portalMoney(total, currency, hidden, language)}
+                </strong>
+                <span>
+                  {portalNumber(items.length, language)}{" "}
+                  {pt ? "movimentos" : "movimientos"}
+                </span>
               </div>
             </div>
           </div>
@@ -763,13 +810,22 @@ function Spending({
           </div>
         </>
       ) : (
-        <Empty title="Aún sin salidas identificadas">
-          No hay compras o retiros aprobados en esta moneda.
+        <Empty
+          title={
+            pt
+              ? "Ainda não há saídas identificadas"
+              : "Aún sin salidas identificadas"
+          }
+        >
+          {pt
+            ? "Não há compras ou saques aprovados nesta moeda."
+            : "No hay compras o retiros aprobados en esta moneda."}
         </Empty>
       )}
       <p className="data-footnote">
-        Transferencias, pagos y ajustes no se clasifican como entradas o
-        salidas.
+        {pt
+          ? "Transferências, pagamentos e ajustes não são classificados como entradas ou saídas."
+          : "Transferencias, pagos y ajustes no se clasifican como entradas o salidas."}
       </p>
     </section>
   );
@@ -918,60 +974,102 @@ function ProductDetail({
   hidden,
   onClose,
   onTransactions,
+  language = "es",
 }: {
   product: Product;
+  language?: ActionLanguage;
   hidden: boolean;
   onClose: () => void;
   onTransactions: () => void;
 }) {
   return (
-    <Modal title={productShort(product.type)} onClose={onClose}>
-      <div className="detail-balance">
-        <span>Saldo del producto · {product.currency}</span>
-        <h2>{money(product.balance, product.currency, hidden)}</h2>
-        <Badge status={product.status} />
-      </div>
-      <dl className="details-list">
-        <div>
-          <dt>Referencia del producto</dt>
-          <dd>{product.reference.slice(-6).toUpperCase()}</dd>
+    <Modal
+      title={portalProduct(product.type, language)}
+      titleLang={language === "pt" ? "pt-BR" : "es"}
+      closeLabel={language === "pt" ? "Fechar" : "Cerrar"}
+      onClose={onClose}
+    >
+      <div lang={language === "pt" ? "pt-BR" : "es"}>
+        <div className="detail-balance">
+          <span>
+            {language === "pt" ? "Saldo do produto" : "Saldo del producto"} ·{" "}
+            {product.currency}
+          </span>
+          <h2>
+            {portalMoney(product.balance, product.currency, hidden, language)}
+          </h2>
+          <Badge status={product.status} language={language} />
         </div>
-        <div>
-          <dt>Moneda</dt>
-          <dd>{product.currency}</dd>
-        </div>
-        <div>
-          <dt>Fecha de apertura</dt>
-          <dd>{date(product.opened_at)}</dd>
-        </div>
-        {product.credit_limit != null && (
+        <dl className="details-list">
           <div>
-            <dt>Límite de crédito del snapshot</dt>
-            <dd>{money(product.credit_limit, product.currency, hidden)}</dd>
+            <dt>
+              {language === "pt"
+                ? "Referência do produto"
+                : "Referencia del producto"}
+            </dt>
+            <dd>{product.reference.slice(-6).toUpperCase()}</dd>
           </div>
-        )}
-        {product.interest_rate != null && (
           <div>
-            <dt>Tasa registrada en el dataset</dt>
-            <dd>{product.interest_rate}%</dd>
+            <dt>{language === "pt" ? "Moeda" : "Moneda"}</dt>
+            <dd>{product.currency}</dd>
           </div>
-        )}
-        <div>
-          <dt>Última actualización de origen</dt>
-          <dd>{date(product.last_updated)}</dd>
+          <div>
+            <dt>
+              {language === "pt" ? "Data de abertura" : "Fecha de apertura"}
+            </dt>
+            <dd>{portalDate(product.opened_at, language)}</dd>
+          </div>
+          {product.credit_limit != null && (
+            <div>
+              <dt>
+                {language === "pt"
+                  ? "Limite de crédito do snapshot"
+                  : "Límite de crédito del snapshot"}
+              </dt>
+              <dd>
+                {portalMoney(
+                  product.credit_limit,
+                  product.currency,
+                  hidden,
+                  language,
+                )}
+              </dd>
+            </div>
+          )}
+          {product.interest_rate != null && (
+            <div>
+              <dt>
+                {language === "pt"
+                  ? "Taxa registrada no conjunto de dados"
+                  : "Tasa registrada en el dataset"}
+              </dt>
+              <dd>{product.interest_rate}%</dd>
+            </div>
+          )}
+          <div>
+            <dt>
+              {language === "pt"
+                ? "Última atualização na origem"
+                : "Última actualización de origen"}
+            </dt>
+            <dd>{portalDate(product.last_updated, language)}</dd>
+          </div>
+        </dl>
+        <div className="inline-note">
+          <ShieldCheck size={18} />
+          <p>
+            {language === "pt"
+              ? "Saldo do snapshot fornecido. Não representa saldo bancário em tempo real. A referência identifica o produto nesta demonstração."
+              : "Saldo del snapshot suministrado. No representa un saldo bancario en tiempo real. La referencia identifica el producto en esta demo."}
+          </p>
         </div>
-      </dl>
-      <div className="inline-note">
-        <ShieldCheck size={18} />
-        <p>
-          Saldo del snapshot suministrado. No representa un saldo bancario en
-          tiempo real. La referencia identifica el producto en esta demo.
-        </p>
+        <button className="button primary full" onClick={onTransactions}>
+          {language === "pt"
+            ? "Ver movimentos deste produto"
+            : "Ver movimientos de este producto"}
+          <ArrowRight size={18} />
+        </button>
       </div>
-      <button className="button primary full" onClick={onTransactions}>
-        Ver movimientos de este producto
-        <ArrowRight size={18} />
-      </button>
     </Modal>
   );
 }
@@ -1159,6 +1257,17 @@ const ptStatus: Record<string, string> = {
   Suspended: "Suspenso",
   Inactive: "Inativo",
 };
+const ptCategories: Record<string, string> = {
+  Food: "Alimentação",
+  Other: "Outros",
+  Services: "Serviços",
+  Transport: "Transporte",
+  Shopping: "Compras",
+  Health: "Saúde",
+  Entertainment: "Entretenimento",
+  Travel: "Viagens",
+  Utilities: "Serviços públicos",
+};
 const ptTypes: Record<string, string> = {
   Purchase: "Compra",
   Withdrawal: "Saque",
@@ -1169,6 +1278,10 @@ const ptTypes: Record<string, string> = {
 };
 const ptProducts: Record<string, string> = {
   "Cuenta Ahorro": "Conta poupança",
+  "Préstamo Personal": "Empréstimo pessoal",
+  "Préstamo Hipotecario": "Financiamento imobiliário",
+  "Crédito Hipotecario": "Crédito imobiliário",
+  Inversión: "Investimento",
   "Cuenta Corriente": "Conta corrente",
   "Tarjeta Crédito": "Cartão de crédito",
   "Tarjeta Débito": "Cartão de débito",
@@ -1186,6 +1299,20 @@ const portalDate = (
   language: ActionLanguage,
   options?: Intl.DateTimeFormatOptions,
 ) => (language === "pt" ? actionDate(value, "pt") : date(value, options));
+const portalMoney = (
+  value: number,
+  currency: string,
+  hidden: boolean,
+  language: ActionLanguage,
+) =>
+  language === "pt" && !hidden
+    ? new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value)
+    : money(value, currency, hidden);
 const portalNumber = (value: number, language: ActionLanguage) =>
   language === "pt"
     ? new Intl.NumberFormat("pt-BR").format(value)
@@ -2918,6 +3045,19 @@ export default function App() {
     [loginNotice, setLoginNotice] = useState<"" | "session-revoke-unconfirmed">(
       "",
     );
+  useEffect(() => {
+    if (authenticated !== true) return;
+    document.documentElement.lang =
+      actionLanguagePreference === "pt" ? "pt-BR" : "es";
+    document.title =
+      actionLanguagePreference === "pt"
+        ? "Savia · Seu banco pessoal"
+        : "Savia · Tu banca personal";
+    return () => {
+      document.documentElement.lang = "es";
+      document.title = "Savia · Tu banca personal";
+    };
+  }, [authenticated, actionLanguagePreference]);
   const dataController = useRef<AbortController | null>(null);
   const expired = useCallback(() => {
     dataController.current?.abort();
@@ -3093,9 +3233,9 @@ export default function App() {
     );
   const pt = actionLanguagePreference === "pt";
   const shellLang = pt ? "pt-BR" : "es";
-  const synthetic =
-    authMode === "invite" ||
-    data?.metadata.dataset === "team-synthetic-fixture";
+  const synthetic = data
+    ? data.metadata.dataset === "team-synthetic-fixture"
+    : authMode === "invite";
   const currencies =
     data?.summary.balances_by_currency.map((b) => b.currency) || [];
   const balance = data?.summary.balances_by_currency.find(
@@ -3299,50 +3439,32 @@ export default function App() {
             {profile && <Avatar name={profile.alias} small />}
           </div>
         </header>
-        <main
-          className="main-content"
-          lang={page === "transactions" ? shellLang : "es"}
-        >
-          {pt && page !== "transactions" && (
-            <p className="data-footnote" lang="pt-BR">
-              Esta área e as informações da demonstração continuam em espanhol.
-              A interface de movimentos e do Assistente usa português quando
-              disponível.
-            </p>
-          )}
+        <main className="main-content" lang={shellLang}>
           {error ? (
             <div className="error-state">
               <ShieldCheck size={36} />
               <h1>
-                {pt && page === "transactions"
+                {pt
                   ? "Um momento para reconectar."
                   : "Un momento para reconectar."}
               </h1>
               <p role="alert">
-                {pt && page === "transactions"
+                {pt
                   ? "Não foi possível carregar os dados bancários. Verifique a conexão e tente novamente."
                   : error}
               </p>
               <button className="button primary" onClick={load}>
-                {pt && page === "transactions"
-                  ? "Tentar novamente"
-                  : "Volver a intentar"}
+                {pt ? "Tentar novamente" : "Volver a intentar"}
                 <ArrowRight size={17} />
               </button>
               <button className="text-button" onClick={logout}>
-                {pt && page === "transactions"
-                  ? "Encerrar sessão"
-                  : "Cerrar sesión"}
+                {pt ? "Encerrar sessão" : "Cerrar sesión"}
               </button>
             </div>
           ) : loading || !data ? (
             <div
               className="loading-state"
-              aria-label={
-                pt && page === "transactions"
-                  ? "Carregando dados"
-                  : "Cargando datos"
-              }
+              aria-label={pt ? "Carregando dados" : "Cargando datos"}
             >
               <div className="skeleton skeleton-heading" />
               <div className="skeleton skeleton-hero" />
@@ -3359,9 +3481,13 @@ export default function App() {
                 <div>
                   <span className="eyebrow">
                     {page === "home"
-                      ? "UN NUEVO DÍA, CON MÁS CLARIDAD"
+                      ? pt
+                        ? "UM NOVO DIA, COM MAIS CLAREZA"
+                        : "UN NUEVO DÍA, CON MÁS CLARIDAD"
                       : page === "products"
-                        ? "CADA PLAN TIENE SU LUGAR"
+                        ? pt
+                          ? "CADA PLANO TEM SEU LUGAR"
+                          : "CADA PLAN TIENE SU LUGAR"
                         : pt
                           ? "OS DETALHES FAZEM A DIFERENÇA"
                           : "EL DETALLE HACE LA DIFERENCIA"}
@@ -3369,14 +3495,18 @@ export default function App() {
                   <h1>
                     {page === "home" ? (
                       <>
-                        Hola, {profile?.alias.split(" ")[0]}
+                        {pt ? "Olá" : "Hola"}, {profile?.alias.split(" ")[0]}
                         <span className="greeting-dot">.</span>
                         <span className="greeting-leaf">
                           <Leaf size={26} />
                         </span>
                       </>
                     ) : page === "products" ? (
-                      "Tus productos, juntos."
+                      pt ? (
+                        "Seus produtos, juntos."
+                      ) : (
+                        "Tus productos, juntos."
+                      )
                     ) : pt ? (
                       "Seu dinheiro em movimento."
                     ) : (
@@ -3385,9 +3515,13 @@ export default function App() {
                   </h1>
                   <p>
                     {page === "home"
-                      ? "Qué bueno tener todo bajo control."
+                      ? pt
+                        ? "Seus dados em um só lugar."
+                        : "Qué bueno tener todo bajo control."
                       : page === "products"
-                        ? "Una vista clara de tus cuentas, tarjetas y otros productos."
+                        ? pt
+                          ? "Uma visão clara das suas contas, cartões e outros produtos."
+                          : "Una vista clara de tus cuentas, tarjetas y otros productos."
                         : pt
                           ? "Explore, filtre e entenda cada operação."
                           : "Explora, filtra y entiende cada operación."}
@@ -3395,16 +3529,11 @@ export default function App() {
                 </div>
                 <span className="asof">
                   <span>
-                    {page === "transactions" && pt
+                    {pt
                       ? "Movimentos registrados até"
                       : "Movimientos registrados hasta"}
                   </span>
-                  <strong>
-                    {portalDate(
-                      asOf,
-                      page === "transactions" ? actionLanguagePreference : "es",
-                    )}
-                  </strong>
+                  <strong>{portalDate(asOf, actionLanguagePreference)}</strong>
                 </span>
               </div>
               {page === "home" && (
@@ -3413,7 +3542,7 @@ export default function App() {
                     <section className="balance-panel">
                       <div className="balance-top">
                         <span className="balance-label">
-                          Tu saldo en cuentas
+                          {pt ? "Seu saldo em contas" : "Tu saldo en cuentas"}
                           <button
                             className="icon-button"
                             aria-label={
@@ -3426,7 +3555,9 @@ export default function App() {
                         </span>
                         <label className="currency-select">
                           <select
-                            aria-label="Moneda del resumen"
+                            aria-label={
+                              pt ? "Moeda do resumo" : "Moneda del resumen"
+                            }
                             value={currency}
                             onChange={(e) => setCurrency(e.target.value)}
                           >
@@ -3438,14 +3569,19 @@ export default function App() {
                         </label>
                       </div>
                       <div className="balance-value">
-                        {money(balance?.deposit_balance || 0, currency, hidden)}
+                        {portalMoney(
+                          balance?.deposit_balance || 0,
+                          currency,
+                          hidden,
+                          actionLanguagePreference,
+                        )}
                         <span>{currency}</span>
                       </div>
                       <div className="balance-caption">
                         <span className="tiny-leaf">
                           <Leaf size={13} />
                         </span>
-                        Saldo del snapshot ·{" "}
+                        {pt ? "Saldo do snapshot" : "Saldo del snapshot"} ·{" "}
                         {
                           products.filter(
                             (p) =>
@@ -3453,28 +3589,37 @@ export default function App() {
                               p.balance_kind === "deposit",
                           ).length
                         }{" "}
-                        productos en esta moneda
+                        {pt
+                          ? "produtos nesta moeda"
+                          : "productos en esta moneda"}
                       </div>
                       <ActivityChart
                         data={data}
                         currency={currency}
                         asOf={asOf}
                         hidden={hidden}
+                        language={actionLanguagePreference}
                       />
                       <div className="balance-footer">
                         <span>
                           <ShieldCheck size={14} />
-                          Sin conversiones entre monedas
+                          {pt
+                            ? "Sem conversão entre moedas"
+                            : "Sin conversiones entre monedas"}
                         </span>
                         <button onClick={() => navigate("products")}>
-                          Ver detalle
+                          {pt ? "Ver detalhes" : "Ver detalle"}
                           <ArrowUpRight size={15} />
                         </button>
                       </div>
                     </section>
                     <div className="overview-side">
                       <div className="section-line">
-                        <span>UN PRODUCTO DESTACADO</span>
+                        <span>
+                          {pt
+                            ? "UM PRODUTO EM DESTAQUE"
+                            : "UN PRODUCTO DESTACADO"}
+                        </span>
                         <button
                           className="text-button"
                           onClick={() => navigate("products")}
@@ -3489,23 +3634,32 @@ export default function App() {
                           alias={profile?.alias || ""}
                           hidden={hidden}
                           onClick={() => setSelectedProduct(featureProduct)}
+                          language={actionLanguagePreference}
                         />
                       ) : (
                         <div className="panel">
-                          <Empty title="Sin productos">
-                            No hay productos en este perfil.
+                          <Empty title={pt ? "Sem produtos" : "Sin productos"}>
+                            {pt
+                              ? "Não há produtos neste perfil."
+                              : "No hay productos en este perfil."}
                           </Empty>
                         </div>
                       )}
                       <div className="quick-actions">
-                        <button onClick={() => openChat()}>
+                        <button
+                          onClick={() =>
+                            chatStatus.available
+                              ? openChat()
+                              : navigate("transactions")
+                          }
+                        >
                           <span>
                             <MessageCircle size={19} />
                           </span>
                           <strong>
-                            Consultar
+                            {chatStatus.available ? "Consultar" : "Ver"}
                             <br />
-                            un cargo
+                            {pt ? "uma cobrança" : "un cargo"}
                           </strong>
                         </button>
                         <button onClick={() => download(transactions)}>
@@ -3513,9 +3667,9 @@ export default function App() {
                             <ArrowDownToLine size={19} />
                           </span>
                           <strong>
-                            Descargar
+                            {pt ? "Baixar" : "Descargar"}
                             <br />
-                            movimientos
+                            {pt ? "movimentos" : "movimientos"}
                           </strong>
                         </button>
                         <button onClick={() => navigate("products")}>
@@ -3523,9 +3677,9 @@ export default function App() {
                             <Wallet size={19} />
                           </span>
                           <strong>
-                            Ver mis
+                            {pt ? "Ver meus" : "Ver mis"}
                             <br />
-                            productos
+                            {pt ? "produtos" : "productos"}
                           </strong>
                         </button>
                       </div>
@@ -3534,7 +3688,13 @@ export default function App() {
                   <section className="products-section">
                     <div className="section-heading">
                       <h2>
-                        Tus productos <span>{products.length}</span>
+                        {pt ? "Seus produtos" : "Tus productos"}{" "}
+                        <span>
+                          {portalNumber(
+                            products.length,
+                            actionLanguagePreference,
+                          )}
+                        </span>
                       </h2>
                       <button
                         className="text-button"
@@ -3551,18 +3711,25 @@ export default function App() {
                           product={p}
                           index={i}
                           hidden={hidden}
+                          language={actionLanguagePreference}
                           onSelect={() => setSelectedProduct(p)}
                         />
                       ))}
                     </div>
                     {products.length === 0 && (
-                      <Empty title="Aún no hay productos" />
+                      <Empty
+                        title={
+                          pt ? "Ainda não há produtos" : "Aún no hay productos"
+                        }
+                      />
                     )}
                   </section>
                   <div className="history-grid">
                     <section className="panel recent-panel">
                       <div className="panel-title">
-                        <h3>Últimos movimientos</h3>
+                        <h3>
+                          {pt ? "Movimentos recentes" : "Últimos movimientos"}
+                        </h3>
                         <button
                           className="text-button"
                           onClick={() => {
@@ -3570,45 +3737,63 @@ export default function App() {
                             navigate("transactions");
                           }}
                         >
-                          Ver historial
+                          {pt ? "Ver histórico" : "Ver historial"}
                           <ArrowRight size={15} />
                         </button>
                       </div>
                       <p className="panel-subtitle">
-                        El registro de lo que pasa con tu dinero.
+                        {pt
+                          ? "Movimentos registrados no histórico do seu perfil."
+                          : "El registro de lo que pasa con tu dinero."}
                       </p>
                       <TransactionTable
                         items={transactions.slice(0, 6)}
                         hidden={hidden}
                         onSelect={setSelectedTx}
                         compact
+                        language={actionLanguagePreference}
                       />
                       <div className="recent-footer">
                         <span>
-                          {number(data.metadata.transactions_total)} movimientos
-                          en el historial del perfil
+                          {portalNumber(
+                            data.metadata.transactions_total,
+                            actionLanguagePreference,
+                          )}{" "}
+                          {pt
+                            ? "movimentos no histórico do perfil"
+                            : "movimientos en el historial del perfil"}
                         </span>
                         <ArrowDownLeft size={15} />
                       </div>
                     </section>
-                    <Spending data={data} currency={currency} hidden={hidden} />
+                    <Spending
+                      data={data}
+                      currency={currency}
+                      hidden={hidden}
+                      language={actionLanguagePreference}
+                    />
                   </div>
                   <section className="clarity-banner">
                     <span className="clarity-icon">
                       <Sparkles size={25} />
                     </span>
                     <div>
-                      <h3>¿Un movimiento que no te suena?</h3>
+                      <h3>
+                        {pt
+                          ? "Não reconhece um movimento?"
+                          : "¿Un movimiento que no te suena?"}
+                      </h3>
                       <p>
-                        Revisa el comercio, la fecha y el monto antes de pedir
-                        ayuda.
+                        {pt
+                          ? "Confira o estabelecimento, a data e o valor antes de pedir ajuda."
+                          : "Revisa el comercio, la fecha y el monto antes de pedir ayuda."}
                       </p>
                     </div>
                     <button
                       className="button subtle"
                       onClick={() => navigate("transactions")}
                     >
-                      Ver movimientos
+                      {pt ? "Ver movimentos" : "Ver movimientos"}
                       <ArrowUpRight size={17} />
                     </button>
                   </section>
@@ -3617,7 +3802,10 @@ export default function App() {
               {page === "products" && (
                 <>
                   <div className="products-toolbar">
-                    <span>{products.length} productos en tu perfil</span>
+                    <span>
+                      {portalNumber(products.length, actionLanguagePreference)}{" "}
+                      {pt ? "produtos no seu perfil" : "productos en tu perfil"}
+                    </span>
                     <button
                       className="text-button"
                       onClick={() => setHidden(!hidden)}
@@ -3633,18 +3821,22 @@ export default function App() {
                         key={p.reference}
                         index={i}
                         hidden={hidden}
+                        language={actionLanguagePreference}
                         onSelect={() => setSelectedProduct(p)}
                       />
                     ))}
                   </div>
                   <section className="panel currency-summary">
                     <div className="panel-title">
-                      <h3>Un resumen por moneda</h3>
+                      <h3>
+                        {pt ? "Resumo por moeda" : "Un resumen por moneda"}
+                      </h3>
                       <ShieldCheck size={19} />
                     </div>
                     <p className="panel-subtitle">
-                      Cada moneda mantiene su valor. No se aplican tipos de
-                      cambio.
+                      {pt
+                        ? "Cada moeda mantém seu valor. Não aplicamos câmbio."
+                        : "Cada moneda mantiene su valor. No se aplican tipos de cambio."}
                     </p>
                     <div className="currency-summary-grid">
                       {data.summary.balances_by_currency.map((b) => (
@@ -3652,32 +3844,50 @@ export default function App() {
                           <span className="currency-tag">{b.currency}</span>
                           <dl>
                             <div>
-                              <dt>Cuentas</dt>
+                              <dt>{pt ? "Contas" : "Cuentas"}</dt>
                               <dd>
-                                {money(b.deposit_balance, b.currency, hidden)}
+                                {portalMoney(
+                                  b.deposit_balance,
+                                  b.currency,
+                                  hidden,
+                                  actionLanguagePreference,
+                                )}
                               </dd>
                             </div>
                             <div>
                               <dt>Crédito</dt>
                               <dd>
-                                {money(b.credit_balance, b.currency, hidden)}
+                                {portalMoney(
+                                  b.credit_balance,
+                                  b.currency,
+                                  hidden,
+                                  actionLanguagePreference,
+                                )}
                               </dd>
                             </div>
                             <div>
-                              <dt>Inversión</dt>
+                              <dt>{pt ? "Investimento" : "Inversión"}</dt>
                               <dd>
-                                {money(
+                                {portalMoney(
                                   b.investment_balance,
                                   b.currency,
                                   hidden,
+                                  actionLanguagePreference,
                                 )}
                               </dd>
                             </div>
                             {b.other_balance !== 0 && (
                               <div>
-                                <dt>Otros productos</dt>
+                                <dt>
+                                  {pt ? "Outros produtos" : "Otros productos"}
+                                </dt>
                                 <dd>
-                                  {money(b.other_balance, b.currency, hidden)}
+                                  {portalMoney(
+                                    b.other_balance,
+                                    b.currency,
+                                    hidden,
+                                    actionLanguagePreference,
+                                  )}
                                 </dd>
                               </div>
                             )}
@@ -3689,9 +3899,9 @@ export default function App() {
                   <div className="inline-note">
                     <ShieldCheck size={20} />
                     <p>
-                      Estos son los saldos registrados en el snapshot. Cada
-                      producto puede tener una fecha de actualización distinta.
-                      Consulta el detalle para verla.
+                      {pt
+                        ? "Estes saldos vêm do snapshot. Cada produto pode ter uma data de atualização diferente. Consulte os detalhes para verificá-la."
+                        : "Estos son los saldos registrados en el snapshot. Cada producto puede tener una fecha de actualización distinta. Consulta el detalle para verla."}
                     </p>
                   </div>
                 </>
@@ -3700,10 +3910,8 @@ export default function App() {
                 <>
                   {pt && (
                     <p className="data-footnote" lang="pt-BR">
-                      Início, a área de produtos, seus detalhes e as informações
-                      da demonstração continuam em espanhol. Nomes de
-                      estabelecimentos e dados da origem são exibidos como
-                      recebidos.
+                      Nomes de estabelecimentos e campos da origem são exibidos
+                      como recebidos.
                     </p>
                   )}
                   <div className="transactions-toolbar">
@@ -3930,6 +4138,7 @@ export default function App() {
         <ProductDetail
           product={selectedProduct}
           hidden={hidden}
+          language={actionLanguagePreference}
           onClose={closeProduct}
           onTransactions={() => {
             setProductFilter(selectedProduct.reference);
@@ -3969,56 +4178,85 @@ export default function App() {
         <Modal
           title={
             synthetic
-              ? "Un escenario para explorar"
-              : "Datos sintéticos del organizador"
+              ? pt
+                ? "Um cenário para explorar"
+                : "Un escenario para explorar"
+              : pt
+                ? "Dados sintéticos do organizador"
+                : "Datos sintéticos del organizador"
           }
+          titleLang={shellLang}
+          closeLabel={pt ? "Fechar" : "Cerrar"}
           onClose={closeInfo}
         >
-          <div className="about-logo">
-            <Brand />
-          </div>
-          <p className="about-intro">
-            {synthetic
-              ? "Savia es un prototipo de banca personal para el Factored AI & Data Hackathon 2026. Los perfiles, productos, saldos y movimientos de este escenario fueron creados por el equipo y son completamente ficticios."
-              : "Savia es una demo de banca personal creada para el Factored AI & Data Hackathon 2026. Los productos, saldos y movimientos corresponden al dataset sintético del organizador."}
-          </p>
-          <dl className="details-list">
-            <div>
-              <dt>Fecha más reciente del movimiento</dt>
-              <dd>{date(asOf)}</dd>
+          <div lang={shellLang}>
+            <div className="about-logo">
+              <Brand />
             </div>
-            <div>
-              <dt>Fuente</dt>
-              <dd>Snapshot silver / gold · DuckDB</dd>
-            </div>
-            <div>
-              <dt>Asistente</dt>
-              <dd>
-                {chatStatus.available
-                  ? "FLUJO conectado"
-                  : "Temporalmente no disponible"}
-              </dd>
-            </div>
-            {data && (
-              <div>
-                <dt>Versión del snapshot</dt>
-                <dd className="mono">{data.metadata.build_id}</dd>
-              </div>
-            )}
-          </dl>
-          <div className="inline-note">
-            <Fingerprint size={21} />
-            <p>
+            <p className="about-intro">
               {synthetic
-                ? "Cada invitación está ligada en el servidor a un único perfil ficticio. Solo puedes consultar sus productos y movimientos."
-                : "Los nombres son alias de demostración. La sesión limita cada consulta a los productos y movimientos del perfil seleccionado."}
+                ? pt
+                  ? "A Savia é um protótipo de banco pessoal para o Factored AI & Data Hackathon 2026. Os perfis, produtos, saldos e movimentos deste cenário foram criados pela equipe e são fictícios."
+                  : "Savia es un prototipo de banca personal para el Factored AI & Data Hackathon 2026. Los perfiles, productos, saldos y movimientos de este escenario fueron creados por el equipo y son completamente ficticios."
+                : pt
+                  ? "A Savia é uma demonstração de banco pessoal criada para o Factored AI & Data Hackathon 2026. Produtos, saldos e movimentos vêm do conjunto de dados sintéticos do organizador."
+                  : "Savia es una demo de banca personal creada para el Factored AI & Data Hackathon 2026. Los productos, saldos y movimientos corresponden al dataset sintético del organizador."}
             </p>
+            <dl className="details-list">
+              <div>
+                <dt>
+                  {pt
+                    ? "Data mais recente do movimento"
+                    : "Fecha más reciente del movimiento"}
+                </dt>
+                <dd>{portalDate(asOf, actionLanguagePreference)}</dd>
+              </div>
+              <div>
+                <dt>{pt ? "Fonte" : "Fuente"}</dt>
+                <dd>Snapshot silver / gold · DuckDB</dd>
+              </div>
+              <div>
+                <dt>{pt ? "Assistente" : "Asistente"}</dt>
+                <dd>
+                  {chatStatus.available
+                    ? "FLUJO conectado"
+                    : pt
+                      ? "Temporariamente indisponível"
+                      : "Temporalmente no disponible"}
+                </dd>
+              </div>
+              {data && (
+                <div>
+                  <dt>{pt ? "Versão do snapshot" : "Versión del snapshot"}</dt>
+                  <dd className="mono">{data.metadata.build_id}</dd>
+                </div>
+              )}
+            </dl>
+            <div className="inline-note">
+              <Fingerprint size={21} />
+              <p>
+                {synthetic
+                  ? pt
+                    ? "Cada convite está vinculado no servidor a um único perfil fictício. Você só pode consultar os produtos e movimentos desse perfil."
+                    : "Cada invitación está ligada en el servidor a un único perfil ficticio. Solo puedes consultar sus productos y movimientos."
+                  : pt
+                    ? "Os nomes são apelidos de demonstração. A sessão limita cada consulta aos produtos e movimentos do perfil selecionado."
+                    : "Los nombres son alias de demostración. La sesión limita cada consulta a los productos y movimientos del perfil seleccionado."}
+              </p>
+            </div>
+            <p className="about-intro">
+              {pt
+                ? "Esta demonstração não movimenta dinheiro, bloqueia cartões nem executa ações em um banco. Os saldos vêm do snapshot e podem ter datas diferentes das dos movimentos."
+                : "Esta demo no mueve dinero, bloquea tarjetas ni ejecuta acciones en un banco. Los saldos son valores suministrados en el snapshot y pueden tener fechas distintas a las transacciones."}
+            </p>
+            {synthetic && !chatStatus.available && (
+              <p className="about-intro">
+                {pt
+                  ? "Neste cenário, o Assistente e o registro de casos não estão disponíveis. Revise os dados fictícios do movimento sem iniciar uma ação bancária."
+                  : "En este escenario, el asistente y el registro de casos no están disponibles. Revisa los datos ficticios del movimiento sin iniciar una acción bancaria."}
+              </p>
+            )}
           </div>
-          <p className="about-intro">
-            Esta demo no mueve dinero, bloquea tarjetas ni ejecuta acciones en
-            un banco. Los saldos son valores suministrados en el snapshot y
-            pueden tener fechas distintas a las transacciones.
-          </p>
         </Modal>
       )}
       {toast && (

@@ -91,7 +91,7 @@ test("Portuguese demo sign-in preserves selected profile and Assistant locale", 
   ).toBeTruthy();
   expect(
     screen.getByText(
-      /a navegação e a consulta de movimentos estarão em português/,
+      /os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português/,
     ),
   ).toBeTruthy();
   await screen.findByRole("group", {
@@ -334,7 +334,7 @@ test("Portuguese sign-in reaches Assistant when storage reads and writes are den
   expect((language as HTMLSelectElement).value).toBe("es");
   fireEvent.change(language, { target: { value: "pt" } });
   expect(
-    screen.getByText(/o Assistente segue o idioma escolhido aqui/),
+    screen.getByText(/O Assistente usa o idioma escolhido aqui/),
   ).toBeTruthy();
   await enterDemo();
   fireEvent.click(screen.getByRole("button", { name: /^Assistente/ }));
@@ -345,7 +345,7 @@ test("Portuguese sign-in reaches Assistant when storage reads and writes are den
   expect(
     screen.getByPlaceholderText("Assistente temporariamente desconectado"),
   ).toBeTruthy();
-  expect(document.documentElement.lang).toBe("es");
+  expect(document.documentElement.lang).toBe("pt-BR");
   expect(getItem).toHaveBeenCalled();
   expect(setItem).toHaveBeenCalled();
   expect(calls.filter((url) => url.startsWith("/api/action/"))).toHaveLength(0);
@@ -373,7 +373,7 @@ test("Assistant language returns to Login during the same storage-denied visit",
   });
   expect((language as HTMLSelectElement).value).toBe("pt");
   expect(
-    screen.getByText(/o Assistente segue o idioma escolhido aqui/),
+    screen.getByText(/O Assistente usa o idioma escolhido aqui/),
   ).toBeTruthy();
 });
 
@@ -452,15 +452,16 @@ function servePortal(
   return calls;
 }
 
-test("Portuguese charge finder keeps labels and dialog names local while retaining Spanish document semantics", async () => {
+test("Portuguese charge finder keeps labels and dialog names local across the portal", async () => {
   const calls = servePortal("pt");
   render(<App />);
   const navigation = await screen.findByRole("button", { name: "Movimentos" });
-  expect(document.documentElement.lang).toBe("es");
+  expect(document.documentElement.lang).toBe("pt-BR");
+  expect(document.title).toBe("Savia · Seu banco pessoal");
   expect(navigation.closest("aside")?.getAttribute("lang")).toBe("pt-BR");
   expect(screen.getByRole("button", { name: "Início" })).toBeTruthy();
-  expect(screen.getByRole("main").getAttribute("lang")).toBe("es");
-  expect(screen.getByText(/Esta área e as informações.*espanhol/)).toBeTruthy();
+  expect(screen.getByRole("main").getAttribute("lang")).toBe("pt-BR");
+  expect(screen.getByRole("heading", { name: /Olá, Bia/ })).toBeTruthy();
   const globalSearch = screen.getByRole("textbox", {
     name: "Buscar movimentos",
   });
@@ -477,7 +478,9 @@ test("Portuguese charge finder keeps labels and dialog names local while retaini
   expect(
     screen.getByRole("heading", { name: "Seu dinheiro em movimento." }),
   ).toBeTruthy();
-  expect(screen.getByText(/área de produtos.*espanhol/)).toBeTruthy();
+  expect(
+    screen.getByText(/Nomes de estabelecimentos e campos da origem/),
+  ).toBeTruthy();
   expect(
     screen.getByRole("combobox", { name: "Filtrar por produto" }),
   ).toBeTruthy();
@@ -641,4 +644,184 @@ test("Portuguese charge review says when the Assistant is unavailable", async ()
   ).toBeTruthy();
   expect(screen.getByText(/Nenhum caso foi registrado/)).toBeTruthy();
   expect(calls.some((url) => url.startsWith("/api/action/"))).toBe(false);
+});
+
+test.each([
+  [
+    "pt",
+    "pt-BR",
+    "Olá, Bia",
+    "Seus produtos, juntos.",
+    "Cartão de débito",
+    "Referência do produto",
+    "Um cenário para explorar",
+  ],
+  [
+    "es",
+    "es",
+    "Hola, Bia",
+    "Tus productos, juntos.",
+    "Tarjeta de débito",
+    "Referencia del producto",
+    "Un escenario para explorar",
+  ],
+] as const)(
+  "%s Home, Products, detail and About use matching language and synthetic disclosure",
+  async (
+    language,
+    locale,
+    greeting,
+    productHeading,
+    productName,
+    referenceLabel,
+    aboutTitle,
+  ) => {
+    const calls = servePortal(language, false);
+    render(<App />);
+    const home = await screen.findByRole("heading", {
+      name: new RegExp(greeting),
+    });
+    expect(home.closest("main")?.getAttribute("lang")).toBe(locale);
+    expect(document.documentElement.lang).toBe(locale);
+    expect(
+      screen.getByRole("heading", {
+        name: language === "pt" ? "Para onde vai" : "En qué se mueve",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("img", {
+        name:
+          language === "pt"
+            ? /Entradas e saídas identificadas/
+            : /Entradas y salidas identificadas/,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        language === "pt" ? "Total de saídas" : "Total de salidas",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: language === "pt" ? /cobrança/ : /cargo/,
+      }),
+    );
+    expect(
+      screen.getByRole("heading", {
+        name:
+          language === "pt"
+            ? "Seu dinheiro em movimento."
+            : "Tu dinero en movimiento.",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("dialog", {
+        name: language === "pt" ? "Seu assistente Savia" : "Tu asistente Savia",
+      }),
+    ).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: language === "pt" ? "Início" : "Inicio",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: language === "pt" ? "Meus produtos" : "Mis productos",
+      }),
+    );
+    expect(screen.getByRole("heading", { name: productHeading })).toBeTruthy();
+    expect(screen.getByRole("main").getAttribute("lang")).toBe(locale);
+    const product = screen.getByRole("button", {
+      name: new RegExp(productName),
+    });
+    expect(product.getAttribute("lang")).toBe(locale);
+    fireEvent.click(product);
+    const detail = screen.getByRole("dialog", { name: productName });
+    expect(detail.querySelector("h2")?.getAttribute("lang")).toBe(locale);
+    expect(within(detail).getByText(referenceLabel)).toBeTruthy();
+    expect(
+      within(detail).getByText(
+        language === "pt"
+          ? /Não representa saldo bancário em tempo real/
+          : /No representa un saldo bancario en tiempo real/,
+      ),
+    ).toBeTruthy();
+    fireEvent.click(
+      within(detail).getByRole("button", {
+        name:
+          language === "pt"
+            ? "Ver movimentos deste produto"
+            : "Ver movimientos de este producto",
+      }),
+    );
+    expect(
+      screen.getByRole("heading", {
+        name:
+          language === "pt"
+            ? "Seu dinheiro em movimento."
+            : "Tu dinero en movimiento.",
+      }),
+    ).toBeTruthy();
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name:
+            language === "pt" ? "Filtrar por produto" : "Filtrar por producto",
+        }) as HTMLSelectElement
+      ).value,
+    ).toBe("card-1");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name:
+          language === "pt"
+            ? "Sobre esta experiência"
+            : "Sobre esta experiencia",
+      }),
+    );
+    const about = screen.getByRole("dialog", { name: aboutTitle });
+    expect(about.querySelector("h2")?.getAttribute("lang")).toBe(locale);
+    expect(
+      within(about).getByText(
+        language === "pt"
+          ? /perfis, produtos, saldos e movimentos deste cenário foram criados pela equipe/
+          : /perfiles, productos, saldos y movimientos de este escenario fueron creados por el equipo/,
+      ),
+    ).toBeTruthy();
+    expect(
+      within(about).getByText(
+        language === "pt"
+          ? /Assistente e o registro de casos não estão disponíveis/
+          : /asistente y el registro de casos no están disponibles/,
+      ),
+    ).toBeTruthy();
+    expect(calls.some((url) => url.startsWith("/api/action/"))).toBe(false);
+  },
+);
+
+test("Portuguese invite uses organizer source wording when metadata identifies organizer data", async () => {
+  servePortal("pt", true, {
+    ...portalOverview,
+    metadata: {
+      ...portalOverview.metadata,
+      dataset: "organizer-synthetic-snapshot",
+    },
+  });
+  render(<App />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Sobre esta experiência" }),
+  );
+  const about = screen.getByRole("dialog", {
+    name: "Dados sintéticos do organizador",
+  });
+  expect(
+    within(about).getByText(/conjunto de dados sintéticos do organizador/),
+  ).toBeTruthy();
+  expect(
+    within(about).getByText(/Os nomes são apelidos de demonstração/),
+  ).toBeTruthy();
+  expect(
+    within(about).queryByText(
+      /Assistente e o registro de casos não estão disponíveis/,
+    ),
+  ).toBeNull();
 });
