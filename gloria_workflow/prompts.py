@@ -252,10 +252,21 @@ _DOCUMENT_TEXT = re.compile(r"(\b(?:documento|c[eé]dula|cpf|cuit|tel[eé]fono|t
 _PHONE_TEXT = re.compile(r"(?<!\w)\+[0-9]{1,3}(?:[ .()-]+[0-9]{1,4}){2,6}(?!\w)")
 _SOURCE_PATH_TEXT = re.compile(r"\b[A-Za-z]:[\\/][^\s\"'<>]{1,240}|/(?:Users|home|tmp|var|etc|data|private|sandbox)/[^\s\"'<>]{1,240}")
 _SOURCE_LABEL = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,79}")
+_CREDENTIAL_LABEL = r"(?:contrase[nñ]a|senha|password|pin|cvv|cvc|otp|api[ _-]?key|service[ _-]?token|credencial(?:es)?|credentials?|token (?:secreto|de acceso)|c[oó]digo de (?:acceso|seguridad|verificaci[oó]n)|c[oó]digo (?:sms|otp))"
+_LABELED_CREDENTIAL = re.compile(
+    r"(?<![\w-])(" + _CREDENTIAL_LABEL + r"[\"']?\s*(?:[:=]\s*|(?:es|son|é|são|is|are)\s+))"
+    r"(?:\"[^\"\r\n]{1,12000}\"|'[^'\r\n]{1,12000}'|[^\s\"'<>]{1,12000})", re.I)
+_NUMERIC_CREDENTIAL = re.compile(r"(?<![\w-])((?:pin|cvv|cvc|otp)\s*[:=]?\s*)[0-9]{1,32}(?![0-9])", re.I)
+_BEARER_CREDENTIAL = re.compile(r"(?<![\w-])(bearer\s+)[A-Za-z0-9._~+/-]{8,12000}=*", re.I)
 
 
 def _text(value):
     text = _PRIVATE_TEXT.sub("[DATO_REDACTADO]", str(value or ""))
+    # Credential values are unnecessary for every language stage. Preserve the
+    # label so the model can recognize the request without receiving its value.
+    text = _LABELED_CREDENTIAL.sub(lambda match: match[1] + "[CREDENCIAL_REDACTADA]", text)
+    text = _NUMERIC_CREDENTIAL.sub(lambda match: match[1] + "[CREDENCIAL_REDACTADA]", text)
+    text = _BEARER_CREDENTIAL.sub(lambda match: match[1] + "[CREDENCIAL_REDACTADA]", text)
     text = _DOCUMENT_TEXT.sub(lambda match: match[1] + "[DOCUMENTO_REDACTADO]", text)
     text = _PHONE_TEXT.sub("[TELÉFONO_REDACTADO]", text)
     return _SOURCE_PATH_TEXT.sub("[RUTA_REDACTADA]", text)[:12000]

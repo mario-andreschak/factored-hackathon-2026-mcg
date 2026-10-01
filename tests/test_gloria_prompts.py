@@ -237,6 +237,52 @@ def test_redaction_preserves_permitted_identifiers_and_decimal_amounts():
     assert "CLI-PRIVATE" not in calls[0] and "987654321" not in calls[0] and "user@example.com" not in calls[0]
 
 
+@pytest.mark.parametrize("text, secret", [
+    ("Mi PIN es 7391", "7391"),
+    ("Minha senha é synthetic-password", "synthetic-password"),
+    ("password: 'synthetic secret phrase'", "synthetic secret phrase"),
+    ('{"api_key":"synthetic-api-secret"}', "synthetic-api-secret"),
+    ("OTP 654321", "654321"),
+    ("CVV987", "987"),
+    ("Bearer synthetic-bearer-secret", "synthetic-bearer-secret"),
+])
+def test_labeled_credentials_are_redacted_before_question_and_history_reach_model(text, secret):
+    calls = []
+    async def model(stage, system, user):
+        calls.append(user)
+        return json.dumps(OUTPUTS[stage])
+    asyncio.run(StageAdapters(model).detect_context(text, historic_conversation=text))
+    assert len(calls) == 1 and secret not in calls[0]
+    assert "CREDENCIAL_REDACTADA" in calls[0]
+
+
+def test_credential_redaction_preserves_public_ids_amounts_and_policy_prohibitions():
+    calls = []
+    async def model(stage, system, user):
+        calls.append(user)
+        return json.dumps(OUTPUTS[stage])
+    text = "Consulta CMP-PIN7391 y TRX-OTP654321, importe 7391.25 COP. No compartas PIN ni CVV."
+    asyncio.run(StageAdapters(model).detect_attack(text))
+    assert all(item in calls[0] for item in ("CMP-PIN7391", "TRX-OTP654321", "7391.25", "No compartas PIN ni CVV"))
+    assert "CREDENCIAL_REDACTADA" not in calls[0]
+
+
+def test_generate_redacts_labeled_credentials_in_projected_display_text():
+    calls = []
+    async def model(stage, system, user):
+        calls.append(user)
+        return json.dumps(OUTPUTS[stage])
+    adapter = StageAdapters(model)
+    data = adapter.build_inputs("generate", STATE)
+    data["clean_query"] = "Mi PIN es 7391"
+    data["historic_conversation"] = "senha: synthetic-history-secret"
+    data["structured_data"]["candidates"][0]["merchant_name"] = "password: synthetic-merchant-secret"
+    data["policy_context"] = [{"chunk_id": "synthetic-policy", "text": "api_key=synthetic-policy-secret"}]
+    asyncio.run(adapter.generate(data))
+    assert all(secret not in calls[0] for secret in ("7391", "synthetic-history-secret", "synthetic-merchant-secret", "synthetic-policy-secret"))
+    assert "250" in calls[0] and "CMP-SBX-AB_cd123" in calls[0]
+
+
 def test_malformed_projection_input_is_a_safe_stage_error():
     async def model(*_):
         pytest.fail("invalid projection must not call model")
