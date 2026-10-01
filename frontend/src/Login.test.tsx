@@ -933,3 +933,112 @@ test("Portuguese invite uses organizer source wording when metadata identifies o
     ),
   ).toBeNull();
 });
+
+test("a Portuguese profile opens the portal in Portuguese until the visitor chooses a language", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url === "/api/auth/profiles")
+        return reply({
+          mode: "demo",
+          profiles: [
+            {
+              id: "fictional-es",
+              alias: "Ana Demo",
+              country: "Colombia",
+              primary_currency: "COP",
+              language: "es",
+              description: "Tu día a día",
+              descriptions: { es: "Tu día a día", pt: "Seu dia a dia" },
+            },
+            {
+              id: "fictional-pt",
+              alias: "Bia Demo",
+              country: "Colombia",
+              primary_currency: "COP",
+              language: "pt",
+              description: "Perfil en portugués",
+              descriptions: {
+                es: "Perfil en portugués",
+                pt: "Perfil em português",
+              },
+            },
+          ],
+        });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  const onLanguageChange = vi.fn();
+  render(
+    <Login onLogin={vi.fn()} notice="" onLanguageChange={onLanguageChange} />,
+  );
+  // The first profile declares Spanish, so nothing switches on its own.
+  await screen.findByRole("group", { name: "Elige un perfil de demostración" });
+  expect(document.documentElement.lang).toBe("es");
+  expect(screen.getByText("Tu día a día")).toBeTruthy();
+  expect(onLanguageChange).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole("button", { name: /Bia Demo/ }));
+  await waitFor(() => expect(document.documentElement.lang).toBe("pt-BR"));
+  expect(document.title).toBe("Savia · Seu banco pessoal");
+  expect(onLanguageChange).toHaveBeenCalledWith("pt");
+  expect(
+    (
+      screen.getByRole("combobox", {
+        name: "Idioma de acesso",
+      }) as HTMLSelectElement
+    ).value,
+  ).toBe("pt");
+  expect(screen.getByText("Perfil em português")).toBeTruthy();
+  expect(
+    within(screen.getByRole("button", { name: /Bia Demo/ })).getByText(
+      "Português",
+    ).lang,
+  ).toBe("pt-BR");
+  // Following a profile is not an explicit choice, so nothing is persisted.
+  expect(localStorage.getItem("flujo-bank-action-language")).toBeNull();
+
+  // An explicit choice wins for the rest of the visit and is remembered.
+  fireEvent.change(screen.getByRole("combobox", { name: "Idioma de acesso" }), {
+    target: { value: "es" },
+  });
+  expect(document.documentElement.lang).toBe("es");
+  expect(localStorage.getItem("flujo-bank-action-language")).toBe("es");
+  fireEvent.click(screen.getByRole("button", { name: /Ana Demo/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Bia Demo/ }));
+  expect(document.documentElement.lang).toBe("es");
+  expect(document.title).toBe("Savia · Tu banca personal");
+  expect(screen.getByText("Perfil en portugués")).toBeTruthy();
+});
+
+test("a stored language choice is not overridden by a Portuguese profile", async () => {
+  localStorage.setItem("flujo-bank-action-language", "es");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      if (String(input) === "/api/auth/profiles")
+        return reply({
+          mode: "demo",
+          profiles: [
+            {
+              id: "fictional-pt",
+              alias: "Bia Demo",
+              country: "Colombia",
+              primary_currency: "COP",
+              language: "pt",
+              descriptions: {
+                es: "Perfil en portugués",
+                pt: "Perfil em português",
+              },
+            },
+          ],
+        });
+      throw new Error(`Unexpected request: ${String(input)}`);
+    }),
+  );
+  render(<Login onLogin={vi.fn()} notice="" initialLanguage="es" />);
+  await screen.findByRole("group", { name: "Elige un perfil de demostración" });
+  expect(screen.getByText("Perfil en portugués")).toBeTruthy();
+  expect(document.documentElement.lang).toBe("es");
+});

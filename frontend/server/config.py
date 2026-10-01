@@ -10,6 +10,10 @@ from urllib.parse import urlsplit
 
 
 PROFILE_IDS = frozenset({"colombia", "mexico", "argentina"})
+# Portal display languages. The published snapshot holds no Brazilian customer,
+# so a Portuguese profile is a display-language binding over an approved
+# synthetic customer and never a claim about the customer's country.
+PROFILE_LANGUAGES = ("es", "pt")
 SYNTHETIC_MARKER = "team_synthetic_fixture"
 
 
@@ -31,6 +35,12 @@ class Settings:
     def __post_init__(self):
         if not isinstance(self.auth_mode, str) or self.auth_mode not in {"demo", "invite"}:
             raise ValueError("Invalid banking authentication mode")
+        # A configured display language is validated in both modes: an unknown
+        # value must fail closed instead of silently selecting fallback copy.
+        for profile in (self.profiles.values() if isinstance(self.profiles, dict) else []):
+            if (isinstance(profile, dict) and "language" in profile
+                    and profile["language"] not in PROFILE_LANGUAGES):
+                raise ValueError("Profile language must be an approved portal language")
         if self.auth_mode == "demo":
             return
         if not isinstance(self.invites, dict) or not 1 <= len(self.invites) <= len(PROFILE_IDS):

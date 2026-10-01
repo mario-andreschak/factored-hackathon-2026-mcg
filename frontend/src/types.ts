@@ -6,6 +6,10 @@ export type Profile = {
   segment: string;
   primary_currency: string;
   description?: string;
+  descriptions?: { es?: string; pt?: string };
+  // Display language this profile opens in. It never describes the customer's
+  // country, which the snapshot supplies in `country`.
+  language?: "es" | "pt";
 };
 export type Product = {
   reference: string;

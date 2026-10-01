@@ -15,14 +15,25 @@ from tempfile import TemporaryDirectory
 
 import duckdb
 
-from .config import SYNTHETIC_MARKER, Settings
+from .config import PROFILE_LANGUAGES, SYNTHETIC_MARKER, Settings
 from .state import State
 
 
+# Aliases and descriptions are presentation copy for the profile chooser. The
+# portal language is a display choice only: country, currency, balances and
+# every record stay exactly as the published snapshot supplies them. The
+# snapshot contains customers in México, Colombia and Argentina only, so a
+# Portuguese profile never asserts that its customer is Brazilian.
 PROFILE_DEFAULTS = {
-    "colombia": {"alias": "Valentina", "country": "Colombia", "description": "Tu día a día, en pesos colombianos"},
-    "mexico": {"alias": "Santiago", "country": "México", "description": "Tu banca, sin fronteras"},
-    "argentina": {"alias": "Lucía", "country": "Argentina", "description": "Todo lo que mueve tus planes"},
+    "colombia": {"alias": "Valentina", "country": "Colombia", "language": "es",
+                 "description": {"es": "Tu día a día, en pesos colombianos",
+                                 "pt": "Seu dia a dia, em pesos colombianos"}},
+    "mexico": {"alias": "Santiago", "country": "México", "language": "es",
+               "description": {"es": "Tu banca, sin fronteras",
+                               "pt": "Seu banco, sem fronteiras"}},
+    "argentina": {"alias": "Lucía", "country": "Argentina", "language": "es",
+                  "description": {"es": "Todo lo que mueve tus planes",
+                                  "pt": "Tudo o que move seus planos"}},
 }
 DEPOSIT_TYPES = {"Cuenta Ahorro", "Cuenta Corriente"}
 CREDIT_TYPES = {"Tarjeta Crédito", "Préstamo Personal", "Préstamo Hipotecario"}
@@ -175,12 +186,32 @@ class Repository:
         digest = hmac.new(self.state.secret, f"{kind}:{customer_id}:{value}".encode(), hashlib.sha256).hexdigest()[:24]
         return f"{kind}_{digest}"
 
+    @staticmethod
+    def _descriptions(value) -> dict:
+        """Describe a profile in every portal language without inventing copy."""
+        if isinstance(value, str):
+            # A single operator override is shown as written, never translated here.
+            return {language: value for language in PROFILE_LANGUAGES}
+        if not isinstance(value, dict):
+            return {language: "" for language in PROFILE_LANGUAGES}
+        base = value.get("es") if isinstance(value.get("es"), str) else ""
+        return {language: value[language] if isinstance(value.get(language), str) else base
+                for language in PROFILE_LANGUAGES}
+
     def _profile_template(self, profile_id: str) -> dict:
         defaults = PROFILE_DEFAULTS.get(profile_id)
         if not defaults:
             raise KeyError(profile_id)
         overrides = self.settings.profiles.get(profile_id, {})
-        return {**defaults, **{k: v for k, v in overrides.items() if k in {"alias", "description", "country"}}}
+        template = {**defaults, **{k: v for k, v in overrides.items()
+                                   if k in {"alias", "description", "country", "language"}}}
+        # An unusable configured language falls back to Spanish copy instead of
+        # leaving the chooser without a label.
+        template["language"] = (template["language"] if template.get("language") in PROFILE_LANGUAGES
+                                else PROFILE_LANGUAGES[0])
+        template["descriptions"] = self._descriptions(template.get("description"))
+        template["description"] = template["descriptions"][PROFILE_LANGUAGES[0]]
+        return template
 
     def ensure_profiles(self, snapshot: Snapshot):
         """Aliases are fictional; private mappings restrict selectable demo records."""

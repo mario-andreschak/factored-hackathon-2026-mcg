@@ -3869,3 +3869,21 @@ button svg {
     flex-basis: 100%;
   }
 }
+
+/* Profile chooser: language marker and per-profile description. */
+.profile-option .profile-language {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.68em;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.profile-option .profile-description {
+  display: block;
+  margin-top: 0.15rem;
+  opacity: 0.85;
+  text-wrap: balance;
+}

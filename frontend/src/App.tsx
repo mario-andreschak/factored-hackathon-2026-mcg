@@ -268,6 +268,8 @@ export function Login({
   onLanguageChange?: (language: ActionLanguage) => void;
 }) {
   const [locale, setLocale] = useState<ActionLanguage>(initialLanguage);
+  // A choice made here wins over the selected profile for the whole visit.
+  const chosenLocale = useRef(storedActionLanguage() !== null);
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [mode, setMode] = useState<"loading" | "demo" | "invite">("loading"),
     [profileId, setProfileId] = useState(""),
@@ -287,6 +289,7 @@ export function Login({
     };
   }, [locale]);
   function changeLocale(next: ActionLanguage) {
+    chosenLocale.current = true;
     setLocale(next);
     onLanguageChange?.(next);
     try {
@@ -310,6 +313,16 @@ export function Login({
       .catch(() => setError("connection"));
   }, []);
   useEffect(load, [load]);
+  const selectedLanguage = profiles.find((p) => p.id === profileId)?.language;
+  useEffect(() => {
+    // Opening a Portuguese profile shows the portal in Portuguese without
+    // overriding or persisting a language the visitor picked themselves.
+    if (chosenLocale.current) return;
+    if (selectedLanguage !== "es" && selectedLanguage !== "pt") return;
+    if (selectedLanguage === locale) return;
+    setLocale(selectedLanguage);
+    onLanguageChange?.(selectedLanguage);
+  }, [selectedLanguage, locale, onLanguageChange]);
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -450,7 +463,20 @@ export function Login({
                           <strong>{p.alias}</strong>
                           <small>
                             {p.country} · {p.primary_currency}
+                            {p.language === "pt" && (
+                              <em className="profile-language" lang="pt-BR">
+                                Português
+                              </em>
+                            )}
                           </small>
+                          {profileDescription(p, locale) && (
+                            <small
+                              className="profile-description"
+                              lang={locale === "pt" ? "pt-BR" : "es"}
+                            >
+                              {profileDescription(p, locale)}
+                            </small>
+                          )}
                         </span>
                         <span className="radio-mark">
                           {profileId === p.id && <span />}
@@ -1469,6 +1495,22 @@ function savedActionLanguage(): ActionLanguage {
   } catch {
     return "es";
   }
+}
+
+/** An explicit stored choice, or null when the visitor has not chosen yet. */
+function storedActionLanguage(): ActionLanguage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = window.localStorage.getItem(ACTION_LANGUAGE_STORAGE);
+    return stored === "pt" || stored === "es" ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Chooser copy for a profile in the language the chooser is showing. */
+function profileDescription(profile: Profile, language: ActionLanguage) {
+  return profile.descriptions?.[language] || profile.description || "";
 }
 
 const actionCopy = {

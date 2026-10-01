@@ -179,6 +179,29 @@ Use `compose.yaml` by itself when FLUJO chat is not configured. Copy
 `BANKING_CONFIG_FILE` to that copy. Local demo mode can select customers from
 the mounted snapshot when no explicit `profiles` mapping is configured.
 
+### Portal language per profile
+
+Each entry in `profiles` accepts an optional `language` of `es` (default) or
+`pt`. Selecting that profile on the sign-in page opens the chooser, the portal
+and the Assistant in that language, and an unknown value is rejected at startup.
+A profile `description` may be a single string or an object with `es` and `pt`
+copy; a missing translation falls back to the Spanish text.
+
+The language is presentation only. Country, currency, balances, statuses and
+every record keep exactly the values the published snapshot supplies, and
+merchant, city and channel text is still shown as received. The snapshot
+contains customers in México, Colombia and Argentina only, so a Portuguese
+profile never asserts that its customer is Brazilian. The sign-in language
+switch remains available and, once a visitor uses it, their choice wins over
+the selected profile for the rest of the visit.
+
+```json
+{
+  "demo_code": "",
+  "profiles": { "colombia": { "language": "pt" } }
+}
+```
+
 The Docker image listens on `0.0.0.0:8080` and has no Docker or host-path
 dependency. It can run on Fly, GCP or Azure behind HTTPS. Provide the published
 dataset tree at `/banking-data` read-only, the private config at

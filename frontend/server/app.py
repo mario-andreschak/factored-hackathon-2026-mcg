@@ -245,7 +245,8 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
             return {"mode": "invite", "demo": True, "profiles": []}
         public = []
         for profile in request.app.state.repository.profiles():
-            public.append({k: profile[k] for k in ("id", "alias", "country", "segment", "description", "primary_currency")})
+            public.append({k: profile[k] for k in ("id", "alias", "country", "segment", "description",
+                                                  "descriptions", "language", "primary_currency")})
         return {"profiles": public, "demo": True}
 
     @app.post("/api/auth/login")
