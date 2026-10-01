@@ -781,7 +781,7 @@ button svg {
 }
 .topbar-title {
   font-size: 12px;
-  color: #879481;
+  color: #52684e;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -826,7 +826,7 @@ button svg {
   border: 1px solid #e5ebdb;
   font-size: 9px;
   padding: 7px 10px;
-  color: #6f8965;
+  color: #52684e;
   border-radius: 20px;
 }
 .help-button {
@@ -1942,6 +1942,10 @@ button svg {
 .chat-message-selection > span {
   overflow-wrap: anywhere;
 }
+.chat-message.user .chat-message-selection {
+  background: #244e40;
+  opacity: 1;
+}
 .modal {
   position: fixed;
   border: 1px solid #dbe5d1;
@@ -2085,9 +2089,9 @@ button svg {
   line-height: 1.55;
 }
 .modal-disclosure {
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.7;
-  color: #a2ae92;
+  color: #4b6246;
   text-align: center;
   margin-top: 13px;
 }
@@ -2122,7 +2126,7 @@ button svg {
 }
 .assistant-status div > span {
   font-size: 8px;
-  color: #94a782;
+  color: #4b6246;
 }
 .assistant-orb {
   width: 36px;
@@ -2147,17 +2151,21 @@ button svg {
 .chat-selection > span {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 5px;
 }
 .chat-selection strong {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
 }
 .chat-selection small {
-  font-size: 8px;
-  color: #9aae84;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #4b6246;
+  overflow-wrap: anywhere;
 }
 .chat-selection > svg {
+  flex-shrink: 0;
   margin-left: auto;
   color: #8eac70;
 }
@@ -3453,12 +3461,6 @@ button svg {
   .assistant-status strong {
     font-size: 10px;
   }
-  .chat-selection strong {
-    font-size: 9px;
-  }
-  .chat-selection small {
-    font-size: 7px;
-  }
   .modal .button.full {
     font-size: 11px;
     gap: 8px;
@@ -3511,6 +3513,7 @@ button svg {
 @media (max-width: 640px) {
   .sidebar {
     visibility: hidden;
+    overflow-y: auto;
   }
   .sidebar.mobile-open {
     visibility: visible;
