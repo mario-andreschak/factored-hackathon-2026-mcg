@@ -16,6 +16,42 @@ FLUJO #534 restored the pre-#530 source tree on main; preserving the separate
 branch does not upgrade the previous worker/image or reconcile its banking
 state. Follow the [deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md).
 
+## Proposed Slack gateway long-task acceptance
+
+PR #30 reports that the Slack gateway times out on long-running tasks. This
+section records a proposed acceptance contract for a separate generic gateway
+follow-up in its actual repository; this project PR neither implements,
+dispatches nor proves a gateway fix. The proposed follow-up remains generic to
+FLUJO and Slack, independent of banking.
+
+**A conversation error requires FLUJO to report `status: 'error'` for that
+same conversation.** Elapsed time in the gateway, an HTTP wait ending, a
+transport break, or a Slack acknowledgement deadline does not establish that
+state. Do not invent a fixed task-duration rule and present it as a FLUJO
+conversation error. Keep the raw FLUJO diagnostic in protected operator records;
+show the requester only a sanitized, user-safe reason and next step. Report
+gateway delivery failure separately from FLUJO conversation state.
+
+Persist accepted-work correlation across a gateway restart or transport break:
+Slack workspace ID, channel ID, thread timestamp, and requesting principal,
+plus FLUJO owner, session ID, and conversation ID. Before resuming observation
+or delivering a reply, revalidate the saved Slack destination/requester and
+FLUJO owner/session/conversation binding against current authority. If that
+binding cannot be verified, hold delivery for protected reconciliation; do not
+start another task or send a reply to an unverified thread.
+
+Review the Slack event acknowledgement, job scheduler, FLUJO client, terminal
+state observation, and reply delivery together. The fix is complete when a
+long-running accepted task survives the former gateway cutoff and produces
+exactly one final reply in its originating Slack thread; a matching FLUJO
+`status: 'error'` produces a truthful, sanitized error reply; duration or
+transport failure alone does not; and reconnect/restart does not launch a
+duplicate task or post a duplicate final reply. Test mismatched or expired
+correlation as a no-delivery case. Verify the deployed path with recorded
+conversation state and Slack delivery evidence before reporting this resolved.
+Security/session limits that FLUJO actually enforces must remain explicit and
+separate from gateway guesses.
+
 ## Product focus
 
 The customer has one problem: **“I do not recognize this charge.”** The product
