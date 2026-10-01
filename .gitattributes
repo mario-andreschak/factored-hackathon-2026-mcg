@@ -8,6 +8,7 @@ ml/data/router_test*.csv text eol=lf
 Dockerfile.banking-package-issue21-preflight text eol=lf
 scripts/package_issue21_preflight/*.cjs text eol=lf
 .github/workflows/banking-synthetic-integration.yml text eol=lf
+.github/workflows/banking-synthetic-source-bundle.yml text eol=lf
 scripts/synthetic_integration/** text eol=lf
 # Preserve the DATASET contribution's exact original byte hashes.
 scripts/synthetic_integration/dataset_source/** -text whitespace=cr-at-eol

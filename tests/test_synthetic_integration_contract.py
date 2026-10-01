@@ -41,8 +41,8 @@ def runtime_config():
 
 def counts():
     return {"cases": 0, "receipts": 0, "handoffs": 0, "pending": 0, "tool_calls": {},
-            "external_model_requests_attempted": 0, "fixture_provider_calls": 1,
-            "forwarded_faults": 0, "forbidden_writes": 0}
+            "external_network_attempts": 0, "fixture_provider_calls": 1,
+            "forwarded_faults": 0, "forbidden_dispatch_attempts": 0}
 
 
 class SourceGates(unittest.TestCase):
