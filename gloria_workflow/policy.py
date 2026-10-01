@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import date, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 import math
 import hashlib
@@ -111,6 +112,8 @@ def _decision(config: dict, rule: str, mode: str, reason: str,
 
 def _increment(state: dict, key: str) -> tuple[int, dict]:
     counters = deepcopy(state.get("workflow_state", {}).get("counters", {}))
+    if key == "tool_failures":
+        counters[key] = max(_count(counters.get(key)), _count(state.get("runtime", {}).get("session_tool_failures")))
     turn_id = state.get("turn", {}).get("turn_id")
     counted = counters.setdefault("counted_turn_ids", {})
     if turn_id and counted.get(key) != turn_id:
@@ -160,7 +163,8 @@ def _trusted_consent(state: dict, config: dict, now: datetime | None) -> bool:
     event = workflow.get("trusted_confirmation", {})
     verified_at = parse_timestamp(event.get("verified_at"))
     expires_at = parse_timestamp(event.get("expires_at"))
-    if (now is None or verified_at is None or expires_at is None or
+    if (not _query_binding_matches(state, pending, event) or
+            now is None or verified_at is None or expires_at is None or
             not verified_at <= now < expires_at or
             (expires_at - verified_at).total_seconds() > config["confirmation_ttl_seconds"] or
             _pending_expired(state, config, now)):
@@ -177,6 +181,100 @@ def _trusted_consent(state: dict, config: dict, now: datetime | None) -> bool:
             pending.get("snapshot_hash") == workflow.get("candidate_snapshot_hash") and
             pending.get("target_transaction_id") == workflow.get("transaction_id") and
             bool(workflow.get("transaction_id")))
+
+
+def _query_binding_matches(state: dict, *records: dict) -> bool:
+    """A host capability belongs to its server-generated query, even for the same target."""
+    runtime = state.get("runtime", {})
+    if "query_scopes" not in runtime:
+        return True
+    query_id = runtime.get("active_query_id")
+    scopes = runtime.get("query_scopes")
+    return (isinstance(query_id, str) and isinstance(scopes, dict) and query_id in scopes and
+            all(isinstance(record, dict) and record.get("query_id") == query_id for record in records))
+
+
+def _business_errors(state: dict) -> list:
+    # Handoff wording is auxiliary to the already-established policy route.
+    return [error for error in state.get("runtime", {}).get("node_errors", [])
+            if not isinstance(error, dict) or error.get("node") != "generate_handoff_summary"]
+
+
+def _scoped_receipt(state: dict, result_id: str) -> bool:
+    """Require fresh host readback and this query's immutable prepared request."""
+    runtime = state.get("runtime", {})
+    if "query_scopes" not in runtime:
+        return True
+    workflow = state.get("workflow_state", {})
+    status = state.get("tool_results", {}).get("host_action_status", {})
+    lineage = runtime.get("action_lineage") or workflow.get("pending", {})
+    if (not _query_binding_matches(state, status, lineage) or
+            status.get("status") != "ok" or status.get("state") != "intake_verified" or status.get("binding_verified") is not True or
+            any(not lineage.get(key) for key in ("request_id", "host_pending_handle", "target_transaction_id", "snapshot_id", "snapshot_hash")) or
+            lineage.get("binding_digest", runtime.get("trusted_binding_digest")) != runtime.get("trusted_binding_digest")):
+        return False
+    proof = status.get("binding", {})
+    session = state.get("session", {})
+    if (not isinstance(proof, dict) or not isinstance(proof.get("owner"), str) or
+            any(proof.get(key) != session.get(key) for key in ("customer_id", "session_id", "conversation_id")) or
+            parse_timestamp(proof.get("expires_at")) != parse_timestamp(runtime.get("session_expires_at"))):
+        return False
+    digest = hashlib.sha256(json.dumps([proof[key] for key in
+        ("owner", "customer_id", "session_id", "conversation_id")], separators=(",", ":")).encode()).hexdigest()
+    if digest != runtime.get("trusted_binding_digest"):
+        return False
+    target = _target(state)
+    reread = state.get("tool_results", {}).get("get_transaction", {})
+    if (target is None or target.get("transaction_id") != lineage["target_transaction_id"] or
+            reread.get("snapshot_id", reread.get("snapshot")) != lineage["snapshot_id"] or
+            workflow.get("candidate_snapshot_hash") != lineage["snapshot_hash"] or
+            any(status.get(key) != lineage[field] for key, field in
+                (("request_id", "request_id"), ("pending_handle", "host_pending_handle"),
+                 ("target_reference", "target_transaction_id"), ("snapshot", "snapshot_id"))) or
+            status.get("snapshot_hash", lineage["snapshot_hash"]) != lineage["snapshot_hash"]):
+        return False
+    canonical = status.get("action")
+    native = status.get("receipt")
+    if canonical is None and native is None:
+        return False
+    if canonical is not None:
+        receipt = canonical.get("receipt", {}) if isinstance(canonical, dict) else {}
+        if (not isinstance(canonical, dict) or not isinstance(receipt, dict) or
+                canonical.get("name") != "CREATE_COMPLAINT" or canonical.get("authorized") is not True or
+                canonical.get("executed") is not True or canonical.get("verified") is not True or
+                canonical.get("result_id") != result_id or receipt.get("verified") is not True or
+                receipt.get("result_id") != result_id or
+                any(receipt.get(key, lineage[field]) != lineage[field] for key, field in
+                    (("snapshot", "snapshot_id"), ("snapshot_id", "snapshot_id"), ("snapshot_hash", "snapshot_hash"),
+                     ("target_reference", "target_transaction_id"), ("target_transaction_id", "target_transaction_id")))):
+            return False
+    if native is not None:
+        # The same deterministic shape validator is used for portal readback.
+        from frontend.server.action import verified_receipt
+        native = verified_receipt(native)
+        if not native or native["id"] != result_id or native["snapshot"] != lineage["snapshot_id"]:
+            return False
+        facts = native["transaction"]
+        try:
+            amount, target_amount = Decimal(str(facts.get("amount"))), Decimal(str(target.get("amount")))
+            if not amount.is_finite() or not target_amount.is_finite() or amount != target_amount:
+                return False
+        except InvalidOperation:
+            return False
+        try:
+            fact_date = datetime.fromisoformat(facts.get("transaction_date", "").replace("Z", "+00:00"))
+            target_date = datetime.fromisoformat(target.get("transaction_date", "").replace("Z", "+00:00"))
+        except (ValueError, TypeError, AttributeError):
+            return False
+        if (facts.get("currency") != target.get("currency") or
+                facts.get("status") != target.get("transaction_status", target.get("status")) or fact_date != target_date):
+            return False
+        for fact, aliases in (("process_date", ("process_date",)), ("merchant", ("merchant_name", "merchant")),
+                              ("transaction_type", ("transaction_type", "type")), ("channel", ("channel",)), ("product", ("product",))):
+            key = next((key for key in aliases if key in target), None)
+            if key is not None and facts.get(fact) != target[key]:
+                return False
+    return isinstance(result_id, str) and bool(re.fullmatch(r"CMP-SBX-[A-Za-z0-9_-]{8}", result_id))
 
 
 def _target(state: dict) -> dict | None:
@@ -329,8 +427,9 @@ def decide(state: dict, config: dict | None = None) -> dict:
                 action.get("verified") is True and action.get("result_id")):
             receipt = results.get("create_complaint", {})
             host_receipt = action.get("receipt", {})
-            if (receipt.get("status") == "ok" and receipt.get("complaint_id") == action.get("result_id") and receipt.get("executed") is True or
-                    host_receipt.get("verified") is True and host_receipt.get("result_id") == action.get("result_id")):
+            if ((receipt.get("status") == "ok" and receipt.get("complaint_id") == action.get("result_id") and receipt.get("executed") is True or
+                    host_receipt.get("verified") is True and host_receipt.get("result_id") == action.get("result_id")) and
+                    _scoped_receipt(state, action["result_id"])):
                 return _decision(cfg, "R3", "ACTION_DONE", "action_verified", clear_pending=True)
         if outcome == "failed" and action.get("executed") is not True:
             count, counters = _increment(state, "tool_failures")
@@ -338,6 +437,8 @@ def decide(state: dict, config: dict | None = None) -> dict:
                              "tool_failure", updates={"counters": counters, "action": {"authorized": False}})
         return _decision(cfg, "R3", "ACTION_UNVERIFIED", "action_unverified",
                          next_step="recover_action", updates={"action": {"authorized": False}})
+    if pending.get("type") != "none" and not _query_binding_matches(state, pending):
+        return _decision(cfg, "R5", "HANDOFF", "query_scope_mismatch", updates={"action": {"authorized": False}})
     resolution = turn.get("clarification", {}).get("resolution_type")
     expired = _pending_expired(state, cfg, now)
     trusted = pending.get("type") == "awaiting_confirmation" and not expired and _trusted_consent(state, cfg, now)
@@ -365,7 +466,7 @@ def decide(state: dict, config: dict | None = None) -> dict:
                          else workflow.get("candidate_snapshot_hash"))
         if candidate is None or not pending.get("snapshot_hash") or pending.get("snapshot_hash") != expected_hash:
             return _clarify(state, cfg, "R5", "invalid_selection", clear_pending=True, clear_target=True)
-        if state.get("runtime", {}).get("node_errors") or any(
+        if _business_errors(state) or any(
                 isinstance(value, dict) and value.get("status") == "error" for value in results.values()):
             # R5 continues from R8, including exhausted read failures at R9.
             return _business(state, cfg, trusted=False, now=now, today=today)
@@ -423,7 +524,7 @@ def decide(state: dict, config: dict | None = None) -> dict:
         return _clarify(state, cfg, "R5", "selection_required")
     active = (pending.get("type") != "none" or workflow.get("transaction_id") or workflow.get("missing_fields") or
               state.get("runtime", {}).get("workflow_intent") in BUSINESS_INTENTS or
-              state.get("runtime", {}).get("node_errors"))
+              _business_errors(state))
     if not active and turn.get("intent") in {"GREETING", "PERSONALITY"}:
         return _decision(cfg, "R6", "SMALL_TALK", "small_talk")
     if not active and turn.get("intent") == "OOD":
@@ -448,7 +549,7 @@ def _business(state: dict, cfg: dict, *, trusted: bool, now: datetime | None,
     if turn.get("human_requested") is True or intent == "HUMAN_REQUEST" or turn.get("emotional_context") == "Emergencia":
         return _decision(cfg, "R8", "HANDOFF", "emergency" if turn.get("emotional_context") == "Emergencia" else "customer_request")
     # R9 includes node failures, not just explicit tool-result envelopes.
-    errors = state.get("runtime", {}).get("node_errors", [])
+    errors = _business_errors(state)
     failed = [(name, result) for name, result in results.items()
               if isinstance(result, dict) and result.get("status") == "error"]
     if errors or failed:
