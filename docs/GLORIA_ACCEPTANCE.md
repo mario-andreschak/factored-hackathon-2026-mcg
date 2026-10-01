@@ -58,6 +58,17 @@ first-turn admission ordering issue that source-read and spy-workflow tests
 alone did not exercise: the bank port requires the trusted conversation to be
 persisted before the workflow begins its reads.
 
+Native host-port probes use temporary admission files and controlled application
+workflows. They check validated-result rendering, trusted selection copies,
+failure cleanup, simultaneous distinct owners/conversations, cancellation that
+preserves a sibling admission, rejection before registration for expired
+bindings, and restart after an abandoned writer marker. These probes invoke no
+provider and do not qualify native FLUJO callbacks or installation. Actual
+native qualification must separately establish expired/removed-token fences
+during provider and MCP awaits, one execution under concurrent replay, private
+durable admission files, and equality between the requested source manifest hash
+and the verified manifest inside the executed image.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or

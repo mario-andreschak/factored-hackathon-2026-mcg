@@ -269,6 +269,130 @@ def test_replayed_turn_cannot_change_selected_query_scope_before_reads(tmp_path)
     assert (len(stages.calls), len(bank.calls)) == before
 
 
+def live_native_binding(**updates):
+    result = binding()
+    result["expires_at"] = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+    result.update(updates)
+    return result
+
+
+def native_admissions(directory):
+    location = directory / "admissions.json"
+    return json.loads(location.read_text(encoding="utf-8")) if location.exists() else []
+
+
+def test_native_port_returns_validated_workflow_result_and_private_selection(tmp_path):
+    from scripts.native_gloria_qualification import NativeGloriaPort
+    selected, trusted = dict(reference="txn_" + "c"*24), live_native_binding()
+    expected = dict(response=response("Respuesta validada."))
+    observed = []
+
+    class ControlledWorkflow:
+        async def run(self, identity, message, **options):
+            records = native_admissions(tmp_path)
+            assert len(records) == 1 and records[0]["mode"] == "language_only"
+            observed.append((deepcopy(identity), message, deepcopy(options), records[0]))
+            identity["owner"] = "mutated-local-copy"
+            options["selection"]["reference"] = "mutated-local-copy"
+            return expected
+
+    port = NativeGloriaPort(lambda model: ControlledWorkflow(), "http://127.0.0.1:4200", tmp_path)
+    result = asyncio.run(port.run(trusted, "Consulta propia.", turn_id="native-valid", selection=selected))
+    assert result is expected
+    assert observed[0][:3] == (trusted, "Consulta propia.", dict(turn_id="native-valid", selection=selected))
+    assert observed[0][3]["conversation"] == trusted["conversation_id"]
+    assert "selection" not in observed[0][3]
+    assert native_admissions(tmp_path) == []
+
+
+@pytest.mark.parametrize("failure", ["factory", "workflow"])
+def test_native_port_failure_removes_only_its_own_admission(tmp_path, failure):
+    from scripts.native_gloria_qualification import NativeGloriaPort
+    sibling = dict(stageToken="fictional-sibling-stage", owner="fictional-sibling-owner")
+    (tmp_path / "admissions.json").write_text(json.dumps([sibling]), encoding="utf-8")
+
+    class FailingWorkflow:
+        async def run(self, *args, **kwargs):
+            assert len(native_admissions(tmp_path)) == 2
+            raise RuntimeError("fictional workflow failure")
+
+    def factory(model):
+        assert len(native_admissions(tmp_path)) == 2
+        if failure == "factory": raise RuntimeError("fictional factory failure")
+        return FailingWorkflow()
+
+    port = NativeGloriaPort(factory, "http://127.0.0.1:4200", tmp_path)
+    with pytest.raises(RuntimeError):
+        asyncio.run(port.run(live_native_binding(), "Consulta propia.", turn_id="native-failure"))
+    assert native_admissions(tmp_path) == [sibling]
+
+
+def test_native_port_cancellation_keeps_concurrent_sibling_identity_and_admission(tmp_path):
+    from scripts.native_gloria_qualification import NativeGloriaPort
+    from gloria_workflow.state import TrustedBinding
+    identities = [live_native_binding(), live_native_binding(owner="second-fictional-owner",
+                  session_id="second-session", conversation_id="second-conversation")]
+
+    async def scenario():
+        entered = [asyncio.Event(), asyncio.Event()]
+        finish = asyncio.Event()
+
+        class ControlledWorkflow:
+            async def run(self, identity, message, **options):
+                index = int(message)
+                entered[index].set()
+                await finish.wait()
+                return dict(response=response("Respuesta propia."))
+
+        port = NativeGloriaPort(lambda model: ControlledWorkflow(), "http://127.0.0.1:4200", tmp_path)
+        tasks = [asyncio.create_task(port.run(identity, str(index), turn_id="native-"+str(index)))
+                 for index, identity in enumerate(identities)]
+        await asyncio.wait_for(asyncio.gather(*(event.wait() for event in entered)), timeout=2)
+        records = native_admissions(tmp_path)
+        assert len(records) == 2
+        assert len({item["stageToken"] for item in records}) == 2
+        expected_sibling = next(item for item in records if item["turnId"] == "native-1")
+        assert {item["owner"] for item in records} == {TrustedBinding(**identity).owner for identity in identities}
+        assert {item["conversation"] for item in records} == {identity["conversation_id"] for identity in identities}
+        tasks[0].cancel()
+        with pytest.raises(asyncio.CancelledError): await tasks[0]
+        assert native_admissions(tmp_path) == [expected_sibling]
+        finish.set()
+        await tasks[1]
+        assert native_admissions(tmp_path) == []
+
+    asyncio.run(scenario())
+
+
+def test_native_port_expired_binding_never_registers_or_calls_factory(tmp_path):
+    from scripts.native_gloria_qualification import NativeGloriaPort
+    sibling = dict(stageToken="fictional-sibling-stage", owner="fictional-sibling-owner")
+    location = tmp_path / "admissions.json"
+    location.write_text(json.dumps([sibling]), encoding="utf-8")
+    before = location.read_bytes()
+    calls = []
+    port = NativeGloriaPort(lambda model: calls.append(model), "http://127.0.0.1:4200", tmp_path)
+    identity = live_native_binding(expires_at=(datetime.now(timezone.utc)-timedelta(seconds=1)).isoformat())
+    with pytest.raises(ValueError): asyncio.run(port.run(identity, "Consulta propia.", turn_id="expired"))
+    assert calls == [] and location.read_bytes() == before
+
+
+def test_native_port_restart_recovers_abandoned_admission_writer(tmp_path):
+    from scripts.native_gloria_qualification import NativeGloriaPort
+    # This is the exact abandoned artifact after the previous process crashes
+    # immediately after opening the marker. No active host owns the fixture.
+    (tmp_path / ".admissions-host.lock").write_bytes(b"")
+
+    class ControlledWorkflow:
+        async def run(self, *args, **kwargs):
+            return dict(response=response("Respuesta propia."))
+
+    restarted = NativeGloriaPort(lambda model: ControlledWorkflow(), "http://127.0.0.1:4200", tmp_path)
+    result = asyncio.run(restarted.run(live_native_binding(), "Consulta propia.", turn_id="restart"))
+    assert result["response"]["message"] == "Respuesta propia."
+    assert native_admissions(tmp_path) == []
+
+
 @pytest.fixture
 def joined(tmp_path):
     key = Ed25519PrivateKey.generate()
