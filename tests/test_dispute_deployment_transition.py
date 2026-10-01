@@ -505,3 +505,50 @@ def test_crossplatform_real_fresh_factory_write_and_restart(tmp_path):
     assert restart["new"] is False
     restarted = NativeHostFactory(workflow_path, service, "http://127.0.0.1:4200", authority)
     assert restarted.ledger_generation == factory.ledger_generation
+
+
+@pytest.mark.parametrize("name", ["dispute-bank-generation.json", "frontend-chat.sqlite3",
+                                  "dispute-workflow.sqlite3"])
+def test_dangling_retained_binding_refused_before_service(tmp_path, monkeypatch, name):
+    from types import SimpleNamespace
+    from scripts import run_dispute
+
+    state, data, control = tmp_path / "fresh", tmp_path / "data", tmp_path / "control"
+    state.mkdir()
+    data.mkdir()
+    control.mkdir()
+    (data / "QUALIFICATION_SYNTHETIC.json").write_text(
+        '{"synthetic":true,"origin":"reviewed-test-fixture"}')
+    (control / "admissions.json").write_text("[]")
+    (control / "native-profile.json").write_text("{}")
+    suspect = state / name
+    try:
+        suspect.symlink_to(state / "missing-target")
+    except OSError:
+        pytest.skip("host cannot create a synthetic symlink")
+    bank = state / "banking.db"
+    settings = SimpleNamespace(state_dir=tmp_path / "new-frontend", data_dir=data,
+                               chat={"principal_customers": {"owner": "customer"}})
+    config = SimpleNamespace(state_db=bank, data_dir=data, mode="delegated",
+                             principal_customers={"owner": "customer"})
+    called = []
+    monkeypatch.setattr(run_dispute, "Service", lambda _: called.append(True))
+    with pytest.raises(ValueError, match="symlink or nonregular"):
+        run_dispute.application(settings, config, state, "http://127.0.0.1:4200",
+                                control, enable_simulated_intake=True)
+    assert not called
+    assert not bank.exists() and not settings.state_dir.exists()
+    assert suspect.is_symlink() and not suspect.exists()
+
+
+def test_nonregular_retained_binding_refused_before_service(tmp_path):
+    state, data = tmp_path / "fresh", tmp_path / "data"
+    state.mkdir()
+    data.mkdir()
+    (data / "QUALIFICATION_SYNTHETIC.json").write_text(
+        '{"synthetic":true,"origin":"reviewed-test-fixture"}')
+    (state / "frontend-chat.sqlite3").mkdir()
+    with pytest.raises(ValueError, match="nonregular"):
+        transition.preflight_unreceipted(state / "banking.db", state,
+                                         source_root=None, data_dir=data)
+    assert not (state / "banking.db").exists()

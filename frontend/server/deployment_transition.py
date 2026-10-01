@@ -490,7 +490,16 @@ def preflight_unreceipted(bank_path: Path, native_state_dir: Path, *,
                           source_root: Path | None, data_dir: Path) -> dict:
     """Read-only provenance fence before a fresh synthetic StateStore."""
     native_state_dir = native_state_dir.resolve()
+    bank_path = Path(bank_path)
+    if bank_path.is_symlink():
+        raise ValueError("bank ledger symlink requires review")
     bank_path = bank_path.resolve()
+    for name in (*RETAINED_APP_FILES, "dispute-bank-generation.json",
+                 "gloria-bank-generation.json", "native-fresh-origin.json",
+                 "legacy-bank-before-native.sqlite3"):
+        candidate = native_state_dir / name
+        if candidate.is_symlink() or candidate.exists() and not candidate.is_file():
+            raise ValueError("retained binding is symlink or nonregular")
     source_path, source_sha = _synthetic_origin(source_root, data_dir)
     if (native_state_dir / "legacy-bank-before-native.sqlite3").exists():
         raise ValueError("retained adoption requires transition receipt")
