@@ -3511,6 +3511,7 @@ button svg {
 @media (max-width: 640px) {
   .sidebar {
     visibility: hidden;
+    overflow-y: auto;
   }
   .sidebar.mobile-open {
     visibility: visible;
