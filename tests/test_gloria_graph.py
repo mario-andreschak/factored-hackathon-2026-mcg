@@ -27,6 +27,13 @@ class GloriaManifestFreshnessTests(unittest.TestCase):
         self.assertEqual(metadata["status"], "source_artifact_not_installed")
         sources = metadata["stageManifest"]["sourceHashes"]
         self.assertGreater(len(sources), 30)
+        required = {path.relative_to(REPO).as_posix()
+                    for directory in ("gloria_workflow", "banking_mcp", "frontend/server", "pipeline")
+                    for path in (REPO / directory).glob("*.py")}
+        required.update(path.relative_to(REPO).as_posix()
+                        for path in (REPO / "resources/policies").glob("*.md"))
+        required.update({".gitattributes", "pipeline/contracts.yaml", "requirements-gloria.txt"})
+        self.assertFalse(required - set(sources), "New protected source requires graph regeneration")
         for relative, expected in sources.items():
             with self.subTest(source=relative):
                 source = REPO / relative
@@ -108,6 +115,12 @@ class GloriaGraphTests(unittest.TestCase):
         self.assertIn("requirements-gloria.txt", sources)
         self.assertIn("banking_mcp/actions.py", sources)
         self.assertIn("banking_mcp/service.py", sources)
+        self.assertIn("banking_mcp/config.py", sources)
+        self.assertIn("banking_mcp/security.py", sources)
+        self.assertIn("banking_mcp/repository.py", sources)
+        self.assertIn("pipeline/common.py", sources)
+        self.assertIn("pipeline/contracts.yaml", sources)
+        self.assertIn(".gitattributes", sources)
         self.assertIn("frontend/server/action.py", sources)
         self.assertIn("frontend/server/chat.py", sources)
         self.assertIn("frontend/server/app.py", sources)
@@ -218,7 +231,8 @@ try {
  const unchanged=build(process.argv[1],DEFAULT_BINDINGS,root);
  assert.equal(unchanged.report.graphHash,original.report.graphHash);
  const cases=['resources/policies/transaction_dispute_policy.md','requirements-gloria.txt',
-  'banking_mcp/actions.py','frontend/server/chat.py','frontend/server/app.py','scripts/native_gloria_qualification.py'];
+  'banking_mcp/actions.py','banking_mcp/security.py','pipeline/common.py',
+  'frontend/server/chat.py','frontend/server/app.py','scripts/native_gloria_qualification.py'];
  for(const relative of cases) {
   const filename=path.join(root,relative),before=fs.readFileSync(filename);
   fs.appendFileSync(filename,'\\n# Independent protected-source mutation for qualification.\\n');
@@ -242,7 +256,7 @@ try {
 """
         result = node_run("--input-type=module", "-e", code, str(FLUJO))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout), {"mutations": 6, "modelIndependent": True})
+        self.assertEqual(json.loads(result.stdout), {"mutations": 8, "modelIndependent": True})
 
 
 if __name__ == "__main__":

@@ -18,6 +18,8 @@ COPY qualification/config /qualification/config
 COPY qualification/contracts /qualification/contracts
 COPY qualification/banking_mcp /qualification/banking_mcp
 COPY qualification/frontend/server /qualification/frontend/server
+COPY qualification/pipeline /qualification/pipeline
+COPY qualification/.gitattributes /qualification/.gitattributes
 COPY qualification/graph_config_v3.yaml /qualification/graph_config_v3.yaml
 COPY qualification/native_gloria_qualification.py /qualification/native_gloria_qualification.py
 COPY qualification/qualify_gloria.py /qualification/qualify_gloria.py

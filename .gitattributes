@@ -3,6 +3,16 @@
 *.md text eol=lf
 *.json text eol=lf
 *.py text eol=lf
+scripts/*.mjs text eol=lf
+scripts/*.ts text eol=lf
+scripts/native_gloria_qualification.Dockerfile text eol=lf
+config/policy_rules.yaml text eol=lf
+pipeline/contracts.yaml text eol=lf
+graph_config_v3.yaml text eol=lf
+resources/prompts/*.yaml text eol=lf
+resources/prompts/*.yml text eol=lf
+requirements*.txt text eol=lf
+frontend/requirements.txt text eol=lf
 ml/data/router_test*.csv text eol=lf
 .github/workflows/banking-package-issue21-preflight.yml text eol=lf
 Dockerfile.banking-package-issue21-preflight text eol=lf

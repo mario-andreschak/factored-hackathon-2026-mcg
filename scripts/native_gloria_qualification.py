@@ -153,7 +153,8 @@ def prepare(flujo_root: Path, context: Path, catalog: Path, native_binary=None, 
             files[name] = digest(data)
     qualification = context / "qualification"
     copied = {}
-    paths = [ROOT / "scripts/native_gloria_qualification.ts", ROOT / "scripts/native_gloria_qualification.py",
+    paths = [ROOT / ".gitattributes", ROOT / "pipeline/contracts.yaml",
+             ROOT / "scripts/native_gloria_qualification.ts", ROOT / "scripts/native_gloria_qualification.py",
              ROOT / "scripts/native_gloria_qualification.mjs", ROOT / "scripts/native_gloria_qualification.Dockerfile",
              ROOT / "scripts/build_gloria_graph.mjs", ROOT / "graph_config_v3.yaml",
              ROOT / "scripts/native_gloria_compatibility_probe.mjs",
@@ -162,7 +163,8 @@ def prepare(flujo_root: Path, context: Path, catalog: Path, native_binary=None, 
              ROOT / "requirements-s3.txt", ROOT / "frontend/requirements.txt"]
     for directory, suffix in (("gloria_workflow", "*.py"), ("resources/prompts", "*.yml"),
                               ("resources/policies", "*.md"), ("config", "*.yaml"),
-                              ("contracts", "*.md"), ("banking_mcp", "*.py"), ("frontend/server", "*.py")):
+                              ("contracts", "*.md"), ("banking_mcp", "*.py"), ("frontend/server", "*.py"),
+                              ("pipeline", "*.py")):
         paths.extend((ROOT / directory).glob(suffix))
     paths.append(ROOT / "resources/prompts/fallback_templates.yaml")
     for source in paths:

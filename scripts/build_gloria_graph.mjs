@@ -121,7 +121,7 @@ export function canonicalManifest(repoRoot, yaml) {
     'scripts/native_gloria_qualification.mjs', 'scripts/native_gloria_qualification.Dockerfile',
     'scripts/native_gloria_capability_probe.mjs', 'scripts/native_gloria_bridge_loader.mjs',
     'scripts/native_gloria_compatibility_probe.mjs']) sourceHashes[relative] = sourceDigest(repoRoot, relative);
-  const fixed = ['config/policy_rules.yaml', 'contracts/policy_engine.md', 'contracts/state_schema.md',
+  const fixed = ['.gitattributes', 'pipeline/contracts.yaml', 'config/policy_rules.yaml', 'contracts/policy_engine.md', 'contracts/state_schema.md',
     'contracts/tools.md', 'contracts/v0_reconciliation.md', 'resources/prompts/fallback_templates.yaml',
     'requirements-gloria.txt', 'frontend/requirements.txt', 'requirements-pipeline.txt', 'requirements-s3.txt',
     'banking_mcp/actions.py', 'banking_mcp/service.py', 'frontend/server/action.py',
@@ -150,10 +150,12 @@ export function canonicalManifest(repoRoot, yaml) {
     const relative = `resources/policies/${name}`;
     sourceHashes[relative] = sourceDigest(repoRoot, relative);
   }
-  const implementationRoot = path.join(repoRoot, 'gloria_workflow');
-  for (const name of fs.readdirSync(implementationRoot).filter(name => name.endsWith('.py')).sort()) {
-    const relative = `gloria_workflow/${name}`;
-    sourceHashes[relative] = sourceDigest(repoRoot, relative);
+  for (const directory of ['gloria_workflow', 'banking_mcp', 'frontend/server', 'pipeline']) {
+    const implementationRoot = path.join(repoRoot, directory);
+    for (const name of fs.readdirSync(implementationRoot).filter(name => name.endsWith('.py')).sort()) {
+      const relative = `${directory}/${name}`;
+      sourceHashes[relative] = sourceDigest(repoRoot, relative);
+    }
   }
   return { schema: 'gloria-stage-ownership/v1', canonicalState: graph.state_class, stages,
     edges: graph.edges, conditionalEdges: graph.conditional_edges, runtime: graph.runtime,
