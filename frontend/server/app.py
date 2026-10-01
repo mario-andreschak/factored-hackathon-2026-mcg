@@ -81,7 +81,7 @@ class HandoffActionBody(BaseModel):
         return normalized
 
 
-def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_backend=None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_backend=None) -> FastAPI:
     # Initialize lazily, allowing imports/build checks without a dataset mount.
     settings = settings or Settings.from_env()
 
@@ -89,9 +89,9 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
     async def lifespan(app):
         state = State(settings.state_dir)
         from .chat import ChatService
-        if gloria_factory is not None or bank_backend is not None:
-            from .gloria_chat import GloriaChatService
-            chat_service = GloriaChatService(settings.chat, settings.state_dir, bank_backend=bank_backend)
+        if dispute_factory is not None or bank_backend is not None:
+            from .dispute_chat import DisputeChatService
+            chat_service = DisputeChatService(settings.chat, settings.state_dir, bank_backend=bank_backend)
         else:
             chat_service = ChatService(settings.chat, settings.state_dir)
         invite_bindings = ({key: value["customer_id"] for key, value in settings.profiles.items()}
@@ -136,7 +136,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
         app.state.repository = Repository(settings, state)
         if bank_backend is not None:
             bank_backend.bind_repository(app.state.repository)
-        app.state.gloria_factory = gloria_factory
+        app.state.dispute_factory = dispute_factory
         if settings.auth_mode == "invite":
             # An external candidate must refuse to start with a real, stale or
             # mismatched mount; no request may trigger automatic customer choice.
@@ -343,8 +343,8 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
         from .chat import ChatError
         try:
             result = service.history(customer, current.id, current.expires_at)
-            if request.app.state.gloria_factory is not None:
-                result.update(request.app.state.gloria_factory.query_context(
+            if request.app.state.dispute_factory is not None:
+                result.update(request.app.state.dispute_factory.query_context(
                     service, customer, current.id, current.expires_at))
             return result
         except ChatError as exc:
@@ -385,9 +385,9 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
                 # A malformed display record cannot become language context.
                 minimized = None
         try:
-            workflow = (request.app.state.gloria_factory(repository, service, current.profile_id,
-                        current.id, current.expires_at) if request.app.state.gloria_factory else None)
-            if workflow is None and gloria_factory is None and bank_backend is None:
+            workflow = (request.app.state.dispute_factory(repository, service, current.profile_id,
+                        current.id, current.expires_at) if request.app.state.dispute_factory else None)
+            if workflow is None and dispute_factory is None and bank_backend is None:
                 if getattr(body, "query_scope_id", None) is not None:
                     raise HTTPException(422, render_action_error("invalid_action", body.language))
                 return await service.send(customer, current.id, current.expires_at, message,
@@ -445,7 +445,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
         service = request.app.state.chat_service
         if not service:
             raise HTTPException(503, render_action_error("chat_unavailable", language))
-        if query_scope_id is not None and gloria_factory is None and bank_backend is None:
+        if query_scope_id is not None and dispute_factory is None and bank_backend is None:
             raise HTTPException(422, render_action_error("invalid_action", language))
         from .chat import ChatError
         try:

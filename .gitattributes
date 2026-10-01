@@ -5,7 +5,7 @@
 *.py text eol=lf
 scripts/*.mjs text eol=lf
 scripts/*.ts text eol=lf
-scripts/native_gloria_qualification.Dockerfile text eol=lf
+scripts/native_dispute_qualification.Dockerfile text eol=lf
 config/policy_rules.yaml text eol=lf
 pipeline/contracts.yaml text eol=lf
 graph_config_v3.yaml text eol=lf

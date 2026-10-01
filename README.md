@@ -54,6 +54,7 @@ these diagrams do not establish successful live acceptance.
 - [Current operator demo](docs/BANKING_OPERATOR_DEMO.md)
 - [Hackathon audit and delivery plan](docs/HACKATHON_AUDIT_PLAN.md)
 - [Hackathon supervision and October 3 team target](docs/HACKATHON_SUPERVISION.md)
+- [Transaction dispute workflow, contributor credit and qualification](docs/DISPUTE_IMPLEMENTATION.md)
 - [Direct S3 data review](docs/DATA_REVIEW_2026-09-26.md)
 - [Channel clarifications on dataset quality (September 30)](docs/CHANNEL_DATA_CLARIFICATIONS_2026-09-30.md)
 - [Banking MCP direct S3 plan](docs/BANKING_MCP_S3_PLAN.md)

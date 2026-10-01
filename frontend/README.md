@@ -9,8 +9,8 @@ Bank authority now belongs to this host; FLUJO provides bounded generic language
 guidance. Legacy worker-bound state requires explicit reconciliation and isolated
 state. This candidate has not been built or deployed; runtime remains held.
 
-The explicit Gloria application has a separate native workflow and private
-configuration. See [Gloria setup and qualification](../docs/GLORIA_IMPLEMENTATION.md)
+The transaction dispute workflow has a separate native workflow and private
+configuration. See [workflow setup and qualification](../docs/DISPUTE_IMPLEMENTATION.md)
 for its matched frontend/bank mappings, independent ledger, and approved
 continuity settings. The direct-MCP example below configures the default service.
 

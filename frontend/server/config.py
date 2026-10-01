@@ -78,8 +78,10 @@ class Settings:
         # Retire pre-migration portal cookies before a new host bank binding can
         # be admitted. Generic language graph/name changes do not rotate bank identity.
         host_mode = self.chat.get("mode")
-        if host_mode in {"host-direct-mcp/v1", "gloria-host/v1"}:
-            policy["bank_host_mode"] = host_mode
+        if host_mode in {"host-direct-mcp/v1", "dispute-host/v1", "gloria-host/v1"}:
+            # The workflow rename changes presentation, not admitted bank
+            # identity. Preserve the existing fingerprint for retained cookies.
+            policy["bank_host_mode"] = "gloria-host/v1" if host_mode == "dispute-host/v1" else host_mode
             policy["bank_namespace"] = self.chat.get("namespace")
             policy["bank_ledger_generation"] = self.chat.get("ledger_generation")
         if self.auth_mode == "invite":
