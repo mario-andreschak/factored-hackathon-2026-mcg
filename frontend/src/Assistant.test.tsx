@@ -982,6 +982,90 @@ test("hidden amount requires a local review before explicit consent", async () =
   expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
 });
 
+test("amount review and confirmation wait for status recovery", async () => {
+  const calls: string[] = [];
+  const heldStatus: Array<(result: Response) => void> = [];
+  let statusRequests = 0;
+  const pending = {
+    state: "pending_confirmation",
+    ...preparedEvidence,
+    pending_handle: "b".repeat(43),
+    target_reference: charge.reference,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      calls.push(`${init?.method || "GET"} ${url}`);
+      if (url === "/api/chat/history")
+        return response({ active: false, messages: [] });
+      if (url.startsWith("/api/action/status")) {
+        statusRequests += 1;
+        if (statusRequests === 1) return response(pending);
+        return new Promise<Response>((resolve) => heldStatus.push(resolve));
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: true }}
+      selected={charge}
+      transactions={[charge]}
+      onSelectTransaction={vi.fn()}
+      hidden
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  const confirm = await screen.findByRole("button", {
+    name: /Confirmo la recepción simulada/,
+  });
+  const status = screen.getByRole("button", {
+    name: "Consultar estado de la solicitud",
+  }) as HTMLButtonElement;
+  await waitFor(() => expect(status.disabled).toBe(false));
+  const summary = document.getElementById(
+    confirm.getAttribute("aria-describedby")!,
+  )!;
+  const reveal = screen.getByRole("button", {
+    name: "Mostrar monto para confirmar",
+  }) as HTMLButtonElement;
+  expect((confirm as HTMLButtonElement).disabled).toBe(true);
+  expect(summary.textContent).toContain("••••••");
+
+  fireEvent.click(status);
+  await waitFor(() => expect(reveal.disabled).toBe(true));
+  fireEvent.click(reveal);
+  fireEvent.click(confirm);
+  expect((confirm as HTMLButtonElement).disabled).toBe(true);
+  expect(summary.textContent).toContain("••••••");
+  expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+  await act(async () => heldStatus.shift()!(response(pending)));
+  await waitFor(() => expect(status.disabled).toBe(false));
+
+  fireEvent.click(reveal);
+  await waitFor(() => {
+    expect((confirm as HTMLButtonElement).disabled).toBe(false);
+    expect(summary.textContent).toContain("42");
+    expect(summary.textContent).not.toContain("••••••");
+  });
+
+  fireEvent.click(status);
+  await waitFor(() =>
+    expect((confirm as HTMLButtonElement).disabled).toBe(true),
+  );
+  fireEvent.click(confirm);
+  expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+  await act(async () => heldStatus.shift()!(response(pending)));
+  await waitFor(() => expect(status.disabled).toBe(false));
+  expect((confirm as HTMLButtonElement).disabled).toBe(false);
+  expect(summary.textContent).toContain("42");
+  expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+});
+
 test.each([
   ["missing saved facts", { transaction: undefined }],
   ["missing saved snapshot", { snapshot: undefined }],
