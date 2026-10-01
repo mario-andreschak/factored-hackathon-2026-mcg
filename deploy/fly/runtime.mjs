@@ -97,7 +97,7 @@ export function runtimeEnvironment(env = process.env, now = Date.now()) {
     FLUJO_CONTAINER: '1', FLUJO_APP_ROOT: '/app', FLUJO_DATA_DIR: '/data/native-flujo',
     FLUJO_EXPOSURE_MODE: 'localhost', FLUJO_BASE_URL: 'http://127.0.0.1:4200',
     FLUJO_MCP_APP_SANDBOX_HOST: '127.0.0.1', FLUJO_MCP_APP_SANDBOX_PORT: '4201',
-    FLUJO_MCP_APP_SANDBOX_ALLOW_ALL: '0', FLUJO_EXECUTION_ADAPTER_MODULE: '/app/fly-native-execution.mts',
+    FLUJO_MCP_APP_SANDBOX_ALLOW_ALL: '0', FLUJO_EXECUTION_ADAPTER_MODULE: '/app/fly-native-execution.ts',
     FLUJO_SNAPSHOT_CONTROL_TOKEN: env.FLUJO_SNAPSHOT_CONTROL_TOKEN };
   const frontend = { ...BASE, HOME: '/nonexistent', BANKING_DATA_DIR: '/data/banking-data',
     BANKING_CONFIG_FILE: '/run/dispute/frontend.json', BANKING_STATE_DIR: '/data/native-frontend-state',
