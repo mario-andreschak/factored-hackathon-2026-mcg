@@ -47,14 +47,16 @@ session, conversation and snapshot. DuckDB connections close at shutdown.
 - [Slack PR #1](https://github.com/flujo-app/flujo-slack-bot/pull/1): bounded scheduler
   with durable claims and ordering within each conversation.
 
-**September 30 source separation:** FLUJO #534 removed the banking integration
+**September 30 source separation; October 1 project source status:** FLUJO #534 removed the banking integration
 from #530/#532/#533 and restored the pre-#530 tree on main at `3fccc557`.
 At the owner's request, their combined pre-restoration source is preserved on
 the separate `codex/hackathon-banking` branch. The adapter descriptions and
 measurements in this section remain tied to their original revisions; they are
 not current generic main source or acceptance of a newly deployed branch.
-Neither change upgraded the old local worker. Project-owned host/MCP draft PRs
-#31/#32 remain an unfinished alternative and are not included. See the
+Neither change upgraded the old local worker. Project-owned host/direct-MCP
+PRs #31/#32 are merged at observed project main `e967e7e` and included in the
+local release integration `af3b22d`; they are absent from the preserved FLUJO
+branch. This source status is not joined runtime acceptance. See the
 [product boundary](FLUJO_PRODUCT_BOUNDARY.md) and
 [deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md) before using this history.
 

@@ -1,6 +1,16 @@
 # Gloria acceptance and release qualification
 
-## Current source integration evidence
+## Current portal/preview source evidence
+
+The portal/preview integration adds its fictional preparation helper to the
+protected graph closure. Its
+[source qualification](qualification/release-preview-source-2026-10-01.json)
+records all 85 protected hashes, source tests and isolated read-only preview
+checks. No native worker, provider or banking action is installed or activated
+by those checks. The credential and native reports below retain their original
+source captures; their runtime results are not transferred to this graph.
+
+## Historical credential source integration evidence
 
 The integrated credential correction at `d7a4f432000db0a225a010235083427f957c35b5`
 has a regenerated protected source map. Its

@@ -4,15 +4,16 @@ Updated September 29, 2026, after four coordinated reviews and implementation.
 This replaces the earlier proposal. See [implementation and measurements](BANKING_MCP_IMPLEMENTATION.md)
 and [operator demo instructions](BANKING_OPERATOR_DEMO.md).
 
-**September 30 source separation:** Keep FLUJO main generic; prefer this
+**September 30 source separation; October 1 project source status:** Keep FLUJO main generic; prefer this
 application and MCP for banking behavior. The owner-authorized
 `codex/hackathon-banking` branch preserves the reversed #530/#532/#533
 integration separately. FLUJO #534 restored the pre-#530 source tree on main at
 `3fccc557`. The September 29 in-worker adapter, CLI-profile and tool-flow
 descriptions below remain integration history tied to their original revisions,
-not acceptance of a newly deployed branch. Project-owned host/MCP draft PRs
-#31/#32 remain an unfinished alternative and are not included in the preserved
-branch; the old runtime and its evidence are unchanged. The
+not acceptance of a newly deployed branch. Project-owned host/direct-MCP
+PRs #31/#32 are merged at observed project main `e967e7e` and included in the
+local release integration `af3b22d`; they are not in the preserved FLUJO
+branch. The old runtime and its evidence are unchanged. The
 [product boundary](FLUJO_PRODUCT_BOUNDARY.md) governs new work, and the
 [deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md) identifies the source to use.
 
