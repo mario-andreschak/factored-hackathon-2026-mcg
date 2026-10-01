@@ -7,6 +7,7 @@ import pytest
 def main():
     root = Path(__file__).resolve().parents[1]
     return pytest.main(["-q", *[str(path) for path in sorted((root / "tests").glob("test_gloria*.py"))],
+        str(root / "tests/test_native_gloria_qualification.py"),
         str(root / "frontend/tests"), *sys.argv[1:]])
 
 
