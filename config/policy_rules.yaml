@@ -43,3 +43,4 @@ success_phrases:
   - foi registrada
   - ficou registrada
 max_tool_failures: 2
+risk_evidence_max_age_seconds: 20

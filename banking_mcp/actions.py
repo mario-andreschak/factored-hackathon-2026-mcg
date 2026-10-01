@@ -67,6 +67,14 @@ class Actions:
         self.evidence_file = evidence_file
         self._prepare_secret = prepare_secret.encode("utf-8")
         self.clock = time.time
+        # Private application injection; never an MCP argument or model field.
+        # A source-backed host rereads the same owned facts on prepare/confirm.
+        self.trusted_evidence_reader = None
+
+    def _action_evidence(self, principal, snapshot, transaction_id):
+        if self.trusted_evidence_reader is None:
+            return self._evidence(snapshot, transaction_id)
+        return self.trusted_evidence_reader(principal, snapshot, transaction_id)
 
     def _evidence(self, snapshot, transaction_id: str) -> dict | None:
         """A private, pinned synthetic fixture; unknown signals cannot clear intake."""
@@ -230,13 +238,52 @@ class Actions:
         except sqlite3.Error:
             raise BankError("service_unavailable") from None
 
+    def _prior_cases(self, db, customer: str, transaction_id: str, now: float) -> tuple[int, bool]:
+        """R16 counts only durable, reread receipts in the owned real-time window.
+
+        A coverage attestation cannot repair a missing or corrupt receipt. Keep
+        the verified distinct count as a lower bound for a high-risk signal,
+        but never expose an incomplete aggregate as a complete low count.
+        """
+        rows = db.execute("""SELECT transaction_id,facts FROM sandbox_cases
+            WHERE customer=? AND action=? AND transaction_id<>?
+              AND created_at>=? AND created_at<?""",
+            (customer, ACTION, transaction_id, now - 86400, now)).fetchall()
+        verified = set()
+        complete = True
+        # Retained intents can prove an uncertain outcome even after a case row
+        # is lost. Its missing timestamp cannot establish absence in this window.
+        retained = db.execute("SELECT DISTINCT transaction_id,facts FROM action_pending "
+            "WHERE customer=? AND action=? AND transaction_id<>?",
+            (customer, ACTION, transaction_id)).fetchall()
+        for prior_transaction, saved_facts in retained:
+            try:
+                projection = self._case_projection(db, customer, prior_transaction, _object(saved_facts))
+                if projection["state"] == "action_unverified":
+                    complete = False
+            except (ValueError, TypeError):
+                complete = False
+        for prior_transaction, saved_facts in rows:
+            try:
+                facts = _object(saved_facts)
+                projection = self._case_projection(db, customer, prior_transaction, facts,
+                                                   pending_uncertain=False)
+            except (ValueError, TypeError):
+                complete = False
+                continue
+            if projection["state"] != "verified":
+                complete = False
+            else:
+                verified.add(prior_transaction)
+        return len(verified), complete
+
     def prepare(self, principal: Principal, transaction_id: str, build: str, request_id: str) -> dict:
         key, handle = self._prepare_identity(principal, request_id)
         with self.store.authority(principal) as db:
             self._prepare_identity_record(db, principal, key, transaction_id, build)
         snapshot, row = self.repository.owned_transaction_id(principal, transaction_id, build)
         facts = self.repository._visible(row, snapshot)
-        evidence = self._evidence(snapshot, transaction_id)
+        evidence = self._action_evidence(principal, snapshot, transaction_id)
         with self.store.authority(principal, write=True) as db:
             self.repository.assert_current_snapshot(build)
             replay = self._prepare_replay(db, principal, key, handle, transaction_id, build, facts)
@@ -254,17 +301,15 @@ class Actions:
         now = self.clock()
         # R16's provisional synthetic measure is prior distinct persisted
         # cases, excluding this target, plus this current distinct request.
-        prior = db.execute("""SELECT count(DISTINCT transaction_id) FROM sandbox_cases
-            WHERE customer=? AND action=? AND transaction_id<>?
-              AND created_at>=? AND created_at<?""",
-            (principal.customer, ACTION, transaction_id, now - 86400, now)).fetchone()[0]
+        prior, receipts_complete = self._prior_cases(db, principal.customer, transaction_id, now)
         existing_case = self._case_projection(db, principal.customer, transaction_id, facts)
         count = prior + 1
-        covered = self._coverage(db, now)
+        attested = self._coverage(db, now)
+        covered = attested and receipts_complete
         age = (datetime.fromtimestamp(now, timezone.utc).date() - row["transaction_date"].date()).days
         duplicate = bool(evidence and (evidence["historical_complaints"] == "exact_open_case"
                                       or evidence["duplicate_signal"] == "persistent"))
-        high = (covered and count >= 3) or bool(evidence and (
+        high = (attested and count >= 3) or bool(evidence and (
             evidence["fraud_score"] is not None and evidence["fraud_score"] >= 70
             or evidence["amount_usd"] is not None and evidence["amount_usd"] >= 1000))
         evidence_incomplete = (evidence is None or evidence["historical_complaints"] == "uncertain"
@@ -322,14 +367,13 @@ class Actions:
             raise BankError("risk_data_unavailable")
         if evidence["fraud_score"] >= 70 or evidence["amount_usd"] >= 1000:
             raise BankError("handoff_required")
-        prior = db.execute("""SELECT count(DISTINCT transaction_id) FROM sandbox_cases
-            WHERE customer=? AND action=? AND transaction_id<>?
-              AND created_at>=? AND created_at<?""",
-            (principal.customer, ACTION, pending[2], now - 86400, now)).fetchone()[0]
+        prior, receipts_complete = self._prior_cases(db, principal.customer, pending[2], now)
         if not self._coverage(db, now):
             raise BankError("risk_data_unavailable")
         if prior + 1 >= 3:
             raise BankError("handoff_required")
+        if not receipts_complete:
+            raise BankError("risk_data_unavailable")
 
     def _wait_for_receipt(self, principal: Principal, pending_handle: str) -> dict:
         """Overlapping confirmation calls only read; an absent case is never rewritten."""
@@ -365,7 +409,7 @@ class Actions:
         snapshot, row = self.repository.owned_transaction_id(principal, pending[2], pending[3])
         if self.repository._visible(row, snapshot) != json.loads(pending[7]):
             raise BankError("snapshot_changed")
-        evidence = self._evidence(snapshot, pending[2])
+        evidence = self._action_evidence(principal, snapshot, pending[2])
         already_verified = False
         overlapping_attempt = False
         with self.store.authority(principal, write=True) as db:
