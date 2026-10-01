@@ -11,8 +11,11 @@ below describe that review, not the current implementation. The
 > authority and read-only banking tools over in-worker stdio. Existing chat and
 > Slack support approved-customer operator tests through one permanent flow.
 > The specialized routes and consent/case-writing proposal below are historical.
-> **Do not implement its banking-specific FLUJO routes.** The
-> [FLUJO product boundary](FLUJO_PRODUCT_BOUNDARY.md) governs new work.
+> **Do not treat the route proposal below as the preserved implementation.**
+> The owner-authorized separate hackathon branch preserves the later combined
+> #530/#532/#533 source; see the
+> [deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md). The
+> [FLUJO product boundary](FLUJO_PRODUCT_BOUNDARY.md) keeps domain code out of main.
 
 ## 1. Decision and scope
 
