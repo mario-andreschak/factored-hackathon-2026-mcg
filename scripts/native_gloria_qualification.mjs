@@ -18,6 +18,7 @@ for (const key of Object.keys(opts)) assert(['--flujo-root', '--context', '--ima
 assert(opts['--flujo-root'] && opts['--context'] && opts['--output'], 'Required: --flujo-root --context --output');
 const context = path.resolve(opts['--context']);
 const sourceContext = JSON.parse(fs.readFileSync(path.join(context, 'source-manifest.json')));
+assert.equal(sha(fs.readFileSync(path.join(context, 'catalog.json'))), sourceContext.catalog_sha256, 'context_catalog_pin_drift');
 for (const [relative, checksum] of Object.entries(sourceContext.application_files)) {
   const source = path.resolve(REPO_ROOT, relative), stat = fs.lstatSync(source);
   assert(source.startsWith(REPO_ROOT + path.sep) && stat.isFile() && !stat.isSymbolicLink(), 'application_source_not_regular');
@@ -63,7 +64,7 @@ const report = { schema: 'gloria-installed-native-qualification/v1', sourceOnly:
   flujoRevision: '0ba62296520a505e6d71eddf5aa650691f3dc311', image, installed: false,
   externalManifestSha256: sha(fs.readFileSync(path.join(context, 'source-manifest.json'))),
   innerStages: 'protected ephemeral native language graphs; real provider',
-  bankData: 'public synthetic development fixture; no host writes', model: modelName,
+  bankData: 'public synthetic development fixture; bridge exposes no banking actions', model: modelName,
   nativeProfile: JSON.parse(fs.readFileSync(path.join(admitted, 'native-profile.json'))), cases,
   modelRelayAuthoritative: false, sharedWorkersChanged: false, sourceContext };
 let started = false;
@@ -90,6 +91,12 @@ try {
   assert.equal(forced[0].catalogSha256, report.nativeProfile.verifiedModelCatalogSha256, 'forced_probe_catalog_drift');
   assert.equal(forced[0].fixtureSha256, sourceContext.application_files['scripts/native_gloria_capability_probe.mjs'], 'forced_probe_source_drift');
   assert.equal(inventory.length, 14, 'forced_probe_cases_missing');
+  const expectedProbes = new Set(['gpt-6-sol', 'gpt-6-luna'].flatMap(model =>
+    ['inventory', 'approved_mcp', 'read_mcp_resource', 'rogue_namespace', 'mcp__rogue__rogue_access',
+      'apply_patch_foreign', 'functions_exec'].map(tool => `${model}:${tool}`)));
+  const actualProbes = new Set(inventory.map(item => `${item.model}:${item.tool}`));
+  assert.equal(actualProbes.size, expectedProbes.size, 'forced_probe_duplicate_cases');
+  assert([...actualProbes].every(item => expectedProbes.has(item)), 'forced_probe_matrix_mismatch');
   assert(inventory.every(item => item.passed) && forced.at(-1).failures.length === 0, 'forced_native_capability_denial_failed');
   report.nativeCapabilityProbes = { scope: 'installed native binary and production tool bridge; synthetic upstream responses',
     bridgeSourceSha256: forced[0].bridgeSourceSha256, fixtureSha256: forced[0].fixtureSha256,

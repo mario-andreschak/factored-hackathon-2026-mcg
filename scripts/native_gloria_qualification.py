@@ -282,6 +282,9 @@ BOUNDARY_CASES = {
     "slow_body_concurrent_replay", "concurrent_replay", "concurrent_replay_transport_replay",
     "poison_state", "poison_state_transport_replay",
 }
+CAPABILITY_CASES = {(model, tool) for model in ("gpt-6-sol", "gpt-6-luna")
+                    for tool in ("inventory", "approved_mcp", "read_mcp_resource", "rogue_namespace",
+                                 "mcp__rogue__rogue_access", "apply_patch_foreign", "functions_exec")}
 
 
 def public_report(report):
@@ -292,7 +295,8 @@ def public_report(report):
     if (report.get("pass") is not True or report.get("installed") is not True
             or len(cases) != 14 or {item.get("case") for item in cases} != BOUNDARY_CASES
             or not all(item.get("pass") is True for item in cases)
-            or len(probes) != 14 or not all(item.get("passed") is True for item in probes)
+            or len(probes) != 14 or {(item.get("model"), item.get("tool")) for item in probes} != CAPABILITY_CASES
+            or not all(item.get("passed") is True for item in probes)
             or installed.get("pass") is not True or audit.get("credential_files_present") != 0
             or not report.get("externalManifestSha256")
             or installed.get("manifest_sha256") != report["externalManifestSha256"]
@@ -314,7 +318,7 @@ def public_report(report):
         "schema": "gloria-native-release-qualification/v1",
         "qualified_utc": datetime.now(timezone.utc).isoformat(),
         "pass": True, "installed": True,
-        "scope": "Isolated local worker; public synthetic development bank fixture; no host writes",
+        "scope": "Isolated local worker; public synthetic development bank fixture; bridge exposes no banking actions",
         "shared_workers_changed": False, "model_relay_authoritative": False,
         "pins": {"flujo_revision": report["flujoRevision"],
                  "application_revision": source["application_revision"],

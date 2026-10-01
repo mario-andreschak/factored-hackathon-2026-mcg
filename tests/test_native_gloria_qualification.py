@@ -6,7 +6,7 @@ import tempfile
 import time
 import unittest
 
-from scripts.native_gloria_qualification import NativeGloriaPort, BOUNDARY_CASES, public_report
+from scripts.native_gloria_qualification import NativeGloriaPort, BOUNDARY_CASES, CAPABILITY_CASES, public_report
 
 
 class PublicQualificationReportTests(unittest.TestCase):
@@ -29,8 +29,8 @@ class PublicQualificationReportTests(unittest.TestCase):
                     "model_observations": [{"stage": "detect_intent", "status": "ok", "latency_ms": 1,
                         "model_content": "PRIVATE_MARKER"}]} for name in sorted(BOUNDARY_CASES)],
                 "nativeCapabilityProbes": {"bridgeSourceSha256": checksum, "fixtureSha256": checksum,
-                    "cases": [{"model": "gpt-6-sol", "tool": "inventory", "passed": True,
-                               "private_output": "PRIVATE_MARKER"} for _ in range(14)]},
+                    "cases": [{"model": model, "tool": tool, "passed": True,
+                               "private_output": "PRIVATE_MARKER"} for model, tool in sorted(CAPABILITY_CASES)]},
                 "admissions": [{"token": "PRIVATE_MARKER"}]}
 
     def test_public_report_excludes_private_payloads_and_retains_measurements(self):
@@ -44,6 +44,8 @@ class PublicQualificationReportTests(unittest.TestCase):
     def test_incomplete_or_source_drift_report_cannot_be_published(self):
         for mutate in (lambda value: value["cases"].pop(),
                        lambda value: value["nativeCapabilityProbes"]["cases"].pop(),
+                       lambda value: value["nativeCapabilityProbes"]["cases"].__setitem__(0,
+                           value["nativeCapabilityProbes"]["cases"][1].copy()),
                        lambda value: value.update({"pass": False}),
                        lambda value: value["installedSourceHashes"].update(manifest_sha256="b" * 64),
                        lambda value: value["imageCredentialAudit"].update(credential_files_present=1)):
