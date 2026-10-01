@@ -411,6 +411,26 @@ button svg {
   align-self: center;
   padding: 50px 0;
 }
+.login-language {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 24px;
+  color: #426149;
+  font-size: 11px;
+  font-weight: 600;
+}
+.login-language select {
+  max-width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #c9d8c5;
+  border-radius: 8px;
+  background: #fff;
+  color: #173c35;
+  font-size: 12px;
+}
 .login-lock {
   display: grid;
   place-items: center;
@@ -533,8 +553,8 @@ button svg {
   gap: 7px;
   align-items: center;
   margin-top: 19px;
-  font-size: 10px;
-  color: #81937b;
+  font-size: 11px;
+  color: #576e59;
 }
 .login-warning {
   margin-top: 18px;
@@ -547,11 +567,15 @@ button svg {
   line-height: 1.55;
 }
 .login-disclosure {
-  font-size: 10px;
-  color: #9aa298;
+  font-size: 11px;
+  color: #667761;
   line-height: 1.7;
   text-align: center;
   margin: 22px 7px 0;
+}
+.login-language-note {
+  margin-top: 8px;
+  color: #426149;
 }
 .login-footer {
   display: flex;

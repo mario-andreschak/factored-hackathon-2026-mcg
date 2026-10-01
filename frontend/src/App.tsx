@@ -134,19 +134,122 @@ function Amount({ t, hidden }: { t: Transaction; hidden?: boolean }) {
   );
 }
 
-function Login({
+type LoginError = "" | "connection" | "invalid" | "submit";
+const loginCopy = {
+  es: {
+    language: "Idioma de acceso",
+    eyebrow: "TU BANCA, A TU RITMO",
+    story: ["Tu dinero.", "Tus planes.", "Tu tranquilidad."],
+    storyIntro: "Una forma más clara de ver tus finanzas.",
+    storyOutro: "Todo lo que necesitas, en un solo lugar.",
+    card: "Tu mundo, conectado",
+    float: "Todo en su lugar",
+    storyFooter: "Hecho para moverte con confianza.",
+    inviteTitle: "Tu acceso, solo tuyo.",
+    demoTitle: "Qué bueno verte.",
+    inviteIntro:
+      "Ingresa la invitación que recibiste para explorar tu espacio.",
+    demoIntro: "Entra a tu espacio personal.",
+    retry: "Reintentar",
+    loading: "Preparando tu acceso…",
+    profile: "Elige un perfil de demostración",
+    inviteCode: "Código de invitación",
+    demoCode: "Código de acceso",
+    invitePlaceholder: "Pega tu invitación",
+    demoPlaceholder: "Ingresa tu código",
+    submit: "Entrar a mi banca",
+    submitting: "Iniciando sesión…",
+    trust: "Sesión privada · Demostración con datos sintéticos",
+    inviteDisclosure:
+      "Prototipo con datos sintéticos creados por el equipo. Cada invitación abre un único perfil ficticio.",
+    demoDisclosure:
+      "Experiencia de demostración con los datos sintéticos del hackathon. Los nombres son alias; los productos y movimientos provienen del dataset.",
+    footer: "Tu dinero, en calma.",
+    portalLanguageNotice: "",
+    sessionNotice:
+      "Se retiró el acceso de este navegador, pero no pudimos confirmar el cierre completo de la sesión y el asistente. Solicita ayuda antes de usar otra cuenta.",
+    errors: {
+      connection:
+        "La conexión con los datos no está disponible. Intenta de nuevo.",
+      invalid: "El código no es correcto. Revisa e intenta de nuevo.",
+      submit: "No pudimos iniciar tu sesión. Intenta de nuevo.",
+    },
+  },
+  pt: {
+    language: "Idioma de acesso",
+    eyebrow: "SEU BANCO, NO SEU RITMO",
+    story: ["Seu dinheiro.", "Seus planos.", "Sua tranquilidade."],
+    storyIntro: "Uma maneira mais clara de acompanhar suas finanças.",
+    storyOutro: "Tudo de que você precisa, em um só lugar.",
+    card: "Seu mundo, conectado",
+    float: "Tudo em seu lugar",
+    storyFooter: "Feito para você seguir com confiança.",
+    inviteTitle: "Seu acesso é só seu.",
+    demoTitle: "Que bom ter você aqui.",
+    inviteIntro:
+      "Digite o código do convite que você recebeu para explorar seu espaço.",
+    demoIntro: "Entre no seu espaço pessoal.",
+    retry: "Tentar novamente",
+    loading: "Preparando seu acesso…",
+    profile: "Escolha um perfil de demonstração",
+    inviteCode: "Código do convite",
+    demoCode: "Código de acesso",
+    invitePlaceholder: "Cole seu convite",
+    demoPlaceholder: "Digite seu código",
+    submit: "Entrar no meu banco",
+    submitting: "Entrando…",
+    trust: "Sessão privada · Demonstração com dados sintéticos",
+    inviteDisclosure:
+      "Protótipo com dados sintéticos criados pela equipe. Cada convite abre um único perfil fictício.",
+    demoDisclosure:
+      "Experiência de demonstração com dados sintéticos do hackathon. Os nomes são apelidos; os produtos e lançamentos vêm do conjunto de dados.",
+    footer: "Seu dinheiro, com tranquilidade.",
+    portalLanguageNotice:
+      "Após entrar, o portal continua em espanhol. Os textos da interface do Assistente seguem o idioma escolhido aqui.",
+    sessionNotice:
+      "O acesso deste navegador foi removido, mas não foi possível confirmar o encerramento completo da sessão e do Assistente. Peça ajuda antes de usar outra conta.",
+    errors: {
+      connection: "A conexão com os dados está indisponível. Tente novamente.",
+      invalid: "O código está incorreto. Confira e tente novamente.",
+      submit: "Não foi possível iniciar sua sessão. Tente novamente.",
+    },
+  },
+} as const;
+
+export function Login({
   onLogin,
   notice,
 }: {
   onLogin: (mode: "demo" | "invite") => void;
-  notice: string;
+  notice: "" | "session-revoke-unconfirmed";
 }) {
+  const [locale, setLocale] = useState<ActionLanguage>(savedActionLanguage);
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [mode, setMode] = useState<"loading" | "demo" | "invite">("loading"),
     [profileId, setProfileId] = useState(""),
     [code, setCode] = useState(""),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState<LoginError>("");
+  const copy = loginCopy[locale];
+  useEffect(() => {
+    document.documentElement.lang = locale === "pt" ? "pt-BR" : "es";
+    document.title =
+      locale === "pt"
+        ? "Savia · Seu banco pessoal"
+        : "Savia · Tu banca personal";
+    return () => {
+      document.documentElement.lang = "es";
+      document.title = "Savia · Tu banca personal";
+    };
+  }, [locale]);
+  function changeLocale(next: ActionLanguage) {
+    setLocale(next);
+    try {
+      window.localStorage.setItem(ACTION_LANGUAGE_STORAGE, next);
+    } catch {
+      // The choice still applies to this sign-in when storage is unavailable.
+    }
+  }
   const load = useCallback(() => {
     setError("");
     setMode("loading");
@@ -159,11 +262,7 @@ function Login({
         setProfiles(r.profiles);
         setProfileId(r.profiles[0]?.id || "");
       })
-      .catch(() =>
-        setError(
-          "La conexión con los datos no está disponible. Intenta de nuevo.",
-        ),
-      );
+      .catch(() => setError("connection"));
   }, []);
   useEffect(load, [load]);
   async function submit(e: FormEvent) {
@@ -180,11 +279,7 @@ function Login({
       onLogin(mode === "invite" ? "invite" : "demo");
     } catch (e) {
       setError(
-        e instanceof ApiError && e.status === 401
-          ? "El código no es correcto. Revisa e intenta de nuevo."
-          : e instanceof Error
-            ? e.message
-            : "No pudimos iniciar tu sesión.",
+        e instanceof ApiError && e.status === 401 ? "invalid" : "submit",
       );
     } finally {
       setBusy(false);
@@ -197,19 +292,19 @@ function Login({
         <div className="story-content">
           <span className="eyebrow light">
             <span className="live-dot" />
-            TU BANCA, A TU RITMO
+            {copy.eyebrow}
           </span>
           <h1>
-            Tu dinero.
+            {copy.story[0]}
             <br />
-            Tus planes.
+            {copy.story[1]}
             <br />
-            <em>Tu tranquilidad.</em>
+            <em>{copy.story[2]}</em>
           </h1>
           <p>
-            Una forma más clara de ver tus finanzas.
+            {copy.storyIntro}
             <br />
-            Todo lo que necesitas, en un solo lugar.
+            {copy.storyOutro}
           </p>
           <div className="login-art" aria-hidden="true">
             <div className="orbit orbit-one" />
@@ -223,7 +318,7 @@ function Login({
               <span className="art-card-line" />
               <span className="art-card-line short" />
               <div className="art-card-bottom">
-                <span>Tu mundo, conectado</span>
+                <span>{copy.card}</span>
                 <Globe2 size={25} />
               </div>
             </div>
@@ -231,12 +326,12 @@ function Login({
               <span>
                 <Check size={15} />
               </span>
-              Todo en su lugar
+              {copy.float}
             </div>
           </div>
         </div>
         <div className="story-footer">
-          <span>Hecho para moverte con confianza.</span>
+          <span>{copy.storyFooter}</span>
           <span>LATAM ↗</span>
         </div>
       </section>
@@ -249,30 +344,41 @@ function Login({
           FACTORED HACKATHON 2026
         </span>
         <div className="login-form-wrap">
+          <label className="login-language">
+            <span>{copy.language}</span>
+            <select
+              value={locale}
+              onChange={(event) =>
+                changeLocale(event.target.value as ActionLanguage)
+              }
+            >
+              <option value="es" lang="es">
+                Español
+              </option>
+              <option value="pt" lang="pt-BR">
+                Português (Brasil)
+              </option>
+            </select>
+          </label>
           <span className="login-lock">
             <LockKeyhole size={24} />
           </span>
-          <h2>
-            {mode === "invite" ? "Tu acceso, solo tuyo." : "Qué bueno verte."}
-          </h2>
+          <h2>{mode === "invite" ? copy.inviteTitle : copy.demoTitle}</h2>
           <p className="login-intro">
-            {mode === "invite"
-              ? "Ingresa la invitación que recibiste para explorar tu espacio."
-              : "Entra a tu espacio personal."}
+            {mode === "invite" ? copy.inviteIntro : copy.demoIntro}
           </p>
           {mode === "loading" ? (
             <div className="login-loading">
               {error ? (
                 <p className="form-error" role="alert">
-                  {error}{" "}
+                  {copy.errors[error]}{" "}
                   <button type="button" className="text-button" onClick={load}>
-                    Reintentar
+                    {copy.retry}
                   </button>
                 </p>
               ) : (
                 <>
-                  <LoaderCircle size={18} className="spin" /> Preparando tu
-                  acceso…
+                  <LoaderCircle size={18} className="spin" /> {copy.loading}
                 </>
               )}
             </div>
@@ -280,16 +386,19 @@ function Login({
             <form onSubmit={submit}>
               {mode === "demo" && (
                 <>
-                  <label className="field-label">
-                    Elige un perfil de demostración
-                  </label>
-                  <div className="profile-options">
+                  <p className="field-label">{copy.profile}</p>
+                  <div
+                    className="profile-options"
+                    role="group"
+                    aria-label={copy.profile}
+                  >
                     {profiles.map((p) => (
                       <button
                         type="button"
                         key={p.id}
                         className={`profile-option ${profileId === p.id ? "selected" : ""}`}
                         onClick={() => setProfileId(p.id || "")}
+                        aria-pressed={profileId === p.id}
                       >
                         <Avatar name={p.alias} small />
                         <span>
@@ -307,9 +416,7 @@ function Login({
                 </>
               )}
               <label className="field-label" htmlFor="login-code">
-                {mode === "invite"
-                  ? "Código de invitación"
-                  : "Código de acceso"}
+                {mode === "invite" ? copy.inviteCode : copy.demoCode}
               </label>
               <div className="input-with-icon">
                 <LockKeyhole size={18} />
@@ -320,8 +427,8 @@ function Login({
                   onChange={(e) => setCode(e.target.value)}
                   placeholder={
                     mode === "invite"
-                      ? "Pega tu invitación"
-                      : "Ingresa tu código"
+                      ? copy.invitePlaceholder
+                      : copy.demoPlaceholder
                   }
                   autoComplete={
                     mode === "invite" ? "one-time-code" : "current-password"
@@ -332,7 +439,7 @@ function Login({
               </div>
               {error && (
                 <p className="form-error" role="alert">
-                  {error}
+                  {copy.errors[error]}
                 </p>
               )}
               <button
@@ -340,10 +447,13 @@ function Login({
                 disabled={busy || (mode === "demo" && !profileId)}
               >
                 {busy ? (
-                  <LoaderCircle className="spin" size={19} />
+                  <>
+                    <LoaderCircle className="spin" size={19} />
+                    {copy.submitting}
+                  </>
                 ) : (
                   <>
-                    Entrar a mi banca
+                    {copy.submit}
                     <ArrowRight size={18} />
                   </>
                 )}
@@ -352,22 +462,25 @@ function Login({
           )}
           <div className="login-trust">
             <ShieldCheck size={17} />
-            <span>Sesión privada · Acceso de solo lectura</span>
+            <span>{copy.trust}</span>
           </div>
           {notice && (
             <p className="login-warning" role="alert">
-              {notice}
+              {copy.sessionNotice}
             </p>
           )}
           <p className="login-disclosure">
-            {mode === "invite"
-              ? "Prototipo con datos sintéticos creados por el equipo. Cada invitación abre un único perfil ficticio."
-              : "Experiencia de demostración con los datos sintéticos del hackathon. Los nombres son alias; los productos y movimientos provienen del dataset."}
+            {mode === "invite" ? copy.inviteDisclosure : copy.demoDisclosure}
           </p>
+          {copy.portalLanguageNotice && (
+            <p className="login-disclosure login-language-note">
+              {copy.portalLanguageNotice}
+            </p>
+          )}
         </div>
         <footer className="login-footer">
           <span>© 2026 Savia</span>
-          <span>Tu dinero, en calma.</span>
+          <span>{copy.footer}</span>
         </footer>
       </section>
     </div>
@@ -2656,7 +2769,9 @@ export default function App() {
     [mobileMenu, setMobileMenu] = useState(false),
     [info, setInfo] = useState(false),
     [toast, setToast] = useState(""),
-    [loginNotice, setLoginNotice] = useState("");
+    [loginNotice, setLoginNotice] = useState<"" | "session-revoke-unconfirmed">(
+      "",
+    );
   const dataController = useRef<AbortController | null>(null);
   const expired = useCallback(() => {
     dataController.current?.abort();
@@ -2773,9 +2888,7 @@ export default function App() {
         error.status === 503 &&
         error.revokeStatus === "persist_failed"
       ) {
-        setLoginNotice(
-          "Se retiró el acceso de este navegador, pero no pudimos confirmar el cierre completo de la sesión y el asistente. Solicita ayuda antes de usar otra cuenta.",
-        );
+        setLoginNotice("session-revoke-unconfirmed");
         expired();
         setPage("home");
         return;
