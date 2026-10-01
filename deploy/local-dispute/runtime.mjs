@@ -91,7 +91,8 @@ export async function bootstrap(origin) {
   await publish(CONTROL + '/native-profile.json', profileBytes, 0, 10002, 0o440);
   await publish(CONTROL + '/admissions.json', '[]\n', 10001, 10002, 0o640, true);
   await execute('/usr/sbin/gosu', ['banking', '/opt/joined/.venv/bin/python',
-    '/local-demo-source/scripts/local_dispute_demo.py', 'prepare', '--root', ROOT],
+    '/local-demo-source/scripts/local_dispute_demo.py', 'prepare', '--root', ROOT,
+    '--native-authority-dir', CONTROL, '--native-reader-group', '10002'],
     { cwd: '/local-demo-source', env: { ...BASE, HOME: '/nonexistent' } });
   console.log('Authored local fixture prepared. Native provider and intake acceptance remain to be verified.');
 }
