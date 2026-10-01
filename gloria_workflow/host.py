@@ -12,40 +12,56 @@ import json
 
 from .runtime import Workflow
 from .prompts import StageAdapters
-from .state import ConversationStore
+from .state import ConversationStore, TrustedBinding
+from .bank_read import OwnedBankReads
+from banking_mcp.security import Principal
+
+
+def _admitted_session(chat, customer, session_id, session_exp):
+    """Resolve persisted admission only; caller selectors confer no authority."""
+    subject, owner = chat._identity(customer, session_id, session_exp)
+    with chat._connection() as db:
+        row = db.execute("SELECT * FROM chat_sessions WHERE session_id=?", (session_id,)).fetchone()
+    if (not row or row["revoked"] or row["customer_id"] != customer or
+            row["subject"] != subject or row["owner"] != owner or
+            row["expires"] != session_exp or not row["conversation_id"]):
+        raise ValueError("session unavailable")
+    return subject, owner, row["conversation_id"]
 
 
 class RepositoryBank:
-    def __init__(self, repository, chat_service, profile_id, session_id, session_exp, *, source_reader=None):
+    def __init__(self, repository, chat_service, profile_id, session_id, session_exp, *, source_reader=None,
+                 bank_service=None, source_root=None):
         self.repository, self.chat = repository, chat_service
         self.profile_id, self.session_id, self.session_exp = profile_id, session_id, session_exp
         self.customer = repository.profile_customer(profile_id)
         self.source_reader = source_reader
+        self.bank_service, self.source_root = bank_service, source_root
+        self.bank_reads = None
         self._binding = None
 
     def bind_context(self, binding):
         from dataclasses import asdict, is_dataclass
         context = asdict(binding) if is_dataclass(binding) else dict(binding)
-        _, owner = self.chat._identity(self.customer, self.session_id, self.session_exp)
+        subject, owner = self.chat._identity(self.customer, self.session_id, self.session_exp)
         if any(context.get(key) != value for key, value in {
                 "owner": owner, "customer_id": self.customer, "session_id": self.session_id,
                 "expires_at": self.session_exp}.items()):
             raise ValueError("workflow binding mismatch")
         self._binding = context
         self._current()
+        if self.bank_service is not None:
+            principal = Principal(subject, self.customer, self.session_id, context["conversation_id"], self.session_exp)
+            self.bank_reads = OwnedBankReads(self.bank_service, self.repository, principal,
+                source_root=self.source_root, guard=self._current)
 
     def _current(self):
         if self.repository.profile_customer(self.profile_id) != self.customer:
             raise ValueError("customer binding changed")
-        self.chat._identity(self.customer, self.session_id, self.session_exp)
-        with self.chat._connection() as db:
-            row = db.execute("SELECT revoked,customer_id FROM chat_sessions WHERE session_id=?", (self.session_id,)).fetchone()
-            if row and (row["revoked"] or row["customer_id"] != self.customer):
-                raise ValueError("session unavailable")
-            if self._binding:
-                conversation = db.execute("SELECT conversation_id FROM chat_sessions WHERE session_id=?", (self.session_id,)).fetchone()
-                if conversation and conversation[0] and conversation[0] != self._binding["conversation_id"]:
-                    raise ValueError("conversation binding mismatch")
+        _, owner, conversation = _admitted_session(self.chat, self.customer, self.session_id, self.session_exp)
+        if self._binding and (owner != self._binding["owner"] or
+                              conversation != self._binding["conversation_id"]):
+            raise ValueError("conversation binding mismatch")
 
     @staticmethod
     def _row(row):
@@ -53,6 +69,8 @@ class RepositoryBank:
 
     async def read(self, name, args):
         self._current()
+        if self.bank_reads is not None and name != "host_action_status":
+            return await self.bank_reads.read(name, args)
         if name == "get_customer_profile":
             data = self.repository.overview(self.profile_id, 1)
             return {"status": "ok", "currencies": sorted({p["currency"] for p in data["products"]}), "products": [{"currency": p["currency"]} for p in data["products"]]}
@@ -142,13 +160,16 @@ class RepositoryBank:
             return {"status": "error", "code": "unsupported_history"}
         if name == "host_action_status":
             result = await self.chat.action_status(self.customer, self.session_id, self.session_exp)
+            if result.get("state") == "intake_verified":
+                result["snapshot"] = result["receipt"]["snapshot"]
             self._current()
             with self.chat._connection() as db:
-                row = db.execute("SELECT owner,expires,prepare_conversation_id FROM action_status WHERE session_id=?", (self.session_id,)).fetchone()
+                row = db.execute("SELECT owner,expires,action_conversation_id FROM action_status WHERE session_id=?", (self.session_id,)).fetchone()
             verified = bool(self._binding and (result.get("state") == "none" or (row and
                 row["owner"] == self._binding["owner"] and row["expires"] == self.session_exp and
-                row["prepare_conversation_id"] == self._binding["conversation_id"])))
-            for field, public in (("expected_request_id", "request_id"), ("pending_handle", "pending_handle")):
+                row["action_conversation_id"] == self._binding["conversation_id"])))
+            for field, public in (("expected_request_id", "request_id"), ("pending_handle", "pending_handle"),
+                                  ("query_id", "query_id")):
                 if args.get(field) and result.get(public) != args[field]:
                     verified = False
             return {"status": "ok", **result, "binding_verified": verified,
@@ -162,10 +183,31 @@ class GloriaHostFactory:
 Construct with a configured model callable. Creating this factory does not
 replace the shared FLUJO worker, change its graph, or enable portal actions.
 """
-    def __init__(self, model, state_path, *, source_reader=None):
+    def __init__(self, model, state_path, *, source_reader=None, bank_service=None, source_root=None):
         self.model, self.store = model, ConversationStore(state_path)
         self.source_reader = source_reader
+        self.bank_service, self.source_root = bank_service, source_root
 
     def __call__(self, repository, chat_service, profile_id, session_id, session_exp):
-        bank = RepositoryBank(repository, chat_service, profile_id, session_id, session_exp, source_reader=self.source_reader)
+        bank = RepositoryBank(repository, chat_service, profile_id, session_id, session_exp,
+                              source_reader=self.source_reader, bank_service=self.bank_service,
+                              source_root=self.source_root)
         return Workflow(StageAdapters(self.model), bank, self.store)
+
+    def query_context(self, chat, customer, sid, expiry):
+        """Readonly public registry projection for the exact admitted session."""
+        _, owner, conversation = _admitted_session(chat, customer, sid, expiry)
+        binding = TrustedBinding(owner=owner, customer_id=customer, session_id=sid,
+            conversation_id=conversation, expires_at=expiry)
+        state = self.store.load(binding)
+        if state is None:
+            return {"queries": [], "active_query_id": None}
+        runtime = state["runtime"]
+        scopes = runtime.get("query_scopes", {})
+        queries = [{"query_id": key, "label": scopes[key]["query_text"],
+                    "transaction_reference": scopes[key]["workflow_state"].get("transaction_id")}
+                   for key in runtime.get("query_scope_order", [])]
+        # Revocation/rebinding during the durable read must not release history.
+        if _admitted_session(chat, customer, sid, expiry)[1:] != (owner, conversation):
+            raise ValueError("conversation binding mismatch")
+        return {"queries": queries, "active_query_id": runtime.get("active_query_id")}

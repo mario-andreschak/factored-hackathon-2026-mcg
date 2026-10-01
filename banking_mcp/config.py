@@ -20,6 +20,10 @@ class Config(BaseModel):
     demo_customer: str | None = None
     approved_customers: frozenset[str] = Field(default_factory=frozenset, repr=False)
     source_env: Path | None = None
+    # Trusted event-date currency-to-USD inputs; request/model data cannot set
+    # these. Both the absolute private path and its complete hash are required.
+    event_rates_file: Path | None = Field(default=None, repr=False)
+    event_rates_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$", repr=False)
     # An operator attests when the SANDBOX report ledger became complete. This
     # never represents bank-wide historical reporting coverage.
     sandbox_report_coverage_start: int | None = Field(default=None, ge=1)
@@ -41,6 +45,9 @@ class Config(BaseModel):
         if (not self.data_dir.is_absolute() or not self.state_db.is_absolute()
                 or (self.synthetic_evidence_file is not None and not self.synthetic_evidence_file.is_absolute())):
             raise ValueError("data_dir and state_db must be absolute")
+        if ((self.event_rates_file is None) != (self.event_rates_sha256 is None)
+                or self.event_rates_file is not None and not self.event_rates_file.is_absolute()):
+            raise ValueError("event_rates_file requires an absolute path and event_rates_sha256 together")
         if self.mode == "delegated":
             if not self.public_keys or not self.principal_customers or self.demo_customer or self.approved_customers:
                 raise ValueError("delegated mode requires keys and a private subject mapping")
