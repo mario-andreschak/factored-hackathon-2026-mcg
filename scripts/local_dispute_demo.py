@@ -7,6 +7,7 @@ a worker or substitutes a model. Private inputs and databases survive shutdown.
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 from dataclasses import dataclass, replace
 from datetime import timezone
 import hashlib
@@ -71,12 +72,28 @@ def _owned_path(root: Path, relative: str) -> Path:
 
 def _coverage(db_path: Path) -> tuple:
     _require(db_path.is_file() and not db_path.is_symlink(), "retained_ledger_missing")
-    with sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True) as db:
+    with closing(sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True)) as db:
         row = db.execute("""SELECT i.generation,c.generation,c.coverage_start,
             c.provenance_digest,c.attested_at FROM sandbox_ledger_identity i
             JOIN sandbox_coverage c ON c.id=i.id WHERE i.id=1""").fetchone()
     _require(row is not None and row[0] == row[1], "retained_coverage_missing")
     return row
+
+
+def _settings(frontend: dict):
+    from frontend.server.config import Settings
+    return Settings(data_dir=Path(frontend["data_dir"]),
+        state_dir=Path(frontend["state_dir"]), static_dir=Path(frontend["static_dir"]),
+        demo_code=frontend["demo_code"], profiles=frontend["profiles"], chat=frontend["chat"],
+        public_origin=frontend["public_origin"], secure_cookie=False)
+
+
+def _application(settings, bank_config, state, source, bank_config_file, *,
+                 native_url, authority_dir, reader_group):
+    from scripts.run_dispute import application
+    return application(settings, bank_config, state, native_url, Path(authority_dir),
+        source_root=source, enable_simulated_intake=True, native_reader_group=reader_group,
+        bank_config_file=bank_config_file, application_source_root=ROOT, transition_receipt=None)
 
 
 @dataclass(frozen=True)
@@ -110,7 +127,6 @@ class PreparedDemo:
 def load_demo(root: str | Path) -> PreparedDemo:
     """Validate retained inputs and coverage without creating or repairing state."""
     from banking_mcp.config import load_config
-    from frontend.server.config import Settings
     from scripts.qualify_dispute_app import _tree_hashes
 
     root = Path(root).resolve()
@@ -130,10 +146,7 @@ def load_demo(root: str | Path) -> PreparedDemo:
              "retained_source_changed")
     bank = load_config(root / "input-settings" / "bank.json")
     frontend = _json(root / "input-settings" / "frontend.json")
-    settings = Settings(data_dir=Path(frontend["data_dir"]),
-        state_dir=Path(frontend["state_dir"]), static_dir=Path(frontend["static_dir"]),
-        demo_code=frontend["demo_code"], profiles=frontend["profiles"], chat=frontend["chat"],
-        public_origin=frontend["public_origin"], secure_cookie=False)
+    settings = _settings(frontend)
     state = root / "instances" / "interactive"
     _require(bank.state_db == state / "bank.sqlite3" and bank.data_dir == root / "fixture" / "data"
              and settings.data_dir == bank.data_dir and settings.public_origin == PUBLIC_ORIGIN
@@ -162,10 +175,12 @@ def load_demo(root: str | Path) -> PreparedDemo:
     return PreparedDemo(root, manifest, settings, bank)
 
 
-def prepare(root: str | Path, *, static_dir: str | Path = STATIC_DIR) -> PreparedDemo:
+def prepare(root: str | Path, *, static_dir: str | Path = STATIC_DIR,
+            native_url: str = "http://127.0.0.1:4200",
+            authority_dir: str | Path = "/data/native-authority/control",
+            reader_group: int | None = 10002) -> PreparedDemo:
     """Create once, or validate this same owned fixture; never reset an occupied root."""
     from banking_mcp.config import Config
-    from banking_mcp.security import StateStore
     from scripts.qualify_dispute_app import build_fixture, _tree_hashes
 
     root = Path(root).resolve()
@@ -196,12 +211,21 @@ def prepare(root: str | Path, *, static_dir: str | Path = STATIC_DIR) -> Prepare
     _write(root / "input-settings" / "frontend.json", _bytes(frontend))
     # A dedicated file lets the human retrieve only the local access code.
     _write(root / "local-access.json", _bytes({"demo_code": fixture.demo_code}))
+    # The source-owned factory performs the fresh-state preflight and publishes
+    # its real pin/origin BEFORE coverage or any retained admission is created.
+    # Constructing the app starts no lifespan, listener, worker or provider call.
+    app, bank = _application(_settings(frontend), config, state, fixture.source,
+        root / "input-settings" / "bank.json", native_url=native_url,
+        authority_dir=authority_dir, reader_group=reader_group)
+    store = bank.store
+    bank.close()
+    del app
     immutable = [root / "input-settings" / "bank.json", root / "input-settings" / "frontend.json",
                  root / "local-access.json", fixture.signer, fixture.rates,
-                 root / "fixture" / "private-admission.json", root / "fixture" / "identifier-salt.bin"]
+                 root / "fixture" / "private-admission.json", root / "fixture" / "identifier-salt.bin",
+                 state / "dispute-bank-generation.json", state / "native-fresh-origin.json"]
     immutable.extend(path for path in fixture.data.rglob("*") if path.is_file())
     input_hashes = {path.relative_to(root).as_posix(): _sha(path) for path in sorted(immutable)}
-    store = StateStore(config.state_db, ledger_continuity_approved=True)
     with store.connect() as db:
         generation = db.execute("SELECT generation FROM sandbox_ledger_identity WHERE id=1").fetchone()[0]
         _require(all(db.execute("SELECT count(*) FROM " + table).fetchone()[0] == 0
@@ -233,7 +257,6 @@ def serve(demo: PreparedDemo, *, static_dir: str | Path = STATIC_DIR, port: int 
           authority_dir: str | Path = "/data/native-authority/control",
           reader_group: int | None = 10002) -> None:
     """Run the actual admitted app behind the separately owned local proxy."""
-    from scripts.run_dispute import application
     from starlette.responses import JSONResponse
     from starlette.routing import Route
     import uvicorn
@@ -245,11 +268,9 @@ def serve(demo: PreparedDemo, *, static_dir: str | Path = STATIC_DIR, port: int 
              "native_reader_group_invalid")
     static = Path(static_dir).resolve()
     _require((static / "index.html").is_file(), "current_frontend_build_missing")
-    app, bank = application(replace(demo.settings, static_dir=static), demo.bank_config,
-        demo.state, native_url, Path(authority_dir), source_root=demo.source,
-        enable_simulated_intake=True, native_reader_group=reader_group,
-        bank_config_file=demo.bank_config_file, application_source_root=ROOT,
-        transition_receipt=None)
+    app, bank = _application(replace(demo.settings, static_dir=static), demo.bank_config,
+        demo.state, demo.source, demo.bank_config_file, native_url=native_url,
+        authority_dir=authority_dir, reader_group=reader_group)
     try:
         async def public_status(request):
             return JSONResponse({**demo.public_status(), "server_running": True,
@@ -274,7 +295,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         _require(args.public_origin == PUBLIC_ORIGIN, "local_origin_changed")
-        demo = prepare(args.root, static_dir=args.static_dir) if args.command == "prepare" else load_demo(args.root)
+        demo = prepare(args.root, static_dir=args.static_dir, native_url=args.native_url,
+            authority_dir=args.native_authority_dir, reader_group=args.native_reader_group
+            ) if args.command == "prepare" else load_demo(args.root)
         if args.command == "serve":
             serve(demo, static_dir=args.static_dir, port=args.port, native_url=args.native_url,
                   authority_dir=args.native_authority_dir, reader_group=args.native_reader_group)

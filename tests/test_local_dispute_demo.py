@@ -5,13 +5,59 @@ import sqlite3
 
 import pytest
 
-from scripts.local_dispute_demo import DemoRejected, load_demo, main, prepare
+from scripts.local_dispute_demo import DemoRejected, _application, load_demo, main, prepare
 
 
 @pytest.fixture(scope="module")
-def original(tmp_path_factory):
+def authority(tmp_path_factory):
+    root = tmp_path_factory.mktemp("authored-constructor-test-authority")
+    (root / "admissions.json").write_text("[]", encoding="utf-8")
+    (root / "native-profile.json").write_text(json.dumps({
+        "scope": "authored constructor test; no provider is installed or called"}), encoding="utf-8")
+    return root
+
+
+@pytest.fixture(scope="module")
+def original(tmp_path_factory, authority):
     root = tmp_path_factory.mktemp("persistent-local-demo")
-    return prepare(root)
+    return prepare(root, authority_dir=authority, reader_group=None)
+
+
+def test_actual_factory_creates_origin_before_coverage_and_reopens(original, authority):
+    first = original
+    pin = first.state / "dispute-bank-generation.json"
+    origin = first.state / "native-fresh-origin.json"
+    before = pin.read_bytes(), origin.read_bytes()
+    generation = json.loads(before[0])["ledger_generation"]
+    assert json.loads(before[1])["ledger_generation"] == generation
+    assert first.manifest["coverage"]["generation"] == generation
+    assert first.manifest["input_sha256"]["instances/interactive/native-fresh-origin.json"] == hashlib.sha256(before[1]).hexdigest()
+    # Re-run the real constructor after coverage made the ledger populated.
+    # A fabricated pin without the genuine source-owned origin cannot pass it.
+    app, bank = _application(first.settings, first.bank_config, first.state, first.source,
+        first.bank_config_file, native_url="http://127.0.0.1:4200",
+        authority_dir=authority, reader_group=None)
+    try:
+        assert bank._dispute_ledger_generation == generation
+        assert (pin.read_bytes(), origin.read_bytes()) == before
+        assert app is not None
+    finally:
+        bank.close()
+
+
+def test_actual_factory_refuses_populated_ledger_without_its_origin(original, authority):
+    origin = original.state / "native-fresh-origin.json"
+    saved = origin.with_suffix(".retained")
+    origin.rename(saved)
+    try:
+        with pytest.raises(ValueError, match="without fresh origin require transition receipt"):
+            _application(original.settings, original.bank_config, original.state, original.source,
+                original.bank_config_file, native_url="http://127.0.0.1:4200",
+                authority_dir=authority, reader_group=None)
+        assert not origin.exists()
+    finally:
+        saved.rename(origin)
+    assert load_demo(original.root).manifest["coverage"] == original.manifest["coverage"]
 
 
 def test_repeat_prepare_preserves_admission_generation_coverage_and_database(original):
