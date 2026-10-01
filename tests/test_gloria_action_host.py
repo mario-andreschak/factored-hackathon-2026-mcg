@@ -1,5 +1,6 @@
 """Real generated-source inquiry/action join; no network or model provider."""
 import asyncio
+import json
 import time
 from types import SimpleNamespace
 import uuid
@@ -102,3 +103,47 @@ def test_foreign_query_cannot_confirm_current_handle(joined):
     pending = asyncio.run(joined.prepare())
     with pytest.raises(ChatError):
         asyncio.run(joined.confirm(pending["pending_handle"], "q_" + "f" * 32))
+
+
+def general_handoff(joined):
+    request = str(uuid.uuid4())
+    result = asyncio.run(joined.chat.action(joined.customer, joined.sid, joined.expiry,
+        dict(operation="handoff", reason="customer_request", requestId=request)))
+    assert result["state"] == "handoff_verified", result
+    with joined.chat._connection() as db:
+        conversation = db.execute("SELECT conversation_id FROM chat_sessions").fetchone()[0]
+    payload = dict(operation="handoff", reason="customer_request", requestId=request,
+        conversationId=conversation, unanswered_questions=[])
+    subject, _ = joined.chat._identity(joined.customer, joined.sid, joined.expiry)
+    return result, payload, joined.chat._headers(subject, joined.sid, joined.expiry)
+
+
+def test_canonical_human_packet_is_durable_private_and_replayed_once(joined):
+    result, payload, headers = general_handoff(joined)
+    with joined.bank.service.store.connect() as db:
+        packet = json.loads(db.execute("SELECT packet_json FROM gloria_handoff_packets").fetchone()[0])
+    assert packet["schema"] == "gloria-human-handoff/v1"
+    assert packet["handoff_id"] == result["handoff"]["id"]
+    assert packet["rule_ids"] == ["R8"] and packet["reason_code"] == "customer_request"
+    assert packet["human_responded"] is False and packet["target_transaction_id"] is None
+    assert packet["native_handoff"]["packet"]["human_responded"] is False
+    assert len(packet["open_questions"]) <= 4 and packet["request_summary"]
+    assert "binding_digest" not in result["handoff"] and "risk_signals" not in result["handoff"]
+    replay = asyncio.run(joined.backend.post("/v1/banking/action", headers, payload, joined.chat))
+    assert replay["handoff"] == result["handoff"]
+    with joined.bank.service.store.connect() as db:
+        assert db.execute("SELECT count(*) FROM gloria_handoff_packets").fetchone()[0] == 1
+        assert db.execute("SELECT count(*) FROM sandbox_handoffs").fetchone()[0] == 1
+        assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("corruption", ["malformed", "foreign_binding"])
+def test_handoff_replay_cannot_promote_corrupt_canonical_packet(joined, corruption):
+    _, payload, headers = general_handoff(joined)
+    with joined.bank.service.store.connect() as db:
+        packet = json.loads(db.execute("SELECT packet_json FROM gloria_handoff_packets").fetchone()[0])
+        packet["binding_digest"] = "f" * 64
+        db.execute("UPDATE gloria_handoff_packets SET packet_json=?",
+            ("broken" if corruption == "malformed" else json.dumps(packet),))
+    result = asyncio.run(joined.backend.post("/v1/banking/action", headers, payload, joined.chat))
+    assert result == {"state": "action_unverified"}
