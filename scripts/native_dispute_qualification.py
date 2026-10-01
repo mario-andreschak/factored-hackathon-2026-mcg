@@ -16,6 +16,7 @@ import sys
 import tarfile
 import os
 import secrets
+import stat
 import time
 import uuid
 from contextlib import contextmanager
@@ -36,27 +37,79 @@ class NativeDisputePort:
     The returned state is the application's validated response; no FLUJO relay
     is rendered. The admission directory belongs only to the isolated service.
     """
-    def __init__(self, workflow_factory, base_url, authority_dir, *, timeout=90):
+    def __init__(self, workflow_factory, base_url, authority_dir, *, timeout=90, reader_group=None):
+        if reader_group is not None and (os.name != "posix" or type(reader_group) is not int
+                                         or reader_group < 1):
+            raise ValueError("native reader group requires a POSIX group id")
         self.workflow_factory = workflow_factory
         self.base_url, self.authority_dir, self.timeout = base_url, Path(authority_dir), timeout
+        self.reader_group = reader_group
+        if reader_group is not None:
+            if reader_group not in {os.getegid(), *os.getgroups()}:
+                raise ValueError("native reader group is not available to writer")
+            self._check_control(self.authority_dir, 0o2750, directory=True)
+            self._check_control(self.authority_dir / "admissions.json", 0o640)
+            lock = self.authority_dir / ".admissions-host.lock"
+            if lock.exists() or lock.is_symlink():
+                info = lock.lstat()
+                if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid()
+                        or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1):
+                    raise ValueError("native host lock permissions mismatch")
+            revocations = self.authority_dir / "revocations"
+            if revocations.exists() or revocations.is_symlink():
+                self._check_control(revocations, 0o2750, directory=True)
+                for marker in revocations.iterdir():
+                    self._check_control(marker, 0o640)
+
+    def _check_control(self, path, mode, *, directory=False):
+        if self.reader_group is None:
+            return
+        info = path.lstat()
+        if (info.st_uid != os.geteuid() or info.st_gid != self.reader_group
+                or stat.S_IMODE(info.st_mode) != mode
+                or not (stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode))
+                or not directory and info.st_nlink != 1):
+            raise ValueError("native control permissions mismatch")
+
+    def _publish_mode(self, descriptor, mode):
+        if self.reader_group is not None:
+            os.fchown(descriptor, -1, self.reader_group)
+            os.fchmod(descriptor, mode)
+            info = os.fstat(descriptor)
+            if info.st_gid != self.reader_group or stat.S_IMODE(info.st_mode) != mode:
+                raise ValueError("native control group publication failed")
+
+    def _revocations_dir(self):
+        directory = self.authority_dir / "revocations"
+        if self.reader_group is None:
+            directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        else:
+            self._check_control(self.authority_dir, 0o2750, directory=True)
+            if not directory.exists():
+                directory.mkdir(mode=0o700)
+                os.chown(directory, -1, self.reader_group)
+                os.chmod(directory, 0o2750)
+            self._check_control(directory, 0o2750, directory=True)
+        return directory
 
     def _revoke_stage(self, stage_token):
         # A registry reader may prevent replacement on Windows. Publish an
         # independent monotonic denial before attempting registry cleanup.
-        directory = self.authority_dir / "revocations"
-        directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        directory = self._revocations_dir()
         location = directory / (digest(stage_token.encode()) + ".revoked")
         try:
             descriptor = os.open(location, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
             # Presence is a monotonic denial; repeated cancellation/revocation
             # never restores authority or skips the independent cleanup.
-            pass
+            self._check_control(location, 0o640)
         else:
             with os.fdopen(descriptor, "wb") as output:
+                self._publish_mode(output.fileno(), 0o640)
                 output.write(b"revoked\n")
                 output.flush()
                 os.fsync(output.fileno())
+            self._check_control(location, 0o640)
         if os.name == "posix":
             for parent in (directory, self.authority_dir):
                 directory_descriptor = os.open(parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
@@ -70,6 +123,8 @@ class NativeDisputePort:
         location = self.authority_dir / "admissions.json"
         lock = self.authority_dir / ".admissions-host.lock"
         self.authority_dir.mkdir(parents=True, exist_ok=True)
+        self._check_control(self.authority_dir, 0o2750, directory=True)
+        self._check_control(location, 0o640)
         # Keep one stable inode. The kernel releases its lock after a crash;
         # existence of an old marker never grants or blocks admission.
         descriptor = os.open(lock, os.O_CREAT | os.O_RDWR, 0o600)
@@ -104,6 +159,7 @@ class NativeDisputePort:
             temporary_descriptor = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             try:
                 with os.fdopen(temporary_descriptor, "w", encoding="utf-8") as output:
+                    self._publish_mode(output.fileno(), 0o640)
                     json.dump(records, output, ensure_ascii=False)
                     output.flush()
                     os.fsync(output.fileno())
@@ -114,6 +170,7 @@ class NativeDisputePort:
                 while True:
                     try:
                         os.replace(temporary, location)
+                        self._check_control(location, 0o640)
                         break
                     except PermissionError as error:
                         if (os.name != "nt" or getattr(error, "winerror", None) not in {5, 32, 33}
@@ -143,7 +200,7 @@ class NativeDisputePort:
         if not isinstance(message, str) or not message or len(message) > 4096 or not isinstance(turn_id, str):
             raise ValueError("native admitted turn required")
         expiry = min(time.time() * 1000 + 600000, parse_timestamp(trusted.expires_at).timestamp() * 1000)
-        (self.authority_dir / "revocations").mkdir(mode=0o700, parents=True, exist_ok=True)
+        self._revocations_dir()
         record = {"mode": "language_only", "token": secrets.token_hex(24), "stageToken": secrets.token_hex(24),
                   "owner": trusted.owner, "conversation": trusted.conversation_id,
                   "runId": str(uuid.uuid4()), "turnId": turn_id, "message": message,

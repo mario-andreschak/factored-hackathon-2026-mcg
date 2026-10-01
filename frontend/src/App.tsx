@@ -2966,6 +2966,7 @@ export function Assistant({
                     <button
                       type="button"
                       className="button outline"
+                      disabled={actionBusy || actionStatusLoading || busy}
                       onClick={() => setConsentAmountVisible(true)}
                     >
                       {copy.showConsentAmount}
@@ -2976,7 +2977,10 @@ export function Assistant({
                     className="button primary action-confirm"
                     aria-describedby={consentSummaryId}
                     disabled={
-                      actionBusy || busy || (hidden && !consentAmountVisible)
+                      actionBusy ||
+                      actionStatusLoading ||
+                      busy ||
+                      (hidden && !consentAmountVisible)
                     }
                     onClick={() =>
                       runAction("/api/action/confirm", {
