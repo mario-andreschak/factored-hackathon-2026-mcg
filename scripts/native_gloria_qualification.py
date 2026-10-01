@@ -82,7 +82,19 @@ class NativeGloriaPort:
                     json.dump(records, output, ensure_ascii=False)
                     output.flush()
                     os.fsync(output.fileno())
-                os.replace(temporary, location)
+                # Docker bind-mount readers can briefly deny delete sharing on
+                # Windows. Keep the writer lock and the same fsynced file until
+                # atomic replacement succeeds; never truncate the live registry.
+                replacement_deadline = time.monotonic() + 5
+                while True:
+                    try:
+                        os.replace(temporary, location)
+                        break
+                    except PermissionError as error:
+                        if (os.name != "nt" or getattr(error, "winerror", None) not in {5, 32, 33}
+                                or time.monotonic() >= replacement_deadline):
+                            raise
+                        time.sleep(0.01)
                 if os.name == "posix":
                     directory_descriptor = os.open(self.authority_dir, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
                     try:

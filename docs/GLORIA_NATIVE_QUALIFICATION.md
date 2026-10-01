@@ -73,7 +73,10 @@ this state directly, avoiding outer model paraphrasing.
 The host creates a private language-only admission for the turn and removes it
 in `finally`. Registry edits use a kernel lock released after process death,
 0600 temporary files, atomic replacement and POSIX directory fsync. An old
-marker cannot prevent restart. Never serve the per-turn closure on shared HTTP
+marker cannot prevent restart. Windows replacement retries transient reader
+sharing conflicts for at most five seconds while retaining the writer lock and
+the same fsynced file; permanent failures preserve the original registry and
+remove the temporary file. Never serve the per-turn closure on shared HTTP
 or derive identity, selection or consent from model text.
 
 ## Reproduction

@@ -1,10 +1,15 @@
 """Host admission lifecycle tests; actual native provider evidence is separate."""
 import asyncio
+from contextlib import contextmanager
+import ctypes
 import json
+import os
 from pathlib import Path
 import tempfile
+import threading
 import time
 import unittest
+from unittest.mock import patch
 
 from scripts.native_gloria_qualification import NativeGloriaPort, BOUNDARY_CASES, CAPABILITY_CASES, public_report
 
@@ -137,6 +142,93 @@ class NativeHostAdmissionTests(unittest.IsolatedAsyncioTestCase):
                     return {"validated": True}
             port = NativeGloriaPort(lambda _model: Workflow(), "http://127.0.0.1:43921", directory)
             self.assertEqual(await port.run(self.binding(), "Original", turn_id="turn-A"), {"validated": True})
+
+
+class NativeAdmissionReplacementTests(unittest.TestCase):
+    @contextmanager
+    def windows_reader_without_delete_sharing(self, location):
+        from ctypes import wintypes
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+            wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+        kernel.CreateFileW.restype = wintypes.HANDLE
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.restype = wintypes.BOOL
+        handle = kernel.CreateFileW(str(location), 0x80000000, 1, None, 3, 0x80, None)
+        self.assertNotEqual(handle, ctypes.c_void_p(-1).value)
+        closed = False
+        def close():
+            nonlocal closed
+            if not closed:
+                self.assertTrue(kernel.CloseHandle(handle))
+                closed = True
+        try:
+            yield close
+        finally:
+            close()
+
+    @unittest.skipUnless(os.name == "nt", "Requires actual Windows delete-sharing semantics")
+    def test_transient_reader_retry_preserves_siblings_and_serializes_another_writer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            location = Path(directory) / "admissions.json"
+            location.write_text('[{"stageToken":"sibling"}]', encoding="utf-8")
+            first = NativeGloriaPort(None, "http://unused", directory)
+            second = NativeGloriaPort(None, "http://unused", directory)
+            failures = []
+            def other_writer():
+                try:
+                    with second._edit_admissions() as records:
+                        records.append({"stageToken": "second"})
+                except BaseException as error:
+                    failures.append(type(error).__name__)
+            with self.windows_reader_without_delete_sharing(location) as close:
+                release = threading.Thread(target=lambda: (time.sleep(0.15), close()))
+                release.start()
+                with first._edit_admissions() as records:
+                    records.append({"stageToken": "first"})
+                    sibling = threading.Thread(target=other_writer)
+                    sibling.start()
+                release.join(timeout=2)
+                sibling.join(timeout=2)
+            self.assertFalse(failures)
+            self.assertFalse(sibling.is_alive())
+            self.assertEqual({item["stageToken"] for item in json.loads(location.read_text())},
+                             {"sibling", "first", "second"})
+            self.assertEqual(list(Path(directory).glob("admissions-*.json")), [])
+
+    @unittest.skipUnless(os.name == "nt", "Requires actual Windows delete-sharing semantics")
+    def test_permanent_reader_failure_is_bounded_and_keeps_original_registry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            location = Path(directory) / "admissions.json"
+            original = b'[{"stageToken":"sibling"}]'
+            location.write_bytes(original)
+            port = NativeGloriaPort(None, "http://unused", directory)
+            with self.windows_reader_without_delete_sharing(location):
+                began = time.monotonic()
+                with self.assertRaises(PermissionError):
+                    with port._edit_admissions() as records:
+                        records.append({"stageToken": "rejected"})
+                elapsed = time.monotonic() - began
+            self.assertGreaterEqual(elapsed, 4.9)
+            self.assertLess(elapsed, 7)
+            self.assertEqual(location.read_bytes(), original)
+            self.assertEqual(list(Path(directory).glob("admissions-*.json")), [])
+            with port._edit_admissions() as records:
+                self.assertEqual(records, [{"stageToken": "sibling"}])
+
+    def test_unrelated_permission_failure_does_not_retry_or_truncate_registry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            location = Path(directory) / "admissions.json"
+            original = b'[{"stageToken":"sibling"}]'
+            location.write_bytes(original)
+            port = NativeGloriaPort(None, "http://unused", directory)
+            with patch("scripts.native_gloria_qualification.os.replace", side_effect=PermissionError("synthetic")) as replace:
+                with self.assertRaises(PermissionError):
+                    with port._edit_admissions() as records:
+                        records.append({"stageToken": "rejected"})
+            replace.assert_called_once()
+            self.assertEqual(location.read_bytes(), original)
+            self.assertEqual(list(Path(directory).glob("admissions-*.json")), [])
 
 
 if __name__ == "__main__":
