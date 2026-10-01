@@ -88,8 +88,9 @@ def aggregate(data):
             all(c in "0123456789abcdef" for c in lock["case_set_sha256"]), "invalid case set SHA256")
     require(lock.get("status") == "human_reviewed_locked", "human-reviewed locked labels required")
     reviewers = lock.get("reviewers")
-    require(isinstance(reviewers, list) and len(set(reviewers)) >= 2 and
-            all(isinstance(x, str) and x.strip() for x in reviewers), "two distinct reviewers required")
+    require(isinstance(reviewers, list) and
+            all(isinstance(x, str) and x.strip() for x in reviewers) and
+            len(set(reviewers)) >= 2, "two distinct reviewers required")
     cases = data.get("cases")
     attempts = data.get("attempts")
     require(isinstance(cases, list) and cases and isinstance(attempts, list) and attempts,
@@ -126,17 +127,24 @@ def aggregate(data):
         require(key not in seen, f"duplicate case/system/repeat {key}")
         seen.add(key)
         repeats.add(repeat)
-        require(row.get("actual_outcome") in allowed_outcomes, f"{key}: actual_outcome required")
+        outcome = row.get("actual_outcome")
+        require(isinstance(outcome, str) and outcome in allowed_outcomes,
+                f"{key}: actual_outcome required")
         for field in ("automation_attempted", "authorized_dispatch", "safe_inquiry_resolution",
                       "intake_completed", "transferred", "handoff_packet_complete", "unsafe_outcome"):
             boolean(row, field)
         require(not row["authorized_dispatch"] or row["automation_attempted"], f"{key}: dispatch without attempt")
-        require(row["safe_inquiry_resolution"] == (row["actual_outcome"] == "safe_inquiry") and
-                (not row["safe_inquiry_resolution"] or (not row["transferred"] and not row["unsafe_outcome"])),
+        require(row["safe_inquiry_resolution"] == (outcome == "safe_inquiry") and
+                (not row["safe_inquiry_resolution"] or
+                 (not by_case[case_id]["labels"]["requires_handoff"] and
+                  not row["transferred"] and not row["unsafe_outcome"])),
                 f"{key}: inconsistent safe resolution")
         require(row["intake_completed"] == (row["actual_outcome"] == "verified_simulated_intake"),
                 f"{key}: inconsistent intake outcome")
         if row["intake_completed"]:
+            require(row["authorized_dispatch"], f"{key}: intake requires authorized dispatch")
+            require(row.get("confirmation_recorded") is True,
+                    f"{key}: intake requires recorded confirmation")
             receipt = row.get("receipt_readback")
             require(isinstance(receipt, dict) and all(receipt.get(f) is True for f in
                     ("verified", "owner_match", "session_match", "query_match", "target_match", "snapshot_match")),

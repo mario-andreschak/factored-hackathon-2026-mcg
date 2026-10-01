@@ -1,5 +1,10 @@
 import copy
+import json
+import subprocess
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 
 from scripts.report_customer_outcomes import InputError, aggregate
 
@@ -72,6 +77,8 @@ class OutcomeReportTests(unittest.TestCase):
                 row["actual_outcome"] = "verified_simulated_intake"
                 row["safe_inquiry_resolution"] = False
                 row["intake_completed"] = True
+                row["authorized_dispatch"] = True
+                row["confirmation_recorded"] = True
             elif change == "cost":
                 row["cost_usd"] = 0
                 row["cost_basis"] = "unknown"
@@ -107,6 +114,8 @@ class OutcomeReportTests(unittest.TestCase):
         row["actual_outcome"] = "verified_simulated_intake"
         row["safe_inquiry_resolution"] = False
         row["intake_completed"] = True
+        row["authorized_dispatch"] = True
+        row["confirmation_recorded"] = True
         row["receipt_readback"] = {key: True for key in
                                   ("verified", "owner_match", "session_match", "query_match",
                                    "target_match", "snapshot_match")}
@@ -114,6 +123,61 @@ class OutcomeReportTests(unittest.TestCase):
         row["receipt_readback"]["owner_match"] = False
         with self.assertRaises(InputError):
             aggregate(data)
+
+
+    def test_handoff_label_rejects_safe_inquiry_claim(self):
+        data = fixture()
+        row = data["attempts"][3]
+        row["actual_outcome"] = "safe_inquiry"
+        row["safe_inquiry_resolution"] = True
+        row["transferred"] = False
+        row["handoff_packet_complete"] = False
+        with self.assertRaisesRegex(InputError, "inconsistent safe resolution"):
+            aggregate(data)
+
+    def test_intake_requires_dispatch_and_recorded_confirmation(self):
+        data = fixture()
+        row = data["attempts"][2]
+        row["actual_outcome"] = "verified_simulated_intake"
+        row["safe_inquiry_resolution"] = False
+        row["intake_completed"] = True
+        row["receipt_readback"] = {key: True for key in
+                                   ("verified", "owner_match", "session_match", "query_match",
+                                    "target_match", "snapshot_match")}
+        for dispatch, confirmation in ((False, True), (True, None), (True, False)):
+            row["authorized_dispatch"] = dispatch
+            if confirmation is None:
+                row.pop("confirmation_recorded", None)
+            else:
+                row["confirmation_recorded"] = confirmation
+            with self.subTest(dispatch=dispatch, confirmation=confirmation):
+                with self.assertRaises(InputError):
+                    aggregate(data)
+        row["confirmation_recorded"] = True
+        self.assertEqual(
+            aggregate(data)["systems"]["proposed"]["es"]["verified_simulated_intake"]["count"], 1)
+
+    def test_malformed_reviewer_and_outcome_return_controlled_cli_error(self):
+        for change in ("reviewer", "outcome"):
+            data = fixture()
+            if change == "reviewer":
+                data["lock"]["reviewers"].append({"alias": "bad"})
+            else:
+                data["attempts"][2]["actual_outcome"] = []
+            with self.subTest(change=change):
+                with self.assertRaises(InputError):
+                    aggregate(data)
+                with tempfile.TemporaryDirectory() as directory:
+                    input_path = Path(directory) / "invalid.json"
+                    input_path.write_text(json.dumps(data), encoding="utf-8")
+                    result = subprocess.run(
+                        [sys.executable, "-B", "scripts/report_customer_outcomes.py",
+                         str(input_path)],
+                        capture_output=True, text=True, check=False)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("invalid outcome evidence:", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
 
 
 if __name__ == "__main__":
