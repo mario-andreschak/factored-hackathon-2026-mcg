@@ -1,6 +1,6 @@
 # Factored AI & Data Hackathon 2026 — MCG
 
-This repository contains the data audit, DuckDB pipeline, classifier baseline, banking MCP and **Savia**, a customer-facing online banking demo for FLUJO-powered unrecognized-charge inquiries. Savia uses real organizer products and transactions from the published silver/gold snapshot. Names are fictional demo aliases. An opt-in simulated intake and verified human handoff prototype is described in [docs/SIMULATED_INTAKE_V0.md](docs/SIMULATED_INTAKE_V0.md); it does not submit a bank dispute or issue a refund.
+This repository contains the data audit, DuckDB pipeline, classifier baseline, banking MCP and **Savia**, a customer-facing prototype for unrecognized-charge inquiries. The runnable, isolated preview generates entirely fictional customers, products and transactions. A separate private local demo can read an approved organizer silver/gold snapshot with fictional name aliases. An opt-in simulated intake and human-handoff prototype is described in [docs/SIMULATED_INTAKE_V0.md](docs/SIMULATED_INTAKE_V0.md); opening an intake does not resolve a dispute or issue a refund.
 
 ## FLUJO product boundary
 
@@ -13,11 +13,11 @@ preserves the reversed hackathon integration separately from generic main.
 See the [architecture boundary and review gate](docs/FLUJO_PRODUCT_BOUNDARY.md)
 and [deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md).
 
-## Open the banking demo
+## Run the fictional preview
 
-The local Docker deployment is described at [localhost:43800](http://localhost:43800). For the local organizer-data demo, choose a Colombia, México or Argentina profile and enter the configured access code; there is no shared default code. External fictional invitations use their separately bound owner access. See the setup guide for the active mode and release limits. Explore balances, accounts/cards, product details, transaction filters and CSV export, or ask about a movement.
+Follow the [isolated synthetic invitation preview](frontend/README.md#isolated-synthetic-invitation-preview) from a clean checkout. It installs Python and Node dependencies, generates a private fixture and owner-bound invitations, builds the frontend, and starts a local loopback server. Sign in with an invitation from the generated private file. The preview supports owned transaction lookup and charge review, with assisted action disabled. It does not start FLUJO, MCP, a model or a human handoff. The Linux dependency and local browser checks are recorded in the private release evidence; Windows startup has not been verified.
 
-See [frontend setup and portable deployment](frontend/README.md) and [dataset, architecture and verification evidence](docs/ONLINE_BANKING_FRONTEND.md). The frontend runs alongside the existing FLUJO worker; its image contains neither customer rows nor service credentials.
+A separate [private organizer-snapshot setup](frontend/README.md#run-beside-the-existing-flujo-worker) is described for the existing local Docker deployment at [localhost:43800](http://localhost:43800). It requires approved data, private configuration and a configured access code; no working default is included. Its source and local UI are not evidence of a joined or deployed customer journey. See [dataset, architecture and verification evidence](docs/ONLINE_BANKING_FRONTEND.md) for the supported paths and limitations. The frontend image contains neither customer rows nor service credentials.
 
 ## Docker and Fly deployment landscapes
 
