@@ -1,6 +1,6 @@
 # Factored AI & Data Hackathon 2026 — MCG
 
-This repository contains the data audit, DuckDB pipeline, classifier baseline, banking MCP and **Savia**, a customer-facing online banking demo for FLUJO-powered unrecognized-charge inquiries. Savia uses real organizer products and transactions from the published silver/gold snapshot. Names are fictional demo aliases. An opt-in simulated intake and verified human handoff prototype is described in [docs/SIMULATED_INTAKE_V0.md](docs/SIMULATED_INTAKE_V0.md); it does not submit a bank dispute or issue a refund.
+This repository contains the data audit, DuckDB pipeline, classifier baseline, banking MCP and **Savia**, a customer-facing online banking demo for FLUJO-powered unrecognized-charge inquiries. Savia uses real organizer products and transactions from the published silver/gold snapshot. Names are fictional demo aliases. The held direct-host intake and verified handoff candidate is described in [frontend/DIRECT_MCP.md](frontend/DIRECT_MCP.md); it does not submit a bank dispute or issue a refund. The [earlier worker-ingress prototype](docs/SIMULATED_INTAKE_V0.md) is historical.
 
 ## FLUJO product boundary
 
