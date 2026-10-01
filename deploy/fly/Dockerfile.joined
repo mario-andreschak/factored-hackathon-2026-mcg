@@ -1,0 +1,85 @@
+# syntax=docker/dockerfile:1
+# Public Git-only context produced by build-joined-context.mjs. Runtime state,
+# account credentials, dataset, TLS keys and admissions arrive from /data at boot.
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS flujo-build
+WORKDIR /app
+ENV PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright
+COPY source-manifest.json /source-manifest.json
+ARG APPLICATION_REVISION
+RUN node -e 'const m=require("/source-manifest.json");if(m.application_revision!==process.argv[1]||m.flujo_revision!=="0ba62296520a505e6d71eddf5aa650691f3dc311")process.exit(1)' "$APPLICATION_REVISION"
+COPY flujo/package.json flujo/package-lock.json ./
+COPY flujo/mcp-servers ./mcp-servers
+RUN npm ci --include=dev
+COPY flujo/ ./
+COPY application/deploy/fly/native-execution.mts /app/fly-native-execution.mts
+RUN FLUJO_EXECUTION_ADAPTER_MODULE=/app/fly-native-execution.mts NODE_OPTIONS=--max-old-space-size=4096 npm run build \
+    && rm -rf /app/.next/cache \
+    && npm prune --omit=dev
+
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS frontend-build
+WORKDIR /build
+COPY application/frontend/package.json application/frontend/package-lock.json ./
+RUN npm ci
+COPY application/frontend/index.html application/frontend/vite.config.ts application/frontend/tsconfig.json ./
+COPY application/frontend/src ./src
+COPY application/frontend/public ./public
+RUN npm run build
+
+FROM python:3.13.15-slim-bookworm@sha256:3e2de9c40ca4e3d73240059f9d48baff27908f10293e985a2f382a0378e6df4a AS python-runtime
+FROM registry.fly.io/flujo-factored-2026@sha256:78c3bf0bf4d090ca7db86b79e03ac8605b17b22a12807e465334df9ecac5746d AS qualified-tools
+FROM qualified-tools AS runtime
+USER root
+ARG APPLICATION_REVISION
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends bubblewrap libssl3 libffi8 libsqlite3-0 \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10002 native-reader \
+    && groupadd --gid 10001 banking \
+    && useradd --uid 10001 --gid 10001 --groups native-reader --no-create-home --shell /usr/sbin/nologin banking \
+    && usermod --append --groups native-reader node \
+    && rm -rf /app /opt/joined /opt/savia/dist
+# The Python distribution uses the same Debian 12 ABI as the qualified runtime.
+COPY --from=python-runtime /usr/local/ /usr/local/
+COPY --from=flujo-build /usr/local/bin/node /usr/local/bin/node
+COPY --from=flujo-build /usr/local/lib/node_modules/npm/ /usr/local/lib/node_modules/npm/
+COPY --from=flujo-build /app/ /app/
+COPY --from=flujo-build /home/node/.cache/ms-playwright/ /home/node/.cache/ms-playwright/
+# Preserve the established immutable GitHub CLI shim/toolchain, not old FLUJO code.
+COPY --from=qualified-tools /app/github/ /app/github/
+COPY application/ /opt/joined/
+COPY --from=frontend-build /build/dist/ /opt/savia/dist/
+COPY application/deploy/fly/ /opt/savia/fly/
+COPY --from=qualified-tools /opt/codex-restricted/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex /opt/native/codex.raw
+COPY application/deploy/fly/native-codex-wrapper.mjs /opt/native/codex-wrapper.mjs
+COPY native/model-catalog.json /opt/native/model-catalog.json
+COPY source-manifest.json /opt/joined/source-manifest.json
+WORKDIR /opt/joined
+RUN echo '3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970  /opt/native/codex.raw' | sha256sum -c - \
+    && /usr/local/bin/python3.13 -m venv /opt/joined/.venv \
+    && /opt/joined/.venv/bin/pip install --no-cache-dir -r requirements-dispute.txt \
+    && /opt/joined/.venv/bin/pip check \
+    && /opt/joined/.venv/bin/pip freeze --all > /opt/joined/python-dependencies.txt \
+    && node -e 'const fs=require("node:fs"),c=require("node:crypto"),sha=p=>c.createHash("sha256").update(fs.readFileSync(p)).digest("hex");if(sha("/opt/native/model-catalog.json")!=="5a1ddcef609e52bd057b247d9487f2c8c4d9453d3d802745ba5325c2e10700e0")process.exit(1);fs.writeFileSync("/opt/native/native-profile.json",JSON.stringify({verifiedCliVersion:"0.157.1",verifiedCliSha256:sha("/opt/native/codex-wrapper.mjs"),verifiedCliPath:"/opt/native/codex-wrapper.mjs",verifiedModelCatalogPath:"/opt/native/model-catalog.json",verifiedModelCatalogSha256:sha("/opt/native/model-catalog.json")},null,2)+"\n");' \
+    && sed -i 's/\r$//' /opt/savia/fly/entrypoint.sh \
+    && chmod 0555 /opt/native/codex.raw /opt/native/codex-wrapper.mjs /opt/savia/fly/entrypoint.sh \
+    && chmod 0444 /opt/native/model-catalog.json /opt/native/native-profile.json \
+    && chown -R root:root /opt/joined /opt/native /opt/savia/fly /opt/savia/dist /app \
+    && node -e 'const fs=require("node:fs"),crypto=require("node:crypto"),cp=require("node:child_process"),m=require("/opt/joined/source-manifest.json");if(m.application_revision!==process.argv[1])process.exit(1);const sha=p=>crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");fs.writeFileSync("/opt/joined/build-receipt.json",JSON.stringify({schema:"savia-fly-joined-build/v1",applicationRevision:m.application_revision,flujoRevision:m.flujo_revision,sourceManifestSha256:sha("/opt/joined/source-manifest.json"),nativeBinarySha256:sha("/opt/native/codex.raw"),nativeWrapperSha256:sha("/opt/native/codex-wrapper.mjs"),nativeCatalogSha256:sha("/opt/native/model-catalog.json"),nodeVersion:process.version,pythonVersion:cp.execFileSync("/opt/joined/.venv/bin/python",["--version"],{encoding:"utf8"}).trim(),pythonDependenciesSha256:sha("/opt/joined/python-dependencies.txt"),workerPackageLockSha256:sha("/app/package-lock.json"),frontendPackageLockSha256:sha("/opt/joined/frontend/package-lock.json"),applicationEntry:"scripts/run_dispute.py",runtimeScope:"joined-native-dispute",deployed:false},null,2)+"\n");' "$APPLICATION_REVISION"
+
+ENV NODE_ENV=production FLUJO_APP_ROOT=/app FLUJO_CONTAINER=1 \
+    FLUJO_BUILD_REVISION=0ba62296520a505e6d71eddf5aa650691f3dc311 \
+    FLUJO_EXECUTION_ADAPTER_MODULE=/app/fly-native-execution.mts \
+    PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+LABEL org.opencontainers.image.revision="0ba62296520a505e6d71eddf5aa650691f3dc311" \
+      org.opencontainers.image.version="3.46.1" \
+      io.flujo.application.version="3.46.1" \
+      io.flujo.hotfix="" \
+      io.savia.joined.application.revision="${APPLICATION_REVISION}" \
+      io.savia.joined.scope="project-owned-native-dispute" \
+      io.savia.worker.compilation="joined-native-dispute-current-source" \
+      io.savia.worker.compilation.adapter="/app/fly-native-execution.mts" \
+      io.savia.worker.compilation.source="permitted-hackathon-0ba622-plus-pinned-project-adapter"
+WORKDIR /app
+EXPOSE 8080
+ENTRYPOINT ["tini", "--", "/opt/savia/fly/entrypoint.sh"]
+CMD ["node", "/opt/savia/fly/runtime.mjs"]
