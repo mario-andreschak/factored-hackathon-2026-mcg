@@ -305,7 +305,7 @@ def test_overlong_intent_query_is_rejected_before_exact_copy_is_lost():
     assert caught.value.errors == ("input.string_bound",)
 
 
-@pytest.mark.parametrize("identifier", ["TRX-EXACT123", "txn_abcdef012345", "CMP-SBX-Ab_Cd123"])
+@pytest.mark.parametrize("identifier", ["TRX-EXACT123", "txn_abcdef012345", "txn_abcdef012345abcdef012345", "CMP-SBX-Ab_Cd123"])
 def test_slots_preserve_explicit_host_and_logical_references(identifier):
     result = {**SLOTS, "date_from": None, "date_to": None, "date_expression": None}
     result["complaint_id" if identifier.startswith("CMP-") else "transaction_id"] = identifier
@@ -332,8 +332,17 @@ def test_slot_adapter_loads_executable_schema_from_canonical_yaml():
     adapter = StageAdapters(lambda *_: None)
     schema = adapter.output_schemas["extract_slots"]
     assert schema["additionalProperties"] is False
-    assert schema["properties"]["transaction_id"]["pattern"] == "^(?:TRX-[A-Z0-9]+|txn_[a-f0-9]{12})$"
-    assert adapter.specs["extract_slots"].version == "2.1.0"
+    assert schema["properties"]["transaction_id"]["pattern"] == "^(?:TRX-[A-Z0-9]+|txn_(?:[a-f0-9]{12}|[a-f0-9]{24}))$"
+    assert adapter.specs["extract_slots"].version == "2.1.1"
+
+
+@pytest.mark.parametrize("length", [0, 1, 11, *range(13, 24), 25])
+def test_slot_opaque_reference_requires_exact_supported_length(length):
+    identifier = "txn_" + "a" * length
+    async def model(*_):
+        return json.dumps({**SLOTS, "transaction_id": identifier})
+    with pytest.raises(StageError):
+        asyncio.run(StageAdapters(model).extract_slots(f"Consulta {identifier}.", "2026-09-30"))
 
 
 @pytest.mark.parametrize("updates", [

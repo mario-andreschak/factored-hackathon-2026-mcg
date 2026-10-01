@@ -1,7 +1,7 @@
 slot_extraction_prompt:
   metadata:
     prompt_id: slot_extraction_prompt
-    version: 2.1.0
+    version: 2.1.1
     node: extract_slots
     input_variables:
     - clean_query
@@ -12,6 +12,7 @@ slot_extraction_prompt:
     - es
     - pt
     changelog:
+    - '2.1.1: referencias opacas exactas de 12 (MCP) o 24 (frontend) caracteres hexadecimales'
     - '2.1.0: esquema cerrado ejecutable y referencias opacas txn_ del host; rev_ no consultable'
     - '2.0.0: contrato canónico ES/PT; interpretación separada de decisión determinista'
   output_schema:
@@ -31,7 +32,7 @@ slot_extraction_prompt:
       channel: {type: [string, 'null'], enum: [POS, ATM, Web, App, Branch, Transfer, null], maxLength: 12000}
       city: {type: [string, 'null'], maxLength: 200}
       country: {type: [string, 'null'], maxLength: 200}
-      transaction_id: {type: [string, 'null'], pattern: '^(?:TRX-[A-Z0-9]+|txn_[a-f0-9]{12})$', maxLength: 12000}
+      transaction_id: {type: [string, 'null'], pattern: '^(?:TRX-[A-Z0-9]+|txn_(?:[a-f0-9]{12}|[a-f0-9]{24}))$', maxLength: 12000}
       complaint_id: {type: [string, 'null'], pattern: '^CMP-[A-Za-z0-9_-]+$', maxLength: 12000}
       product_hint: {type: [string, 'null'], maxLength: 200}
       product_last4: {type: [string, 'null'], pattern: '^[0-9]{4}$', maxLength: 12000}
@@ -60,7 +61,9 @@ slot_extraction_prompt:
     Canales observados: POS, ATM, Web, App, Branch, Transfer. Cajero/caixa eletrônico=ATM;
     aplicación/aplicativo=App; sucursal/agência=Branch. No inferir canal Transfer solo por pix.
     merchant literal; city/country explícitos; product_hint conserva texto.
-    transaction_id: TRX-[A-Z0-9]+ del contrato lógico o referencia opaca del host txn_[a-f0-9]{12}.
+    transaction_id: TRX-[A-Z0-9]+ del contrato lógico o referencia opaca del host
+    txn_ seguida de exactamente 12 o 24 caracteres hexadecimales minúsculos [a-f0-9].
+    No aceptar longitudes intermedias; ambos formatos se copian sin transformarlos.
     Copia exactamente el identificador explícito presente en clean_query, con su capitalización.
     No reconstruyas IDs internos a partir de una referencia opaca. Los códigos rev_ son referencias
     de revisión no resueltas: no son transaction_id ni complaint_id; devuelve null para ellos.
@@ -70,6 +73,8 @@ slot_extraction_prompt:
     incluyendo marcador redactado con ese significado. No reproduce esos datos.
     
     # Ejemplos (ilustrativos; no son hechos del cliente)
+    Entrada: {"clean_query": "Revisa la transacción txn_abcdef012345abcdef012345.", "current_date": "2026-03-12", "customer_currencies": ["COP"]}
+    Salida: {"amount": null, "amount_is_approximate": false, "currency": null, "currency_raw": null, "date_from": null, "date_to": null, "date_expression": null, "merchant": null, "transaction_type": null, "channel": null, "city": null, "country": null, "transaction_id": "txn_abcdef012345abcdef012345", "complaint_id": null, "product_hint": null, "product_last4": null, "foreign_customer_reference": false}
     Entrada: {"clean_query": "Não reconheço a transação txn_abcdef012345.", "current_date": "2026-03-12", "customer_currencies": ["COP"]}
     Salida: {"amount": null, "amount_is_approximate": false, "currency": null, "currency_raw": null, "date_from": null, "date_to": null, "date_expression": null, "merchant": null, "transaction_type": null, "channel": null, "city": null, "country": null, "transaction_id": "txn_abcdef012345", "complaint_id": null, "product_hint": null, "product_last4": null, "foreign_customer_reference": false}
     Entrada: {"clean_query": "Como está a revisão rev_abcdef012345?", "current_date": "2026-03-12", "customer_currencies": ["COP"]}

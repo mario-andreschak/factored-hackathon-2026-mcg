@@ -67,7 +67,7 @@ SLOT_SCHEMA["transaction_type"] = _string(nullable=True, enum=(
     "Purchase", "Withdrawal", "Transfer", "Payment", "Deposit", "Adjustment", None))
 SLOT_SCHEMA["channel"] = _string(nullable=True, enum=(
     "POS", "ATM", "Web", "App", "Branch", "Transfer", None))
-SLOT_SCHEMA["transaction_id"] = _string(nullable=True, pattern=r"(?:TRX-[A-Z0-9]+|txn_[a-f0-9]{12})")
+SLOT_SCHEMA["transaction_id"] = _string(nullable=True, pattern=r"(?:TRX-[A-Z0-9]+|txn_(?:[a-f0-9]{12}|[a-f0-9]{24}))")
 SLOT_SCHEMA["complaint_id"] = _string(nullable=True, pattern=r"CMP-[A-Za-z0-9_-]+")
 SLOT_SCHEMA["product_last4"] = _string(nullable=True, pattern=r"[0-9]{4}")
 SCHEMAS = {
