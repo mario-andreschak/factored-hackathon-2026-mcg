@@ -104,6 +104,13 @@ def test_receipt_binding_must_match_current_server_session(field):
     assert decide(state)["response_mode"] == "ACTION_UNVERIFIED"
 
 
+@pytest.mark.parametrize("field", ["query_id", "binding_digest"])
+def test_pure_policy_rejects_an_inconsistent_active_capsule_before_store_validation(field):
+    state, first, _ = scoped_done()
+    state["runtime"]["query_scopes"][first][field] = "foreign"
+    assert decide(state)["response_mode"] == "ACTION_UNVERIFIED"
+
+
 def test_same_target_and_snapshot_do_not_make_sibling_receipt_an_execution_proof():
     state, first, second = scoped_done()
     original = deepcopy(state)

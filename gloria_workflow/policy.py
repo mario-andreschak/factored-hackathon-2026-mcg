@@ -190,7 +190,9 @@ def _query_binding_matches(state: dict, *records: dict) -> bool:
         return True
     query_id = runtime.get("active_query_id")
     scopes = runtime.get("query_scopes")
-    return (isinstance(query_id, str) and isinstance(scopes, dict) and query_id in scopes and
+    capsule = scopes.get(query_id) if isinstance(scopes, dict) and isinstance(query_id, str) else None
+    return (isinstance(capsule, dict) and capsule.get("query_id") == query_id and
+            capsule.get("binding_digest") == runtime.get("trusted_binding_digest") and
             all(isinstance(record, dict) and record.get("query_id") == query_id for record in records))
 
 
