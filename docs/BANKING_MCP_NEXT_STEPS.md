@@ -4,6 +4,18 @@ Updated September 29, 2026, after four coordinated reviews and implementation.
 This replaces the earlier proposal. See [implementation and measurements](BANKING_MCP_IMPLEMENTATION.md)
 and [operator demo instructions](BANKING_OPERATOR_DEMO.md).
 
+**September 30 source separation:** Keep FLUJO main generic; prefer this
+application and MCP for banking behavior. The owner-authorized
+`codex/hackathon-banking` branch preserves the reversed #530/#532/#533
+integration separately. FLUJO #534 restored the pre-#530 source tree on main at
+`3fccc557`. The September 29 in-worker adapter, CLI-profile and tool-flow
+descriptions below remain integration history tied to their original revisions,
+not acceptance of a newly deployed branch. Project-owned host/MCP draft PRs
+#31/#32 remain an unfinished alternative and are not included in the preserved
+branch; the old runtime and its evidence are unchanged. The
+[product boundary](FLUJO_PRODUCT_BOUNDARY.md) governs new work, and the
+[deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md) identifies the source to use.
+
 ## Decisions
 
 - Keep Carlos's pipeline and customer lookup over immutable gold Parquet. S3 supplies ingestion and optional verification of a selected source object.
@@ -11,7 +23,7 @@ and [operator demo instructions](BANKING_OPERATOR_DEMO.md).
 - Use permanent graphical flows. Do not create a flow per customer.
 - Give organizers an explicit approved customer selector in operator mode.
 - Bind customer mode to a verified per-request principal, outside prompts, flow definitions, conversation metadata and model-visible arguments.
-- Keep shared FLUJO changes generic and optional. Banking policy belongs in the hackathon adapter; use ordinary `/v1/chat/completions`.
+- Keep FLUJO main general purpose. Prefer project host/MCP ownership of banking authority, policy and orchestration; any demo-specific FLUJO integration stays on the dedicated hackathon branch. Ordinary generic language interfaces do not carry banking keys, actions or selection capabilities.
 - Use the existing Sol and Luna models. Restricted customer runs use a separately pinned and tested CLI profile.
 
 ## Two modes, same read tools

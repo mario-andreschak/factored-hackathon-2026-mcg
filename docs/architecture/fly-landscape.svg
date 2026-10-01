@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1320" width="2400" height="1320" role="img" aria-labelledby="title desc">
+<title id="title">Fly · hosted deployment landscape</title><desc id="desc">One Fly Machine contains gateway, Savia, FLUJO and banking MCP; only gateway :8080 receives public traffic.</desc>
+<defs>
+<marker id="request" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2869b2"/></marker>
+<marker id="data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#117f72"/></marker>
+<marker id="batch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b87412"/></marker>
+<marker id="state" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8052a2"/></marker>
+</defs><style>
+text{font-family:Arial,Helvetica,sans-serif;fill:#18323d}
+.title{font-size:43px;font-weight:700}.sub{font-size:22px;fill:#57707c}
+.boundary{font-size:22px;font-weight:700;letter-spacing:.5px}
+.kicker{font-size:17px;font-weight:700;letter-spacing:1.1px;fill:#57707c}
+.node-title{font-size:27px;font-weight:700}.body{font-size:21px;fill:#365460}
+.small{font-size:19px;fill:#57707c}.label{font-size:19px;font-weight:600}
+.foot{font-size:21px;fill:#365460}
+</style><rect width="2400" height="1320" fill="#f7fafb"/>
+<text x="45" y="60" class="title">Fly · hosted deployment landscape</text>
+<text x="45" y="100" class="sub">One Fly Machine contains gateway, Savia, FLUJO and banking MCP; only gateway :8080 receives public traffic.</text>
+<rect x="380" y="145" width="1595" height="225" rx="22" fill="#fcf7ec" stroke="#ccb27d" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="405" y="180" class="boundary">WORKSTATION / FIRST IMPORT · offline preparation; separate from the running Fly Machine</text>
+<rect x="380" y="395" width="1595" height="765" rx="22" fill="#edf3f6" stroke="#91a7b2" stroke-width="2"/>
+<text x="405" y="430" class="boundary">FLY APP · flujo-factored-2026 · iad · 1 Machine · 2 shared CPUs / 4 GB RAM</text>
+<rect x="425" y="470" width="1510" height="285" rx="22" fill="#e8f0f7" stroke="#9eafc1" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="450" y="505" class="boundary">APPLICATION PROCESSES · UID 1000</text>
+<rect x="425" y="805" width="1510" height="285" rx="22" fill="#f5eff9" stroke="#b5a0c6" stroke-width="2"/>
+<text x="450" y="840" class="boundary">PERSISTENT /data VOLUME · encrypted 10 GB</text>
+<g data-node="Organizer S3" data-box="45,205,280,150">
+<rect x="45" y="205" width="280" height="150" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="67" y="235" class="kicker">EXTERNAL SOURCE</text>
+<text x="67" y="272" class="node-title">Organizer S3</text>
+<text x="67" y="306" class="body">Read-only source CSVs</text>
+<text x="67" y="335" class="body">Same source as Docker</text>
+</g>
+<g data-node="DuckDB + Docker capture" data-box="435,205,470,150">
+<rect x="435" y="205" width="470" height="150" rx="18" fill="#fff9ed" stroke="#d3b27b" stroke-width="2"/>
+<text x="457" y="235" class="kicker">LOCAL · NOT A FLY DAEMON</text>
+<text x="457" y="272" class="node-title">DuckDB + Docker capture</text>
+<text x="457" y="306" class="small">Build/publish snapshots; capture approved config</text>
+<text x="457" y="335" class="small">Allowlisted data + consistent SQLite backups</text>
+</g>
+<g data-node="Checksum-verified import → /data" data-box="1110,205,805,150">
+<rect x="1110" y="205" width="805" height="150" rx="18" fill="#fff9ed" stroke="#d3b27b" stroke-width="2"/>
+<text x="1132" y="235" class="kicker">ONE-TIME PRIVATE MIGRATION</text>
+<text x="1132" y="272" class="node-title">Checksum-verified import → /data</text>
+<text x="1132" y="306" class="body">Gold + silver masters; config, keys, MCP deps; bank continuity records</text>
+<text x="1132" y="335" class="body">Bronze/old builds stay local. Imported UI sessions and chats start empty.</text>
+</g>
+<g data-node="Browser / Savia" data-box="45,525,280,190">
+<rect x="45" y="525" width="280" height="190" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="67" y="555" class="kicker">REMOTE USER</text>
+<text x="67" y="592" class="node-title">Browser / Savia</text>
+<text x="67" y="626" class="body">flujo-factored-2026</text>
+<text x="67" y="655" class="body"> .fly.dev · HTTPS:443</text>
+<text x="67" y="684" class="body">UI assets + /api/*</text>
+</g>
+<g data-node="Gateway · :8080" data-box="435,525,280,190">
+<rect x="435" y="525" width="280" height="190" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="457" y="555" class="kicker">PUBLIC INGRESS</text>
+<text x="457" y="592" class="node-title">Gateway · :8080</text>
+<text x="457" y="626" class="body">Outer demo login gate</text>
+<text x="457" y="655" class="body">Secure / HttpOnly cookie</text>
+<text x="457" y="684" class="body">Proxy only to Savia</text>
+</g>
+<g data-node="Savia API" data-box="795,525,300,190">
+<rect x="795" y="525" width="300" height="190" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="817" y="555" class="kicker">LOOPBACK · :8082</text>
+<text x="817" y="592" class="node-title">Savia API</text>
+<text x="817" y="626" class="body">Inner demo/profile login</text>
+<text x="817" y="655" class="body">Session → customer</text>
+<text x="817" y="684" class="body">Signs chat assertion</text>
+</g>
+<g data-node="FLUJO worker" data-box="1175,525,330,190">
+<rect x="1175" y="525" width="330" height="190" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="1197" y="555" class="kicker">LOOPBACK · :4200</text>
+<text x="1197" y="592" class="node-title">FLUJO worker</text>
+<text x="1197" y="626" class="body">Verifies execution + user</text>
+<text x="1197" y="655" class="body">Pins graph / run authority</text>
+<text x="1197" y="684" class="body">Sandbox :4201 is private</text>
+</g>
+<g data-node="Banking MCP" data-box="1590,525,325,190">
+<rect x="1590" y="525" width="325" height="190" rx="18" fill="#effaf6" stroke="#6bb9a2" stroke-width="2"/>
+<text x="1612" y="555" class="kicker">STDIO · NO PUBLIC PORT</text>
+<text x="1612" y="592" class="node-title">Banking MCP</text>
+<text x="1612" y="626" class="body">Read-only owned rows</text>
+<text x="1612" y="655" class="body">Masked banking facts</text>
+<text x="1612" y="684" class="body">Optional S3 verification</text>
+</g>
+<g data-node="Model provider" data-box="2100,350,260,175">
+<rect x="2100" y="350" width="260" height="175" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="2122" y="380" class="kicker">EXTERNAL COMPUTE</text>
+<text x="2122" y="417" class="node-title">Model provider</text>
+<text x="2122" y="451" class="small">Codex / configured LLM</text>
+<text x="2122" y="480" class="small">Prompt + minimized facts</text>
+<text x="2122" y="509" class="small">Reply returns same path</text>
+</g>
+<g data-node="Optional recheck" data-box="2100,605,260,175">
+<rect x="2100" y="605" width="260" height="175" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="2122" y="635" class="kicker">SAME SOURCE S3</text>
+<text x="2122" y="672" class="node-title">Optional recheck</text>
+<text x="2122" y="706" class="small">Only with verify_source</text>
+<text x="2122" y="735" class="small">Pinned ETag HEAD / GET</text>
+<text x="2122" y="764" class="small">Server credentials only</text>
+</g>
+<g data-node="/data/banking-data" data-box="450,855,405,210">
+<rect x="450" y="855" width="405" height="210" rx="18" fill="#effaf6" stroke="#6bb9a2" stroke-width="2"/>
+<text x="472" y="885" class="kicker">DATASET · READ-ONLY TO APPS</text>
+<text x="472" y="922" class="node-title">/data/banking-data</text>
+<text x="472" y="956" class="body">Alias: /banking-data</text>
+<text x="472" y="985" class="body">CURRENT + manifests</text>
+<text x="472" y="1014" class="body">Silver masters + current gold</text>
+<text x="472" y="1043" class="body">Synthetic fixture also retained</text>
+</g>
+<g data-node="/data/frontend-state" data-box="895,855,300,200">
+<rect x="895" y="855" width="300" height="200" rx="18" fill="#f7f0fb" stroke="#b5a0c6" stroke-width="2"/>
+<text x="917" y="885" class="kicker">SAVIA · READ / WRITE</text>
+<text x="917" y="922" class="node-title">/data/frontend-state</text>
+<text x="917" y="956" class="body">Login sessions</text>
+<text x="917" y="985" class="body">Public chat transcript</text>
+<text x="917" y="1014" class="body">Revocation retry queue</text>
+</g>
+<g data-node="/data/flujo" data-box="1235,855,330,210">
+<rect x="1235" y="855" width="330" height="210" rx="18" fill="#f7f0fb" stroke="#b5a0c6" stroke-width="2"/>
+<text x="1257" y="885" class="kicker">FLUJO · READ / WRITE</text>
+<text x="1257" y="922" class="node-title">/data/flujo</text>
+<text x="1257" y="956" class="body">Flow/model/MCP config</text>
+<text x="1257" y="985" class="body">Encrypted credentials</text>
+<text x="1257" y="1014" class="body">New conversations</text>
+<text x="1257" y="1043" class="body">Bank authority owner ledger</text>
+</g>
+<g data-node="/data/banking-state" data-box="1605,855,305,200">
+<rect x="1605" y="855" width="305" height="200" rx="18" fill="#f7f0fb" stroke="#b5a0c6" stroke-width="2"/>
+<text x="1627" y="885" class="kicker">MCP · READ / WRITE</text>
+<text x="1627" y="922" class="node-title">/data/banking-state</text>
+<text x="1627" y="956" class="body">SQLite bank ledger</text>
+<text x="1627" y="985" class="body">Opaque selection handles</text>
+<text x="1627" y="1014" class="body">Also: banking-demo-state</text>
+</g>
+<path d="M 325 275 L 435 275" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<path d="M 905 275 L 1110 275" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<rect x="960.65" y="236" width="92.7" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1007" y="258" class="label" text-anchor="middle" style="fill:#b87412">package</text>
+<path d="M 1885 355 L 2015 355 L 2015 1125 L 650 1125 L 650 1065" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<rect x="1167.0" y="1096" width="426.0" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1380" y="1118" class="label" text-anchor="middle" style="fill:#b87412">First import; later releases reuse /data</text>
+<path d="M 450 958 L 410 958 L 410 450 L 1760 450 L 1760 525" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)"/>
+<path d="M 945 450 L 945 525" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)"/>
+<rect x="612.65" y="441" width="294.7" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="760" y="463" class="label" text-anchor="middle" style="fill:#117f72">Owned Parquet rows → DuckDB</text>
+<path d="M 325 620 L 435 620" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="308.4" y="549" width="143.2" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="380" y="571" class="label" text-anchor="middle" style="fill:#2869b2">HTTPS:443</text>
+<text x="380" y="595" class="label" text-anchor="middle" style="fill:#2869b2">Fly edge TLS</text>
+<path d="M 715 620 L 795 620" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="718.75" y="569" width="72.5" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="755" y="591" class="label" text-anchor="middle" style="fill:#2869b2">proxy</text>
+<path d="M 1095 620 L 1175 620" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="1068.45" y="549" width="133.1" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1135" y="571" class="label" text-anchor="middle" style="fill:#2869b2">HTTP</text>
+<text x="1135" y="595" class="label" text-anchor="middle" style="fill:#2869b2">signed user</text>
+<path d="M 1505 620 L 1590 620" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="1510.75" y="569" width="72.5" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1547" y="591" class="label" text-anchor="middle" style="fill:#2869b2">stdio</text>
+<path d="M 1340 525 L 1340 495 L 2045 495 L 2045 425 L 2100 425" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="1823.45" y="465" width="133.1" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1890" y="487" class="label" text-anchor="middle" style="fill:#2869b2">HTTPS / LLM</text>
+<path d="M 1915 680 L 2100 680" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)" marker-start="url(#data)" stroke-dasharray="9 7"/>
+<rect x="1935.4" y="624" width="143.2" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="2007" y="646" class="label" text-anchor="middle" style="fill:#117f72">Bounded S3</text>
+<text x="2007" y="670" class="label" text-anchor="middle" style="fill:#117f72">verification</text>
+<path d="M 945 715 L 945 780 L 1045 780 L 1045 855" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<rect x="973.4" y="776" width="143.2" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1045" y="798" class="label" text-anchor="middle" style="fill:#8052a2">read / write</text>
+<path d="M 1335 715 L 1335 780 L 1400 780 L 1400 855" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<rect x="1328.4" y="776" width="143.2" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1400" y="798" class="label" text-anchor="middle" style="fill:#8052a2">read / write</text>
+<path d="M 1755 715 L 1755 780 L 1755 780 L 1755 855" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<rect x="1683.4" y="776" width="143.2" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1755" y="798" class="label" text-anchor="middle" style="fill:#8052a2">read / write</text>
+<text x="435" y="1148" class="small">BOOTSTRAP · /data/private → protected /run files; policy hash checked; dataset sealed RO; services drop to UID 1000.</text>
+<text x="45" y="174" class="kicker">DATA ORIGIN</text>
+<text x="2100" y="174" class="kicker">OUTBOUND ONLY</text>
+<text x="45" y="1108" class="kicker">RELEASE STATUS</text>
+<text x="45" y="1138" class="small">Adapter repair recorded;</text>
+<text x="45" y="1166" class="small">live acceptance pending*</text>
+<text x="45" y="1208" class="kicker">READING THE ARROWS</text>
+<path d="M 45 1235 L 100 1235" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<text x="119" y="1242" class="small">Request ↔ response</text>
+<path d="M 465 1235 L 520 1235" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)"/>
+<text x="539" y="1242" class="small">Data returned to reader</text>
+<path d="M 970 1235 L 1025 1235" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<text x="1044" y="1242" class="small">Batch / migration</text>
+<path d="M 1410 1235 L 1465 1235" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<text x="1484" y="1242" class="small">Persistent state read / write</text>
+<text x="45" y="1293" class="small">* Recorded Fly release: adapter repair deployed; inquiry + revocation acceptance pending. Configured topology · 30 Sep 2026.</text>
+</svg>
