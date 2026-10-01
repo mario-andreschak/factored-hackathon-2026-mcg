@@ -320,7 +320,7 @@ test.each([
       JSON.parse(calls.find(({ url }) => url === "/api/chat/messages")!.body!),
     ).toEqual({
       message: yes,
-      language: "es",
+      language,
       transaction_reference: charge.reference,
     });
 
