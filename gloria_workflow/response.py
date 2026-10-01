@@ -98,7 +98,8 @@ _SCOPE_LIMITATION = re.compile(
     r"(?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao|estorno)(?: (?:ni|o|e|ou) (?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao|estorno))*(?: del cargo|da cobranca)?)|"
     r"(?:este prototipo|el prototipo|este asistente|el asistente|o prototipo|o assistente) (?:no|nao) (?:bloquea tarjetas|bloqueia cartoes|"
     r"determina fraude ni garantiza bloqueo o reembolso|determina fraude nem garante bloqueio ou reembolso)|"
-    r"(?:no (?:se )?garantiza|no garantizamos|nao (?:se )?garante|nao garantimos) (?:un |um |o |el )?(?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao)(?: (?:ni|o|e|ou) (?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao))*"
+    r"(?:no (?:se )?garantiza|no garantizamos|nao (?:se )?garante|nao garantimos) (?:un |um |o |el )?(?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao)(?: (?:ni|o|e|ou) (?:reembolsos?|bloqueo|bloqueio|devolucion|devolucao))*|"
+    r"(?:una respuesta en el chat|el chat|responder en este chat) no autoriza ni registra la solicitud"
 )
 _POLICY_INSTRUCTION_RULES = {
     "portal_confirmation": {"dispute-03": "control explicito del portal"},

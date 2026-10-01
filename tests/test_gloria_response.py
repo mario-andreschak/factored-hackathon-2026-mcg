@@ -611,6 +611,55 @@ def test_capability_limitations_remain_safe(language, text):
     assert validate_response(response(text, language), inputs("HANDOFF", language)) == []
 
 
+@pytest.mark.parametrize("text", [
+    "Una respuesta en el chat no autoriza ni registra la solicitud.",
+    "El chat no autoriza ni registra la solicitud.",
+    "Responder en este chat no autoriza ni registra la solicitud.",
+])
+def test_explicit_negative_chat_scope_does_not_request_intake(text):
+    assert validate_response(response(text), inputs("CONFIRM_ACTION")) == []
+
+
+@pytest.mark.parametrize("suffix", [
+    " y responde con sí.",
+    ". Responde con sí para registrar la solicitud.",
+    "; usa el chat para registrar la solicitud.",
+    ", pero registra la solicitud en este chat.",
+    ". Confirma la transferencia en el portal.",
+])
+def test_negative_chat_scope_cannot_launder_added_operation(suffix):
+    text = "Responder en este chat no autoriza ni registra la solicitud" + suffix
+    errors = validate_response(response(text), inputs("CONFIRM_ACTION"))
+    assert {"unsupported_operation_guidance", "recommendation_unverified"}.intersection(errors)
+
+
+@pytest.mark.parametrize("language, text", [
+    ("es", "Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder en este chat no autoriza ni registra la solicitud."),
+    ("pt", "Se quiser registrar uma solicitação simulada, use o controle de confirmação do portal. Responder aqui no chat não faz o registro."),
+])
+def test_bilingual_optional_portal_intake_requires_no_chat_authority(language, text):
+    data = inputs("CONFIRM_ACTION", language)
+    assert validate_response(response(text, language), data) == []
+    assert not any(data["workflow_state"]["action"][key] for key in ("authorized", "executed", "verified"))
+
+
+def test_native_confirmation_preserves_source_timestamp_and_known_product_suffix():
+    data = inputs("CONFIRM_ACTION")
+    data["structured_data"]["candidates"][0].update(
+        transaction_id="txn_9b24bf867ab09efac917e05d", transaction_date="2026-09-16 18:25:00",
+        amount="954.58", currency="MXN", merchant_name="Mercado Origen", product_last4="4381",
+    )
+    data["workflow_state"]["transaction_id"] = "txn_9b24bf867ab09efac917e05d"
+    text = (
+        "La compra **txn_9b24bf867ab09efac917e05d** fue realizada el **2026-09-16 18:25:00** "
+        "por **954.58 MXN** en Mercado Origen, con la tarjeta de crédito terminada en **4381**. "
+        "Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. "
+        "Responder en este chat no autoriza ni registra la solicitud."
+    )
+    assert validate_response(response(text), data) == []
+    assert "number_unverified" in validate_response(response(text.replace("2026-09-16 18:25:00", "2026-09-16 a las 18:25")), data)
+
+
 @pytest.mark.parametrize("language, text", [
     ("es", "Para registrar una solicitud simulada, usa el control explícito del portal."),
     ("pt", "Para registrar uma solicitação simulada, use o controle explícito do portal."),
