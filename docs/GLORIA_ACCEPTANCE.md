@@ -128,6 +128,22 @@ and 100,454 reported tokens; provider cost remained unknown. Application source
 changed during execution. Those failures remain diagnostic gaps, with additional
 independent ES/PT product-hint cases preserving conflicting-product rejection.
 
+The next frozen local checkpoint passed **185/185** cases in 70.44 seconds at
+acceptance checkout `e306036543da9c64b8cfcb964d50110b28c8cf9d`, merging integration
+candidate `b6fb52c`. All 76 graph-protected source hashes matched the generated
+artifact. Git HEAD, 79 captured source hashes including that artifact, and both
+test-file hashes were unchanged before and after execution; actual source bytes
+matched integration. The sorted source-map SHA256 was
+`20132d1003480469ab54c3c1b754820ecd34b019ad5cc218ce1aebd2d08e91b7`.
+
+An additional independent review then exposed a false-success boundary outside
+those 185 cases: Spanish and Portuguese present-progress claims said a request
+was processing despite no authorization, execution or receipt. Four new release
+assertions reproduce that rejection gap, including after a truthful statement
+that chat cannot register the request. The frozen 185-case checkpoint remains
+historical evidence; the expanded 189-case suite and actual native qualification
+require a corrected, frozen source candidate.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or

@@ -89,6 +89,28 @@ def test_reviewed_portal_guidance_cannot_be_repurposed_for_payment_or_transfer(l
     assert validate_response(response(message, language, ["dispute-03"]), inputs)
 
 
+@pytest.mark.parametrize("language,claim", [
+    ("es", "Ya se está procesando la solicitud."),
+    ("es", "Tu solicitud está en proceso."),
+    ("pt", "Sua solicitação está em processamento."),
+    ("pt", "A solicitação está sendo processada."),
+])
+def test_present_processing_claim_requires_an_execution_receipt(language, claim):
+    prefix = {
+        "es": "Responder en este chat no autoriza ni registra la solicitud.",
+        "pt": "Responder aqui no chat não faz o registro.",
+    }[language]
+    inputs = dict(response_mode="CONFIRM_ACTION", language=language,
+        clean_query="No reconozco un movimiento propio.", historic_conversation="",
+        structured_data=dict(status="ok", candidates=[transaction()], data_sources=["transactions"]),
+        workflow_state=dict(transaction_id=transaction()["transaction_id"],
+            action=dict(authorized=False, executed=False, verified=False, result_id=None)),
+        policy_context=retrieve_policy("TRANSACTION_DISPUTE"))
+    assert validate_response(response(prefix, language), inputs) == []
+    assert validate_response(response(prefix + " " + claim, language), inputs), \
+        "present processing was claimed without any execution or receipt"
+
+
 @pytest.mark.parametrize("language,message", [
     ("es", "Si lo deseas, bloquea tu tarjeta por precaución."),
     ("pt", "Se desejar, bloqueie seu cartão por precaução."),
