@@ -35,6 +35,21 @@ def fixed_action_clock(service, wall_origin=ACTION_TEST_WALL_ORIGIN):
     service.actions.clock = lambda: ACTION_TEST_NOW + (time.time() - wall_origin)
 
 
+def stdio_action_clock_bootstrap():
+    # Only the stdio test child gets this clock. The CLI, MCP transport and
+    # authorizer still use their ordinary code paths and real wall time.
+    return (
+        "from banking_mcp.actions import Actions\n"
+        "original_init = Actions.__init__\n"
+        "def init_with_test_clock(self, *args, **kwargs):\n"
+        "    original_init(self, *args, **kwargs)\n"
+        f"    self.clock = lambda: {ACTION_TEST_NOW!r}\n"
+        "Actions.__init__ = init_with_test_clock\n"
+        "from banking_mcp.__main__ import main\n"
+        "raise SystemExit(main())\n"
+    )
+
+
 @pytest.fixture(scope="module")
 def dataset(tmp_path_factory):
     root = tmp_path_factory.mktemp("bank-dataset")
@@ -1128,12 +1143,15 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
     from mcp.client.stdio import stdio_client
     service, _ = bank
     build, targets = owned_action_target(bank)
+    # June 2 is outside the real 120-day window after September 30. This
+    # remains a regression for the child fixture as the wall date advances.
+    assert (datetime.now(timezone.utc).date() - datetime(2026, 6, 2, tzinfo=timezone.utc).date()).days > 120
     config = tmp_path / "bank.json"
     config.write_text(service.config.model_dump_json())
     repo = Path(__file__).resolve().parents[1]
     async def exercise():
         params = StdioServerParameters(command=sys.executable,
-            args=["-m", "banking_mcp", "serve", "--config", str(config)], cwd=str(repo))
+            args=["-c", stdio_action_clock_bootstrap(), "serve", "--config", str(config)], cwd=str(repo))
         async with stdio_client(params) as (read, write):
             async with ClientSession(read, write) as client:
                 await client.initialize()
@@ -1152,6 +1170,7 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
                     meta=assertion(bank, "prepare_unrecognized_charge", prepare_args, scope=["bank:prepare"]))
                 assert not prepared.isError
                 pending = json.loads(prepared.content[0].text)
+                assert pending["transaction"]["transaction_date"].startswith("2026-06-02")
                 assert pending["decision"] == "handoff" and pending["reason"] == "missing_evidence"
                 handoff_args = {"reason": "missing_evidence", "pending_handle": pending["pending_handle"]}
                 created = await client.call_tool("create_verified_handoff", handoff_args,
