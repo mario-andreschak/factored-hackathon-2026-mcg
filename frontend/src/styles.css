@@ -197,7 +197,7 @@ button svg {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 1.7px;
-  color: #819382;
+  color: #4b6044;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -632,7 +632,7 @@ button svg {
 .sidebar-label {
   font-size: 8px;
   letter-spacing: 1.4px;
-  color: #98a38e;
+  color: #4b6044;
   padding: 0 14px;
   margin-bottom: 15px;
   font-weight: 600;
@@ -651,7 +651,7 @@ button svg {
   padding: 13px 14px;
   text-align: left;
   font-size: 12px;
-  color: #74826e;
+  color: #4b6044;
   border-radius: 9px;
 }
 .sidebar nav > button:hover {
@@ -672,7 +672,7 @@ button svg {
 .nav-new {
   font-size: 7px;
   letter-spacing: 0.4px;
-  color: #769569;
+  color: #4b6044;
   background: #e3ecda;
   padding: 3px 5px;
   border-radius: 3px;
@@ -708,7 +708,7 @@ button svg {
 .sidebar-help p {
   font-size: 10px;
   line-height: 1.7;
-  color: #819078;
+  color: #4b6044;
   margin-top: 8px;
 }
 .sidebar-help button {
@@ -731,7 +731,7 @@ button svg {
   border: 0;
   font-size: 9px;
   padding: 0 6px 22px;
-  color: #829179;
+  color: #4b6044;
 }
 .sidebar-info svg:last-child {
   margin-left: auto;
@@ -759,7 +759,7 @@ button svg {
 }
 .sidebar-profile small {
   font-size: 8px;
-  color: #98a18f;
+  color: #4b6044;
 }
 .sidebar-profile > .icon-button {
   margin-left: auto;
@@ -863,7 +863,7 @@ button svg {
   transform: rotate(-20deg);
 }
 .page-heading p {
-  color: #909b89;
+  color: #4b6044;
   font-size: 12px;
 }
 .asof {
@@ -874,11 +874,11 @@ button svg {
   align-self: flex-end;
   padding-bottom: 3px;
   font-size: 10px;
-  color: #9da694;
+  color: #4b6044;
 }
 .asof strong {
   font-weight: 500;
-  color: #64795c;
+  color: #4b6044;
   font-size: 11px;
 }
 .overview-grid {
@@ -1383,11 +1383,11 @@ button svg {
 .badge.approved,
 .badge.active {
   background: #edf4e5;
-  color: #72915a;
+  color: #496633;
 }
 .badge.pending {
   background: #fbf2df;
-  color: #b39654;
+  color: #785922;
 }
 .badge.declined,
 .badge.blocked,
@@ -1399,7 +1399,7 @@ button svg {
 .badge.closed,
 .badge.inactive {
   background: #eaf0f0;
-  color: #839b9b;
+  color: #4d6868;
 }
 .product-card .badge {
   font-size: 7px;
@@ -1444,7 +1444,7 @@ button svg {
   display: grid;
   grid-template-columns: minmax(140px, 1fr) 64px 76px 100px;
   gap: 13px;
-  color: #9da891;
+  color: #4b6044;
   font-size: 8px;
   padding-bottom: 12px;
   border-bottom: 1px solid #eef1e8;
@@ -1495,7 +1495,7 @@ button svg {
 }
 .transaction-description small {
   font-size: 8px;
-  color: #a1ac96;
+  color: #4b6044;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1521,14 +1521,14 @@ button svg {
 }
 .transaction-date {
   font-size: 9px;
-  color: #89987f;
+  color: #4b6044;
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 .transaction-date small {
   font-size: 8px;
-  color: #adb7a2;
+  color: #4b6044;
 }
 .transaction-status {
   display: flex;
@@ -1553,7 +1553,7 @@ button svg {
   letter-spacing: 0.4px;
 }
 .amount.incoming {
-  color: #6b9156;
+  color: #4b6044;
 }
 .recent-footer {
   display: flex;
@@ -1650,7 +1650,7 @@ button svg {
 .data-footnote {
   font-size: 8px;
   line-height: 1.7;
-  color: #a3ad97;
+  color: #4b6044;
   margin-top: 20px;
 }
 .clarity-banner {
@@ -1698,7 +1698,7 @@ button svg {
   padding: 21px 0 23px;
   margin-top: 31px;
   font-size: 8px;
-  color: #a5b098;
+  color: #4b6044;
   gap: 20px;
 }
 .content-footer > span {
@@ -1713,7 +1713,7 @@ button svg {
   border: 0;
   background: none;
   font-size: 8px;
-  color: #8b9e7b;
+  color: #4b6044;
 }
 .content-footer .live-dot {
   width: 4px;
@@ -1730,7 +1730,7 @@ button svg {
   align-items: center;
   justify-content: space-between;
   font-size: 12px;
-  color: #8b9b7c;
+  color: #4b6044;
   margin-bottom: 21px;
   gap: 20px;
 }
@@ -1794,7 +1794,7 @@ button svg {
 .inline-note p {
   font-size: 10px;
   line-height: 1.7;
-  color: #92a085;
+  color: #4b6044;
 }
 .inline-note svg {
   margin-top: 2px;
@@ -1852,7 +1852,7 @@ button svg {
 .filters select {
   font-size: 9px;
   padding: 11px 9px;
-  color: #7a8e68;
+  color: #4b6044;
   border: 1px solid #e6ecdd;
   background: white;
   border-radius: 7px;
@@ -1893,7 +1893,7 @@ button svg {
   border-top: 1px solid #edf1e5;
   margin-top: 8px;
   font-size: 9px;
-  color: #a0ad92;
+  color: #4b6044;
 }
 .pagination > div {
   display: flex;
@@ -2003,7 +2003,7 @@ button svg {
   border: 0;
 }
 .details-list dt {
-  color: #93a086;
+  color: #4b6044;
   flex-shrink: 0;
 }
 .details-list dd {
