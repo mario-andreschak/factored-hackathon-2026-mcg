@@ -14,12 +14,13 @@ const FLUJO_TREE = 'c1e66af0a8ba9cf436a4f3a76b6b684fdd2ccb1d';
 const NATIVE_SHA256 = '3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970';
 const CATALOG_SHA256 = '5a1ddcef609e52bd057b247d9487f2c8c4d9453d3d802745ba5325c2e10700e0';
 const APP_ROOTS = new Set(['.gitattributes', 'graph_config_v3.yaml', 'requirements-dispute.txt',
-  'requirements-pipeline.txt', 'requirements-s3.txt', 'frontend/package.json', 'frontend/package-lock.json',
+  'requirements-mcp.txt', 'requirements-pipeline.txt', 'requirements-s3.txt', 'frontend/package.json', 'frontend/package-lock.json',
   'frontend/index.html', 'frontend/vite.config.ts', 'frontend/tsconfig.json', 'frontend/requirements.txt']);
 const APP_PREFIXES = ['frontend/src/', 'frontend/public/', 'frontend/server/', 'banking_mcp/',
-  'pipeline/', 'dispute_workflow/', 'resources/prompts/', 'resources/policies/', 'config/', 'contracts/', 'deploy/fly/'];
+  'pipeline/', 'dispute_workflow/', 'resources/', 'config/', 'contracts/', 'deploy/fly/'];
 const APP_SCRIPTS = new Set(['scripts/run_dispute.py', 'scripts/native_dispute_qualification.py',
   'scripts/native_dispute_qualification.ts', 'scripts/native_dispute_qualification.mjs',
+  'scripts/native_dispute_qualification.Dockerfile',
   'scripts/build_dispute_graph.mjs', 'scripts/provision_banking_runtime_policy.mjs',
   'scripts/reconcile_dispute_deployment.py', 'scripts/qualify_dispute_app.py', 'scripts/qualify_dispute.py',
   'scripts/native_dispute_capability_probe.mjs', 'scripts/native_dispute_bridge_loader.mjs',
