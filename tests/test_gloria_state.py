@@ -8,7 +8,9 @@ import hashlib
 import pytest
 
 from gloria_workflow.state import (ConversationStore, ReplayConflict, RevisionConflict, StateError,
-    TrustedBinding, begin_turn, cancel_pending, new_state, record_tool_result, reset_workflow, set_pending)
+    TrustedBinding, apply_decision, begin_turn, cancel_pending, merge_explicit_slots, new_state,
+    record_tool_result, reset_workflow, set_pending)
+from gloria_workflow.policy import decide
 
 
 NOW = datetime(2026, 10, 1, 3, 50, tzinfo=timezone.utc)
@@ -285,3 +287,58 @@ def test_turn_and_state_commit_atomically_on_cas_conflict(binding, tmp_path):
     with pytest.raises(RevisionConflict):
         store.save_turn(binding, "not-committed", stale, now=NOW)
     assert store.load_turn(binding, "not-committed", now=NOW) is None
+
+
+def test_currency_only_reply_keeps_explicit_amount_and_intent_across_restart(binding, tmp_path):
+    store = ConversationStore(tmp_path / "state.sqlite3")
+    state = state_for(binding)
+    state["turn"].update(intent="TRANSACTION_DISPUTE")
+    state["turn"]["slots"].update(amount=150, currency_raw="pesos", date_from="2026-09-15", date_to="2026-09-15",
+                                    transaction_id="TRX-user-text", amount_is_approximate=True)
+    state = apply_decision(state, decide(state))
+    assert state["workflow_state"]["pending"]["type"] == "none"
+    assert state["runtime"]["field_clarification"]["missing_fields"] == ["currency"]
+    store.save(binding, state, now=NOW)
+    next_turn = begin_turn(store.load(binding, now=NOW), binding, turn_id="turn-2", user_question="COP", now=NOW)
+    assert next_turn["turn"]["slots"]["amount"] is None
+    next_turn["turn"]["intent"] = "OOD"  # A classifier's currency-only label is not the ongoing intent.
+    merged = merge_explicit_slots(next_turn, {"currency": "COP", "amount": None, "amount_is_approximate": False})
+    assert merged["turn"]["intent"] == "TRANSACTION_DISPUTE"
+    assert merged["turn"]["slots"]["amount"] == 150
+    assert merged["turn"]["slots"]["currency"] == "COP"
+    assert merged["turn"]["slots"]["date_from"] == "2026-09-15"
+    assert merged["turn"]["slots"]["amount_is_approximate"] is True
+    assert merged["turn"]["slots"]["transaction_id"] is None
+    assert merged["workflow_state"]["action"]["authorized"] is False
+
+
+def test_unrelated_new_request_drops_field_context_and_counters(binding):
+    state = state_for(binding)
+    state["turn"]["intent"] = "TRANSACTION_DISPUTE"
+    state["turn"]["slots"].update(amount=150, currency_raw="pesos")
+    state = apply_decision(state, decide(state))
+    next_turn = begin_turn(state, binding, turn_id="turn-2", user_question="estado de mi reclamo", now=NOW)
+    next_turn["turn"]["intent"] = "COMPLAINT_STATUS"
+    merged = merge_explicit_slots(next_turn, {"complaint_id": "CMP-new"}, continuing=False)
+    assert merged["turn"]["intent"] == "COMPLAINT_STATUS"
+    assert merged["turn"]["slots"]["complaint_id"] == "CMP-new"
+    assert merged["turn"]["slots"]["amount"] is None
+    assert "field_clarification" not in merged["runtime"]
+    assert merged["workflow_state"]["counters"]["clarification_attempts"] == 0
+
+
+@pytest.mark.parametrize("guard", ["human_requested", "unauthorized_reference", "deceptive"])
+def test_guarded_field_reply_does_not_restore_previous_slots(binding, guard):
+    state = state_for(binding)
+    state["turn"]["intent"] = "TRANSACTION_DISPUTE"
+    state["turn"]["slots"].update(amount=150, currency_raw="pesos")
+    state = apply_decision(state, decide(state))
+    next_turn = begin_turn(state, binding, turn_id="turn-2", user_question="COP", now=NOW)
+    if guard == "deceptive":
+        next_turn["turn"]["attack"]["deceptive"] = 1
+    else:
+        next_turn["turn"][guard] = True
+    merged = merge_explicit_slots(next_turn, {"currency": "COP"})
+    assert merged["turn"]["slots"]["amount"] is None
+    assert merged["turn"]["intent"] is None
+    assert merged["workflow_state"]["action"]["authorized"] is False

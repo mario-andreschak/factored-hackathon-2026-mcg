@@ -188,6 +188,7 @@ def cancel_pending(state: dict, *, clear_target: bool = False) -> dict:
         workflow.update(transaction_identified=False, transaction_unique=False,
                         transaction_id=None, candidate_snapshot_hash=None)
         workflow["existing_case"] = {"found": False, "complaint_id": None, "status": None}
+        result["runtime"].pop("field_clarification", None)
     return result
 
 
@@ -205,6 +206,7 @@ def reset_workflow(state: dict) -> dict:
     result["runtime"].pop("tool_attempts", None)
     result["runtime"].pop("workflow_intent", None)
     result["runtime"].pop("complaint_snapshot_hash", None)
+    result["runtime"].pop("field_clarification", None)
     return result
 
 
@@ -236,7 +238,7 @@ def begin_turn(state: dict, binding: TrustedBinding, *, turn_id: str,
     result["trace"] = deepcopy(state.get("trace", []))
     for key in ("store_revision", "workflow_id", "policy_version", "pending_created_at",
                 "pending_expires_at", "workflow_intent", "history", "prior_verified_actions",
-                "complaint_snapshot_hash"):
+                "complaint_snapshot_hash", "field_clarification"):
         if key in state.get("runtime", {}):
             result["runtime"][key] = deepcopy(state["runtime"][key])
     result["turn"].update(turn_id=turn_id, user_question=user_question)
@@ -268,6 +270,50 @@ def begin_turn(state: dict, binding: TrustedBinding, *, turn_id: str,
     if binding.expired(current) or not binding.authenticated:
         return cancel_pending(result, clear_target=True)
     return expire_pending(result, now=current, pending_expiry_turns=pending_expiry_turns)
+
+
+def merge_explicit_slots(state: dict, extracted_slots: dict, *, continuing: bool = True) -> dict:
+    """Merge an explicitly continuing field reply without restoring capabilities.
+
+    The runtime decides topic continuity. Historical target IDs and foreign
+    references are excluded; fresh IDs still require trusted owner-scoped reads.
+    Guard flags always prevent using historical fields or business intent.
+    """
+    if not isinstance(extracted_slots, dict) or any(key not in SLOT_KEYS for key in extracted_slots):
+        raise StateError("invalid_extracted_slots")
+    result = deepcopy(state)
+    turn = result["turn"]
+    metadata = result.get("runtime", {}).get("field_clarification", {})
+    previous_intent = metadata.get("intent")
+    current_intent = turn.get("intent")
+    attack = turn.get("attack", {})
+    guarded = (turn.get("human_requested") is True or turn.get("unauthorized_reference") is True or
+               extracted_slots.get("foreign_customer_reference") is True or
+               attack.get("deceptive") == 1 or attack.get("inappropriate") == 1)
+    business = {"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY", "COMPLAINT_STATUS", "HUMAN_REQUEST"}
+    retain = (continuing and not guarded and previous_intent in business and
+              current_intent != "HUMAN_REQUEST" and
+              (current_intent == previous_intent or current_intent not in business) and
+              turn.get("clarification", {}).get("resolution_type") != "NEW_REQUEST")
+    slots = {key: False if key in ("amount_is_approximate", "foreign_customer_reference") else None for key in SLOT_KEYS}
+    if retain:
+        for key, value in metadata.get("slots", {}).items():
+            if key in SLOT_KEYS and key not in {"transaction_id", "complaint_id", "foreign_customer_reference"}:
+                slots[key] = deepcopy(value)
+        turn["intent"] = previous_intent
+    for key, value in extracted_slots.items():
+        if value is not None:
+            if retain and key == "amount_is_approximate" and extracted_slots.get("amount") is None:
+                continue
+            slots[key] = deepcopy(value)
+    turn["slots"] = slots
+    if not retain:
+        result["runtime"].pop("field_clarification", None)
+        if metadata and not guarded and (not continuing or
+                turn.get("clarification", {}).get("resolution_type") == "NEW_REQUEST" or
+                current_intent in business and current_intent != previous_intent):
+            result = reset_workflow(result)
+    return result
 
 
 def set_pending(state: dict, pending: dict, *, now: datetime | None = None,
@@ -308,6 +354,19 @@ def apply_decision(state: dict, decision: dict) -> dict:
         result["runtime"]["workflow_intent"] = decision["workflow_intent"]
     if decision.get("complaint_snapshot_hash"):
         result["runtime"]["complaint_snapshot_hash"] = decision["complaint_snapshot_hash"]
+    fields = decision.get("workflow_updates", {}).get("missing_fields")
+    if (decision.get("response_mode") == "CLARIFY" and fields and
+            result["workflow_state"]["pending"].get("type") == "none"):
+        slots = {key: deepcopy(value) for key, value in result["turn"]["slots"].items()
+                 if key in SLOT_KEYS and key not in {"transaction_id", "complaint_id", "foreign_customer_reference"} and
+                 value is not None}
+        result["runtime"]["field_clarification"] = {
+            "intent": decision.get("workflow_intent") or result["turn"].get("intent"),
+            "slots": slots, "missing_fields": deepcopy(fields)}
+    elif decision.get("response_mode") != "CLARIFY":
+        result["runtime"].pop("field_clarification", None)
+        if decision.get("response_mode") in {"CONFIRM_ACTION", "INFORM", "INFORM_EXISTING_CASE", "ACTION_DONE"}:
+            result["workflow_state"]["missing_fields"] = []
     result["runtime"]["policy_version"] = decision.get("policy_version")
     return result
 

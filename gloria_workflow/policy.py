@@ -68,6 +68,10 @@ def _config(overrides: dict | None) -> dict:
                 result[key].update(value)
             else:
                 result[key] = deepcopy(value)
+    result.setdefault("risk_evidence_max_age_seconds", result.get("node_timeout_seconds", 20))
+    freshness = result["risk_evidence_max_age_seconds"]
+    if type(freshness) not in (int, float) or not math.isfinite(freshness) or not 0 <= freshness <= 60:
+        raise ValueError("invalid_policy_configuration")
     for key in _NUMERIC_CONFIG:
         if type(result[key]) is not int or result[key] < (0 if key == "tool_retries" else 1):
             raise ValueError("invalid_policy_configuration")
@@ -232,7 +236,8 @@ def _risk(state: dict, config: dict, now: datetime | None) -> tuple[bool, bool, 
     covered = (report.get("scope") == "prototype_sandbox_cases" and
                report.get("coverage_complete") is True and type(prior) is int and prior >= 0 and
                now is not None and start is not None and end is not None and
-               end == now and start == now - timedelta(hours=24))
+               start == end - timedelta(hours=24) and
+               0 <= (now - end).total_seconds() <= config["risk_evidence_max_age_seconds"])
     count = prior + 1 if covered else None
     # A trusted private aggregate is permitted by the canonical contract; its
     # producer attests current ledger generation/window and excludes this target.
@@ -240,7 +245,8 @@ def _risk(state: dict, config: dict, now: datetime | None) -> tuple[bool, bool, 
     if not report and private.get("coverage_complete") is True and private.get("generation_verified") is True:
         aggregate = private.get("unrecognized_count_24h")
         if (type(aggregate) is int and aggregate >= 1 and private.get("scope") == "prototype_sandbox_cases" and
-                parse_timestamp(private.get("verified_at")) == now):
+                now is not None and parse_timestamp(private.get("verified_at")) is not None and
+                0 <= (now - parse_timestamp(private["verified_at"])).total_seconds() <= config["risk_evidence_max_age_seconds"]):
             count = aggregate
             covered = True
     thresholds = config["high_risk"]
@@ -339,7 +345,7 @@ def decide(state: dict, config: dict | None = None) -> dict:
         return _decision(cfg, "R4", "ACTION_CANCELLED", "customer_cancelled",
                          updates={"trusted_confirmation": empty_confirmation(), "action": {"authorized": False}},
                          clear_pending=True, clear_target=True)
-    if pending.get("type") != "none" and resolution == "NEW_REQUEST":
+    if (pending.get("type") != "none" or workflow.get("missing_fields")) and resolution == "NEW_REQUEST":
         # The caller redetects intent on this same original message after reset.
         return _decision(cfg, "R5" if pending.get("type") == "awaiting_selection" else "R4",
                          "CLARIFY", "new_request", next_step="detect_intent", clear_pending=True, clear_target=True,
@@ -359,6 +365,10 @@ def decide(state: dict, config: dict | None = None) -> dict:
                          else workflow.get("candidate_snapshot_hash"))
         if candidate is None or not pending.get("snapshot_hash") or pending.get("snapshot_hash") != expected_hash:
             return _clarify(state, cfg, "R5", "invalid_selection", clear_pending=True, clear_target=True)
+        if state.get("runtime", {}).get("node_errors") or any(
+                isinstance(value, dict) and value.get("status") == "error" for value in results.values()):
+            # R5 continues from R8, including exhausted read failures at R9.
+            return _business(state, cfg, trusted=False, now=now, today=today)
         if complaint_selection:
             complaint_id = candidate.get("complaint_id")
             if not complaint_id:
@@ -383,6 +393,10 @@ def decide(state: dict, config: dict | None = None) -> dict:
             target = reread.get("transaction") or {}
             snapshot = reread.get("snapshot_id", reread.get("snapshot"))
             if snapshot is not None and pending.get("snapshot_id") != snapshot:
+                return _clarify(state, cfg, "R5", "snapshot_changed", clear_pending=True, clear_target=True)
+            if isinstance(target, dict) and target.get("customer_id") not in (None, session.get("customer_id")):
+                return _decision(cfg, "R9", "TOOL_ERROR", "target_binding_mismatch", clear_pending=True, clear_target=True)
+            if reread.get("snapshot_hash") is not None and reread.get("snapshot_hash") != pending.get("snapshot_hash"):
                 return _clarify(state, cfg, "R5", "snapshot_changed", clear_pending=True, clear_target=True)
             if (not transaction_id or reread.get("status") != "ok" or target.get("transaction_id") != transaction_id):
                 return _decision(cfg, "R5", "CLARIFY", "selected_target_revalidation", next_step="read_target",

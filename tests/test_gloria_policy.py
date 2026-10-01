@@ -374,6 +374,24 @@ def test_24h_count_requires_current_coverage_and_includes_distinct_current():
     assert result["reason_code"] == "missing_evidence" and result["workflow_updates"]["unrecognized_count_24h"] is None
 
 
+@pytest.mark.parametrize("age,complete", [(0, True), (0.123456, True), (20, True), (20.01, False), (-0.1, False)])
+def test_real_server_window_allows_only_bounded_verified_read_freshness(age, complete):
+    state = ready_state()
+    window = state["tool_results"]["get_related_complaints"]["report_window"]
+    end = NOW - timedelta(seconds=age)
+    window.update(window_start=(end - timedelta(hours=24)).isoformat(), window_end=end.isoformat())
+    result = decide(state, {"risk_evidence_max_age_seconds": 20})
+    assert result["workflow_updates"]["risk_data_complete"] is complete
+    assert result["response_mode"] == ("CONFIRM_ACTION" if complete else "HANDOFF")
+
+
+def test_report_window_span_cannot_be_shifted_or_future_dated():
+    state = ready_state()
+    window = state["tool_results"]["get_related_complaints"]["report_window"]
+    window["window_start"] = (NOW - timedelta(hours=25)).isoformat()
+    assert decide(state)["reason_code"] == "missing_evidence"
+
+
 def test_complaint_status_independent_of_transaction_matching():
     state = ready_state("COMPLAINT_STATUS")
     state["tool_results"]["search_transactions"].update(match_count=0, candidates=[])
@@ -417,6 +435,42 @@ def test_new_request_clears_pending_target_and_resets_workflow_counters():
     assert applied["workflow_state"]["pending"]["type"] == "none"
     assert applied["workflow_state"]["transaction_id"] is None
     assert applied["workflow_state"]["counters"]["clarification_attempts"] == 0
+
+
+def test_new_request_ends_field_clarification_without_selection_pending():
+    state = ready_state()
+    state["workflow_state"]["missing_fields"] = ["currency"]
+    state["workflow_state"]["counters"]["clarification_attempts"] = 1
+    state["turn"]["clarification"]["resolution_type"] = "NEW_REQUEST"
+    applied = apply_decision(state, decide(state))
+    assert applied["workflow_state"]["missing_fields"] == []
+    assert applied["workflow_state"]["counters"]["clarification_attempts"] == 0
+
+
+@pytest.mark.parametrize("candidate_type,tool_name,id_key", [
+    ("transaction", "get_transaction", "transaction_id"), ("complaint", "get_complaint", "complaint_id")])
+def test_selected_reread_failure_uses_r9_instead_of_read_loop(candidate_type, tool_name, id_key):
+    state = ready_state()
+    state["workflow_state"]["pending"].update(type="awaiting_selection", candidate_type=candidate_type,
+        candidates=[{"ref": "1", id_key: "owned-id"}], snapshot_hash="hash-1", snapshot_id="snapshot-1")
+    if candidate_type == "complaint":
+        state["runtime"]["complaint_snapshot_hash"] = "hash-1"
+    state["turn"]["clarification"].update(resolution_type="SELECTED", selected_ref="1")
+    state["tool_results"][tool_name] = {"status": "error", "retries_exhausted": True}
+    result = decide(state)
+    assert result["rule_ids"] == ["R9"] and result["response_mode"] == "TOOL_ERROR"
+
+
+def test_selected_foreign_target_is_never_marked_current():
+    state = ready_state()
+    state["workflow_state"]["pending"].update(type="awaiting_selection", candidates=[{"ref": "1", "transaction_id": "TRX-one"}],
+        snapshot_hash="hash-1", snapshot_id="snapshot-1")
+    state["turn"]["clarification"].update(resolution_type="SELECTED", selected_ref="1")
+    state["tool_results"]["get_transaction"]["transaction"]["customer_id"] = "another-customer"
+    applied = apply_decision(state, decide(state))
+    assert applied["workflow_state"]["transaction_identified"] is False
+    assert applied["workflow_state"]["transaction_unique"] is False
+    assert applied["workflow_state"]["pending"]["type"] == "none"
 
 
 def test_canonical_transaction_status_has_precedence_over_compatibility_alias():
