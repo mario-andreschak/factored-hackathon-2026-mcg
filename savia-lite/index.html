@@ -7,22 +7,24 @@
     <title>Savia Lite · Tu banca personal</title>
     <meta
       name="description"
-      content="Savia Lite: portal de banca personal de demostración. Datos sintéticos generados en el navegador. No ejecuta acciones bancarias."
+      content="Savia Lite: portal de banca personal de demostración. Datos sintéticos generados en el navegador. No consulta un banco y no ejecuta acciones bancarias."
     />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="assets/styles.css" />
   </head>
   <body>
     <div id="root">
-      <!-- Shown only until the module runs; replaced on first render. -->
-      <noscript
-        style="display:block;max-width:56ch;margin:56px auto;padding:20px;border:1px solid #dfe7de;border-radius:16px;font-family:system-ui,sans-serif"
-      >
-        <strong>Savia Lite</strong> necesita JavaScript porque genera todo el escenario de
-        demostración dentro de tu navegador. No hay servidor de datos detrás.
+      <noscript class="boot-error">
+        <strong>Savia Lite</strong>
+        <p style="margin-top: 10px">
+          Esta página necesita JavaScript porque genera todo el escenario de demostración dentro
+          de tu navegador. No hay ningún servidor de datos detrás.
+        </p>
       </noscript>
     </div>
+    <!-- boot.js installs the error reporter before the app module is evaluated. -->
     <script type="module" src="assets/boot.js"></script>
     <script type="module" src="assets/app.js"></script>
   </body>

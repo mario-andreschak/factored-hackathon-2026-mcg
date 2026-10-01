@@ -3,7 +3,8 @@
  *
  * Dates in the dataset are plain calendar/clock strings. They are formatted
  * field by field so the host timezone can never move a transaction to another
- * day, which is exactly the kind of silent drift this portal is meant to avoid.
+ * calendar day, which is exactly the kind of silent drift this portal exists
+ * to avoid.
  */
 
 const LOCALE = { es: "es-CO", pt: "pt-BR", en: "en-GB" };
@@ -39,49 +40,114 @@ export function formatDay(stampText, lang) {
 
 export function formatDayTime(stampText, lang) {
   const p = parts(stampText);
-  return `${formatDay(stampText, lang)} · ${String(p.hh).padStart(2, "0")}:${String(p.mm).padStart(2, "0")}`;
+  const hh = String(p.hh).padStart(2, "0");
+  const mm = String(p.mm).padStart(2, "0");
+  return `${formatDay(stampText, lang)} · ${hh}:${mm}`;
 }
 
+/** "2026-06" -> "junio 2026" */
 export function formatMonth(monthText, lang) {
   const [y, m] = monthText.split("-").map(Number);
-  const month = MONTHS[lang]?.[m - 1] ?? MONTHS.en[m - 1];
-  const cap = month.charAt(0).toUpperCase() + month.slice(1);
-  return `${cap} ${y}`;
+  const name = MONTHS[lang]?.[m - 1] ?? MONTHS.en[m - 1];
+  return `${name} ${y}`;
 }
 
+/** "2026-06" -> "jun" */
+export function formatMonthShort(monthText, lang) {
+  const [, m] = monthText.split("-").map(Number);
+  return MONTHS_SHORT[lang]?.[m - 1] ?? MONTHS_SHORT.en[m - 1];
+}
+
+/**
+ * Always prints the currency the row actually carries. There is no conversion
+ * anywhere in this app, so a value is never shown in a currency it was not
+ * recorded in.
+ */
 export function formatMoney(value, currency, lang) {
+  const locale = LOCALE[lang] || LOCALE.es;
   try {
-    return new Intl.NumberFormat(LOCALE[lang] || "es-CO", {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
-      maximumFractionDigits: 2,
       minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(value);
   } catch {
-    return `${currency} ${value.toFixed(2)}`;
+    return `${currency} ${formatNumber(value, lang)}`;
   }
 }
 
-export function formatNumber(value, lang) {
+/** Short form for chart axes: 1.2M / 340k. Never used for an exact figure. */
+export function formatCompact(value, lang) {
+  const locale = LOCALE[lang] || LOCALE.es;
+  const abs = Math.abs(value);
   try {
-    return new Intl.NumberFormat(LOCALE[lang] || "es-CO").format(value);
+    if (abs >= 1000) {
+      return new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(value);
+    }
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);
+  } catch {
+    return String(Math.round(value));
+  }
+}
+
+export function formatNumber(value, lang, digits = 2) {
+  const locale = LOCALE[lang] || LOCALE.es;
+  try {
+    return new Intl.NumberFormat(locale, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(value);
   } catch {
     return String(value);
   }
 }
 
-/** A signed display is only offered when the source direction is known. */
-export function signedMoney(transaction, lang) {
-  const text = formatMoney(transaction.amount, transaction.currency, lang);
-  if (transaction.direction === "credit") return `+ ${text}`;
-  if (transaction.direction === "debit") return `− ${text}`;
+export const formatCount = (value, lang) => formatNumber(value, lang, 0);
+
+export function formatPercent(fraction, lang, digits = 1) {
+  const locale = LOCALE[lang] || LOCALE.es;
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "percent",
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(fraction);
+  } catch {
+    return `${(fraction * 100).toFixed(digits)}%`;
+  }
+}
+
+/**
+ * Signs a money figure only when the direction is actually known. An unknown
+ * direction gets no sign, because inventing one would be a claim the data
+ * does not support.
+ */
+export function signedMoney(value, currency, direction, lang) {
+  const text = formatMoney(value, currency, lang);
+  if (direction === "credit") return `+ ${text}`;
+  if (direction === "debit") return `− ${text}`;
   return text;
 }
 
-export function toCsv(rows, header) {
+/** RFC 4180 style quoting, so a separator inside a value cannot break a row. */
+export function toCsv(rows) {
   const escape = (cell) => {
     const text = cell === null || cell === undefined ? "" : String(cell);
-    return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    return /[",;\n\r]/.test(text) ? `"${text.split('"').join('""')}"` : text;
   };
-  return [header, ...rows].map((row) => row.map(escape).join(",")).join("\r\n") + "\r\n";
+  return rows.map((row) => row.map(escape).join(",")).join("\r\n");
+}
+
+/** Triggers a client-side download. No upload, no network request. */
+export function download(filename, text, mime = "text/plain;charset=utf-8") {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

@@ -1,30 +1,36 @@
 /**
  * Savia Lite - boot guard.
  *
- * Loaded before the app. If a module fails to parse or throws during start-up,
- * a blank page is the worst possible outcome for someone testing a demo, so
- * this prints the actual error on screen instead.
+ * Loaded before the app module. If a module fails to parse or throws while
+ * starting up, a blank page is the worst possible outcome for somebody testing
+ * a demo, so this prints the actual error on screen instead.
  */
 
+let reported = false;
+
 function show(kind, detail) {
+  if (reported) return;
+  reported = true;
   const root = document.getElementById("root");
   if (!root) return;
-  root.innerHTML = "";
+  while (root.firstChild) root.firstChild.remove();
+
   const box = document.createElement("div");
+  box.className = "boot-error";
   box.setAttribute("role", "alert");
-  box.style.cssText =
-    "max-width:70ch;margin:56px auto;padding:22px 24px;border:1px solid #f0c6bf;" +
-    "border-radius:16px;background:#fae8e5;color:#93342b;font-family:system-ui,sans-serif";
+
   const title = document.createElement("strong");
-  title.textContent = "Savia Lite could not start (" + kind + ")";
+  title.textContent = `Savia Lite could not start (${kind})`;
+
   const pre = document.createElement("pre");
-  pre.style.cssText = "white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0 0;font-size:.85rem";
   pre.textContent = detail;
+
   const hint = document.createElement("p");
-  hint.style.cssText = "margin:12px 0 0;font-size:.85rem;opacity:.85";
+  hint.style.cssText = "margin:12px 0 0;font-size:.85rem;opacity:.9";
   hint.textContent =
-    "Serve the folder over http:// rather than opening the file directly, " +
-    "or run: node tools/selfcheck.mjs";
+    "Run \"python serve.py\" and open the address it prints, instead of opening "
+    + "this file directly. To see what broke: node tools/selfcheck.mjs";
+
   box.append(title, pre, hint);
   root.append(box);
 }
@@ -32,16 +38,18 @@ function show(kind, detail) {
 addEventListener("error", (event) => {
   show("script error", `${event.message}\n${event.filename || ""}:${event.lineno || "?"}`);
 });
+
 addEventListener("unhandledrejection", (event) => {
-  show("promise rejection", String(event.reason && event.reason.stack ? event.reason.stack : event.reason));
+  const reason = event.reason;
+  show("promise rejection", String(reason && reason.stack ? reason.stack : reason));
 });
 
-// If the app never renders, say so rather than showing an empty page.
+// If the app never rendered anything, say so rather than showing a blank page.
 addEventListener("load", () => {
   setTimeout(() => {
     const root = document.getElementById("root");
     if (root && root.childElementCount === 0) {
       show("no render", "The application module loaded but produced no output.");
     }
-  }, 900);
+  }, 600);
 });
