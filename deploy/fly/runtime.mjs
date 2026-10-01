@@ -68,6 +68,7 @@ export async function bootstrap() {
   await publish('/run/dispute/transition-receipt.json', receipt, 0, 10001, 0o440);
   await publish('/run/dispute/legacy-admission.json', await privateBytes(PRIVATE + '/legacy-admission.json'), 0, 10001, 0o440);
   await publish('/run/dispute/frontend-signer.pem', await privateBytes('/data/private/frontend/signer.pem'), 0, 10001, 0o440);
+  await publish('/run/dispute/source.env', await privateBytes('/data/private/banking/source.env'), 0, 10001, 0o440);
   await publish(CONTROL + '/native-profile.json', await fs.readFile('/opt/native/native-profile.json'), 0, 10002, 0o440);
   try { await fs.lstat(CONTROL + '/admissions.json'); }
   catch (error) { if (error.code !== 'ENOENT') throw error; await publish(CONTROL + '/admissions.json', Buffer.from('[]\n'), 10001, 10002, 0o640); }
@@ -123,7 +124,7 @@ export function runtimeCommands({ worker, frontend, gateway, dev } = runtimeEnvi
     { name: 'native worker', command: '/usr/sbin/gosu', args: ['node', 'node', 'scripts/launch-next.mjs', 'start', '-p', '4200', '-H', '127.0.0.1'], cwd: '/app', env: worker },
     { name: 'joined banking application', command: '/usr/sbin/gosu', args: ['banking', '/opt/joined/.venv/bin/python', '/opt/joined/scripts/run_dispute.py',
       '--state-dir', '/data/banking-state', '--bank-config-file', '/run/dispute/bank-config.json', '--native-url', 'http://127.0.0.1:4200',
-      '--native-authority-dir', CONTROL, '--source-root', '/opt/joined', '--transition-receipt', '/run/dispute/transition-receipt.json',
+      '--native-authority-dir', CONTROL, '--transition-receipt', '/run/dispute/transition-receipt.json',
       '--native-reader-group', '10002', '--port', '8082', '--enable-simulated-intake'], cwd: '/opt/joined', env: frontend },
     { name: 'public gateway', command: '/usr/sbin/gosu', args: ['node', 'node', '/opt/savia/fly/gateway.mjs'], cwd: '/app', env: gateway },
   ];
