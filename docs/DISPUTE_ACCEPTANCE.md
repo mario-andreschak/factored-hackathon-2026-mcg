@@ -32,8 +32,13 @@ The new report qualifies combined source and fictional read preview only.
 The graph remains `installed=false`, `actionsEnabled=false` with example bindings.
 Native/provider execution, exact replacement-image acceptance, human semantic
 and assistive-technology checks, deployment and submission remain separately
-gated. Passing local source checks do not replace current-head hosted CI and
-branch policy before merge.
+gated. Source-only qualification does not replace complete current-head workflow
+CI and branch policy before merge. The authorized private CI route executes all
+eleven workflow jobs (five on Windows and six on Linux in local Docker), preserving
+the exact commit, commands, environments, source pins and timeouts. Independently
+reviewed execution receipts must pass the complete-gate validator before distinct
+external CI statuses can establish that coverage. Refused GitHub-hosted Actions
+jobs remain failed; external results do not bypass required checks or approvals.
 
 ## Historical PR39 portal/preview source evidence
 
