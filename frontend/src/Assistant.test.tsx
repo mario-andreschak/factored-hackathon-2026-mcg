@@ -80,6 +80,9 @@ const generalHandoff: HandoffPacket = {
   unanswered_questions: ["Pregunta guardada anterior?"],
 };
 
+const effectiveLanguage = (element: Element) =>
+  element.closest("[lang]")?.getAttribute("lang");
+
 const response = (body: unknown) =>
   ({
     ok: true,
@@ -172,7 +175,28 @@ test("Portuguese consent and saved status survive refresh without submitting an 
   await screen.findByRole("button", {
     name: /Confirmo o registro simulado para Mercado Central/,
   });
-  await screen.findByText("Estado em português para este lançamento.");
+  const actionStatus = await screen.findByText(
+    "Estado em português para este lançamento.",
+  );
+  expect(effectiveLanguage(actionStatus)).toBe("pt-BR");
+  expect(actionStatus.getAttribute("role")).toBe("status");
+  const consentButton = screen.getByRole("button", {
+    name: /Confirmo o registro simulado para Mercado Central/,
+  });
+  expect(effectiveLanguage(consentButton)).toBe("pt-BR");
+  const consentSummary = screen
+    .getByText(/Solicitação pendente para este lançamento/)
+    .closest('[role="status"]');
+  expect(consentSummary).not.toBeNull();
+  expect(effectiveLanguage(consentSummary!)).toBe("pt-BR");
+  expect(
+    effectiveLanguage(
+      within(consentSummary as HTMLElement).getByText(charge.merchant!),
+    ),
+  ).toBe("");
+  expect(
+    effectiveLanguage(within(consentButton).getByText(charge.merchant!)),
+  ).toBe("");
   expect(screen.getByText(/O registro é uma simulação/)).toBeTruthy();
   expect(
     calls.some(({ url }) => url === "/api/action/status?language=pt"),
@@ -630,6 +654,12 @@ test.each([
     const view = render(<Assistant {...props} />);
     fireEvent.click(await screen.findByRole("button", { name: reviewLabel }));
     const evidence = await screen.findByRole("region", { name: receiptLabel });
+    expect(effectiveLanguage(evidence)).toBe(
+      language === "pt" ? "pt-BR" : "es",
+    );
+    expect(
+      effectiveLanguage(within(evidence).getByText(charge.merchant!)),
+    ).toBe("");
     expect(within(evidence).getByText(receipt.id)).toBeTruthy();
     expect(within(evidence).getByText(charge.reference)).toBeTruthy();
     expect(within(evidence).getByText(received)).toBeTruthy();
@@ -1027,10 +1057,13 @@ test.each([
       onExpired: vi.fn(),
     };
     const view = render(<Assistant {...props} />);
-    fireEvent.change(
-      await screen.findByRole("textbox", { name: questionsLabel }),
-      { target: { value: ` ${question} \nSegunda pergunta?` } },
-    );
+    const questionDraft = await screen.findByRole("textbox", {
+      name: questionsLabel,
+    });
+    expect(effectiveLanguage(questionDraft)).toBe("");
+    fireEvent.change(questionDraft, {
+      target: { value: ` ${question} \nSegunda pergunta?` },
+    });
     const prefer = screen.getByRole("button", { name: preferLabel });
     expect((prefer as HTMLButtonElement).disabled).toBe(false);
     expect(writes).toHaveLength(0);
@@ -1059,7 +1092,10 @@ test.each([
       name:
         language === "pt" ? "Referência da análise" : "Referencia de revisión",
     });
-    expect(within(evidence).getByText(question)).toBeTruthy();
+    expect(effectiveLanguage(evidence)).toBe(
+      language === "pt" ? "pt-BR" : "es",
+    );
+    expect(effectiveLanguage(within(evidence).getByText(question))).toBe("");
     expect(within(evidence).getByText(handoff.id)).toBeTruthy();
     expect(writes).toHaveLength(2);
     expect(writes[1]).toEqual({

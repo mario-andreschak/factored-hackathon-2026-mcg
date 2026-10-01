@@ -1506,7 +1506,9 @@ function EvidenceFacts({
   const copy = actionCopy[language];
   return (
     <>
-      <strong>{facts.merchant || copy.merchantNotReported}</strong>
+      <strong lang={facts.merchant ? "" : undefined}>
+        {facts.merchant || copy.merchantNotReported}
+      </strong>
       <dl>
         <div>
           <dt>{copy.eventDate}</dt>
@@ -1557,6 +1559,7 @@ function ReceiptEvidence({
     <section
       className={`action-evidence${previous ? " action-evidence-prior" : ""}`}
       aria-label={previous ? copy.priorReceiptLabel : copy.receiptLabel}
+      lang={language === "pt" ? "pt-BR" : "es"}
     >
       <h4>{previous ? copy.priorReceiptTitle : copy.existingCase}</h4>
       {previous && <p>{copy.priorReceiptNote}</p>}
@@ -1618,6 +1621,7 @@ function HandoffEvidence({
     <section
       className={`action-evidence${previous ? " action-evidence-prior" : ""}`}
       aria-label={previous ? copy.priorHandoffLabel : copy.handoffLabel}
+      lang={language === "pt" ? "pt-BR" : "es"}
     >
       <h4>{previous ? copy.priorHandoffTitle : copy.savedReview}</h4>
       {previous && <p>{copy.priorHandoffNote}</p>}
@@ -1680,7 +1684,9 @@ function HandoffEvidence({
           <strong>{copy.questions}</strong>
           <ul>
             {packet.unanswered_questions.map((question, i) => (
-              <li key={i}>{question}</li>
+              <li key={i} lang="">
+                {question}
+              </li>
             ))}
           </ul>
         </>
@@ -2244,7 +2250,7 @@ export function Assistant({
       {status.sandbox_intake_available &&
         historyReady &&
         (messages.length > 0 || action) && (
-          <div className="action-panel">
+          <div className="action-panel" lang={uiLang}>
             <strong lang={uiLang}>{copy.title}</strong>
             <p lang={uiLang}>{copy.disclosure}</p>
             {action && (
@@ -2311,7 +2317,7 @@ export function Assistant({
                   <small>
                     {preparedFacts ? (
                       <>
-                        <span>
+                        <span lang={preparedFacts.merchant ? "" : undefined}>
                           {preparedFacts.merchant || copy.merchantNotReported}
                         </span>
                         <span>
@@ -2426,7 +2432,9 @@ export function Assistant({
                   >
                     <span>
                       {copy.confirmIntake}{" "}
-                      {preparedFacts.merchant || copy.merchantNotReported}
+                      <span lang={preparedFacts.merchant ? "" : undefined}>
+                        {preparedFacts.merchant || copy.merchantNotReported}
+                      </span>
                     </span>
                     <small>
                       {copy.chargeReference}: {action.target_reference}
@@ -2444,6 +2452,7 @@ export function Assistant({
                     <textarea
                       rows={3}
                       value={handoffQuestionDraft}
+                      lang=""
                       aria-labelledby={`${consentSummaryId}-questions-label`}
                       disabled={actionBusy || busy}
                       aria-describedby={`${consentSummaryId}-questions-hint`}
