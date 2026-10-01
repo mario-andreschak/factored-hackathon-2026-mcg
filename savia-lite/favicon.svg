@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Savia">
+  <rect width="64" height="64" rx="16" fill="#3f6b52" />
+  <path d="M32 14c-9 8-14 14-14 21a14 14 0 0 0 28 0c0-7-5-13-14-21z" fill="#e6efe7" />
+  <path d="M32 24v22" stroke="#3f6b52" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M32 33l6-5M32 39l-6-5" stroke="#3f6b52" stroke-width="2.4" stroke-linecap="round" />
+</svg>
