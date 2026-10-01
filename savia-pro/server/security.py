@@ -153,8 +153,9 @@ def product_payload(row: dict[str, Any]) -> dict[str, Any]:
     kind = {"Tarjeta Crédito": "credit", "Préstamo Personal": "credit",
             "Préstamo Hipotecario": "credit", "Inversión": "investment"}
     payload["balance_kind"] = kind.get(payload["type"], "deposit")
-    if payload["balance_kind"] == "credit" and payload["credit_limit"]:
-        payload["available"] = round(payload["credit_limit"] - (payload["balance"] or 0), 2)
+    if (payload["balance_kind"] == "credit" and payload["credit_limit"] is not None
+            and payload["balance"] is not None):
+        payload["available"] = round(payload["credit_limit"] - payload["balance"], 2)
     else:
         payload["available"] = None
     masked = payload["reference"][-4:] if payload["reference"] else "????"

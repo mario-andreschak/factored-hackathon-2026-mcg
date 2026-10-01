@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import type { Overview, Signals } from "../types";
 import { compact, formatDay, formatMonth, money, percent } from "../format";
@@ -26,23 +26,29 @@ function BalanceCard({ bucket, series, index }: {
   index: number;
 }) {
   const { lang, t } = useShell();
-  const headline = bucket.deposit + bucket.investment;
-  const shown = useCountUp(headline, 1100);
-  const utilisation = bucket.credit_limit > 0 ? bucket.credit / bucket.credit_limit : 0;
+  const headline = bucket.deposit === null || bucket.investment === null
+    ? null : bucket.deposit + bucket.investment;
+  const shown = useCountUp(headline ?? 0, 1100);
+  const utilisation = bucket.credit !== null && bucket.credit_limit !== null && bucket.credit_limit > 0
+    ? bucket.credit / bucket.credit_limit : null;
   const net = (series ?? []).map((point) => point.inflow - point.outflow);
 
   return (
     <div className="kpi reveal" style={{ ["--i" as string]: index }}>
       <div className="eyebrow">{bucket.currency}</div>
-      <div className="kpi-value">{money(shown, bucket.currency, lang)}</div>
+      <div className="kpi-value">{money(headline === null ? null : shown, bucket.currency, lang)}</div>
       <div className="kpi-sub">{t("home.deposits")} + {t("home.investment")}</div>
       {net.length > 1 && <div style={{ marginTop: 10 }}><Sparkline values={net} /></div>}
-      {bucket.credit > 0 && (
+      {(bucket.credit === null || bucket.credit > 0) && (
         <div style={{ marginTop: 12 }}>
-          <Meter label={t("home.credit")} value={bucket.credit} of={bucket.credit_limit || bucket.credit}
-                 caption={`${money(bucket.credit, bucket.currency, lang)}${
-                   bucket.credit_limit ? ` · ${percent(utilisation, lang, 0)}` : ""}`}
-                 tone="warn" index={index} />
+          {utilisation !== null && bucket.credit !== null && bucket.credit_limit !== null
+            ? <Meter label={t("home.credit")} value={bucket.credit} of={bucket.credit_limit}
+                     caption={`${money(bucket.credit, bucket.currency, lang)} · ${percent(utilisation, lang, 0)}`}
+                     tone="warn" index={index} />
+            : <div className="kpi-row">
+                <span>{t("home.credit")}</span>
+                <b>{money(bucket.credit, bucket.currency, lang)}</b>
+              </div>}
         </div>
       )}
     </div>
@@ -55,20 +61,28 @@ export default function Home({ onAlias }: { onAlias: (alias: string) => void }) 
   const [signals, setSignals] = useState<Signals | null>(null);
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState("");
+  const generation = useRef(0);
 
   function load() {
+    const current = ++generation.current;
     setError("");
     Promise.all([api.overview(), api.signals()])
       .then(([overview, found]) => {
+        if (current !== generation.current) return;
         setData(overview);
         setSignals(found);
         setCurrency(overview.currencies[0] ?? "");
         onAlias(overview.customer.alias);
       })
-      .catch((caught) => setError(caught?.message ?? "failed"));
+      .catch((caught) => {
+        if (current === generation.current) setError(caught?.message ?? "failed");
+      });
   }
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+    return () => { generation.current += 1; };
+  }, []);
 
   const points = useMemo(() => (currency ? data?.series[currency] ?? [] : []), [data, currency]);
 

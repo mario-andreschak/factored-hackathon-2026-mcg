@@ -5,12 +5,23 @@ import type {
 const TOKEN_KEY = "savia.session";
 
 let token: string | null = sessionStorage.getItem(TOKEN_KEY);
+const sessionListeners = new Set<() => void>();
 
 export const hasSession = () => Boolean(token);
+
+export function subscribeSession(listener: () => void) {
+  sessionListeners.add(listener);
+  return () => { sessionListeners.delete(listener); };
+}
+
+function sessionChanged() {
+  for (const listener of sessionListeners) listener();
+}
 
 export function clearSession() {
   token = null;
   sessionStorage.removeItem(TOKEN_KEY);
+  sessionChanged();
 }
 
 export class ApiError extends Error {
@@ -20,13 +31,15 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const requestToken = token;
   const headers = new Headers(init.headers);
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (requestToken) headers.set("Authorization", `Bearer ${requestToken}`);
   if (init.body) headers.set("Content-Type", "application/json");
 
   const response = await fetch(`/api${path}`, { ...init, headers });
+  ensureCurrentSession(requestToken);
   if (response.status === 401) {
-    clearSession();
+    if (requestToken === token) clearSession();
     throw new ApiError(401, "session expired");
   }
   if (!response.ok) {
@@ -38,7 +51,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     }
     throw new ApiError(response.status, String(detail));
   }
-  return response.json() as Promise<T>;
+  const result = await response.json() as T;
+  ensureCurrentSession(requestToken);
+  return result;
+}
+
+// A response issued for an old profile must neither publish its data nor revoke
+// the session selected since the request began.
+function ensureCurrentSession(requestToken: string | null) {
+  if (requestToken && requestToken !== token) {
+    throw new ApiError(401, "session changed");
+  }
 }
 
 /** Turns the filter object into the query string the API expects. */
@@ -63,6 +86,7 @@ export const api = {
       "/session", { method: "POST", body: JSON.stringify({ slug }) });
     token = result.token;
     sessionStorage.setItem(TOKEN_KEY, result.token);
+    sessionChanged();
     return result;
   },
 
@@ -71,11 +95,11 @@ export const api = {
     request<Insights>(`/insights${currency ? `?currency=${encodeURIComponent(currency)}` : ""}`),
   signals: () => request<Signals>("/signals"),
 
-  ledger: (f: Partial<Filters>, offset = 0, limit = 40) =>
-    request<Ledger>(`/transactions?${filterQuery(f, { offset, limit })}`),
+  ledger: (f: Partial<Filters>, offset = 0, limit = 40, signal?: AbortSignal) =>
+    request<Ledger>(`/transactions?${filterQuery(f, { offset, limit })}`, { signal }),
 
-  detail: (reference: string) =>
-    request<Detail>(`/transactions/${encodeURIComponent(reference)}`),
+  detail: (reference: string, signal?: AbortSignal) =>
+    request<Detail>(`/transactions/${encodeURIComponent(reference)}`, { signal }),
 
   reviews: () => request<{ reviews: Review[] }>("/reviews").then((r) => r.reviews),
 
@@ -89,11 +113,15 @@ export const api = {
 
   /** CSV needs the Authorization header, so it is fetched and saved client-side. */
   async downloadCsv(f: Partial<Filters>, filename: string) {
+    const requestToken = token;
     const response = await fetch(api.exportUrl(f), {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: requestToken ? { Authorization: `Bearer ${requestToken}` } : {},
     });
+    ensureCurrentSession(requestToken);
+    if (response.status === 401 && requestToken === token) clearSession();
     if (!response.ok) throw new ApiError(response.status, "export failed");
     const blob = await response.blob();
+    ensureCurrentSession(requestToken);
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;

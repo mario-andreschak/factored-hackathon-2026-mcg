@@ -27,6 +27,9 @@ export default function Movements(props: {
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<Overview["products"]>([]);
   const [draft, setDraft] = useState(filters.q);
+  const [reload, setReload] = useState(0);
+  const generation = useRef(0);
+  const moreController = useRef<AbortController | null>(null);
 
   useEffect(() => { setDraft(filters.q); }, [filters.q]);
 
@@ -41,35 +44,63 @@ export default function Movements(props: {
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setFilters({ ...filters, q: draft }), 280);
     return () => window.clearTimeout(timer.current);
-  }, [draft]);
+  }, [draft, filters, setFilters]);
 
   const key = JSON.stringify(filters);
+  const currentKey = useRef(key);
+  currentKey.current = key;
   useEffect(() => {
     let alive = true;
+    const current = ++generation.current;
+    const controller = new AbortController();
+    moreController.current?.abort();
+    moreController.current = null;
+    setMore(false);
     setLoading(true);
     setError("");
-    api.ledger(filters, 0, 40)
+    setPage(null);
+    setRows([]);
+    api.ledger(filters, 0, 40, controller.signal)
       .then((result) => {
-        if (!alive) return;
+        if (!alive || current !== generation.current || key !== currentKey.current) return;
         setPage(result);
         setRows(result.transactions);
       })
-      .catch((caught) => alive && setError(caught?.message ?? "failed"))
-      .finally(() => alive && setLoading(false));
-    return () => { alive = false; };
-  }, [key]);
+      .catch((caught) => {
+        if (alive && !controller.signal.aborted && key === currentKey.current) {
+          setError(caught?.message ?? "failed");
+        }
+      })
+      .finally(() => {
+        if (alive && current === generation.current && key === currentKey.current) setLoading(false);
+      });
+    return () => {
+      alive = false;
+      generation.current += 1;
+      controller.abort();
+      moreController.current?.abort();
+    };
+  }, [key, reload]);
 
   async function loadMore() {
-    if (!page?.next_offset) return;
+    if (!page?.next_offset || moreController.current) return;
+    const current = generation.current;
+    const requestKey = key;
+    const controller = new AbortController();
+    moreController.current = controller;
     setMore(true);
     try {
-      const next = await api.ledger(filters, page.next_offset, 40);
+      const next = await api.ledger(filters, page.next_offset, 40, controller.signal);
+      if (current !== generation.current || requestKey !== currentKey.current) return;
       setPage(next);
       setRows((current) => [...current, ...next.transactions]);
     } catch (caught: any) {
-      toast(caught?.message ?? "failed", "bad");
+      if (current === generation.current && requestKey === currentKey.current && !controller.signal.aborted) {
+        toast(caught?.message ?? "failed", "bad");
+      }
     } finally {
-      setMore(false);
+      if (moreController.current === controller) moreController.current = null;
+      if (current === generation.current && requestKey === currentKey.current) setMore(false);
     }
   }
 
@@ -81,6 +112,8 @@ export default function Movements(props: {
   }
 
   const grouped = useMemo(() => {
+    // Grouping an amount-sorted response by month would change its global order.
+    if (filters.sort.startsWith("amount_")) return [["", rows]] as [string, Txn[]][];
     const map = new Map<string, Txn[]>();
     for (const row of rows) {
       const month = monthKey(row.event_date);
@@ -88,7 +121,7 @@ export default function Movements(props: {
       map.get(month)!.push(row);
     }
     return [...map.entries()];
-  }, [rows]);
+  }, [rows, filters.sort]);
 
   const currencies = useMemo(
     () => [...new Set(products.map((product) => product.currency))].sort(),
@@ -225,7 +258,7 @@ export default function Movements(props: {
         </div>
       )}
 
-      {error && <ErrorBox message={error} t={t} onRetry={() => setFilters({ ...filters })} />}
+      {error && <ErrorBox message={error} t={t} onRetry={() => setReload((current) => current + 1)} />}
       {loading && <Skeleton kind="row" count={8} />}
 
       {!loading && rows.length === 0 && !error && (
@@ -236,10 +269,10 @@ export default function Movements(props: {
 
       {!loading && grouped.map(([month, items]) => (
         <section key={month}>
-          <div className="month-head">
+          {month && <div className="month-head">
             <span className="eyebrow">{formatMonth(month, lang)}</span>
             <span className="note num">{items.length}</span>
-          </div>
+          </div>}
           <div className="rows">
             {items.map((txn, index) => (
               <TxnRow key={txn.reference} txn={txn} onOpen={openTxn}

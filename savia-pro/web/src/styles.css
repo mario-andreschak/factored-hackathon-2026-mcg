@@ -728,11 +728,14 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .split, .gate-cols { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .tabs { order: 3; width: 100%; overflow-x: auto; }
-  .who-name, .who-meta, .searchbtn span { display: none; }
+  .topbar { flex-wrap: wrap; gap: 8px; }
+  .tabs { order: 3; flex-basis: 100%; width: 100%; overflow-x: auto; }
+  .who-name, .who-details br, .who .avatar, .searchbtn span:not(:first-child) { display: none; }
+  .who-meta { white-space: nowrap; }
+  .topbar > .seg button { padding-inline: 6px; }
   .row { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 9px; }
   .answers { grid-template-columns: 1fr; }
-  .month-head { top: 52px; }
+  .month-head { position: static; }
 }
 
 @media (prefers-reduced-motion: reduce) {

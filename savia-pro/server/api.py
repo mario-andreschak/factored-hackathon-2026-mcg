@@ -127,8 +127,20 @@ def overview(me: Session = Depends(session)) -> dict[str, Any]:
         bucket = buckets.setdefault(product["currency"], {
             "currency": product["currency"], "deposit": 0.0, "credit": 0.0,
             "investment": 0.0, "credit_limit": 0.0, "products": 0})
-        bucket[product["balance_kind"]] += product["balance"] or 0.0
-        bucket["credit_limit"] += product["credit_limit"] or 0.0
+        kind = product["balance_kind"]
+        balance = product["balance"]
+        # A total is unknown if any contributing source balance is unknown.
+        # An empty product category remains a known empty sum, rather than
+        # pretending a missing value on an existing product is zero.
+        if balance is None:
+            bucket[kind] = None
+        elif bucket[kind] is not None:
+            bucket[kind] += balance
+        if kind == "credit":
+            if product["credit_limit"] is None:
+                bucket["credit_limit"] = None
+            elif bucket["credit_limit"] is not None:
+                bucket["credit_limit"] += product["credit_limit"]
         bucket["products"] += 1
 
     recent = db.transactions(cid, {"limit": 8, "sort": "date_desc"})

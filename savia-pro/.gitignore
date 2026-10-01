@@ -3,3 +3,5 @@ web/node_modules/
 web/dist/
 __pycache__/
 *.pyc
+.venv-test/
+.pytest_cache/

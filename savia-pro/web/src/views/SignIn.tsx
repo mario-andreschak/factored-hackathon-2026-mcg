@@ -29,6 +29,7 @@ export default function SignIn(props: {
   const [chosen, setChosen] = useState<string>("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -38,11 +39,12 @@ export default function SignIn(props: {
         if (!alive) return;
         setProfiles(list);
         setSnapshot(snap);
-        setChosen(list[0]?.slug ?? "");
+        setChosen((current) => list.some((profile) => profile.slug === current)
+          ? current : list[0]?.slug ?? "");
       })
       .catch((caught) => alive && setError(caught?.message || t("err.offline")));
     return () => { alive = false; };
-  }, [lang]);
+  }, [lang, reload]);
 
   async function enter() {
     if (!chosen) return;
@@ -76,7 +78,7 @@ export default function SignIn(props: {
         </header>
 
         {error && <div className="reveal" style={{ ["--i" as string]: 1 }}>
-          <ErrorBox message={error} t={t} onRetry={() => setLang(lang)} />
+          <ErrorBox message={error} t={t} onRetry={() => setReload((current) => current + 1)} />
         </div>}
 
         <div className="gate-cols">

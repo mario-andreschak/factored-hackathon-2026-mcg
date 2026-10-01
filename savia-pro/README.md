@@ -29,12 +29,19 @@ replace, modify or depend on it. The two differ in substance, not in skin:
 
 ```powershell
 .\run.ps1                # Windows
+.\run.ps1 --api-only     # skip the web build
 ```
 
 Requirements: Python 3.11+, the organizer lake mounted read-only (default
 `/banking-data`, override with `SAVIA_LAKE`), and Node 20+ if you want the
 bundled client. The API alone is useful without Node — it ships an OpenAPI page
 at `/api/docs`.
+
+`SAVIA_SERVING` overrides the serving file consistently in the builder, launcher
+and API. A rebuild compiles to an owned temporary file, closes and reopens it
+for validation, and only then atomically replaces the serving file. If the
+source or verification fails, the previous serving file stays intact. Stop the
+API before replacing a serving file that it already has open.
 
 During UI work, run the service and the Vite dev server side by side:
 
@@ -65,10 +72,13 @@ It does three things that matter:
 
 ### Choosing the profiles
 
-The five demo customers were not picked by hand. The build scans the gold layer
-for customers with at least three products, more than one currency, and at least
-one of every transaction status, then takes the richest. Each one keeps its
-whole real history — roughly three years and 120–150 transactions.
+The five demo profiles are a frozen, measured selection from the published
+snapshot, defined explicitly in `tools/build_serving.py`. They cover multiple
+products, currencies and transaction statuses. The builder does not rerank or
+silently select new customers when `CURRENT` changes: it requires every listed
+customer and every selected ownership-valid transaction to survive the owned
+product join. Each profile keeps its whole selected history — roughly three
+years and 120–150 transactions in the named snapshot.
 
 | slug | real shape |
 | --- | --- |
@@ -176,6 +186,25 @@ It asserts, among other things:
   customer's words out of the verified facts, and carries a 64-character digest;
 * the CSV export carries both date bases and no fraud column.
 
+Small source regressions are separate from that published-snapshot acceptance:
+
+```bash
+python3 -m venv .venv-test
+.venv-test/bin/python -m pip install -r requirements-test.txt
+.venv-test/bin/python -m pip check
+.venv-test/bin/python -m pytest -q tests
+```
+
+On Windows, use `.venv-test\Scripts\python.exe` for the same commands. The
+tests write a tiny synthetic Parquet fixture under the test runner's temporary
+directory; they do not open `/banking-data`, install through the launcher or
+start a server. They cover ownership refusal, preserving an existing artifact
+on failed rebuild/verification, the precise 72-hour boundary, nullable source
+balances, profile isolation, explicit projection and truthful local review
+records. Launcher tests mock their tools and verify failure propagation and the
+configured serving path; run them on both Windows and Linux to cover each
+launcher. These checks do not establish published-snapshot or runtime acceptance.
+
 ## Honest limits
 
 * Not a bank. Nothing here moves money, opens a dispute, issues a refund or
@@ -186,8 +215,11 @@ It asserts, among other things:
 * Names shown are aliases over real snapshot customer records. The underlying
   identifiers never leave the server.
 * Balances are the snapshot's own values. They are never recomputed by summing
-  transactions, and missing data is never rendered as zero.
+  transactions. A currency/category total is unknown if any contributing
+  product balance is missing; available credit is unknown without both its
+  source balance and source limit. Missing data is never rendered as zero.
 * The snapshot contains 24 distinct merchant names in total. The merchant-level
   views are therefore thin by nature, and the app says so rather than padding
   them.
-* `--api-only` serves the API without a client; the React bundle needs Node 20+.
+* `--api-only` skips the client build; an already-built client may still be
+  served. The React build needs Node 20+.

@@ -9,6 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 PORT="${SAVIA_PORT:-43950}"
+SERVING="${SAVIA_SERVING:-var/serving.duckdb}"
 REBUILD=0
 API_ONLY=0
 for arg in "$@"; do
@@ -25,16 +26,16 @@ say "1/4  Python dependencies"
 python3 -m pip install --quiet --disable-pip-version-check -r requirements.txt
 
 say "2/4  Serving database"
-if [[ "$REBUILD" == "1" || ! -f var/serving.duckdb ]]; then
+if [[ "$REBUILD" == "1" || ! -f "$SERVING" ]]; then
   python3 tools/build_serving.py --verify
 else
-  echo "     var/serving.duckdb already present (use --rebuild to refresh)"
+  echo "     $SERVING already present (use --rebuild to refresh)"
 fi
 
 if [[ "$API_ONLY" == "0" ]]; then
   say "3/4  Web client"
   if command -v npm >/dev/null 2>&1; then
-    ( cd web && [[ -d node_modules ]] || npm install --no-audit --no-fund )
+    ( cd web; if [[ ! -d node_modules ]]; then npm ci --no-audit --no-fund; fi )
     ( cd web && npm run build )
   else
     echo "     npm not found - the API will serve without a bundled client."

@@ -43,7 +43,7 @@ export type MonthPoint = {
 export type Overview = {
   customer: { alias: string };
   products: Product[];
-  balances: { currency: string; deposit: number; credit: number; investment: number; credit_limit: number; products: number }[];
+  balances: { currency: string; deposit: number | null; credit: number | null; investment: number | null; credit_limit: number | null; products: number }[];
   currencies: string[];
   series: Record<string, MonthPoint[]>;
   recent: Txn[];

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { hasSession, clearSession } from "./api";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { hasSession, clearSession, subscribeSession } from "./api";
 import { LANGS, translator } from "./i18n";
 import type { Filters, Lang } from "./types";
 import { EMPTY_FILTERS } from "./types";
@@ -23,13 +23,23 @@ export default function App() {
   const [theme, setTheme] = useState<"dark" | "light">(
     () => (localStorage.getItem(THEME_KEY) as "dark" | "light") || "dark");
 
-  const [signedIn, setSignedIn] = useState(hasSession());
+  const signedIn = useSyncExternalStore(subscribeSession, hasSession);
   const [alias, setAlias] = useState<string>("");
   const [view, setView] = useState<View>("home");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openRef, setOpenRef] = useState<string | null>(null);
   const [palette, setPalette] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  useEffect(() => {
+    if (signedIn) return;
+    setAlias("");
+    setView("home");
+    setFilters(EMPTY_FILTERS);
+    setOpenRef(null);
+    setPalette(false);
+    setToasts([]);
+  }, [signedIn]);
 
   const t = useMemo(() => translator(lang), [lang]);
 
@@ -80,17 +90,12 @@ export default function App() {
 
   function signOut() {
     clearSession();
-    setSignedIn(false);
-    setAlias("");
-    setView("home");
-    setFilters(EMPTY_FILTERS);
-    setOpenRef(null);
   }
 
   if (!signedIn) {
     return (
       <SignIn lang={lang} setLang={setLang}
-              onSignedIn={() => { setSignedIn(true); setView("home"); }} />
+              onSignedIn={() => setView("home")} />
     );
   }
 
@@ -119,7 +124,7 @@ export default function App() {
 
           <span className="spacer" />
 
-          <button className="searchbtn" onClick={() => setPalette(true)}>
+          <button className="searchbtn" aria-label={t("nav.search")} onClick={() => setPalette(true)}>
             <span aria-hidden="true">⌕</span>
             <span>{t("nav.search")}</span>
             <span className="kbd">Ctrl K</span>
@@ -141,7 +146,7 @@ export default function App() {
             <span className="avatar" aria-hidden="true">
               {(alias || "·").split(" ").map((w) => w[0]).slice(0, 2).join("")}
             </span>
-            <span>
+            <span className="who-details">
               <span className="who-name">{alias}</span><br />
               <button className="linkbtn who-meta" onClick={signOut}>{t("nav.signOut")}</button>
             </span>
@@ -156,7 +161,7 @@ export default function App() {
         </main>
 
         {openRef && (
-          <TxnDrawer reference={openRef} onClose={() => setOpenRef(null)} />
+          <TxnDrawer key={openRef} reference={openRef} onClose={() => setOpenRef(null)} />
         )}
 
         {palette && (

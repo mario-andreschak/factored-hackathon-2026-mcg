@@ -34,6 +34,7 @@ export default function TxnDrawer(props: { reference: string; onClose: () => voi
 
   const panel = useRef<HTMLDivElement | null>(null);
   const opener = useRef<HTMLElement | null>(null);
+  const generation = useRef(0);
 
   useEffect(() => {
     opener.current = document.activeElement as HTMLElement;
@@ -41,16 +42,33 @@ export default function TxnDrawer(props: { reference: string; onClose: () => voi
   }, []);
 
   useEffect(() => {
+    const current = ++generation.current;
+    const controller = new AbortController();
     setDetail(null);
     setError("");
     setMode("detail");
     setStep(0);
     setAnswers({});
+    setReason(REASONS[0]);
+    setNote("");
     setUrgent(false);
     setReceipt(null);
-    api.detail(reference)
-      .then(setDetail)
-      .catch((caught) => setError(caught?.message ?? "failed"));
+    setBusy(false);
+    api.detail(reference, controller.signal)
+      .then((result) => {
+        if (current !== generation.current) return;
+        if (result.transaction.reference !== reference) {
+          setError(t("err.title"));
+          return;
+        }
+        setDetail(result);
+      })
+      .catch((caught) => {
+        if (current === generation.current && !controller.signal.aborted) {
+          setError(caught?.message ?? "failed");
+        }
+      });
+    return () => { generation.current += 1; controller.abort(); };
   }, [reference]);
 
   /* Escape closes, and Tab stays inside the panel while it is open. */
@@ -75,23 +93,31 @@ export default function TxnDrawer(props: { reference: string; onClose: () => voi
   }, [detail, mode]);
 
   async function submit() {
+    if (!matchingDetail || busy || (!urgent && !answered)) return;
+    const current = generation.current;
+    const submittedReference = matchingDetail.transaction.reference;
     setBusy(true);
     try {
       const created = await api.openReview({
-        reference, reason: urgent ? "card_lost_or_stolen" : reason,
+        reference: submittedReference, reason: urgent ? "card_lost_or_stolen" : reason,
         answers: urgent ? {} : answers, note, urgent,
       });
+      if (current !== generation.current) return;
+      if (created.verified_facts.reference !== submittedReference) {
+        throw new Error(t("err.title"));
+      }
       setReceipt(created);
       setMode("receipt");
       toast(`${t("rec.title")} · ${created.id}`);
     } catch (caught: any) {
-      toast(caught?.message ?? "failed", "bad");
+      if (current === generation.current) toast(caught?.message ?? "failed", "bad");
     } finally {
-      setBusy(false);
+      if (current === generation.current) setBusy(false);
     }
   }
 
-  const txn = detail?.transaction;
+  const matchingDetail = detail?.transaction.reference === reference ? detail : null;
+  const txn = matchingDetail?.transaction;
   const last = step === QUESTIONS.length - 1;
   const answered = urgent || answers[QUESTIONS[step]?.id] !== undefined;
 
@@ -110,13 +136,13 @@ export default function TxnDrawer(props: { reference: string; onClose: () => voi
 
         <div className="drawer-body">
           {error && <ErrorBox message={error} t={t} />}
-          {!detail && !error && <Skeleton kind="text" count={8} />}
+          {!matchingDetail && !error && <Skeleton kind="text" count={8} />}
 
-          {detail && txn && mode === "detail" && (
-            <Detailed detail={detail} lang={lang} t={t} openTxn={openTxn} />
+          {matchingDetail && txn && mode === "detail" && (
+            <Detailed detail={matchingDetail} lang={lang} t={t} openTxn={openTxn} />
           )}
 
-          {detail && txn && mode === "review" && (
+          {matchingDetail && txn && mode === "review" && (
             <>
               <p className="note">{t("rev.lead")}</p>
 
@@ -171,7 +197,7 @@ export default function TxnDrawer(props: { reference: string; onClose: () => voi
             </>
           )}
 
-          {mode === "receipt" && receipt && (
+          {mode === "receipt" && receipt?.verified_facts.reference === reference && (
             <div className="receipt">
               <div className="receipt-id">
                 <span>
@@ -211,12 +237,16 @@ export default function TxnDrawer(props: { reference: string; onClose: () => voi
         <footer className="drawer-foot">
           {mode === "detail" && (
             <>
-              <button className="btn" data-autofocus onClick={() => setMode("review")}>
+              <button className="btn" data-autofocus disabled={!matchingDetail || busy}
+                      onClick={() => setMode("review")}>
                 {t("tx.review")}
               </button>
-              <button className="btn ghost" onClick={() => {
-                navigator.clipboard?.writeText(JSON.stringify(detail?.transaction, null, 2));
-                toast(t("tx.copy") + " ✓");
+              <button className="btn ghost" disabled={!matchingDetail} onClick={async () => {
+                try {
+                  if (!navigator.clipboard) throw new Error(t("err.title"));
+                  await navigator.clipboard.writeText(JSON.stringify(matchingDetail?.transaction, null, 2));
+                  toast(t("tx.copy") + " ✓");
+                } catch { toast(t("err.title"), "bad"); }
               }}>{t("tx.copy")}</button>
             </>
           )}
@@ -229,7 +259,8 @@ export default function TxnDrawer(props: { reference: string; onClose: () => voi
                 </button>
               )}
               {urgent || last ? (
-                <button className={`btn ${urgent ? "danger" : ""}`} disabled={busy} onClick={submit}>
+                <button className={`btn ${urgent ? "danger" : ""}`}
+                        disabled={busy || !matchingDetail || !answered} onClick={submit}>
                   {busy ? t("mov.loading") : t("rev.finish")}
                 </button>
               ) : (
@@ -243,7 +274,7 @@ export default function TxnDrawer(props: { reference: string; onClose: () => voi
             </>
           )}
 
-          {mode === "receipt" && receipt && (
+          {mode === "receipt" && receipt?.verified_facts.reference === reference && (
             <>
               <button className="btn ghost" onClick={() => {
                 const blob = new Blob([JSON.stringify(receipt, null, 2)], { type: "application/json" });

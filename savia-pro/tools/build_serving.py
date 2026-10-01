@@ -26,6 +26,7 @@ import json
 import os
 import sys
 import time
+import uuid
 from pathlib import Path
 
 import duckdb
@@ -76,30 +77,35 @@ def resolve_build(lake: Path, explicit: str | None) -> Path:
     return path
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--build", default=None, help="build id under <lake>/builds")
-    ap.add_argument("--out", default=str(OUT))
-    ap.add_argument("--verify", action="store_true")
-    args = ap.parse_args()
+def _sql_path(path: Path) -> str:
+    # Quote local paths as SQL literals, including an apostrophe in a lake path.
+    return path.as_posix().replace("'", "''")
 
-    started = time.time()
-    build = resolve_build(LAKE, args.build)
-    meta = json.loads((build / "snapshot.json").read_text())
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    if out.exists():
-        out.unlink()
 
-    print(f"Savia Pro serving build")
-    log(f"lake   {LAKE}")
-    log(f"build  {meta['build_id']}  fingerprint {meta['source_fingerprint']}")
-    log(f"out    {out}")
+def _require_owned_rows(con: duckdb.DuckDBPyConnection, placeholders: str) -> int:
+    duplicate_products = con.execute("""
+        select count(*) from (
+            select customer_id, product_id from products
+            group by customer_id, product_id having count(*) <> 1)
+    """).fetchone()[0]
+    if duplicate_products:
+        raise ValueError(f"{duplicate_products} duplicated owned products would multiply source rows")
+    selected = con.execute(
+        f"select count(*) from src_tx where customer_id in ({placeholders})").fetchone()[0]
+    unmatched = con.execute(f"""
+        select count(*) from src_tx t
+        left join products p on p.product_id = t.product_id and p.customer_id = t.customer_id
+        where t.customer_id in ({placeholders}) and p.product_id is null
+    """).fetchone()[0]
+    if unmatched:
+        raise ValueError(f"{unmatched} selected source transactions fail the ownership join")
+    return int(selected)
 
-    gold = str(build / "gold" / "transactions_by_customer" / "**" / "*.parquet")
+
+def _populate_serving(con: duckdb.DuckDBPyConnection, lake: Path,
+                      build: Path, meta: dict) -> int:
+    gold = _sql_path(build / "gold" / "transactions_by_customer" / "**" / "*.parquet")
     silver = build / "silver"
-
-    con = duckdb.connect(str(out))
     con.execute("pragma threads=4")
 
     # --- source views ------------------------------------------------------
@@ -108,8 +114,8 @@ def main() -> int:
         select * from read_parquet('{gold}', hive_partitioning=true)
         where ownership_valid
     """)
-    con.execute(f"create view src_cust as select * from '{silver / 'customers.parquet'}'")
-    con.execute(f"create view src_prod as select * from '{silver / 'products.parquet'}'")
+    con.execute(f"create view src_cust as select * from '{_sql_path(silver / 'customers.parquet')}'")
+    con.execute(f"create view src_prod as select * from '{_sql_path(silver / 'products.parquet')}'")
 
     total_rows = con.execute("select count(*) from src_tx").fetchone()[0]
     log(f"ownership-valid gold rows: {total_rows:,}")
@@ -147,7 +153,7 @@ def main() -> int:
                  transaction_date
           from src_tx where merchant_name is not null)
         select count(*) from t
-        where prev is not null and date_diff('hour', prev, transaction_date) <= 72
+        where prev is not null and transaction_date <= prev + interval '72 hours'
     """).fetchone()[0]
     stats["similar_charge_pairs_72h"] = dup_total
     stats["distinct_merchant_names"] = con.execute(
@@ -161,7 +167,7 @@ def main() -> int:
         ("snapshot_created_at", meta["created_at"]),
         ("source_validation", meta.get("source_validation", "unknown")),
         ("serving_built_at", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
-        ("lake_path", str(LAKE)),
+        ("lake_path", str(lake)),
     ]:
         con.execute("insert into build_info values (?, ?)", [key, str(value)])
 
@@ -211,9 +217,10 @@ def main() -> int:
     """)
 
     # --- transactions ------------------------------------------------------
-    # Ownership is re-checked here by joining to the products actually owned by
-    # the customer. A row whose product is not in that set is dropped, so the
-    # API can never serve a transaction across an ownership boundary.
+    # Check selected source rows BEFORE the inner join can discard anything.
+    # A missing/foreign product refuses the whole build rather than silently
+    # publishing an incomplete history with a vacuous post-join orphan count.
+    selected = _require_owned_rows(con, placeholders)
     cols = ", ".join(f"t.{c}" for c in TX_COLUMNS)
     con.execute(f"""
         create table transactions as
@@ -269,9 +276,9 @@ def main() -> int:
           window w as (partition by customer_id, merchant_name, amount, currency
                        order by transaction_date))
         select customer_id, transaction_id, prev_id,
-               date_diff('hour', prev_at, transaction_date) as hours_apart
+               epoch(transaction_date - prev_at) / 3600.0 as hours_apart
         from t where prev_id is not null
-          and date_diff('hour', prev_at, transaction_date) <= 72
+          and transaction_date <= prev_at + interval '72 hours'
     """)
 
     # Merchants seen three or more times. Grouping by merchant and amount found
@@ -299,6 +306,10 @@ def main() -> int:
 
     # --- guarantees --------------------------------------------------------
     served = con.execute("select count(*) from transactions").fetchone()[0]
+    if served != selected:
+        raise ValueError(f"selected source count {selected} differs from served count {served}")
+    for key, value in [("selected_source_rows", selected), ("served_rows", served)]:
+        con.execute("insert into build_info values (?, ?)", [key, str(value)])
     orphans = con.execute("""
         select count(*) from transactions t
         left join products p on p.product_id = t.product_id and p.customer_id = t.customer_id
@@ -322,23 +333,63 @@ def main() -> int:
             f"pend {row[4]:>2} rev {row[5]:>2} dec {row[6]:>2}  "
             f"no-merchant {row[7]:>3}  {row[8]} -> {row[9]}")
 
-    con.execute("checkpoint")
-    con.close()
+    return int(served)
 
-    size = out.stat().st_size / 1024
-    print(f"\n  {served:,} transactions served from a {size:.0f} KiB database "
-          f"({time.time() - started:.1f}s, {orphans} ownership failures, {len(leaked)} leaked columns)")
 
-    if args.verify:
-        check = duckdb.connect(str(out), read_only=True)
+def _verify_serving(path: Path, served: int) -> None:
+    check = duckdb.connect(str(path), read_only=True)
+    try:
         tables = {r[0] for r in check.execute("show tables").fetchall()}
         expected = {"build_info", "snapshot_stats", "customers", "profiles", "products",
                     "transactions", "customer_stats", "similar_charges", "repeat_merchants"}
-        assert expected.issubset(tables), f"missing tables: {expected - tables}"
-        assert check.execute("select count(*) from transactions").fetchone()[0] == served
+        if not expected.issubset(tables):
+            raise ValueError(f"missing tables: {expected - tables}")
+        if check.execute("select count(*) from transactions").fetchone()[0] != served:
+            raise ValueError("reopened serving count differs from the qualified build")
+    finally:
         check.close()
-        print("  verify: reopened read-only, all tables present, row count matches")
 
+
+def build_serving(lake: Path, build: Path, out: Path) -> int:
+    """Publish a closed, verified build atomically, retaining the prior on failure."""
+    meta = json.loads((build / "snapshot.json").read_text())
+    out.parent.mkdir(parents=True, exist_ok=True)
+    temporary = out.with_name(f".{out.name}.{uuid.uuid4().hex}.building.duckdb")
+    started = time.time()
+    print("Savia Pro serving build")
+    log(f"lake   {lake}")
+    log(f"build  {meta['build_id']}  fingerprint {meta['source_fingerprint']}")
+    log(f"out    {out}")
+    try:
+        con = duckdb.connect(str(temporary))
+        try:
+            served = _populate_serving(con, lake, build, meta)
+            con.execute("checkpoint")
+        finally:
+            con.close()
+        # Admission always reopens and checks the artifact, even without the
+        # historical --verify flag. Neither a partial file nor a failed assertion
+        # can replace the previous known-good database.
+        _verify_serving(temporary, served)
+        size = temporary.stat().st_size / 1024
+        os.replace(temporary, out)
+        print(f"\n  {served:,} transactions served from a {size:.0f} KiB database "
+              f"({time.time() - started:.1f}s, 0 ownership failures, 0 leaked columns)")
+        print("  verify: reopened read-only, all tables present, row count matches")
+        return served
+    finally:
+        # Only this invocation's UUID-named files are owned by this builder.
+        for owned in (temporary, Path(str(temporary) + ".wal")):
+            owned.unlink(missing_ok=True)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--build", default=None, help="build id under <lake>/builds")
+    ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--verify", action="store_true", help="retained for compatibility; verification is always required")
+    args = ap.parse_args()
+    build_serving(LAKE, resolve_build(LAKE, args.build), Path(args.out))
     return 0
 
 
