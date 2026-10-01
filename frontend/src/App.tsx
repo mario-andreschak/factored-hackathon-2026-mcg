@@ -2787,10 +2787,17 @@ export function Assistant({
         <div className="chat-selection">
           <TxIcon transaction={selected} />
           <span>
-            <strong>{label(selected)}</strong>
+            <strong>
+              {selected.merchant || portalType(selected.type, actionLanguage)}
+            </strong>
             <small>
-              {date(selected.occurred_at)} ·{" "}
-              {money(selected.amount, selected.currency, hidden)}{" "}
+              {portalDate(selected.occurred_at, actionLanguage)} ·{" "}
+              {portalMoney(
+                selected.amount,
+                selected.currency,
+                hidden,
+                actionLanguage,
+              )}{" "}
               {selected.currency}
             </small>
           </span>
@@ -3114,9 +3121,14 @@ export function Assistant({
                 <div className="chat-message-selection">
                   <CreditCard size={14} />
                   <span>
-                    {typeNames[m.selection.type] || m.selection.type} ·{" "}
-                    {date(m.selection.occurred_at)} ·{" "}
-                    {money(m.selection.amount, m.selection.currency, hidden)}
+                    {portalType(m.selection.type, actionLanguage)} ·{" "}
+                    {portalDate(m.selection.occurred_at, actionLanguage)} ·{" "}
+                    {portalMoney(
+                      m.selection.amount,
+                      m.selection.currency,
+                      hidden,
+                      actionLanguage,
+                    )}
                   </span>
                 </div>
               )}
