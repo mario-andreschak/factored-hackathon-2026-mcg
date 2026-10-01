@@ -175,6 +175,26 @@ from the final qualification path. Four additional independent cases cover the
 truthful PT uncertainty and rejection of added success, human-response and
 unsupported contact claims; the expanded suite has 193 cases.
 
+The subsequent historical `79f6e80` source checkpoint passed **193/193** cases
+in 78.11 seconds with unchanged HEAD, both test hashes and 80 captured source
+files; all 77 graph-protected hashes matched. Its actual native HTTP diagnostic
+passed **2/4** journeys in 381,043 ms, using 41 successful model attempts and
+315,476 reported tokens with unknown provider cost. Spanish intake and human
+review passed. Portuguese receipt followup and emergency review fell back after
+one repair despite reaching their expected policy modes. All source, generated
+fixture, host and installed-manifest captures remained stable.
+
+The receipt guard split the decimal point in `209944.00 COP` as a sentence
+boundary, detaching a truthful registration claim from its verified receipt ID.
+The emergency guard rejected a truthful restatement that the customer needed
+to speak with a human attendant as contact guidance. Its initial instruction
+to call a local emergency service remained correctly rejected. Five additional
+independent assertions reproduce these two gaps while preserving rejection of
+a separate success sentence and appended unsupported contact advice. The
+required suite now contains **198 cases: 91 acceptance and 107 release cases**.
+The historical 193-case pass and 2/4 diagnostic do not qualify the next frozen
+source and installed image; those require fresh matching captures.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or

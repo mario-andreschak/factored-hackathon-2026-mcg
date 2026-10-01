@@ -137,6 +137,54 @@ def test_captured_emergency_contact_advice_remains_unsupported():
     assert "unsupported_operation_guidance" in validate_response(response(text, "pt"), inputs)
 
 
+@pytest.mark.parametrize("detail", [
+    "referente à compra de **2026-09-16** no valor de **209944.00 COP**",
+    "referente à compra de **209944.00 COP** de **2026-09-16**",
+])
+def test_verified_receipt_sentence_keeps_its_decimal_amount_and_bound_id(detail):
+    target = transaction(amount=209944.00, currency="COP", transaction_date="2026-09-16T12:00:00+00:00")
+    action = canonical_host_receipt()["action"]
+    inputs = dict(response_mode="ACTION_DONE", language="pt", clean_query="Qual é o estado desta solicitação?",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[target], data_sources=["transactions"]),
+        workflow_state=dict(transaction_id=target["transaction_id"], action=action),
+        policy_context=retrieve_policy("TRANSACTION_DISPUTE"))
+    text = (f"A solicitação simulada **{action['result_id']}**, {detail}, "
+            "foi registrada e teve o registro verificado no ambiente de teste.")
+    assert validate_response(response(text, "pt"), inputs) == [], \
+        "a decimal point inside a verified amount must not detach the receipt ID from its sentence"
+
+
+def test_verified_decimal_receipt_does_not_authorize_a_separate_success_sentence():
+    target = transaction(amount=209944.00, currency="COP", transaction_date="2026-09-16T12:00:00+00:00")
+    action = canonical_host_receipt()["action"]
+    inputs = dict(response_mode="ACTION_DONE", language="pt", clean_query="Qual é o estado desta solicitação?",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[target], data_sources=["transactions"]),
+        workflow_state=dict(transaction_id=target["transaction_id"], action=action),
+        policy_context=retrieve_policy("TRANSACTION_DISPUTE"))
+    text = (f"A solicitação simulada **{action['result_id']}**. "
+            "A compra de **209944.00 COP** foi registrada no ambiente de teste.")
+    assert "action_success_unverified" in validate_response(response(text, "pt"), inputs), \
+        "a decimal amount must not join an unrelated success sentence to the preceding receipt ID"
+
+
+@pytest.mark.parametrize("extra_contact,safe", [("", True),
+    (" Ligue para o serviço de emergência local.", False)])
+def test_captured_human_request_restatement_does_not_grant_contact_guidance(extra_contact, safe):
+    inputs = dict(response_mode="HANDOFF", language="pt",
+        clean_query="É uma emergência. Estou em perigo agora e preciso falar com um atendente humano.",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
+        workflow_state=dict(action=dict(authorized=False, executed=False, verified=False, result_id=None),
+            handoff=dict(required=True, created=False, handoff_id=None)),
+        policy_context=retrieve_policy("HUMAN_REQUEST", human_required=True))
+    text = ("Entendo que é uma emergência e que você precisa falar com um atendente humano. "
+            "Sua solicitação precisa de atendimento humano, mas ainda não posso confirmar o encaminhamento."
+            + extra_contact)
+    errors = validate_response(response(text, "pt"), inputs)
+    assert (errors == []) is safe, "restating the customer's human request must not grant unsourced contact instructions"
+    if not safe:
+        assert "unsupported_operation_guidance" in errors
+
+
 @pytest.mark.parametrize("language,message", [
     ("es", "Si lo deseas, bloquea tu tarjeta por precaución."),
     ("pt", "Se desejar, bloqueie seu cartão por precaução."),
