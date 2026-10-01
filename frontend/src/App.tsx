@@ -238,7 +238,7 @@ const loginCopy = {
       "Experiência de demonstração com dados sintéticos do hackathon. Os nomes são apelidos; os produtos e lançamentos vêm do conjunto de dados.",
     footer: "Seu dinheiro, com tranquilidade.",
     portalLanguageNotice:
-      "Após entrar, a navegação, os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português. O Assistente usa o idioma escolhido aqui. Nomes e campos vindos da origem permanecem como recebidos.",
+      "Após entrar, a navegação, os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português. O Assistente usa o idioma escolhido aqui. Nomes de estabelecimentos, cidades e canais da origem são exibidos como recebidos.",
     sessionNotice:
       "O acesso deste navegador foi removido, mas não foi possível confirmar o encerramento completo da sessão e do Assistente. Peça ajuda antes de usar outra conta.",
     errors: {
@@ -1313,6 +1313,21 @@ const portalMoney = (
         maximumFractionDigits: 2,
       }).format(value)
     : money(value, currency, hidden);
+const portalBalance = (
+  value: number,
+  currency: string,
+  hidden: boolean,
+  language: ActionLanguage,
+) =>
+  hidden
+    ? `•••••• ${currency}`
+    : new Intl.NumberFormat(language === "pt" ? "pt-BR" : "es-MX", {
+        style: "currency",
+        currency,
+        currencyDisplay: "code",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value);
 const portalNumber = (value: number, language: ActionLanguage) =>
   language === "pt"
     ? new Intl.NumberFormat("pt-BR").format(value)
@@ -3569,13 +3584,12 @@ export default function App() {
                         </label>
                       </div>
                       <div className="balance-value">
-                        {portalMoney(
+                        {portalBalance(
                           balance?.deposit_balance || 0,
                           currency,
                           hidden,
                           actionLanguagePreference,
                         )}
-                        <span>{currency}</span>
                       </div>
                       <div className="balance-caption">
                         <span className="tiny-leaf">
@@ -3910,8 +3924,8 @@ export default function App() {
                 <>
                   {pt && (
                     <p className="data-footnote" lang="pt-BR">
-                      Nomes de estabelecimentos e campos da origem são exibidos
-                      como recebidos.
+                      Nomes de estabelecimentos, cidades e canais da origem são
+                      exibidos como recebidos.
                     </p>
                   )}
                   <div className="transactions-toolbar">

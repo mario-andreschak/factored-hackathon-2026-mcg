@@ -8,6 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import App, { Assistant, Login } from "./App";
+import type { Overview } from "./types";
 
 const reply = (body: unknown, status = 200) =>
   ({
@@ -92,6 +93,11 @@ test("Portuguese demo sign-in preserves selected profile and Assistant locale", 
   expect(
     screen.getByText(
       /os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português/,
+    ),
+  ).toBeTruthy();
+  expect(
+    screen.getByText(
+      /Nomes de estabelecimentos, cidades e canais da origem são exibidos como recebidos/,
     ),
   ).toBeTruthy();
   await screen.findByRole("group", {
@@ -259,7 +265,7 @@ const syntheticOverview = {
   products: [],
   transactions: [],
   summary: {
-    balances_by_currency: [],
+    balances_by_currency: [] as Overview["summary"]["balances_by_currency"],
     transaction_count: 0,
     monthly_activity: [],
   },
@@ -452,6 +458,44 @@ function servePortal(
   return calls;
 }
 
+test.each([
+  ["pt", "COP"],
+  ["pt", "ARS"],
+  ["es", "COP"],
+  ["es", "ARS"],
+] as const)(
+  "%s Home shows %s once in visible and hidden balances",
+  async (language, currency) => {
+    servePortal(language, false, {
+      ...portalOverview,
+      profile: { ...portalOverview.profile, primary_currency: currency },
+      summary: {
+        ...portalOverview.summary,
+        balances_by_currency: [
+          {
+            currency,
+            deposit_balance: 1234.5,
+            credit_balance: 0,
+            investment_balance: 0,
+            other_balance: 0,
+          },
+        ],
+      },
+    });
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: language === "pt" ? /Olá, Bia/ : /Hola, Bia/,
+    });
+    const balance = document.querySelector(".balance-value");
+    expect(balance).toBeTruthy();
+    const visible = balance?.textContent || "";
+    expect(visible.match(new RegExp(currency, "g"))).toHaveLength(1);
+    expect(visible).toContain(language === "pt" ? "1.234,50" : "1,234.50");
+    fireEvent.click(screen.getByRole("button", { name: "Ocultar saldos" }));
+    expect(balance?.textContent).toBe(`•••••• ${currency}`);
+  },
+);
+
 test("Portuguese charge finder keeps labels and dialog names local across the portal", async () => {
   const calls = servePortal("pt");
   render(<App />);
@@ -479,7 +523,7 @@ test("Portuguese charge finder keeps labels and dialog names local across the po
     screen.getByRole("heading", { name: "Seu dinheiro em movimento." }),
   ).toBeTruthy();
   expect(
-    screen.getByText(/Nomes de estabelecimentos e campos da origem/),
+    screen.getByText(/Nomes de estabelecimentos, cidades e canais da origem/),
   ).toBeTruthy();
   expect(
     screen.getByRole("combobox", { name: "Filtrar por produto" }),
