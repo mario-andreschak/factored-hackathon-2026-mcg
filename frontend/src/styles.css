@@ -1942,6 +1942,10 @@ button svg {
 .chat-message-selection > span {
   overflow-wrap: anywhere;
 }
+.chat-message.user .chat-message-selection {
+  background: #244e40;
+  opacity: 1;
+}
 .modal {
   position: fixed;
   border: 1px solid #dbe5d1;
@@ -2122,7 +2126,7 @@ button svg {
 }
 .assistant-status div > span {
   font-size: 8px;
-  color: #94a782;
+  color: #4b6246;
 }
 .assistant-orb {
   width: 36px;
