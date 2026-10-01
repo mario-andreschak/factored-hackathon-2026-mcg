@@ -166,12 +166,6 @@ class Actions:
         return {**result, "pending_handle": handle}
 
     @staticmethod
-    def _assert_action_authorized(db, principal: Principal) -> None:
-        if principal.expires <= int(time.time()) or db.execute(
-                "SELECT 1 FROM revoked WHERE session=?", (principal.session,)).fetchone():
-            raise BankError("authorization_denied")
-
-    @staticmethod
     def _case_projection(db, customer: str, transaction_id: str, facts: dict,
                          *, pending_uncertain: bool = True) -> dict:
         result = {"state": "not_found", "receipt": None,
@@ -229,74 +223,80 @@ class Actions:
         snapshot, row = self.repository.owned_transaction_id(principal, transaction_id, build)
         facts = self.repository._visible(row, snapshot)
         try:
-            with self.store.connect() as db:
-                self._assert_action_authorized(db, principal)
-                return self._case_projection(db, principal.customer, transaction_id, facts)
+            with self.store.authority(principal) as db:
+                result = self._case_projection(db, principal.customer, transaction_id, facts)
+            self.store.assert_current(principal)
+            return result
         except sqlite3.Error:
             raise BankError("service_unavailable") from None
 
     def prepare(self, principal: Principal, transaction_id: str, build: str, request_id: str) -> dict:
         key, handle = self._prepare_identity(principal, request_id)
-        with self.store.connect() as db:
-            self._assert_action_authorized(db, principal)
+        with self.store.authority(principal) as db:
             self._prepare_identity_record(db, principal, key, transaction_id, build)
         snapshot, row = self.repository.owned_transaction_id(principal, transaction_id, build)
         facts = self.repository._visible(row, snapshot)
         evidence = self._evidence(snapshot, transaction_id)
-        with self.store.connect() as db:
-            db.execute("BEGIN IMMEDIATE")
-            self._assert_action_authorized(db, principal)
+        with self.store.authority(principal, write=True) as db:
             self.repository.assert_current_snapshot(build)
             replay = self._prepare_replay(db, principal, key, handle, transaction_id, build, facts)
             if replay is not None:
-                return replay
-            now = self.clock()
-            # R16's provisional synthetic measure is prior distinct persisted
-            # cases, excluding this target, plus this current distinct request.
-            prior = db.execute("""SELECT count(DISTINCT transaction_id) FROM sandbox_cases
-                WHERE customer=? AND action=? AND transaction_id<>?
-                  AND created_at>=? AND created_at<?""",
-                (principal.customer, ACTION, transaction_id, now - 86400, now)).fetchone()[0]
-            existing_case = self._case_projection(db, principal.customer, transaction_id, facts)
-            count = prior + 1
-            covered = self._coverage(db, now)
-            age = (datetime.fromtimestamp(now, timezone.utc).date() - row["transaction_date"].date()).days
-            duplicate = bool(evidence and (evidence["historical_complaints"] == "exact_open_case"
-                                          or evidence["duplicate_signal"] == "persistent"))
-            high = (covered and count >= 3) or bool(evidence and (
-                evidence["fraud_score"] is not None and evidence["fraud_score"] >= 70
-                or evidence["amount_usd"] is not None and evidence["amount_usd"] >= 1000))
-            evidence_incomplete = (evidence is None or evidence["historical_complaints"] == "uncertain"
-                or evidence["duplicate_signal"] == "unknown" or evidence["fraud_score"] is None
-                or evidence["amount_usd"] is None)
-            reason = ("action_unverified" if existing_case["state"] == "action_unverified"
-                      else "duplicate_review" if duplicate else "missing_evidence" if age < 0
-                      else "out_of_policy" if age > 120
-                      or str(row["transaction_status"]).lower() != "approved"
-                      else "high_risk" if high else "missing_evidence" if not covered or evidence_incomplete
-                      else None)
-            if existing_case["state"] == "verified":
-                decision, reason = "existing_case", None
+                # Exit the transaction before the final fresh identity read.
+                result = replay
             else:
-                decision = "handoff" if reason else "intake"
-            result = {"snapshot": snapshot.id, "action": ACTION,
-                      "decision": decision, "reason": reason, "transaction": facts,
-                      "existing_case": existing_case,
-                      "risk": {"unrecognized_count_24h": count if covered else None,
-                               "risk_data_complete": covered, "coverage": "sandbox_only",
-                               "source": "sandbox_cases", "window_start": _utc(now - 86400),
-                               "window_end": _utc(now)}}
-            db.execute("""INSERT INTO action_pending
-                (id,binding,customer,transaction_id,snapshot,action,decision,reason,facts,expires,
-                 evidence_digest,request_key,result_json,confirmation_state) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (_digest(handle), principal.binding(), principal.customer, transaction_id,
-                 snapshot.id, ACTION, decision, reason, json.dumps(facts), now + PENDING_SECONDS,
-                 self._evidence_digest(evidence), key, json.dumps(result), "prepared"))
+                result = self._prepare_new(db, principal, transaction_id, snapshot, row,
+                                           evidence, key, handle, facts)
+        self.store.assert_current(principal)
         return {**result, "pending_handle": handle}
 
+    def _prepare_new(self, db, principal, transaction_id, snapshot, row,
+                     evidence, key, handle, facts):
+        now = self.clock()
+        # R16's provisional synthetic measure is prior distinct persisted
+        # cases, excluding this target, plus this current distinct request.
+        prior = db.execute("""SELECT count(DISTINCT transaction_id) FROM sandbox_cases
+            WHERE customer=? AND action=? AND transaction_id<>?
+              AND created_at>=? AND created_at<?""",
+            (principal.customer, ACTION, transaction_id, now - 86400, now)).fetchone()[0]
+        existing_case = self._case_projection(db, principal.customer, transaction_id, facts)
+        count = prior + 1
+        covered = self._coverage(db, now)
+        age = (datetime.fromtimestamp(now, timezone.utc).date() - row["transaction_date"].date()).days
+        duplicate = bool(evidence and (evidence["historical_complaints"] == "exact_open_case"
+                                      or evidence["duplicate_signal"] == "persistent"))
+        high = (covered and count >= 3) or bool(evidence and (
+            evidence["fraud_score"] is not None and evidence["fraud_score"] >= 70
+            or evidence["amount_usd"] is not None and evidence["amount_usd"] >= 1000))
+        evidence_incomplete = (evidence is None or evidence["historical_complaints"] == "uncertain"
+            or evidence["duplicate_signal"] == "unknown" or evidence["fraud_score"] is None
+            or evidence["amount_usd"] is None)
+        reason = ("action_unverified" if existing_case["state"] == "action_unverified"
+                  else "duplicate_review" if duplicate else "missing_evidence" if age < 0
+                  else "out_of_policy" if age > 120
+                  or str(row["transaction_status"]).lower() != "approved"
+                  else "high_risk" if high else "missing_evidence" if not covered or evidence_incomplete
+                  else None)
+        if existing_case["state"] == "verified":
+            decision, reason = "existing_case", None
+        else:
+            decision = "handoff" if reason else "intake"
+        result = {"snapshot": snapshot.id, "action": ACTION,
+                  "decision": decision, "reason": reason, "transaction": facts,
+                  "existing_case": existing_case,
+                  "risk": {"unrecognized_count_24h": count if covered else None,
+                           "risk_data_complete": covered, "coverage": "sandbox_only",
+                           "source": "sandbox_cases", "window_start": _utc(now - 86400),
+                           "window_end": _utc(now)}}
+        db.execute("""INSERT INTO action_pending
+            (id,binding,customer,transaction_id,snapshot,action,decision,reason,facts,expires,
+             evidence_digest,request_key,result_json,confirmation_state) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (_digest(handle), principal.binding(), principal.customer, transaction_id,
+             snapshot.id, ACTION, decision, reason, json.dumps(facts), now + PENDING_SECONDS,
+             self._evidence_digest(evidence), key, json.dumps(result), "prepared"))
+        return result
+
     def receipt(self, principal: Principal, pending_handle: str) -> dict:
-        with self.store.connect() as db:
-            self._assert_action_authorized(db, principal)
+        with self.store.authority(principal) as db:
             try:
                 pending = self._pending(db, principal, pending_handle, require_fresh=False)
             except BankError as exc:
@@ -304,6 +304,7 @@ class Actions:
                     return {"state": "action_unverified", "receipt": None}
                 raise
             projection = self._case_projection(db, principal.customer, pending[2], _object(pending[7]))
+        self.store.assert_current(principal)
         if projection["state"] != "verified":
             return {"state": "action_unverified", "receipt": None}
         return {"state": "created", "receipt": projection["receipt"]}
@@ -334,17 +335,17 @@ class Actions:
         """Overlapping confirmation calls only read; an absent case is never rewritten."""
         deadline = time.monotonic() + RECEIPT_WAIT_SECONDS
         while True:
-            with self.store.connect() as db:
-                self._assert_action_authorized(db, principal)
+            with self.store.authority(principal) as db:
                 if time.monotonic() > deadline:
                     raise BankError("action_unverified")
                 pending = self._pending(db, principal, pending_handle)
                 projection = self._case_projection(db, principal.customer, pending[2], _object(pending[7]),
                                                    pending_uncertain=False)
-                if projection["state"] == "verified":
-                    return {"state": "created", "receipt": projection["receipt"]}
-                if projection["state"] == "action_unverified" or pending[11] != "attempted":
+                if projection["state"] != "verified" and (projection["state"] == "action_unverified" or pending[11] != "attempted"):
                     raise BankError("action_unverified")
+            if projection["state"] == "verified":
+                self.store.assert_current(principal)
+                return {"state": "created", "receipt": projection["receipt"]}
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise BankError("action_unverified")
@@ -355,8 +356,7 @@ class Actions:
     def confirm(self, principal: Principal, pending_handle: str, confirmed: bool) -> dict:
         if confirmed is not True:
             raise BankError("confirmation_required")
-        with self.store.connect() as db:
-            self._assert_action_authorized(db, principal)
+        with self.store.authority(principal) as db:
             pending = self._pending(db, principal, pending_handle)
         if pending[5] != "intake":
             raise BankError("handoff_required")
@@ -368,11 +368,9 @@ class Actions:
         evidence = self._evidence(snapshot, pending[2])
         already_verified = False
         overlapping_attempt = False
-        with self.store.connect() as db:
+        with self.store.authority(principal, write=True) as db:
             # Commit the attempted marker BEFORE a potentially uncertain case
             # write. A lost/failed write cannot later become a clean no-match.
-            db.execute("BEGIN IMMEDIATE")
-            self._assert_action_authorized(db, principal)
             pending = self._pending(db, principal, pending_handle)
             existing = self._case_projection(db, principal.customer, pending[2], _object(pending[7]))
             if existing["state"] == "action_unverified":
@@ -392,11 +390,9 @@ class Actions:
             return self._wait_for_receipt(principal, pending_handle)
         if already_verified:
             return self.receipt(principal, pending_handle)
-        with self.store.connect() as db:
+        with self.store.authority(principal, write=True) as db:
             # Recheck admission/risk under the same writer lock as the case and
             # receipt. Distinct charges cannot bypass the 24-hour threshold.
-            db.execute("BEGIN IMMEDIATE")
-            self._assert_action_authorized(db, principal)
             pending = self._pending(db, principal, pending_handle)
             if pending[11] != "attempted":
                 raise BankError("action_unverified")
@@ -492,8 +488,7 @@ class Actions:
                 raise BankError("invalid_arguments") from None
         # The packet's selected facts come exclusively from a fresh owned read;
         # question text is bounded caller data and never supplies verified facts.
-        with self.store.connect() as db:
-            self._assert_action_authorized(db, principal)
+        with self.store.authority(principal) as db:
             original = self._pending(db, principal, pending_handle, require_fresh=False) if pending_handle else None
             key = self._handoff_key(principal, request_id, pending_handle, original, reason)
             existing_id = self._handoff_replay(db, principal, key, original, reason, questions)
@@ -511,9 +506,7 @@ class Actions:
                   "transaction_provenance": {"source": "owned_serving_snapshot", "snapshot": original[3],
                                              "as_of": _utc(time.time())} if original else None,
                   "reason": reason, "unanswered_questions": questions, "human_responded": False}
-        with self.store.connect() as db:
-            db.execute("BEGIN IMMEDIATE")
-            self._assert_action_authorized(db, principal)
+        with self.store.authority(principal, write=True) as db:
             pending = self._pending(db, principal, pending_handle, require_fresh=False) if pending_handle else None
             if pending != original:
                 raise BankError("snapshot_changed")
@@ -537,8 +530,7 @@ class Actions:
     def read_handoff(self, principal: Principal, handoff_id: str) -> dict:
         if not isinstance(handoff_id, str) or re.fullmatch(r"HOF-[A-Za-z0-9_-]{8}", handoff_id) is None:
             raise BankError("reference_unavailable")
-        with self.store.connect() as db:
-            self._assert_action_authorized(db, principal)
+        with self.store.authority(principal) as db:
             row = db.execute("""SELECT binding,customer,snapshot,reason,created_at,facts,transaction_id,packet_json
                 FROM sandbox_handoffs WHERE id=?""", (handoff_id,)).fetchone()
         if not row or row[1] != principal.customer or not secrets.compare_digest(row[0], principal.binding()):
@@ -563,6 +555,7 @@ class Actions:
                 currentness = "same_snapshot" if self.repository.snapshot().id == row[2] else "different_snapshot"
             except (BankError, OSError, ValueError):
                 currentness = "unknown"
+        self.store.assert_current(principal)
         return {"state": "created", "handoff": {"id": handoff_id, "reason": row[3],
                 "snapshot": row[2], "created_at": _utc(row[4]), "facts": facts, "packet": packet,
                 "transaction_currentness": currentness,

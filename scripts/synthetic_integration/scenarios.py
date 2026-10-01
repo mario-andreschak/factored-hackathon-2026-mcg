@@ -61,13 +61,13 @@ class Browser:
 def snapshot(provider) -> dict:
     result = provider.observe()
     require(set(result) == {"cases", "receipts", "handoffs", "pending", "tool_calls",
-                            "external_model_requests_attempted", "fixture_provider_calls",
-                            "forwarded_faults", "forbidden_writes"}, "observer_contract")
+                            "external_network_attempts", "fixture_provider_calls",
+                            "forwarded_faults", "forbidden_dispatch_attempts"}, "observer_contract")
     require(all(type(result[k]) is int and result[k] >= 0
                 for k in ("cases", "receipts", "handoffs", "pending",
-                          "external_model_requests_attempted", "fixture_provider_calls",
-                          "forwarded_faults", "forbidden_writes")), "observer_count_type")
-    require(result["external_model_requests_attempted"] == 0 and result["forbidden_writes"] == 0,
+                          "external_network_attempts", "fixture_provider_calls",
+                          "forwarded_faults", "forbidden_dispatch_attempts")), "observer_count_type")
+    require(result["external_network_attempts"] == 0 and result["forbidden_dispatch_attempts"] == 0,
             "forbidden_execution_observed")
     require(isinstance(result["tool_calls"], dict)
             and set(result["tool_calls"]) <= {"banking_status", "list_my_transactions",
