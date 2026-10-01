@@ -575,6 +575,11 @@ test("Portuguese charge finder keeps labels and dialog names local across the po
   ).toBeTruthy();
   expect(screen.queryByRole("button", { name: /Loja Sol/ })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Limpar filtros" }));
+  const filterSearch = document.querySelector<HTMLInputElement>(
+    ".filter-search input",
+  );
+  expect(filterSearch?.getAttribute("placeholder")).toBe("Loja, tipo ou moeda");
+  expect(filterSearch?.getAttribute("aria-label")).toBe("Filtrar movimentos");
   const search = screen.getByRole("textbox", { name: "Buscar movimentos" });
   fireEvent.change(search, { target: { value: "Loja Sol" } });
   fireEvent.click(screen.getByRole("button", { name: /Loja Sol.*Aprovado/s }));

@@ -3972,7 +3972,7 @@ export default function App() {
                         <input
                           placeholder={
                             pt
-                              ? "Estabelecimento, operação ou moeda"
+                              ? "Loja, tipo ou moeda"
                               : "Comercio, operación o moneda"
                           }
                           aria-label={
