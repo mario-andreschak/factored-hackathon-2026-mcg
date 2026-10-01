@@ -47,6 +47,181 @@ def verified_existing(data):
     return data
 
 
+@pytest.mark.parametrize("text, code", [
+    ("Tu identificador es CLI-ALICE.", "private_contact_or_identifier"),
+    ("Identificador éCLI-ALICE.", "private_contact_or_identifier"),
+    ("Identificador CLI-AL\u200bICE.", "private_contact_or_identifier"),
+    ("Identificador CUST-ALICE.", "private_contact_or_identifier"),
+    ("Identificador CUS-ALICE.", "private_contact_or_identifier"),
+    ("Identificador CUSTOMER-ALICE.", "private_contact_or_identifier"),
+    ("Email alice@example.test", "private_contact_or_identifier"),
+    ("E-mail alice@exam\u200bple.test", "private_contact_or_identifier"),
+    (r"Fuente C:\Users\Test\private\data.json", "private_or_implementation_detail"),
+    ("s3://internal-bucket/private", "private_or_implementation_detail"),
+    (r"Fuente \\internal-server\private\data.json", "private_or_implementation_detail"),
+    ("Fonte file:///home/internal/data.json", "private_or_implementation_detail"),
+    ("Fuente /private/banking/data.json", "private_or_implementation_detail"),
+    ("Token secreto: fictional-value", "credential_disclosure"),
+    ("Tu contraseña es fictional-value.", "credential_disclosure"),
+    ("Sua senha é fictional-value.", "credential_disclosure"),
+    ("PIN: 1234.56", "credential_disclosure"),
+    ("Bearer fictional-token", "credential_disclosure"),
+    ("Teléfono: +57 300 123 4567", "private_contact_or_document"),
+    ("Telefone: 300 123 4567", "private_contact_or_document"),
+    ("CPF: 123.456.789-00", "private_contact_or_document"),
+    ("Número de cuenta: 1234567890", "private_contact_or_document"),
+])
+def test_generator_rejects_private_values_and_source_paths_even_in_display_fields(text, code):
+    data = inputs()
+    data["clean_query"] = data["historic_conversation"] = text
+    data["structured_data"]["candidates"][0]["merchant_name"] = text
+    data["structured_data"]["candidates"][0]["transaction_city"] = text
+    assert code in validate_response(response(text), data)
+    assert "No pude completar" in fallback_response(data)["message"]
+
+
+@pytest.mark.parametrize("key", ["data_sources", "chunk_ids"])
+def test_grounded_metadata_cannot_expose_private_source_paths(key):
+    value = "s3://internal-bucket/private"
+    data = inputs()
+    if key == "data_sources":
+        data["structured_data"][key] = [value]
+    else:
+        data["policy_context"] = {"chunks": [{"chunk_id": value, "text": "Política sintética."}]}
+    assert "private_or_implementation_detail" in validate_response(response("Consulta disponible.", **{key: [value]}), data)
+
+
+@pytest.mark.parametrize("label", ["Teléfono", "Telefone", "CPF", "Número de cuenta"])
+def test_private_numeric_label_cannot_borrow_amount_authority(label):
+    data = inputs()
+    data["structured_data"]["candidates"][0]["amount"] = "1234567890"
+    assert "private_contact_or_document" in validate_response(response(f"{label}: 1234567890 COP"), data)
+    assert validate_response(response("Importe **+1234567890 COP**."), data) == []
+
+
+@pytest.mark.parametrize("text", [
+    "Comercio PIN Store, Bogotá. Importe **1234.56 COP**.",
+    "Comercio Central, São Paulo. Fecha **2026-09-29**.",
+    "No compartas contraseñas.",
+    "Não compartilhe sua senha.",
+])
+def test_neutral_display_and_secret_sharing_limitations_are_preserved(text):
+    assert validate_response(response(text), inputs()) == []
+
+
+@pytest.mark.parametrize("text", ["Tarjeta de crédito terminada en **8469**.", "Cartão com final **8469**.", "Últimos cuatro dígitos: **8469**."])
+def test_only_labeled_known_product_last_four_digits_are_display_facts(text):
+    data = inputs()
+    data["structured_data"]["candidates"][0]["product_last4"] = "8469"
+    assert validate_response(response(text), data) == []
+    assert "number_unverified" in validate_response(response(text.replace("8469", "8470")), data)
+    assert "number_unverified" in validate_response(response("El plazo es 8469 días."), data)
+    assert "credential_disclosure" in validate_response(response("PIN: 8469"), data)
+
+
+def test_verified_public_receipt_id_is_not_a_private_cli_suffix():
+    data = verified_handoff(inputs("HANDOFF"))
+    data["workflow_state"]["handoff"].update(handoff_id="HOF-CLI-ALICE", receipt={"verified": True, "handoff_id": "HOF-CLI-ALICE"})
+    result = fallback_response(data)
+    assert "**HOF-CLI-ALICE**" in result["message"]
+    assert validate_response(result, data) == []
+
+
+@pytest.mark.parametrize("mode, projection, field, identifier", [
+    ("HANDOFF", "handoff", "handoff_id", "HOF-atendeu"),
+    ("ACTION_DONE", "action", "result_id", "CMP-encaminhei"),
+])
+def test_receipt_suffix_cannot_be_read_as_an_action_or_human_service_claim(mode, projection, field, identifier):
+    data = verified_handoff(inputs(mode)) if projection == "handoff" else verified_action(inputs(mode))
+    data["workflow_state"][projection].update({field: identifier, "receipt": {"verified": True, field: identifier}})
+    result = fallback_response(data)
+    assert f"**{identifier}**" in result["message"]
+    assert validate_response(result, data) == []
+
+
+@pytest.mark.parametrize("language, text", [
+    ("es", "Tu caso ya está en manos de un asesor."),
+    ("es", "Ya estás con un asesor."),
+    ("es", "Un asesor te atenderá pronto."),
+    ("es", "Tu caso está siendo atendido por un asesor."),
+    ("es", "Ya asignamos tu solicitud a un asesor."),
+    ("es", "Ya estás conectado con atención humana."),
+    ("es", "Te contactarán cuando terminen la revisión."),
+    ("pt", "Seu caso já está nas mãos de um atendente."),
+    ("pt", "Um atendente já recebeu seu caso."),
+    ("pt", "Um atendente vai responder em breve."),
+    ("pt", "Seu caso está sendo analisado por um atendente."),
+    ("pt", "Entrarão em contato após a análise."),
+])
+@pytest.mark.parametrize("receipt", [False, True])
+def test_local_handoff_receipt_never_proves_human_service(language, text, receipt):
+    data = inputs("HANDOFF", language)
+    if receipt:
+        verified_handoff(data)
+        text += " Referencia **HOF-Fixture_1**."
+    assert "human_service_unverified" in validate_response(response(text, language), data)
+    # Narrative permits omission of a verified result ID; it must not suppress
+    # unsupported pickup/assignment/response claims along with that omission.
+    candidate = narrative(request_summary="Cliente de habla española solicita revisión. " + text, customer_language=language)
+    if language == "pt":
+        candidate["request_summary"] = candidate["request_summary"].replace("española", "portuguesa")
+    assert "human_service_unverified" in validate_handoff_summary(candidate, data)
+
+
+@pytest.mark.parametrize("language, text", [
+    ("es", "La derivación ya está confirmada."),
+    ("es", "Tu solicitud se ha derivado a atención humana."),
+    ("pt", "O encaminhamento já está confirmado."),
+    ("pt", "A solicitação foi encaminhada para atendimento humano."),
+    ("es", "La derivación quedó creada."),
+    ("pt", "O encaminhamento foi registrado."),
+])
+def test_created_handoff_claim_requires_matching_reread_and_visible_id(language, text):
+    data = inputs("HANDOFF", language)
+    assert "handoff_success_unverified" in validate_response(response(text, language), data)
+    verified_handoff(data)
+    assert "handoff_success_unverified" in validate_response(response(text, language), data)
+    assert validate_response(response(text.rstrip(".") + " **HOF-Fixture_1**.", language), data) == []
+
+
+@pytest.mark.parametrize("language, text", [
+    ("es", "El reclamo fue registrado y fue derivado con **HOF-Fixture_1**."),
+    ("es", "El reclamo fue registrado, y derivé a atención humana con **HOF-Fixture_1**."),
+    ("pt", "A reclamação foi registrada e foi encaminhada com **HOF-Fixture_1**."),
+    ("pt", "A reclamação foi registrada, e encaminhei para atendimento humano com **HOF-Fixture_1**."),
+])
+def test_handoff_receipt_cannot_authorize_complaint_creation_in_same_sentence(language, text):
+    data = verified_handoff(inputs("HANDOFF", language))
+    assert "action_success_unverified" in validate_response(response(text, language), data)
+    candidate = narrative(request_summary="Cliente de habla española solicita revisión. " + text, customer_language=language)
+    if language == "pt":
+        candidate["request_summary"] = candidate["request_summary"].replace("española", "portuguesa")
+    assert "action_success_unverified" in validate_handoff_summary(candidate, data)
+
+
+@pytest.mark.parametrize("language, text", [
+    ("es", "El reclamo **CMP-SBX-Case_123** fue registrado y fue derivado a atención humana."),
+    ("pt", "A reclamação **CMP-SBX-Case_123** foi registrada e foi encaminhada para atendimento humano."),
+])
+def test_action_receipt_cannot_authorize_handoff_in_same_sentence(language, text):
+    data = verified_action(inputs("ACTION_DONE", language))
+    assert "handoff_success_unverified" in validate_response(response(text, language), data)
+    candidate = narrative(request_summary="Cliente de habla española solicita revisión. " + text, customer_language=language)
+    if language == "pt":
+        candidate["request_summary"] = candidate["request_summary"].replace("española", "portuguesa")
+    assert "handoff_success_unverified" in validate_handoff_summary(candidate, data)
+
+
+@pytest.mark.parametrize("language, text", [
+    ("es", "El reclamo **CMP-SBX-Case_123** fue registrado, y necesita atención humana."),
+    ("pt", "A reclamação **CMP-SBX-Case_123** foi registrada e precisa de atendimento humano."),
+])
+def test_verified_action_can_describe_required_review_without_created_handoff(language, text):
+    data = verified_action(inputs("ACTION_DONE", language))
+    data["policy_context"] = retrieve_policy("HUMAN_REQUEST", human_required=True)
+    assert validate_response(response(text, language, chunk_ids=["handoff-01"]), data) == []
+
+
 @pytest.mark.parametrize("language", ["es", "pt"])
 @pytest.mark.parametrize("mode", ["SMALL_TALK", "OUT_OF_SCOPE", "BLOCKED", "AUTH_REQUIRED", "CLARIFY", "NO_MATCH", "INFORM", "INFORM_EXISTING_CASE", "CONFIRM_ACTION", "ACTION_DONE", "ACTION_UNVERIFIED", "ACTION_CANCELLED", "OUT_OF_POLICY", "HANDOFF", "TOOL_ERROR"])
 def test_all_canonical_modes_have_safe_fallbacks(mode, language):

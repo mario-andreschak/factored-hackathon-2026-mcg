@@ -40,11 +40,11 @@ _PRIVATE = re.compile(r"\b(?:customer_id|session_id|conversation_id|risk_signals
 _TOOLS = re.compile(r"\b(?:get_my_transaction|list_my_transactions|search_transactions|get_transaction|get_related_complaints|create_complaint|confirm_simulated_intake|prepare_unrecognized_charge|read_intake_receipt|create_verified_handoff|read_verified_handoff|execute_action|verify_action)\b", re.I)
 _PROCESSING = re.compile(r"\b(?:fue procesad[ao]|foi processad[ao]|ya proces[eé]|j[aá] processei)\b")
 _ADDITIONAL_SUCCESS = re.compile(r"\b(?:fue cread[ao]|qued[oó] registrad[ao]|he registrado|se ha registrado|ya est[aá] registrad[ao]|j[aá] est[aá] registrad[ao]|se registr[oó]|se cadastrou|foi cadastrada)\b")
-_HANDOFF_SUCCESS = re.compile(r"\b(?:deriv[eé]|transfer[ií]|encaminhei|encaminhamos|ha sido derivad[ao]|fue derivad[ao]|foi encaminhad[ao]|derivaci[oó]n creada|encaminhamento criado)\b")
-_HANDOFF_NOUN = re.compile(r"\b(?:atenci[oó]n humana|atendimento humano|derivaci[oó]n|encaminhamento|asesor|agente humano)\b")
+_HANDOFF_SUCCESS = re.compile(r"\b(?:deriv[eé]|transfer[ií]|encaminhei|encaminhamos|ha sido derivad[ao]|se ha derivad[ao]|fue derivad[ao]|foi encaminhad[ao]|derivaci[oó]n creada|encaminhamento criado)\b")
+_HANDOFF_NOUN = re.compile(r"\b(?:atenci[oó]n humana|atendimento humano|derivaci[oó]n|encaminhamento|asesor(?:a)?|atendente|agente humano)\b")
 _COMPLAINT_NOUN = re.compile(r"\b(?:reclamo|reclamaci[oó]n|reclama[cç][aã]o)\b")
 _UNSUPPORTED_PROMISE = re.compile(r"\b(?:reembolso garantizado|devoluci[oó]n garantizada|devolu[cç][aã]o garantida|te devolveremos|vamos devolver|bloque[eé] tu tarjeta|bloqueei seu cart[aã]o|un agente (?:ya )?recibi[oó]|um agente (?:j[aá] )?recebeu|un humano (?:ya )?respondi[oó]|um humano (?:j[aá] )?respondeu)\b")
-_FACT_KEYS = {"transaction_id", "complaint_id", "transaction_reference", "amount", "claimed_amount", "currency", "transaction_date", "date_from", "date_to", "created_at", "complaint_date", "process_date", "status", "transaction_status", "ref", "match_count"}
+_FACT_KEYS = {"transaction_id", "complaint_id", "transaction_reference", "amount", "claimed_amount", "currency", "transaction_date", "date_from", "date_to", "created_at", "complaint_date", "process_date", "status", "transaction_status", "product_last4", "ref", "match_count"}
 _SKIP_KEYS = {"text", "description", "label", "merchant", "merchant_name", "clean_query", "historic_conversation", "customer_stated_claims", "risk_signals", "error", "receipt", "action", "handoff", "existing_case"}
 _MONTHS = {"enero": 1, "janeiro": 1, "febrero": 2, "fevereiro": 2, "marzo": 3, "marco": 3, "março": 3, "abril": 4, "mayo": 5, "maio": 5, "junio": 6, "junho": 6, "julio": 7, "julho": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "setembro": 9, "octubre": 10, "outubro": 10, "noviembre": 11, "novembro": 11, "diciembre": 12, "dezembro": 12}
 _NAMED_DATE = re.compile(r"\b(\d{1,2})\s+de\s+(" + "|".join(_MONTHS) + r")\s+de\s+(\d{4})\b", re.I)
@@ -52,7 +52,22 @@ _NARRATIVE_FIELDS = {"request_summary", "customer_language", "customer_stated_cl
 _CONTACT_VALUE = re.compile(r"\bCLI-[\w-]+|[\w.%+-]+@[\w.-]+\.[a-z]{2,}|(?<!\w)\+\d[\d ()-]{6,}\d", re.I)
 _SECRET_TEXT = re.compile(r"\b(?:contrase[nñ]a|senha|password|pin|cvv|cvc|otp|api[_ -]?key|bearer|credencial(?:es)?|token secreto|documento de identidad|c[eé]dula|cpf|dni|pasaporte|c[oó]digo de (?:acceso|seguridad|verificaci[oó]n)|c[oó]digo (?:sms|otp)|n[uú]mero (?:completo )?de (?:tarjeta|cuenta|documento|cart[aã]o|conta))\b", re.I)
 _CONTACT_REQUEST = re.compile(r"\b(?:tel[eé]fono|telefone|celular|whatsapp|correo electr[oó]nico|e-?mail|direcci[oó]n postal|n[uú]mero de contacto)\b", re.I)
-_NARRATIVE_IMPLEMENTATION = re.compile(r"(?:https?://|s3://|\b[a-z]:[\\/]|/users/|/home/|```)|\b(?:curl|wget|powershell|cmd\.exe|exec_command|access[_ -]?key|secret[_ -]?key)\b", re.I)
+_NARRATIVE_IMPLEMENTATION = re.compile(r"(?:https?://|(?:s3|file|gs|az)://|\b[a-z]:[\\/]|\\\\[\w.-]+\\|/(?:users|home|tmp|var|etc|private|data|sandbox)/|```)|\b(?:curl|wget|powershell|cmd\.exe|exec_command|access[_ -]?key|secret[_ -]?key)\b", re.I)
+_EMAIL_VALUE = re.compile(r"[\w.%+-]+@[\w.-]+\.[a-z]{2,}", re.I)
+_PRIVATE_ID_HINT = re.compile(r"(?:CLI|CUST|CUS|CUSTOMER)-", re.I)
+_PHONE_VALUE = re.compile(r"(?<!\w)(?:\+\d[\d ()-]{6,}\d|\(?\d{2,4}\)?[ -]\d{3,4}[ -]\d{3,4})(?!\w)")
+_PRIVATE_NUMBER_LABEL = re.compile(r"\b(?:telefono|telefone|celular|whatsapp|numero de contacto|cpf|dni|cedula|pasaporte|documento(?: de identidad)?|numero (?:completo )?(?:de |da |do )?(?:tarjeta|cartao|cuenta|conta))\b[^\d.!?\n]{0,24}([+()\d][\d .()-]{4,}\d)")
+_SECRET_DISCLOSURE = re.compile(r"\b(?:contrasena|senha|password|pin|cvv|cvc|otp|api[ _-]?key|credencial(?:es)?|token secreto|codigo de (?:acceso|seguridad|verificacion)|codigo (?:sms|otp))\s*(?:(?:es|e|is)\s+|[:=]\s*)\S|\bbearer\s+[a-z0-9_.-]+", re.I)
+_LAST4_PREFIX = re.compile(r"\b(?:(?:tarjeta|cartao|producto|produto)(?: (?:de credito|de debito|credito|debito))? (?:terminad[ao](?: (?:en|em))?|(?:con |com )?final)|ultimos (?:cuatro|quatro) digitos)\s*[:=]?\s*$")
+_HUMAN_ACTOR = r"(?:asesor(?:a|es|as)?|agentes?(?: humanos?)?|atendentes?|humano|atencion humana|atendimento humano)"
+_HUMAN_SERVICE_CLAIM = re.compile(
+    rf"\b{_HUMAN_ACTOR}\b.{{0,60}}\b(?:recibio|recebeu|ha recibido|ha respondido|respondio|respondeu|contesto|contestou|atendio|atendeu|atendera|atenderan|respondera|responderan|vai responder|vao responder|esta (?:revisando|analizando|atendiendo|atendendo|analisando)|estao (?:atendendo|analisando))\b|"
+    rf"\b(?:en manos de|nas maos de|estas con|esta com|conectad[ao] (?:con|com))\s+(?:(?:un|una|um|uma|el|la|o|a) )?{_HUMAN_ACTOR}\b|"
+    rf"\b(?:asignamos|asignad[ao]|atribuimos|atribuid[ao]|designad[ao])\b.{{0,60}}\b{_HUMAN_ACTOR}\b|"
+    r"\b(?:esta siendo (?:atendid[ao]|analizad[ao]|revisad[ao])|esta sendo (?:atendid[ao]|analisad[ao])|te contactaran?|te atenderan?|te responderan?|entrara(?:o)? em contato|vai entrar em contato|vao entrar em contato|sera(?:s)? atendid[ao]|recibiras atencion humana|recebera atendimento humano)\b"
+)
+_HANDOFF_CREATED_CLAIM = re.compile(r"\b(?:derivacion|encaminhamento)\s+(?:ya |ja )?(?:esta|fue|foi|ha sido|quedo)\s+(?:confirmad[ao]|completad[ao]|concluid[ao]|realizad[ao]|cread[ao]|criad[ao]|registrad[ao]|guardad[ao])\b")
+_HANDOFF_LIMITATION = re.compile(r"(?:aun |todavia |ainda )?(?:no puedo|no podemos|nao posso|nao podemos) confirmar(?: aqui)?(?: (?:la derivacion|el encaminhamento|o encaminhamento)| que (?:la derivacion|o encaminhamento) (?:este|esta|fue|foi) (?:completada|confirmada|concluido|confirmado))")
 _ATTRIBUTION = re.compile(r"\b(?:el cliente|la cliente|cliente|la persona|el usuario|la usuaria)\b.*\b(?:afirma|se[nñ]ala|dice|indica|declara|refiere|relata|manifiesta|comenta|reporta|sostiene|solicita|expresa|cree|alega|informa|asegura)\b|\bseg[uú]n (?:el cliente|la cliente|la persona|el usuario|la usuaria)\b", re.I)
 
 # This finite grammar checks advice, not intent. The configured model remains
@@ -163,14 +178,19 @@ def _policy_instructions(inputs: Mapping, cited_chunks: object) -> set[str]:
     return instructions
 
 
+def _mask_display_ids(message: str, allowed: set | None = None) -> str:
+    """Identifier suffixes are values, never operational language."""
+    for token, start, end in reversed(list(_tokens(message))):
+        if _ID.fullmatch(token) and (allowed is None or token in allowed):
+            message = message[:start] + " " * (end - start) + message[end:]
+    return message
+
+
 def _recommendation_errors(message: str, inputs: Mapping, cited_chunks: object) -> list[str]:
     """Reject unsupported operational directions clause by clause, fail closed."""
     # Identifier spelling is checked separately; a base64 suffix resembling a
     # verb is not customer advice. Preserve all remaining sentence boundaries.
-    masked = message
-    for token, start, end in reversed(list(_tokens(message))):
-        if _ID.fullmatch(token):
-            masked = masked[:start] + " " * (end - start) + masked[end:]
+    masked = _mask_display_ids(message)
     sentences = [_guidance_text(sentence) for sentence in _sentences(masked)]
     mode = _mode(inputs)
     instructions = _policy_instructions(inputs, cited_chunks)
@@ -337,7 +357,7 @@ def _existing(inputs: Mapping) -> tuple[bool, Mapping]:
 
 
 def _facts(inputs: Mapping) -> dict[str, set]:
-    facts = {key: set() for key in ("ids", "dates", "amounts", "amount_currency", "currencies", "refs", "numbers", "statuses")}
+    facts = {key: set() for key in ("ids", "dates", "amounts", "amount_currency", "currencies", "refs", "numbers", "statuses", "last4")}
 
     def collect(value: object):
         if isinstance(value, Mapping):
@@ -375,6 +395,8 @@ def _facts(inputs: Mapping) -> dict[str, set]:
                         facts["numbers"].add(Decimal(item))
                     elif key in {"status", "transaction_status"} and isinstance(item, str):
                         facts["statuses"].add(item)
+                    elif key == "product_last4" and isinstance(item, str) and re.fullmatch(r"[0-9]{4}", item):
+                        facts["last4"].add(item)
                 elif isinstance(item, (Mapping, list, tuple)):
                     collect(item)
         elif isinstance(value, (list, tuple)):
@@ -395,6 +417,50 @@ def _facts(inputs: Mapping) -> dict[str, set]:
             if projection_key == "existing_case":
                 facts["statuses"].add(projection["status"])
     return facts
+
+
+def _output_privacy_errors(message: str, facts: Mapping) -> list[str]:
+    """Display authority never permits exposing private values or source paths.
+
+    Sensitive labels are checked before monetary/date exemptions. A telephone
+    number equal to a trusted transaction amount is still a telephone number.
+    Public display IDs are the only identifier tokens exempted from this scan.
+    """
+    masked = _mask_display_ids(message, facts["ids"])
+    text = _guidance_text(masked)
+    errors = []
+    if any(_PRIVATE_ID_HINT.search(token) for token, _, _ in _tokens(text)) or _EMAIL_VALUE.search(text):
+        errors.append("private_contact_or_identifier")
+    original = "".join(char for char in _normalized(masked) if unicodedata.category(char) != "Cf")
+    if _NARRATIVE_IMPLEMENTATION.search(original) or _NARRATIVE_IMPLEMENTATION.search(text):
+        errors.append("private_or_implementation_detail")
+    if _SECRET_DISCLOSURE.search(text):
+        errors.append("credential_disclosure")
+    for match in _PRIVATE_NUMBER_LABEL.finditer(text):
+        if len(re.sub(r"\D", "", match[1])) >= 7:
+            errors.append("private_contact_or_document")
+    ignored = [match.span() for match in _DATE.finditer(text) if _date_key(match.group()) in facts["dates"]]
+    # Numeric evidence is useful only after private-value labels have been
+    # rejected. It keeps signed monetary amounts from looking like phones.
+    for match in _NUMBER.finditer(text):
+        if not _decimals(match.group()).intersection(facts["amounts"]):
+            continue
+        currency = re.match(r"\s*([a-z]{3})\b", text[match.end():]) or re.search(r"\b([a-z]{3})\s*$", text[:match.start()])
+        money_label = re.search(r"\b(?:importe|monto|valor|amount)\s*(?:es|e|de|[:=])?\s*$", text[max(0, match.start() - 30):match.start()])
+        if money_label or (currency and currency[1].upper() in facts["currencies"]):
+            ignored.append(match.span())
+    for start, end in reversed(sorted(ignored)):
+        text = text[:start] + " " * (end - start) + text[end:]
+    if _PHONE_VALUE.search(text):
+        errors.append("private_contact_or_identifier")
+    return errors
+
+
+def _last4_display(message: str, start: int, end: int, facts: Mapping) -> bool:
+    """Only a labeled, exact product suffix is a permitted four-digit fact."""
+    value = message[start:end]
+    prefix = _guidance_text(message[max(0, start - 90):start])
+    return value in facts["last4"] and bool(_LAST4_PREFIX.search(prefix))
 
 
 def _chunks(value: object) -> set[str]:
@@ -463,6 +529,12 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
     # must never be reduced to a known ASCII identifier.
     if _PRIVATE.search(normalized) or _TOOLS.search(normalized):
         errors.append("private_or_implementation_detail")
+    errors.extend(_output_privacy_errors(message, facts))
+    for key in ("chunk_ids", "data_sources"):
+        if isinstance(candidate.get(key), list):
+            for item in candidate[key]:
+                if isinstance(item, str):
+                    errors.extend(_output_privacy_errors(item, facts))
     if _UNSUPPORTED_PROMISE.search(normalized):
         errors.append("unsupported_action_or_promise")
     errors.extend(_recommendation_errors(message, generator_input, candidate.get("chunk_ids")))
@@ -513,7 +585,7 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
                 errors.append("currency_unverified")
             if not numbers.intersection({amount for amount, code in facts["amount_currency"] if code == currency}):
                 errors.append("amount_unverified")
-        elif not numbers.intersection(facts["amounts"] | facts["numbers"]):
+        elif not numbers.intersection(facts["amounts"] | facts["numbers"]) and not _last4_display(message, match.start(), match.end(), facts):
             errors.append("number_unverified")
     for match in re.finditer(r"\b[A-Z]{3}\b", message, re.I):
         if any(start <= match.start() and match.end() <= end for start, end in ignored_spans):
@@ -546,16 +618,28 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
             errors.append("existing_case_receipt_unverified")
         elif existing["complaint_id"] not in message or existing["status"] not in message:
             errors.append("existing_case_facts_missing")
-    for sentence in re.split(r"[.!?;\n]", normalized):
-        success = any(phrase in sentence for phrase in _success_phrases()) or bool(_ADDITIONAL_SUCCESS.search(sentence))
-        handoff_success = _HANDOFF_SUCCESS.search(sentence) is not None
-        if success or handoff_success:
-            describes_handoff = bool(_HANDOFF_NOUN.search(sentence)) and not _COMPLAINT_NOUN.search(sentence)
-            if describes_handoff or handoff_success:
-                if not handoff_ok or mode not in {"HANDOFF", "ACTION_UNVERIFIED"} or _normalized(str(handoff_id)) not in sentence:
-                    errors.append("handoff_success_unverified")
-            elif not action_ok or mode != "ACTION_DONE" or _normalized(str(action_id)) not in sentence:
+    original_sentences = re.split(r"[.!?;\n]", normalized)
+    claim_sentences = re.split(r"[.!?;\n]", _normalized(_mask_display_ids(message)))
+    for sentence, claim in zip(original_sentences, claim_sentences):
+        success = any(phrase in claim for phrase in _success_phrases()) or bool(_ADDITIONAL_SUCCESS.search(claim))
+        guidance = _guidance_text(claim).strip(" :-()")
+        if _HUMAN_SERVICE_CLAIM.search(guidance):
+            # Even a verified local handoff record proves no human pickup,
+            # assignment, connection, response or future response time.
+            errors.append("human_service_unverified")
+        handoff_success = bool(_HANDOFF_SUCCESS.search(claim)) or (bool(_HANDOFF_CREATED_CLAIM.search(guidance)) and not _HANDOFF_LIMITATION.fullmatch(guidance))
+        handoff_noun = bool(_HANDOFF_NOUN.search(claim))
+        complaint_noun = bool(_COMPLAINT_NOUN.search(claim))
+        # Check both claims independently. A handoff receipt cannot authorize
+        # complaint creation in the same sentence, or vice versa.
+        action_claim = success and (complaint_noun or not handoff_noun)
+        handoff_claim = handoff_success or (success and handoff_noun and not complaint_noun)
+        if action_claim:
+            if not action_ok or mode != "ACTION_DONE" or _normalized(str(action_id)) not in sentence:
                 errors.append("action_success_unverified")
+        if handoff_claim:
+            if not handoff_ok or mode not in {"HANDOFF", "ACTION_UNVERIFIED"} or _normalized(str(handoff_id)) not in sentence:
+                errors.append("handoff_success_unverified")
     if _PROCESSING.search(normalized) and _mapping(workflow.get("action")).get("executed") is not True:
         errors.append("processing_unverified")
     if mode in {"SMALL_TALK", "OUT_OF_SCOPE", "BLOCKED", "AUTH_REQUIRED"} and (_ID_HINT.search(message) or _DATE.search(message) or _NUMBER.search(message)):
