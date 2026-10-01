@@ -568,7 +568,10 @@ export function buildAccount(profileId) {
     profile,
     products,
     transactions: rows,
-    currencies: [...new Set(products.map((p) => p.currency))],
+    currencies: [...new Set([
+      ...products.map((p) => p.currency),
+      ...rows.map((tx) => tx.currency),
+    ])],
   });
   CACHE.set(profileId, account);
   return account;
@@ -666,12 +669,16 @@ export function categoryTotals(transactions, currency) {
   const totals = new Map();
   let unknown = 0;
   let known = 0;
+  let rowCount = 0;
+  let unknownRowCount = 0;
   for (const tx of transactions) {
     if (tx.currency !== currency) continue;
     if (tx.direction !== "debit") continue;
     if (tx.transaction_status === "declined" || tx.transaction_status === "reversed") continue;
+    rowCount += 1;
     if (!tx.transaction_category) {
       unknown += tx.amount;
+      unknownRowCount += 1;
       continue;
     }
     known += tx.amount;
@@ -680,7 +687,11 @@ export function categoryTotals(transactions, currency) {
   const slices = [...totals.entries()]
     .map(([category, value]) => ({ category, value }))
     .sort((a, b) => b.value - a.value);
-  return { slices, unknown, known, total: known + unknown };
+  return {
+    slices, unknown, known, total: known + unknown,
+    rowCount, unknownRowCount,
+    unknownRowShare: rowCount ? unknownRowCount / rowCount : 0,
+  };
 }
 
 /** Month by month inflow / outflow / undetermined, oldest first. */

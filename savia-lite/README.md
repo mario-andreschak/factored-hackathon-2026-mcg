@@ -99,7 +99,7 @@ Every notice exists to avoid claiming more than the data supports:
 ## Verify it instead of trusting it
 
 ```bash
-node tools/selfcheck.mjs      # 241 assertions, plain Node, nothing installed
+node tools/selfcheck.mjs      # 264 assertions, plain Node, nothing installed
 ```
 
 The harness asserts the claims above rather than restating them, including:
@@ -140,7 +140,7 @@ assets/ui.js        hyperscript plus focus trap and restore
 assets/app.js       the portal
 assets/styles.css   design tokens, light/dark, print, breakpoints
 assets/boot.js      start-up error reporter
-tools/selfcheck.mjs the 241 assertions
+tools/selfcheck.mjs the 264 assertions
 ```
 
 ## What it is not

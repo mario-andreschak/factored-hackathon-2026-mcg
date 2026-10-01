@@ -27,7 +27,7 @@ import {
   toCsv, download,
 } from "./format.js";
 import { monthlyBars, donut, meter } from "./charts.js";
-import { h, frag, clear, bindTabCycle, focusFirst } from "./ui.js";
+import { h, frag, clear, bindTabCycle, focusFirst, captureFocus, restoreFocus } from "./ui.js";
 
 /* ==================================================================== *
  * Glyphs. Plain characters, so there is no icon font and no SVG sprite
@@ -622,7 +622,7 @@ function renderInsights() {
     slices.push({ label: t("ins.unknownSlice"), value: totals.unknown, cls: "cat-unknown" });
   }
 
-  const unknownShare = totals.total ? totals.unknown / totals.total : 0;
+  const unknownShare = totals.unknownRowShare;
 
   const legendRows = slices.map((slice) => h("div", {
     class: `legend-row ${slice.cls === "cat-unknown" ? "is-unknown" : ""}`.trim(),
@@ -1150,6 +1150,7 @@ function renderTriage() {
     class: "answer",
     type: "button",
     "aria-pressed": String(tr.answers[question.id] === value),
+    dataset: { focusKey: `answer:${question.id}:${value}` },
     onClick: () => { tr.answers[question.id] = value; render(); },
   }, t(`triage.${value}`)));
 
@@ -1168,6 +1169,7 @@ function renderTriage() {
     h("input", {
       type: "checkbox",
       checked: tr.urgent,
+      dataset: { focusKey: "triage-urgent" },
       onChange: (event) => { tr.urgent = event.target.checked; render(); },
     }),
     h("span", {},
@@ -1697,12 +1699,18 @@ function activeDialog() {
   return null;
 }
 
+function activeSurface() {
+  return root.querySelector("[data-dialog] .modal-card")
+    || root.querySelector('[data-panel="detail"]');
+}
+
 function render() {
   document.documentElement.lang = state.language;
   document.documentElement.dataset.theme = state.theme;
   document.title = t("app.title");
 
   const scrollY = window.scrollY;
+  const previousFocus = captureFocus(activeSurface());
   clear(root);
 
   root.append(h("a", { class: "skip", href: "#main" }, t("a11y.skip")));
@@ -1724,30 +1732,32 @@ function render() {
   root.append(renderToasts());
 
   if (state.account) window.scrollTo({ top: scrollY, behavior: "auto" });
-  manageFocus();
+  manageFocus(previousFocus);
 }
 
 /**
  * Binds Tab cycling to whichever overlay is on screen, moves focus into it the
  * first time it appears, and hands focus back when it goes away. Re-renders
- * while the same overlay stays open never move focus, so typing and clicking
- * inside a dialog behave normally.
+ * while the same overlay stays open restore the equivalent control in the new
+ * DOM, including the caret, so typing and clicking stay inside that overlay.
  */
-function manageFocus() {
+function manageFocus(previousFocus) {
   if (unbindTab) {
     unbindTab();
     unbindTab = null;
   }
 
-  const surface = root.querySelector("[data-dialog] .modal-card")
-    || root.querySelector('[data-panel="detail"]');
+  const surface = activeSurface();
   const owner = state.dialog
     ? `dialog:${state.dialog}`
     : state.selectedId ? `panel:${state.selectedId}` : null;
 
   if (surface) unbindTab = bindTabCycle(surface);
 
-  if (owner === focusOwner) return;
+  if (owner === focusOwner) {
+    if (surface && !restoreFocus(surface, previousFocus)) focusFirst(surface);
+    return;
+  }
 
   if (owner && surface) {
     focusFirst(surface);
@@ -1786,6 +1796,7 @@ function isTyping(target) {
 }
 
 function moveRowFocus(step) {
+  if (state.dialog || state.selectedId) return false;
   const rows = [...document.querySelectorAll(".tx-row")];
   if (!rows.length) return false;
   const index = rows.indexOf(document.activeElement);
@@ -1828,17 +1839,21 @@ document.addEventListener("keydown", (event) => {
 
   if (!state.account) return;
 
+  if (key === "T" && event.shiftKey) {
+    event.preventDefault();
+    setTheme(state.theme === "dark" ? "light" : "dark");
+    return;
+  }
+
+  // Overlay controls own their keys; page shortcuts must not focus rows or
+  // search fields behind an open dialog or detail panel.
+  if (state.dialog || state.selectedId) return;
+
   if (key === "/") {
     event.preventDefault();
     const search = document.getElementById("tx-search");
     if (search) search.focus();
     else openDialog("palette");
-    return;
-  }
-
-  if (key === "T" && event.shiftKey) {
-    event.preventDefault();
-    setTheme(state.theme === "dark" ? "light" : "dark");
     return;
   }
 

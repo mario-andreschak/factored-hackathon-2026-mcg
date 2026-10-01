@@ -48,6 +48,48 @@ const FOCUSABLE = [
 export const focusables = (root) =>
   [...root.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null || el === document.activeElement);
 
+/** Remember a control before a full render removes its DOM node. */
+export function captureFocus(container) {
+  const active = document.activeElement;
+  if (!container || !container.contains(active)) return null;
+  const index = focusables(container).indexOf(active);
+  if (index < 0) return null;
+  return {
+    id: active.id,
+    key: active.dataset.focusKey,
+    index,
+    tag: active.tagName,
+    type: active.getAttribute("type"),
+    text: active.textContent,
+    start: active.selectionStart,
+    end: active.selectionEnd,
+    direction: active.selectionDirection,
+  };
+}
+
+/** Restore the equivalent control, never a stale node or a different action. */
+export function restoreFocus(container, saved) {
+  if (!saved) return false;
+  const items = focusables(container);
+  const matches = (el) => Boolean(el) && el.tagName === saved.tag
+    && el.getAttribute("type") === saved.type && el.textContent === saved.text;
+  const target = saved.id
+    ? items.find((el) => el.id === saved.id)
+    : saved.key
+      ? items.find((el) => el.dataset.focusKey === saved.key)
+      : matches(items[saved.index]) ? items[saved.index] : items.find(matches);
+  if (!target) return false;
+  target.focus();
+  if (typeof saved.start === "number" && typeof target.setSelectionRange === "function") {
+    try {
+      target.setSelectionRange(saved.start, saved.end, saved.direction);
+    } catch {
+      /* Date and number inputs may refuse selection ranges. */
+    }
+  }
+  return true;
+}
+
 /**
  * Keeps Tab inside `container` while it is open. Returns an unbind function.
  * Focusing is deliberately a separate call, so a re-render can rebind the
@@ -61,7 +103,10 @@ export function bindTabCycle(container) {
     if (!items.length) return;
     const first = items[0];
     const last = items[items.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
+    if (!container.contains(document.activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    } else if (event.shiftKey && document.activeElement === first) {
       event.preventDefault();
       last.focus();
     } else if (!event.shiftKey && document.activeElement === last) {
@@ -69,8 +114,8 @@ export function bindTabCycle(container) {
       first.focus();
     }
   }
-  container.addEventListener("keydown", onKeyDown);
-  return () => container.removeEventListener("keydown", onKeyDown);
+  document.addEventListener("keydown", onKeyDown);
+  return () => document.removeEventListener("keydown", onKeyDown);
 }
 
 /** Moves focus into a freshly opened surface. */

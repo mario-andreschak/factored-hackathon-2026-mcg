@@ -22,6 +22,7 @@ import {
   formatMoney, formatDay, formatPercent, signedMoney,
   dayKey, monthKey, toCsv,
 } from "../assets/format.js";
+import { captureFocus, restoreFocus, focusFirst, bindTabCycle } from "../assets/ui.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -62,6 +63,10 @@ for (const account of accounts) {
     rows.every((tx, i) => i === 0 || rows[i - 1].transaction_date >= tx.transaction_date));
   check(`${id}: amounts are positive magnitudes, never signed`,
     rows.every((tx) => tx.amount > 0));
+  check(`${id}: every product and transaction currency can be selected`,
+    [...account.products, ...rows].every((entry) => account.currencies.includes(entry.currency)));
+  check(`${id}: selectable currencies are unique`,
+    new Set(account.currencies).size === account.currencies.length);
 }
 
 check("the generator is deterministic",
@@ -179,6 +184,13 @@ for (const account of accounts) {
   check(`${id}: the unclassified remainder is kept, not dropped`, totals.unknown > 0);
   check(`${id}: slices are ordered by size`,
     totals.slices.every((slice, i) => i === 0 || totals.slices[i - 1].value >= slice.value));
+  const outgoing = rows.filter((tx) => tx.currency === currency && tx.direction === "debit"
+    && !["declined", "reversed"].includes(tx.transaction_status));
+  const unclassified = outgoing.filter((tx) => !tx.transaction_category);
+  check(`${id}: category row count uses the same eligible outgoing rows`,
+    totals.rowCount === outgoing.length && totals.unknownRowCount === unclassified.length);
+  check(`${id}: the missing-category share counts rows, not money`,
+    totals.unknownRowShare === unclassified.length / outgoing.length);
 
   const series = monthlySeries(rows, currency);
   check(`${id}: a full year of months`, series.length === 12, String(series.length));
@@ -205,6 +217,23 @@ for (const account of accounts) {
 check("an acquirer descriptor is recognised", looksOpaque("DLC*PAGOS DIGITALES 8829"));
 check("an ordinary shop name is not flagged as a descriptor", !looksOpaque("Cafe Bracero"));
 check("a missing merchant is not flagged as a descriptor", !looksOpaque(null));
+
+const categoryRow = (overrides = {}) => ({
+  currency: "USD", direction: "debit", transaction_status: "approved",
+  transaction_category: "tech", amount: 100, ...overrides,
+});
+const unevenCategories = categoryTotals([
+  categoryRow(),
+  categoryRow({ transaction_category: null, amount: 1 }),
+  categoryRow({ transaction_category: null, transaction_status: "declined" }),
+  categoryRow({ transaction_category: null, transaction_status: "reversed" }),
+  categoryRow({ transaction_category: null, currency: "COP" }),
+  categoryRow({ transaction_category: null, direction: "unknown" }),
+], "USD");
+check("a small unclassified row counts as one row, regardless of its amount",
+  unevenCategories.unknownRowShare === 0.5 && unevenCategories.total === 101);
+check("an empty currency has no unclassified rows or non-finite percentage",
+  categoryTotals([], "USD").rowCount === 0 && categoryTotals([], "USD").unknownRowShare === 0);
 
 /* ================================================================== */
 section("translations");
@@ -398,6 +427,84 @@ check("the app is loaded as a module", /<script type="module" src="assets\/app\.
 check("the boot guard loads first", html.indexOf("boot.js") < html.indexOf("app.js"));
 check("the demo asks search engines to stay away", /noindex/.test(html));
 check("there is a no-JavaScript explanation", /<noscript/.test(html));
+
+/* ================================================================== */
+section("focus survives replacement of dialog controls");
+
+// A small DOM double keeps these behavioural checks dependency-free. The old
+// controls are deliberately replaced, matching the app's full renders.
+const previousDocument = globalThis.document;
+const keyListeners = new Set();
+globalThis.document = {
+  activeElement: null,
+  addEventListener: (name, listener) => { if (name === "keydown") keyListeners.add(listener); },
+  removeEventListener: (name, listener) => { if (name === "keydown") keyListeners.delete(listener); },
+};
+try {
+  const control = (overrides = {}) => ({
+    id: "", dataset: {}, tagName: "BUTTON", type: "button", textContent: "Yes",
+    offsetParent: {},
+    getAttribute(name) { return name === "type" ? this.type : null; },
+    focus() { document.activeElement = this; },
+    setSelectionRange(start, end, direction) {
+      this.selectionStart = start; this.selectionEnd = end; this.selectionDirection = direction;
+    },
+    ...overrides,
+  });
+  const surface = (items) => ({
+    querySelectorAll: () => items,
+    querySelector: () => null,
+    contains: (node) => items.includes(node),
+  });
+  const outside = control({ textContent: "Background transaction" });
+  const input = control({
+    id: "palette-input", tagName: "INPUT", type: "text", textContent: "",
+    selectionStart: 2, selectionEnd: 5, selectionDirection: "forward",
+  });
+  input.focus();
+  const inputFocus = captureFocus(surface([input]));
+  const newInput = control({ id: "palette-input", tagName: "INPUT", type: "text", textContent: "" });
+  outside.focus();
+  check("a palette render restores the new input rather than the removed node",
+    restoreFocus(surface([newInput]), inputFocus) && document.activeElement === newInput);
+  check("replacing a text field preserves its selection",
+    newInput.selectionStart === 2 && newInput.selectionEnd === 5 && newInput.selectionDirection === "forward");
+
+  const answer = control({ dataset: { focusKey: "answer:recognise:yes" } });
+  answer.focus();
+  const answerFocus = captureFocus(surface([answer]));
+  const newAnswer = control({ dataset: { focusKey: "answer:recognise:yes" } });
+  outside.focus();
+  check("answering triage preserves focus even when the control moves",
+    restoreFocus(surface([newInput, newAnswer]), answerFocus) && document.activeElement === newAnswer);
+  const nextAnswer = control({ dataset: { focusKey: "answer:authorised:yes" } });
+  outside.focus();
+  check("a changed question does not restore a different answer with the same label",
+    !restoreFocus(surface([nextAnswer]), answerFocus));
+  check("a removed control falls back inside the current dialog",
+    focusFirst(surface([nextAnswer])) && document.activeElement === nextAnswer);
+
+  const tabSurface = surface([newInput, newAnswer]);
+  const release = bindTabCycle(tabSurface);
+  const tab = (shiftKey = false) => {
+    const event = { key: "Tab", shiftKey, prevented: false, preventDefault() { this.prevented = true; } };
+    for (const listener of keyListeners) listener(event);
+    return event.prevented;
+  };
+  newAnswer.focus();
+  check("Tab at the end of a dialog cycles to its first control",
+    tab() && document.activeElement === newInput);
+  check("Shift+Tab at the start cycles to its last control",
+    tab(true) && document.activeElement === newAnswer);
+  outside.focus();
+  check("Tab from outside an open dialog returns focus inside it",
+    tab() && document.activeElement === newInput);
+  release();
+  check("closing or rerendering a dialog removes its old Tab listener", keyListeners.size === 0);
+} finally {
+  if (previousDocument === undefined) delete globalThis.document;
+  else globalThis.document = previousDocument;
+}
 
 /* ================================================================== */
 section("browser modules parse");
