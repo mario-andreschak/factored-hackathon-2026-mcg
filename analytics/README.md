@@ -33,9 +33,17 @@ kept.
 operational store can open the exact transcript of a flagged turn.
 
 Conversation `outcome` values: `action_verified`, `handoff`,
-`handoff_required` (needed but not created), `abandoned_pending` (left while
-awaiting selection/confirmation), `abandoned_clarify`, `no_match`, `blocked`,
-`informed`, `transcript_only` (chat without Gloria state) and `other`.
+`handoff_required` (needed but not created by the host),
+`awaiting_confirmation` (chat ended at the portal consent step),
+`abandoned_pending` (left while choosing a candidate), `abandoned_clarify`,
+`no_match`, `out_of_scope`, `out_of_policy`, `tool_error`,
+`action_unverified`, `cancelled`, `blocked`, `informed`, `transcript_only`
+(chat without Gloria state) and `other`.
+
+Portal confirmation and handoff creation happen in the trusted host
+(`action_status` and the banking MCP), not in the workflow store, so
+`awaiting_confirmation` and `handoff_required` do not say whether the host
+later completed them.
 
 ## Privacy
 

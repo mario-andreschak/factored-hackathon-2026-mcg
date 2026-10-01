@@ -200,3 +200,16 @@ def test_cli_build_report_and_feedback(state_dir, tmp_path, capsys):
     assert main(["report", "--db", str(out)]) == 0
     text = capsys.readouterr().out
     assert "Tasa de contención (sin handoff): 0.5" in text and "handoff_correct: 1" in text
+
+
+@pytest.mark.parametrize("last,expected", [
+    ({"response_mode": "CONFIRM_ACTION", "pending_type": "awaiting_confirmation"}, "awaiting_confirmation"),
+    ({"response_mode": "CLARIFY", "pending_type": "awaiting_selection"}, "abandoned_pending"),
+    ({"response_mode": "TOOL_ERROR", "pending_type": "none"}, "tool_error"),
+    ({"response_mode": "OUT_OF_SCOPE", "pending_type": "none"}, "out_of_scope"),
+    ({"response_mode": "CLARIFY", "pending_type": "none"}, "abandoned_clarify"),
+])
+def test_outcome_of_last_turn(last, expected):
+    from analytics.extract import conversation_record
+    turn = {"turn_id": "t", "turn_index": 1, "source": "workflow", "node_errors": "[]", **last}
+    assert conversation_record("c", [turn])["outcome"] == expected

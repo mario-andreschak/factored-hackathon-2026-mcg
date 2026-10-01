@@ -72,6 +72,9 @@ CREATE TABLE IF NOT EXISTS feedback (
 
 _BARRIERS = frozenset({"merge_parallel", "query_preflight_barrier"})
 _INFORMED = frozenset({"INFORM", "INFORM_EXISTING_CASE", "COMPLAINT_STATUS", "SMALL_TALK"})
+_TERMINAL = {"NO_MATCH": "no_match", "OUT_OF_SCOPE": "out_of_scope", "OUT_OF_POLICY": "out_of_policy",
+             "TOOL_ERROR": "tool_error", "ACTION_UNVERIFIED": "action_unverified",
+             "ACTION_CANCELLED": "cancelled"}
 TURN_COLUMNS = (
     "turn_id", "source", "conversation_id", "session_ref", "customer_ref", "ts", "turn_index",
     "language", "effective_language", "emotional_context", "intent", "n_intents", "n_sub_queries",
@@ -250,12 +253,15 @@ def _outcome(turns: list[dict]) -> tuple[str, str | None]:
     last = turns[-1]
     if last.get("source") == "transcript":
         return "transcript_only", None
+    if last.get("pending_type") == "awaiting_confirmation":
+        # Consent happens in the portal, outside chat; the chat ends here.
+        return "awaiting_confirmation", None
     if last.get("pending_type") not in (None, "none"):
         return "abandoned_pending", None
     if any(turn.get("response_mode") == "BLOCKED" for turn in turns):
         return "blocked", None
-    if last.get("response_mode") == "NO_MATCH":
-        return "no_match", None
+    if last.get("response_mode") in _TERMINAL:
+        return _TERMINAL[last["response_mode"]], None
     if last.get("response_mode") in _INFORMED:
         return "informed", None
     if last.get("response_mode") == "CLARIFY":
@@ -346,6 +352,8 @@ def build(out_path: Path, *, workflow_dbs: Iterable[Path] = (), chat_dbs: Iterab
                 "customer_ref": pseudonym("customer", session.get("customer_id")), "_order": entry["order"]}
         record["user_chars"] = entry.get("user_chars")
         record["reply_chars"] = entry.get("reply_chars")
+        # Message order breaks ties between turns stamped in the same instant.
+        record["_order"] = entry["order"]
 
     by_conversation: dict[str, list[dict]] = {}
     for record in turns.values():
