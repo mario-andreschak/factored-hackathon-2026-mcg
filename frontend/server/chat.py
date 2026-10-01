@@ -1067,7 +1067,8 @@ class ChatService:
         return {field: selection[field] for field in sorted(fields)}
 
     async def send(self, customer_id: str, session_id: str, session_exp: int, message: str, *,
-                   display_message: str | None = None, selection: dict[str, Any] | None = None) -> dict[str, Any]:
+                   display_message: str | None = None, selection: dict[str, Any] | None = None,
+                   workflow=None) -> dict[str, Any]:
         subject, owner = self._identity(customer_id, session_id, session_exp)
         if (not isinstance(message, str) or not message.strip() or len(message.strip()) > 4096
                 or len(message.encode("utf-8")) > 12000):
@@ -1095,15 +1096,29 @@ class ChatService:
             db.execute("UPDATE chat_sessions SET active_id = ?, active_until = ? WHERE session_id = ?",
                        (operation, min(now + _TIMEOUT + 15, session_exp), session_id))
         try:
+            if workflow is not None:
+                # Explicit trusted server injection. The browser supplies neither
+                # a model, identity, workflow state nor an authorization event.
+                returned_conversation = conversation or str(uuid.uuid4())
+                state = await workflow.run({"owner": owner, "customer_id": customer_id,
+                    "session_id": session_id, "conversation_id": returned_conversation,
+                    "expires_at": session_exp}, public_message.strip(), turn_id=operation,
+                    selection=public_selection)
+                reply = state["response"]["message"]
+                status = ("waiting_for_input" if state["workflow_state"]["pending"]["type"] != "none"
+                          else "completed")
+            else:
+                reply = None
             metadata = {"flujo": "true", "appendMessages": "true"}
             if conversation:
                 if not _CONVERSATION.fullmatch(conversation):
                     raise ChatError("chat_invalid_state", 503, "La sesión del asistente no está disponible.")
                 metadata["conversationId"] = conversation
-            result = await self._post("/v1/chat/completions", self._headers(subject, session_id, session_exp),
-                {"model": self._model, "messages": [{"role": "user", "content": message.strip()}],
-                 "stream": False, "metadata": metadata})
-            reply, returned_conversation, status = self._public_reply(result)
+            if workflow is None:
+                result = await self._post("/v1/chat/completions", self._headers(subject, session_id, session_exp),
+                    {"model": self._model, "messages": [{"role": "user", "content": message.strip()}],
+                     "stream": False, "metadata": metadata})
+                reply, returned_conversation, status = self._public_reply(result)
             if conversation and returned_conversation != conversation:
                 raise ChatError("chat_invalid_response", 502, "No se pudo verificar la respuesta de FLUJO.")
             with self._connection() as db:
@@ -1118,7 +1133,7 @@ class ChatService:
                      json.dumps(public_selection, ensure_ascii=False, allow_nan=False) if public_selection else None),
                     (session_id, operation, "assistant", reply, None),
                 ])
-            return {"reply": reply, "mode": "flujo", "status": status}
+            return {"reply": reply, "mode": "gloria" if workflow is not None else "flujo", "status": status}
         finally:
             with self._connection() as db:
                 db.execute("UPDATE chat_sessions SET active_id = NULL, active_until = 0 WHERE session_id = ? AND active_id = ?",

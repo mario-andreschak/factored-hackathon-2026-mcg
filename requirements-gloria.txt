@@ -1,0 +1,7 @@
+-r frontend/requirements.txt
+-r requirements-pipeline.txt
+-r requirements-s3.txt
+mcp==1.30.0
+rfc8785==0.1.4
+PyYAML>=6.0,<7
+tzdata>=2025.2

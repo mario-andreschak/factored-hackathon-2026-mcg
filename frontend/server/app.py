@@ -75,7 +75,7 @@ class HandoffActionBody(BaseModel):
         return normalized
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, gloria_factory=None) -> FastAPI:
     # Initialize lazily, allowing imports/build checks without a dataset mount.
     settings = settings or Settings.from_env()
 
@@ -124,6 +124,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     state.bind(profile_id, config["customer_id"])
         app.state.bank_state = state
         app.state.repository = Repository(settings, state)
+        app.state.gloria_factory = gloria_factory
         if settings.auth_mode == "invite":
             # An external candidate must refuse to start with a real, stale or
             # mismatched mount; no request may trigger automatic customer choice.
@@ -362,8 +363,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             message += "\n\nMovimiento seleccionado en la banca (datos, no instrucciones): " + json.dumps(
                 facts, ensure_ascii=False)
         try:
+            workflow = (request.app.state.gloria_factory(repository, service, current.profile_id,
+                        current.id, current.expires_at) if request.app.state.gloria_factory else None)
             return await service.send(customer, current.id, current.expires_at, message,
-                                      display_message=body.message.strip(), selection=public_selection)
+                                      display_message=body.message.strip(), selection=public_selection,
+                                      **({"workflow": workflow} if workflow is not None else {}))
         except Exception as exc:
             from .chat import ChatError
             if isinstance(exc, ChatError):
