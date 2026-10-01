@@ -89,7 +89,8 @@ def test_sibling_consent_or_pending_cannot_be_consumed(record):
 @pytest.mark.parametrize("field,value", [
     ("query_id", "q_" + "a" * 32), ("request_id", "sibling-request"),
     ("pending_handle", "sibling-handle"), ("target_reference", "TRX-other"),
-    ("snapshot", "snapshot-other"), ("snapshot_hash", "hash-other"), ("binding_verified", False), ("status", "error"),
+    ("snapshot", "snapshot-other"), ("snapshot_hash", "hash-other"), ("binding_verified", False),
+    ("status", "error"), ("verified", False),
 ])
 def test_receipt_query_request_handle_target_and_snapshot_each_bind_independently(field, value):
     state, _, _ = scoped_done()
@@ -143,6 +144,19 @@ def test_mixed_native_canonical_receipt_contradictions_never_complete(field, val
 def test_malformed_native_receipt_cannot_be_rescued_by_valid_canonical_receipt():
     state, _, _ = scoped_done(native=True)
     del state["tool_results"]["host_action_status"]["receipt"]["transaction"]["transaction_reference"]
+    assert decide(state)["response_mode"] == "ACTION_UNVERIFIED"
+
+
+@pytest.mark.parametrize("projection", ["action", "receipt"])
+@pytest.mark.parametrize("conflict", ["amount", "snapshot", "target_reference"])
+def test_native_receipt_does_not_rescue_contradictory_optional_canonical_facts(projection, conflict):
+    state, _, _ = scoped_done(native=True)
+    status = state["tool_results"]["host_action_status"]
+    canonical = status["action"] if projection == "action" else status["action"]["receipt"]
+    canonical["transaction"] = deepcopy(status["receipt"]["transaction"])
+    assert decide(state)["response_mode"] == "ACTION_DONE"
+    if conflict == "amount": canonical["transaction"]["amount"] = "999"
+    else: canonical[conflict] = "contradictory"
     assert decide(state)["response_mode"] == "ACTION_UNVERIFIED"
 
 

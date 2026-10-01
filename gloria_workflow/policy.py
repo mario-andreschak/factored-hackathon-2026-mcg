@@ -202,6 +202,29 @@ def _business_errors(state: dict) -> list:
             if not isinstance(error, dict) or error.get("node") != "generate_handoff_summary"]
 
 
+def _receipt_facts_match(facts: dict, target: dict) -> bool:
+    if not isinstance(facts, dict):
+        return False
+    try:
+        amount, target_amount = Decimal(str(facts.get("amount"))), Decimal(str(target.get("amount")))
+        if not amount.is_finite() or not target_amount.is_finite() or amount != target_amount:
+            return False
+        fact_date = datetime.fromisoformat(facts.get("transaction_date", "").replace("Z", "+00:00"))
+        target_date = datetime.fromisoformat(target.get("transaction_date", "").replace("Z", "+00:00"))
+    except (InvalidOperation, ValueError, TypeError, AttributeError):
+        return False
+    if (facts.get("currency") != target.get("currency") or
+            facts.get("status") != target.get("transaction_status", target.get("status")) or fact_date != target_date):
+        return False
+    for fact, aliases in (("process_date", ("process_date",)), ("merchant", ("merchant_name", "merchant")),
+                          ("transaction_type", ("transaction_type", "type")), ("channel", ("channel",)),
+                          ("product", ("product", "product_type"))):
+        key = next((key for key in aliases if key in target), None)
+        if key is not None and facts.get(fact) != target[key]:
+            return False
+    return True
+
+
 def _scoped_receipt(state: dict, result_id: str) -> bool:
     """Require fresh host readback and this query's immutable prepared request."""
     runtime = state.get("runtime", {})
@@ -211,7 +234,8 @@ def _scoped_receipt(state: dict, result_id: str) -> bool:
     status = state.get("tool_results", {}).get("host_action_status", {})
     lineage = runtime.get("action_lineage") or workflow.get("pending", {})
     if (not _query_binding_matches(state, status, lineage) or
-            status.get("status") != "ok" or status.get("state") != "intake_verified" or status.get("binding_verified") is not True or
+            status.get("status") != "ok" or status.get("state") != "intake_verified" or
+            status.get("verified", True) is not True or status.get("binding_verified") is not True or
             any(not lineage.get(key) for key in ("request_id", "host_pending_handle", "target_transaction_id", "snapshot_id", "snapshot_hash")) or
             lineage.get("binding_digest", runtime.get("trusted_binding_digest")) != runtime.get("trusted_binding_digest")):
         return False
@@ -245,37 +269,23 @@ def _scoped_receipt(state: dict, result_id: str) -> bool:
                 canonical.get("name") != "CREATE_COMPLAINT" or canonical.get("authorized") is not True or
                 canonical.get("executed") is not True or canonical.get("verified") is not True or
                 canonical.get("result_id") != result_id or receipt.get("verified") is not True or
-                receipt.get("result_id") != result_id or
-                any(receipt.get(key, lineage[field]) != lineage[field] for key, field in
-                    (("snapshot", "snapshot_id"), ("snapshot_id", "snapshot_id"), ("snapshot_hash", "snapshot_hash"),
-                     ("target_reference", "target_transaction_id"), ("target_transaction_id", "target_transaction_id")))):
+                receipt.get("result_id") != result_id):
             return False
+        for projection in (canonical, receipt):
+            if (any(projection.get(key, lineage[field]) != lineage[field] for key, field in
+                    (("snapshot", "snapshot_id"), ("snapshot_id", "snapshot_id"), ("snapshot_hash", "snapshot_hash"),
+                     ("target_reference", "target_transaction_id"), ("target_transaction_id", "target_transaction_id"),
+                     ("transaction_id", "target_transaction_id"))) or
+                    "transaction" in projection and not _receipt_facts_match(projection["transaction"], target)):
+                return False
     if native is not None:
         # The same deterministic shape validator is used for portal readback.
         from frontend.server.action import verified_receipt
         native = verified_receipt(native)
         if not native or native["id"] != result_id or native["snapshot"] != lineage["snapshot_id"]:
             return False
-        facts = native["transaction"]
-        try:
-            amount, target_amount = Decimal(str(facts.get("amount"))), Decimal(str(target.get("amount")))
-            if not amount.is_finite() or not target_amount.is_finite() or amount != target_amount:
-                return False
-        except InvalidOperation:
+        if not _receipt_facts_match(native["transaction"], target):
             return False
-        try:
-            fact_date = datetime.fromisoformat(facts.get("transaction_date", "").replace("Z", "+00:00"))
-            target_date = datetime.fromisoformat(target.get("transaction_date", "").replace("Z", "+00:00"))
-        except (ValueError, TypeError, AttributeError):
-            return False
-        if (facts.get("currency") != target.get("currency") or
-                facts.get("status") != target.get("transaction_status", target.get("status")) or fact_date != target_date):
-            return False
-        for fact, aliases in (("process_date", ("process_date",)), ("merchant", ("merchant_name", "merchant")),
-                              ("transaction_type", ("transaction_type", "type")), ("channel", ("channel",)), ("product", ("product",))):
-            key = next((key for key in aliases if key in target), None)
-            if key is not None and facts.get(fact) != target[key]:
-                return False
     return isinstance(result_id, str) and bool(re.fullmatch(r"CMP-SBX-[A-Za-z0-9_-]{8}", result_id))
 
 

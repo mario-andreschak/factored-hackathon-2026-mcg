@@ -32,13 +32,13 @@ SLOT_KEYS = ("amount", "currency", "currency_raw", "date_from", "date_to",
              "country", "transaction_id", "complaint_id", "product_hint", "product_last4",
              "amount_is_approximate", "foreign_customer_reference")
 
-_SCOPE_RUNTIME = frozenset({"pending_created_at", "pending_expires_at", "workflow_intent",
+_SCOPE_RUNTIME = frozenset({"pending_created_at", "pending_expires_at", "pending_expired", "workflow_intent",
     "complaint_snapshot_hash", "field_clarification", "action_lineage", "handoff_lineage",
     "host_receipt_lineage", "prior_verified_actions", "prior_verified_handoffs", "policy_version",
     "node_errors", "auxiliary_errors", "safe_fallback_used", "handoff_narrative",
     "host_cancellation_requested", "tool_attempts", "query_history"})
 _BATCH_RUNTIME = frozenset({"query_scopes", "query_scope_order", "query_batch_id",
-    "active_query_id", "query_results", "query_projection", "shared_node_errors"})
+    "active_query_id", "query_results", "query_projection", "shared_node_errors", "host_cancellation_queue"})
 _DOMAINS = frozenset({"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY", "COMPLAINT_STATUS",
     "HUMAN_REQUEST", "GREETING", "PERSONALITY", "OOD"})
 
@@ -212,11 +212,14 @@ def cancel_pending(state: dict, *, clear_target: bool = False) -> dict:
     _remember_action_lineage(result)
     workflow = result["workflow_state"]
     prior_pending = workflow.get("pending", {})
-    if prior_pending.get("host_pending_handle"):
+    if prior_pending.get("type") == "awaiting_confirmation" or prior_pending.get("host_pending_handle"):
         result["runtime"]["host_cancellation_requested"] = {
             "query_id": result["runtime"].get("active_query_id"),
-            "prior_pending_handle": prior_pending["host_pending_handle"],
-            "request_id": prior_pending.get("request_id"), "reason": "pending_cleared"}
+            "prior_pending_handle": prior_pending.get("host_pending_handle"),
+            "request_id": prior_pending.get("request_id"),
+            "prior_target_transaction_id": prior_pending.get("target_transaction_id"),
+            "prior_snapshot_id": prior_pending.get("snapshot_id"),
+            "prior_snapshot_hash": prior_pending.get("snapshot_hash"), "reason": "pending_cleared"}
     workflow["pending"] = empty_pending()
     workflow["trusted_confirmation"] = empty_confirmation()
     workflow["action"]["authorized"] = False
@@ -266,6 +269,8 @@ def expire_pending(state: dict, *, now: datetime | None = None,
     if pending.get("type") != "none" and expired:
         result = cancel_pending(state, clear_target=True)
         result["runtime"]["pending_expired"] = True
+        if result["runtime"].get("host_cancellation_requested"):
+            result["runtime"]["host_cancellation_requested"]["reason"] = "pending_expired"
         return result
     return deepcopy(state)
 
@@ -284,7 +289,7 @@ def begin_turn(state: dict, binding: TrustedBinding, *, turn_id: str,
                 "pending_expires_at", "workflow_intent", "history", "prior_verified_actions",
                 "complaint_snapshot_hash", "field_clarification", "action_lineage", "handoff_lineage",
                 "prior_verified_handoffs", "host_receipt_lineage", "session_tool_failures",
-                "query_history", "host_cancellation_requested"):
+                "query_history", "host_cancellation_requested", "pending_expired"):
         if key in state.get("runtime", {}):
             result["runtime"][key] = deepcopy(state["runtime"][key])
     for key in _BATCH_RUNTIME - {"shared_node_errors"}:
@@ -516,6 +521,17 @@ def start_query_batch(state: dict, intents: list[dict], *, batch_id: str | None 
     if any(_unresolved(capsule) for capsule in scopes.values()) or _unresolved(result):
         raise StateError("unresolved_query_batch")
     runtime = result["runtime"]
+    # A new batch can retire every old capsule. Its unacknowledged revocations
+    # must remain visible to the trusted host even when their query is retired.
+    queue = deepcopy(runtime.get("host_cancellation_queue", []))
+    if not isinstance(queue, list) or any(not isinstance(signal, dict) for signal in queue):
+        raise StateError("invalid_host_cancellations")
+    for signal in [runtime.get("host_cancellation_requested")] + [
+            capsule["runtime"].get("host_cancellation_requested") for capsule in scopes.values()]:
+        if isinstance(signal, dict) and signal not in queue:
+            queue.append(deepcopy(signal))
+    if queue:
+        runtime["host_cancellation_queue"] = queue
     runtime.update(query_scopes={}, query_scope_order=[], query_batch_id=batch_id or uuid.uuid4().hex,
                    active_query_id=None, query_results=[], query_projection=True,
                    shared_node_errors=deepcopy(runtime.get("node_errors", [])))
@@ -744,7 +760,14 @@ class ConversationStore:
         state["session"] = binding.session(now)
         state["runtime"]["store_revision"] = revision
         state["runtime"]["session_expires_at"] = _iso(parse_timestamp(binding.expires_at))
-        state = _sanitize_query_scopes(state, binding, now, pending_expiry_turns=self.pending_expiry_turns)
+        state = _sanitize_query_scopes(state, binding, now, pending_expiry_turns=self.pending_expiry_turns,
+                                       pending_ttl_seconds=self.pending_ttl_seconds)
+        if state["workflow_state"]["pending"].get("type") != "none":
+            created = parse_timestamp(state["runtime"].get("pending_created_at")) or now
+            expiry = parse_timestamp(state["runtime"].get("pending_expires_at"))
+            cap = created + timedelta(seconds=self.pending_ttl_seconds)
+            state["runtime"].update(pending_created_at=_iso(created),
+                                   pending_expires_at=_iso(min(cap, expiry) if expiry else cap))
         # Consent is a current host event, never durable chat history.
         state["workflow_state"]["trusted_confirmation"] = empty_confirmation()
         state["workflow_state"]["action"]["authorized"] = False

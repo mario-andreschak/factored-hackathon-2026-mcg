@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from gloria_workflow.state import (ConversationStore, StateError, TrustedBinding, activate_query_scope,
-    begin_turn, checkpoint_query_scope, finish_query_batch, new_state, set_pending, start_query_batch)
+    begin_turn, checkpoint_query_scope, expire_pending, finish_query_batch, new_state, set_pending, start_query_batch)
 
 
 NOW = datetime(2026, 10, 1, 5, 40, tzinfo=timezone.utc)
@@ -130,3 +130,58 @@ def test_start_cannot_discard_unresolved_requests_and_model_cannot_supply_ids():
         start_query_batch(state, [{"query_text": "new request", "domain": "TRANSACTION_INQUIRY"}])
     with pytest.raises(StateError, match="invalid_query_batch"):
         start_query_batch(batch(), [{"query_text": "x", "domain": "TRANSACTION_INQUIRY", "query_id": "model-id"}])
+
+
+def test_expiry_without_known_host_handle_retains_original_scope_target_and_snapshot(tmp_path):
+    state = batch()
+    first, second = state["runtime"]["query_scope_order"]
+    for query_id, target in ((first, "TRX-A"), (second, "TRX-B")):
+        state = activate_query_scope(state, BINDING, query_id, now=NOW)
+        state = set_pending(state, {"type": "awaiting_confirmation", "intent": "TRANSACTION_DISPUTE",
+            "target_transaction_id": target, "snapshot_id": "snapshot-1", "snapshot_hash": "hash-1"}, now=NOW, ttl_seconds=30)
+        state = checkpoint_query_scope(state)
+    state = finish_query_batch(state)
+    store = ConversationStore(tmp_path / "expiration.sqlite")
+    store.save(BINDING, state, now=NOW)
+    expired = store.load(BINDING, now=NOW + timedelta(seconds=30))
+    for query_id, target in ((first, "TRX-A"), (second, "TRX-B")):
+        runtime = expired["runtime"]["query_scopes"][query_id]["runtime"]
+        assert runtime["pending_expired"] is True
+        signal = runtime["host_cancellation_requested"]
+        assert signal == {"query_id": query_id, "prior_pending_handle": None, "request_id": None,
+            "prior_target_transaction_id": target, "prior_snapshot_id": "snapshot-1",
+            "prior_snapshot_hash": "hash-1", "reason": "pending_expired"}
+    advanced = begin_turn(expired, BINDING, turn_id="turn-2", user_question="otra consulta", now=NOW + timedelta(seconds=31))
+    assert all(capsule["runtime"]["pending_expired"] for capsule in advanced["runtime"]["query_scopes"].values())
+    fresh = start_query_batch(advanced, [{"query_text": "consulta nueva", "domain": "TRANSACTION_INQUIRY"}])
+    queue = fresh["runtime"]["host_cancellation_queue"]
+    assert {signal["query_id"] for signal in queue} == {first, second}
+    active = activate_query_scope(fresh, BINDING, fresh["runtime"]["query_scope_order"][0], now=NOW + timedelta(seconds=31))
+    assert active["runtime"]["host_cancellation_queue"] == queue
+    assert "host_cancellation_queue" not in active["runtime"]["query_scopes"][active["runtime"]["active_query_id"]]["runtime"]
+
+
+def test_expired_unknown_attempt_emits_cancel_signal_but_keeps_recovery_identity():
+    state = populate_two_pending()
+    state["workflow_state"].update(action_attempted=True, action_outcome="unknown")
+    state["workflow_state"]["action"]["idempotency_key"] = "request-1"
+    expired = expire_pending(state, now=NOW + timedelta(seconds=600))
+    assert expired["runtime"]["host_cancellation_requested"]["request_id"] == "request-1"
+    assert expired["workflow_state"]["action_attempted"] is True
+    assert expired["workflow_state"]["action_outcome"] == "unknown"
+    assert expired["runtime"]["action_lineage"]["request_id"] == "request-1"
+
+
+def test_reload_caps_top_and_each_query_to_the_current_store_ttl(tmp_path):
+    state = populate_two_pending()
+    second = state["runtime"]["query_scope_order"][1]
+    state["runtime"]["query_scopes"][second]["workflow_state"].update(action_attempted=True, action_outcome="unknown")
+    path = tmp_path / "changed-ttl.sqlite"
+    ConversationStore(path, pending_ttl_seconds=600).save(BINDING, state, now=NOW)
+    restored = ConversationStore(path, pending_ttl_seconds=1).load(BINDING, now=NOW + timedelta(seconds=2))
+    assert restored["workflow_state"]["pending"]["type"] == "none"
+    assert restored["runtime"]["host_cancellation_requested"]["prior_pending_handle"] == "handle-1"
+    for capsule in restored["runtime"]["query_scopes"].values():
+        assert capsule["workflow_state"]["pending"]["type"] == "none"
+        assert capsule["runtime"]["pending_expired"] is True
+    assert restored["runtime"]["query_scopes"][second]["workflow_state"]["action_outcome"] == "unknown"
