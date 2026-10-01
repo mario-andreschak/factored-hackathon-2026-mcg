@@ -91,15 +91,8 @@ class FlujoModel:
                         if len(data) > 256 * 1024:
                             raise ValueError("oversized model result")
             result = _object_json(data)
-            choices = result["choices"]
-            if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], Mapping) or choices[0].get("finish_reason") not in {None, "stop"}:
-                raise ValueError("invalid model completion")
-            message = choices[0]["message"]
-            if not isinstance(message, Mapping) or message.get("tool_calls") or message.get("function_call") or message.get("refusal"):
-                raise ValueError("unexpected model tool call")
-            content = message.get("content")
-            if not isinstance(content, str) or len(content) > 32000:
-                raise ValueError("invalid model result")
+            # Rejected completions still consumed provider usage when it is
+            # reported. Keep that accounting without retaining output content.
             usage = result.get("usage")
             usage = usage if isinstance(usage, Mapping) else {}
             for field in ("prompt_tokens", "completion_tokens", "total_tokens"):
@@ -110,10 +103,31 @@ class FlujoModel:
             observation["cache_write_tokens"] = _token_count(details.get("cache_write_tokens"))
             details = usage.get("completion_tokens_details")
             observation["reasoning_tokens"] = _token_count(details.get("reasoning_tokens")) if isinstance(details, Mapping) else None
+            inconsistent = []
+            prompt, completion = observation["prompt_tokens"], observation["completion_tokens"]
+            total = observation["total_tokens"]
+            if prompt is not None and completion is not None and total is not None and total != prompt + completion:
+                observation["total_tokens"] = None
+                inconsistent.append("total_tokens")
+            for field, bound in (("cached_prompt_tokens", prompt), ("cache_write_tokens", prompt), ("reasoning_tokens", completion)):
+                if bound is not None and observation[field] is not None and observation[field] > bound:
+                    observation[field] = None
+                    inconsistent.append(field)
+            if inconsistent:
+                observation["usage_inconsistent_fields"] = inconsistent
             returned_model = result.get("model")
             observation["response_model"] = returned_model if isinstance(returned_model, str) and re.fullmatch(r"[A-Za-z0-9._ -]{1,256}", returned_model) else None
             response_id = result.get("id")
-            observation["response_id_kind"] = next((kind for kind in ("codex", "chatcmpl", "claude") if isinstance(response_id, str) and response_id.startswith(kind + "_")), "unknown")
+            observation["response_id_kind"] = next((kind for kind in ("codex", "chatcmpl", "claude") if isinstance(response_id, str) and response_id.startswith((kind + "_", kind + "-"))), "unknown")
+            choices = result["choices"]
+            if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], Mapping) or choices[0].get("finish_reason") != "stop":
+                raise ValueError("invalid model completion")
+            message = choices[0]["message"]
+            if not isinstance(message, Mapping) or message.get("role") != "assistant" or message.get("tool_calls") or message.get("function_call") or message.get("refusal"):
+                raise ValueError("unexpected model tool call")
+            content = message.get("content")
+            if not isinstance(content, str) or len(content) > 32000:
+                raise ValueError("invalid model result")
             observation["status"] = "ok"
             return content
         except (TimeoutError, httpx.TimeoutException):

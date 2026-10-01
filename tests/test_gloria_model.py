@@ -24,7 +24,7 @@ OUTPUTS = {
 
 def completion(content="{}", **extra):
     return {"id": "codex_private-response-id", "model": "model-fixture",
-            "choices": [{"finish_reason": "stop", "message": {"content": content}}],
+            "choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": content}}],
             "usage": {"prompt_tokens": 14000, "completion_tokens": 50, "total_tokens": 14050,
                       "prompt_tokens_details": {"cached_tokens": 13000, "cache_write_tokens": 0},
                       "completion_tokens_details": {"reasoning_tokens": 7}}, **extra}
@@ -61,7 +61,25 @@ def test_unreported_or_invalid_provider_usage_remains_unknown(usage):
     assert "secret" not in repr(row)
 
 
+def test_inconsistent_provider_aggregates_are_unknown_without_discarding_known_counts():
+    usage = {"prompt_tokens": 10, "completion_tokens": 3, "total_tokens": 99,
+             "prompt_tokens_details": {"cached_tokens": 11, "cache_write_tokens": 12},
+             "completion_tokens_details": {"reasoning_tokens": 4}}
+    model = model_with_response(completion(usage=usage, id="chatcmpl-private-response-id"))
+    asyncio.run(model("stage", "system", "user"))
+    row = model.observations[0]
+    assert row["prompt_tokens"] == 10 and row["completion_tokens"] == 3
+    assert row["response_id_kind"] == "chatcmpl"
+    assert "private-response-id" not in repr(row)
+    assert set(row["usage_inconsistent_fields"]) == {"total_tokens", "cached_prompt_tokens", "cache_write_tokens", "reasoning_tokens"}
+    assert all(row[field] is None for field in row["usage_inconsistent_fields"])
+
+
 @pytest.mark.parametrize("update", [
+    {"choices": [{"message": {"role": "assistant", "content": "{}"}}]},
+    {"choices": [{"finish_reason": None, "message": {"role": "assistant", "content": "{}"}}]},
+    {"choices": [{"finish_reason": "stop", "message": {"role": "user", "content": "{}"}}]},
+    {"choices": [{"finish_reason": "stop", "message": {"content": "{}"}}]},
     {"choices": []}, {"choices": [{"finish_reason": "length", "message": {"content": "{}"}}]},
     {"choices": [{"finish_reason": "tool_calls", "message": {"content": "{}"}}]},
     {"choices": [{"message": {"content": "{}", "tool_calls": [{"secret": "private-token"}]}}]},
@@ -75,6 +93,8 @@ def test_provider_tool_refusal_partial_and_invalid_content_fail_closed(update):
     assert str(caught.value) == "configured model request failed"
     assert "private-token" not in repr(model.observations)
     assert model.observations[0]["status"] == "error"
+    assert model.observations[0]["prompt_tokens"] == 14000
+    assert model.observations[0]["cached_prompt_tokens"] == 13000
 
 
 def test_http_error_never_echoes_private_body():
@@ -146,6 +166,25 @@ def test_different_turn_or_history_cannot_be_batched(field):
     inputs["detect_context"]["user_question" if field == "question" else "historic_conversation"] = "different private turn"
     result = asyncio.run(StageAdapters(Model(), batch_preflight=True).run_parallel(inputs))
     assert all(isinstance(value, StageError) and value.code == "input" for value in result.values())
+
+
+@pytest.mark.parametrize("field", ["question", "history"])
+def test_redaction_cannot_collapse_different_private_turns_into_one_batch(field):
+    class Model:
+        async def __call__(self, *args):
+            pytest.fail("distinct original scope must not call provider")
+        async def batch(self, requests):
+            pytest.fail("distinct original scope must not call provider")
+    inputs = {stage: dict(values) for stage, values in PREFLIGHT.items()}
+    if field == "question":
+        for stage in inputs:
+            inputs[stage]["user_question"] = "Hola CLI-A"
+        inputs["detect_attack"]["user_question"] = "Hola CLI-B"
+    else:
+        inputs["rewrite_decompose"]["historic_conversation"] = "Hola CLI-A"
+        inputs["detect_context"]["historic_conversation"] = "Hola CLI-B"
+    result = asyncio.run(StageAdapters(Model(), batch_preflight=True).run_parallel(inputs))
+    assert all(isinstance(value, StageError) and value.errors == ("input.same_turn_scope",) for value in result.values())
 
 
 @pytest.mark.parametrize("content", ["not JSON", "{}", json.dumps({**OUTPUTS, "extra": {}}), '{"detect_attack":{},"detect_attack":{}}'])

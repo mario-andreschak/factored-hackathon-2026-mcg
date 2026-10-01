@@ -549,14 +549,16 @@ class StageAdapters:
         try:
             for stage in stages:
                 prepared[stage] = self._prepare(stage, inputs_by_stage[stage])
-            questions = {values[0]["user_question"] for values in prepared.values()}
-            if len(questions) != 1 or prepared["rewrite_decompose"][0]["historic_conversation"] != prepared["detect_context"][0]["historic_conversation"]:
+            # Check the original validated strings as well: redaction can make
+            # two distinct private turns appear equal in the safe projection.
+            questions = {inputs_by_stage[stage]["user_question"] for stage in stages}
+            if len(questions) != 1 or inputs_by_stage["rewrite_decompose"]["historic_conversation"] != inputs_by_stage["detect_context"]["historic_conversation"]:
                 raise StageError("preflight_batch", "input", ("input.same_turn_scope",))
         except StageError as exc:
             return {stage: StageError(stage, exc.code, exc.errors) for stage in stages}
         batch = getattr(self.model, "batch", None)
         if not use_batch or not callable(batch):
-            outputs = await asyncio.gather(*(self.run(stage, inputs_by_stage[stage]) for stage in stages), return_exceptions=True)
+            outputs = await asyncio.gather(*(self.run(stage, prepared[stage][0]) for stage in stages), return_exceptions=True)
             for output in outputs:
                 if isinstance(output, asyncio.CancelledError):
                     raise output
