@@ -12,6 +12,7 @@ COPY qualification/requirements-gloria.txt /tmp/requirements-gloria.txt
 COPY qualification/frontend/requirements.txt /tmp/frontend/requirements.txt
 COPY qualification/requirements-pipeline.txt qualification/requirements-s3.txt /tmp/
 RUN python3 -m pip install --no-cache-dir -r /tmp/requirements-gloria.txt
+COPY qualification/requirements-mcp.txt /tmp/requirements-mcp.txt
 COPY qualification/gloria_workflow /qualification/gloria_workflow
 COPY qualification/resources /qualification/resources
 COPY qualification/config /qualification/config
