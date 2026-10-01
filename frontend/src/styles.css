@@ -904,7 +904,7 @@ button svg {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #86937f;
+  color: #4b6044;
 }
 .balance-label .icon-button {
   width: 24px;
@@ -953,7 +953,7 @@ button svg {
   gap: 6px;
   align-items: center;
   font-size: 9px;
-  color: #93a087;
+  color: #4b6044;
   margin-top: 10px;
 }
 .tiny-leaf {
@@ -1023,7 +1023,7 @@ button svg {
   gap: 16px;
   margin-top: 16px;
   font-size: 8px;
-  color: #8d9a82;
+  color: #4b6044;
 }
 .chart-legend > span {
   display: flex;
@@ -1032,7 +1032,7 @@ button svg {
 }
 .chart-legend > span:last-child {
   margin-left: auto;
-  color: #acb4a4;
+  color: #4b6044;
 }
 .chart-legend i {
   width: 6px;
@@ -1054,7 +1054,7 @@ button svg {
   align-items: center;
   justify-content: space-between;
   font-size: 8px;
-  color: #9aa58d;
+  color: #4b6044;
 }
 .balance-footer > span {
   display: flex;
@@ -1086,7 +1086,7 @@ button svg {
 .section-line > span {
   font-size: 8px;
   letter-spacing: 1.2px;
-  color: #8d9b81;
+  color: #4b6044;
   font-weight: 600;
 }
 .section-line .text-button {
@@ -1243,7 +1243,7 @@ button svg {
   font-weight: 500;
   line-height: 1.5;
   font-size: 9px;
-  color: #7e8b75;
+  color: #4b6044;
 }
 .quick-actions button:hover > span {
   background: #dfe9d2;
@@ -1331,7 +1331,7 @@ button svg {
 }
 .product-ref {
   font-size: 8px;
-  color: #a6b09a;
+  color: #4b6044;
   margin-top: 5px;
   letter-spacing: 0.3px;
 }
@@ -1352,7 +1352,7 @@ button svg {
 }
 .product-card-bottom small {
   font-size: 8px;
-  color: #99a28e;
+  color: #4b6044;
 }
 .product-card-bottom strong {
   font-family: Manrope, sans-serif;
@@ -1433,7 +1433,7 @@ button svg {
 }
 .panel-subtitle {
   font-size: 9px;
-  color: #a0aa94;
+  color: #4b6044;
   margin-top: 8px;
 }
 .transaction-table {
@@ -1549,7 +1549,7 @@ button svg {
   font-family: "DM Sans", sans-serif;
   font-size: 7px;
   font-weight: 400;
-  color: #a3af98;
+  color: #4b6044;
   letter-spacing: 0.4px;
 }
 .amount.incoming {
@@ -1559,7 +1559,7 @@ button svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #a3ae96;
+  color: #4b6044;
   font-size: 8px;
   padding-top: 13px;
   border-top: 1px solid #eef2e6;
@@ -1569,7 +1569,7 @@ button svg {
   background: #f2f5ec;
   border: 1px solid #e8eddf;
   border-radius: 5px;
-  color: #849677;
+  color: #4b6044;
   padding: 4px 6px;
   font-size: 8px;
 }
@@ -1633,7 +1633,7 @@ button svg {
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #8c9980;
+  color: #4b6044;
   min-width: 0;
 }
 .spending-groups i {
@@ -1645,7 +1645,7 @@ button svg {
 .spending-groups strong {
   font-size: 9px;
   font-weight: 500;
-  color: #697e5d;
+  color: #4b6044;
 }
 .data-footnote {
   font-size: 8px;
@@ -1679,7 +1679,7 @@ button svg {
   font-weight: 600;
 }
 .clarity-banner p {
-  color: #94a080;
+  color: #4b6044;
   font-size: 9px;
   margin-top: 7px;
 }
@@ -1773,7 +1773,7 @@ button svg {
   gap: 8px;
   margin: 13px 0;
   font-size: 11px;
-  color: #96a287;
+  color: #4b6044;
 }
 .currency-summary dd {
   margin: 0;
@@ -1979,7 +1979,7 @@ button svg {
 }
 .detail-balance > span {
   font-size: 10px;
-  color: #93a185;
+  color: #4b6044;
 }
 .detail-balance h2 {
   font-size: 34px;
@@ -2293,7 +2293,7 @@ button svg {
 .about-intro {
   font-size: 11px;
   line-height: 1.85;
-  color: #8d9e7d;
+  color: #4b6044;
   margin-top: 16px;
 }
 .toast {

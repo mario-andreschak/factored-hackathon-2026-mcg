@@ -824,7 +824,7 @@ function Spending({
       )}
       <p className="data-footnote">
         {pt
-          ? "Transferências, pagamentos e ajustes não são classificados como entradas ou saídas."
+          ? "Transferências, pagamentos e ajustes não são classificados como entradas ou saídas. Categorias conhecidas aparecem em português; as demais mantêm o nome da origem."
           : "Transferencias, pagos y ajustes no se clasifican como entradas o salidas."}
       </p>
     </section>
@@ -1267,6 +1267,15 @@ const ptCategories: Record<string, string> = {
   Entertainment: "Entretenimento",
   Travel: "Viagens",
   Utilities: "Serviços públicos",
+  "Compra en línea": "Compras online",
+  "Compra anulada": "Compra cancelada",
+  Cafetería: "Cafeteria",
+  Nómina: "Salário",
+  Transferencia: "Transferência",
+  Hogar: "Casa e lar",
+  Supermercado: "Supermercado",
+  Efectivo: "Dinheiro",
+  Suscripción: "Assinaturas",
 };
 const ptTypes: Record<string, string> = {
   Purchase: "Compra",

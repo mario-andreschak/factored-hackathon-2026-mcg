@@ -496,6 +496,45 @@ test.each([
   },
 );
 
+test.each([
+  ["Compra en línea", "Compras online"],
+  ["Compra anulada", "Compra cancelada"],
+  ["Cafetería", "Cafeteria"],
+  ["Nómina", "Salário"],
+  ["Transferencia", "Transferência"],
+  ["Hogar", "Casa e lar"],
+  ["Supermercado", "Supermercado"],
+  ["Efectivo", "Dinheiro"],
+  ["Suscripción", "Assinaturas"],
+  ["Categoria inédita", "Categoria inédita"],
+] as const)(
+  "Portuguese Home displays source category %s as %s in Spending",
+  async (category, expected) => {
+    servePortal("pt", false, {
+      ...portalOverview,
+      transactions: [{ ...portalCharge, category }],
+      metadata: {
+        ...portalOverview.metadata,
+        transactions_returned: 1,
+        transactions_total: 1,
+      },
+    });
+    render(<App />);
+    await screen.findByRole("heading", { name: /Olá, Bia/ });
+    const spending = document.querySelector(".spending-panel");
+    expect(spending).toBeTruthy();
+    expect(within(spending as HTMLElement).getByText(expected)).toBeTruthy();
+    expect(
+      within(spending as HTMLElement).getByText(
+        /Categorias conhecidas aparecem em português; as demais mantêm o nome da origem/,
+      ),
+    ).toBeTruthy();
+    if (category !== expected) {
+      expect(within(spending as HTMLElement).queryByText(category)).toBeNull();
+    }
+  },
+);
+
 test("Portuguese charge finder keeps labels and dialog names local across the portal", async () => {
   const calls = servePortal("pt");
   render(<App />);
