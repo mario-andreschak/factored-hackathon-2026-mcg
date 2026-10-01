@@ -8,7 +8,21 @@ simulated hackathon workflow using newly generated fictional bank records.
 Qualification identifies the exact tested source and installed worker;
 earlier checkpoints remain historical evidence.
 
-## Current source integration
+## Current portal/preview source integration
+
+The ES/PT portal and fictional invitation preview add
+`pipeline/prepare_release_preview.py` to the protected source closure. The
+regenerated graph covers 85 files, with graph SHA256
+`210c5bab0c4fec943163a17ce6f3c622b2664751a3745c98cdd0a338a83cb30c`
+and artifact SHA256
+`29dfc2823d41c116de59da77182c00278152d4a896b3727e270681ee04c97dd0`.
+[Portal/preview source qualification](qualification/release-preview-source-2026-10-01.json)
+records the final combined source and validation. The previous credential and
+installed-native reports below remain tied to their own immutable captures.
+The preview starts no worker, model or banking action. This source merge does
+not install the new graph or transfer historical runtime acceptance to it.
+
+## Historical credential source integration
 
 The credential-question correction is integrated with the frozen `94f8c82`
 successor at `d7a4f432000db0a225a010235083427f957c35b5`. Customer replies reject
