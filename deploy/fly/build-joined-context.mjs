@@ -21,6 +21,7 @@ const APP_PREFIXES = ['frontend/src/', 'frontend/public/', 'frontend/server/', '
 const APP_SCRIPTS = new Set(['scripts/run_dispute.py', 'scripts/native_dispute_qualification.py',
   'scripts/native_dispute_qualification.ts', 'scripts/native_dispute_qualification.mjs',
   'scripts/build_dispute_graph.mjs', 'scripts/provision_banking_runtime_policy.mjs',
+  'scripts/reconcile_dispute_deployment.py', 'scripts/qualify_dispute_app.py', 'scripts/qualify_dispute.py',
   'scripts/native_dispute_capability_probe.mjs', 'scripts/native_dispute_bridge_loader.mjs',
   'scripts/native_dispute_compatibility_probe.mjs', 'scripts/native_dispute_revocation_probe.mjs']);
 const FLUJO_ROOTS = new Set(['package.json', 'package-lock.json', 'next.config.mjs', 'next-env.d.ts',
