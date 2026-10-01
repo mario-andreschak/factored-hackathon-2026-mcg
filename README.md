@@ -2,6 +2,14 @@
 
 This repository contains the data audit, DuckDB pipeline, classifier baseline, banking MCP and **Savia**, a customer-facing prototype for unrecognized-charge inquiries. The runnable, isolated preview uses fictional customers, products and transactions; a separate private mode can read an approved organizer silver/gold snapshot with fictional name aliases. The merged direct-host/MCP source candidate is described in [frontend/DIRECT_MCP.md](frontend/DIRECT_MCP.md). The [earlier worker-ingress intake and handoff prototype](docs/SIMULATED_INTAKE_V0.md) is historical. An intake does not resolve a dispute or issue a refund.
 
+## CI runs locally
+
+Hourly CI runs on the local Windows computer and disposable Docker Linux
+containers: five Windows jobs and six Linux jobs for one exact source commit.
+The daily Modal CPU run is an additional Linux cross-check. The avatar-server
+memory incident does not pause CI. See [the local CI policy](docs/LOCAL_CI.md)
+for execution, resource bounds and truthful GitHub evidence.
+
 ## FLUJO product boundary
 
 FLUJO is a long-lived, general-purpose product. Keep its main branch and default
