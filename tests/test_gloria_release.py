@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import hashlib
 import json
+import re
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -393,6 +394,131 @@ def test_native_port_restart_recovers_abandoned_admission_writer(tmp_path):
     result = asyncio.run(restarted.run(live_native_binding(), "Consulta propia.", turn_id="restart"))
     assert result["response"]["message"] == "Respuesta propia."
     assert native_admissions(tmp_path) == []
+
+
+@pytest.fixture(scope="module")
+def qualification_fixture(tmp_path_factory):
+    from scripts.qualify_gloria_app import build_fixture
+    return build_fixture(tmp_path_factory.mktemp("joined-qualification") / "private")
+
+
+def qualification_model_transport(fixture, authority):
+    """Script canonical stage text through the actual model HTTP client."""
+    from gloria_workflow.prompts import StageAdapters
+    specs = StageAdapters(lambda *args: None).specs
+    calls = []
+
+    def transport(request):
+        body = json.loads(request.content)
+        assert request.url.path == "/v1/chat/completions" and body["model"] == "model-gloria-native-model"
+        token = request.headers["Authorization"].removeprefix("Bearer ")
+        record = next(item for item in native_admissions(authority) if item["stageToken"] == token)
+        assert record["mode"] == "language_only" and record["expires"] > time.time()*1000
+        system = body["messages"][0]["content"]
+        stage = next(name for name, spec in specs.items() if system.startswith(spec.system))
+        message = record["message"]
+        language = "pt" if message.startswith(("Não", "Qual", "É")) else "es"
+        emergency = message.startswith("É uma emergência")
+        target = fixture.targets["colombia" if "COP" in message else "mexico"]
+        if stage == "rewrite_decompose":
+            output = dict(clean_query=message, sub_queries=[dict(query_text=message)])
+        elif stage == "detect_attack": output = dict(inappropriate=0, deceptive=0)
+        elif stage == "detect_context":
+            output = dict(language=language, emotional_context="Emergencia" if emergency else "Neutro")
+        elif stage == "detect_intent":
+            output = dict(intents=[dict(query_text=message, domain="HUMAN_REQUEST" if
+                "humano" in message or "emergência" in message else "TRANSACTION_DISPUTE")])
+        elif stage == "extract_slots":
+            output = {key: None for key in ("amount", "currency", "currency_raw", "date_from", "date_to",
+                "date_expression", "merchant", "transaction_type", "channel", "city", "country",
+                "transaction_id", "complaint_id", "product_hint", "product_last4")}
+            output.update(amount=float(target["amount"]), currency=target["currency"],
+                date_from=target["transaction_date"][:10], date_to=target["transaction_date"][:10],
+                amount_is_approximate=False, foreign_customer_reference=False)
+        elif stage == "resolve_clarification": output = dict(resolution_type="UNCLEAR", selected_ref=None)
+        elif stage == "generate_handoff_summary":
+            output = dict(request_summary="El cliente solicita revisión.", customer_language=language,
+                          customer_stated_claims=[], suggested_open_questions=[])
+        elif stage == "generate":
+            fields = dict(re.findall(r"\[([a-z_]+)\]\s*\n(.*?)(?=\n\s*\[[a-z_]+\]|\Z)", body["messages"][1]["content"], re.S))
+            response_mode = json.loads(fields["response_mode"])
+            language = json.loads(fields["language"])
+            if response_mode == "ACTION_DONE":
+                workflow = json.loads(fields["workflow_state"])
+                case_id = workflow["action"]["result_id"]
+                text = (f"Se verificó la recepción simulada del reclamo **{case_id}**." if language == "es" else
+                        f"A solicitação simulada da reclamação **{case_id}** foi verificada.")
+                output = response(text, language)
+            elif response_mode == "CONFIRM_ACTION":
+                text = ("Puedes confirmar la recepción simulada en el control explícito del portal." if language == "es" else
+                        "Você pode confirmar a solicitação simulada no controle explícito do portal.")
+                output = response(text, language, ["dispute-03"])
+            elif response_mode == "HANDOFF":
+                text = ("La solicitud requiere revisión humana. Aún no hay respuesta de una persona." if language == "es" else
+                        "A solicitação precisa de revisão humana. Ainda não houve resposta de uma pessoa.")
+                output = response(text, language)
+            else: pytest.fail("unexpected mode in scripted qualifier generator")
+        else: pytest.fail("unexpected scripted canonical stage")
+        calls.append((stage, record["turnId"]))
+        return httpx.Response(200, json=dict(model=fixture.service_token, id="chatcmpl-fictional",
+            choices=[dict(finish_reason="stop", message=dict(role="assistant", content=json.dumps(output, ensure_ascii=False)))]))
+    return httpx.MockTransport(transport), calls
+
+
+def test_joined_qualifier_real_http_native_port_with_scripted_model_is_private_and_offline(qualification_fixture, tmp_path):
+    from scripts.qualify_gloria_app import run_qualification
+    fixture = qualification_fixture
+    authority = tmp_path / "authority"
+    authority.mkdir()
+    (authority / "admissions.json").write_text("[]", encoding="utf-8")
+    (authority / "native-profile.json").write_text('{"synthetic":true}', encoding="utf-8")
+    transport, calls = qualification_model_transport(fixture, authority)
+    report = run_qualification(fixture, "http://127.0.0.1:4200", authority, model_transport=transport,
+                              request_timeout_seconds=20, native_timeout_seconds=2)
+    assert report["passed"] is True, [(case["scenario"], case.get("failure_code"),
+        [(attempt["step"], attempt.get("http_status")) for attempt in case["attempts"] if not attempt["passed"]]) for case in report["results"]]
+    assert report["scenario_count"] == report["passed_scenarios"] == 4
+    assert report["execution_mode"] == "scripted_offline" and report["human_adjudicated"] is False
+    assert report["native_execution_verified"] is False and report["native_port_invoked"] is False
+    assert report["model_call_observed"] is True and report["model_attempt_count"] == len(calls)
+    assert report["usage"]["total_tokens"] is None and report["usage"]["cost_usd"] is None
+    assert report["source_stable"] is True
+    assert report["application_sources_before"] == report["application_sources_after"]
+    assert "contracts/state_schema.md" in report["application_sources_before"]
+    assert "pipeline/contracts.yaml" in report["application_sources_before"]
+    assert native_admissions(authority) == []
+    public = json.dumps(report)
+    for private_value in [fixture.demo_code, fixture.service_token, fixture.execution_token,
+            fixture.public_key, fixture.signer.read_text(), *fixture.subject_customers,
+            *fixture.subject_customers.values(), *(row["transaction_id"] for row in fixture.targets.values())]:
+        assert private_value not in public
+    for case in report["results"]:
+        for attempt in case["attempts"]:
+            assert "body" not in attempt and "reply" not in attempt and "cookies" not in attempt
+
+
+def test_qualifier_provider_metadata_cannot_serialize_raw_identity_or_nonfinite_metrics():
+    from scripts.qualify_gloria_app import _safe_observations
+    private = "fictional-private-session-id"
+    observed = _safe_observations(SimpleNamespace(observations=[dict(stage=private, status=private,
+        model=private, response_model=private, response_id_kind=private, cost_usd=float("inf"),
+        latency_ms=float("nan"), prompt_tokens=None)]))
+    assert private not in json.dumps(observed)
+    assert observed[0].get("stage") is None and observed[0].get("model") is None
+    assert observed[0].get("status") is None and observed[0].get("cost_usd") is None
+    assert observed[0].get("latency_ms") is None and observed[0].get("prompt_tokens") is None
+
+
+def test_qualifier_rejects_changed_generated_source_before_application_admission(qualification_fixture, tmp_path):
+    from scripts.qualify_gloria_app import build_application
+    path = next(qualification_fixture.source.rglob("*.csv"))
+    original = path.read_bytes()
+    try:
+        path.write_bytes(original+b"\n")
+        with pytest.raises(ValueError, match="changed before application admission"):
+            build_application(qualification_fixture, "http://127.0.0.1:4200", tmp_path / "uninstalled-authority",
+                              instance="mutated-source", records=[])
+    finally: path.write_bytes(original)
 
 
 @pytest.fixture
