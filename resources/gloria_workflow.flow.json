@@ -542,14 +542,15 @@
         "resources/prompts/intent_detection_prompt.yml": "f2a1dacc022bcc3f26ac664534d2d5110a26bbd9d4c2253be562726077f03bfb",
         "resources/prompts/rewrite_decompose_prompt.yml": "6a7a55f87a2be53d1b23556b486369d719937d5f9186c449c1a3d99f7957ff06",
         "resources/prompts/slot_extraction_prompt.yml": "92fa8a6ac29e85841b4ea49f76e0c3fb02c29cd47d723c9c685a1d3956348012",
-        "scripts/build_gloria_graph.mjs": "a3d176a87e27ef947a4135c666801b14d2b7be8fa204e89f503b81c850d891c6",
+        "scripts/build_gloria_graph.mjs": "cfbda57aaa5d5c145f9de589bce81d3231da0542fa625f53db7df91a73770b00",
         "scripts/native_gloria_bridge_loader.mjs": "fda17ffaf428bdc3dec5e76295694a785a0cd62cab5e4aaa24babc4148f6bb62",
         "scripts/native_gloria_capability_probe.mjs": "b6b3bc3204c597fdd2d5b6d2cc0ea69a69a379c37dd9476c2982a09a3509ab96",
         "scripts/native_gloria_compatibility_probe.mjs": "a8ba3fb3e3ba6e89b23024e0a350e82a34d700a9494172a60fe8ba50c17901a3",
-        "scripts/native_gloria_qualification.Dockerfile": "c5081bde75001c88e98d2357c0b15b9116302771d3119211b9ca35a3b25f695f",
-        "scripts/native_gloria_qualification.mjs": "085ba494c9291782579143465b1ce393d7daa15bbd6271891247c64e4202ff26",
-        "scripts/native_gloria_qualification.py": "3f553acbd822d2107d2229267dcdea1d90c66dc6acf7d405bb61aba50e652711",
-        "scripts/native_gloria_qualification.ts": "892a09044ba68ac3badd035106fbe65763a84a1438bd50c751c52d6dd9480bce"
+        "scripts/native_gloria_qualification.Dockerfile": "763ce86824a273a95e8db5f2621e7ea9b9e8f3abb7497848a8cc7ecb739f8537",
+        "scripts/native_gloria_qualification.mjs": "2cba007fad231345853ecbf0a7638c5b054c7c40b49e9a223a68efd65686b6a6",
+        "scripts/native_gloria_qualification.py": "9690597bd6e5c81e3a750df6f90411365cc4f8de45c22483a08a2ac3d95c6590",
+        "scripts/native_gloria_qualification.ts": "43e89fdeac24d406d883534729c96ae9ccee0e1e5c333912d4f5efaba8756bc6",
+        "scripts/native_gloria_revocation_probe.mjs": "73f1c535f0ba8c69cfe5215f7edd1fe86218e881b12f54787d7f730e75cc84f3"
       },
       "coverage": "Declared canonical logical roles; handler execution and route acceptance require separate application tests."
     },
