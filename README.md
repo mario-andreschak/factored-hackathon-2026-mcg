@@ -19,6 +19,32 @@ The local Docker deployment is described at [localhost:43800](http://localhost:4
 
 See [frontend setup and portable deployment](frontend/README.md) and [dataset, architecture and verification evidence](docs/ONLINE_BANKING_FRONTEND.md). The frontend runs alongside the existing FLUJO worker; its image contains neither customer rows nor service credentials.
 
+## Docker and Fly deployment landscapes
+
+The diagrams show the captured configurations reviewed on September 30, 2026:
+where source data enters, how it reaches the frontend API and banking MCP, how
+users connect, and which network, process and storage boundaries protect it.
+The banking integration shown belongs to the dedicated hackathon runtime
+described in the [deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md).
+
+### Docker: local containers
+
+![Docker deployment landscape: S3 ingestion, shared read-only snapshot, Savia frontend API, private FLUJO worker and banking MCP, user connections and persistent state](docs/architecture/docker-landscape.png)
+
+### Fly: hosted Machine
+
+![Fly deployment landscape: private initial migration, HTTPS gateway, loopback Savia and FLUJO services, banking MCP and persistent data volume](docs/architecture/fly-landscape.png)
+
+Download the [two-page landscape PDF](docs/architecture/deployment-landscapes.pdf),
+[Docker SVG](docs/architecture/docker-landscape.svg),
+[Fly SVG](docs/architecture/fly-landscape.svg), or
+[self-contained viewer with zoom and descriptions](docs/architecture/deployment-landscapes.html).
+See [configuration details and evidence](docs/architecture/landscape-notes.md)
+for the separate screen/chat read paths, optional S3 verification, persistence
+and recorded runtime limitations. The source Docker image's banking-adapter
+omission and Fly's pending customer inquiry/revocation acceptance are marked;
+these diagrams do not establish successful live acceptance.
+
 ## Start here
 
 - [FLUJO product boundary for this hackathon](docs/FLUJO_PRODUCT_BOUNDARY.md)
