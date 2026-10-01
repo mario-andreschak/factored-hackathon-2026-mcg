@@ -41,9 +41,10 @@ mode checks in unit tests do not establish cross-user isolation.
 The protected operator evidence JSON uses
 `dispute-retained-operator-evidence/v1`. It names the exact retained bank
 path, source inventory digest, four-table ledger schema/row hashes and counts,
-an active exclusive deployment lease, explicit original-process retirement
-and worker drain, preservation of late replies, and every old obligation as
-`confirmed` with its original-authority receipt hash. It names sealed old
+an active exclusive deployment lease with its private proof file/hash,
+explicit original-process retirement and worker drain with a separate proof
+file/hash, preservation of late replies, and every old obligation as
+`confirmed` with its original-authority receipt file/hash. It names sealed old
 frontend/worker archive files and their hashes, plus a separate synthetic
 coverage proof file, actual start time and `synthetic:` provenance. Unknown,
 pending, uncertain, or expired-unconfirmed obligations block. An old worker
@@ -88,8 +89,11 @@ the result, then atomically publishes the generation pin. A crash before
 receipt/pin leaves an explicit manual recovery block; it never silently
 re-adopts or seeds a pin. Apply and verify never restore a stale bank snapshot.
 Later native sessions, replays, cases, receipts, and revocations may change
-the active DB; verify checks the generation, schema, coverage and immutable old
-archive, not a frozen hash of mutable DB bytes.
+the active DB. Verify checks the generation, schema, coverage, immutable old
+archive and exact original session/revocation rows. Original live replay and
+capability rows must remain unchanged; expired originals may be pruned after
+the archive retains their bytes. It does not pin a frozen hash of mutable DB
+bytes.
 
 Runtime uses:
 
@@ -117,10 +121,13 @@ rejects populated missing-pin state. Real bank effects stay off.
 
 ## Proof limits and recovery
 
-The local source inventory covers Python files in `banking_mcp`,
-`dispute_workflow`, `frontend/server`, the two runner/reconcile scripts,
-the native port module and `requirements-dispute.txt`. It is a code-change
-fence, not an exact OCI image or installed model/profile/provider proof. The
+The local source inventory covers bank, dispute and frontend Python files;
+frontend TS/TSX/CSS and public assets; prompts, policy, pipeline and config
+inputs; the flow definition; runner/reconcile/native port scripts; and
+`requirements-dispute.txt` plus frontend package metadata. It is a
+code-change fence, not an exact OCI image or installed model/profile/provider
+proof. The source image must actually carry these inputs at `/opt/joined`
+or the plan fails closed. The
 Fly owner must provide the image/source manifest, configuration and provider
 readback separately. The operator evidence is a protected attestation; this
 tool checks its exact declared files and hashes but cannot independently prove
@@ -130,8 +137,16 @@ Do not treat a synthetic test, a source digest, or API health as end-to-end
 customer acceptance.
 
 On interrupted apply, preserve the newer bank DB, archive, pending
-obligations and receipt artifacts. Stop and review exact schema/generation
-rather than retrying a changed plan or restoring a stale DB. Roll source and
+obligations and receipt artifacts. There is no automatic crash-resume journal:
+a crash after archive publication, after schema commit, or before generation
+pin publication cannot be retried through the ordinary four-table plan.
+The Fly owner must freeze authority, inspect exact DB schema/generation,
+archive, receipt and pin, and have an independent reviewer authorize an
+explicit recovery procedure. Do not delete an artifact to replay apply or
+restore a stale DB. The old authority flags and hashes in the operator
+evidence are declarations, not proof of original-worker revocation or OS
+process exit; the Fly owner must independently join the actual original
+receipts and process-drain evidence before apply. Roll source and
 gateway back only if the Fly owner verifies compatible admitted authority;
 otherwise use maintenance/read-only archive mode. Customers re-login. No
 public deployment or bank action activation is part of this source change.

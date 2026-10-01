@@ -26,9 +26,26 @@ LEGACY_COLUMNS = {
     "sessions": ("session", "subject", "customer"),
     "capabilities": ("id", "kind", "binding", "expires", "payload"),
 }
-SOURCE_DIRS = ("banking_mcp", "dispute_workflow", "frontend/server")
+GUARDED_BANK_TABLES = {
+    "sessions", "replays", "revoked", "capabilities", "action_pending",
+    "sandbox_cases", "sandbox_case_receipts", "sandbox_handoffs",
+    "dispute_host_actions", "dispute_host_cancelled", "dispute_handoff_packets",
+    "gloria_host_actions", "gloria_host_cancelled", "gloria_handoff_packets",
+}
+RETAINED_APP_FILES = ("frontend-chat.sqlite3", "dispute-workflow.sqlite3",
+                      "gloria-workflow.sqlite3")
+SOURCE_DIRS = {
+    "banking_mcp": {".py"}, "dispute_workflow": {".py"},
+    "frontend/server": {".py"}, "frontend/src": {".ts", ".tsx", ".css"},
+    "frontend/public": None, "resources/prompts": {".yml", ".yaml", ".md"},
+    "resources/policies": {".md"}, "pipeline": {".py", ".yaml"},
+    "config": {".yaml"},
+}
 SOURCE_FILES = ("scripts/run_dispute.py", "scripts/reconcile_dispute_deployment.py",
-                "scripts/native_dispute_qualification.py", "requirements-dispute.txt")
+                "scripts/native_dispute_qualification.py", "requirements-dispute.txt",
+                "resources/dispute_workflow.flow.json", "graph_config_v3.yaml",
+                "frontend/package.json", "frontend/package-lock.json",
+                "frontend/index.html")
 ADDITIVE_SQL = (
     """CREATE TABLE action_pending(
     id TEXT PRIMARY KEY, binding TEXT NOT NULL, customer TEXT NOT NULL,
@@ -50,6 +67,19 @@ ADDITIVE_SQL = (
     """CREATE TABLE sandbox_coverage(
     id INTEGER PRIMARY KEY CHECK(id=1), generation TEXT NOT NULL,
     coverage_start INTEGER NOT NULL, provenance_digest TEXT NOT NULL, attested_at INTEGER NOT NULL)""",
+    """CREATE TABLE dispute_host_actions(
+        binding TEXT NOT NULL, request_id TEXT NOT NULL, query_id TEXT,
+        pending_hash TEXT, target TEXT, snapshot TEXT, handoff_id TEXT,
+        PRIMARY KEY(binding,request_id))""",
+    """CREATE UNIQUE INDEX dispute_host_pending
+        ON dispute_host_actions(binding,pending_hash) WHERE pending_hash IS NOT NULL""",
+    """CREATE TABLE dispute_host_cancelled(
+        binding TEXT NOT NULL, pending_hash TEXT NOT NULL, query_id TEXT,
+        cancelled_at INTEGER NOT NULL, PRIMARY KEY(binding,pending_hash))""",
+    """CREATE TABLE dispute_handoff_packets(
+        binding TEXT NOT NULL, handoff_id TEXT NOT NULL, query_id TEXT,
+        request_id TEXT NOT NULL, packet_json TEXT NOT NULL,
+        PRIMARY KEY(binding,handoff_id))""",
 )
 
 
@@ -83,11 +113,12 @@ def _file_hash(path: Path) -> str:
 def _source(source_root: Path) -> dict:
     source_root = source_root.resolve(strict=True)
     files = []
-    for dirname in SOURCE_DIRS:
+    for dirname, suffixes in SOURCE_DIRS.items():
         directory = source_root / dirname
         if not directory.is_dir() or directory.is_symlink():
             raise ValueError("missing application source directory")
-        files.extend(directory.rglob("*.py"))
+        files.extend(path for path in directory.rglob("*")
+                     if path.is_file() and (suffixes is None or path.suffix in suffixes))
     files.extend(source_root / name for name in SOURCE_FILES)
     manifest = {}
     for path in sorted(files):
@@ -148,6 +179,16 @@ def _ledger(path: Path, *, legacy: bool) -> dict:
             "generation": generation, "coverage": coverage}
 
 
+def _proof_artifact(item: dict, path_key: str, hash_key: str) -> dict:
+    path = Path(item.get(path_key, ""))
+    expected = item.get(hash_key)
+    if not isinstance(expected, str) or re.fullmatch(r"[a-f0-9]{64}", expected) is None:
+        raise ValueError("operator proof digest missing")
+    if _file_hash(path) != expected:
+        raise ValueError("operator proof artifact mismatch")
+    return {"path": str(path.resolve()), "sha256": expected}
+
+
 def _proof(evidence_path: Path, *, bank_path: Path, source: dict, ledger: dict,
            frontend_dir: Path, worker_dir: Path) -> dict:
     evidence = _read_json(evidence_path)
@@ -165,12 +206,16 @@ def _proof(evidence_path: Path, *, bank_path: Path, source: dict, ledger: dict,
                    ("old_process_retired", "old_worker_drained", "old_bank_stdio_retired",
                     "late_replies_preserved"))):
         raise ValueError("old authority or exclusive lease unproved")
+    lease_artifact = _proof_artifact(lease, "proof_path", "proof_sha256")
+    authority_artifact = _proof_artifact(authority, "proof_path", "proof_sha256")
     obligations = evidence.get("obligations")
     if not isinstance(obligations, list) or not obligations or any(
             not isinstance(item, dict) or item.get("state") != "confirmed"
-            or not isinstance(item.get("original_receipt_sha256"), str)
-            or len(item["original_receipt_sha256"]) != 64 for item in obligations):
+            or not isinstance(item.get("id"), str) or not item["id"] for item in obligations):
         raise ValueError("old obligations unresolved")
+    obligation_artifacts = [_proof_artifact(item, "original_receipt_path",
+                                             "original_receipt_sha256")
+                            for item in obligations]
     archives = evidence.get("archives", {})
     for label, directory in (("frontend", frontend_dir), ("worker", worker_dir)):
         archive = archives.get(label, {})
@@ -192,6 +237,8 @@ def _proof(evidence_path: Path, *, bank_path: Path, source: dict, ledger: dict,
             "coverage_provenance_sha256": _sha(provenance.encode()),
             "coverage_proof_path": str(Path(coverage["proof_path"]).resolve()),
             "coverage_proof_sha256": coverage["proof_sha256"],
+            "lease_artifact": lease_artifact, "authority_artifact": authority_artifact,
+            "obligation_artifacts": obligation_artifacts,
             "archives": {key: {"path": str(Path(archives[key]["path"]).resolve()),
                                "sha256": archives[key]["sha256"]}
                          for key in ("frontend", "worker")}}
@@ -368,6 +415,10 @@ def verify(*, receipt: Path, bank_config_file: Path, source_root: Path,
         raise ValueError("operator evidence changed")
     if _file_hash(Path(proof["coverage_proof_path"])) != proof.get("coverage_proof_sha256"):
         raise ValueError("coverage proof changed")
+    for artifact in (proof["lease_artifact"], proof["authority_artifact"],
+                     *proof["obligation_artifacts"]):
+        if _file_hash(Path(artifact["path"])) != artifact["sha256"]:
+            raise ValueError("old authority or obligation proof changed")
     for artifact in proof["archives"].values():
         if _file_hash(Path(artifact["path"])) != artifact["sha256"]:
             raise ValueError("old state archive changed")
@@ -379,11 +430,20 @@ def verify(*, receipt: Path, bank_config_file: Path, source_root: Path,
     # Expired replay/capability rows may be pruned only after the private archive
     # has retained their original bytes.
     with _connect_ro(Path(saved["archive_path"])) as old, _connect_ro(bank_path) as active:
-        for table, key in (("revoked", "session"), ("sessions", "session")):
-            retained = {row[0] for row in old.execute("SELECT " + key + " FROM " + table)}
-            present = {row[0] for row in active.execute("SELECT " + key + " FROM " + table)}
+        for table in ("revoked", "sessions"):
+            retained = set(old.execute("SELECT * FROM " + table))
+            present = set(active.execute("SELECT * FROM " + table))
             if not retained.issubset(present):
-                raise ValueError("old admission or revocation lost")
+                raise ValueError("old admission content or revocation lost")
+        now = int(time.time())
+        for table, expiry_index in (("replays", 1), ("capabilities", 3)):
+            active_rows = {row[0]: row for row in active.execute("SELECT * FROM " + table)}
+            for original in old.execute("SELECT * FROM " + table):
+                present = active_rows.get(original[0])
+                if present is not None and present != original:
+                    raise ValueError("old replay or capability content changed")
+                if present is None and original[expiry_index] > now:
+                    raise ValueError("live old replay or capability lost")
     current = _ledger(bank_path, legacy=False)
     if (current["generation"] != saved.get("generation")
             or current["schema_sha256"] != saved.get("adopted_schema_sha256")
@@ -426,18 +486,15 @@ def preflight_unreceipted(bank_path: Path, native_state_dir: Path, *,
     if legacy_pin.exists() or legacy_pin.is_symlink():
         raise ValueError("legacy generation pin requires reviewed transition")
     if not bank_path.exists():
-        if pin.exists() or marker_path.exists() or any((native_state_dir / name).exists() for name in
-                                ("frontend-chat.sqlite3", "dispute-workflow.sqlite3",
-                                 "gloria-workflow.sqlite3")):
+        if pin.exists() or marker_path.exists() or any((native_state_dir / name).exists()
+                                                        for name in RETAINED_APP_FILES):
             raise ValueError("missing ledger beside prior application state")
         return {"new": True, "source_path": source_path, "source_sha256": source_sha}
     with _connect_ro(bank_path) as db:
         tables = {row[0] for row in db.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
         if not tables:
-            if pin.exists() or marker_path.exists():
-                raise ValueError("generation marker without ledger identity")
-            return {"new": True, "source_path": source_path, "source_sha256": source_sha}
+            raise ValueError("existing ledger file without fresh origin requires review")
         if "sandbox_ledger_identity" not in tables:
             raise ValueError("legacy ledger requires transition receipt before StateStore")
         row = db.execute("SELECT generation FROM sandbox_ledger_identity WHERE id=1").fetchall()
@@ -454,12 +511,16 @@ def preflight_unreceipted(bank_path: Path, native_state_dir: Path, *,
                          "ledger_generation": generation}:
                 raise ValueError("fresh ledger pin changed")
             return {"new": False, "source_path": source_path, "source_sha256": source_sha}
-        if pin.exists() or pin.is_symlink():
-            raise ValueError("identity and pin without fresh origin require transition receipt")
-        if any(db.execute("SELECT 1 FROM " + table + " LIMIT 1").fetchone()
-               for table in sorted(tables & set(LEGACY_COLUMNS))):
-            raise ValueError("populated ledger without fresh origin requires transition receipt")
-    return {"new": True, "source_path": source_path, "source_sha256": source_sha}
+        # Match the bank_read guarded table and retained-file inventory before
+        # Service/StateStore can add schema. Even an empty existing DB with an
+        # identity but no fresh-origin marker is ambiguous after lost adoption
+        # artifacts and therefore cannot be claimed as newly authored.
+        populated = [table for table in sorted(tables & GUARDED_BANK_TABLES)
+                     if db.execute("SELECT 1 FROM " + table + " LIMIT 1").fetchone()]
+        retained = [name for name in RETAINED_APP_FILES if (native_state_dir / name).exists()]
+        if populated or retained:
+            raise ValueError("populated retained state without fresh origin requires transition receipt")
+        raise ValueError("identity without fresh origin requires transition receipt")
 
 
 def publish_fresh_origin(state: Path, ledger_file: str, generation: str, preflight: dict) -> None:
