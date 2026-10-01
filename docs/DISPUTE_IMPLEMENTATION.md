@@ -8,7 +8,7 @@ simulated hackathon workflow using newly generated fictional bank records.
 Qualification identifies the exact tested source and installed worker;
 earlier checkpoints remain historical evidence.
 
-Gloria Yanta Salc ([gloriayantasalc](https://github.com/gloriayantasalc)) designed
+Gloria designed
 this prompt flow and R0–R18 decision motor. The implementation uses the descriptive
 name **transaction dispute workflow**; the customer-facing assistant remains **Savia**.
 
