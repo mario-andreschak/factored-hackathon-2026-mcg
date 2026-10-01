@@ -129,6 +129,13 @@ runs do not qualify later source edits.
 
 ## Current source integration and runtime requalification
 
+The portal/preview source map now contains 85 protected files. Its
+[separate source report](qualification/release-preview-source-2026-10-01.json)
+qualifies source integration and a fictional loopback read preview only.
+Neither that preview nor a graph freshness pass establishes installation or
+native/provider execution. The installed image/report below remains historical
+and must not be substituted for a replacement image's exact qualification.
+
 The credential-question source correction and regenerated bridge at
 `d7a4f432000db0a225a010235083427f957c35b5` are validated separately by the
 [combined source report](qualification/gloria-credential-source-2026-10-01.json).
