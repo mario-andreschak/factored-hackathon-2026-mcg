@@ -67,7 +67,7 @@ state = await port.run(
 host and ConversationStore and installs `StageAdapters(model)` with a bounded
 stage timeout appropriate to the qualification. Trusted selections remain in
 the application call; they never become model/tool arguments. The returned
-state contains the application's validated response. ChatService consumes
+state contains the application's validated response. GloriaChatService consumes
 this state directly, avoiding outer model paraphrasing.
 
 The host creates a private language-only admission for the turn and revokes it
@@ -126,3 +126,29 @@ container and cleanup paths. Stop only that named owned container and remove
 only its checked private auth copy after joined tests. Final source freeze
 requires a fresh context/image and a final installed report; earlier passing
 runs do not qualify later source edits.
+
+## Frozen source validation
+
+The final isolated qualification uses application source
+`abc90682faa5cb496c9cd3476ec7811a7e5c9281`, image
+`sha256:402581eaa5df62914d91acbee60c2cdba63aacdfcca64957637825d3387243c7`,
+and external source-manifest SHA256
+`f8757e1e059370c93b32258d169d2faecbcde18b2de786e5a5bef91b91bde453`.
+All 87 application files and 1,410 FLUJO files match their installed bytes.
+The bank requirements file is copied and hashed as provenance; the image
+installs the independent Gloria application dependency closure.
+
+The [sanitized installed report](qualification/gloria-native-release-2026-10-01.json)
+records 37 passing checks: fourteen workflow boundary cases, fourteen native
+capability probes, four revocation probes and five exact adapter fences.
+The real provider returned exact validated Spanish and Portuguese tool
+projections. Timeout used the guarded fallback with zero bank reads; restart,
+foreign-session, replay, poisoned-state and late-callback cases denied execution.
+These workflow cases use the public synthetic development fixture and expose
+no banking action tools.
+
+The separately retained joined listener's readiness report has zero workflow
+cases and deliberately reports qualification false. Its installed pins and
+capability/revocation/fence gates pass, permitting the separate joined
+application qualification. It is distinct from the passing full boundary
+report. Shared deployment remains unactivated.

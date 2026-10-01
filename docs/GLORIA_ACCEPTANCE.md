@@ -13,8 +13,9 @@ selected synthetic local application paths on the frozen candidate.
 Final allowlisted reports:
 [independent source qualification](qualification/gloria-independent-release-2026-10-01.json)
 and [joined native-port HTTP qualification](qualification/gloria-joined-native-release-2026-10-01.json).
-Protected native installation and callback gates are separately retained
-supervisor provenance; the HTTP report keeps `native_execution_verified=false`
+Protected native installation and callback gates are recorded in the separate
+[installed-native report](qualification/gloria-native-release-2026-10-01.json);
+the HTTP report keeps `native_execution_verified=false`
 and `human_adjudicated=false`.
 
 The historical `79f6e80b35b41c4714131e918027cb95569ba128` source checkpoint

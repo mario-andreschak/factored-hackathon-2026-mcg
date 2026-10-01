@@ -3,8 +3,60 @@
 Gloria implements the authenticated Spanish/Portuguese unrecognized-charge
 journey: executable interpretation prompts, emotion/language detection, ordered
 R0–R18 decisions, owned source reads, scoped clarification, explicit simulated
-intake, durable receipt recovery and human handoff. Release qualification is in
-progress; the historical checkpoint below is preserved as earlier evidence.
+intake, durable receipt recovery and human handoff. The release scope is the
+simulated hackathon workflow using newly generated fictional bank records.
+The final qualification below identifies the tested source and installed worker;
+the first checkpoint is retained as historical evidence.
+
+## Release qualification
+
+The executable source is frozen at `abc9068`; subsequent documentation and report
+commits must preserve its 84 protected source hashes. The saved bridge has graph
+SHA256 `c082b3243a8c118d09be0d9346d576fc5a1d243ba23a75be00cb8afdacdf0d08`
+and artifact SHA256
+`640362eef0f5e7d1fbcc8ac8117e4515e64fb6b98fe8a920330a0e4721f57a5e`.
+The installed manifest covers 1,410 pinned FLUJO files and 87 application files.
+Source, independent acceptance, installed native execution and provider/HTTP
+observations are recorded separately; their before/after hashes bind them to
+the same candidate.
+
+The [frozen source report](qualification/gloria-source-release-2026-10-01.json)
+records 1,629 passing tests and 427 passing subtests, including all eleven pinned
+graph compiler checks. It verifies unchanged source, test, compiler and HEAD
+hashes before and after the run, with no failures or skips and a passing dependency
+check. The independent and installed/provider evidence uses the same protected
+source, with each report retaining its own declared before/after file map.
+
+| Qualification | Result |
+| --- | --- |
+| [Frozen source](qualification/gloria-source-release-2026-10-01.json) | 1,629 tests and 427 subtests passed; no failures or skips |
+| [Independent acceptance and source-backed release assertions](qualification/gloria-independent-release-2026-10-01.json) | 198 passed; no assertion or scenario-count reduction |
+| [Installed native boundary](qualification/gloria-native-release-2026-10-01.json) | 14 workflow boundaries, 14 capability probes, four revocation probes and five fence probes passed |
+| [Real native stage checks](qualification/gloria-native-stages-merged-pinned-2026-10-01.md) | Four authored classifier cases and four preflight contract checks passed |
+| [Joined HTTP application journeys](qualification/gloria-joined-native-release-2026-10-01.json) | Four scenarios, 30 HTTP checks and six durable turns passed; no fallback or model/node errors |
+
+The joined journeys exercise ES/PT intake, customer-request handoff and emergency
+handoff. Both intakes verify explicit consent, exact receipt ownership, restart,
+readback, replay with a single case, and logout denial. The PT emergency response
+used one bounded repair. The capture records 39 successful observed model calls
+and 291,090 tokens; monetary cost is unknown. The stage-only preflight comparison
+has one observation per mode and does not establish general performance gains.
+
+The installed image is
+`sha256:402581eaa5df62914d91acbee60c2cdba63aacdfcca64957637825d3387243c7`;
+its external manifest SHA256 is
+`f8757e1e059370c93b32258d169d2faecbcde18b2de786e5a5bef91b91bde453`.
+The native manifest and outer host map both contain 87 files, with different
+explicit wrapper/provenance paths; their shared files and each complete declared
+map are independently verified. The PR's Windows/Linux banking, Gloria, frontend
+API, frontend build and existing source checks pass on the frozen source. Final
+documentation commits retain these hashes and are checked again before readiness.
+
+Intake and review receipts belong to the private simulated ledger. They establish
+that a request was recorded and read back with the correct ownership and lineage.
+They do not establish a real card block, refund or response from a person.
+Scenario labels are authored fictional expectations. Qualification does not
+substitute for independent human-labelled holdout or shared deployment acceptance.
 
 ## Application and authority
 
@@ -38,6 +90,15 @@ rereads source/risk at preparation and confirmation. A chat reply cannot execute
 intake. Confirmation is bound to the owner, session, conversation, query, target,
 snapshot and durable request handle; receipt readback determines success.
 
+The frontend's default direct-MCP service remains available. Gloria uses an
+explicit host factory and its own chat adapter; the two services refuse to adopt
+each other's retained admission state. Trusted Gloria startup pins the explicitly
+approved sandbox ledger generation in private durable state. Every read, write,
+cancellation and revocation reuses that generation across restart. A replaced
+ledger, a malformed pin, or a missing pin beside existing workflow state fails
+closed. Approval of ledger continuity remains an explicit private configuration
+choice, and language preferences do not grant action authority.
+
 `response.py` checks canonical response schema, facts, action claims and
 recommendation support. One bounded repair precedes an ES/PT fallback. Each
 query is grounded independently before its exact message is composed; facts
@@ -70,7 +131,10 @@ unless a configured price is actually available.
 
 ## Reproduction
 
-Install `requirements-gloria.txt` in a fresh environment, then run:
+Install `requirements-gloria.txt`, `pytest` and `pytest-subtests` in a fresh
+environment. To include the eleven native graph compiler checks, set `FLUJO_ROOT`
+to a clean checkout of the pinned revision above and install its existing
+authoring dependencies with `npm ci --ignore-scripts`. Then run:
 
 ```powershell
 python -m pip check
@@ -87,8 +151,28 @@ private authority and login mounts. It verifies installed source bytes against
 the requested manifest and exercises admission, replay, restart, poisoning and
 provider boundaries. A successful worker may be retained for joined qualification.
 
-For an independent admitted application, use private frontend and bank
-configuration with the same dataset/customer mapping and a separate state/ledger:
+For an independent admitted application, set `BANKING_CONFIG_FILE` to a private
+frontend configuration and `BANKING_DATA_DIR` to the serving dataset. The frontend
+configuration supplies the demo authentication settings and explicit profile
+bindings, plus a `chat` object containing `base_url`, `model`, `execution_token`,
+`frontend_issuer`, `frontend_kid`, `frontend_signing_key_file`,
+`frontend_audience: "flujo-banking-ingress"`, and `principal_customers`. These are
+server-side values. The URL points to the isolated native worker, the signing key
+is a private Ed25519 key, and the mapping binds each approved subject to the same
+customer used by its frontend profile.
+
+The private bank configuration must use delegated mode, the same `data_dir` and
+`principal_customers`, and matching approved frontend signer/issuer/audience. Its
+`state_db` must be inside the independent `--state-dir`. After approving continuity
+of that exact sandbox ledger, explicitly set `ledger_continuity_approved: true`;
+the default is false and startup otherwise refuses admission. Existing pins or
+state are never migrated to a replacement ledger. Configure the source and
+event-date rate pins needed by the dataset; missing evidence remains incomplete.
+
+The default frontend direct-MCP example describes the separate default service.
+Gloria uses the private chat fields above and the runner's explicit host factory.
+The runner records Gloria mode and the pinned generation in the cookie policy.
+Use a separate state directory and ledger:
 
 ```powershell
 python scripts/run_gloria.py --state-dir '<independent-state>' --bank-config-file '<private-bank-config>' --native-url 'http://127.0.0.1:<isolated-port>' --native-authority-dir '<isolated-authority>' --source-root '<generated-source>' --enable-simulated-intake
@@ -96,7 +180,8 @@ python scripts/run_gloria.py --state-dir '<independent-state>' --bank-config-fil
 
 The existing sandbox coverage attestation is never fabricated by this runner.
 Use a separate browser profile to avoid cookie interference. `--batch-preflight`
-remains opt-in pending same-fixture real-provider comparison. Source tests and
+remains opt-in; the targeted real-provider comparison checks its contracts and
+does not establish general accuracy, cost or latency superiority. Source tests and
 synthetic smoke outcomes do not replace independent human-labelled holdout,
 shared deployment acceptance or authorization to merge/activate the candidate.
 
@@ -130,9 +215,10 @@ development routing observations, not a clean-stage or speed claim.
 Independent read-only semantic review agreed with the four modes, languages
 and dispute facts, and found no invented receipt or completed-action claim.
 It also found unsourced conditional card-blocking advice in the PT emergency
-reply: the advice is absent from the reviewed synthetic policy chunks.
-The textual validator allowed it. Recommendation grounding therefore remains
-a known gap and must be qualified before a complete grounded-response claim.
+reply: the advice was absent from the reviewed synthetic policy chunks.
+The textual validator at that checkpoint allowed it. The release now checks
+recommendation support and independently rejects that advice; the earlier run
+remains diagnostic evidence.
 
 The 25 returned model calls report 371,171 prompt tokens and 1,257 completion
 tokens in total. The timed-out call has no captured provider usage. Cost remains
