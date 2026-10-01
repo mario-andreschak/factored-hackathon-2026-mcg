@@ -54,7 +54,10 @@ const name = `codex-gloria-native-${randomBytes(4).toString('hex')}`;
 const endpoint = `http://127.0.0.1:${port}`;
 const admissions = [], cases = [];
 const request = async (route, body, token, method = 'POST') => {
-  const result = await fetch(endpoint + route, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) },
+  // Authoring and the real Windows cleanup probe block this process briefly.
+  // Fresh connections avoid reusing a socket whose close event was deferred;
+  // admitted turn requests are never retried.
+  const result = await fetch(endpoint + route, { method, headers: { 'content-type': 'application/json', connection: 'close', ...(token ? { authorization: 'Bearer ' + token } : {}) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(420000) });
   const text = await result.text();
   let data; try { data = JSON.parse(text); } catch { data = { error: 'invalid_json' }; }
@@ -146,7 +149,7 @@ try {
   } });
   before = eventsBytes();
   const pendingBody = fetch(endpoint + '/v1/chat/completions', { method: 'POST', headers: {
-    'content-type': 'application/json', authorization: 'Bearer ' + duringBody.stageToken }, body: slowBody, duplex: 'half' });
+    'content-type': 'application/json', connection: 'close', authorization: 'Bearer ' + duringBody.stageToken }, body: slowBody, duplex: 'half' });
   await new Promise(resolve => setTimeout(resolve, 200)); revoke(duringBody.stageToken); finishBody();
   const bodyDenied = await pendingBody; const bodyDeniedData = await bodyDenied.json(); unchanged = before.equals(eventsBytes());
   revocationCases.push({ case: 'revocation_during_body_await', httpStatus: bodyDenied.status,
@@ -198,7 +201,7 @@ try {
     if (definition.scenario === 'concurrent_replay') {
       const serialized = JSON.stringify(body);
       const stream = new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode(serialized.slice(0, 10))); setTimeout(() => { controller.enqueue(new TextEncoder().encode(serialized.slice(10))); controller.close(); }, 500); } });
-      slowReplay = fetch(endpoint + '/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + record.token }, body: stream, duplex: 'half' });
+      slowReplay = fetch(endpoint + '/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', connection: 'close', authorization: 'Bearer ' + record.token }, body: stream, duplex: 'half' });
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     const completion = await request('/v1/chat/completions', body, record.token);
