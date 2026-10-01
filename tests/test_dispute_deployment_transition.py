@@ -204,6 +204,7 @@ def test_runner_rejects_changed_generation_before_service_or_state_creation(tmp_
     assert not kwargs["new_frontend_state_dir"].exists()
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX mode contract")
 def test_default_native_port_keeps_private_files(tmp_path):
     authority = tmp_path / "private-control"
     authority.mkdir(mode=0o700)
@@ -248,6 +249,7 @@ def test_missing_adopted_receipt_cannot_pass_as_fresh_even_without_archive(tmp_p
                                          source_root=None, data_dir=synthetic)
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX group ownership contract")
 def test_fresh_authored_origin_restart_and_group_path(tmp_path):
     from types import SimpleNamespace
     from scripts import run_dispute
@@ -454,3 +456,128 @@ def test_missing_or_changed_original_authority_receipt_fails_closed(tmp_path):
     with pytest.raises(ValueError, match="obligation proof changed"):
         transition.verify(receipt=receipt, bank_config_file=kwargs["bank_config_file"],
                           source_root=root, native_state_dir=kwargs["native_state_dir"])
+
+
+def test_archive_parent_sync_precedes_adoption_and_fault_preserves_original(tmp_path, monkeypatch):
+    kwargs, bank, proof, _ = fixture(tmp_path)
+    original = transition._ledger(bank, legacy=True)
+    plan_file, receipt = tmp_path / "plan.json", tmp_path / "receipt.json"
+    transition.plan(output=plan_file, **kwargs)
+    real_sync = transition._fsync_parent_directory
+    calls = []
+
+    def fail_archive_sync(parent):
+        calls.append(parent)
+        if parent == bank.parent:
+            raise OSError("synthetic archive directory sync failure")
+        real_sync(parent)
+
+    monkeypatch.setattr(transition, "_fsync_parent_directory", fail_archive_sync)
+    with pytest.raises(OSError, match="archive directory sync failure"):
+        transition.apply(plan_file=plan_file, bank_config_file=kwargs["bank_config_file"],
+                         operator_evidence=proof, receipt=receipt)
+    archive = bank.parent / "legacy-bank-before-native.sqlite3"
+    assert calls == [bank.parent]
+    assert archive.exists()
+    assert transition._ledger(archive, legacy=True) == original
+    assert transition._ledger(bank, legacy=True) == original
+    assert not receipt.exists()
+    assert not (bank.parent / "dispute-bank-generation.json").exists()
+    with sqlite3.connect(bank) as db:
+        assert not db.execute("SELECT name FROM sqlite_master WHERE name='sandbox_ledger_identity'").fetchone()
+
+
+def test_directory_sync_platform_branch_and_no_overwrite_after_fault(tmp_path, monkeypatch):
+    with monkeypatch.context() as patch:
+        patch.setattr(transition.os, "open", lambda *args, **kwargs: (_ for _ in ()).throw(
+            PermissionError("synthetic Windows directory open")))
+        transition._fsync_parent_directory(tmp_path, platform_name="nt")
+        with pytest.raises(PermissionError, match="synthetic Windows"):
+            transition._fsync_parent_directory(tmp_path, platform_name="posix")
+    artifact = tmp_path / "no-overwrite.json"
+    with monkeypatch.context() as patch:
+        patch.setattr(transition, "_fsync_parent_directory",
+                      lambda _: (_ for _ in ()).throw(PermissionError("synthetic sync fault")))
+        with pytest.raises(PermissionError, match="synthetic sync fault"):
+            transition._atomic_new(artifact, b'{"synthetic":true}\n')
+    assert artifact.read_bytes() == b'{"synthetic":true}\n'
+    assert not list(tmp_path.glob(".transition-*"))
+    with pytest.raises(ValueError, match="already exists"):
+        transition._atomic_new(artifact, b"replaced")
+    assert artifact.read_bytes() == b'{"synthetic":true}\n'
+
+
+def test_crossplatform_real_fresh_factory_write_and_restart(tmp_path):
+    from types import SimpleNamespace
+    from banking_mcp.security import Principal, StateStore
+    from scripts.run_dispute import NativeHostFactory
+
+    state, data = tmp_path / "fresh-bank", tmp_path / "synthetic-data"
+    state.mkdir(mode=0o700)
+    data.mkdir()
+    (data / "QUALIFICATION_SYNTHETIC.json").write_text(
+        '{"synthetic":true,"origin":"crossplatform-authored-fixture"}')
+    bank = state / "banking.db"
+    first = transition.preflight_unreceipted(bank, state, source_root=None, data_dir=data)
+    assert first["new"] is True
+    store = StateStore(bank, ledger_continuity_approved=True)
+    service = SimpleNamespace(config=SimpleNamespace(
+        mode="delegated", ledger_continuity_approved=True, state_db=bank), store=store)
+    workflow_path = state / "dispute-workflow.sqlite3"
+    authority = tmp_path / "control"
+    factory = NativeHostFactory(workflow_path, service, "http://127.0.0.1:4200", authority)
+    transition.publish_fresh_origin(state, bank.name, factory.ledger_generation, first)
+    principal = Principal("new-owner", "new-customer", "new-session", "new-conversation",
+                          int(time.time()) + 600, factory.ledger_generation)
+    store.admit(principal, "new-jti")
+    restart = transition.preflight_unreceipted(bank, state, source_root=None, data_dir=data)
+    assert restart["new"] is False
+    restarted = NativeHostFactory(workflow_path, service, "http://127.0.0.1:4200", authority)
+    assert restarted.ledger_generation == factory.ledger_generation
+
+
+@pytest.mark.parametrize("name", ["dispute-bank-generation.json", "frontend-chat.sqlite3",
+                                  "dispute-workflow.sqlite3"])
+def test_dangling_retained_binding_refused_before_service(tmp_path, monkeypatch, name):
+    from types import SimpleNamespace
+    from scripts import run_dispute
+
+    state, data, control = tmp_path / "fresh", tmp_path / "data", tmp_path / "control"
+    state.mkdir()
+    data.mkdir()
+    control.mkdir()
+    (data / "QUALIFICATION_SYNTHETIC.json").write_text(
+        '{"synthetic":true,"origin":"reviewed-test-fixture"}')
+    (control / "admissions.json").write_text("[]")
+    (control / "native-profile.json").write_text("{}")
+    suspect = state / name
+    try:
+        suspect.symlink_to(state / "missing-target")
+    except OSError:
+        pytest.skip("host cannot create a synthetic symlink")
+    bank = state / "banking.db"
+    settings = SimpleNamespace(state_dir=tmp_path / "new-frontend", data_dir=data,
+                               chat={"principal_customers": {"owner": "customer"}})
+    config = SimpleNamespace(state_db=bank, data_dir=data, mode="delegated",
+                             principal_customers={"owner": "customer"})
+    called = []
+    monkeypatch.setattr(run_dispute, "Service", lambda _: called.append(True))
+    with pytest.raises(ValueError, match="symlink or nonregular"):
+        run_dispute.application(settings, config, state, "http://127.0.0.1:4200",
+                                control, enable_simulated_intake=True)
+    assert not called
+    assert not bank.exists() and not settings.state_dir.exists()
+    assert suspect.is_symlink() and not suspect.exists()
+
+
+def test_nonregular_retained_binding_refused_before_service(tmp_path):
+    state, data = tmp_path / "fresh", tmp_path / "data"
+    state.mkdir()
+    data.mkdir()
+    (data / "QUALIFICATION_SYNTHETIC.json").write_text(
+        '{"synthetic":true,"origin":"reviewed-test-fixture"}')
+    (state / "frontend-chat.sqlite3").mkdir()
+    with pytest.raises(ValueError, match="nonregular"):
+        transition.preflight_unreceipted(state / "banking.db", state,
+                                         source_root=None, data_dir=data)
+    assert not (state / "banking.db").exists()
