@@ -60,9 +60,19 @@ import {
 
 type Page = "home" | "products" | "transactions";
 const nav = [
-  { id: "home" as Page, label: "Inicio", icon: Home },
-  { id: "products" as Page, label: "Mis productos", icon: Wallet },
-  { id: "transactions" as Page, label: "Movimientos", icon: ArrowDownLeft },
+  { id: "home" as Page, label: "Inicio", pt: "Início", icon: Home },
+  {
+    id: "products" as Page,
+    label: "Mis productos",
+    pt: "Meus produtos",
+    icon: Wallet,
+  },
+  {
+    id: "transactions" as Page,
+    label: "Movimientos",
+    pt: "Movimentos",
+    icon: ArrowDownLeft,
+  },
 ];
 
 function Brand({ inverse = false }: { inverse?: boolean }) {
@@ -86,11 +96,19 @@ function Avatar({ name, small = false }: { name: string; small?: boolean }) {
     </span>
   );
 }
-function Badge({ status }: { status: string }) {
+function Badge({
+  status,
+  language = "es",
+}: {
+  status: string;
+  language?: ActionLanguage;
+}) {
   return (
     <span className={`badge ${status.toLowerCase()}`}>
       <span />
-      {statusNames[status] || status}
+      {language === "pt"
+        ? ptStatus[status] || statusNames[status] || status
+        : statusNames[status] || status}
     </span>
   );
 }
@@ -118,7 +136,15 @@ function TxIcon({ transaction }: { transaction: Transaction }) {
     </span>
   );
 }
-function Amount({ t, hidden }: { t: Transaction; hidden?: boolean }) {
+function Amount({
+  t,
+  hidden,
+  language = "es",
+}: {
+  t: Transaction;
+  hidden?: boolean;
+  language?: ActionLanguage;
+}) {
   return (
     <span
       className={`amount ${t.direction === "credit" && t.status === "Approved" ? "incoming" : ""}`}
@@ -128,7 +154,14 @@ function Amount({ t, hidden }: { t: Transaction; hidden?: boolean }) {
           ? "+"
           : "−"
         : ""}
-      {money(t.amount, t.currency, hidden)}
+      {language === "pt" && !hidden
+        ? new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: t.currency,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(t.amount)
+        : money(t.amount, t.currency, hidden)}
       <small>{t.currency}</small>
     </span>
   );
@@ -205,7 +238,7 @@ const loginCopy = {
       "Experiência de demonstração com dados sintéticos do hackathon. Os nomes são apelidos; os produtos e lançamentos vêm do conjunto de dados.",
     footer: "Seu dinheiro, com tranquilidade.",
     portalLanguageNotice:
-      "Após entrar, o portal continua em espanhol. Os textos da interface do Assistente seguem o idioma escolhido aqui.",
+      "Após entrar, a navegação e a consulta de movimentos estarão em português. Início, produtos, seus detalhes e as informações da demonstração continuam em espanhol; o Assistente segue o idioma escolhido aqui.",
     sessionNotice:
       "O acesso deste navegador foi removido, mas não foi possível confirmar o encerramento completo da sessão e do Assistente. Peça ajuda antes de usar outra conta.",
     errors: {
@@ -747,19 +780,22 @@ function TransactionTable({
   hidden,
   onSelect,
   compact = false,
+  language = "es",
 }: {
   items: Transaction[];
   hidden: boolean;
   onSelect: (t: Transaction) => void;
   compact?: boolean;
+  language?: ActionLanguage;
 }) {
+  const pt = language === "pt";
   return (
-    <div className="transaction-table">
+    <div className="transaction-table" lang={pt ? "pt-BR" : "es"}>
       <div className="table-heading">
-        <span>Movimiento</span>
-        <span>Fecha</span>
-        <span>Estado</span>
-        <span>Monto</span>
+        <span>{pt ? "Movimento" : "Movimiento"}</span>
+        <span>{pt ? "Data" : "Fecha"}</span>
+        <span>{pt ? "Status" : "Estado"}</span>
+        <span>{pt ? "Valor" : "Monto"}</span>
       </div>
       {items.map((t) => (
         <button
@@ -770,9 +806,15 @@ function TransactionTable({
           <span className="transaction-description">
             <TxIcon transaction={t} />
             <span>
-              <strong>{label(t)}</strong>
+              <strong lang={t.merchant ? "" : pt ? "pt-BR" : "es"}>
+                {t.merchant || portalType(t.type, language)}
+              </strong>
               <small>
-                {t.merchant ? typeNames[t.type] || t.type : t.channel}{" "}
+                {t.merchant ? (
+                  portalType(t.type, language)
+                ) : (
+                  <span lang="">{t.channel}</span>
+                )}{" "}
                 {!compact && (
                   <span>
                     · Ref. {t.product_reference.slice(-6).toUpperCase()}
@@ -780,27 +822,37 @@ function TransactionTable({
                 )}
               </small>
               <span className="transaction-mini-status">
-                <Badge status={t.status} />
+                <Badge status={t.status} language={language} />
               </span>
             </span>
           </span>
           <span className="transaction-date">
-            {date(t.occurred_at, {
-              day: "2-digit",
-              month: "short",
-              timeZone: "UTC",
-            })}
+            {pt
+              ? new Intl.DateTimeFormat("pt-BR", {
+                  day: "2-digit",
+                  month: "short",
+                  timeZone: "UTC",
+                }).format(new Date(t.occurred_at.slice(0, 10) + "T12:00:00Z"))
+              : date(t.occurred_at, {
+                  day: "2-digit",
+                  month: "short",
+                  timeZone: "UTC",
+                })}
             <small>{t.occurred_at.slice(0, 4)}</small>
           </span>
           <span className="transaction-status">
-            <Badge status={t.status} />
+            <Badge status={t.status} language={language} />
           </span>
-          <Amount t={t} hidden={hidden} />
+          <Amount t={t} hidden={hidden} language={language} />
         </button>
       ))}
       {items.length === 0 && (
-        <Empty title="No hay movimientos aquí">
-          Prueba otro filtro para explorar tu historial.
+        <Empty
+          title={pt ? "Nenhum movimento encontrado" : "No hay movimientos aquí"}
+        >
+          {pt
+            ? "Experimente outro filtro para consultar seu histórico."
+            : "Prueba otro filtro para explorar tu historial."}
         </Empty>
       )}
     </div>
@@ -931,6 +983,7 @@ function TransactionDetail({
   chatAvailable,
   onClose,
   onChat,
+  language = "es",
 }: {
   transaction: Transaction;
   products: Product[];
@@ -938,95 +991,134 @@ function TransactionDetail({
   chatAvailable: boolean;
   onClose: () => void;
   onChat: () => void;
+  language?: ActionLanguage;
 }) {
+  const pt = language === "pt";
   const product = products.find((p) => p.reference === t.product_reference);
   const isCharge = t.type === "Purchase";
   return (
-    <Modal title="Detalle del movimiento" onClose={onClose}>
-      <div className="transaction-detail-head">
-        <TxIcon transaction={t} />
-        <h3>{label(t)}</h3>
-        <Amount t={t} hidden={hidden} />
-        <Badge status={t.status} />
-      </div>
-      <dl className="details-list">
-        <div>
-          <dt>Fecha del movimiento</dt>
-          <dd>
-            {date(t.occurred_at)} · {t.occurred_at.slice(11, 16)}
-          </dd>
+    <Modal
+      title={pt ? "Detalhes do movimento" : "Detalle del movimiento"}
+      titleLang={pt ? "pt-BR" : "es"}
+      closeLabel={pt ? "Fechar" : "Cerrar"}
+      onClose={onClose}
+    >
+      <div lang={pt ? "pt-BR" : "es"}>
+        <div className="transaction-detail-head">
+          <TxIcon transaction={t} />
+          <h3 lang={t.merchant ? "" : pt ? "pt-BR" : "es"}>
+            {t.merchant || portalType(t.type, language)}
+          </h3>
+          <Amount t={t} hidden={hidden} language={language} />
+          <Badge status={t.status} language={language} />
         </div>
-        {t.process_date.slice(0, 10) !== t.occurred_at.slice(0, 10) && (
+        <dl className="details-list">
           <div>
-            <dt>Fecha de procesamiento</dt>
-            <dd>{date(t.process_date)}</dd>
+            <dt>{pt ? "Data do movimento" : "Fecha del movimiento"}</dt>
+            <dd>
+              {portalDate(t.occurred_at, language)} ·{" "}
+              {t.occurred_at.slice(11, 16)}
+            </dd>
+          </div>
+          {t.process_date.slice(0, 10) !== t.occurred_at.slice(0, 10) && (
+            <div>
+              <dt>{pt ? "Data do processamento" : "Fecha de procesamiento"}</dt>
+              <dd>{portalDate(t.process_date, language)}</dd>
+            </div>
+          )}
+          <div>
+            <dt>{pt ? "Produto" : "Producto"}</dt>
+            <dd>
+              {product
+                ? portalProduct(product.type, language)
+                : pt
+                  ? "Produto"
+                  : "Producto"}{" "}
+              · {t.product_reference.slice(-6).toUpperCase()}
+            </dd>
+          </div>
+          <div>
+            <dt>{pt ? "Tipo de operação" : "Tipo de operación"}</dt>
+            <dd>{portalType(t.type, language)}</dd>
+          </div>
+          <div>
+            <dt>Canal</dt>
+            <dd lang="">{t.channel}</dd>
+          </div>
+          <div>
+            <dt>{pt ? "Estabelecimento" : "Comercio"}</dt>
+            <dd lang={t.merchant ? "" : undefined}>
+              {t.merchant ||
+                (pt ? "Não informado na origem" : "No informado en el origen")}
+            </dd>
+          </div>
+          <div>
+            <dt>{pt ? "Localização" : "Ubicación"}</dt>
+            <dd lang={t.city ? "" : undefined}>
+              {[t.city, t.country].filter(Boolean).join(", ") ||
+                (pt ? "Não informada" : "No informada")}
+            </dd>
+          </div>
+          <div>
+            <dt>{pt ? "Referência" : "Referencia"}</dt>
+            <dd className="mono">{t.reference}</dd>
+          </div>
+        </dl>
+        {t.direction === "unknown" && (
+          <p className="data-footnote">
+            {pt
+              ? "A origem não informa se este movimento é entrada ou saída; o valor aparece sem sinal."
+              : "El origen no indica si este movimiento es entrada o salida; su monto se presenta sin signo."}
+          </p>
+        )}
+        {isCharge && (
+          <div className="charge-review">
+            <span className="charge-review-icon">
+              <ShieldCheck size={20} />
+            </span>
+            <div>
+              <strong>
+                {pt
+                  ? "Não reconhece esta cobrança?"
+                  : "¿No reconoces este cargo?"}
+              </strong>
+              <p>
+                {chatAvailable
+                  ? pt
+                    ? "Confira o estabelecimento, a data e o valor. A Savia pode ajudar você a revisar o movimento antes de solicitar atendimento humano."
+                    : "Comprueba el comercio, la fecha y el monto. Savia puede ayudarte a revisar el movimiento antes de solicitar atención humana."
+                  : pt
+                    ? "Confira o estabelecimento, a data, o valor e o produto associado. Este protótipo ainda não registra análises nem casos."
+                    : "Comprueba el comercio, la fecha, el monto y el producto asociado. Este prototipo aún no registra revisiones ni casos."}
+              </p>
+            </div>
           </div>
         )}
-        <div>
-          <dt>Producto</dt>
-          <dd>
-            {product ? productShort(product.type) : "Producto"} ·{" "}
-            {t.product_reference.slice(-6).toUpperCase()}
-          </dd>
-        </div>
-        <div>
-          <dt>Tipo de operación</dt>
-          <dd>{typeNames[t.type] || t.type}</dd>
-        </div>
-        <div>
-          <dt>Canal</dt>
-          <dd>{t.channel}</dd>
-        </div>
-        <div>
-          <dt>Comercio</dt>
-          <dd>{t.merchant || "No informado en el origen"}</dd>
-        </div>
-        <div>
-          <dt>Ubicación</dt>
-          <dd>
-            {[t.city, t.country].filter(Boolean).join(", ") || "No informada"}
-          </dd>
-        </div>
-        <div>
-          <dt>Referencia</dt>
-          <dd className="mono">{t.reference}</dd>
-        </div>
-      </dl>
-      {t.direction === "unknown" && (
-        <p className="data-footnote">
-          El origen no indica si este movimiento es entrada o salida; su monto
-          se presenta sin signo.
+        <button
+          className="button primary full"
+          onClick={onChat}
+          disabled={!chatAvailable}
+        >
+          <MessageCircle size={18} />
+          {isCharge
+            ? pt
+              ? "Revisar esta cobrança"
+              : "Revisar este cargo"
+            : pt
+              ? "Consultar este movimento"
+              : "Consultar este movimiento"}
+          <ArrowRight size={18} />
+        </button>
+        <p className="modal-disclosure">
+          {chatAvailable
+            ? pt
+              ? "A consulta é somente leitura. Uma solicitação de atendimento humano só é registrada após uma confirmação verificável."
+              : "La consulta es de solo lectura. Un caso humano solo se registra cuando recibes una confirmación verificable."
+            : pt
+              ? "A revisão assistida ainda não está disponível neste protótipo. Nenhum caso foi registrado."
+              : "La revisión asistida aún no está disponible en este prototipo. No se ha registrado un caso."}
         </p>
-      )}
-      {isCharge && (
-        <div className="charge-review">
-          <span className="charge-review-icon">
-            <ShieldCheck size={20} />
-          </span>
-          <div>
-            <strong>¿No reconoces este cargo?</strong>
-            <p>
-              {chatAvailable
-                ? "Comprueba el comercio, la fecha y el monto. Savia puede ayudarte a revisar el movimiento antes de solicitar atención humana."
-                : "Comprueba el comercio, la fecha, el monto y el producto asociado. Este prototipo aún no registra revisiones ni casos."}
-            </p>
-          </div>
-        </div>
-      )}
-      <button
-        className="button primary full"
-        onClick={onChat}
-        disabled={!chatAvailable}
-      >
-        <MessageCircle size={18} />
-        {isCharge ? "Revisar este cargo" : "Consultar este movimiento"}
-        <ArrowRight size={18} />
-      </button>
-      <p className="modal-disclosure">
-        {chatAvailable
-          ? "La consulta es de solo lectura. Un caso humano solo se registra cuando recibes una confirmación verificable."
-          : "La revisión asistida aún no está disponible en este prototipo. No se ha registrado un caso."}
-      </p>
+      </div>
     </Modal>
   );
 }
@@ -1056,6 +1148,48 @@ function AssistantText({ text }: { text: string }) {
 }
 
 type ActionLanguage = "es" | "pt";
+const ptStatus: Record<string, string> = {
+  Approved: "Aprovado",
+  Pending: "Pendente",
+  Declined: "Recusado",
+  Reversed: "Estornado",
+  Active: "Ativo",
+  Blocked: "Bloqueado",
+  Closed: "Encerrado",
+  Suspended: "Suspenso",
+  Inactive: "Inativo",
+};
+const ptTypes: Record<string, string> = {
+  Purchase: "Compra",
+  Withdrawal: "Saque",
+  Transfer: "Transferência",
+  Payment: "Pagamento",
+  Deposit: "Depósito",
+  Adjustment: "Ajuste",
+};
+const ptProducts: Record<string, string> = {
+  "Cuenta Ahorro": "Conta poupança",
+  "Cuenta Corriente": "Conta corrente",
+  "Tarjeta Crédito": "Cartão de crédito",
+  "Tarjeta Débito": "Cartão de débito",
+};
+const portalType = (value: string, language: ActionLanguage) =>
+  language === "pt"
+    ? ptTypes[value] || typeNames[value] || value
+    : typeNames[value] || value;
+const portalProduct = (value: string, language: ActionLanguage) =>
+  language === "pt"
+    ? ptProducts[value] || productShort(value)
+    : productShort(value);
+const portalDate = (
+  value: string,
+  language: ActionLanguage,
+  options?: Intl.DateTimeFormatOptions,
+) => (language === "pt" ? actionDate(value, "pt") : date(value, options));
+const portalNumber = (value: number, language: ActionLanguage) =>
+  language === "pt"
+    ? new Intl.NumberFormat("pt-BR").format(value)
+    : number(value);
 const ACTION_LANGUAGE_STORAGE = "flujo-bank-action-language";
 const assistantCopy = {
   es: {
@@ -2905,7 +3039,11 @@ export default function App() {
         setPage("home");
         return;
       }
-      setToast("No pudimos cerrar la sesión. Intenta de nuevo.");
+      setToast(
+        actionLanguagePreference === "pt"
+          ? "Não foi possível encerrar a sessão. Tente novamente."
+          : "No pudimos cerrar la sesión. Intenta de nuevo.",
+      );
     }
   }
   const closeProduct = useCallback(() => setSelectedProduct(null), []),
@@ -2946,6 +3084,8 @@ export default function App() {
         <span>Preparando tu espacio…</span>
       </div>
     );
+  const pt = actionLanguagePreference === "pt";
+  const shellLang = pt ? "pt-BR" : "es";
   const synthetic =
     authMode === "invite" ||
     data?.metadata.dataset === "team-synthetic-fixture";
@@ -2968,13 +3108,14 @@ export default function App() {
           label(t),
           t.type,
           typeNames[t.type],
+          ptTypes[t.type],
           t.channel,
           t.currency,
           t.reference,
         ]
           .join(" ")
-          .toLocaleLowerCase("es")
-          .includes(query.toLocaleLowerCase("es"))),
+          .toLocaleLowerCase(pt ? "pt-BR" : "es")
+          .includes(query.toLocaleLowerCase(pt ? "pt-BR" : "es"))),
   );
   const months = [
     ...new Set(transactions.map((t) => t.occurred_at.slice(0, 7))),
@@ -2986,22 +3127,31 @@ export default function App() {
   const paginationTotal = Math.max(1, Math.ceil(filtered.length / 10));
   function download(items: Transaction[]) {
     csv(items);
-    setToast("Tus movimientos se descargaron en CSV.");
+    setToast(
+      pt
+        ? "Seus movimentos foram baixados em CSV."
+        : "Tus movimientos se descargaron en CSV.",
+    );
   }
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${mobileMenu ? "mobile-open" : ""}`}>
+      <aside
+        className={`sidebar ${mobileMenu ? "mobile-open" : ""}`}
+        lang={shellLang}
+      >
         <div className="sidebar-brand">
           <Brand />
           <button
             className="icon-button mobile-close"
-            aria-label="Cerrar menú"
+            aria-label={pt ? "Fechar menu" : "Cerrar menú"}
             onClick={() => setMobileMenu(false)}
           >
             <X size={21} />
           </button>
         </div>
-        <span className="sidebar-label">TU ESPACIO PERSONAL</span>
+        <span className="sidebar-label">
+          {pt ? "SEU ESPAÇO PESSOAL" : "TU ESPACIO PERSONAL"}
+        </span>
         <nav>
           {nav.map((n) => (
             <button
@@ -3010,7 +3160,7 @@ export default function App() {
               onClick={() => navigate(n.id)}
             >
               <n.icon size={20} />
-              <span>{n.label}</span>
+              <span>{pt ? n.pt : n.label}</span>
               {page === n.id && <span className="nav-dot" />}
             </button>
           ))}
@@ -3021,9 +3171,9 @@ export default function App() {
             }}
           >
             <MessageCircle size={20} />
-            <span>Asistente</span>
+            <span>{pt ? "Assistente" : "Asistente"}</span>
             <span className="nav-new">
-              {chatStatus.available ? "FLUJO" : "PRONTO"}
+              {chatStatus.available ? "FLUJO" : pt ? "EM BREVE" : "PRONTO"}
             </span>
           </button>
         </nav>
@@ -3032,20 +3182,32 @@ export default function App() {
             <span className="help-leaf">
               <Leaf size={21} />
             </span>
-            <strong>Todo un poco más claro.</strong>
+            <strong>
+              {pt ? "Tudo um pouco mais claro." : "Todo un poco más claro."}
+            </strong>
             <p>
               {chatStatus.available
-                ? "Entiende un movimiento con ayuda de tu asistente."
-                : "Revisa los detalles de cada cargo en tu historial."}
+                ? pt
+                  ? "Entenda um movimento com a ajuda do Assistente."
+                  : "Entiende un movimiento con ayuda de tu asistente."
+                : pt
+                  ? "Confira os detalhes de cada cobrança no seu histórico."
+                  : "Revisa los detalles de cada cargo en tu historial."}
             </p>
             <button onClick={() => openChat()}>
-              {chatStatus.available ? "Hablemos" : "Estado del asistente"}
+              {chatStatus.available
+                ? pt
+                  ? "Vamos conversar"
+                  : "Hablemos"
+                : pt
+                  ? "Status do Assistente"
+                  : "Estado del asistente"}
               <ArrowUpRight size={16} />
             </button>
           </div>
           <button className="sidebar-info" onClick={() => setInfo(true)}>
             <ShieldCheck size={18} />
-            Sobre esta experiencia
+            {pt ? "Sobre esta experiência" : "Sobre esta experiencia"}
             <ArrowUpRight size={14} />
           </button>
           <div className="sidebar-profile">
@@ -3060,8 +3222,8 @@ export default function App() {
             )}
             <button
               className="icon-button"
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
+              aria-label={pt ? "Encerrar sessão" : "Cerrar sesión"}
+              title={pt ? "Encerrar sessão" : "Cerrar sesión"}
               onClick={logout}
             >
               <LogOut size={18} />
@@ -3072,28 +3234,34 @@ export default function App() {
       {mobileMenu && (
         <button
           className="mobile-shade"
-          aria-label="Cerrar menú"
+          aria-label={pt ? "Fechar menu" : "Cerrar menú"}
           onClick={() => setMobileMenu(false)}
         />
       )}
       <div className="main-shell">
-        <header className="topbar">
+        <header className="topbar" lang={shellLang}>
           <div className="topbar-title">
             <button
               className="icon-button mobile-menu"
-              aria-label="Abrir menú"
+              aria-label={pt ? "Abrir menu" : "Abrir menú"}
               onClick={() => setMobileMenu(true)}
             >
               <Menu size={21} />
             </button>
-            <span>{nav.find((n) => n.id === page)?.label}</span>
+            <span>
+              {pt
+                ? nav.find((n) => n.id === page)?.pt
+                : nav.find((n) => n.id === page)?.label}
+            </span>
           </div>
           <div className="topbar-actions">
             <label className="global-search">
               <Search size={17} />
               <input
-                aria-label="Buscar movimientos"
-                placeholder="Buscar un movimiento"
+                aria-label={pt ? "Buscar movimentos" : "Buscar movimientos"}
+                placeholder={
+                  pt ? "Buscar um movimento" : "Buscar un movimiento"
+                }
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -3105,12 +3273,18 @@ export default function App() {
             <button className="snapshot-pill" onClick={() => setInfo(true)}>
               <span className="live-dot" />
               {synthetic
-                ? "Escenario sintético"
-                : "Datos sintéticos del organizador"}
+                ? pt
+                  ? "Cenário sintético"
+                  : "Escenario sintético"
+                : pt
+                  ? "Dados sintéticos do organizador"
+                  : "Datos sintéticos del organizador"}
             </button>
             <button
               className="icon-button help-button"
-              aria-label="Información de la demo"
+              aria-label={
+                pt ? "Informações da demonstração" : "Información de la demo"
+              }
               onClick={() => setInfo(true)}
             >
               <CircleHelp size={20} />
@@ -3118,7 +3292,17 @@ export default function App() {
             {profile && <Avatar name={profile.alias} small />}
           </div>
         </header>
-        <main className="main-content">
+        <main
+          className="main-content"
+          lang={page === "transactions" ? shellLang : "es"}
+        >
+          {pt && page !== "transactions" && (
+            <p className="data-footnote" lang="pt-BR">
+              Esta área e as informações da demonstração continuam em espanhol.
+              A interface de movimentos e do Assistente usa português quando
+              disponível.
+            </p>
+          )}
           {error ? (
             <div className="error-state">
               <ShieldCheck size={36} />
@@ -3152,7 +3336,9 @@ export default function App() {
                       ? "UN NUEVO DÍA, CON MÁS CLARIDAD"
                       : page === "products"
                         ? "CADA PLAN TIENE SU LUGAR"
-                        : "EL DETALLE HACE LA DIFERENCIA"}
+                        : pt
+                          ? "OS DETALHES FAZEM A DIFERENÇA"
+                          : "EL DETALLE HACE LA DIFERENCIA"}
                   </span>
                   <h1>
                     {page === "home" ? (
@@ -3165,6 +3351,8 @@ export default function App() {
                       </>
                     ) : page === "products" ? (
                       "Tus productos, juntos."
+                    ) : pt ? (
+                      "Seu dinheiro em movimento."
                     ) : (
                       "Tu dinero en movimiento."
                     )}
@@ -3174,12 +3362,23 @@ export default function App() {
                       ? "Qué bueno tener todo bajo control."
                       : page === "products"
                         ? "Una vista clara de tus cuentas, tarjetas y otros productos."
-                        : "Explora, filtra y entiende cada operación."}
+                        : pt
+                          ? "Explore, filtre e entenda cada operação."
+                          : "Explora, filtra y entiende cada operación."}
                   </p>
                 </div>
                 <span className="asof">
-                  <span>Movimientos registrados hasta</span>
-                  <strong>{date(asOf)}</strong>
+                  <span>
+                    {page === "transactions" && pt
+                      ? "Movimentos registrados até"
+                      : "Movimientos registrados hasta"}
+                  </span>
+                  <strong>
+                    {portalDate(
+                      asOf,
+                      page === "transactions" ? actionLanguagePreference : "es",
+                    )}
+                  </strong>
                 </span>
               </div>
               {page === "home" && (
@@ -3473,16 +3672,31 @@ export default function App() {
               )}
               {page === "transactions" && (
                 <>
+                  {pt && (
+                    <p className="data-footnote" lang="pt-BR">
+                      Início, a área de produtos, seus detalhes e as informações
+                      da demonstração continuam em espanhol. Nomes de
+                      estabelecimentos e dados da origem são exibidos como
+                      recebidos.
+                    </p>
+                  )}
                   <div className="transactions-toolbar">
                     <div>
                       <span className="history-count">
-                        {number(filtered.length)}
+                        {portalNumber(
+                          filtered.length,
+                          actionLanguagePreference,
+                        )}
                       </span>
                       <span>
-                        movimientos{" "}
+                        {pt ? "movimentos" : "movimientos"}{" "}
                         {filtered.length !== transactions.length
-                          ? "en este filtro"
-                          : "en tu historial"}
+                          ? pt
+                            ? "neste filtro"
+                            : "en este filtro"
+                          : pt
+                            ? "no seu histórico"
+                            : "en tu historial"}
                       </span>
                     </div>
                     <button
@@ -3499,60 +3713,90 @@ export default function App() {
                       <label className="filter-search">
                         <Search size={18} />
                         <input
-                          placeholder="Comercio, operación o moneda"
-                          aria-label="Filtrar movimientos"
+                          placeholder={
+                            pt
+                              ? "Estabelecimento, operação ou moeda"
+                              : "Comercio, operación o moneda"
+                          }
+                          aria-label={
+                            pt ? "Filtrar movimentos" : "Filtrar movimientos"
+                          }
                           value={query}
                           onChange={(e) => setQuery(e.target.value)}
                         />
                       </label>
                       <label>
-                        <span className="sr-only">Producto</span>
+                        <span className="sr-only">
+                          {pt ? "Produto" : "Producto"}
+                        </span>
                         <select
-                          aria-label="Filtrar por producto"
+                          aria-label={
+                            pt ? "Filtrar por produto" : "Filtrar por producto"
+                          }
                           value={productFilter}
                           onChange={(e) => setProductFilter(e.target.value)}
                         >
-                          <option value="all">Todos los productos</option>
+                          <option value="all">
+                            {pt ? "Todos os produtos" : "Todos los productos"}
+                          </option>
                           {products.map((p) => (
                             <option key={p.reference} value={p.reference}>
-                              {productShort(p.type)} ·{" "}
-                              {p.reference.slice(-6).toUpperCase()}
+                              {portalProduct(p.type, actionLanguagePreference)}{" "}
+                              · {p.reference.slice(-6).toUpperCase()}
                             </option>
                           ))}
                         </select>
                       </label>
                       <label>
-                        <span className="sr-only">Estado</span>
+                        <span className="sr-only">
+                          {pt ? "Status" : "Estado"}
+                        </span>
                         <select
-                          aria-label="Filtrar por estado"
+                          aria-label={
+                            pt ? "Filtrar por status" : "Filtrar por estado"
+                          }
                           value={status}
                           onChange={(e) => setStatus(e.target.value)}
                         >
-                          <option value="all">Todos los estados</option>
+                          <option value="all">
+                            {pt ? "Todos os status" : "Todos los estados"}
+                          </option>
                           {["Approved", "Pending", "Declined", "Reversed"].map(
                             (s) => (
                               <option key={s} value={s}>
-                                {statusNames[s]}
+                                {pt ? ptStatus[s] : statusNames[s]}
                               </option>
                             ),
                           )}
                         </select>
                       </label>
                       <label>
-                        <span className="sr-only">Mes</span>
+                        <span className="sr-only">{pt ? "Mês" : "Mes"}</span>
                         <select
-                          aria-label="Filtrar por mes del movimiento"
+                          aria-label={
+                            pt
+                              ? "Filtrar por mês do movimento"
+                              : "Filtrar por mes del movimiento"
+                          }
                           value={month}
                           onChange={(e) => setMonth(e.target.value)}
                         >
-                          <option value="all">Todo el historial</option>
+                          <option value="all">
+                            {pt ? "Todo o histórico" : "Todo el historial"}
+                          </option>
                           {months.map((m) => (
                             <option value={m} key={m}>
-                              {date(m + "-01", {
-                                month: "long",
-                                year: "numeric",
-                                timeZone: "UTC",
-                              })}
+                              {pt
+                                ? new Intl.DateTimeFormat("pt-BR", {
+                                    month: "long",
+                                    year: "numeric",
+                                    timeZone: "UTC",
+                                  }).format(new Date(m + "-01T12:00:00Z"))
+                                : date(m + "-01", {
+                                    month: "long",
+                                    year: "numeric",
+                                    timeZone: "UTC",
+                                  })}
                             </option>
                           ))}
                         </select>
@@ -3573,7 +3817,7 @@ export default function App() {
                             setMonth("all");
                           }}
                         >
-                          Limpiar filtros
+                          {pt ? "Limpar filtros" : "Limpiar filtros"}
                           <X size={13} />
                         </button>
                       </div>
@@ -3585,12 +3829,15 @@ export default function App() {
                       )}
                       hidden={hidden}
                       onSelect={setSelectedTx}
+                      language={actionLanguagePreference}
                     />
                     <div className="pagination">
                       <span>
                         {filtered.length
-                          ? `${(pagination - 1) * 10 + 1}–${Math.min(pagination * 10, filtered.length)} de ${number(filtered.length)}`
-                          : "0 movimientos"}
+                          ? `${(pagination - 1) * 10 + 1}–${Math.min(pagination * 10, filtered.length)} de ${portalNumber(filtered.length, actionLanguagePreference)}`
+                          : pt
+                            ? "0 movimentos"
+                            : "0 movimientos"}
                       </span>
                       <div>
                         <button
@@ -3606,7 +3853,9 @@ export default function App() {
                         </span>
                         <button
                           className="icon-button"
-                          aria-label="Página siguiente"
+                          aria-label={
+                            pt ? "Próxima página" : "Página siguiente"
+                          }
                           disabled={pagination === paginationTotal}
                           onClick={() => setPagination(pagination + 1)}
                         >
@@ -3618,21 +3867,29 @@ export default function App() {
                   <div className="inline-note">
                     <FileText size={18} />
                     <p>
-                      Los montos sin signo no tienen una dirección indicada en
-                      el origen. Si un comercio no está informado, mostramos el
-                      tipo de operación y su canal.
+                      {pt
+                        ? "Valores sem sinal não têm direção informada na origem. Se o estabelecimento não constar, mostramos o tipo de operação e o canal."
+                        : "Los montos sin signo no tienen una dirección indicada en el origen. Si un comercio no está informado, mostramos el tipo de operación y su canal."}
                     </p>
                   </div>
                 </>
               )}
-              <footer className="content-footer">
+              <footer className="content-footer" lang={shellLang}>
                 <span>
                   <Leaf size={15} />
-                  Savia · Tu dinero, en calma.
+                  {pt
+                    ? "Savia · Seu dinheiro, com tranquilidade."
+                    : "Savia · Tu dinero, en calma."}
                 </span>
                 <button onClick={() => setInfo(true)}>
                   <span className="live-dot" />
-                  {synthetic ? "Prototipo sintético" : "Dataset del hackathon"}
+                  {synthetic
+                    ? pt
+                      ? "Protótipo sintético"
+                      : "Prototipo sintético"
+                    : pt
+                      ? "Dados do hackathon"
+                      : "Dataset del hackathon"}
                   <ArrowUpRight size={13} />
                 </button>
               </footer>
@@ -3661,6 +3918,7 @@ export default function App() {
           products={products}
           hidden={hidden}
           chatAvailable={chatStatus.available}
+          language={actionLanguagePreference}
           onClose={closeTx}
           onChat={() => openChat(selectedTx)}
         />

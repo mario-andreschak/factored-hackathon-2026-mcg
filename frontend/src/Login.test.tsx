@@ -88,7 +88,11 @@ test("Portuguese demo sign-in preserves selected profile and Assistant locale", 
   expect(
     screen.getByRole("heading", { name: "Que bom ter você aqui." }),
   ).toBeTruthy();
-  expect(screen.getByText(/portal continua em espanhol/)).toBeTruthy();
+  expect(
+    screen.getByText(
+      /a navegação e a consulta de movimentos estarão em português/,
+    ),
+  ).toBeTruthy();
   await screen.findByRole("group", {
     name: "Escolha um perfil de demonstração",
   });
@@ -317,7 +321,7 @@ async function enterDemo() {
       name: /Entrar a mi banca|Entrar no meu banco/,
     }),
   );
-  await screen.findByRole("button", { name: "Cerrar sesión" });
+  await screen.findByRole("button", { name: /Cerrar sesión|Encerrar sessão/ });
 }
 
 test("Portuguese sign-in reaches Assistant when storage reads and writes are denied", async () => {
@@ -329,10 +333,10 @@ test("Portuguese sign-in reaches Assistant when storage reads and writes are den
   expect((language as HTMLSelectElement).value).toBe("es");
   fireEvent.change(language, { target: { value: "pt" } });
   expect(
-    screen.getByText(/Os textos da interface do Assistente seguem/),
+    screen.getByText(/o Assistente segue o idioma escolhido aqui/),
   ).toBeTruthy();
   await enterDemo();
-  fireEvent.click(screen.getByRole("button", { name: /^Asistente/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Assistente/ }));
   const assistantLanguage = screen.getByRole("combobox", {
     name: "Idioma da interface",
   }) as HTMLSelectElement;
@@ -362,12 +366,171 @@ test("Assistant language returns to Login during the same storage-denied visit",
       }) as HTMLSelectElement
     ).value,
   ).toBe("pt");
-  fireEvent.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+  fireEvent.click(screen.getByRole("button", { name: "Encerrar sessão" }));
   const language = await screen.findByRole("combobox", {
     name: "Idioma de acesso",
   });
   expect((language as HTMLSelectElement).value).toBe("pt");
   expect(
-    screen.getByText(/Os textos da interface do Assistente seguem/),
+    screen.getByText(/o Assistente segue o idioma escolhido aqui/),
   ).toBeTruthy();
+});
+
+const portalCharge = {
+  reference: "txn_aaaaaaaaaaaaaaaaaaaaaaaa",
+  product_reference: "card-1",
+  occurred_at: "2026-09-20T12:00:00Z",
+  process_date: "2026-09-20T12:00:00Z",
+  type: "Purchase",
+  category: "Shopping",
+  amount: 42,
+  currency: "BRL",
+  status: "Approved",
+  channel: "Card",
+  merchant: "Loja Sol",
+  country: "BR",
+  city: "São Paulo",
+  direction: "debit",
+};
+const portalOverview = {
+  ...syntheticOverview,
+  products: [
+    {
+      reference: "card-1",
+      type: "Tarjeta Débito",
+      currency: "BRL",
+      balance: 0,
+      balance_kind: "deposit",
+      credit_limit: null,
+      interest_rate: null,
+      status: "Active",
+      opened_at: "2026-01-01",
+      last_updated: "2026-09-20",
+    },
+  ],
+  transactions: [
+    portalCharge,
+    {
+      ...portalCharge,
+      reference: "txn_bbbbbbbbbbbbbbbbbbbbbbbb",
+      merchant: "Loja Lua",
+      status: "Pending",
+    },
+  ],
+  metadata: {
+    ...syntheticOverview.metadata,
+    transactions_returned: 2,
+    transactions_total: 2,
+  },
+};
+function servePortal(language: "es" | "pt", chatAvailable = true) {
+  localStorage.setItem("flujo-bank-action-language", language);
+  vi.stubGlobal("scrollTo", vi.fn());
+  const calls: string[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      const url = String(input);
+      calls.push(url);
+      if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+      if (url === "/api/overview") return reply(portalOverview);
+      if (url === "/api/chat/status")
+        return reply({
+          available: chatAvailable,
+          sandbox_intake_available: false,
+        });
+      if (url === "/api/chat/history")
+        return reply({ active: false, messages: [] });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  return calls;
+}
+
+test("Portuguese charge finder keeps labels and dialog names local while retaining Spanish document semantics", async () => {
+  const calls = servePortal("pt");
+  render(<App />);
+  const navigation = await screen.findByRole("button", { name: "Movimentos" });
+  expect(document.documentElement.lang).toBe("es");
+  expect(navigation.closest("aside")?.getAttribute("lang")).toBe("pt-BR");
+  expect(screen.getByRole("button", { name: "Início" })).toBeTruthy();
+  expect(screen.getByRole("main").getAttribute("lang")).toBe("es");
+  expect(screen.getByText(/Esta área e as informações.*espanhol/)).toBeTruthy();
+  const globalSearch = screen.getByRole("textbox", {
+    name: "Buscar movimentos",
+  });
+  fireEvent.change(globalSearch, { target: { value: "Loja Sol" } });
+  expect(
+    screen.getByRole("button", { name: /Loja Sol.*Aprovado/s }),
+  ).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /Loja Lua/ })).toBeNull();
+  fireEvent.change(globalSearch, { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: "Início" }));
+  fireEvent.click(navigation);
+  const main = screen.getByRole("main");
+  expect(main.getAttribute("lang")).toBe("pt-BR");
+  expect(
+    screen.getByRole("heading", { name: "Seu dinheiro em movimento." }),
+  ).toBeTruthy();
+  expect(screen.getByText(/área de produtos.*espanhol/)).toBeTruthy();
+  expect(
+    screen.getByRole("combobox", { name: "Filtrar por produto" }),
+  ).toBeTruthy();
+  const status = screen.getByRole("combobox", { name: "Filtrar por status" });
+  fireEvent.change(status, { target: { value: "Pending" } });
+  expect(
+    screen.getByRole("button", { name: /Loja Lua.*Pendente/s }),
+  ).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /Loja Sol/ })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Limpar filtros" }));
+  const search = screen.getByRole("textbox", { name: "Buscar movimentos" });
+  fireEvent.change(search, { target: { value: "Loja Sol" } });
+  fireEvent.click(screen.getByRole("button", { name: /Loja Sol.*Aprovado/s }));
+  const dialog = screen.getByRole("dialog", { name: "Detalhes do movimento" });
+  expect(dialog.querySelector("h2")?.getAttribute("lang")).toBe("pt-BR");
+  expect(screen.getByRole("button", { name: "Fechar" })).toBeTruthy();
+  expect(screen.getByText("Não reconhece esta cobrança?")).toBeTruthy();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Revisar esta cobrança" }),
+  );
+  expect(
+    screen.getByRole("combobox", { name: "Idioma da interface" }),
+  ).toBeTruthy();
+  expect(calls.some((url) => url.startsWith("/api/action/"))).toBe(false);
+});
+
+test("Spanish charge finder retains its navigation, filters and review entry", async () => {
+  servePortal("es");
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Movimientos" }));
+  expect(screen.getByRole("main").getAttribute("lang")).toBe("es");
+  expect(
+    screen.getByRole("textbox", { name: "Buscar movimientos" }),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole("combobox", { name: "Filtrar por estado" }),
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: /Loja Sol.*Aprobado/s }));
+  expect(
+    screen.getByRole("dialog", { name: "Detalle del movimiento" }),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Revisar este cargo" }),
+  ).toBeTruthy();
+});
+
+test("Portuguese charge review says when the Assistant is unavailable", async () => {
+  const calls = servePortal("pt", false);
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Movimentos" }));
+  fireEvent.click(screen.getByRole("button", { name: /Loja Sol.*Aprovado/s }));
+  const review = screen.getByRole("button", {
+    name: "Revisar esta cobrança",
+  }) as HTMLButtonElement;
+  expect(review.disabled).toBe(true);
+  expect(
+    screen.getByText(/revisão assistida ainda não está disponível/),
+  ).toBeTruthy();
+  expect(screen.getByText(/Nenhum caso foi registrado/)).toBeTruthy();
+  expect(calls.some((url) => url.startsWith("/api/action/"))).toBe(false);
 });
