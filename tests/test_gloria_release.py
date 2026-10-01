@@ -7,10 +7,12 @@ deployed customer path. Required behavior stays asserted when source is incomple
 from __future__ import annotations
 
 import asyncio
+import csv
 from copy import deepcopy
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import time
+from pathlib import Path
 from types import SimpleNamespace
 import uuid
 
@@ -292,3 +294,295 @@ def test_revoked_session_cannot_recover_receipt_or_confirm_after_restart(joined)
         asyncio.run(restarted.action("release-customer", joined.sid, joined.expiry,
             dict(operation="confirm", pendingHandle=pending["pending_handle"], confirmed=True)))
     assert len(joined.requests) == before
+
+
+def rewrite_csv(path, transform, extra_fields=()):
+    with path.open(encoding="utf-8", newline="") as stream:
+        reader = csv.DictReader(stream)
+        fields, rows = list(reader.fieldnames), list(reader)
+    rows = transform(rows)
+    with path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(dict.fromkeys(fields + list(extra_fields))))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+@pytest.fixture(scope="module")
+def release_source(tmp_path_factory):
+    """A newly generated source and pipeline publication, never organizer files."""
+    from pipeline.prototype_fixture import PERSONAS, write_prototype_source
+    from pipeline.__main__ import main
+    root = tmp_path_factory.mktemp("gloria-release-source")
+    source = root / "source"
+    write_prototype_source(source)
+    # Private source metadata tests a real last-four filter without adding
+    # these fictional full numbers to serving rows, prompts or test assertions.
+    def products(rows):
+        for row in rows:
+            row["product_number"] = "4000000000004381" if row["product_type"] == "Tarjeta Crédito" else "1000000000007729"
+        return rows
+    rewrite_csv(source / "products.csv", products, ["product_number"])
+    target = None
+    for path in sorted((source / "transactions").rglob("*.csv")):
+        def events(rows):
+            nonlocal target
+            for row in rows: row["amount_usd"] = "12.50"
+            if target is None:
+                target = next((deepcopy(row) for row in rows if row["customer_id"] == PERSONAS[0].customer_id
+                    and row["transaction_type"] == "Purchase" and row["transaction_status"] == "Approved"), None)
+                if target:
+                    # Canonical duplicate definition does not require matching
+                    # merchant or product, only own amount/currency and <=2min.
+                    twin = deepcopy(target)
+                    twin.update(transaction_id="SYNTH-MX-NEAR-TWIN", product_id=PERSONAS[0].account_id,
+                                merchant_name="Fictional Other Merchant")
+                    twin["transaction_date"] = (datetime_from_text(target["transaction_date"]) + timedelta(seconds=60)).isoformat(sep=" ")
+                    rows.append(twin)
+            return rows
+        rewrite_csv(path, events)
+    for path in (source / "complaints").rglob("*.csv"):
+        def complaints(rows):
+            for row in rows:
+                if row["customer_id"] == PERSONAS[0].customer_id:
+                    row.update(status="Open", category="Transactions", subcategory="Cargo no reconocido",
+                               resolution_date="", resolution_days="", resolution="",
+                               claimed_amount=target["amount"], affected_product_id=target["product_id"])
+            return rows
+        rewrite_csv(path, complaints)
+    assert main(["run", "--source", str(source), "--out", str(root / "data"),
+                 "--reports", str(root / "reports")]) == 0
+    return SimpleNamespace(root=root, source=source, data=root / "data", person=PERSONAS[0], target=target)
+
+
+def datetime_from_text(text):
+    return datetime.fromisoformat(text)
+
+
+@pytest.fixture
+def complete_reads(release_source, tmp_path):
+    from banking_mcp.config import Config
+    from banking_mcp.security import Principal
+    from banking_mcp.service import Service
+    from frontend.server.config import Settings
+    from frontend.server.repository import Repository
+    from frontend.server.state import State
+    from gloria_workflow.bank_read import OwnedBankReads
+    source = release_source
+    signer = Ed25519PrivateKey.generate()
+    public = signer.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo).decode()
+    service = Service(Config(data_dir=source.data, state_db=tmp_path / "bank.sqlite",
+        service_token="fictional-release-token-"*3, public_keys={"release": public},
+        principal_customers={"release-subject": source.person.customer_id,
+                            "other-release-subject": "SYNTH-CO-001"},
+        sandbox_report_coverage_start=int(NOW.timestamp())-90000))
+    service.store.attest_sandbox_coverage(int(NOW.timestamp())-90000, "synthetic:release-complete-empty-ledger")
+    public_state = State(tmp_path / "public-state")
+    settings = Settings(data_dir=source.data, state_dir=tmp_path / "public-state", static_dir=tmp_path / "static",
+        demo_code="fictional-code", profiles={source.person.profile: dict(customer_id=source.person.customer_id)})
+    repository = Repository(settings, public_state)
+    principal = Principal("release-subject", source.person.customer_id, "release-session", "release-conversation", int(time.time())+3600)
+    reads = OwnedBankReads(service, repository, principal, source_root=source.source, clock=lambda: NOW.timestamp())
+    ref = repository.reference("txn", principal.customer, source.target["transaction_id"])
+    yield SimpleNamespace(reads=reads, service=service, repository=repository, principal=principal,
+                          source=source, reference=ref, snapshot=service.repository.snapshot().id)
+    service.close()
+
+
+def read(port, name, **args):
+    return asyncio.run(port.read(name, args))
+
+
+def test_complete_profile_uses_owned_source_product_details(complete_reads):
+    result = read(complete_reads.reads, "get_customer_profile")
+    assert result["status"] == "ok"
+    assert result["first_name"] == complete_reads.source.person.alias
+    assert len(result["products"]) == 2
+    for product in result["products"]:
+        assert {"product_id", "product_type", "currency", "product_status", "product_last4"} <= product.keys()
+    assert {product["product_last4"] for product in result["products"]} == {"4381", "7729"}
+
+
+@pytest.mark.parametrize("slots", [
+    dict(city="Ciudad de México"), dict(country="México"),
+    dict(product_hint="Tarjeta Crédito"), dict(product_last4="4381"),
+    dict(city="Ciudad de México", country="México", product_hint="Tarjeta Crédito", product_last4="4381"),
+])
+def test_actual_source_bank_honors_location_and_product_filters(complete_reads, slots):
+    slots.update(transaction_id=complete_reads.reference,
+                 date_from=complete_reads.source.target["transaction_date"][:10],
+                 date_to=complete_reads.source.target["transaction_date"][:10])
+    result = read(complete_reads.reads, "search_transactions", slots=slots)
+    assert result["status"] == "ok"
+    assert result["match_count"] == 1
+    assert result["candidates"][0]["transaction_id"] == complete_reads.reference
+    assert result["search_context"]["coverage_complete"] is True
+    assert result["search_context"]["snapshot_id"] == complete_reads.snapshot
+    assert result["snapshot_hash"] != complete_reads.snapshot
+
+
+def test_authoritative_near_duplicate_does_not_require_same_product_or_merchant(complete_reads):
+    result = read(complete_reads.reads, "get_transaction", transaction_id=complete_reads.reference,
+                  snapshot_id=complete_reads.snapshot)
+    assert result["status"] == "ok" and result["source_verified"] is True
+    expected = complete_reads.repository.reference("txn", complete_reads.principal.customer, "SYNTH-MX-NEAR-TWIN")
+    assert expected in repr(result["transaction"].get("possible_duplicate_of")), "target lost its canonical duplicate signal"
+    assert "possible_duplicate" in result["data_quality_flags"]
+
+
+def test_historical_status_is_owned_and_never_repaired_to_exact_transaction_link(complete_reads):
+    listed = read(complete_reads.reads, "list_customer_complaints")
+    assert listed["status"] == "ok" and listed["coverage_complete"] is True
+    assert listed["match_count"] == 1
+    case = listed["complaints"][0]
+    assert case["complaint_id"] == "SYNTH-MX-OLD-CASE" and case["status"] == "Open"
+    assert case["transaction_id"] is None and case["linkage"] == "unknown"
+    exact = read(complete_reads.reads, "get_complaint", complaint_id=case["complaint_id"], snapshot_hash=listed["snapshot_hash"])
+    assert exact["status"] == "ok" and exact["complaint"]["transaction_id"] is None
+    foreign = read(complete_reads.reads, "get_complaint", complaint_id="SYNTH-CO-OLD-CASE")
+    absent = read(complete_reads.reads, "get_complaint", complaint_id="SYNTH-ABSENT-CASE")
+    assert foreign == absent
+    assert foreign["status"] == "error"
+    related_result = read(complete_reads.reads, "get_related_complaints", transaction_id=complete_reads.reference)
+    assert related_result["status"] == "ok"
+    assert related_result["complaints"] == []
+    assert related_result["duplicate_check"] == "historical_uncertain"
+    assert related_result["historical_candidates"][0]["linkage"] == "unknown"
+    assert related_result["report_window"]["prior_distinct_verified_count"] == 0
+    assert related_result["report_window"]["coverage_complete"] is True
+
+
+@pytest.mark.parametrize("source_name", ["customers.csv", "products.csv", "transaction", "complaint"])
+def test_pinned_source_mutation_cannot_reuse_ingestion_validation(complete_reads, source_name):
+    source = complete_reads.source.source
+    path = (source / source_name if source_name.endswith(".csv") else
+            next((source / ("transactions" if source_name == "transaction" else "complaints")).rglob("*.csv")))
+    if source_name == "transaction":
+        path = next(p for p in (source / "transactions").rglob("*.csv") if complete_reads.source.target["transaction_id"] in p.read_text(encoding="utf-8"))
+    original = path.read_bytes()
+    try:
+        path.write_bytes(original + b"\n")
+        name = "get_related_complaints" if source_name == "complaint" else "get_transaction"
+        result = read(complete_reads.reads, name, transaction_id=complete_reads.reference)
+        assert result["status"] == "error"
+        assert result.get("source_verified") is not True
+        assert result.get("risk_data_complete") is not True
+    finally:
+        path.write_bytes(original)
+
+
+def test_unattested_ledger_does_not_mean_zero_prior_reports(complete_reads):
+    with complete_reads.service.store.connect() as db: db.execute("DELETE FROM sandbox_coverage")
+    result = read(complete_reads.reads, "get_related_complaints", transaction_id=complete_reads.reference)
+    assert result["status"] == "ok"
+    assert result["report_window"]["coverage_complete"] is False
+    assert result["report_window"]["prior_distinct_verified_count"] is None
+
+
+@pytest.mark.parametrize("selector", ["customer_id", "owner", "session_id", "conversation_id", "principal"])
+def test_actual_read_port_rejects_model_supplied_identity_before_data_access(complete_reads, selector):
+    result = read(complete_reads.reads, "get_customer_profile", **{selector: "other-fictional-owner"})
+    assert result == dict(status="error", code="authorization_denied")
+
+
+def test_complete_search_count_is_not_the_five_candidate_display_limit(complete_reads):
+    result = read(complete_reads.reads, "search_transactions", slots={})
+    assert result["status"] == "ok"
+    assert result["match_count"] > 5
+    assert len(result["candidates"]) == 5
+    assert result["search_context"]["coverage_complete"] is True
+    # All references resolve inside the owner and disclosed candidate snapshot.
+    for candidate in result["candidates"]:
+        target = read(complete_reads.reads, "get_transaction", transaction_id=candidate["transaction_id"],
+                      snapshot_id=result["search_context"]["snapshot_id"])
+        assert target["status"] == "ok"
+        assert target["transaction"]["transaction_id"] == candidate["transaction_id"]
+
+
+def test_foreign_and_absent_transaction_references_are_indistinguishable(complete_reads):
+    foreign = complete_reads.repository.reference("txn", "SYNTH-CO-001", "SYNTH-CO-UNRECOGNIZED")
+    missing = complete_reads.repository.reference("txn", complete_reads.principal.customer, "SYNTH-MISSING")
+    a = read(complete_reads.reads, "get_transaction", transaction_id=foreign)
+    b = read(complete_reads.reads, "get_transaction", transaction_id=missing)
+    assert a == b and a["status"] == "error"
+
+
+def test_exact_read_requires_the_disclosed_build_not_candidate_digest(complete_reads):
+    result = read(complete_reads.reads, "get_transaction", transaction_id=complete_reads.reference,
+                  snapshot_id="different-build")
+    assert result == dict(status="error", code="snapshot_changed")
+
+
+def save_prior_receipt(port, *, case_id, raw_target, created_at, owner=None, receipt=True):
+    snapshot, row = port.service.repository.owned_transaction_id(port.principal, raw_target, port.snapshot)
+    facts = port.service.repository._visible(row, snapshot)
+    proof = dict(id=case_id, kind="simulated_intake", simulated=True, status="received",
+        snapshot=port.snapshot, created_at=datetime.fromtimestamp(created_at, timezone.utc).isoformat().replace("+00:00", "Z"),
+        transaction=facts)
+    with port.service.store.connect() as db:
+        db.execute("INSERT INTO sandbox_cases VALUES (?,?,?,?,?,?,?)", (case_id, owner or port.principal.customer,
+            raw_target, "simulated_intake", port.snapshot, created_at, json.dumps(facts)))
+        if receipt: db.execute("INSERT INTO sandbox_case_receipts VALUES (?,?)", (case_id, json.dumps(proof)))
+
+
+def test_prior_report_window_counts_only_distinct_releasable_owned_receipts(complete_reads):
+    now = NOW.timestamp()
+    target = complete_reads.source.target["transaction_id"]
+    save_prior_receipt(complete_reads, case_id="CMP-SBX-Rel00001", raw_target="SYNTH-MX-NEAR-TWIN", created_at=now-86400)
+    save_prior_receipt(complete_reads, case_id="CMP-SBX-Rel00002", raw_target=target, created_at=now-1)
+    save_prior_receipt(complete_reads, case_id="CMP-SBX-Rel00003", raw_target="SYNTH-MX-TX-001", created_at=now,
+                       receipt=False)
+    result = read(complete_reads.reads, "get_related_complaints", transaction_id=complete_reads.reference)
+    assert result["status"] == "ok"
+    assert result["report_window"]["coverage_complete"] is True
+    assert result["report_window"]["prior_distinct_verified_count"] == 1
+    assert result["duplicate_check"] == "exact_open_case"
+    assert result["complaints"][0]["complaint_id"] == "CMP-SBX-Rel00002"
+    assert result["complaints"][0]["transaction_id"] == complete_reads.reference
+    assert result["complaints"][0]["linkage"] == "exact_sandbox"
+
+
+def test_corrupt_in_window_receipt_never_becomes_complete_zero_risk(complete_reads):
+    save_prior_receipt(complete_reads, case_id="CMP-SBX-Rel00001", raw_target="SYNTH-MX-NEAR-TWIN",
+                       created_at=NOW.timestamp()-1, receipt=False)
+    result = read(complete_reads.reads, "get_related_complaints", transaction_id=complete_reads.reference)
+    assert result["status"] == "ok"
+    assert result["report_window"]["coverage_complete"] is False
+    assert result["report_window"]["prior_distinct_verified_count"] is None
+
+
+def test_expired_workflow_pending_cannot_confirm_older_portal_handle_after_restart(joined):
+    asyncio.run(joined.send("No reconozco esta compra de 25.50 USD."))
+    pending = asyncio.run(joined.prepare())
+    # The application may have a shorter pending TTL than the banking handle.
+    joined.runner.store = ConversationStore(joined.tmp_path / "workflow.sqlite", pending_ttl_seconds=1)
+    joined.runner.clock = lambda: NOW + timedelta(seconds=2)
+    restarted = ChatService(joined.config, joined.tmp_path / "chat")
+    restarted._transport = joined.service._transport
+    joined.service.__dict__.update(restarted.__dict__)
+    # A chat turn lets the host observe expiration through the real store/runtime.
+    asyncio.run(joined.send("¿Sigue pendiente la solicitud?"))
+    before = len(joined.requests)
+    with pytest.raises(ChatError): asyncio.run(joined.confirm(pending["pending_handle"]))
+    assert len(joined.requests) == before
+
+
+def test_native_tool_closure_keeps_selection_and_identity_in_trusted_context():
+    from gloria_workflow.tool import create_mcp_server
+    class Recorder:
+        def __init__(self): self.calls = []
+        async def run(self, context, message, **kwargs):
+            self.calls.append((deepcopy(context), message, deepcopy(kwargs)))
+            return dict(response=dict(message="Respuesta verificada.", language="es"),
+                workflow_state=dict(policy_decision=dict(rule_ids=["R13"])), turn=dict(turn_id="same-turn"))
+    selection = dict(transaction_id="TRX-RELEASE_A", snapshot_id="fictional-build", amount="25.50", currency="USD")
+    context, runner = binding(), Recorder()
+    # Selection is an already validated host value, never an extra model argument.
+    server = create_mcp_server(runner, context, "original", "same-turn", selection=selection)
+    context["customer_id"] = "mutated-foreign-owner"
+    selection["transaction_id"] = "TRX-MUTATED"
+    tools = asyncio.run(server.list_tools())
+    assert [item.name for item in tools] == ["gloria_run_turn"]
+    assert set(tools[0].inputSchema["properties"]) == {"message"}
+    asyncio.run(server.call_tool("gloria_run_turn", dict(message="original")))
+    assert runner.calls[0][0]["customer_id"] == binding()["customer_id"]
+    assert runner.calls[0][2]["selection"]["transaction_id"] == "TRX-RELEASE_A"

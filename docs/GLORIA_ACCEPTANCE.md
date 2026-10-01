@@ -30,6 +30,23 @@ single-query-only execution, conflicting receipt-proof promotion, durable
 portal cancellation, and receipt followup after an unclear chat classification.
 It is development gap evidence, not a release pass.
 
+The bank release fixture now generates its own prototype CSV source, adds
+fictional product-number suffixes and a nearby cross-product/cross-merchant
+duplicate, publishes through the real pipeline, and constructs the actual
+`Service`, public repository and `OwnedBankReads` port. It checks complete
+profile fields, all four additional filters, full counts versus five displayed
+candidates, owner-indistinguishable exact reads, unknown historical linkage,
+private selector rejection, pinned-source mutation, sandbox attestation, and
+verified receipt integrity in the exact half-open 24-hour window. Direct SQLite
+fixture inserts represent newly invented sandbox receipts, never live actions.
+
+The actual bank subset reached 23 passing assertions against a development
+integration checkout after its owners repaired profile and duplicate projection.
+That checkout was changing during implementation; this checkpoint is useful
+for gap closure and is not substituted for a final frozen-source run. The
+native closure case additionally requires a validated host selection to survive
+the MCP bridge without expanding its model input schema.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or
