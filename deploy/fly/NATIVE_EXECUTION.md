@@ -28,8 +28,11 @@ adapter.
 Install the selected FLUJO model with id `dispute-native-model`, provider `codex`,
 adapter `codex-cli`, model name `gpt-6-sol`, and the independently qualified
 reasoning effort. Application stages call `model-dispute-native-model`. Set
-`FLUJO_DATA_DIR=/data/native-flujo` and use `default-workspace`. Compile the
-selected FLUJO build with `FLUJO_EXECUTION_ADAPTER_MODULE=/app/fly-native-execution.mts`.
+`FLUJO_DATA_DIR=/data/native-flujo` and use `default-workspace`. Copy the exact
+`native-execution.mts` source bytes to `/app/fly-native-execution.ts`, then select
+that `.ts` filename through `FLUJO_EXECUTION_ADAPTER_MODULE` at build and runtime.
+The selected Next webpack loader recognizes `.ts` but excludes `.mts`; the
+installed `.ts` hash must still equal the reviewed `.mts` source hash.
 
 The immutable restricted profile at `/opt/native/native-profile.json` contains:
 
@@ -46,6 +49,11 @@ The immutable restricted profile at `/opt/native/native-profile.json` contains:
 The wrapper and raw CLI are distinct executable identities. The wrapper validates
 the immutable raw CLI at `/opt/native/codex.raw` against SHA256
 `3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970`.
+Read-only ELF inspection of these exact bytes found ELF64 x86_64, no PT_INTERP
+and zero DT_NEEDED entries. Its dynamic segment contains static-PIE relocation
+metadata; the executable does not require a host interpreter/shared-library
+loader. This supports excluding host `/usr` and `/lib` from the namespace;
+installed provider execution still needs separate qualification.
 `--version` reports the checked raw CLI version; a version string does not make
 the wrapper's SHA256 equal to the raw CLI hash. Record both hashes in the image
 and deployment receipt. Root owns the raw CLI/wrapper with mode0555; profile and
