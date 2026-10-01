@@ -1,100 +1,106 @@
-# Gloria iteration checkpoint
+# Gloria release candidate
 
-This branch implements the application-owned ES/PT workflow described in
-`graph_config_v3.yaml`: validated interpretation prompts, a same-turn parallel
-rewrite/attack/context barrier, persistent conversation state, ordered R0–R18
-policy decisions, owned read adapters, reviewed policy retrieval, narrative
-handoff summaries, response grounding, one bounded repair and deterministic
-fallbacks. The language workflow has no action write port. Chat consent cannot
-authorize the existing portal's simulated intake.
+Gloria implements the authenticated Spanish/Portuguese unrecognized-charge
+journey: executable interpretation prompts, emotion/language detection, ordered
+R0–R18 decisions, owned source reads, scoped clarification, explicit simulated
+intake, durable receipt recovery and human handoff. Release qualification is in
+progress; the historical checkpoint below is preserved as earlier evidence.
 
-## Source and execution boundaries
+## Application and authority
 
-`gloria_workflow/runtime.py` owns the orchestration and `policy.py` owns the
-deterministic motor. `state.py` persists owner/customer/session/conversation
-state and immutable turn inputs in SQLite with revision checks. A cached
-success needs a fresh owned-target and independently verified host receipt.
-Field answers retain explicit earlier criteria; new requests clear them.
-Missing duplicate/risk coverage cannot imply low risk. The policy requires a
-complete 24-hour report whose end is no more than the configured 20 seconds old.
+`runtime.py` coordinates validated language stages and deterministic policy.
+A single human message can create up to eight independent query capsules with
+separate facts, snapshots, pending requests, history and receipts. Every scope
+is checked for foreign-customer references before any bank read. Original
+message digests include trusted selection and the chosen query scope. Completed
+responses are reread before replay, including inactive query results.
 
-`prompts.py` renders canonical YAML prompts through the configured generic
-FLUJO model endpoint. `response.py` validates grounded messages and safe ES/PT
-fallbacks. Host identity, credentials, capabilities and raw customer records
-are excluded from model inputs. Textual grounding remains conservative; it
-does not prove arbitrary semantic claims or redact arbitrary names/addresses.
+`state.py` persists exact owner/customer/session/conversation bindings, query
+capsules, request lineage and immutable turn inputs. Consent is never restored
+as live authorization. Pending lifetime is checked on load as well as save;
+expired or rejected prepared requests are cancelled by the trusted host, while
+attempted or uncertain writes retain receipt recovery.
 
-`host.py` binds frontend repository reads to the admitted profile and session,
-checks revocation, distinguishes candidate hashes from serving snapshot IDs,
-and independently reads existing host action status. Supported search fields
-are transaction ID, event date range, currency, merchant, amount, transaction
-type and channel. Type and channel use exact canonical enum matches. An omitted
-date uses an inclusive 90-day window anchored to the latest owned event.
-Populated city, country, product hint and product last-four filters return
-`unsupported_filter` before searching; those filters require a qualified
-adapter and never silently select a charge from an unfiltered result.
+`bank_read.py` uses the existing banking `Service`, source verification and
+sandbox ledger. It implements all declared transaction filters, complete
+counts, owned product suffixes, profile/history reads and nearby duplicate
+signals. Historical complaints remain separate with unknown transaction linkage.
+Missing source coverage cannot establish uniqueness or absence. Currency risk
+uses a pinned rate for the exact event date/currency; absent or invalid rates
+leave risk incomplete. Exact USD amounts require no conversion. Raw identity,
+source records and internal risk stay outside language model inputs.
 
-The default repository adapter intentionally reports incomplete source/risk
-readback and duplicate coverage; historical complaints return an unsupported
-error. Those paths fall back or request human assistance. Complete fictional
-read ports qualify the canonical motor separately from the live bank adapter.
+The frontend admits the conversation before private reads and retains its
+existing transcript/session fences. Browser request scopes are opaque selectors
+verified against the owned registry. `action_host.py` connects explicit portal
+controls to the same authoritative banking ledger used by the inquiry. It
+rereads source/risk at preparation and confirmation. A chat reply cannot execute
+intake. Confirmation is bound to the owner, session, conversation, query, target,
+snapshot and durable request handle; receipt readback determines success.
 
-The optional frontend factory runs Gloria under existing admission and session
-checks. It has not qualified the join to the protected banking conversation and
-portal action routes. The isolated runner forces portal actions off.
+`response.py` checks canonical response schema, facts, action claims and
+recommendation support. One bounded repair precedes an ES/PT fallback. Each
+query is grounded independently before its exact message is composed; facts
+are never pooled into a new model prompt. These conservative text checks do
+not establish arbitrary semantic understanding or human adjudication.
 
-`resources/gloria_workflow.flow.json` is a source-only four-node generic FLUJO
-bridge (Start/Process/MCP/Finish). Its manifest names 21 logical application
-stages and eight interpretation/generation stages. The build uses immutable
-compiler/schema/validator blobs from the permitted FLUJO revision
-`0ba62296520a505e6d71eddf5aa650691f3dc311`; it records protected source hashes
-and rejects stale builds. These are not 21 installed FLUJO node handlers.
-`tool.py` supplies a per-turn `gloria_run_turn` MCP tool whose closure fixes
-host identity and the exact original user message. No shared worker graph,
-model binding or bank MCP registration was changed or activated.
+## Native execution
+
+The saved generic four-node FLUJO bridge uses immutable compiler/schema blobs
+from the permitted revision `0ba62296520a505e6d71eddf5aa650691f3dc311`.
+Its manifest records the application, prompts, policy and native authority source
+hashes. The 21 logical stages belong to the application; they are not 21 native
+FLUJO node handlers. The per-turn MCP closure binds the original message and
+trusted selection outside the message-only model tool schema.
+
+`scripts/native_gloria_qualification.py` supplies `NativeGloriaPort`. Every
+language call traverses an ephemeral protected native flow with an attested
+CLI/catalog and capability restrictions. The host displays its validated
+application result directly. The separately captured MCP projection is checked
+independently of any model relay. Native installation, forced capability probes,
+real provider behavior and joined application outcomes have separate evidence.
+Shared workers, generic FLUJO main and active banking deployments are preserved.
+
+Preflight batching is an explicit same-turn option. It combines only rewrite,
+attack and context contracts for the same original message/history and validates
+each output separately. It is neither cross-customer pooling nor physical
+isolation of those three model instructions. Provider observations include
+latency, input/output/cache usage and unknown usage on failures; cost is unknown
+unless a configured price is actually available.
 
 ## Reproduction
 
-Install `requirements-gloria.txt` in an isolated environment. It combines the
-frontend, pipeline and S3 dependencies with MCP 1.30.0 and timezone data.
+Install `requirements-gloria.txt` in a fresh environment, then run:
 
 ```powershell
-python -m pytest tests/test_gloria_prompts.py tests/test_gloria_response.py tests/test_gloria_policy.py tests/test_gloria_policy_review.py tests/test_gloria_state.py tests/test_gloria_acceptance.py tests/test_gloria_host.py tests/test_gloria_prior_receipts.py -q
-node scripts/build_gloria_graph.mjs --flujo-root C:/Users/Moe/Documents/GitHub/FLUJO
-node scripts/build_gloria_graph.mjs --flujo-root C:/Users/Moe/Documents/GitHub/FLUJO --check
-python -m pytest tests/test_gloria_graph.py -q
-python scripts/qualify_gloria.py --model 'model-GPT-6 Luna' --output '<independent-path>/real-workflow-smoke.json'
+python -m pip check
+python scripts/test_gloria.py
+npm ci --ignore-scripts --prefix frontend
+npm test --prefix frontend
+npm run build --prefix frontend
+node scripts/build_gloria_graph.mjs --flujo-root '<permitted-source-checkout>'
+node scripts/build_gloria_graph.mjs --flujo-root '<permitted-source-checkout>' --check
 ```
 
-The real-model qualifier uses invented messages and complete synthetic reads;
-it cannot execute bank writes. It records source hashes before and after,
-intent/slots, response mode/language, stage traces, latency and provider token
-usage. Four development smoke cases are not held-out accuracy evidence.
-Provider cost is unknown. `docs/GLORIA_ACCEPTANCE.md` describes independently
-authored boundary cases and source-bound execution evidence.
+The native qualification driver builds/runs a disposable isolated worker with
+private authority and login mounts. It verifies installed source bytes against
+the requested manifest and exercises admission, replay, restart, poisoning and
+provider boundaries. A successful worker may be retained for joined qualification.
 
-For a separate local app instance, use an existing private frontend admission
-configuration and `scripts/run_gloria.py --state-dir '<independent-path>'
---model 'model-GPT-6 Luna'`. The state directory must be independent of the
-configured active state. Use a separate browser profile to avoid session cookie
-interference with another localhost instance. This runner has not been launched
-as part of the checkpoint.
+For an independent admitted application, use private frontend and bank
+configuration with the same dataset/customer mapping and a separate state/ledger:
 
-## Work required before activation
+```powershell
+python scripts/run_gloria.py --state-dir '<independent-state>' --bank-config-file '<private-bank-config>' --native-url 'http://127.0.0.1:<isolated-port>' --native-authority-dir '<isolated-authority>' --source-root '<generated-source>' --enable-simulated-intake
+```
 
-Qualify complete owned banking source/history/duplicate/risk reads, enforce all
-supported extraction filters, and join the admitted Gloria conversation to the
-protected host action/receipt lineage. Qualify the per-turn MCP registration
-and saved bridge in an isolated native FLUJO execution before changing any
-shared worker binding. Implement independently scoped multi-query execution;
-the current workflow fails closed when decomposition finds multiple queries.
-Then run independent ES/PT semantic adjudication and a joined session/action
-test against the frozen release, with any model/provider cost measured.
+The existing sandbox coverage attestation is never fabricated by this runner.
+Use a separate browser profile to avoid cookie interference. `--batch-preflight`
+remains opt-in pending same-fixture real-provider comparison. Source tests and
+synthetic smoke outcomes do not replace independent human-labelled holdout,
+shared deployment acceptance or authorization to merge/activate the candidate.
 
-The 60-minute iteration is a source checkpoint. The complete deployed objective
-remains unfinished and the supervisor pauses at the agreed deadline.
-
-## Frozen qualification
+## First checkpoint (historical)
 
 Core source is committed at `6bee817dc74d414153cd714c9f6b4a7f2ca3e06e`;
 the generated bridge is committed at `2aa64e1`. Documentation and qualification
