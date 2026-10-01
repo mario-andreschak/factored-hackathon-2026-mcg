@@ -1176,11 +1176,11 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
                     meta=assertion(bank, "prepare_unrecognized_charge", prepare_args, scope=["bank:prepare"]))
                 assert not prepared.isError
                 pending = json.loads(prepared.content[0].text)
-                # The separate stdio process uses real wall time, while this
-                # module's in-process fixtures freeze action time. The synthetic
-                # June charge legitimately ages beyond the 120-day window.
+                # The launcher shares the deterministic action clock with the
+                # parent fixture; authentication and revocation use wall time.
                 event_date = datetime.fromisoformat(pending["transaction"]["transaction_date"]).date()
-                age = (datetime.now(timezone.utc).date() - event_date).days
+                action_now = ACTION_TEST_NOW + (time.time() - ACTION_TEST_WALL_ORIGIN)
+                age = (datetime.fromtimestamp(action_now, timezone.utc).date() - event_date).days
                 expected_reason = "out_of_policy" if age > 120 else "missing_evidence"
                 assert pending["decision"] == "handoff" and pending["reason"] == expected_reason
                 handoff_args = {"reason": expected_reason, "pending_handle": pending["pending_handle"]}
