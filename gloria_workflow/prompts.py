@@ -117,8 +117,8 @@ class PromptSpec:
 
 def _type_matches(value, kind):
     return {"null": value is None, "string": isinstance(value, str),
-            "integer": type(value) is int, "number": type(value) in (int, float)
-            and math.isfinite(value), "boolean": type(value) is bool,
+            "integer": type(value) is int, "number": type(value) is int
+            or (type(value) is float and math.isfinite(value)), "boolean": type(value) is bool,
             "array": isinstance(value, list), "object": isinstance(value, dict)}[kind]
 
 
@@ -229,11 +229,13 @@ FACT_FIELDS = ("ref", "transaction_id", "transaction_reference", "transaction_da
                "merchant_name", "merchant_category", "transaction_city", "transaction_country",
                "city", "country", "transaction_status", "status", "product", "product_type",
                "product_last4", "complaint_id", "complaint_status", "created_at", "label")
-_PRIVATE_TEXT = re.compile(r"\bCLI-[A-Za-z0-9_-]+\b|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(?<![\w.,])\d{8,}(?![\w.,])", re.IGNORECASE)
+_PRIVATE_TEXT = re.compile(r"\bCLI-[A-Za-z0-9_-]+\b|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", re.IGNORECASE)
+_DOCUMENT_TEXT = re.compile(r"(\b(?:documento|c[eé]dula|cpf|cuit|tel[eé]fono|telefone|celular|tarjeta|cart[aã]o)\s*(?:(?:n[uú]mero|n[ºo.]|final|terminad[ao])\s*)?[:#=-]?\s*)([0-9][0-9 .()-]{6,}[0-9])", re.IGNORECASE)
 
 
 def _text(value):
-    return _PRIVATE_TEXT.sub("[DATO_REDACTADO]", str(value or ""))[:12000]
+    text = _PRIVATE_TEXT.sub("[DATO_REDACTADO]", str(value or ""))
+    return _DOCUMENT_TEXT.sub(lambda match: match[1] + "[DOCUMENTO_REDACTADO]", text)[:12000]
 
 
 def _fields(value, allowed):
@@ -318,22 +320,6 @@ def build_stage_inputs(stage: str, state: Mapping, **overrides) -> dict:
     """Construct only declared variables from canonical state; never send ChatState."""
     if stage not in STAGE_FILES:
         raise StageError(stage, "input", ("stage.unknown",))
-    turn, runtime = state.get("turn", {}), state.get("runtime", {})
-    workflow = state.get("workflow_state", {})
-    language = turn.get("language", "es")
-    history = runtime.get("history", "")
-    defaults = {"user_question": turn.get("user_question", ""),
-                "historic_conversation": history, "clean_query": turn.get("clean_query", ""),
-                "queries": [item["query_text"] for item in turn.get("sub_queries", [])],
-                "current_date": turn.get("current_date", ""),
-                "customer_currencies": runtime.get("customer_currencies", []),
-                "pending": workflow.get("pending", {}), "language": language,
-                "emotional_context": turn.get("emotional_context", "Neutro"),
-                "response_mode": workflow.get("policy_decision", {}).get("response_mode", "TOOL_ERROR"),
-                "structured_data": _structured_from_state(state),
-                "workflow_state": workflow,
-                "policy_context": state.get("tool_results", {}).get("retrieve_policy", {}).get("chunks", []),
-                "customer_first_name": state.get("tool_results", {}).get("get_customer_profile", {}).get("first_name", "")}
     variables = {
         "detect_attack": ("user_question",),
         "detect_context": ("user_question", "historic_conversation"),
@@ -346,10 +332,52 @@ def build_stage_inputs(stage: str, state: Mapping, **overrides) -> dict:
     }[stage]
     if set(overrides) - set(variables):
         raise StageError(stage, "input", ("input.unknown_override",))
-    return _safe_inputs(stage, {key: overrides.get(key, defaults[key]) for key in variables})
+    try:
+        if not isinstance(state, Mapping):
+            raise TypeError()
+
+        def section(key):
+            value = state.get(key, {})
+            if not isinstance(value, Mapping):
+                raise TypeError()
+            return value
+
+        def default(key):
+            if key in ("user_question", "clean_query", "current_date"):
+                return section("turn").get(key, "")
+            if key == "language":
+                return section("turn").get("language", "es")
+            if key == "emotional_context":
+                return section("turn").get(key, "Neutro")
+            if key == "queries":
+                return [item["query_text"] for item in section("turn").get("sub_queries", [])]
+            if key == "historic_conversation":
+                return section("runtime").get("history", "")
+            if key == "customer_currencies":
+                return section("runtime").get(key, [])
+            if key == "pending":
+                return section("workflow_state").get("pending", {})
+            if key == "workflow_state":
+                return section("workflow_state")
+            if key == "response_mode":
+                return section("workflow_state").get("policy_decision", {}).get("response_mode", "TOOL_ERROR")
+            if key == "structured_data":
+                return _structured_from_state(state)
+            if key == "policy_context":
+                return section("tool_results").get("retrieve_policy", {}).get("chunks", [])
+            if key == "customer_first_name":
+                return section("tool_results").get("get_customer_profile", {}).get("first_name", "")
+            raise ValueError()
+
+        values = {key: overrides[key] if key in overrides else default(key) for key in variables}
+        return _safe_inputs(stage, values)
+    except (TypeError, ValueError, AttributeError, KeyError, RecursionError):
+        raise StageError(stage, "input", ("input.projection",)) from None
 
 
 def _safe_inputs(stage, inputs):
+    if any(isinstance(value, str) and len(value) > 12000 for value in inputs.values()):
+        raise StageError(stage, "input", ("input.string_bound",))
     result = dict(inputs)
     for field in ("user_question", "historic_conversation", "clean_query", "customer_first_name"):
         if field in result and isinstance(result[field], str):
@@ -407,7 +435,12 @@ class StageAdapters:
         spec = self.specs[stage]
         if not isinstance(inputs, Mapping) or set(inputs) != set(spec.input_variables):
             raise StageError(stage, "input", ("input.keys",))
-        inputs = _safe_inputs(stage, inputs)
+        if any(isinstance(value, str) and len(value) > 12000 for value in inputs.values()):
+            raise StageError(stage, "input", ("input.string_bound",))
+        try:
+            inputs = _safe_inputs(stage, inputs)
+        except (TypeError, ValueError, AttributeError, RecursionError):
+            raise StageError(stage, "input", ("input.projection",)) from None
         self._check_inputs(stage, inputs)
         # A substitution callback replaces only canonical placeholders once. User
         # braces cannot become new variables or instructions in the system prompt.
@@ -458,6 +491,10 @@ class StageAdapters:
             raise StageError(stage, "input", ("input.queries.bound",))
         if "language" in inputs and inputs["language"] not in ("es", "pt", "other"):
             raise StageError(stage, "input", ("input.language",))
+        if "emotional_context" in inputs and inputs["emotional_context"] not in ("Neutro", "Positivo", "Frustración", "Emergencia"):
+            raise StageError(stage, "input", ("input.emotional_context",))
+        if "customer_currencies" in inputs and any(not re.fullmatch(r"[A-Z]{3}", item) for item in inputs["customer_currencies"]):
+            raise StageError(stage, "input", ("input.customer_currencies",))
         if "response_mode" in inputs and inputs["response_mode"] not in MODES:
             raise StageError(stage, "input", ("input.response_mode",))
         if "current_date" in inputs:

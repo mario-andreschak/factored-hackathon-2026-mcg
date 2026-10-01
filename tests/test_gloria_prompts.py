@@ -225,3 +225,59 @@ def test_all_convenience_methods_are_executable():
         assert await adapter.generate(adapter.build_inputs("generate", STATE)) == OUTPUTS["generate"]
         assert await adapter.generate_handoff_summary(adapter.build_inputs("generate_handoff_summary", STATE)) == OUTPUTS["generate_handoff_summary"]
     asyncio.run(exercise())
+
+
+def test_redaction_preserves_permitted_identifiers_and_decimal_amounts():
+    calls = []
+    async def model(stage, system, user):
+        calls.append(user)
+        return json.dumps(OUTPUTS["detect_attack"])
+    asyncio.run(StageAdapters(model).detect_attack("TRX-123456789012 123456789.25 COP CLI-PRIVATE documento 987654321 user@example.com"))
+    assert "TRX-123456789012" in calls[0] and "123456789.25" in calls[0]
+    assert "CLI-PRIVATE" not in calls[0] and "987654321" not in calls[0] and "user@example.com" not in calls[0]
+
+
+def test_malformed_projection_input_is_a_safe_stage_error():
+    async def model(*_):
+        pytest.fail("invalid projection must not call model")
+    adapter = StageAdapters(model)
+    inputs = adapter.build_inputs("generate", STATE)
+    inputs["structured_data"]["data_sources"] = None
+    with pytest.raises(StageError) as caught:
+        asyncio.run(adapter.run("generate", inputs))
+    assert caught.value.code == "input"
+
+
+def test_oversized_user_input_fails_closed_instead_of_truncating_meaning():
+    async def model(*_):
+        pytest.fail("oversized message must not be classified")
+    with pytest.raises(StageError) as caught:
+        asyncio.run(StageAdapters(model).detect_attack("x" * 12001))
+    assert caught.value.errors == ("input.string_bound",)
+
+
+@pytest.mark.parametrize("query", ["compra de 10000000 COP", "compra de 10000000", "saque de 200000000 BRL"])
+def test_large_integral_amount_is_preserved_for_language_interpretation(query):
+    calls = []
+    async def model(stage, system, user):
+        calls.append(user)
+        return json.dumps(OUTPUTS["detect_attack"])
+    asyncio.run(StageAdapters(model).detect_attack(query))
+    assert query in calls[0]
+
+
+def test_attack_does_not_inspect_unrelated_malformed_state():
+    async def model(*_):
+        return json.dumps(OUTPUTS["detect_attack"])
+    state = {"turn": {"user_question": "Hola", "sub_queries": [{}]},
+             "tool_results": {"search_transactions": None}, "workflow_state": None}
+    assert asyncio.run(StageAdapters(model).from_state("detect_attack", state)) == OUTPUTS["detect_attack"]
+
+
+@pytest.mark.parametrize("state", [None, {"turn": None}, {"turn": {"sub_queries": [{}]}}, {"turn": {"sub_queries": None}}])
+def test_bad_relevant_state_fails_closed_with_safe_error(state):
+    async def model(*_):
+        pytest.fail("invalid state must not call model")
+    with pytest.raises(StageError) as caught:
+        asyncio.run(StageAdapters(model).from_state("detect_intent", state))
+    assert caught.value.code == "input"
