@@ -974,10 +974,13 @@ def test_repository_bank_distinguishes_candidate_hash_from_snapshot_id():
     class FictionalSessionHost:
         def _identity(self, customer, session, expiry):
             assert customer == binding()["customer_id"] and session == binding()["session_id"]
-            return customer, binding()["owner"]
+            assert expiry == binding()["expires_at"]
+            return binding()["owner"], binding()["owner"]
         @contextmanager
         def _connection(self):
-            record = dict(revoked=False, customer_id=binding()["customer_id"])
+            record = dict(revoked=False, customer_id=binding()["customer_id"],
+                subject=binding()["owner"], owner=binding()["owner"], expires=binding()["expires_at"],
+                conversation_id=binding()["conversation_id"])
             yield SimpleNamespace(execute=lambda *_: SimpleNamespace(fetchone=lambda: record))
 
     bank = RepositoryBank(FictionalServingRepository(), FictionalSessionHost(),
