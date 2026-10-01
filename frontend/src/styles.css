@@ -2085,9 +2085,9 @@ button svg {
   line-height: 1.55;
 }
 .modal-disclosure {
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.7;
-  color: #a2ae92;
+  color: #4b6246;
   text-align: center;
   margin-top: 13px;
 }
@@ -2147,17 +2147,21 @@ button svg {
 .chat-selection > span {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 5px;
 }
 .chat-selection strong {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
 }
 .chat-selection small {
-  font-size: 8px;
-  color: #9aae84;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #4b6246;
+  overflow-wrap: anywhere;
 }
 .chat-selection > svg {
+  flex-shrink: 0;
   margin-left: auto;
   color: #8eac70;
 }
@@ -3452,12 +3456,6 @@ button svg {
   }
   .assistant-status strong {
     font-size: 10px;
-  }
-  .chat-selection strong {
-    font-size: 9px;
-  }
-  .chat-selection small {
-    font-size: 7px;
   }
   .modal .button.full {
     font-size: 11px;
