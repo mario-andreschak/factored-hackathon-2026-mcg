@@ -887,6 +887,18 @@ test.each([
     });
     closeButton.focus();
     expect(document.activeElement).toBe(closeButton);
+    expect(
+      fireEvent.keyDown(closeButton, { key: "Tab", cancelable: true }),
+    ).toBe(false);
+    expect(document.activeElement).toBe(closeButton);
+    expect(
+      fireEvent.keyDown(closeButton, {
+        key: "Tab",
+        shiftKey: true,
+        cancelable: true,
+      }),
+    ).toBe(false);
+    expect(document.activeElement).toBe(closeButton);
     fireEvent.click(closeButton);
     expect(screen.queryByRole("dialog", { name: aboutTitle })).toBeNull();
     expect(document.activeElement).toBe(aboutTrigger);
