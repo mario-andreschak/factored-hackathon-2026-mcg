@@ -155,8 +155,8 @@ try {
   const siblingMalformed = await request('/v1/chat/completions', {}, sibling.stageToken); unchanged = before.equals(eventsBytes());
   revocationCases.push({ case: 'foreign_marker_preserves_sibling', httpStatus: siblingMalformed.status,
     noProviderOrMcpBeforeDenial: unchanged, pass: siblingMalformed.status === 403 && siblingMalformed.data.error === 'gloria_stage_request_denied' && unchanged });
-  const cancelledCleanup = JSON.parse(execFileSync('python', [path.join(REPO_ROOT, 'scripts/native_gloria_qualification.py'),
-    '--probe-cancel-cleanup', '--base-url', endpoint, '--authority-dir', admitted], { encoding: 'utf8', timeout: 20000 }));
+  const cancelledCleanup = JSON.parse(execFileSync('python', ['-m', 'scripts.native_gloria_qualification',
+    '--probe-cancel-cleanup', '--base-url', endpoint, '--authority-dir', admitted], { cwd: REPO_ROOT, encoding: 'utf8', timeout: 20000 }));
   revocationCases.push(cancelledCleanup);
   report.revocationProbes = { cases: revocationCases };
   assert(revocationCases.every(item => item.pass), 'installed_revocation_denial_failed');
