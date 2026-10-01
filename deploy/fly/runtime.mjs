@@ -136,7 +136,7 @@ export function runtimeCommands({ worker, frontend, gateway, dev } = runtimeEnvi
     { name: 'native worker', command: '/usr/sbin/gosu', args: ['node', 'node', 'scripts/launch-next.mjs', 'start', '-p', '4200', '-H', '127.0.0.1'], cwd: '/app', env: worker },
     { name: 'joined banking application', command: '/usr/sbin/gosu', args: ['banking', '/opt/joined/.venv/bin/python', '/opt/joined/scripts/run_dispute.py',
       '--state-dir', '/data/banking-state', '--bank-config-file', '/run/dispute/bank-config.json', '--native-url', 'http://127.0.0.1:4200',
-      '--native-authority-dir', CONTROL, '--transition-receipt', '/run/dispute/transition-receipt.json',
+      '--native-authority-dir', CONTROL, '--transition-receipt', '/run/dispute/transition-receipt.json', '--application-source-root', '/opt/joined',
       '--native-reader-group', '10002', '--port', '8082', '--enable-simulated-intake'], cwd: '/opt/joined', env: frontend },
     { name: 'public gateway', command: '/usr/sbin/gosu', args: ['node', 'node', '/opt/savia/fly/gateway.mjs'], cwd: '/app', env: gateway },
   ];
