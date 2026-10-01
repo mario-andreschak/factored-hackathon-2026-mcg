@@ -18,13 +18,13 @@ python -m pytest tests/test_gloria_acceptance.py -q
 | Area | Required observation |
 | --- | --- |
 | Normal ES/PT | An eligible, owned dispute requests the portal control; inquiry reports evidence; no chat action write. |
-| Ambiguous and unsupported | Multiple candidates require selection; ambiguous pesos require currency; balance/history unsupported cases do not fabricate evidence. |
+| Ambiguous and unsupported | Multiple candidates require selection; ambiguous pesos require currency; an explicit currency reply retains the amount; an unrelated balance request changes scope; unsupported history does not fabricate evidence. |
 | Human and emergency | A human request in the original message survives a false intent label. Active current misuse escalates; a past unfamiliar charge alone does not imply emergency. |
 | Model failure | Timeout or malformed classification fails closed. An invented success or receipt is rejected, retried once, then safely replaced. |
 | Ownership | Authentication and third-party guards precede private reads, including when the model suppresses the foreign-reference signal. Stored pending state never crosses customers or conversations. |
 | Consent and replay | Chat `sí/sim`, a model `CONFIRMED`, and selection never authorize intake. Replayed turns or uncertain outcomes never attempt another write; an expired session cannot replay private evidence. |
 | Receipt uncertainty | An attempted action without verified readback retains `ACTION_UNVERIFIED`, including after a verified human-review receipt. Both native host envelopes and the agreed canonical test projection are exercised. |
-| Policy precedence | Authentication/ownership beat old success; age/status beat new intake; an exact existing case beats risk; missing coverage never means low risk. |
+| Policy precedence | Authentication/ownership beat old success; age/status beat new intake; an exact existing case beats risk; missing coverage never means low risk. A risk report must cover exactly 24 hours and have a nonfuture endpoint within the configured freshness bound. |
 
 ## Evidence scope
 
@@ -41,19 +41,30 @@ the protected banking MCP remain separate from the language workflow.
 
 ## Execution evidence
 
-Final independent local run: **83 passed, 0 failed, 0 skipped in 2.80 seconds**,
-September 30, 2026 at 23:07 Bogotá (October 1 at 04:07 UTC). The tests were
+Latest independent local run: **90 passed, 1 failed, 0 skipped in 2.39 seconds**,
+September 30, 2026 at 23:16 Bogotá (October 1 at 04:16 UTC). The tests were
 executed against the actual supervisor integration package with the committed
-acceptance file at `f2d67b06675301337e9e09150f39f2d5be1a5fb8`.
+acceptance file at `a8f5bcd9b1849605d8ed12ce9c41f4edd1904fd9`.
+
+The remaining failure is a real topic-switch guard: after a dispute asks for
+currency, “Ahora quiero saber mi saldo en USD” with model intent `OOD` wrongly
+supplies the old dispute's missing currency and returns `CONFIRM_ACTION`.
+It must start a new request and return `OUT_OF_SCOPE` without transaction
+search. The assertion remains enabled. All other 90 cases, including the four
+freshness boundaries and cached-success receipt revalidation, pass.
 
 The integration checkout's Git HEAD was
-`f32b0e51a6b2e47477082e59b69fdaa630a09b5f`; runtime and host work were still
+`367bc5c948319bd58d47c768688b4477fd30acfc`; runtime and host work were still
 uncommitted there. Therefore that HEAD alone does **not** identify the tested
 source. The worker's durable `acceptance-status.json` records SHA256 maps of
 application modules, canonical prompts, contracts, policy configuration, and
 the relevant frontend/MCP action boundaries both before and after execution.
 Those maps were identical throughout the run. Their sorted JSON-map SHA256 is
-`acc8719d3f5e69ecb5713982214360ddb1dc58875c5ca7ba9912b7222d045ad3`.
+`b6a64e09a5e7bbe9733b26bf9f3e9cb3c8bf22f3caa429667bd3c37b09a0c715`.
+
+An earlier 83-case checkpoint passed before the later freshness/continuity
+freeze. It is retained as historical development evidence, not substituted
+for this latest run.
 
 The suite exposed status-field incompatibility, missing selection snapshots,
 adapter input mismatch, absent bounded repairs and language notices, receipt
