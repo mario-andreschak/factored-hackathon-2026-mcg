@@ -60,11 +60,12 @@ class ChatError(Exception):
 
 
 class ChatService:
-    def __init__(self, config: dict[str, Any] | None, state_dir: Path):
+    def __init__(self, config: dict[str, Any] | None, state_dir: Path, *, bank_backend=None):
         self._configured = False
         self._reason = "El asistente de FLUJO todavía no está conectado a esta demo."
         self._customer_subjects: dict[str, str] = {}
         self._action_enabled = False
+        self._bank_backend = bank_backend
         self._approved_subject_customers: dict[str, str] = {}
         self._approved_owner_subjects: dict[str, tuple[str, str]] = {}
         self._db_path = Path(state_dir) / "frontend-chat.sqlite3"
@@ -121,6 +122,16 @@ class ChatService:
                 db.execute("ALTER TABLE action_status ADD COLUMN prepare_recovery_after INTEGER NOT NULL DEFAULT 0")
             if "prepare_recovery_deadline" not in action_columns:
                 db.execute("ALTER TABLE action_status ADD COLUMN prepare_recovery_deadline INTEGER NOT NULL DEFAULT 0")
+            if "query_scope_id" not in action_columns:
+                db.execute("ALTER TABLE action_status ADD COLUMN query_scope_id TEXT")
+            if "action_conversation_id" not in action_columns:
+                db.execute("ALTER TABLE action_status ADD COLUMN action_conversation_id TEXT")
+            if "query_snapshot_hash" not in action_columns:
+                db.execute("ALTER TABLE action_status ADD COLUMN query_snapshot_hash TEXT")
+            db.execute("""CREATE TABLE IF NOT EXISTS cancelled_action_handles(
+                session_id TEXT NOT NULL, handle_hash TEXT NOT NULL, owner TEXT NOT NULL,
+                expires INTEGER NOT NULL, query_scope_id TEXT, cancelled_at INTEGER NOT NULL,
+                PRIMARY KEY(session_id,handle_hash))""")
             # Legacy status can still be recovered, but without a saved public
             # target it cannot authorize a new confirmation.
             db.execute("UPDATE action_status SET action_id=lower(hex(randomblob(16))) WHERE action_id IS NULL")
@@ -299,6 +310,12 @@ class ChatService:
         else:
             result.pop("target_reference", None)
         result = project_action_result(result)
+        if "query_scope_id" in row.keys() and row["query_scope_id"]:
+            result["query_id"] = row["query_scope_id"]
+        if "query_snapshot_hash" in row.keys() and row["query_snapshot_hash"]:
+            result["snapshot_hash"] = row["query_snapshot_hash"]
+        if result.get("state") == "intake_verified":
+            result["snapshot"] = result["receipt"]["snapshot"]
         if (result.get("state") == "handoff_verified" and row["target_reference"] is None
                 and not result.get("pending_handle")
                 and not ChatService._general_handoff(result["handoff"])):
@@ -369,7 +386,8 @@ class ChatService:
                         target_reference: str | None, initial: dict[str, Any],
                         *, prepare_transaction_id: str | None = None,
                         prepare_snapshot: str | None = None,
-                        prepare_conversation_id: str | None = None
+                        prepare_conversation_id: str | None = None,
+                        query_scope_id: str | None = None, query_snapshot_hash: str | None = None
                         ) -> tuple[str, int, sqlite3.Row | None]:
         now = int(time.time())
         action_id = str(uuid.uuid4())
@@ -388,8 +406,8 @@ class ChatService:
             db.execute("""INSERT INTO action_status
                 (session_id,owner,expires,result_json,updated_at,action_id,target_reference,revision,
                  prepare_transaction_id,prepare_snapshot,prepare_conversation_id,
-                 prepare_recovery_attempts,prepare_recovery_after,prepare_recovery_deadline)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(session_id) DO UPDATE SET
+                 prepare_recovery_attempts,prepare_recovery_after,prepare_recovery_deadline,query_scope_id,action_conversation_id,query_snapshot_hash)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(session_id) DO UPDATE SET
                 result_json=excluded.result_json,updated_at=excluded.updated_at,
                 action_id=excluded.action_id,target_reference=excluded.target_reference,
                 revision=excluded.revision,
@@ -397,11 +415,15 @@ class ChatService:
                 prepare_snapshot=excluded.prepare_snapshot,
                 prepare_conversation_id=excluded.prepare_conversation_id,
                 prepare_recovery_attempts=0,prepare_recovery_after=0,
-                prepare_recovery_deadline=excluded.prepare_recovery_deadline""",
+                prepare_recovery_deadline=excluded.prepare_recovery_deadline,
+                query_scope_id=excluded.query_scope_id,
+                action_conversation_id=excluded.action_conversation_id,
+                query_snapshot_hash=excluded.query_snapshot_hash""",
                 (session_id, owner, session_exp, json.dumps(result), now, action_id,
                  target_reference, revision, prepare_transaction_id, prepare_snapshot,
                  prepare_conversation_id, 0, 0,
-                 now + _PREPARE_RECOVERY_WINDOW if prepare_transaction_id else 0))
+                 now + _PREPARE_RECOVERY_WINDOW if prepare_transaction_id else 0, query_scope_id,
+                 prepare_conversation_id, query_snapshot_hash))
         return action_id, revision, row
 
     def _rollback_unadmitted_action(self, session_id: str, owner: str, session_exp: int,
@@ -425,13 +447,14 @@ class ChatService:
                 db.execute("""UPDATE action_status SET result_json=?,updated_at=?,action_id=?,
                     target_reference=?,revision=?,prepare_transaction_id=?,prepare_snapshot=?,
                     prepare_conversation_id=?,prepare_recovery_attempts=?,prepare_recovery_after=?,
-                    prepare_recovery_deadline=?
+                    prepare_recovery_deadline=?,query_scope_id=?,action_conversation_id=?,query_snapshot_hash=?
                     WHERE session_id=?""",
                     (previous["result_json"], int(time.time()), previous["action_id"],
                      previous["target_reference"], revision + 1,
                      previous["prepare_transaction_id"], previous["prepare_snapshot"],
                      previous["prepare_conversation_id"], previous["prepare_recovery_attempts"],
-                     previous["prepare_recovery_after"], previous["prepare_recovery_deadline"], session_id))
+                     previous["prepare_recovery_after"], previous["prepare_recovery_deadline"],
+                     previous["query_scope_id"], previous["action_conversation_id"], previous["query_snapshot_hash"], session_id))
 
     def _advance_action(self, session_id: str, owner: str, session_exp: int,
                         action_id: str, revision: int, result: dict[str, Any]) -> tuple[dict[str, Any], int]:
@@ -531,7 +554,8 @@ class ChatService:
                  session_id, action_id, revision))
         return {"conversationId": stored_conversation, "operation": "prepare",
                 "transactionId": transaction_id, "snapshot": snapshot,
-                "requestId": request_id}, revision
+                "requestId": request_id,
+                **({"queryId": row["query_scope_id"]} if row["query_scope_id"] else {})}, revision
 
     def _release_rejected_prepare_recovery(self, session_id: str, owner: str, session_exp: int,
                                            action_id: str, revision: int) -> None:
@@ -550,7 +574,8 @@ class ChatService:
     async def action(self, customer_id: str, session_id: str, session_exp: int,
                      operation: dict[str, Any], *, target_reference: str | None = None,
                      expected_snapshot: str | None = None,
-                     expected_transaction: dict[str, Any] | None = None) -> dict[str, Any]:
+                     expected_transaction: dict[str, Any] | None = None,
+                     query_scope_id: str | None = None) -> dict[str, Any]:
         """A trusted frontend control, separate from model text and tool arguments."""
         if not self._action_enabled:
             raise ChatError("action_unavailable", 503, "La recepción simulada no está habilitada.")
@@ -595,6 +620,13 @@ class ChatService:
         if not isinstance(conversation, str) or not _CONVERSATION.fullmatch(conversation):
             raise ChatError("inquiry_required", 409,
                             "Primero consulta el movimiento con Savia para iniciar una conversación segura.")
+        query_snapshot_hash = None
+        if self._bank_backend is not None and kind in {"prepare", "handoff"}:
+            scope = self._bank_backend.query_scope(self, customer_id, session_id,
+                session_exp, target_reference, query_scope_id)
+            query_scope_id, query_snapshot_hash = scope["query_id"], scope["snapshot_hash"]
+            if query_scope_id:
+                operation["queryId"] = query_scope_id
         action_id: str | None = None
         revision: int | None = None
         previous: sqlite3.Row | None = None
@@ -606,14 +638,25 @@ class ChatService:
                 target_reference, {"state": "preparing", "request_id": operation["requestId"]},
                 prepare_transaction_id=operation.get("transactionId"),
                 prepare_snapshot=operation.get("snapshot"),
-                prepare_conversation_id=conversation)
+                prepare_conversation_id=conversation, query_scope_id=query_scope_id,
+                query_snapshot_hash=query_snapshot_hash)
         elif kind == "confirm" or handle:
             if not isinstance(handle, str) or not _PENDING_HANDLE.fullmatch(handle):
                 raise ChatError("action_mismatch", 409, "La solicitud no corresponde al movimiento seleccionado.")
             current, saved = self._current_action(session_id, owner, session_exp)
+            with self._connection() as db:
+                denied = db.execute("SELECT owner,expires FROM cancelled_action_handles WHERE session_id=? AND handle_hash=?",
+                    (session_id, hashlib.sha256(handle.encode()).hexdigest())).fetchone()
+            if denied:
+                raise ChatError("action_cancelled", 409, "La solicitud anterior fue cancelada. Inicia una nueva preparación.")
             if (not current or current["target_reference"] != target_reference
                     or saved.get("pending_handle") != handle):
                 raise ChatError("action_mismatch", 409, "La solicitud no corresponde al movimiento seleccionado.")
+            stored_scope = current["query_scope_id"]
+            if query_scope_id is not None and stored_scope != query_scope_id:
+                raise ChatError("action_mismatch", 409, "La solicitud no corresponde a esta consulta.")
+            if stored_scope:
+                operation["queryId"] = stored_scope
             bound_snapshot = saved.get("snapshot")
             bound_transaction = saved.get("transaction")
             if kind == "confirm" and saved.get("state") == "pending_confirmation" and (
@@ -735,7 +778,8 @@ class ChatService:
                            "unanswered_questions": operation["unansweredQuestions"],
                            "request_id": operation["requestId"], "reason": operation["reason"]}
                 action_id, revision, previous = self._reserve_action(session_id, owner,
-                                                                       session_exp, None, initial)
+                    session_exp, None, initial, prepare_conversation_id=conversation,
+                    query_scope_id=query_scope_id, query_snapshot_hash=query_snapshot_hash)
 
         payload = {"conversationId": conversation, **operation}
         if kind == "handoff":
@@ -889,7 +933,8 @@ class ChatService:
             try:
                 receipt = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
                     {"conversationId": session["conversation_id"], "operation": "receipt",
-                     "pendingHandle": saved["pending_handle"]}, timeout_seconds=20)
+                     "pendingHandle": saved["pending_handle"],
+                     **({"queryId": row["query_scope_id"]} if row["query_scope_id"] else {})}, timeout_seconds=20)
             except ChatError as exc:
                 # A lost receipt response leaves the durable uncertain state.
                 # Local ownership/revocation errors must still propagate.
@@ -1017,6 +1062,12 @@ class ChatService:
 
     async def _post(self, path: str, headers: dict[str, str], payload: dict[str, Any],
                     timeout_seconds: float = _TIMEOUT) -> dict[str, Any]:
+        if self._bank_backend is not None and path in {"/v1/banking/action", "/v1/banking/session/revoke"}:
+            try:
+                async with asyncio.timeout(timeout_seconds):
+                    return await self._bank_backend.post(path, headers, payload, self)
+            except TimeoutError:
+                raise ChatError("chat_timeout", 504, "La solicitud sigue sin verificar. Consulta su estado.") from None
         try:
             # HTTPX's read timeout applies to each chunk. A total deadline also
             # bounds a slow response stream and the complete logout request.
@@ -1068,7 +1119,7 @@ class ChatService:
 
     async def send(self, customer_id: str, session_id: str, session_exp: int, message: str, *,
                    display_message: str | None = None, selection: dict[str, Any] | None = None,
-                   workflow=None) -> dict[str, Any]:
+                   workflow=None, query_scope_id: str | None = None) -> dict[str, Any]:
         subject, owner = self._identity(customer_id, session_id, session_exp)
         if (not isinstance(message, str) or not message.strip() or len(message.strip()) > 4096
                 or len(message.encode("utf-8")) > 12000):
@@ -1093,6 +1144,10 @@ class ChatService:
             elif row["subject"] != subject or row["customer_id"] != customer_id:
                 raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
             conversation = row["conversation_id"]
+            if workflow is not None and conversation is None:
+                conversation = str(uuid.uuid4())
+                db.execute("UPDATE chat_sessions SET conversation_id=? WHERE session_id=?",
+                    (conversation, session_id))
             db.execute("UPDATE chat_sessions SET active_id = ?, active_until = ? WHERE session_id = ?",
                        (operation, min(now + _TIMEOUT + 15, session_exp), session_id))
         try:
@@ -1100,11 +1155,28 @@ class ChatService:
                 # Explicit trusted server injection. The browser supplies neither
                 # a model, identity, workflow state nor an authorization event.
                 returned_conversation = conversation or str(uuid.uuid4())
-                state = await workflow.run({"owner": owner, "customer_id": customer_id,
-                    "session_id": session_id, "conversation_id": returned_conversation,
-                    "expires_at": session_exp}, public_message.strip(), turn_id=operation,
-                    selection=public_selection)
+                try:
+                    async with asyncio.timeout(_TIMEOUT):
+                        state = await workflow.run({"owner": owner, "customer_id": customer_id,
+                            "session_id": session_id, "conversation_id": returned_conversation,
+                            "expires_at": session_exp}, public_message.strip(), turn_id=operation,
+                            selection=public_selection,
+                            **({"query_scope_id": query_scope_id} if query_scope_id is not None else {}))
+                except TimeoutError:
+                    raise ChatError("chat_timeout", 504, "La consulta tardó más de lo esperado. No se ha reenviado automáticamente.") from None
                 reply = state["response"]["message"]
+                cancellation = state.get("runtime", {}).get("host_cancellation_requested")
+                signals = cancellation if isinstance(cancellation, list) else [cancellation] if cancellation else []
+                for capsule in state.get("runtime", {}).get("query_scopes", {}).values():
+                    signal = capsule.get("runtime", {}).get("host_cancellation_requested")
+                    if signal:
+                        signals.extend(signal if isinstance(signal, list) else [signal])
+                if signals:
+                    for signal in signals:
+                        if not signal.get("prior_pending_handle"):
+                            continue
+                        self.cancel_pending(customer_id, session_id, session_exp,
+                            query_scope_id=signal.get("query_id"), handle=signal.get("prior_pending_handle"))
                 status = ("waiting_for_input" if state["workflow_state"]["pending"]["type"] != "none"
                           else "completed")
             else:
@@ -1133,11 +1205,48 @@ class ChatService:
                      json.dumps(public_selection, ensure_ascii=False, allow_nan=False) if public_selection else None),
                     (session_id, operation, "assistant", reply, None),
                 ])
-            return {"reply": reply, "mode": "gloria" if workflow is not None else "flujo", "status": status}
+            result = {"reply": reply, "mode": "gloria" if workflow is not None else "flujo", "status": status}
+            if workflow is not None:
+                runtime = state.get("runtime", {})
+                if runtime.get("query_scopes"):
+                    result["active_query_id"] = runtime.get("active_query_id")
+                    result["queries"] = [{"query_id": key, "label": capsule["query_text"],
+                        "transaction_reference": capsule.get("workflow_state", {}).get("transaction_id")}
+                        for key, capsule in runtime["query_scopes"].items()]
+            return result
         finally:
             with self._connection() as db:
                 db.execute("UPDATE chat_sessions SET active_id = NULL, active_until = 0 WHERE session_id = ? AND active_id = ?",
                            (session_id, operation))
+
+    def cancel_pending(self, customer_id, session_id, session_exp, *, query_scope_id=None, handle=None):
+        """Deny an old prepared handle durably before publishing cancellation."""
+        _, owner = self._identity(customer_id, session_id, session_exp)
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._assert_action_session(db, session_id, owner, session_exp)
+            current = self._action_row(db, session_id, owner, session_exp)
+            if not current:
+                return False
+            saved = self._action_result(current)
+            if saved.get("state") != "pending_confirmation":
+                return False  # Attempted or uncertain writes remain recoverable.
+            old_handle = saved.get("pending_handle")
+            if (not old_handle or (handle is not None and handle != old_handle)
+                    or current["query_scope_id"] != query_scope_id):
+                return False
+            # Hold the frontend writer lock while the bank decides. A concurrent
+            # confirmation either wins first and remains readable, or loses to
+            # this durable bank cancellation before it can start its write.
+            if self._bank_backend is not None and not self._bank_backend.cancel(
+                    self, customer_id, session_id, session_exp, old_handle, query_scope_id):
+                return False
+            db.execute("INSERT OR IGNORE INTO cancelled_action_handles VALUES (?,?,?,?,?,?)",
+                (session_id, hashlib.sha256(old_handle.encode()).hexdigest(), owner,
+                 session_exp, query_scope_id, int(time.time())))
+            db.execute("DELETE FROM action_status WHERE session_id=? AND action_id=? AND revision=?",
+                (session_id, current["action_id"], current["revision"]))
+        return True
 
     @staticmethod
     def _public_reply(result: dict[str, Any]) -> tuple[str, str, str]:

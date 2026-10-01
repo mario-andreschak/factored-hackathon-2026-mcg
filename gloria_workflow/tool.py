@@ -4,20 +4,23 @@ from __future__ import annotations
 from copy import deepcopy
 
 
-def make_run_turn_tool(workflow, binding, expected_message, turn_id):
+def make_run_turn_tool(workflow, binding, expected_message, turn_id, *, selection=None, query_scope_id=None):
     trusted_binding = deepcopy(binding)
+    trusted_selection = deepcopy(selection)
 
     async def gloria_run_turn(message: str) -> dict:
         """Run the admitted original turn; model-authored changes are rejected."""
         if not isinstance(message, str) or message != expected_message:
             raise ValueError("original turn mismatch")
-        state = await workflow.run(trusted_binding, expected_message, turn_id=turn_id)
+        state = await workflow.run(trusted_binding, expected_message, turn_id=turn_id,
+            **({"selection": trusted_selection} if trusted_selection is not None else {}),
+            **({"query_scope_id": query_scope_id} if query_scope_id is not None else {}))
         return {"response": state["response"]["message"], "language": state["response"]["language"], "rule_ids": state["workflow_state"]["policy_decision"]["rule_ids"], "turn_id": state["turn"]["turn_id"]}
 
     return gloria_run_turn
 
 
-def create_mcp_server(workflow, binding, expected_message, turn_id):
+def create_mcp_server(workflow, binding, expected_message, turn_id, *, selection=None, query_scope_id=None):
     """Register a per-turn stdio server in the trusted host process.
 
     The host owns its lifetime and admitted context. Do not serve this closure
@@ -25,5 +28,6 @@ def create_mcp_server(workflow, binding, expected_message, turn_id):
     """
     from mcp.server.fastmcp import FastMCP
     server = FastMCP("gloria-admitted-turn")
-    server.tool(name="gloria_run_turn")(make_run_turn_tool(workflow, binding, expected_message, turn_id))
+    server.tool(name="gloria_run_turn")(make_run_turn_tool(workflow, binding, expected_message, turn_id,
+        selection=selection, query_scope_id=query_scope_id))
     return server

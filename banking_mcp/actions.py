@@ -67,6 +67,14 @@ class Actions:
         self.evidence_file = evidence_file
         self._prepare_secret = prepare_secret.encode("utf-8")
         self.clock = time.time
+        # Private application injection; never an MCP argument or model field.
+        # A source-backed host rereads the same owned facts on prepare/confirm.
+        self.trusted_evidence_reader = None
+
+    def _action_evidence(self, principal, snapshot, transaction_id):
+        if self.trusted_evidence_reader is None:
+            return self._evidence(snapshot, transaction_id)
+        return self.trusted_evidence_reader(principal, snapshot, transaction_id)
 
     def _evidence(self, snapshot, transaction_id: str) -> dict | None:
         """A private, pinned synthetic fixture; unknown signals cannot clear intake."""
@@ -248,6 +256,18 @@ class Actions:
             (customer, ACTION, transaction_id, now - 86400, now)).fetchall()
         verified = set()
         complete = True
+        # Retained intents can prove an uncertain outcome even after a case row
+        # is lost. Its missing timestamp cannot establish absence in this window.
+        retained = db.execute("SELECT DISTINCT transaction_id,facts FROM action_pending "
+            "WHERE customer=? AND action=? AND transaction_id<>?",
+            (customer, ACTION, transaction_id)).fetchall()
+        for prior_transaction, saved_facts in retained:
+            try:
+                projection = self._case_projection(db, customer, prior_transaction, _object(saved_facts))
+                if projection["state"] == "action_unverified":
+                    complete = False
+            except (ValueError, TypeError):
+                complete = False
         for prior_transaction, saved_facts in rows:
             try:
                 facts = _object(saved_facts)
@@ -269,7 +289,7 @@ class Actions:
             self._prepare_identity_record(db, principal, key, transaction_id, build)
         snapshot, row = self.repository.owned_transaction_id(principal, transaction_id, build)
         facts = self.repository._visible(row, snapshot)
-        evidence = self._evidence(snapshot, transaction_id)
+        evidence = self._action_evidence(principal, snapshot, transaction_id)
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             self._assert_action_authorized(db, principal)
@@ -389,7 +409,7 @@ class Actions:
         snapshot, row = self.repository.owned_transaction_id(principal, pending[2], pending[3])
         if self.repository._visible(row, snapshot) != json.loads(pending[7]):
             raise BankError("snapshot_changed")
-        evidence = self._evidence(snapshot, pending[2])
+        evidence = self._action_evidence(principal, snapshot, pending[2])
         already_verified = False
         overlapping_attempt = False
         with self.store.connect() as db:

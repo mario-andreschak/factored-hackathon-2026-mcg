@@ -37,6 +37,7 @@ class ChatBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     message: str = Field(min_length=1, max_length=4000)
     transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
+    query_scope_id: str | None = Field(default=None, pattern=r"^q_[a-f0-9]{32}$")
 
 
 class PrepareActionBody(BaseModel):
@@ -44,6 +45,7 @@ class PrepareActionBody(BaseModel):
     transaction_reference: str = Field(pattern=r"^txn_[a-f0-9]{24}$")
     request_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
     language: Literal["es", "pt"] = "es"
+    query_scope_id: str | None = Field(default=None, pattern=r"^q_[a-f0-9]{32}$")
 
 
 class ConfirmActionBody(BaseModel):
@@ -52,6 +54,7 @@ class ConfirmActionBody(BaseModel):
     transaction_reference: str = Field(pattern=r"^txn_[a-f0-9]{24}$")
     confirmed: Literal[True]
     language: Literal["es", "pt"] = "es"
+    query_scope_id: str | None = Field(default=None, pattern=r"^q_[a-f0-9]{32}$")
 
 
 class HandoffActionBody(BaseModel):
@@ -62,6 +65,7 @@ class HandoffActionBody(BaseModel):
     transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
     request_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
     language: Literal["es", "pt"] = "es"
+    query_scope_id: str | None = Field(default=None, pattern=r"^q_[a-f0-9]{32}$")
     unanswered_questions: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=240)]] = Field(
         default_factory=list, max_length=8)
 
@@ -75,7 +79,7 @@ class HandoffActionBody(BaseModel):
         return normalized
 
 
-def create_app(settings: Settings | None = None, *, gloria_factory=None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_backend=None) -> FastAPI:
     # Initialize lazily, allowing imports/build checks without a dataset mount.
     settings = settings or Settings.from_env()
 
@@ -83,7 +87,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
     async def lifespan(app):
         state = State(settings.state_dir)
         from .chat import ChatService
-        chat_service = ChatService(settings.chat, settings.state_dir)
+        chat_service = ChatService(settings.chat, settings.state_dir, bank_backend=bank_backend)
         invite_bindings = ({key: value["customer_id"] for key, value in settings.profiles.items()}
                            if settings.auth_mode == "invite" else None)
         demo_bindings = ({key: value["customer_id"] for key, value in settings.profiles.items()
@@ -124,6 +128,8 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
                     state.bind(profile_id, config["customer_id"])
         app.state.bank_state = state
         app.state.repository = Repository(settings, state)
+        if bank_backend is not None:
+            bank_backend.bind_repository(app.state.repository)
         app.state.gloria_factory = gloria_factory
         if settings.auth_mode == "invite":
             # An external candidate must refuse to start with a real, stale or
@@ -330,7 +336,11 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
             return {"available": False, "messages": [], "active": False}
         from .chat import ChatError
         try:
-            return service.history(customer, current.id, current.expires_at)
+            result = service.history(customer, current.id, current.expires_at)
+            if request.app.state.gloria_factory is not None:
+                result.update(request.app.state.gloria_factory.query_context(
+                    service, customer, current.id, current.expires_at))
+            return result
         except ChatError as exc:
             raise HTTPException(exc.status_code, exc.message) from None
 
@@ -367,6 +377,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
                         current.id, current.expires_at) if request.app.state.gloria_factory else None)
             return await service.send(customer, current.id, current.expires_at, message,
                                       display_message=body.message.strip(), selection=public_selection,
+                                      query_scope_id=body.query_scope_id,
                                       **({"workflow": workflow} if workflow is not None else {}))
         except Exception as exc:
             from .chat import ChatError
@@ -377,7 +388,10 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
 
     def render_action_result(result: dict, language: str):
         from .action import project_action_result, render_action
+        query_id = result.get("query_id")
         result = project_action_result(result)
+        if isinstance(query_id, str) and re.fullmatch(r"q_[a-f0-9]{32}", query_id):
+            result["query_id"] = query_id
         if result.get("state") in {"preparing", "prepare_unverified"}:
             message = (
                 ({"es": "Se agotó la recuperación segura. La solicitud sigue sin resolver y bloqueada. La referencia visible no avisa al equipo ni indica que alguien la haya tomado.",
@@ -403,7 +417,8 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
         return render_action(result, language)
 
     async def run_action(request: Request, operation: dict, language: str,
-                         target_reference: str | None = None, *, target_context: dict | None = None):
+                         target_reference: str | None = None, *, target_context: dict | None = None,
+                         query_scope_id: str | None = None):
         current = session(request)
         customer = request.app.state.repository.profile_customer(current.profile_id)
         service = request.app.state.chat_service
@@ -412,7 +427,8 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
             context = ({"expected_snapshot": target_context["snapshot"],
                         "expected_transaction": target_context["transaction"]} if target_context else {})
             result = await service.action(customer, current.id, current.expires_at,
-                                          operation, target_reference=target_reference, **context)
+                                          operation, target_reference=target_reference,
+                                          query_scope_id=query_scope_id, **context)
             return render_action_result(result, language)
         except ChatError as exc:
             raise HTTPException(exc.status_code, exc.message) from None
@@ -443,7 +459,8 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
             raise HTTPException(404, "El movimiento seleccionado no está disponible.")
         return await run_action(request, {"operation": "prepare", "transactionId": target["transaction_id"],
                                           "snapshot": target["snapshot"]},
-                                body.language, body.transaction_reference, target_context=target)
+                                body.language, body.transaction_reference, target_context=target,
+                                query_scope_id=body.query_scope_id)
 
     @app.post("/api/action/confirm")
     async def action_confirm(body: ConfirmActionBody, request: Request):
@@ -453,7 +470,8 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
             raise HTTPException(404, "El movimiento seleccionado no está disponible.")
         return await run_action(request, {"operation": "confirm", "pendingHandle": body.pending_handle,
                                           "confirmed": body.confirmed}, body.language,
-                                body.transaction_reference, target_context=target)
+                                body.transaction_reference, target_context=target,
+                                query_scope_id=body.query_scope_id)
 
     @app.post("/api/action/handoff")
     async def action_handoff(body: HandoffActionBody, request: Request):
@@ -472,7 +490,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
                 "pendingHandle": body.pending_handle,
                 **questions,
                 **({"requestId": body.request_id} if body.request_id else {})},
-                body.language, body.transaction_reference)
+                body.language, body.transaction_reference, query_scope_id=body.query_scope_id)
             return handed
         if body.transaction_reference and not body.pending_handle:
             current = session(request)
@@ -501,7 +519,8 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
                     raise HTTPException(409, "Primero revisa el estado de la solicitud anterior.")
                 prepared = await run_action(request, {"operation": "prepare",
                     "transactionId": target["transaction_id"], "snapshot": target["snapshot"]},
-                    body.language, body.transaction_reference, target_context=target)
+                    body.language, body.transaction_reference, target_context=target,
+                    query_scope_id=body.query_scope_id)
                 if prepared.get("state") not in {"pending_confirmation", "existing_case_verified"}:
                     return prepared
             pending = prepared.get("pending_handle")
@@ -512,7 +531,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
                 raise HTTPException(502, "No se pudo verificar la solicitud de revisión humana.")
             handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
                 "pendingHandle": pending, "requestId": request_id, **questions},
-                body.language, body.transaction_reference)
+                body.language, body.transaction_reference, query_scope_id=body.query_scope_id)
             if handed.get("state") == "handoff_unverified":
                 handed["pending_handle"] = pending
             return handed
@@ -520,7 +539,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None) -> Fast
                                             **questions,
                                             **({"pendingHandle": body.pending_handle} if body.pending_handle else {}),
                                             **({"requestId": body.request_id} if body.request_id else {})},
-                                  body.language)
+                                  body.language, query_scope_id=body.query_scope_id)
         if handed.get("state") == "handoff_unverified" and body.pending_handle:
             handed["pending_handle"] = body.pending_handle
         return handed

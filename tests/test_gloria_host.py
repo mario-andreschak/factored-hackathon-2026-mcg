@@ -84,7 +84,7 @@ def test_receipt_read_requires_exact_durable_conversation(admitted, matching_con
     asyncio.run(service.send("customer-a", sid, expiry, "hola", workflow=runner))
     binding = runner.calls[0][0]
     with service._connection() as db:
-        db.execute("INSERT INTO action_status(session_id,owner,expires,result_json,updated_at,prepare_conversation_id) VALUES (?,?,?,?,?,?)", (sid,binding["owner"],expiry,'{}',int(time.time()),binding["conversation_id"] if matching_conversation else str(uuid.uuid4())))
+        db.execute("INSERT INTO action_status(session_id,owner,expires,result_json,updated_at,action_conversation_id) VALUES (?,?,?,?,?,?)", (sid,binding["owner"],expiry,'{}',int(time.time()),binding["conversation_id"] if matching_conversation else str(uuid.uuid4())))
     async def status(*_): return {"state": "intake_verified", "target_reference": "txn_" + "a"*24, "receipt": action_receipt()}
     service.action_status = status
     repo = SimpleNamespace(profile_customer=lambda _: "customer-a")
@@ -112,7 +112,7 @@ def test_direct_model_port_has_no_tools_persistence_or_banking_assertion():
     seen = []
     def respond(request):
         seen.append(request)
-        return httpx.Response(200,json={"choices":[{"message":{"content":"{}"}}],"usage":{"prompt_tokens":5,"completion_tokens":1}})
+        return httpx.Response(200,json={"choices":[{"finish_reason":"stop","message":{"role":"assistant","content":"{}"}}],"usage":{"prompt_tokens":5,"completion_tokens":1}})
     model = FlujoModel("http://127.0.0.1:43420", "model-fixture", transport=httpx.MockTransport(respond))
     assert asyncio.run(model("detect_context","system","sanitized user")) == "{}"
     payload = json.loads(seen[0].content)
