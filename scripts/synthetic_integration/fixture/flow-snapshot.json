@@ -1,0 +1,16 @@
+{
+  "id": "synthetic-checkpoint-inquiry",
+  "name": "SyntheticCheckpointInquiry",
+  "description": "Private deterministic API assembly inquiry; no model banking mutations.",
+  "createdAt": 0,
+  "updatedAt": 0,
+  "nodes": [
+    {"id": "start", "type": "start", "position": {"x": 0, "y": 0}, "data": {"type": "start", "label": "Start", "properties": {}}},
+    {"id": "process", "type": "process", "position": {"x": 200, "y": 0}, "data": {"type": "process", "label": "Inquiry", "properties": {"boundModel": "synthetic-fixture-provider", "promptTemplate": "Route this synthetic inquiry to Finish. Do not claim any bank action or human response.", "inputMode": "full-history", "allowQuestion": false, "maxTurns": 2}}},
+    {"id": "finish", "type": "finish", "position": {"x": 400, "y": 0}, "data": {"type": "finish", "label": "Finish", "properties": {}}}
+  ],
+  "edges": [
+    {"id": "start-process", "source": "start", "target": "process", "sourceHandle": "start-bottom", "targetHandle": "process-top", "type": "custom", "data": {"edgeType": "standard"}},
+    {"id": "process-finish", "source": "process", "target": "finish", "sourceHandle": "process-bottom", "targetHandle": "finish-top", "type": "custom", "data": {"edgeType": "standard"}}
+  ]
+}
