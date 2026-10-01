@@ -219,11 +219,15 @@ const loginCopy = {
 export function Login({
   onLogin,
   notice,
+  initialLanguage = savedActionLanguage(),
+  onLanguageChange,
 }: {
   onLogin: (mode: "demo" | "invite") => void;
   notice: "" | "session-revoke-unconfirmed";
+  initialLanguage?: ActionLanguage;
+  onLanguageChange?: (language: ActionLanguage) => void;
 }) {
-  const [locale, setLocale] = useState<ActionLanguage>(savedActionLanguage);
+  const [locale, setLocale] = useState<ActionLanguage>(initialLanguage);
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [mode, setMode] = useState<"loading" | "demo" | "invite">("loading"),
     [profileId, setProfileId] = useState(""),
@@ -244,6 +248,7 @@ export function Login({
   }, [locale]);
   function changeLocale(next: ActionLanguage) {
     setLocale(next);
+    onLanguageChange?.(next);
     try {
       window.localStorage.setItem(ACTION_LANGUAGE_STORAGE, next);
     } catch {
@@ -1875,6 +1880,8 @@ export function Assistant({
   synthetic,
   onClose,
   onExpired,
+  initialLanguage = savedActionLanguage(),
+  onLanguageChange,
 }: {
   open: boolean;
   status: ChatStatus;
@@ -1885,6 +1892,8 @@ export function Assistant({
   synthetic: boolean;
   onClose: () => void;
   onExpired: () => void;
+  initialLanguage?: ActionLanguage;
+  onLanguageChange?: (language: ActionLanguage) => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]),
     [input, setInput] = useState(""),
@@ -1893,7 +1902,7 @@ export function Assistant({
     [actionBusy, setActionBusy] = useState(false),
     [actionStatusLoading, setActionStatusLoading] = useState(false),
     [actionLanguage, setActionLanguage] =
-      useState<ActionLanguage>(savedActionLanguage),
+      useState<ActionLanguage>(initialLanguage),
     [handoffRequestId, setHandoffRequestId] = useState<string>(() =>
       crypto.randomUUID(),
     ),
@@ -2103,6 +2112,7 @@ export function Assistant({
     if (language === previousLanguage) return;
     actionLanguageRef.current = language;
     setActionLanguage(language);
+    onLanguageChange?.(language);
     setAction((current) =>
       current ? { ...current, message: undefined } : current,
     );
@@ -2769,6 +2779,8 @@ export default function App() {
     [mobileMenu, setMobileMenu] = useState(false),
     [info, setInfo] = useState(false),
     [toast, setToast] = useState(""),
+    [actionLanguagePreference, setActionLanguagePreference] =
+      useState<ActionLanguage>(savedActionLanguage),
     [loginNotice, setLoginNotice] = useState<"" | "session-revoke-unconfirmed">(
       "",
     );
@@ -2922,6 +2934,8 @@ export default function App() {
           load();
         }}
         notice={loginNotice}
+        initialLanguage={actionLanguagePreference}
+        onLanguageChange={setActionLanguagePreference}
       />
     );
   if (authenticated === null)
@@ -3661,6 +3675,8 @@ export default function App() {
         synthetic={synthetic}
         onClose={closeAssistant}
         onExpired={expired}
+        initialLanguage={actionLanguagePreference}
+        onLanguageChange={setActionLanguagePreference}
       />
       {info && (
         <Modal

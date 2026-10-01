@@ -6,7 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { Assistant, Login } from "./App";
+import App, { Assistant, Login } from "./App";
 
 const reply = (body: unknown, status = 200) =>
   ({
@@ -40,6 +40,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 test("Portuguese demo sign-in preserves selected profile and Assistant locale", async () => {
@@ -240,4 +241,133 @@ test("Spanish defaults and non-401 failures remain safe and local", async () => 
   ).toBeTruthy();
   expect(screen.queryByText("server diagnostic")).toBeNull();
   expect(onLogin).not.toHaveBeenCalled();
+});
+
+const syntheticOverview = {
+  profile: {
+    id: "fictional-b",
+    alias: "Bia Demo",
+    country: "BR",
+    segment: "demo",
+    primary_currency: "BRL",
+  },
+  products: [],
+  transactions: [],
+  summary: {
+    balances_by_currency: [],
+    transaction_count: 0,
+    monthly_activity: [],
+  },
+  metadata: {
+    dataset: "team-synthetic-fixture",
+    build_id: "fictional-build",
+    source_fingerprint: "fictional-snapshot",
+    snapshot_created_at: "2026-10-01",
+    data_as_of: "2026-10-01",
+    balances_note: "",
+    amounts_note: "",
+    transactions_returned: 0,
+    transactions_total: 0,
+    filtered_count: 0,
+    transactions_limit: 500,
+    transactions_offset: 0,
+    transactions_truncated: false,
+    next_offset: null,
+  },
+};
+
+function denyStorageAndServeDemo() {
+  const getItem = vi
+    .spyOn(Storage.prototype, "getItem")
+    .mockImplementation(() => {
+      throw new DOMException("Storage denied", "SecurityError");
+    });
+  const setItem = vi
+    .spyOn(Storage.prototype, "setItem")
+    .mockImplementation(() => {
+      throw new DOMException("Storage denied", "SecurityError");
+    });
+  const calls: string[] = [];
+  vi.stubGlobal("scrollTo", vi.fn());
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      const url = String(input);
+      calls.push(url);
+      if (url === "/api/auth/me") return reply({}, 401);
+      if (url === "/api/auth/profiles")
+        return reply({ mode: "demo", profiles: [syntheticOverview.profile] });
+      if (url === "/api/auth/login" || url === "/api/auth/logout")
+        return reply({});
+      if (url === "/api/overview") return reply(syntheticOverview);
+      if (url === "/api/chat/status") return reply({ available: false });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  return { getItem, setItem, calls };
+}
+
+async function enterDemo() {
+  await screen.findByRole("button", { name: /Bia Demo/ });
+  fireEvent.change(screen.getByLabelText(/Código de acceso|Código de acesso/), {
+    target: { value: "synthetic-demo-code" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: /Entrar a mi banca|Entrar no meu banco/,
+    }),
+  );
+  await screen.findByRole("button", { name: "Cerrar sesión" });
+}
+
+test("Portuguese sign-in reaches Assistant when storage reads and writes are denied", async () => {
+  const { getItem, setItem, calls } = denyStorageAndServeDemo();
+  render(<App />);
+  const language = await screen.findByRole("combobox", {
+    name: "Idioma de acceso",
+  });
+  expect((language as HTMLSelectElement).value).toBe("es");
+  fireEvent.change(language, { target: { value: "pt" } });
+  expect(
+    screen.getByText(/Os textos da interface do Assistente seguem/),
+  ).toBeTruthy();
+  await enterDemo();
+  fireEvent.click(screen.getByRole("button", { name: /^Asistente/ }));
+  const assistantLanguage = screen.getByRole("combobox", {
+    name: "Idioma da interface",
+  }) as HTMLSelectElement;
+  expect(assistantLanguage.value).toBe("pt");
+  expect(
+    screen.getByPlaceholderText("Assistente temporariamente desconectado"),
+  ).toBeTruthy();
+  expect(document.documentElement.lang).toBe("es");
+  expect(getItem).toHaveBeenCalled();
+  expect(setItem).toHaveBeenCalled();
+  expect(calls.filter((url) => url.startsWith("/api/action/"))).toHaveLength(0);
+});
+
+test("Assistant language returns to Login during the same storage-denied visit", async () => {
+  denyStorageAndServeDemo();
+  render(<App />);
+  await enterDemo();
+  fireEvent.click(screen.getByRole("button", { name: /^Asistente/ }));
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    { target: { value: "pt" } },
+  );
+  expect(
+    (
+      screen.getByRole("combobox", {
+        name: "Idioma da interface",
+      }) as HTMLSelectElement
+    ).value,
+  ).toBe("pt");
+  fireEvent.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+  const language = await screen.findByRole("combobox", {
+    name: "Idioma de acesso",
+  });
+  expect((language as HTMLSelectElement).value).toBe("pt");
+  expect(
+    screen.getByText(/Os textos da interface do Assistente seguem/),
+  ).toBeTruthy();
 });
