@@ -781,7 +781,7 @@ button svg {
 }
 .topbar-title {
   font-size: 12px;
-  color: #879481;
+  color: #52684e;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -826,7 +826,7 @@ button svg {
   border: 1px solid #e5ebdb;
   font-size: 9px;
   padding: 7px 10px;
-  color: #6f8965;
+  color: #52684e;
   border-radius: 20px;
 }
 .help-button {
