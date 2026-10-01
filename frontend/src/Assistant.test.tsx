@@ -957,6 +957,15 @@ test("hidden amount requires a local review before explicit consent", async () =
   const confirm = await screen.findByRole("button", {
     name: /Confirmo la recepción simulada/,
   });
+  await waitFor(() =>
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Consultar estado de la solicitud",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false),
+  );
   expect((confirm as HTMLButtonElement).disabled).toBe(true);
   const summary = document.getElementById(
     confirm.getAttribute("aria-describedby")!,
@@ -965,9 +974,11 @@ test("hidden amount requires a local review before explicit consent", async () =
   fireEvent.click(
     screen.getByRole("button", { name: "Mostrar monto para confirmar" }),
   );
-  expect((confirm as HTMLButtonElement).disabled).toBe(false);
-  expect(summary!.textContent).toContain("42");
-  expect(summary!.textContent).not.toContain("••••••");
+  await waitFor(() => {
+    expect((confirm as HTMLButtonElement).disabled).toBe(false);
+    expect(summary!.textContent).toContain("42");
+    expect(summary!.textContent).not.toContain("••••••");
+  });
   expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
 });
 
