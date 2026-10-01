@@ -450,11 +450,12 @@ class Workflow:
     def _cancellation_signals(state):
         containers = [state["runtime"]] + [capsule.get("runtime", {}) for capsule in state["runtime"].get("query_scopes", {}).values()]
         for container in containers:
-            signals = container.get("host_cancellation_requested")
-            if isinstance(signals, dict):
-                yield signals
-            elif isinstance(signals, list):
-                yield from (signal for signal in signals if isinstance(signal, dict))
+            for key in ("host_cancellation_requested", "host_cancellation_queue"):
+                signals = container.get(key)
+                if isinstance(signals, dict):
+                    yield signals
+                elif isinstance(signals, list):
+                    yield from (signal for signal in signals if isinstance(signal, dict))
 
     def _recover_cancellation_from_status(self, state, status, binding):
         """Read-only recovery of the exact prepared handle whose graph wait ended."""
@@ -492,11 +493,12 @@ class Workflow:
             return
         # Cancellation readback is also private. The actual human's ownership
         # signal must be known even if its current intent is outside banking.
+        before = len(state["runtime"]["node_errors"])
         slots = await self._stage(state, "extract_slots", {"clean_query": state["turn"]["user_question"],
             "current_date": state["turn"]["current_date"], "customer_currencies": []})
         if slots:
             state["turn"]["slots"]["foreign_customer_reference"] = bool(slots.get("foreign_customer_reference"))
-        if state["runtime"]["node_errors"] or state["turn"]["slots"].get("foreign_customer_reference"):
+        if slots is None or len(state["runtime"]["node_errors"]) != before or state["turn"]["slots"].get("foreign_customer_reference"):
             return
         for signal in unresolved:
             if not signal.get("prior_target_transaction_id") or not signal.get("prior_snapshot_id"):
@@ -1087,6 +1089,15 @@ class Workflow:
             state = await self._execute_batch(state, binding, history_items)
         elif not state["runtime"].get("batch_response_completed"):
             state = await self._complete(state, binding, history, history_items)
+        # DENIED/NEW_REQUEST and deterministic expiry can create a cancellation
+        # while applying the decision. Resolve that newly emitted signal before
+        # the host receives it; the runner still exposes no bank write port.
+        terminal_turn = state["turn"]
+        if (not terminal_turn["attack"].get("deceptive") and not terminal_turn["attack"].get("inappropriate")
+                and not terminal_turn["unauthorized_reference"] and not terminal_turn["slots"].get("foreign_customer_reference")
+                and not terminal_turn["human_requested"] and terminal_turn["emotional_context"] != "Emergencia"
+                and state["session"]["authenticated"] and not binding.expired(self.clock())):
+            await self._resolve_cancellations(state, binding)
         finished = self.clock()
         if not live or binding.expired(finished):
             # The store rejects expired sessions. Return an ungrounded auth
