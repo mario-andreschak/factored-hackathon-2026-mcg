@@ -41,30 +41,29 @@ the protected banking MCP remain separate from the language workflow.
 
 ## Execution evidence
 
-Latest independent local run: **90 passed, 1 failed, 0 skipped in 2.39 seconds**,
-September 30, 2026 at 23:16 Bogotá (October 1 at 04:16 UTC). The tests were
+Final independent local run: **91 passed, 0 failed, 0 skipped in 2.45 seconds**,
+September 30, 2026 at 23:22 Bogotá (October 1 at 04:22 UTC). The tests were
 executed against the actual supervisor integration package with the committed
 acceptance file at `a8f5bcd9b1849605d8ed12ce9c41f4edd1904fd9`.
 
-The remaining failure is a real topic-switch guard: after a dispute asks for
+The previous 90/91 run exposed a topic-switch guard: after a dispute asks for
 currency, “Ahora quiero saber mi saldo en USD” with model intent `OOD` wrongly
-supplies the old dispute's missing currency and returns `CONFIRM_ACTION`.
-It must start a new request and return `OUT_OF_SCOPE` without transaction
-search. The assertion remains enabled. All other 90 cases, including the four
-freshness boundaries and cached-success receipt revalidation, pass.
+completed the old dispute. The frozen runtime now starts a new request and
+returns `OUT_OF_SCOPE` without transaction search. The same assertion passes,
+as do all four freshness boundaries and cached-success receipt revalidation.
 
 The integration checkout's Git HEAD was
-`367bc5c948319bd58d47c768688b4477fd30acfc`; runtime and host work were still
-uncommitted there. Therefore that HEAD alone does **not** identify the tested
-source. The worker's durable `acceptance-status.json` records SHA256 maps of
-application modules, canonical prompts, contracts, policy configuration, and
-the relevant frontend/MCP action boundaries both before and after execution.
+`6bee817dc74d414153cd714c9f6b4a7f2ca3e06e`, unchanged before and after execution.
+Protected application source was committed; the source-only generated graph
+was still untracked. The worker's durable `acceptance-status.json` records
+SHA256 maps of 36 application modules and inputs: canonical prompts, retrieved
+policies, contracts, configuration, graph artifacts, dependency requirements,
+and relevant frontend/MCP action boundaries, both before and after execution.
 Those maps were identical throughout the run. Their sorted JSON-map SHA256 is
-`b6a64e09a5e7bbe9733b26bf9f3e9cb3c8bf22f3caa429667bd3c37b09a0c715`.
+`85728c34434da00b422dda4d237ba3eaab62a868e6f542d82eb3aca1e03996df`.
 
-An earlier 83-case checkpoint passed before the later freshness/continuity
-freeze. It is retained as historical development evidence, not substituted
-for this latest run.
+Earlier 83-case and 90/91 checkpoints are historical development evidence;
+neither is substituted for this frozen 91/91 run.
 
 The suite exposed status-field incompatibility, missing selection snapshots,
 adapter input mismatch, absent bounded repairs and language notices, receipt
