@@ -152,6 +152,20 @@ def test_motor_existing_exact_case_precedes_high_risk():
     assert not result["workflow_state"]["action"]["authorized"]
 
 
+@pytest.mark.parametrize("restriction", ["old_event", "declined_status"])
+def test_motor_eligibility_precedes_existing_case_and_high_risk(restriction):
+    changes = dict(transaction_date=(NOW - timedelta(days=121)).isoformat()) \
+        if restriction == "old_event" else dict(transaction_status="Declined")
+    state = policy_state(**changes)
+    state["tool_results"]["get_transaction"]["risk_signals"]["fraud_score"] = 99
+    state["tool_results"]["get_related_complaints"] = related(
+        duplicate_check="exact_open_case", complaints=[dict(complaint_id=COMPLAINT_ID,
+            transaction_id=TRANSACTION_ID, status="Open", linkage="exact_sandbox")])
+    result = assert_decision(state, "OUT_OF_POLICY", "R14")
+    assert not result["workflow_state"]["existing_case"]["found"]
+    assert not result["workflow_state"]["action"]["authorized"]
+
+
 @pytest.mark.parametrize("duplicate_check", ["historical_uncertain", "incomplete"])
 def test_motor_unlinked_history_never_becomes_exact_existing_case(duplicate_check):
     state = policy_state()
