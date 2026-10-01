@@ -19,9 +19,9 @@ import uuid
 import yaml
 
 from .policy import decide
-from .state import TrustedBinding, new_state, begin_turn, apply_decision, parse_timestamp, empty_pending
+from .state import TrustedBinding, StateError, new_state, begin_turn, apply_decision, parse_timestamp, empty_pending, reset_workflow
 from .prompts import StageError, safe_structured_data, safe_workflow_state
-from .response import validate_response, fallback_response
+from .response import validate_response, fallback_response, validate_handoff_summary
 from .retrieval import retrieve_policy
 
 
@@ -71,8 +71,45 @@ class Workflow:
             state["trace"].append({"node": name, "turn_id": state["turn"]["turn_id"], "latency_ms": round((time.monotonic()-started)*1000), "model": getattr(self.adapters, "model_id", None)})
         return None
 
+    async def _parallel_preflight(self, state, inputs):
+        stages = ("rewrite_decompose", "detect_attack", "detect_context")
+        supplied = {"rewrite_decompose": inputs,
+            "detect_attack": {"user_question": inputs["user_question"]}, "detect_context": inputs}
+        parallel = getattr(self.adapters, "run_parallel", None)
+        if not callable(parallel):
+            return await asyncio.gather(*(self._stage(state, stage, supplied[stage]) for stage in stages))
+        started = time.monotonic()
+        try:
+            results = await parallel(supplied)
+            if not isinstance(results, dict) or set(results) != set(stages):
+                raise StageError("preflight_batch", "schema")
+        except asyncio.CancelledError:
+            raise
+        except StageError as exc:
+            results = {stage: StageError(stage, exc.code) for stage in stages}
+        except Exception:
+            results = {stage: StageError(stage, "model_error") for stage in stages}
+        elapsed = round((time.monotonic() - started) * 1000)
+        outputs = []
+        for stage in stages:
+            result = results[stage]
+            if not isinstance(result, dict):
+                state["runtime"]["node_errors"].append({"node": stage,
+                    "code": result.code if isinstance(result, StageError) else "model_error"})
+                result = None
+            state["trace"].append({"node": stage, "turn_id": state["turn"]["turn_id"],
+                "latency_ms": elapsed, "shared_barrier": True, "model": getattr(self.adapters, "model_id", None)})
+            outputs.append(result)
+        return outputs
+
     async def _read(self, state, name, args, *, optional=False):
         started = time.monotonic()
+        expiry = parse_timestamp(state["runtime"].get("session_expires_at"))
+        if (state["session"].get("authenticated") is not True or expiry is None or self.clock() >= expiry):
+            result = {"status": "error", "code": "authorization_denied"}
+            state["tool_results"][name] = result
+            state["runtime"]["node_errors"].append({"node": name, "code": "authorization_denied"})
+            return result
         result = None
         retries = min(2, max(0, int(self.config.get("tool_retries", 2))))
         for attempt in range(retries + 1):
@@ -174,16 +211,31 @@ class Workflow:
         if t["intent"] not in {"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY"}:
             return
         slots = t["slots"]
+        pending = w.get("pending", {})
+        bound_confirmation = pending.get("type") == "awaiting_confirmation"
         w["search_criteria_present"] = bool(selection or w.get("transaction_id") or any(slots.get(k) is not None for k in ("amount", "date_from", "date_to", "transaction_id", "merchant")))
-        if slots.get("currency_raw") and not slots.get("currency"):
+        if slots.get("currency_raw") and not slots.get("currency") and not bound_confirmation:
             w["search_criteria_present"] = False
             w["missing_fields"] = ["currency"]
             return
         if not w["search_criteria_present"]:
             return
-        pending = w.get("pending", {})
         selected_pending = t.get("clarification", {}).get("resolution_type") == "SELECTED"
-        if selected_pending and pending.get("type") == "awaiting_selection":
+        if bound_confirmation:
+            if selection and selection.get("reference") != pending.get("target_transaction_id"):
+                self._invalidate_target(state, "selection_not_bound")
+                return
+            await self._confirmation_target(state)
+            if not w.get("transaction_identified"):
+                return
+            # The displayed target remains fixed across conversational replies.
+            # Current ownership/snapshot evidence comes from its direct reread.
+            search = {"status": "ok", "match_count": 1,
+                "candidates": [deepcopy(state["tool_results"]["get_transaction"]["transaction"])],
+                "snapshot_hash": pending.get("snapshot_hash"),
+                "search_context": {"coverage_complete": True, "snapshot_id": pending.get("snapshot_id")}}
+            state["tool_results"]["search_transactions"] = deepcopy(search)
+        elif selected_pending and pending.get("type") == "awaiting_selection":
             # Preserve the displayed count; selection rereads its target rather
             # than replacing the original candidate evidence with a new search.
             search = {"status": "ok", "match_count": len(pending.get("candidates", [])),
@@ -201,17 +253,17 @@ class Workflow:
             return
         if pending.get("type") != "awaiting_confirmation" and not selected_pending:
             w["candidate_snapshot_hash"] = search.get("snapshot_hash") or search.get("search_context", {}).get("snapshot_id")
-        chosen = selection.get("reference") if selection else slots.get("transaction_id") or w.get("transaction_id")
+        chosen = pending.get("target_transaction_id") if bound_confirmation else selection.get("reference") if selection else slots.get("transaction_id") or w.get("transaction_id")
         if selection and pending.get("type") == "awaiting_selection" and chosen not in {c.get("transaction_id") for c in pending.get("candidates", [])}:
             self._invalidate_target(state, "selection_not_displayed")
             return
-        if chosen == w.get("transaction_id") and not selected_pending and not selection and not slots.get("transaction_id") and chosen not in {c.get("transaction_id") for c in candidates}:
+        if chosen == w.get("transaction_id") and not bound_confirmation and not selected_pending and not selection and not slots.get("transaction_id") and chosen not in {c.get("transaction_id") for c in candidates}:
             chosen = None
         if not chosen and len(candidates) == 1 and search.get("search_context", {}).get("coverage_complete"):
             chosen = candidates[0].get("transaction_id")
         if chosen:
             expected_snapshot = pending.get("snapshot_id") if selected_pending or pending.get("type") == "awaiting_confirmation" else search.get("search_context", {}).get("snapshot_id")
-            target = await self._read(state, "get_transaction", {"transaction_id": chosen, "snapshot_hash": w.get("candidate_snapshot_hash"), "snapshot_id": expected_snapshot})
+            target = deepcopy(state["tool_results"]["get_transaction"]) if bound_confirmation else await self._read(state, "get_transaction", {"transaction_id": chosen, "snapshot_hash": w.get("candidate_snapshot_hash"), "snapshot_id": expected_snapshot})
             if target.get("status") == "error" and target.get("code") in {"snapshot_changed", "target_mismatch", "reference_unavailable", "authorization_denied"}:
                 self._invalidate_target(state, target["code"])
                 return
@@ -258,7 +310,7 @@ class Workflow:
                     or facts["status"] != row.get("transaction_status", row.get("status"))):
                 return False
             for fact, aliases in (("process_date", ("process_date",)), ("merchant", ("merchant_name", "merchant")),
-                                  ("transaction_type", ("transaction_type", "type")), ("channel", ("channel",)), ("product", ("product",))):
+                                  ("transaction_type", ("transaction_type", "type")), ("channel", ("channel",)), ("product", ("product", "product_type"))):
                 key = next((key for key in aliases if key in row), None)
                 if key and facts[fact] != row[key]:
                     return False
@@ -276,6 +328,14 @@ class Workflow:
                 or parse_timestamp(proof.get("expires_at")) != parse_timestamp(binding.expires_at)):
             state["runtime"]["unaccepted_host_status"] = "binding_mismatch"
             return
+        query_id = state["runtime"].get("active_query_id") if state["runtime"].get("query_scopes") else None
+        if (query_id and status.get("state") in {"pending_confirmation", "intake_verified", "action_unverified", "handoff_verified"}
+                and status.get("query_id") != query_id):
+            state["runtime"]["unaccepted_host_status"] = "query_scope_mismatch"
+            return
+        if self._recover_cancellation_from_status(state, status, binding):
+            state["runtime"]["unaccepted_host_status"] = "cancelled_pending"
+            return
         pending = w.get("pending", {})
         target = w.get("transaction_id")
         snapshot = state["tool_results"].get("get_transaction", {}).get("snapshot_id")
@@ -286,7 +346,11 @@ class Workflow:
         native_handoff = verified_handoff(raw_handoff)
         status_snapshot = status.get("snapshot") or (native_receipt or {}).get("snapshot") or (native_handoff or {}).get("snapshot")
         matches_target = bool(w.get("transaction_identified") and target and snapshot and status.get("target_reference") == target and status_snapshot == snapshot)
-        matches_request = all(not pending.get(key) or status.get(status_key) == pending[key]
+        lineage = state["runtime"].get("action_lineage", {})
+        if lineage.get("invalidated") and not w.get("action_attempted"):
+            lineage = {}
+        expected_request = {key: pending.get(key) or lineage.get(key) for key in ("request_id", "host_pending_handle")}
+        matches_request = all(not expected_request.get(key) or status.get(status_key) == expected_request[key]
                               for key, status_key in (("request_id", "request_id"), ("host_pending_handle", "pending_handle")))
         if status.get("state") == "pending_confirmation" and matches_target and matches_request:
             for key, status_key in (("request_id", "request_id"), ("host_pending_handle", "pending_handle")):
@@ -302,13 +366,44 @@ class Workflow:
                 and isinstance(canonical.get("result_id"), str) and re.fullmatch(r"CMP-SBX-[A-Za-z0-9_-]{8}", canonical["result_id"])
                 and canonical_receipt.get("verified") is True and canonical_receipt.get("result_id") == canonical["result_id"])
             row = state["tool_results"].get("get_transaction", {}).get("transaction", {})
+            if canonical_valid:
+                for projection in (canonical, canonical_receipt):
+                    for key, expected in (("snapshot", snapshot), ("snapshot_id", snapshot),
+                                          ("target_reference", target), ("transaction_id", target)):
+                        if key in projection and projection[key] != expected:
+                            canonical_valid = False
+                    if "transaction" in projection and not self._receipt_matches_target(projection, row):
+                        canonical_valid = False
             native_valid = bool(native_receipt and native_receipt["snapshot"] == snapshot and self._receipt_matches_target(native_receipt, row))
-            if matches_target and matches_request and (native_valid or canonical_valid):
-                rid = native_receipt["id"] if native_receipt else canonical["result_id"]
+            native_present = status.get("receipt") is not None
+            canonical_present = "action" in status
+            representations_agree = bool(
+                (not native_present or native_valid)
+                and (not canonical_present or canonical_valid)
+                and (not native_present or not canonical_present or native_receipt and native_receipt["id"] == canonical.get("result_id"))
+                and status.get("verified", True) is True)
+            if matches_target and matches_request and representations_agree and (native_valid or canonical_valid):
+                rid = native_receipt["id"] if native_valid else canonical["result_id"]
+                if query_id:
+                    request_id, handle = status.get("request_id"), status.get("pending_handle")
+                    snapshot_hash = w.get("candidate_snapshot_hash")
+                    if (isinstance(request_id, str) and request_id and isinstance(handle, str) and handle
+                            and snapshot_hash and status.get("snapshot_hash", snapshot_hash) == snapshot_hash):
+                        state["runtime"]["action_lineage"] = {
+                            "query_id": query_id, "binding_digest": binding.digest(), "request_id": request_id,
+                            "host_pending_handle": handle, "target_transaction_id": target,
+                            "snapshot_id": snapshot, "snapshot_hash": snapshot_hash}
                 w["action"] = {"name": "CREATE_COMPLAINT", "authorized": True, "executed": True, "verified": True, "result_id": rid, "receipt": {"verified": True, "result_id": rid}}
                 w["action_attempted"], w["action_outcome"] = True, "verified"
+            elif (native_present or canonical_present) and not representations_agree:
+                state["runtime"]["unaccepted_host_status"] = "contradictory_receipt"
+                if matches_target and matches_request:
+                    w["action"].update(authorized=False, executed=False, verified=False, result_id=None)
+                    w["action_attempted"], w["action_outcome"] = True, "unknown"
         elif status.get("state") == "action_unverified":
-            if matches_request:
+            known_request = bool(pending.get("request_id") or pending.get("host_pending_handle"))
+            unresolved_target = known_request and status.get("target_reference") in {None, target}
+            if matches_request and (matches_target or unresolved_target):
                 # A trusted conversation-bound uncertain outcome must be
                 # recovered even if its target is unavailable. It supplies no
                 # success facts and never authorizes a different action.
@@ -316,15 +411,101 @@ class Workflow:
                 w["action_attempted"], w["action_outcome"] = True, "unknown"
         handoff = native_handoff
         general = handoff and handoff.get("facts") == {} and handoff.get("snapshot") is None
-        if status.get("state") in {"handoff_verified", "action_unverified"} and handoff and matches_request and (general and not target or matches_target and handoff["snapshot"] == snapshot):
+        handoff_matches = bool(handoff and (general and not target or matches_target and handoff["snapshot"] == snapshot
+            and self._receipt_matches_target({"transaction": handoff["facts"]}, state["tool_results"].get("get_transaction", {}).get("transaction", {}))))
+        canonical_handoff = status.get("handoff", {})
+        canonical_handoff_receipt = canonical_handoff.get("receipt", {}) if isinstance(canonical_handoff, dict) else {}
+        canonical_handoff_valid = (isinstance(canonical_handoff_receipt, dict)
+            and canonical_handoff.get("created") is True and isinstance(canonical_handoff.get("handoff_id"), str)
+            and re.fullmatch(r"HOF-[A-Za-z0-9_-]{8}", canonical_handoff["handoff_id"])
+            and canonical_handoff_receipt.get("verified") is True
+            and canonical_handoff_receipt.get("handoff_id") == canonical_handoff["handoff_id"])
+        native_handoff_present = isinstance(raw_handoff, dict) and any(key in raw_handoff for key in ("id", "facts", "packet", "human_responded"))
+        canonical_handoff_present = isinstance(canonical_handoff, dict) and any(key in canonical_handoff for key in ("created", "handoff_id", "receipt"))
+        handoff_agrees = (not native_handoff_present or handoff_matches) and (not canonical_handoff_present or canonical_handoff_valid)
+        if native_handoff_present and canonical_handoff_present:
+            handoff_agrees = bool(handoff_agrees and handoff["id"] == canonical_handoff["handoff_id"])
+        if status.get("state") in {"handoff_verified", "action_unverified"} and handoff and matches_request and handoff_matches and handoff_agrees:
             w["handoff"].update(created=True, handoff_id=handoff["id"], receipt={"verified": True, "handoff_id": handoff["id"]})
-        elif status.get("state") in {"handoff_verified", "action_unverified"} and matches_target and matches_request:
+        elif status.get("state") in {"handoff_verified", "action_unverified"} and matches_target and matches_request and handoff_agrees:
             handoff = status.get("handoff", {})
             receipt = handoff.get("receipt", {}) if isinstance(handoff, dict) else {}
             if (isinstance(receipt, dict) and handoff.get("created") is True and isinstance(handoff.get("handoff_id"), str)
                     and re.fullmatch(r"HOF-[A-Za-z0-9_-]{8}", handoff["handoff_id"])
                     and receipt.get("verified") is True and receipt.get("handoff_id") == handoff["handoff_id"]):
                 w["handoff"].update(created=True, handoff_id=handoff["handoff_id"], receipt={"verified": True, "handoff_id": handoff["handoff_id"]})
+
+    @staticmethod
+    def _status_args(state, *, previous_status=None):
+        pending = state["workflow_state"].get("pending", {})
+        evidence = previous_status if isinstance(previous_status, dict) else {}
+        lineage = state["runtime"].get("action_lineage", {}) if state["workflow_state"].get("action_attempted") else {}
+        args = {"expected_request_id": evidence.get("request_id") or pending.get("request_id") or lineage.get("request_id"),
+                "pending_handle": evidence.get("pending_handle") or pending.get("host_pending_handle") or lineage.get("host_pending_handle")}
+        if state["runtime"].get("query_scopes"):
+            args["query_id"] = state["runtime"].get("active_query_id")
+        return args
+
+    @staticmethod
+    def _cancellation_signals(state):
+        containers = [state["runtime"]] + [capsule.get("runtime", {}) for capsule in state["runtime"].get("query_scopes", {}).values()]
+        for container in containers:
+            signals = container.get("host_cancellation_requested")
+            if isinstance(signals, dict):
+                yield signals
+            elif isinstance(signals, list):
+                yield from (signal for signal in signals if isinstance(signal, dict))
+
+    def _recover_cancellation_from_status(self, state, status, binding):
+        """Read-only recovery of the exact prepared handle whose graph wait ended."""
+        if status.get("state") != "pending_confirmation" or status.get("binding_verified") is not True:
+            return False
+        proof = status.get("binding", {})
+        if (not isinstance(proof, dict) or any(proof.get(key) != getattr(binding, key)
+                for key in ("owner", "customer_id", "session_id", "conversation_id"))
+                or parse_timestamp(proof.get("expires_at")) != parse_timestamp(binding.expires_at)):
+            return False
+        matched = False
+        for signal in self._cancellation_signals(state):
+            if signal.get("query_id") != status.get("query_id"):
+                continue
+            handle = signal.get("prior_pending_handle")
+            if handle:
+                exact = handle == status.get("pending_handle")
+            else:
+                target = signal.get("prior_target_transaction_id")
+                snapshot = signal.get("prior_snapshot_id")
+                exact = bool(target and snapshot and status.get("target_reference") == target and status.get("snapshot") == snapshot)
+            if signal.get("request_id") and signal["request_id"] != status.get("request_id"):
+                exact = False
+            if signal.get("prior_snapshot_hash") and status.get("snapshot_hash", signal["prior_snapshot_hash"]) != signal["prior_snapshot_hash"]:
+                exact = False
+            if exact and isinstance(status.get("pending_handle"), str) and status["pending_handle"]:
+                signal["prior_pending_handle"] = status["pending_handle"]
+                signal["request_id"] = status.get("request_id")
+                matched = True
+        return matched
+
+    async def _resolve_cancellations(self, state, binding):
+        unresolved = [signal for signal in self._cancellation_signals(state) if not signal.get("prior_pending_handle")]
+        if not unresolved:
+            return
+        # Cancellation readback is also private. The actual human's ownership
+        # signal must be known even if its current intent is outside banking.
+        slots = await self._stage(state, "extract_slots", {"clean_query": state["turn"]["user_question"],
+            "current_date": state["turn"]["current_date"], "customer_currencies": []})
+        if slots:
+            state["turn"]["slots"]["foreign_customer_reference"] = bool(slots.get("foreign_customer_reference"))
+        if state["runtime"]["node_errors"] or state["turn"]["slots"].get("foreign_customer_reference"):
+            return
+        for signal in unresolved:
+            if not signal.get("prior_target_transaction_id") or not signal.get("prior_snapshot_id"):
+                continue
+            args = {"expected_request_id": signal.get("request_id"), "pending_handle": None}
+            if signal.get("query_id") is not None:
+                args["query_id"] = signal["query_id"]
+            status = await self._read(state, "host_action_status", args, optional=True)
+            self._recover_cancellation_from_status(state, status, binding)
 
     def _retrieve(self, state, *, human_required=False):
         started = time.monotonic()
@@ -397,6 +578,18 @@ class Workflow:
 
     async def _refresh_replay(self, state, binding):
         """Cached success needs current readback; never replay a model or write."""
+        if state["runtime"].get("query_scopes") and state["runtime"].get("query_projection"):
+            from .state import activate_query_scope, checkpoint_query_scope
+            original = deepcopy(state)
+            for query_id in state["runtime"]["query_scope_order"]:
+                frame = activate_query_scope(state, binding, query_id, now=self.clock(), fresh=False)
+                frame = await self._refresh_replay(frame, binding)
+                if binding.expired(self.clock()):
+                    return frame
+                state = checkpoint_query_scope(frame)
+            state = self._compose_batch(state, original, [])
+            state["runtime"]["history"] = deepcopy(original["runtime"].get("history", []))
+            return state
         w = state["workflow_state"]
         mode = w.get("policy_decision", {}).get("response_mode")
         success = mode == "ACTION_DONE"
@@ -424,8 +617,7 @@ class Workflow:
                 target["snapshot_id"] = current_snapshot
                 state["tool_results"]["get_transaction"] = deepcopy(target)
         if target_ok:
-            status = await self._read(state, "host_action_status", {"expected_request_id": old_status.get("request_id"),
-                "pending_handle": old_status.get("pending_handle")}, optional=True)
+            status = await self._read(state, "host_action_status", self._status_args(state, previous_status=old_status), optional=True)
             self._host_evidence(state, status, binding)
         action_ok = w.get("action", {}).get("verified") is True and w["action"].get("result_id") == original_id
         handoff_ok = w.get("handoff", {}).get("created") is True and w["handoff"].get("handoff_id") == original_handoff
@@ -450,129 +642,312 @@ class Workflow:
         state["runtime"].update(safe_fallback_used=True, replay_receipt_reverified=False)
         return state
 
-    async def run(self, binding, message, *, turn_id=None, selection=None):
-        binding = TrustedBinding(**binding) if isinstance(binding, dict) else binding
-        turn_id = turn_id or str(uuid.uuid4())
-        if not isinstance(message, str) or not message.strip() or len(message) > 4096:
-            raise ValueError("invalid message")
-        now = self.clock()
-        if hasattr(self.bank, "bind_context"):
-            # This call is server-only. Its identity never comes from message or LLM JSON.
-            self.bank.bind_context({key: getattr(binding, key) for key in ("owner", "customer_id", "session_id", "conversation_id", "expires_at")})
-        digest = hashlib.sha256(json.dumps({"message": message, "selection": selection}, sort_keys=True, ensure_ascii=False, allow_nan=False).encode()).hexdigest()
-        if hasattr(self.store, "load_turn"):
-            replay = self.store.load_turn(binding, turn_id, now=now)
-            if replay:
-                if replay["runtime"].get("input_sha256") != digest:
-                    raise ValueError("turn replay mismatch")
-                return await self._refresh_replay(replay, binding)
-        live = binding.authenticated and not binding.expired(now)
-        previous = (self.store.load(binding, now=now) if live else None) or new_state(binding, now=now)
-        revision = previous.get("runtime", {}).get("store_revision", 0)
-        history_items = previous.get("runtime", {}).get("history", [])[-6:]
-        history = "\n".join(history_items)
-        state = begin_turn(previous, binding, turn_id=turn_id, user_question=sanitize(message), now=now)
-        state["runtime"]["input_sha256"] = digest
+    async def _process_scope(self, state, binding, history, selection, *, prepared_intents=None, preflight_slots=None):
         t, w = state["turn"], state["workflow_state"]
-        t["human_requested"] = bool(_HUMAN.search(message))
-        t["unauthorized_reference"] = bool(_FOREIGN.search(message))
-        if state["session"]["authenticated"] and not state["session"]["expired"]:
-            inputs = {"user_question": t["user_question"], "historic_conversation": history}
-            rewrite, attack, context = await asyncio.gather(self._stage(state, "rewrite_decompose", inputs), self._stage(state, "detect_attack", {"user_question": t["user_question"]}), self._stage(state, "detect_context", inputs))
-            # asyncio.gather is the real same-turn barrier before any dependent stage.
-            state["trace"].append({"node": "merge_parallel", "turn_id": turn_id, "branches": ["rewrite_decompose", "detect_attack", "detect_context"]})
-            if rewrite:
-                t.update(rewrite)
-            if attack:
-                t["attack"] = attack
-            if context:
-                t.update(context)
-                t["effective_language"] = "pt" if context["language"] == "pt" else "es"
-            guarded = t["attack"].get("deceptive") or t["attack"].get("inappropriate") or t["unauthorized_reference"] or state["runtime"]["node_errors"]
-            if not guarded:
-                pending = w.get("pending", {})
-                if pending.get("type") != "none":
-                    clarification = await self._stage(state, "resolve_clarification", {"clean_query": t["clean_query"], "pending": safe_workflow(state)["pending"], "historic_conversation": history})
-                    if clarification:
-                        t["clarification"] = clarification
-                        resolution = clarification["resolution_type"]
-                        if resolution == "NEW_REQUEST":
-                            if w.get("action_outcome") in {"unknown", "executed"}:
-                                state["runtime"]["node_errors"].append({"node": "resolve_clarification", "code": "action_recovery_required"})
-                            else:
-                                state["workflow_state"] = w = new_state(binding, now=now)["workflow_state"]
-                        elif resolution == "SELECTED":
-                            candidate = next((c for c in pending.get("candidates", []) if c.get("ref") == clarification["selected_ref"]), None)
-                            if candidate:
-                                field = "complaint_id" if pending.get("candidate_type") == "complaint" else "transaction_id"
-                                w[field] = candidate.get(field)
-                                t["intent"] = pending.get("intent") or ("COMPLAINT_STATUS" if field == "complaint_id" else "TRANSACTION_DISPUTE")
-                                t["slots"][field] = candidate.get(field)
-                            else:
-                                t["clarification"] = {"resolution_type": "UNCLEAR", "selected_ref": None}
-                        else:
-                            t["intent"] = pending.get("intent") or "TRANSACTION_DISPUTE"
-                if w.get("pending", {}).get("type") == "none":
-                    queries = [query["query_text"] for query in t.get("sub_queries", [])] or [t["clean_query"]]
-                    intents = await self._stage(state, "detect_intent", {"queries": queries})
-                    if intents:
-                        t["intents"] = intents["intents"]
-                        # Multiple business queries need independent target scopes. This
-                        # slice asks for one rather than accidentally reusing a target.
-                        if len(t["intents"]) == 1:
-                            t["intent"] = t["intents"][0]["domain"]
-                        elif len(t["intents"]) > 1:
-                            state["runtime"]["node_errors"].append({"node": "detect_intent", "code": "multiple_queries_need_separate_turns"})
-                business = t["intent"] in {"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY", "COMPLAINT_STATUS"}
-                field_context = state["runtime"].get("field_clarification") if w.get("pending", {}).get("type") == "none" else None
-                if (business or field_context or t["human_requested"] or t["emotional_context"] == "Emergencia") and not state["runtime"]["node_errors"]:
-                    # R2 must be known before even a currency/profile read. The
-                    # first extraction has no customer data; ambiguity stays null.
-                    slots = await self._stage(state, "extract_slots", {"clean_query": t["user_question"] if field_context else t["clean_query"], "current_date": t["current_date"], "customer_currencies": []})
-                    if slots:
-                        if field_context:
-                            # A currency in an unrelated question is not a field
-                            # answer. Reuse the canonical clarification model to
-                            # distinguish the current answer from a topic change.
-                            if not t["human_requested"] and t["emotional_context"] != "Emergencia" and not slots.get("foreign_customer_reference"):
-                                resolution = await self._stage(state, "resolve_clarification", {
-                                    "clean_query": t["user_question"], "pending": {"type": "none", "candidates": []},
-                                    "historic_conversation": history}, correction=(
-                                    "Hay una pregunta de campos pendiente del host: " + ", ".join(field_context.get("missing_fields", [])) +
-                                    ". Usa UNCLEAR para una respuesta a esos campos y NEW_REQUEST para una pregunta independiente o un cambio de tema. No uses SELECTED ni CONFIRMED; no hay selección ni consentimiento pendientes."))
-                                if resolution and resolution["resolution_type"] in {"NEW_REQUEST", "DENIED"}:
-                                    field_context = {**field_context, "new_request": True}
-                            slots = self._resume_fields(state, slots, field_context)
-                            business = t["intent"] in {"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY", "COMPLAINT_STATUS"}
-                        retained = deepcopy(t.get("slots", {}))
-                        t["slots"].update(slots)
-                        if t.get("clarification", {}).get("resolution_type") == "SELECTED":
-                            # A validated displayed reference outranks extraction.
-                            for field in ("transaction_id", "complaint_id"):
-                                if retained.get(field):
-                                    t["slots"][field] = retained[field]
-                    assisted = t["human_requested"] or t["intent"] == "HUMAN_REQUEST" or t["emotional_context"] == "Emergencia"
-                    stopped = t.get("clarification", {}).get("resolution_type") in {"DENIED", "UNCLEAR"} and w.get("pending", {}).get("type") != "none"
-                    if business and not assisted and not stopped and not t["slots"].get("foreign_customer_reference") and not state["runtime"]["node_errors"]:
-                        if t["slots"].get("currency_raw") and not t["slots"].get("currency"):
-                            profile = await self._read(state, "get_customer_profile", {})
-                            currencies = profile.get("currencies", [])
-                            if not currencies:
-                                currencies = sorted({p.get("currency") for p in profile.get("products", []) if p.get("currency")})
-                            if not state["runtime"]["node_errors"]:
-                                slots = await self._stage(state, "extract_slots", {"clean_query": t["clean_query"], "current_date": t["current_date"], "customer_currencies": currencies})
-                                if slots:
-                                    for field, value in slots.items():
-                                        if field not in {"transaction_id", "complaint_id"} or t.get("clarification", {}).get("resolution_type") != "SELECTED":
-                                            t["slots"][field] = value
-                        if not t["slots"].get("foreign_customer_reference") and not state["runtime"]["node_errors"]:
-                            await self._facts(state, selection)
-                assisted = t["human_requested"] or t["intent"] == "HUMAN_REQUEST" or t["emotional_context"] == "Emergencia"
-                stopped = t.get("clarification", {}).get("resolution_type") in {"DENIED", "UNCLEAR"} and w.get("pending", {}).get("type") != "none"
-                needs_status = business or w.get("pending", {}).get("type") == "awaiting_confirmation" or w.get("action_attempted")
-                if needs_status and not assisted and not stopped and not state["runtime"]["node_errors"] and not t["slots"].get("foreign_customer_reference"):
-                    status = await self._read(state, "host_action_status", {"expected_request_id": w.get("pending", {}).get("request_id"), "pending_handle": w.get("pending", {}).get("host_pending_handle")}, optional=True)
-                    self._host_evidence(state, status, binding)
+        now = self.clock()
+        pending = w.get("pending", {})
+        if pending.get("type") != "none":
+            clarification = await self._stage(state, "resolve_clarification", {"clean_query": t["clean_query"], "pending": safe_workflow(state)["pending"], "historic_conversation": history})
+            if clarification:
+                t["clarification"] = clarification
+                resolution = clarification["resolution_type"]
+                if resolution in {"DENIED", "NEW_REQUEST"}:
+                    state["runtime"]["host_cancellation_requested"] = {
+                        "query_id": state["runtime"].get("active_query_id") if state["runtime"].get("query_scopes") else None,
+                        "prior_pending_handle": pending.get("host_pending_handle"),
+                        "request_id": pending.get("request_id"),
+                        "prior_target_transaction_id": pending.get("target_transaction_id"),
+                        "prior_snapshot_id": pending.get("snapshot_id"),
+                        "prior_snapshot_hash": pending.get("snapshot_hash"),
+                        "reason": resolution.lower(),
+                    }
+                if resolution == "NEW_REQUEST":
+                    if w.get("action_outcome") in {"unknown", "executed"}:
+                        state["runtime"]["node_errors"].append({"node": "resolve_clarification", "code": "action_recovery_required"})
+                    else:
+                        try:
+                            state = reset_workflow(state)
+                            t, w = state["turn"], state["workflow_state"]
+                        except StateError:
+                            state["runtime"]["node_errors"].append({"node": "resolve_clarification", "code": "action_recovery_required"})
+                elif resolution == "SELECTED":
+                    candidate = next((c for c in pending.get("candidates", []) if c.get("ref") == clarification["selected_ref"]), None)
+                    if candidate:
+                        field = "complaint_id" if pending.get("candidate_type") == "complaint" else "transaction_id"
+                        w[field] = candidate.get(field)
+                        t["intent"] = pending.get("intent") or ("COMPLAINT_STATUS" if field == "complaint_id" else "TRANSACTION_DISPUTE")
+                        t["slots"][field] = candidate.get(field)
+                    else:
+                        t["clarification"] = {"resolution_type": "UNCLEAR", "selected_ref": None}
+                else:
+                    t["intent"] = pending.get("intent") or "TRANSACTION_DISPUTE"
+        if w.get("pending", {}).get("type") == "none":
+            queries = [query["query_text"] for query in t.get("sub_queries", [])] or [t["clean_query"]]
+            intents = {"intents": prepared_intents} if prepared_intents is not None else await self._stage(state, "detect_intent", {"queries": queries})
+            if intents:
+                t["intents"] = intents["intents"]
+                if len(t["intents"]) == 1:
+                    t["intent"] = t["intents"][0]["domain"]
+                elif len(t["intents"]) > 1:
+                    state["runtime"]["multi_intents"] = deepcopy(t["intents"])
+                    return state
+        business = t["intent"] in {"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY", "COMPLAINT_STATUS"}
+        field_context = state["runtime"].get("field_clarification") if w.get("pending", {}).get("type") == "none" else None
+        if (business or field_context or t["human_requested"] or t["emotional_context"] == "Emergencia") and not state["runtime"]["node_errors"]:
+            # R2 must be known before even a currency/profile read. The
+            # first extraction has no customer data; ambiguity stays null.
+            slots = deepcopy(preflight_slots) if preflight_slots is not None else await self._stage(state, "extract_slots", {"clean_query": t["user_question"] if field_context else t["clean_query"], "current_date": t["current_date"], "customer_currencies": []})
+            if slots:
+                if field_context:
+                    # A currency in an unrelated question is not a field
+                    # answer. Reuse the canonical clarification model to
+                    # distinguish the current answer from a topic change.
+                    if not t["human_requested"] and t["emotional_context"] != "Emergencia" and not slots.get("foreign_customer_reference"):
+                        resolution = await self._stage(state, "resolve_clarification", {
+                            "clean_query": t["user_question"], "pending": {"type": "none", "candidates": []},
+                            "historic_conversation": history}, correction=(
+                            "Hay una pregunta de campos pendiente del host: " + ", ".join(field_context.get("missing_fields", [])) +
+                            ". Usa UNCLEAR para una respuesta a esos campos y NEW_REQUEST para una pregunta independiente o un cambio de tema. No uses SELECTED ni CONFIRMED; no hay selección ni consentimiento pendientes."))
+                        if resolution and resolution["resolution_type"] in {"NEW_REQUEST", "DENIED"}:
+                            field_context = {**field_context, "new_request": True}
+                    slots = self._resume_fields(state, slots, field_context)
+                    business = t["intent"] in {"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY", "COMPLAINT_STATUS"}
+                retained = deepcopy(t.get("slots", {}))
+                t["slots"].update(slots)
+                if t.get("clarification", {}).get("resolution_type") == "SELECTED":
+                    # A validated displayed reference outranks extraction.
+                    for field in ("transaction_id", "complaint_id"):
+                        if retained.get(field):
+                            t["slots"][field] = retained[field]
+            assisted = t["human_requested"] or t["intent"] == "HUMAN_REQUEST" or t["emotional_context"] == "Emergencia"
+            stopped = t.get("clarification", {}).get("resolution_type") in {"DENIED", "UNCLEAR"} and w.get("pending", {}).get("type") != "none"
+            if business and not assisted and not stopped and not t["slots"].get("foreign_customer_reference") and not state["runtime"]["node_errors"]:
+                if (t["slots"].get("currency_raw") and not t["slots"].get("currency")
+                        and w.get("pending", {}).get("type") != "awaiting_confirmation"):
+                    profile = await self._read(state, "get_customer_profile", {})
+                    currencies = profile.get("currencies", [])
+                    if not currencies:
+                        currencies = sorted({p.get("currency") for p in profile.get("products", []) if p.get("currency")})
+                    if not state["runtime"]["node_errors"]:
+                        slots = await self._stage(state, "extract_slots", {"clean_query": t["clean_query"], "current_date": t["current_date"], "customer_currencies": currencies})
+                        if slots:
+                            for field, value in slots.items():
+                                if field not in {"transaction_id", "complaint_id"} or t.get("clarification", {}).get("resolution_type") != "SELECTED":
+                                    t["slots"][field] = value
+                if not t["slots"].get("foreign_customer_reference") and not state["runtime"]["node_errors"]:
+                    await self._facts(state, selection)
+        assisted = t["human_requested"] or t["intent"] == "HUMAN_REQUEST" or t["emotional_context"] == "Emergencia"
+        stopped = t.get("clarification", {}).get("resolution_type") in {"DENIED", "UNCLEAR"} and w.get("pending", {}).get("type") != "none"
+        needs_status = business or w.get("pending", {}).get("type") == "awaiting_confirmation" or w.get("action_attempted")
+        # A verified portal result is independent of whether the chat reply
+        # supplies conversational consent. Re-read only the already-bound
+        # target for UNCLEAR confirmation, never authorize a new operation.
+        confirmation_readback = (w.get("pending", {}).get("type") == "awaiting_confirmation"
+            and t.get("clarification", {}).get("resolution_type") == "UNCLEAR")
+        if confirmation_readback and not assisted and not state["runtime"]["node_errors"] and not t["slots"].get("foreign_customer_reference"):
+            await self._confirmation_target(state)
+        if needs_status and not assisted and (not stopped or confirmation_readback) and not state["runtime"]["node_errors"] and not t["slots"].get("foreign_customer_reference"):
+            status = await self._read(state, "host_action_status", self._status_args(state), optional=True)
+            self._host_evidence(state, status, binding)
+        return state
+
+    async def _confirmation_target(self, state):
+        workflow = state["workflow_state"]
+        pending = workflow["pending"]
+        target_id = pending.get("target_transaction_id")
+        snapshot = pending.get("snapshot_id")
+        if not target_id or target_id != workflow.get("transaction_id") or not snapshot:
+            return
+        target = await self._read(state, "get_transaction", {"transaction_id": target_id,
+            "snapshot_id": snapshot, "snapshot_hash": pending.get("snapshot_hash") or workflow.get("candidate_snapshot_hash")})
+        row = target.get("transaction", {})
+        current = target.get("snapshot_id") or target.get("snapshot") or target.get("snapshot_hash")
+        if (target.get("status") != "ok" or not isinstance(row, dict) or row.get("transaction_id") != target_id
+                or current != snapshot or row.get("customer_id") not in {None, state["session"]["customer_id"]}):
+            self._invalidate_target(state, "snapshot_changed" if current != snapshot else "target_mismatch")
+            return
+        target["snapshot_id"] = current
+        state["tool_results"]["get_transaction"] = deepcopy(target)
+        workflow.update(transaction_identified=True, transaction_unique=True)
+
+    @staticmethod
+    def _original_guards(frame, original):
+        """Every scope inherits guards from the actual human turn, never its rewrite."""
+        turn = frame["turn"]
+        source = original["turn"]
+        for key in ("language", "effective_language", "emotional_context", "attack",
+                    "human_requested", "unauthorized_reference", "current_date", "current_timestamp"):
+            turn[key] = deepcopy(source[key])
+        # Scope-local history is deliberately excluded from the shared text context.
+        frame["runtime"]["original_turn_sha256"] = original["runtime"].get("input_sha256")
+
+    async def _preflight_queries(self, state, intents):
+        """Check every independent query's ownership evidence before any bank read."""
+        if not 1 < len(intents) <= 8:
+            state["runtime"]["node_errors"].append({"node": "detect_intent", "code": "invalid_query_count"})
+            return None
+        for item in intents:
+            if (not isinstance(item, dict) or not isinstance(item.get("query_text"), str)
+                    or not item["query_text"].strip()):
+                state["runtime"]["node_errors"].append({"node": "detect_intent", "code": "invalid_query"})
+                return None
+        limit = asyncio.Semaphore(3)
+        async def extract(item):
+            async with limit:
+                return await self._stage(state, "extract_slots", {
+                    "clean_query": item["query_text"], "current_date": state["turn"]["current_date"],
+                    "customer_currencies": []})
+        # The rewrite/classifier cannot remove an ownership restriction from
+        # the actual human text. Only its foreign-reference flag is consumed;
+        # blended financial slots never enter any independent query frame.
+        ownership_input = {"query_text": state["turn"]["user_question"]}
+        all_outputs = await asyncio.gather(*(extract(item) for item in [*intents, ownership_input]))
+        outputs = all_outputs[:-1]
+        state["trace"].append({"node": "query_preflight_barrier", "turn_id": state["turn"]["turn_id"], "queries": len(intents)})
+        for slots in all_outputs:
+            if slots and slots.get("foreign_customer_reference"):
+                state["turn"]["slots"]["foreign_customer_reference"] = True
+        if state["runtime"]["node_errors"] or state["turn"]["slots"].get("foreign_customer_reference"):
+            return None
+        return outputs
+
+    def _compose_batch(self, state, original, history_items):
+        from .state import finish_query_batch
+        from .response import combine_responses
+        state = finish_query_batch(state)
+        observations = state["runtime"]["query_results"]
+        active = state["runtime"]["active_query_id"]
+        active_index = state["runtime"]["query_scope_order"].index(active)
+        language = original["turn"]["effective_language"]
+        parts = []
+        for item in observations:
+            part = item["response"]
+            if part.get("language") != language:
+                capsule = state["runtime"]["query_scopes"][item["query_id"]]
+                display = deepcopy(state)
+                for key in ("turn", "workflow_state", "tool_results"):
+                    display[key] = deepcopy(capsule[key])
+                display["turn"].update(language=original["turn"]["language"], effective_language=language)
+                part = fallback_response(self._generator_input(display, ""))
+            parts.append(part)
+        # Labels are host-owned sequence numbers, not bank facts or model input.
+        label = "Consulta"
+        labelled = [{**part, "message": f"{label} {index + 1}:\n{part['message']}"} for index, part in enumerate(parts)]
+        try:
+            state["response"] = combine_responses(labelled, language, active_query_index=active_index)
+        except ValueError as exc:
+            code = "response_composition_overflow" if str(exc) == "response_composition_overflow" else "invalid_response_composition"
+            state["runtime"].setdefault("auxiliary_errors", []).append({"node": "combine_responses", "code": code})
+            state["runtime"]["safe_fallback_used"] = True
+            state["response"] = {"message": "No pude presentar todas las respuestas juntas. Revisa cada consulta por separado." if language == "es" else "Não consegui apresentar todas as respostas juntas. Revise cada consulta separadamente.",
+                "language": language, "arquetipos": [], "chunk_ids": [], "data_sources": [], "grounding_violation": 0}
+        for key in ("user_question", "turn_id", "sub_queries", "intents", "language", "effective_language",
+                    "emotional_context", "attack", "human_requested", "unauthorized_reference"):
+            state["turn"][key] = deepcopy(original["turn"][key])
+        state["runtime"]["input_sha256"] = original["runtime"]["input_sha256"]
+        state["runtime"]["history"] = (history_items + [f"user: {state['turn']['user_question']}",
+            f"assistant: {sanitize(state['response']['message'])}", f"language: {state['turn']['effective_language']}"])[-9:]
+        return state
+
+    async def _execute_batch(self, state, binding, history_items):
+        from .state import StateError, start_query_batch, activate_query_scope, checkpoint_query_scope
+        intents = state["runtime"].pop("multi_intents")
+        original = deepcopy(state)
+        slots = await self._preflight_queries(state, intents)
+        if slots is None:
+            return await self._complete(state, binding, "", history_items)
+        if (state["turn"]["human_requested"] or state["turn"]["emotional_context"] == "Emergencia"
+                or any(item["domain"] == "HUMAN_REQUEST" for item in intents)):
+            state["turn"]["intent"] = "HUMAN_REQUEST"
+            return await self._complete(state, binding, "", history_items)
+        try:
+            state = start_query_batch(state, intents)
+        except StateError:
+            state["runtime"]["node_errors"].append({"node": "detect_intent", "code": "action_recovery_required"})
+            return await self._complete(state, binding, "", history_items)
+        for index, query_id in enumerate(state["runtime"]["query_scope_order"]):
+            frame = activate_query_scope(state, binding, query_id, now=self.clock())
+            self._original_guards(frame, original)
+            frame["runtime"]["query_scope_id"] = query_id
+            frame["turn"]["sub_queries"] = [{"query_text": intents[index]["query_text"]}]
+            # The original human remains authoritative for guard and replay identity.
+            frame["turn"]["user_question"] = original["turn"]["user_question"]
+            frame = await self._process_scope(frame, binding, "", None,
+                prepared_intents=[intents[index]], preflight_slots=slots[index])
+            frame = await self._complete(frame, binding, "", [], max_output_chars=max(1200, 11000 // len(intents)))
+            frame["runtime"]["query_history"] = [f"user: {intents[index]['query_text']}",
+                f"assistant: {sanitize(frame['response']['message'])}", f"language: {frame['turn']['effective_language']}"]
+            state = checkpoint_query_scope(frame)
+            if binding.expired(self.clock()):
+                break
+        if binding.expired(self.clock()):
+            return state
+        return self._compose_batch(state, original, history_items)
+
+    @staticmethod
+    def _unresolved_scope(capsule):
+        workflow = capsule.get("workflow_state", {})
+        return (workflow.get("pending", {}).get("type") not in {None, "none"}
+            or workflow.get("policy_decision", {}).get("response_mode") == "CLARIFY" and bool(workflow.get("missing_fields"))
+            or workflow.get("action_outcome") in {"unknown", "executed"}
+            or workflow.get("action_attempted") is True and workflow.get("action_outcome") not in {"verified", "failed"}
+            or workflow.get("handoff", {}).get("required") is True and workflow.get("handoff", {}).get("created") is not True)
+
+    async def _continue_batch(self, state, previous, binding, history_items, selection, query_scope_id):
+        from .state import activate_query_scope, checkpoint_query_scope
+        original = deepcopy(state)
+        scopes = state["runtime"]["query_scopes"]
+        query_id = query_scope_id or state["runtime"]["active_query_id"]
+        current_slots = await self._stage(state, "extract_slots", {
+            "clean_query": state["turn"]["user_question"], "current_date": state["turn"]["current_date"],
+            "customer_currencies": []})
+        if current_slots:
+            state["turn"]["slots"].update(current_slots)
+        if state["runtime"]["node_errors"] or state["turn"]["slots"].get("foreign_customer_reference"):
+            return await self._complete(state, binding, "", history_items)
+        # A short reply has no target scope when two questions await an answer.
+        # A host-associated explicit ID selects one durable owner-bound capsule.
+        unresolved = [item for item in scopes.values() if self._unresolved_scope(item)]
+        if query_scope_id is None and len(unresolved) > 1:
+            state["runtime"]["query_scope_required"] = True
+            state["response"] = {"message": "Indica a cuál de las consultas corresponde tu respuesta." if state["turn"]["effective_language"] == "es" else "Indique a qual consulta corresponde sua resposta.",
+                "language": state["turn"]["effective_language"], "arquetipos": [], "chunk_ids": [], "data_sources": [], "grounding_violation": 0}
+            return state
+        frame = activate_query_scope(state, binding, query_id, now=self.clock(), query_text=state["turn"]["clean_query"])
+        self._original_guards(frame, original)
+        frame["runtime"]["query_scope_id"] = query_id
+        frame["turn"]["sub_queries"] = deepcopy(original["turn"]["sub_queries"])
+        local_items = previous["runtime"]["query_scopes"][query_id].get("runtime", {}).get("query_history", [])[-6:]
+        local_history = "\n".join(local_items)
+        frame = await self._process_scope(frame, binding, local_history, selection, preflight_slots=current_slots)
+        if frame["runtime"].get("multi_intents"):
+            return await self._execute_batch(frame, binding, history_items)
+        frame = await self._complete(frame, binding, local_history, local_items, max_output_chars=max(1200, 11000 // len(scopes)))
+        if (frame["turn"].get("clarification", {}).get("resolution_type") == "NEW_REQUEST"
+                or frame["turn"].get("intent") != scopes[query_id]["intent"] and not frame["runtime"].get("field_clarification_resumed")):
+            frame["runtime"]["query_scopes"][query_id]["intent"] = frame["turn"]["intent"]
+            frame["runtime"]["query_scopes"][query_id]["query_text"] = frame["turn"]["clean_query"]
+        frame["runtime"]["query_history"] = deepcopy(frame["runtime"]["history"])
+        state = checkpoint_query_scope(frame)
+        if (state["turn"]["slots"].get("foreign_customer_reference") or state["turn"]["unauthorized_reference"]
+                or state["turn"]["human_requested"] or state["turn"]["emotional_context"] == "Emergencia"
+                or binding.expired(self.clock())):
+            return state
+        for sibling_id in state["runtime"]["query_scope_order"]:
+            if sibling_id == query_id:
+                continue
+            old_capsule = previous["runtime"]["query_scopes"][sibling_id]
+            if not self._unresolved_scope(old_capsule):
+                # Retain the response's own factual scope; it is never active
+                # consent or a source for the current query's model stages.
+                state["runtime"]["query_scopes"][sibling_id] = deepcopy(old_capsule)
+                sibling = activate_query_scope(state, binding, sibling_id, now=self.clock(), fresh=False)
+                sibling = await self._refresh_replay(sibling, binding)
+                state = checkpoint_query_scope(sibling)
+        return self._compose_batch(state, original, history_items)
+
+    async def _complete(self, state, binding, history, history_items, *, max_output_chars=None):
+        t = state["turn"]
         state["policy_context"] = []
         if (state["session"]["authenticated"] and not state["session"]["expired"]
                 and not t["attack"].get("deceptive") and not t["attack"].get("inappropriate")
@@ -605,8 +980,15 @@ class Workflow:
                 self._retrieve(state, human_required=True)
             packet_input = self._generator_input(state, history)
             narrative_input = {k: packet_input[k] for k in ("clean_query", "historic_conversation", "structured_data", "workflow_state", "language")}
-            narrative_input["language"] = t["effective_language"]
+            narrative_input["language"] = t["language"]
+            before_narrative = len(state["runtime"]["node_errors"])
             narrative = await self._stage(state, "generate_handoff_summary", narrative_input)
+            errors = validate_handoff_summary(narrative, narrative_input) if narrative else ["narrative_failed"]
+            auxiliary = state["runtime"]["node_errors"][before_narrative:]
+            del state["runtime"]["node_errors"][before_narrative:]
+            if errors:
+                state["runtime"].setdefault("auxiliary_errors", []).extend(auxiliary + [{"node": "generate_handoff_summary", "code": error} for error in errors])
+                narrative = None
             state["runtime"]["handoff_narrative"] = narrative
             # Narrative is auxiliary: it never replaces the host's factual packet
             # and does not establish handoff.created.
@@ -617,6 +999,8 @@ class Workflow:
             before = len(state["runtime"]["node_errors"])
             candidate = await self._stage(state, "generate", generator_input, correction=correction)
             errors = validate_response(candidate, generator_input) if candidate else ["generation_failed"]
+            if candidate and max_output_chars is not None and len(candidate.get("message", "")) > max_output_chars:
+                errors.append("query_response_too_long")
             t["validation_errors"] = errors
             t["validation_attempts"] = attempt
             if not errors:
@@ -633,6 +1017,76 @@ class Workflow:
             state["runtime"]["safe_fallback_used"] = True
         state["response"] = response
         state["runtime"]["history"] = (history_items + [f"user: {t['user_question']}", f"assistant: {sanitize(response['message'])}", f"language: {t['effective_language']}"])[-9:]
+        return state
+
+    async def run(self, binding, message, *, turn_id=None, selection=None, query_scope_id=None):
+        binding = TrustedBinding(**binding) if isinstance(binding, dict) else binding
+        turn_id = turn_id or str(uuid.uuid4())
+        if not isinstance(message, str) or not message.strip() or len(message) > 4096:
+            raise ValueError("invalid message")
+        now = self.clock()
+        if hasattr(self.bank, "bind_context"):
+            # This call is server-only. Its identity never comes from message or LLM JSON.
+            self.bank.bind_context({key: getattr(binding, key) for key in ("owner", "customer_id", "session_id", "conversation_id", "expires_at")})
+        replay_input = {"message": message, "selection": selection}
+        if query_scope_id is not None:
+            replay_input["query_scope_id"] = query_scope_id
+        digest = hashlib.sha256(json.dumps(replay_input, sort_keys=True, ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+        if hasattr(self.store, "load_turn"):
+            replay = self.store.load_turn(binding, turn_id, now=now)
+            if replay:
+                if replay["runtime"].get("input_sha256") != digest:
+                    raise ValueError("turn replay mismatch")
+                return await self._refresh_replay(replay, binding)
+        live = binding.authenticated and not binding.expired(now)
+        previous = (self.store.load(binding, now=now) if live else None) or new_state(binding, now=now)
+        revision = previous.get("runtime", {}).get("store_revision", 0)
+        history_items = previous.get("runtime", {}).get("history", [])[-6:]
+        history = "\n".join(history_items)
+        prior_scopes = previous.get("runtime", {}).get("query_scopes", {})
+        if query_scope_id is not None and (not isinstance(query_scope_id, str) or query_scope_id not in prior_scopes):
+            raise ValueError("invalid query scope")
+        continuing_batch = bool(prior_scopes and any(self._unresolved_scope(capsule) for capsule in prior_scopes.values()))
+        if continuing_batch:
+            selected_id = query_scope_id or previous["runtime"]["active_query_id"]
+            history = "\n".join(prior_scopes[selected_id].get("runtime", {}).get("query_history", [])[-6:])
+        elif prior_scopes:
+            # Completed capsules remain in the durable prior turn audit. A new
+            # request begins with a new target scope, never their old receipt.
+            previous = deepcopy(previous)
+            for key in ("query_scopes", "query_scope_order", "query_batch_id", "active_query_id", "query_results", "query_projection", "shared_node_errors"):
+                previous["runtime"].pop(key, None)
+        state = begin_turn(previous, binding, turn_id=turn_id, user_question=sanitize(message), now=now)
+        state["runtime"]["input_sha256"] = digest
+        t, w = state["turn"], state["workflow_state"]
+        t["human_requested"] = bool(_HUMAN.search(message))
+        t["unauthorized_reference"] = bool(_FOREIGN.search(message))
+        if state["session"]["authenticated"] and not state["session"]["expired"]:
+            inputs = {"user_question": t["user_question"], "historic_conversation": history}
+            rewrite, attack, context = await self._parallel_preflight(state, inputs)
+            # asyncio.gather is the real same-turn barrier before any dependent stage.
+            state["trace"].append({"node": "merge_parallel", "turn_id": turn_id, "branches": ["rewrite_decompose", "detect_attack", "detect_context"]})
+            if rewrite:
+                t.update(rewrite)
+            if attack:
+                t["attack"] = attack
+            if context:
+                t.update(context)
+                t["effective_language"] = "pt" if context["language"] == "pt" else "es"
+            guarded = t["attack"].get("deceptive") or t["attack"].get("inappropriate") or t["unauthorized_reference"] or state["runtime"]["node_errors"]
+            if not guarded and not t["human_requested"] and t["emotional_context"] != "Emergencia":
+                await self._resolve_cancellations(state, binding)
+                guarded = state["runtime"]["node_errors"] or t["slots"].get("foreign_customer_reference")
+            if not guarded:
+                if continuing_batch and not t["human_requested"] and t["emotional_context"] != "Emergencia":
+                    state = await self._continue_batch(state, previous, binding, history_items, selection, query_scope_id)
+                    state["runtime"]["batch_response_completed"] = True
+                else:
+                    state = await self._process_scope(state, binding, history, selection)
+        if state["runtime"].get("multi_intents"):
+            state = await self._execute_batch(state, binding, history_items)
+        elif not state["runtime"].get("batch_response_completed"):
+            state = await self._complete(state, binding, history, history_items)
         finished = self.clock()
         if not live or binding.expired(finished):
             # The store rejects expired sessions. Return an ungrounded auth
