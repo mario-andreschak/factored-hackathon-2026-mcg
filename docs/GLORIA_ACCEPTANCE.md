@@ -1,5 +1,35 @@
 # Gloria development acceptance
 
+## Release qualification in progress
+
+The release lane resumed October 1, 2026; the previous pause and timebox no
+longer apply. `tests/test_gloria_release.py` adds independently expected release
+behavior. A failing required case remains a failure; it is not skipped or
+relabeled as an accepted implementation limitation.
+
+| Release boundary | Evidence required |
+| --- | --- |
+| Owned bank reads | Real repository/MCP-backed profile, complete transaction searches with product/location filters, exact rereads, historical complaint list/exact status, separate unknown historical linkage, and verified sandbox duplicate/risk coverage. Ingestion lineage alone cannot assert source verification. |
+| Multiple requests | Each query executes serially with its own explicit slots, target, candidate snapshot, policy result and pending state. An inquiry cannot inherit another query's receipt or consent. |
+| Native execution | Immutable pinned FLUJO graph execution, effective tool allowlist under poisoned shared state, isolated simultaneous owner/conversation contexts, trusted selection propagation, and host rendering of validated tool output. Compilation, direct Python execution and installation are distinct evidence. |
+| Host consent and receipts | Prepare and explicit portal confirmation share exact owner/session/conversation/target/snapshot. Cancellation and new requests invalidate the old handle durably; revocation/restart/replay preserve scope. Uncertain writes retain receipt recovery. Contradictory receipt formats cannot verify one another. |
+| Grounded ES/PT response | Conditional recommendations require reviewed, relevant policy support. A valid unrelated chunk ID does not establish that support. Repeated unsupported advice gets one repair then safe fallback. Scripted probes do not establish learned-model accuracy or human semantic adjudication. |
+
+Run both suites from the repository root:
+
+```powershell
+python -m pytest tests/test_gloria_acceptance.py tests/test_gloria_release.py -q
+```
+
+The initial release cases use actual `Workflow`, response validation,
+`ChatService` admission/action persistence, public confirmation request schema,
+and `RepositoryBank` receipt binding. Their transport is an in-memory fictional
+host; no shared worker, network bank, provider or deployment is activated.
+The first release checkpoint exposes missing recommendation support checks,
+single-query-only execution, conflicting receipt-proof promotion, durable
+portal cancellation, and receipt followup after an unclear chat classification.
+It is development gap evidence, not a release pass.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or
