@@ -35,21 +35,6 @@ def fixed_action_clock(service, wall_origin=ACTION_TEST_WALL_ORIGIN):
     service.actions.clock = lambda: ACTION_TEST_NOW + (time.time() - wall_origin)
 
 
-def stdio_action_clock_bootstrap():
-    # Only the stdio test child gets this clock. The CLI, MCP transport and
-    # authorizer still use their ordinary code paths and real wall time.
-    return (
-        "from banking_mcp.actions import Actions\n"
-        "original_init = Actions.__init__\n"
-        "def init_with_test_clock(self, *args, **kwargs):\n"
-        "    original_init(self, *args, **kwargs)\n"
-        f"    self.clock = lambda: {ACTION_TEST_NOW!r}\n"
-        "Actions.__init__ = init_with_test_clock\n"
-        "from banking_mcp.__main__ import main\n"
-        "raise SystemExit(main())\n"
-    )
-
-
 @pytest.fixture(scope="module")
 def dataset(tmp_path_factory):
     root = tmp_path_factory.mktemp("bank-dataset")
@@ -1139,6 +1124,7 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
     import subprocess
     import sys
     from pathlib import Path
+    from textwrap import dedent
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
     service, _ = bank
@@ -1151,9 +1137,22 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
     config = tmp_path / "bank.json"
     config.write_text(service.config.model_dump_json())
     repo = Path(__file__).resolve().parents[1]
+    # The CLI creates a new Service, so the parent fixture's action clock does
+    # not reach it. Keep June transactions in policy while JWT/revocation time
+    # still uses the real clock and the normal CLI/stdio paths remain exercised.
+    launcher = dedent(f"""\
+        import time
+        from banking_mcp import __main__ as cli
+        class FixtureService(cli.Service):
+            def __init__(self, config):
+                super().__init__(config)
+                self.actions.clock = lambda: {ACTION_TEST_NOW!r} + (time.time() - {ACTION_TEST_WALL_ORIGIN!r})
+        cli.Service = FixtureService
+        raise SystemExit(cli.main())
+        """)
     async def exercise():
         params = StdioServerParameters(command=sys.executable,
-            args=["-c", stdio_action_clock_bootstrap(), "serve", "--config", str(config)], cwd=str(repo))
+            args=["-c", launcher, "serve", "--config", str(config)], cwd=str(repo))
         async with stdio_client(params) as (read, write):
             async with ClientSession(read, write) as client:
                 await client.initialize()
