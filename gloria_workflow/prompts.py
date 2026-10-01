@@ -231,11 +231,16 @@ FACT_FIELDS = ("ref", "transaction_id", "transaction_reference", "transaction_da
                "product_last4", "complaint_id", "complaint_status", "created_at", "label")
 _PRIVATE_TEXT = re.compile(r"\bCLI-[A-Za-z0-9_-]+\b|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", re.IGNORECASE)
 _DOCUMENT_TEXT = re.compile(r"(\b(?:documento|c[eé]dula|cpf|cuit|tel[eé]fono|telefone|celular|tarjeta|cart[aã]o)\s*(?:(?:n[uú]mero|n[ºo.]|final|terminad[ao])\s*)?[:#=-]?\s*)([0-9][0-9 .()-]{6,}[0-9])", re.IGNORECASE)
+_PHONE_TEXT = re.compile(r"(?<!\w)\+[0-9]{1,3}(?:[ .()-]+[0-9]{1,4}){2,6}(?!\w)")
+_SOURCE_PATH_TEXT = re.compile(r"\b[A-Za-z]:[\\/][^\s\"'<>]{1,240}|/(?:Users|home|tmp|var|etc|data|private|sandbox)/[^\s\"'<>]{1,240}")
+_SOURCE_LABEL = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,79}")
 
 
 def _text(value):
     text = _PRIVATE_TEXT.sub("[DATO_REDACTADO]", str(value or ""))
-    return _DOCUMENT_TEXT.sub(lambda match: match[1] + "[DOCUMENTO_REDACTADO]", text)[:12000]
+    text = _DOCUMENT_TEXT.sub(lambda match: match[1] + "[DOCUMENTO_REDACTADO]", text)
+    text = _PHONE_TEXT.sub("[TELÉFONO_REDACTADO]", text)
+    return _SOURCE_PATH_TEXT.sub("[RUTA_REDACTADA]", text)[:12000]
 
 
 def _fields(value, allowed):
@@ -245,12 +250,19 @@ def _fields(value, allowed):
     for key in allowed:
         item = value.get(key)
         if key in value and (item is None or isinstance(item, (str, bool, int, float))):
+            if key == "product_last4" and item is not None and not re.fullmatch(r"[0-9]{4}", str(item)):
+                continue
             result[key] = _text(item) if isinstance(item, str) else item
     return result
 
 
 def safe_structured_data(value: Mapping) -> dict:
-    """Customer facts only; excludes risk, credentials, identifiers and capabilities."""
+    """Allowlist host-redacted facts, excluding risk, private IDs and capabilities.
+
+    The trusted host must semantically redact full names and addresses in free
+    text before using this API. Regex defense here cannot identify arbitrary
+    personal names; it additionally removes known identifier/phone/path forms.
+    """
     result = _fields(value, ("status", "match_count"))
     for field in ("candidates", "transactions", "complaints"):
         if isinstance(value.get(field), list):
@@ -258,8 +270,8 @@ def safe_structured_data(value: Mapping) -> dict:
     for field in ("transaction", "complaint"):
         if isinstance(value.get(field), Mapping):
             result[field] = _fields(value[field], FACT_FIELDS)
-    result["data_sources"] = [_text(item)[:160] for item in value.get("data_sources", [])
-                              if isinstance(item, str)][:30]
+    result["data_sources"] = [item for item in value.get("data_sources", [])
+                              if isinstance(item, str) and _SOURCE_LABEL.fullmatch(item)][:30]
     if isinstance(value.get("search_context"), Mapping):
         result["search_context"] = _fields(value["search_context"], (
             "date_from", "date_to", "date_basis", "used_snapshot_default", "coverage_complete"))
@@ -371,6 +383,8 @@ def build_stage_inputs(stage: str, state: Mapping, **overrides) -> dict:
 
         values = {key: overrides[key] if key in overrides else default(key) for key in variables}
         return _safe_inputs(stage, values)
+    except StageError:
+        raise
     except (TypeError, ValueError, AttributeError, KeyError, RecursionError):
         raise StageError(stage, "input", ("input.projection",)) from None
 
@@ -383,6 +397,8 @@ def _safe_inputs(stage, inputs):
         if field in result and isinstance(result[field], str):
             result[field] = _text(result[field])
     if "queries" in result and isinstance(result["queries"], list):
+        if any(isinstance(item, str) and len(item) > 12000 for item in result["queries"]):
+            raise StageError(stage, "input", ("input.string_bound",))
         result["queries"] = [_text(item) if isinstance(item, str) else item for item in result["queries"]]
     for field, projector in (("structured_data", safe_structured_data), ("workflow_state", safe_workflow_state)):
         if field in result and isinstance(result[field], Mapping):
@@ -439,6 +455,8 @@ class StageAdapters:
             raise StageError(stage, "input", ("input.string_bound",))
         try:
             inputs = _safe_inputs(stage, inputs)
+        except StageError:
+            raise
         except (TypeError, ValueError, AttributeError, RecursionError):
             raise StageError(stage, "input", ("input.projection",)) from None
         self._check_inputs(stage, inputs)

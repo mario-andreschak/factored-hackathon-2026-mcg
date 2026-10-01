@@ -281,3 +281,25 @@ def test_bad_relevant_state_fails_closed_with_safe_error(state):
     with pytest.raises(StageError) as caught:
         asyncio.run(StageAdapters(model).from_state("detect_intent", state))
     assert caught.value.code == "input"
+
+
+def test_formatted_phones_paths_and_long_product_numbers_stay_out_of_projection():
+    state = copy.deepcopy(STATE)
+    record = state["tool_results"]["search_transactions"]["candidates"][0]
+    record["merchant_name"] = "Tienda +57 300 123 4567 C:/private/customer_records.csv"
+    record["product_last4"] = "4111111111111111"
+    state["tool_results"]["search_transactions"]["data_sources"] = ["transactions", "C:/private/customer_records.csv", "/private/data.csv"]
+    state["tool_results"]["retrieve_policy"]["chunks"][0]["text"] = "C:/private/rules.md +57 300 123 4567"
+    inputs = build_stage_inputs("generate", state)
+    serialized = json.dumps(inputs)
+    assert "300 123 4567" not in serialized and "private/" not in serialized
+    assert "4111111111111111" not in serialized
+    assert inputs["structured_data"]["data_sources"] == ["transactions"]
+
+
+def test_overlong_intent_query_is_rejected_before_exact_copy_is_lost():
+    async def model(*_):
+        pytest.fail("overlong queries cannot be classified")
+    with pytest.raises(StageError) as caught:
+        asyncio.run(StageAdapters(model).detect_intent(["a" * 12001]))
+    assert caught.value.errors == ("input.string_bound",)
