@@ -97,18 +97,35 @@ class NativeDisputePort:
         # independent monotonic denial before attempting registry cleanup.
         directory = self._revocations_dir()
         location = directory / (digest(stage_token.encode()) + ".revoked")
-        try:
-            descriptor = os.open(location, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        except FileExistsError:
-            # Presence is a monotonic denial; repeated cancellation/revocation
-            # never restores authority or skips the independent cleanup.
-            self._check_control(location, 0o640)
+        if self.reader_group is None:
+            try:
+                descriptor = os.open(location, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            except FileExistsError:
+                # Presence is a monotonic denial.
+                pass
+            else:
+                with os.fdopen(descriptor, "wb") as output:
+                    output.write(b"revoked\n")
+                    output.flush()
+                    os.fsync(output.fileno())
         else:
-            with os.fdopen(descriptor, "wb") as output:
-                self._publish_mode(output.fileno(), 0o640)
-                output.write(b"revoked\n")
-                output.flush()
-                os.fsync(output.fileno())
+            # A complete group-readable tombstone becomes visible at its final
+            # name in one hard-link publication. Never expose a 0600 half-write
+            # at that name to the worker reader.
+            temporary = directory / (".revoked-" + uuid.uuid4().hex + ".tmp")
+            descriptor = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            try:
+                with os.fdopen(descriptor, "wb") as output:
+                    self._publish_mode(output.fileno(), 0o640)
+                    output.write(b"revoked\n")
+                    output.flush()
+                    os.fsync(output.fileno())
+                try:
+                    os.link(temporary, location)
+                except FileExistsError:
+                    pass
+            finally:
+                temporary.unlink(missing_ok=True)
             self._check_control(location, 0o640)
         if os.name == "posix":
             for parent in (directory, self.authority_dir):
