@@ -80,6 +80,34 @@ during provider and MCP awaits, one execution under concurrent replay, private
 durable admission files, and equality between the requested source manifest hash
 and the verified manifest inside the executed image.
 
+`scripts/qualify_gloria_app.py` reproduces a separate joined application using
+current-date generated source, explicit fictional event-date rates, an isolated
+sandbox ledger and the real loopback HTTP routes. It covers ES/PT intake,
+explicit false/true consent, receipt followup after application restart,
+confirmation replay, logout revocation, and human/emergency review. Its report
+includes before/after source hashes, salted identifier hashes, request/stage
+latency and observed usage; unavailable usage/cost stays null. Public reports
+exclude request bodies, replies, cookies, signing material and raw identity.
+
+Fixture publication alone can be reproduced without a worker or provider:
+
+```powershell
+python scripts/qualify_gloria_app.py --workdir-private '<new-private-dir>' --output '<new-report.json>' --prepare-only
+```
+
+With a separately installed and qualified isolated worker:
+
+```powershell
+python scripts/qualify_gloria_app.py --workdir-private '<new-private-dir>' --output '<new-report.json>' --native-url 'http://127.0.0.1:<isolated-port>' --native-authority-dir '<isolated-authority>' --cases intake-es,intake-pt,human,emergency
+```
+
+The default language path invokes `NativeGloriaPort`; injectable scripted ports
+or transports are explicitly reported as offline. Observing a model completion
+does not attest that the protected native extension was installed and executed.
+The report therefore retains `native_execution_verified=false` until external
+installed-artifact and same-turn native callback evidence are joined to it.
+Expected scenario labels are authored assertions, not human adjudication.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or
