@@ -58,7 +58,7 @@ _MONTHS = {"enero": 1, "janeiro": 1, "febrero": 2, "fevereiro": 2, "marzo": 3, "
 _NAMED_DATE = re.compile(r"\b(\d{1,2})\s+de\s+(" + "|".join(_MONTHS) + r")\s+de\s+(\d{4})\b", re.I)
 _NARRATIVE_FIELDS = {"request_summary", "customer_language", "customer_stated_claims", "suggested_open_questions"}
 _CONTACT_VALUE = re.compile(r"\bCLI-[\w-]+|[\w.%+-]+@[\w.-]+\.[a-z]{2,}|(?<!\w)\+\d[\d ()-]{6,}\d", re.I)
-_SECRET_TEXT = re.compile(r"\b(?:contrase[nñ]a|senha|password|pin|cvv|cvc|otp|api[_ -]?key|bearer|credencial(?:es)?|token secreto|documento de identidad|c[eé]dula|cpf|dni|pasaporte|c[oó]digo de (?:acceso|seguridad|verificaci[oó]n)|c[oó]digo (?:sms|otp)|n[uú]mero (?:completo )?de (?:tarjeta|cuenta|documento|cart[aã]o|conta))\b", re.I)
+_SECRET_TEXT = re.compile(r"\b(?:contrase[nñ]as?|senhas?|passwords?|pin|cvv|cvc|otp|api[_ -]?key|bearer|credencial(?:es)?|token secreto|documento de identidad|c[eé]dula|cpf|dni|pasaporte|c[oó]digos? de (?:acceso|acesso|seguridad|seguran[cç]a|verificaci[oó]n|verifica[cç][aã]o)|c[oó]digo (?:sms|otp)|n[uú]mero (?:completo )?de (?:tarjeta|cuenta|documento|cart[aã]o|conta))\b", re.I)
 _CONTACT_REQUEST = re.compile(r"\b(?:tel[eé]fono|telefone|celular|whatsapp|correo electr[oó]nico|e-?mail|direcci[oó]n postal|n[uú]mero de contacto)\b", re.I)
 _NARRATIVE_IMPLEMENTATION = re.compile(r"(?:https?://|(?:s3|file|gs|az)://|\b[a-z]:[\\/]|\\\\[\w.-]+\\|/(?:users|home|tmp|var|etc|private|data|sandbox)/|```)|\b(?:curl|wget|powershell|cmd\.exe|exec_command|access[_ -]?key|secret[_ -]?key)\b", re.I)
 _EMAIL_VALUE = re.compile(r"[\w.%+-]+@[\w.-]+\.[a-z]{2,}", re.I)
@@ -98,8 +98,22 @@ _HUMAN_REVIEW = re.compile(r"\b(?:revision humana|atencion humana|revisao humana
 _CHAT_CONFIRMATION = re.compile(r"\b(?:(?:responde|responda|responder|contesta|conteste|diga|di|escribe|escriba|escreva) (?:con |com |apenas |simplemente |simplesmente )?(?:un |um )?(?:si|sim|acepto|confirmo)|(?:confirma|confirme) (?:aqui|por chat|no chat|en el chat))\b")
 _HANDOFF_PROMISE = re.compile(r"\b(?:(?:vou|vamos|voy a|vamos a|iremos|te voy a|vou te) (?:encaminhar|derivar|transferir)|derivare|derivaremos|encaminharei|encaminharemos)\b")
 _BANK_CONFIRMATION = re.compile(r"\b(?:confirma|confirme|confirmar) (?:el |la |o |a |un |una |um |uma )?(?:pago\w*|pagamento\w*|transferencia\w*|saldo|cuenta\w*|conta\w*|tarjeta\w*|cartao|cartoes)\b")
-_SENSITIVE_REQUEST = re.compile(r"\b(?:envia|envie|enviame|envienos|enviar|dame|proporciona|proporcione|comparte|comparta|compartilha|compartilhe|compartir|compartilhar|diga|informe|ingresa|introduce|digite|escribe|escriba|escreva|manda|mande|necesito|preciso|quero)\b")
-_NEGATIVE_SHARING = re.compile(r"^(?:no|nao) (?:compartas|comparta|compartilhe|envies|envie|informes|informe|digas|diga|escribas|escreva|entregues|forneca)\b")
+_SENSITIVE_REQUEST = re.compile(r"\b(?:envia|envie|enviame|envienos|enviar|dame|dime|dinos|decirme|decirnos|dizer|facilita|facilite|facilitar|forneca|fornecer|passar|proporciona|proporcione|comparte|comparta|compartilha|compartilhe|compartir|compartilhar|diga|informe|ingresa|introduce|digite|escribe|escriba|escreva|manda|mande|necesito|preciso|quero)\b")
+_NEGATIVE_SHARING = re.compile(r"^(?:no|nao) (?:(?:me|nos) )?(?:compartas|comparta|compartilhe|envies|envie|informes|informe|digas|diga|escribas|escreva|entregues|forneca)\b")
+# Match the prefix immediately before a secret's name. A question about changing,
+# forgetting or having problems with a password does not ask for its value.
+_SECRET_VALUE_QUESTION = re.compile(
+    r"\b(?:cual(?:es)?|qual|quais|que)(?:\s+(?P<copula>es|son|e|sao))?"
+    r"(?:\s+(?:el|la|los|las|o|a|os|as|tu|tus|su|sus|tua|tuas|teu|teus|sua|suas|seu|seus))*\s*$"
+)
+_SECRET_USAGE_QUESTION = re.compile(
+    r"^(?:(?:tu|usted|voce)\s+)?(?:usas|usa|utilizas|utiliza|tienes|tiene|tem|recuerdas|recuerda|lembra)\b"
+    r"(?!\s+que\s+(?:cambiar|alterar|redefinir)\b)"
+)
+_SECRET_COLLECTION_QUESTION = re.compile(
+    r"\b(?:me|nos)\s+(?:(?:puedes|podrias|pode|poderia)\s+)?(?:dar|das|darias|dices|dirias|confirmas|confirmarias|facilitas|facilitarias|"
+    r"da|daria|diz|diria|passa|passaria|fornece|forneceria)\b"
+)
 _SCOPE_LIMITATION = re.compile(
     r"(?:no puedo|no podemos|nao posso|nao podemos) (?:bloquear (?:tu |su |seu |o seu )?(?:tarjetas?|cartao|cartoes)(?: (?:ni|nem) (?:garantizar|garantir|prometer) (?:un |um )?(?:reembolso|devolucion|devolucao|estorno))?|"
     r"(?:garantizar|garantir|prometer|confirmar)(?:te|le)? (?:un |una |um |uma |el |la |o |a )?"
@@ -214,8 +228,25 @@ def _recommendation_errors(message: str, inputs: Mapping, cited_chunks: object) 
         if _SCOPE_LIMITATION.fullmatch(clause):
             continue
         sensitive_verbs = list(_SENSITIVE_REQUEST.finditer(clause))
-        if _SECRET_TEXT.search(clause) and sensitive_verbs:
-            if not (_NEGATIVE_SHARING.search(clause) and len(sensitive_verbs) == 1):
+        secrets = list(_SECRET_TEXT.finditer(clause))
+        negative = _NEGATIVE_SHARING.search(clause)
+        asks_value = False
+        questions_negated = True
+        for secret in secrets:
+            question = _SECRET_VALUE_QUESTION.search(clause[:secret.start()])
+            tail = clause[secret.end():].strip()
+            if question and (question.group("copula") or not tail or _SECRET_USAGE_QUESTION.search(tail)):
+                asks_value = True
+                # "No digas cuál es tu PIN" negates the value question itself;
+                # an earlier warning followed by "y cuál es..." does not.
+                questions_negated = (questions_negated and negative is not None
+                                     and not clause[negative.end():question.start()].strip())
+        asks_collection = bool(_SECRET_COLLECTION_QUESTION.search(clause))
+        if secrets and (sensitive_verbs or asks_value or asks_collection):
+            safe_negative = (negative and len(secrets) == 1 and not asks_collection
+                             and (not asks_value or questions_negated)
+                             and all(verb.start() < negative.end() for verb in sensitive_verbs))
+            if not safe_negative:
                 errors.append("credential_request")
         if _CHAT_CONFIRMATION.search(clause) or _HANDOFF_PROMISE.search(clause) or _BANK_CONFIRMATION.search(clause):
             errors.append("unsupported_operation_guidance")

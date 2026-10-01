@@ -841,6 +841,74 @@ def test_customer_credentials_cannot_be_requested(language, text):
     assert "credential_request" in validate_response(response(text, language), inputs("HANDOFF", language))
 
 
+@pytest.mark.parametrize("language, text", [
+    ("es", "¿Cuál es tu contraseña?"),
+    ("pt", "Qual é a sua senha?"),
+    ("es", "¿Me das tu PIN?"),
+    ("pt", "Qual é seu código de verificação?"),
+    ("es", "¿Qué contraseña usas?"),
+    ("pt", "Qual senha você usa?"),
+    ("es", "¿Qué PIN tienes?"),
+    ("pt", "Qual senha você tem?"),
+    ("es", "¿Qué contraseñas recuerdas?"),
+    ("pt", "Qual senha você lembra?"),
+    ("es", "¿Cuáles son tus contraseñas?"),
+    ("pt", "Quais são suas senhas?"),
+    ("es", "¿Puedes decirme tu contraseña?"),
+    ("pt", "Você poderia me dizer sua senha?"),
+    ("es", "¿Podrías facilitar tu contraseña?"),
+    ("pt", "Pode me passar seu PIN?"),
+    ("es", "¿Me puedes dar tu PIN?"),
+    ("pt", "Você pode me dar seu PIN?"),
+    ("es", "¿Me confirmas tu PIN?"),
+    ("pt", "Qual é seu código de acesso?"),
+    ("pt", "Qual é seu código de segurança?"),
+    ("es", "¿Cuál es tu **contra**seña?"),
+    ("pt", "Qual é sua se\u200bnha?"),
+])
+@pytest.mark.parametrize("mode", ["HANDOFF", "AUTH_REQUIRED"])
+def test_customer_credential_value_and_collection_questions_are_rejected(language, text, mode):
+    assert "credential_request" in validate_response(response(text, language), inputs(mode, language))
+
+
+@pytest.mark.parametrize("language, text", [
+    ("es", "No compartas tu contraseña y dime cuál es tu PIN."),
+    ("pt", "Não compartilhe sua senha; qual é seu OTP?"),
+    ("es", "No envíes tu contraseña, ¿me das tu PIN?"),
+    ("pt", "Não compartilhe sua senha e qual é seu PIN?"),
+    ("es", "No compartas tu contraseña y dime cuál es."),
+    ("pt", "Não compartilhe sua senha e diga qual é."),
+    ("es", "No compartas datos privados y ¿cuál es tu contraseña?"),
+    ("pt", "Não compartilhe dados privados e qual é a sua senha?"),
+])
+def test_negative_sharing_cannot_launder_a_credential_question(language, text):
+    assert "credential_request" in validate_response(response(text, language), inputs("HANDOFF", language))
+
+
+@pytest.mark.parametrize("language, text", [
+    ("es", "¿Has cambiado tu contraseña?"),
+    ("pt", "Você alterou sua senha?"),
+    ("es", "¿Necesitas ayuda para cambiar tu contraseña?"),
+    ("pt", "Precisa de ajuda para redefinir sua senha?"),
+    ("es", "¿Olvidaste tu contraseña?"),
+    ("pt", "Esqueceu sua senha?"),
+    ("es", "¿Recibiste el código de verificación?"),
+    ("pt", "Você recebeu o código de verificação?"),
+    ("es", "¿Cuál es el problema con tu contraseña?"),
+    ("pt", "Qual é o problema com sua senha?"),
+    ("es", "¿Cuál contraseña necesitas cambiar?"),
+    ("pt", "Qual senha você esqueceu?"),
+    ("es", "¿Qué contraseñas has cambiado?"),
+    ("es", "¿Qué contraseña tienes que cambiar?"),
+    ("pt", "Qual senha você tem que alterar?"),
+    ("es", "No digas cuál es tu PIN."),
+    ("es", "No me digas cuál es tu PIN."),
+    ("pt", "Não informe seu código de verificação."),
+])
+def test_credential_status_change_and_negative_sharing_questions_do_not_request_values(language, text):
+    assert validate_response(response(text, language), inputs("HANDOFF", language)) == []
+
+
 @pytest.mark.parametrize("language, text", [("es", "No compartas contraseñas."), ("pt", "Não compartilhe sua senha.")])
 def test_safe_credential_sharing_limitations_are_preserved(language, text):
     assert validate_response(response(text, language), inputs("HANDOFF", language)) == []
