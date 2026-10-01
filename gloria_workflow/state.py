@@ -15,6 +15,7 @@ import math
 from pathlib import Path
 import re
 import sqlite3
+import uuid
 from typing import Any, Iterator
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -30,6 +31,16 @@ SLOT_KEYS = ("amount", "currency", "currency_raw", "date_from", "date_to",
              "date_expression", "merchant", "transaction_type", "channel", "city",
              "country", "transaction_id", "complaint_id", "product_hint", "product_last4",
              "amount_is_approximate", "foreign_customer_reference")
+
+_SCOPE_RUNTIME = frozenset({"pending_created_at", "pending_expires_at", "workflow_intent",
+    "complaint_snapshot_hash", "field_clarification", "action_lineage", "handoff_lineage",
+    "host_receipt_lineage", "prior_verified_actions", "prior_verified_handoffs", "policy_version",
+    "node_errors", "auxiliary_errors", "safe_fallback_used", "handoff_narrative",
+    "host_cancellation_requested", "tool_attempts"})
+_BATCH_RUNTIME = frozenset({"query_scopes", "query_scope_order", "query_batch_id",
+    "active_query_id", "query_results", "query_projection", "shared_node_errors"})
+_DOMAINS = frozenset({"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY", "COMPLAINT_STATUS",
+    "HUMAN_REQUEST", "GREETING", "PERSONALITY", "OOD"})
 
 
 class StateError(ValueError):
@@ -175,13 +186,40 @@ def _merge(destination: dict, patch: dict) -> None:
             destination[key] = deepcopy(value)
 
 
+def _remember_action_lineage(state: dict) -> None:
+    """Capture trusted preparation before its conversational projection disappears."""
+    runtime, workflow = state["runtime"], state["workflow_state"]
+    pending = workflow.get("pending", {})
+    if not all(pending.get(key) for key in ("request_id", "host_pending_handle",
+            "target_transaction_id", "snapshot_id", "snapshot_hash")):
+        return
+    prior = runtime.get("action_lineage", {})
+    if (workflow.get("action_attempted") is True and prior.get("request_id") and
+            prior["request_id"] != pending["request_id"]):
+        raise StateError("action_lineage_conflict")
+    lineage = {key: deepcopy(pending.get(key)) for key in ("request_id", "host_pending_handle",
+        "target_transaction_id", "snapshot_id", "snapshot_hash", "created_turn_id")}
+    lineage.update(query_id=runtime.get("active_query_id"), binding_digest=runtime.get("trusted_binding_digest"),
+                   invalidated=bool(prior.get("invalidated") and prior.get("request_id") == pending["request_id"]))
+    runtime["action_lineage"] = lineage
+
+
 def cancel_pending(state: dict, *, clear_target: bool = False) -> dict:
     result = deepcopy(state)
+    _remember_action_lineage(result)
     workflow = result["workflow_state"]
+    prior_pending = workflow.get("pending", {})
+    if prior_pending.get("host_pending_handle"):
+        result["runtime"]["host_cancellation_requested"] = {
+            "query_id": result["runtime"].get("active_query_id"),
+            "prior_pending_handle": prior_pending["host_pending_handle"],
+            "request_id": prior_pending.get("request_id"), "reason": "pending_cleared"}
     workflow["pending"] = empty_pending()
     workflow["trusted_confirmation"] = empty_confirmation()
     workflow["action"]["authorized"] = False
     workflow["action"]["authorization_expires_at"] = None
+    if result["runtime"].get("action_lineage"):
+        result["runtime"]["action_lineage"]["invalidated"] = True
     result["runtime"]["pending_created_at"] = None
     result["runtime"]["pending_expires_at"] = None
     if clear_target:
@@ -207,6 +245,9 @@ def reset_workflow(state: dict) -> dict:
     result["runtime"].pop("workflow_intent", None)
     result["runtime"].pop("complaint_snapshot_hash", None)
     result["runtime"].pop("field_clarification", None)
+    result["runtime"].pop("action_lineage", None)
+    result["runtime"].pop("handoff_lineage", None)
+    result["runtime"].pop("host_receipt_lineage", None)
     return result
 
 
@@ -228,7 +269,7 @@ def expire_pending(state: dict, *, now: datetime | None = None,
 
 def begin_turn(state: dict, binding: TrustedBinding, *, turn_id: str,
                user_question: str, now: datetime | None = None,
-               pending_expiry_turns: int = 2) -> dict:
+               pending_expiry_turns: int = 2, _advance_scopes: bool = True) -> dict:
     _assert_session(binding, state)
     if not isinstance(turn_id, str) or not turn_id or not isinstance(user_question, str):
         raise StateError("invalid_turn")
@@ -238,11 +279,16 @@ def begin_turn(state: dict, binding: TrustedBinding, *, turn_id: str,
     result["trace"] = deepcopy(state.get("trace", []))
     for key in ("store_revision", "workflow_id", "policy_version", "pending_created_at",
                 "pending_expires_at", "workflow_intent", "history", "prior_verified_actions",
-                "complaint_snapshot_hash", "field_clarification"):
+                "complaint_snapshot_hash", "field_clarification", "action_lineage", "handoff_lineage",
+                "prior_verified_handoffs", "host_receipt_lineage", "session_tool_failures"):
+        if key in state.get("runtime", {}):
+            result["runtime"][key] = deepcopy(state["runtime"][key])
+    for key in _BATCH_RUNTIME - {"shared_node_errors"}:
         if key in state.get("runtime", {}):
             result["runtime"][key] = deepcopy(state["runtime"][key])
     result["turn"].update(turn_id=turn_id, user_question=user_question)
     workflow = result["workflow_state"]
+    _remember_action_lineage(result)
     prior_action = workflow.get("action", {})
     if (state["turn"].get("turn_id") != turn_id and workflow.get("action_outcome") == "verified" and
             prior_action.get("executed") is True and prior_action.get("verified") is True and
@@ -250,13 +296,24 @@ def begin_turn(state: dict, binding: TrustedBinding, *, turn_id: str,
         # Completion ends this request. Keep a private audit, never use that old
         # receipt as current ownership/duplicate/risk evidence for a new target.
         audits = result["runtime"].get("prior_verified_actions", [])
+        lineage = result["runtime"].get("action_lineage", {})
         audits.append({"turn_id": state["turn"].get("turn_id"), "result_id": prior_action["result_id"],
-                       "idempotency_key": prior_action.get("idempotency_key"),
-                       "transaction_id": workflow.get("transaction_id"),
-                       "snapshot_id": workflow.get("pending", {}).get("snapshot_id")})
+                       "idempotency_key": prior_action.get("idempotency_key") or lineage.get("request_id"),
+                       "transaction_id": workflow.get("transaction_id") or lineage.get("target_transaction_id"),
+                       "snapshot_id": workflow.get("pending", {}).get("snapshot_id") or lineage.get("snapshot_id"),
+                       "query_id": lineage.get("query_id"), "host_pending_handle": lineage.get("host_pending_handle")})
         result = reset_workflow(result)
         result["runtime"]["prior_verified_actions"] = audits[-20:]
         workflow = result["workflow_state"]
+    previous_handoff = workflow.get("handoff", {})
+    if previous_handoff.get("created") is True and previous_handoff.get("handoff_id"):
+        audits = result["runtime"].get("prior_verified_handoffs", [])
+        audits.append({"query_id": result["runtime"].get("active_query_id"),
+            "turn_id": state["turn"].get("turn_id"), "handoff_id": previous_handoff["handoff_id"],
+            "reason_code": previous_handoff.get("reason_code"),
+            "transaction_id": workflow.get("transaction_id")})
+        result["runtime"]["prior_verified_handoffs"] = audits[-20:]
+    workflow["handoff"] = {"required": False, "created": False, "handoff_id": None, "reason_code": None}
     workflow["trusted_confirmation"] = empty_confirmation()
     workflow["action"]["authorized"] = False
     workflow["action"]["authorization_expires_at"] = None
@@ -265,6 +322,10 @@ def begin_turn(state: dict, binding: TrustedBinding, *, turn_id: str,
     workflow["existing_case"] = {"found": False, "complaint_id": None, "status": None}
     workflow["risk_data_complete"] = False
     workflow["unrecognized_count_24h"] = None
+    if _advance_scopes and result["runtime"].get("query_scopes"):
+        result = _advance_query_scopes(result, binding, turn_id=turn_id, user_question=user_question,
+                                       now=current, pending_expiry_turns=pending_expiry_turns)
+        workflow = result["workflow_state"]
     if workflow["pending"].get("type") != "none" and state["turn"].get("turn_id") != turn_id:
         workflow["pending"]["turns_waiting"] += 1
     if binding.expired(current) or not binding.authenticated:
@@ -326,6 +387,11 @@ def set_pending(state: dict, pending: dict, *, now: datetime | None = None,
     current = utc_now(now)
     result = cancel_pending(state)
     result["workflow_state"]["pending"].update(deepcopy(pending))
+    query_id = result["runtime"].get("active_query_id")
+    if query_id is not None:
+        if pending.get("query_id") not in (None, query_id):
+            raise StateError("query_scope_binding_mismatch")
+        result["workflow_state"]["pending"]["query_id"] = query_id
     result["runtime"]["pending_created_at"] = _iso(current)
     result["runtime"]["pending_expires_at"] = _iso(datetime.fromtimestamp(
         current.timestamp() + ttl_seconds, timezone.utc))
@@ -346,6 +412,9 @@ def apply_decision(state: dict, decision: dict) -> dict:
         result = cancel_pending(result, clear_target=decision.get("clear_target", False))
         if decision.get("response_mode") == "ACTION_DONE":
             result["workflow_state"]["action"]["authorized"] = True
+            result["runtime"].pop("host_cancellation_requested", None)
+        elif result["runtime"].get("host_cancellation_requested"):
+            result["runtime"]["host_cancellation_requested"]["reason"] = decision.get("reason_code", "pending_cleared")
     if decision.get("pending"):
         result = set_pending(result, decision["pending"],
                              now=parse_timestamp(result["turn"]["current_timestamp"]),
@@ -368,6 +437,237 @@ def apply_decision(state: dict, decision: dict) -> dict:
         if decision.get("response_mode") in {"CONFIRM_ACTION", "INFORM", "INFORM_EXISTING_CASE", "ACTION_DONE"}:
             result["workflow_state"]["missing_fields"] = []
     result["runtime"]["policy_version"] = decision.get("policy_version")
+    failures = result["workflow_state"].get("counters", {}).get("tool_failures", 0)
+    result["runtime"]["session_tool_failures"] = max(result["runtime"].get("session_tool_failures", 0), failures)
+    return result
+
+
+def _scope_map(state: dict) -> tuple[dict, list]:
+    runtime = state.get("runtime", {})
+    if "query_scopes" not in runtime and "query_scope_order" not in runtime:
+        return {}, []
+    scopes = runtime.get("query_scopes", {})
+    order = runtime.get("query_scope_order", [])
+    if not isinstance(scopes, dict) or not isinstance(order, list) or len(scopes) > 8 or len(order) != len(scopes):
+        raise StateError("invalid_query_scopes")
+    if len(set(order)) != len(order) or set(order) != set(scopes):
+        raise StateError("invalid_query_scopes")
+    for index, query_id in enumerate(order):
+        capsule = scopes[query_id]
+        if (not isinstance(query_id, str) or not re.fullmatch(r"q_[a-f0-9]{32}", query_id) or
+                not isinstance(capsule, dict) or capsule.get("query_id") != query_id or
+                capsule.get("query_index") != index or
+                capsule.get("binding_digest") != runtime.get("trusted_binding_digest") or
+                capsule.get("intent") not in _DOMAINS or
+                not isinstance(capsule.get("query_text"), str) or
+                any(key in capsule.get("runtime", {}) for key in _BATCH_RUNTIME)):
+            raise StateError("query_scope_binding_mismatch")
+        pending_id = capsule.get("workflow_state", {}).get("pending", {}).get("query_id")
+        if pending_id is not None and pending_id != query_id:
+            raise StateError("query_scope_binding_mismatch")
+        lineage = capsule.get("runtime", {}).get("action_lineage", {})
+        if lineage and (lineage.get("query_id") != query_id or lineage.get("binding_digest") != capsule["binding_digest"]):
+            raise StateError("query_scope_binding_mismatch")
+    active = runtime.get("active_query_id")
+    if active is not None and active not in scopes:
+        raise StateError("invalid_query_scope")
+    return scopes, order
+
+
+def _unresolved(capsule: dict) -> bool:
+    workflow = capsule.get("workflow_state", {})
+    mode = workflow.get("policy_decision", {}).get("response_mode")
+    return (workflow.get("pending", {}).get("type") not in (None, "none") or
+        mode == "CLARIFY" and bool(workflow.get("missing_fields")) or
+        workflow.get("action_outcome") in {"unknown", "executed"} or
+        workflow.get("action_attempted") is True and workflow.get("action_outcome") not in {"verified", "failed"} or
+        workflow.get("handoff", {}).get("required") is True and workflow.get("handoff", {}).get("created") is not True)
+
+
+def start_query_batch(state: dict, intents: list[dict], *, batch_id: str | None = None) -> dict:
+    """Allocate independent server-owned capsules for a bounded ordered classifier result.
+
+    The model supplies only query text/domain. IDs, owner binding and capability
+    lineage are allocated here, never taken from that output.
+    """
+    if not isinstance(intents, list) or not 1 <= len(intents) <= 8:
+        raise StateError("invalid_query_batch")
+    for intent in intents:
+        if (not isinstance(intent, dict) or set(intent) != {"query_text", "domain"} or
+                intent.get("domain") not in _DOMAINS or not isinstance(intent.get("query_text"), str) or
+                not intent["query_text"] or len(intent["query_text"]) > 12000):
+            raise StateError("invalid_query_batch")
+    if batch_id is not None and (not isinstance(batch_id, str) or not batch_id or len(batch_id) > 128):
+        raise StateError("invalid_query_batch")
+    result = deepcopy(state)
+    scopes, _ = _scope_map(result)
+    if any(_unresolved(capsule) for capsule in scopes.values()) or _unresolved(result):
+        raise StateError("unresolved_query_batch")
+    runtime = result["runtime"]
+    runtime.update(query_scopes={}, query_scope_order=[], query_batch_id=batch_id or uuid.uuid4().hex,
+                   active_query_id=None, query_results=[], query_projection=True,
+                   shared_node_errors=deepcopy(runtime.get("node_errors", [])))
+    result["turn"]["intents"] = deepcopy(intents)
+    for index, intent in enumerate(intents):
+        query_id = "q_" + uuid.uuid4().hex
+        runtime["query_scope_order"].append(query_id)
+        runtime["query_scopes"][query_id] = {
+            "query_id": query_id, "binding_digest": runtime["trusted_binding_digest"],
+            "query_index": index, "query_text": intent["query_text"], "intent": intent["domain"],
+            "turn": {"turn_id": None}, "workflow_state": empty_workflow(), "tool_results": {},
+            "response": {}, "runtime": {"pending_created_at": None, "pending_expires_at": None}}
+    return result
+
+
+def _capsule_frame(parent: dict, capsule: dict, binding: TrustedBinding, now: datetime) -> dict:
+    frame = new_state(binding, now=now)
+    frame["turn"].update(deepcopy(capsule.get("turn", {})))
+    frame["workflow_state"] = deepcopy(capsule["workflow_state"])
+    frame["tool_results"] = deepcopy(capsule.get("tool_results", {}))
+    frame["response"] = deepcopy(capsule.get("response", {}))
+    frame["runtime"].update({key: deepcopy(value) for key, value in capsule.get("runtime", {}).items()
+                             if key in _SCOPE_RUNTIME})
+    frame["runtime"]["active_query_id"] = capsule["query_id"]
+    return frame
+
+
+def _snapshot_capsule(capsule: dict, frame: dict) -> dict:
+    result = {key: deepcopy(capsule[key]) for key in ("query_id", "binding_digest", "query_index", "query_text", "intent")}
+    result.update(turn=deepcopy(frame["turn"]), workflow_state=deepcopy(frame["workflow_state"]),
+                  tool_results=deepcopy(frame.get("tool_results", {})), response=deepcopy(frame.get("response", {})),
+                  runtime={key: deepcopy(value) for key, value in frame["runtime"].items() if key in _SCOPE_RUNTIME})
+    return result
+
+
+def activate_query_scope(state: dict, binding: TrustedBinding, query_id: str, *, now: datetime | None = None,
+                         fresh: bool = True, query_text: str | None = None) -> dict:
+    """Project one owner-bound capsule; fresh activation clears current evidence.
+
+    ``fresh=False`` restores replay facts for a new trusted host readback. It
+    still revokes consent and authorization; it never verifies a receipt itself.
+    """
+    _assert_session(binding, state)
+    scopes, _ = _scope_map(state)
+    if query_id not in scopes:
+        raise StateError("invalid_query_scope")
+    if query_text is not None and (not isinstance(query_text, str) or len(query_text) > 12000):
+        raise StateError("invalid_query_text")
+    current = utc_now(now)
+    capsule = scopes[query_id]
+    result = _capsule_frame(state, capsule, binding, current)
+    if fresh:
+        result = begin_turn(result, binding, turn_id=state["turn"]["turn_id"],
+                            user_question=state["turn"]["user_question"], now=current, _advance_scopes=False)
+        for key in ("language", "effective_language", "emotional_context", "attack", "human_requested",
+                    "unauthorized_reference", "intents"):
+            result["turn"][key] = deepcopy(state["turn"][key])
+        result["runtime"]["node_errors"] = deepcopy(state["runtime"].get("shared_node_errors", []))
+    else:
+        result["workflow_state"]["trusted_confirmation"] = empty_confirmation()
+        result["workflow_state"]["action"]["authorized"] = False
+        result["workflow_state"]["action"]["authorization_expires_at"] = None
+        clock = new_state(binding, now=current)["turn"]
+        result["turn"].update(current_date=clock["current_date"], current_timestamp=clock["current_timestamp"])
+        result = expire_pending(result, now=current)
+    result["turn"].update(active_query_index=capsule["query_index"], intent=capsule["intent"],
+                          clean_query=query_text if query_text is not None else capsule["query_text"])
+    # Restore batch container and shared operational metadata only outside the
+    # capsule. A capsule never recursively stores other queries or their tools.
+    for key in ("store_revision", "workflow_id", "history", "input_sha256", "session_tool_failures"):
+        if key in state["runtime"]:
+            result["runtime"][key] = deepcopy(state["runtime"][key])
+    for key in _BATCH_RUNTIME:
+        if key in state["runtime"]:
+            result["runtime"][key] = deepcopy(state["runtime"][key])
+    result["runtime"].update(active_query_id=query_id, query_projection=False)
+    result["trace"] = deepcopy(state.get("trace", []))
+    result["workflow_state"]["counters"]["tool_failures"] = max(
+        result["workflow_state"]["counters"].get("tool_failures", 0), result["runtime"].get("session_tool_failures", 0))
+    pending = result["workflow_state"]["pending"]
+    if pending.get("type") != "none":
+        if pending.get("query_id") not in (None, query_id):
+            raise StateError("query_scope_binding_mismatch")
+        pending["query_id"] = query_id
+    return result
+
+
+def checkpoint_query_scope(state: dict) -> dict:
+    """Save the active canonical view into its own capsule, preserving siblings."""
+    scopes, _ = _scope_map(state)
+    query_id = state.get("runtime", {}).get("active_query_id")
+    if query_id is None:
+        return deepcopy(state)
+    if state["turn"].get("active_query_index") != scopes[query_id]["query_index"]:
+        raise StateError("query_scope_binding_mismatch")
+    result = deepcopy(state)
+    pending = result["workflow_state"]["pending"]
+    if pending.get("type") != "none":
+        if pending.get("query_id") not in (None, query_id):
+            raise StateError("query_scope_binding_mismatch")
+        pending["query_id"] = query_id
+    _remember_action_lineage(result)
+    result["runtime"]["query_scopes"][query_id] = _snapshot_capsule(scopes[query_id], result)
+    result["runtime"]["session_tool_failures"] = max(result["runtime"].get("session_tool_failures", 0),
+        result["workflow_state"]["counters"].get("tool_failures", 0))
+    return result
+
+
+def finish_query_batch(state: dict) -> dict:
+    """Project the first unresolved scope and expose ordered response observations."""
+    result = checkpoint_query_scope(state) if not state.get("runtime", {}).get("query_projection") else deepcopy(state)
+    original_turn = deepcopy(result["turn"])
+    scopes, order = _scope_map(result)
+    observations = [{"query_id": query_id, "query_index": scopes[query_id]["query_index"],
+        "response": deepcopy(scopes[query_id].get("response", {})),
+        "policy_decision": deepcopy(scopes[query_id]["workflow_state"].get("policy_decision", {}))} for query_id in order]
+    chosen = next((query_id for query_id in order if _unresolved(scopes[query_id])), order[-1] if order else None)
+    if chosen is not None:
+        capsule = scopes[chosen]
+        result["turn"] = deepcopy(capsule["turn"])
+        result["workflow_state"] = deepcopy(capsule["workflow_state"])
+        result["tool_results"] = deepcopy(capsule.get("tool_results", {}))
+        result["response"] = deepcopy(capsule.get("response", {}))
+        for key in _SCOPE_RUNTIME:
+            result["runtime"].pop(key, None)
+        result["runtime"].update(deepcopy(capsule.get("runtime", {})))
+    for key in ("turn_id", "user_question", "intents", "language", "effective_language", "current_date", "current_timestamp"):
+        if key in original_turn:
+            result["turn"][key] = deepcopy(original_turn[key])
+    result["runtime"].update(active_query_id=chosen, query_results=observations, query_projection=True)
+    return result
+
+
+def _advance_query_scopes(state: dict, binding: TrustedBinding, *, turn_id: str,
+                          user_question: str, now: datetime, pending_expiry_turns: int) -> dict:
+    result = deepcopy(state)
+    scopes, order = _scope_map(result)
+    for query_id in order:
+        frame = _capsule_frame(result, scopes[query_id], binding, now)
+        frame = begin_turn(frame, binding, turn_id=turn_id, user_question=user_question,
+                           now=now, pending_expiry_turns=pending_expiry_turns, _advance_scopes=False)
+        result["runtime"]["query_scopes"][query_id] = _snapshot_capsule(scopes[query_id], frame)
+    return result
+
+
+def _sanitize_query_scopes(state: dict, binding: TrustedBinding, now: datetime,
+                            *, pending_expiry_turns: int, pending_ttl_seconds: int | None = None) -> dict:
+    result = deepcopy(state)
+    scopes, order = _scope_map(result)
+    for query_id in order:
+        frame = _capsule_frame(result, scopes[query_id], binding, now)
+        _remember_action_lineage(frame)
+        frame["workflow_state"]["trusted_confirmation"] = empty_confirmation()
+        frame["workflow_state"]["action"]["authorized"] = False
+        frame["workflow_state"]["action"]["authorization_expires_at"] = None
+        pending = frame["workflow_state"]["pending"]
+        if pending_ttl_seconds is not None and pending.get("type") != "none":
+            created = parse_timestamp(frame["runtime"].get("pending_created_at")) or now
+            expiry = parse_timestamp(frame["runtime"].get("pending_expires_at"))
+            cap = created + timedelta(seconds=pending_ttl_seconds)
+            frame["runtime"].update(pending_created_at=_iso(created), pending_expires_at=_iso(min(cap, expiry) if expiry else cap))
+        frame = (cancel_pending(frame, clear_target=True) if binding.expired(now) or not binding.authenticated
+                 else expire_pending(frame, now=now, pending_expiry_turns=pending_expiry_turns))
+        result["runtime"]["query_scopes"][query_id] = _snapshot_capsule(scopes[query_id], frame)
     return result
 
 
@@ -432,6 +732,7 @@ class ConversationStore:
         state["session"] = binding.session(now)
         state["runtime"]["store_revision"] = revision
         state["runtime"]["session_expires_at"] = _iso(parse_timestamp(binding.expires_at))
+        state = _sanitize_query_scopes(state, binding, now, pending_expiry_turns=self.pending_expiry_turns)
         # Consent is a current host event, never durable chat history.
         state["workflow_state"]["trusted_confirmation"] = empty_confirmation()
         state["workflow_state"]["action"]["authorized"] = False
@@ -459,7 +760,12 @@ class ConversationStore:
         expected = state.get("runtime", {}).get("store_revision", 0) if expected_revision is None else expected_revision
         if type(expected) is not int or expected != revision:
             raise RevisionConflict("revision_conflict")
-        prepared = expire_pending(state, now=current, pending_expiry_turns=self.pending_expiry_turns)
+        prepared = (checkpoint_query_scope(state) if state.get("runtime", {}).get("query_scopes") and
+                    not state["runtime"].get("query_projection") else deepcopy(state))
+        _remember_action_lineage(prepared)
+        prepared = _sanitize_query_scopes(prepared, binding, current,
+            pending_expiry_turns=self.pending_expiry_turns, pending_ttl_seconds=self.pending_ttl_seconds)
+        prepared = expire_pending(prepared, now=current, pending_expiry_turns=self.pending_expiry_turns)
         # Cap any caller-provided pending TTL to the store policy and absolute 600s.
         created = parse_timestamp(prepared.get("runtime", {}).get("pending_created_at"))
         if prepared["workflow_state"]["pending"].get("type") != "none":
@@ -473,6 +779,7 @@ class ConversationStore:
         prepared = expire_pending(prepared, now=current, pending_expiry_turns=self.pending_expiry_turns)
         prepared["workflow_state"]["trusted_confirmation"] = empty_confirmation()
         prepared["workflow_state"]["action"]["authorized"] = False
+        prepared["workflow_state"]["action"]["authorization_expires_at"] = None
         prepared["runtime"]["store_revision"] = revision + 1
         payload = json.dumps(prepared, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
         expires = parse_timestamp(binding.expires_at).timestamp()
