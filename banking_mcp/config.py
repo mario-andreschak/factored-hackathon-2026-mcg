@@ -23,10 +23,22 @@ class Config(BaseModel):
     # An operator attests when the SANDBOX report ledger became complete. This
     # never represents bank-wide historical reporting coverage.
     sandbox_report_coverage_start: int | None = Field(default=None, ge=1)
+    # Trusted deployment approval, outside SQLite backups. Restore/import or
+    # uncertain volume continuity requires pause/drain and explicit reconciliation.
+    ledger_continuity_approved: bool = Field(default=False, strict=True)
     synthetic_evidence_file: Path | None = None
     max_active_reads: int = Field(default=8, ge=1, le=32)
     max_queued_reads: int = Field(default=512, ge=1, le=1024)
     http_hosts: list[str] = Field(default_factory=lambda: ["127.0.0.1:*", "localhost:*"])
+    # Optional host companion of the ordinary stdio child; no second Service.
+    # Explicit private IPv4 interface/peers. No wildcard/public bind, and no
+    # assumption that frontend and worker share a network namespace.
+    # Enabling this does not establish deployment network or OS isolation.
+    private_host_bind: str | None = None
+    private_host_port: int | None = Field(default=None, ge=1024, le=65535, strict=True)
+    private_host_clients: tuple[str, ...] = ()
+    private_host_cert_file: Path | None = Field(default=None, repr=False)
+    private_host_key_file: Path | None = Field(default=None, repr=False)
 
     @field_validator("http_hosts")
     @classmethod
@@ -38,6 +50,17 @@ class Config(BaseModel):
 
     @model_validator(mode="after")
     def validate_mode(self):
+        configured = (self.private_host_port is not None or self.private_host_bind is not None or bool(self.private_host_clients)
+                      or self.private_host_cert_file is not None or self.private_host_key_file is not None)
+        if configured:
+            if (self.mode != "delegated" or self.private_host_port is None or self.private_host_bind is None
+                or not 1 <= len(self.private_host_clients) <= 16 or len(set(self.private_host_clients)) != len(self.private_host_clients)):
+                raise ValueError("private host transport requires delegated mode and explicit bind/port/clients")
+            if (self.private_host_cert_file is None or self.private_host_key_file is None
+                or not self.private_host_cert_file.is_absolute() or not self.private_host_key_file.is_absolute()):
+                raise ValueError("private host TCP transport requires absolute TLS certificate/key files")
+            for address in (self.private_host_bind, *self.private_host_clients):
+                private_ipv4(address)
         if (not self.data_dir.is_absolute() or not self.state_db.is_absolute()
                 or (self.synthetic_evidence_file is not None and not self.synthetic_evidence_file.is_absolute())):
             raise ValueError("data_dir and state_db must be absolute")
@@ -65,6 +88,20 @@ class Config(BaseModel):
             }:
                 raise ValueError("synthetic demo marker mismatch")
         return self
+
+
+def private_ipv4(value: str) -> str:
+    """Canonical literal loopback/RFC1918 only; never wildcard, DNS or CIDR."""
+    from ipaddress import IPv4Address, IPv4Network
+    try:
+        address = IPv4Address(value)
+    except (ValueError, TypeError):
+        raise ValueError("private host requires an explicit private IPv4 address") from None
+    networks = ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+    if (str(address) != value or not (value == "127.0.0.1" or any(address in IPv4Network(net) for net in networks))
+        or (int(address) & 255) in {0, 255}):
+        raise ValueError("private host requires an explicit private IPv4 address")
+    return value
 
 
 def load_config(path: str | Path) -> Config:

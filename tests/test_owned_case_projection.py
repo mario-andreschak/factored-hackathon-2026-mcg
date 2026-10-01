@@ -5,6 +5,7 @@ import pytest
 
 from banking_mcp.security import BankError
 from tests.test_banking_mcp import action_call, bank, call, dataset
+from tests.banking_authority_fixtures import principal_for
 
 
 def selected_approved(bank):
@@ -12,9 +13,8 @@ def selected_approved(bank):
     listed = call(bank)
     selected = next(row for row in listed["transactions"] if row["status"].lower() == "approved")
     customer = service.config.principal_customers["alice"]
-    from banking_mcp.security import Principal
     import time
-    principal = Principal("alice", customer, "session-alice", "conversation-alice", int(time.time()) + 60)
+    principal = principal_for(service.store, "alice", customer, "session-alice", "conversation-alice", int(time.time()) + 60)
     stored = service.store.get(selected["selection_handle"], "selection", principal)
     return listed["snapshot"], selected, stored["id"]
 

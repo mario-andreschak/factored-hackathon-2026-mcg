@@ -71,14 +71,22 @@ def main():
                 raise BankError("authorization_denied")
             Authorizer(config, StateStore(config.state_db)).revoke_assertion(token)
             return 0
-        service = Service(config)
-        from .server import create_http_app, run_stdio
-        if args.transport == "stdio":
-            anyio.run(run_stdio, service)
-        else:
-            import uvicorn
-            uvicorn.run(create_http_app(service), host=args.host, port=args.port,
-                        log_level="warning", access_log=False)
+        if config.private_host_port is not None and args.transport != "stdio":
+            raise ValueError("private host transport requires stdio")
+        from .private_host import private_instance_lock
+        with private_instance_lock(config):
+            service = Service(config)
+            from .server import create_http_app, run_stdio
+            if args.transport == "stdio":
+                if config.private_host_port is None:
+                    anyio.run(run_stdio, service)
+                else:
+                    from .private_host import run_stdio_with_private_http
+                    anyio.run(run_stdio_with_private_http, service)
+            else:
+                import uvicorn
+                uvicorn.run(create_http_app(service), host=args.host, port=args.port,
+                            log_level="warning", access_log=False)
         return 0
     except (OSError, ValueError, BankError):
         print("Banking MCP could not start. Check the private configuration and published pipeline snapshot.",

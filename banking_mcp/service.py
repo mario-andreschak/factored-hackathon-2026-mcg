@@ -121,7 +121,9 @@ DESCRIPTIONS = {
 class Service:
     def __init__(self, config: Config):
         self.config = config
-        self.store = StateStore(config.state_db)
+        self.store = StateStore(config.state_db,
+                                ledger_continuity_approved=config.ledger_continuity_approved,
+                                require_ledger_generation=config.mode == "delegated")
         self.auth = Authorizer(config, self.store)
         self.repository = Repository(config, self.store)
         self.actions = Actions(self.store, self.repository, config.sandbox_report_coverage_start,
