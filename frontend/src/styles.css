@@ -3699,3 +3699,132 @@ button svg {
   color: var(--muted);
   line-height: 1.5;
 }
+
+/* Keep the owned-charge journey readable on a phone without narrowing amounts. */
+@media (max-width: 640px) {
+  .sidebar-label,
+  .sidebar-profile small,
+  .sidebar-info,
+  .topbar-title,
+  .snapshot-pill,
+  .eyebrow,
+  .page-heading p,
+  .panel-subtitle,
+  .balance-caption,
+  .balance-footer,
+  .chart-legend,
+  .recent-footer,
+  .content-footer,
+  .content-footer > button {
+    font-size: 12px;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .quick-actions > button {
+    flex-direction: column;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .quick-actions strong,
+  .panel-title .text-button,
+  .clarity-banner h3,
+  .clarity-banner p,
+  .clarity-banner .button,
+  .inline-note p {
+    font-size: 12px;
+  }
+  .clarity-banner .button {
+    margin-left: 0;
+  }
+  .content-footer {
+    flex-wrap: wrap;
+  }
+
+  .transaction-table .table-heading {
+    display: none;
+  }
+  .transaction-table .transaction-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "description amount"
+      "date date";
+    align-items: start;
+    column-gap: 12px;
+    row-gap: 8px;
+  }
+  .transaction-row .transaction-description {
+    grid-area: description;
+    min-width: 0;
+  }
+  .transaction-description strong,
+  .full-history .transaction-description strong {
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .transaction-description small,
+  .full-history .transaction-description small {
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: normal;
+  }
+  .transaction-mini-status .badge {
+    font-size: 12px;
+  }
+  .transaction-row .transaction-date,
+  .full-history .transaction-row .transaction-date {
+    grid-area: date;
+    flex-direction: row;
+    padding-left: 39px;
+    font-size: 12px;
+  }
+  .transaction-date small {
+    font-size: 12px;
+  }
+  .transaction-row .amount,
+  .full-history .transaction-row .amount {
+    grid-area: amount;
+    font-size: 12px;
+  }
+  .transaction-row .amount small,
+  .transaction-detail-head .amount small,
+  .transaction-detail-head .badge {
+    font-size: 12px;
+  }
+
+  .transactions-toolbar {
+    flex-wrap: wrap;
+  }
+  .transactions-toolbar > div,
+  .transactions-toolbar .button,
+  .filter-search input,
+  .filters select,
+  .pagination {
+    font-size: 12px;
+  }
+  .filters > label:not(:first-child) {
+    flex-basis: calc(50% - 4px);
+  }
+
+  .modal-top h2 {
+    font-size: 16px;
+  }
+  .details-list > div,
+  .details-list dd,
+  .charge-review p,
+  .modal-disclosure,
+  .about-intro,
+  .modal .button.full {
+    font-size: 12px;
+  }
+  .details-list dt,
+  .details-list dd {
+    min-width: 0;
+  }
+  .modal .mono {
+    font-size: 12px !important;
+  }
+}
