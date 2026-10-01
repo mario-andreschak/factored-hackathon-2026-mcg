@@ -472,6 +472,7 @@ def test_joined_qualifier_real_http_native_port_with_scripted_model_is_private_a
     authority.mkdir()
     (authority / "admissions.json").write_text("[]", encoding="utf-8")
     (authority / "native-profile.json").write_text('{"synthetic":true}', encoding="utf-8")
+    previous_captures = set((fixture.root / "private-stage-outputs").glob("*.json"))
     transport, calls = qualification_model_transport(fixture, authority)
     report = run_qualification(fixture, "http://127.0.0.1:4200", authority, model_transport=transport,
                               request_timeout_seconds=20, native_timeout_seconds=2)
@@ -487,6 +488,11 @@ def test_joined_qualifier_real_http_native_port_with_scripted_model_is_private_a
     assert "contracts/state_schema.md" in report["application_sources_before"]
     assert "pipeline/contracts.yaml" in report["application_sources_before"]
     assert native_admissions(authority) == []
+    captures = set((fixture.root / "private-stage-outputs").glob("*.json")) - previous_captures
+    assert len(captures) == len(calls)
+    assert all(set(json.loads(path.read_text())) == {"stage", "output"} for path in captures)
+    assert all("output" not in digest for case in report["results"] for attempt in case["attempts"]
+               for turn in attempt["workflow_turns"] for digest in turn["stage_output_hashes"])
     public = json.dumps(report)
     for private_value in [fixture.demo_code, fixture.service_token, fixture.execution_token,
             fixture.public_key, fixture.signer.read_text(), *fixture.subject_customers,
@@ -507,6 +513,20 @@ def test_qualifier_provider_metadata_cannot_serialize_raw_identity_or_nonfinite_
     assert observed[0].get("stage") is None and observed[0].get("model") is None
     assert observed[0].get("status") is None and observed[0].get("cost_usd") is None
     assert observed[0].get("latency_ms") is None and observed[0].get("prompt_tokens") is None
+
+
+def test_qualifier_private_capture_preserves_exact_stage_result_without_public_text(qualification_fixture):
+    from scripts.qualify_gloria_app import CapturedModel
+    observed = []
+    output = '{"message":"Fictional private model text."}'
+    async def source(stage, system, user):
+        observed.append((stage, system, user))
+        return output
+    model = CapturedModel(source, qualification_fixture)
+    assert asyncio.run(model("generate", "exact canonical system", "exact safe input")) == output
+    assert observed == [("generate", "exact canonical system", "exact safe input")]
+    assert model.captures == [dict(stage="generate", output_hmac_sha256=qualification_fixture.hash_id(output))]
+    assert output not in json.dumps(model.captures)
 
 
 def test_qualifier_rejects_changed_generated_source_before_application_admission(qualification_fixture, tmp_path):

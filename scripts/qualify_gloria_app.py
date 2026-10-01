@@ -254,6 +254,33 @@ def _safe_observations(model: Any) -> list[dict[str, Any]]:
     return result
 
 
+class CapturedModel:
+    """Delegate native calls unchanged and retain bounded fictional output privately."""
+    def __init__(self, model: Any, fixture: Fixture):
+        self.model, self.fixture, self.captures = model, fixture, []
+
+    def __getattr__(self, name: str):
+        return getattr(self.model, name)
+
+    def _capture(self, stage: str, output: str) -> None:
+        if stage not in _STAGES or not isinstance(output, str) or len(output) > 32000:
+            raise ValueError("bounded known stage output required")
+        path = self.fixture.root / "private-stage-outputs" / (stage + "-" + secrets.token_hex(12) + ".json")
+        _private_write(path, _json_bytes({"stage": stage, "output": output}))
+        self.captures.append({"stage": stage, "output_hmac_sha256": self.fixture.hash_id(output)})
+
+    async def __call__(self, stage: str, system: str, user: str):
+        output = await self.model(stage, system, user)
+        self._capture(stage, output)
+        return output
+
+    async def batch(self, requests):
+        outputs = await self.model.batch(requests)
+        for stage, output in outputs.items():
+            self._capture(stage, output)
+        return outputs
+
+
 class ObservedWorkflow:
     """Read-only observation around the same application Workflow and model."""
     def __init__(self, workflow: Any, model: Any, records: list[dict[str, Any]], fixture: Fixture):
@@ -276,6 +303,9 @@ class ObservedWorkflow:
                     "host_consent_verified", "receipt_verified", "exact_open_case", "out_of_policy"} else None,
                 language=language if language in {"es", "pt"} else None,
                 safe_fallback_used=runtime.get("safe_fallback_used", False),
+                validation_errors=[code for code in result.get("turn", {}).get("validation_errors", [])
+                    if isinstance(code, str) and re.fullmatch(r"[a-z_]{1,80}", code)],
+                validation_attempts=result.get("turn", {}).get("validation_attempts"),
                 node_errors=[{key: item.get(key) for key in ("node", "code")}
                              for item in runtime.get("node_errors", []) if isinstance(item, dict)
                              and item.get("node") in _NODES and item.get("code") in {
@@ -287,7 +317,8 @@ class ObservedWorkflow:
             return result
         finally:
             observation.update(latency_ms=round((time.monotonic() - started) * 1000),
-                               model_observations=_safe_observations(self.model))
+                               model_observations=_safe_observations(self.model),
+                               stage_output_hashes=getattr(self.model, "captures", []))
             self.records.append(observation)
 
 
@@ -340,7 +371,8 @@ def build_application(fixture: Fixture, native_url: str, authority_dir: str | Pa
         def wrapped_factory(model):
             if model_transport is not None:
                 model.transport = model_transport
-            return ObservedWorkflow(original_factory(model), model, records, fixture)
+            captured = CapturedModel(model, fixture)
+            return ObservedWorkflow(original_factory(captured), captured, records, fixture)
         if port_factory is not None:
             return port_factory(wrapped_factory, native_url, authority_dir)
         port.workflow_factory = wrapped_factory
