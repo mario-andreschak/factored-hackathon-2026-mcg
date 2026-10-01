@@ -5,13 +5,38 @@ journey: executable interpretation prompts, emotion/language detection, ordered
 R0–R18 decisions, owned source reads, scoped clarification, explicit simulated
 intake, durable receipt recovery and human handoff. The release scope is the
 simulated hackathon workflow using newly generated fictional bank records.
-The final qualification below identifies the tested source and installed worker;
-the first checkpoint is retained as historical evidence.
+Qualification identifies the exact tested source and installed worker;
+earlier checkpoints remain historical evidence.
 
-## Release qualification
+## Current source integration
 
-The executable source is frozen at `abc9068`; subsequent documentation and report
-commits must preserve its 84 protected source hashes. The saved bridge has graph
+The credential-question correction is integrated with the frozen `94f8c82`
+successor at `d7a4f432000db0a225a010235083427f957c35b5`. Customer replies reject
+ES/PT questions collecting password, PIN and verification-code values, including
+polite and mixed-negation requests. Password-change/status questions and safe
+negative guidance retain their previous behavior. The decimal receipt-claim and
+bounded emergency-acknowledgment corrections are preserved.
+
+The regenerated bridge covers 84 protected source hashes, with graph SHA256
+`59d87851f4354c3e01c7d1c64e5810d75d910e0ca8b390ce8665bd2a5b228b34`
+and artifact SHA256
+`aeaddd34131b6705058497c4f7a4f6d56396ae856983308e6a42941e0c6151b7`.
+[Combined source qualification](qualification/gloria-credential-source-2026-10-01.json)
+records validation of these bytes. Subsequent evidence/documentation commits
+must preserve that map.
+
+This integration is qualified for source merge only. The installed native,
+real-provider and joined HTTP results below belong to `abc9068` and its recorded
+image; they do not qualify the changed response guard or regenerated bridge.
+The current artifact retains `installed=false`, `actionsEnabled=false` and
+example bindings. Installing or activating it requires a fresh image and exact
+source qualification under the existing native gates. Source integration grants
+no runtime authority, human adjudication or deployment approval.
+
+## Historical abc9068 release qualification
+
+That executable source was frozen at `abc9068`; its report and documentation
+commits preserved its 84 protected source hashes. That saved bridge has graph
 SHA256 `c082b3243a8c118d09be0d9346d576fc5a1d243ba23a75be00cb8afdacdf0d08`
 and artifact SHA256
 `640362eef0f5e7d1fbcc8ac8117e4515e64fb6b98fe8a920330a0e4721f57a5e`.
