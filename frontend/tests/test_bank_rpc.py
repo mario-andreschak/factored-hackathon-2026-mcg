@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from frontend.server.bank_rpc import ASSERTION_META, BankContext, BankRPC, BankRPCError, PROTOCOL_VERSION
-from frontend.tests.direct_host_fixtures import make_direct_config
+from frontend.tests.direct_host_fixtures import GENERATED_LEDGER_GENERATION, make_direct_config
 
 
 def tool_response(request, body, value, *, error=False):
@@ -42,7 +42,8 @@ class BankRPCTests(unittest.IsolatedAsyncioTestCase):
                        "issuer": "hackathon-bank-host", "audience": "banking-mcp", "kid": "bank-host-v1",
                        "signing_key_file": str(filename), "ca_file": ca_file}
         self.context = BankContext("subject-a", "host-bank-session-a", "host-bank-conversation-a",
-                                   str(uuid.uuid4()), "a" * 40, int(time.time()) + 3600)
+                                   str(uuid.uuid4()), "a" * 40, int(time.time()) + 3600,
+                                   GENERATED_LEDGER_GENERATION)
         self.requests = []
         self.value = {"state": "created", "receipt": None}
         self.tool_handler = None
@@ -94,7 +95,8 @@ class BankRPCTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(jwt.get_unverified_header(body["params"]["_meta"][ASSERTION_META]),
                          {"alg": "EdDSA", "typ": "bank-mcp+jwt", "kid": "bank-host-v1"})
         self.assertEqual(set(claims), {"iss", "aud", "sub", "iat", "nbf", "exp", "jti", "session_id",
-            "conversation_id", "run_id", "graph_revision", "tool", "scope", "args_sha256"})
+            "conversation_id", "run_id", "graph_revision", "tool", "scope", "args_sha256", "ledger_generation"})
+        self.assertEqual(claims["ledger_generation"], GENERATED_LEDGER_GENERATION)
         self.assertEqual(claims["args_sha256"], hashlib.sha256(rfc8785.dumps(args)).hexdigest())
         self.assertEqual((claims["sub"], claims["session_id"], claims["conversation_id"]),
                          (self.context.subject, self.context.session_id, self.context.conversation_id))
@@ -379,6 +381,7 @@ class BankRPCTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((claims["tool"], claims["scope"]), ("revoke_session", ["bank:revoke"]))
             self.assertEqual(claims["args_sha256"], hashlib.sha256(rfc8785.dumps({})).hexdigest())
             self.assertEqual(claims["session_id"], self.context.session_id)
+            self.assertEqual(claims["ledger_generation"], GENERATED_LEDGER_GENERATION)
             self.assertNotIn("X-Flujo-User-Assertion", request.headers)
         self.assertNotEqual(decoded[0]["jti"], decoded[1]["jti"])
         bad = BankRPC(self.config, transport=httpx.MockTransport(lambda request: httpx.Response(200, json={"revoked": 1})))
@@ -416,6 +419,8 @@ class BankRPCTests(unittest.IsolatedAsyncioTestCase):
 
     def test_context_rejects_fabricated_revision_or_noncanonical_operation_id(self):
         for changes in [{"operation_id": "worker-run-invented"}, {"host_revision": "flow-language-name"},
-                        {"host_revision": "A" * 40}, {"session_expires": True}, {"subject": "a\x00"}]:
+                        {"host_revision": "A" * 40}, {"session_expires": True}, {"subject": "a\x00"},
+                        {"ledger_generation": ""}, {"ledger_generation": "D" * 64},
+                        {"ledger_generation": "d" * 63}]:
             with self.subTest(fields=list(changes)), self.assertRaises(ValueError):
                 replace(self.context, **changes)

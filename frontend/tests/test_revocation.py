@@ -8,6 +8,7 @@ from dataclasses import replace
 from pathlib import Path
 import sqlite3
 import tempfile
+import threading
 import time
 import unittest
 from unittest.mock import patch
@@ -362,7 +363,9 @@ def _client_with_fakes(configured, *, bank=None, language=None):
 
 def test_api_logout_reports_durable_pending_and_deletes_browser_session(dataset_settings, tmp_path):
     bank = RecordingBank()
+    delivered = threading.Event()
     async def unavailable(context):
+        delivered.set()
         raise BankRPCError("bank_unreachable", possibly_sent=True)
     bank.revoke_handler = unavailable
     with _client_with_fakes(_api_with_chat(dataset_settings, tmp_path), bank=bank) as client:
@@ -378,6 +381,9 @@ def test_api_logout_reports_durable_pending_and_deletes_browser_session(dataset_
         with service._connection() as db:
             marker = db.execute("SELECT s.revoked,p.state FROM chat_sessions s JOIN pending_revocations p USING(session_id)").fetchone()
         assert tuple(marker) == (1, "pending")
+        # Logout commits denial and an outbox intent; its independent worker
+        # delivers on a later poll, rather than before the HTTP response.
+        assert delivered.wait(5), "The revocation retry worker did not deliver the queued intent"
         assert bank.calls == [] and bank.revocations
 
 

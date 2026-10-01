@@ -128,6 +128,7 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(self.session_row()["conversation_id"])
         self.assertEqual((context.host_revision, context.session_expires), (self.config["host_revision"], self.expiry))
         self.assertRegex(context.operation_id, _REQUEST_ID_PATTERN)
+        self.assertEqual(context.ledger_generation, self.config["ledger_generation"])
         self.assertNotIn(_REF_A, json.dumps(arguments))
         with self.assertRaises(ChatError) as foreign:
             await self.prepare(customer="customer-b")
@@ -223,7 +224,7 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
         self.bank.call_handler = handler
         await self.prepare()
         late = asyncio.create_task(self.service.action_status("customer-a", self.session_a, self.expiry))
-        await started.wait()
+        await asyncio.wait_for(started.wait(), 5)
         self.update_action(prepare_recovery_after=0)
         first = await self.service.action_status("customer-a", self.session_a, self.expiry)
         self.assertEqual(first["state"], "handoff_verified")
@@ -290,7 +291,7 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
             return self.bank.answer(tool, arguments)
         self.bank.call_handler = handler
         late = asyncio.create_task(self.service.action_status("customer-a", self.session_a, self.expiry))
-        await started.wait()
+        await asyncio.wait_for(started.wait(), 5)
         recovered = await self.service.action_status("customer-a", self.session_a, self.expiry)
         self.assertEqual(recovered["state"], "intake_verified")
         next_action = await self.prepare(target=_REF_B, transaction="private-b")
@@ -309,7 +310,7 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
             return self.bank.answer(tool, arguments)
         self.bank.call_handler = handler
         status = asyncio.create_task(self.service.action_status("customer-a", self.session_a, self.expiry))
-        await started.wait()
+        await asyncio.wait_for(started.wait(), 5)
         self.service.queue_revoke("customer-a", self.session_a, self.expiry)
         release.set()
         with self.assertRaises(ChatError) as revoked:
@@ -808,7 +809,7 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
             return LanguageResult("untrusted prose", "ask_selection", conversation, True)
         self.language.handler = delayed
         current = asyncio.create_task(self.service.send("customer-a", self.session_a, self.expiry, "Hola"))
-        await started.wait()
+        await asyncio.wait_for(started.wait(), 5)
         await self.service.revoke("customer-a", self.session_a, self.expiry)
         release.set()
         with self.assertRaises(ChatError) as expired:
@@ -953,6 +954,21 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ChatError):
             self.service.history("customer-a", self.session_a, self.expiry)
 
+    async def test_action_enabled_does_not_imply_ledger_continuity_approval(self):
+        config = deepcopy(self.config)
+        config.pop("ledger_continuity_approved")
+        service = ChatService(config, self.root / "unapproved-ledger")
+        bank, language = attach_direct_fakes(service)
+        self.assertTrue(service.status("customer-a")["available"])
+        self.assertFalse(service.status("customer-a")["sandbox_intake_available"])
+        with self.assertRaises(ChatError) as blocked:
+            await self.prepare(service)
+        self.assertEqual(blocked.exception.code, "action_unverified")
+        with service._connection() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM chat_sessions").fetchone()[0], 0)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM action_status").fetchone()[0], 0)
+        self.assertEqual((bank.calls, bank.revocations, language.calls), ([], [], []))
+
     async def test_active_history_does_not_store_uncompleted_or_failed_turns(self):
         started, release = asyncio.Event(), asyncio.Event()
         async def delayed(text, language, facts, conversation):
@@ -961,16 +977,19 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
             return LanguageResult("unused prose", "ask_selection", conversation, True)
         self.language.handler = delayed
         operation = asyncio.create_task(self.service.send("customer-a", self.session_a, self.expiry, "Hola"))
-        await started.wait()
-        pending = self.service.history("customer-a", self.session_a, self.expiry)
-        self.assertTrue(pending["active"])
-        self.assertEqual(pending["messages"], [])
-        with self.assertRaises(ChatError) as busy:
-            await self.prepare()
-        self.assertEqual(busy.exception.code, "chat_busy")
-        self.assertEqual(self.bank.calls, [])
-        release.set()
-        await operation
+        try:
+            await asyncio.wait_for(started.wait(), 5)
+            pending = self.service.history("customer-a", self.session_a, self.expiry)
+            self.assertTrue(pending["active"])
+            self.assertEqual(pending["messages"], [])
+            with self.assertRaises(ChatError) as busy:
+                await self.prepare()
+            self.assertEqual(busy.exception.code, "chat_busy")
+            self.assertEqual(self.bank.calls, [])
+        finally:
+            release.set()
+            # Surface an early send failure and drain the fake on every path.
+            await asyncio.wait_for(operation, 5)
         completed = self.service.history("customer-a", self.session_a, self.expiry)
         self.assertFalse(completed["active"])
         self.assertEqual(len(completed["messages"]), 2)

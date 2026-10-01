@@ -18,7 +18,11 @@ from frontend.server.language import LanguageResult
 from frontend.tests.action_fixtures import action_facts, action_handoff, action_receipt, action_selected
 
 
-def make_direct_config(root: Path, *, principal_customers=None, action_enabled=False) -> dict:
+GENERATED_LEDGER_GENERATION = "d" * 64
+
+
+def make_direct_config(root: Path, *, principal_customers=None, action_enabled=False,
+                       ledger_continuity_approved=True) -> dict:
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
     signer = root / "generated-bank-signer.pem"
@@ -38,6 +42,10 @@ def make_direct_config(root: Path, *, principal_customers=None, action_enabled=F
         ca_file.write_bytes(certificate.public_bytes(serialization.Encoding.PEM))
     return {"mode": "host-direct-mcp/v1", "namespace": "generated-direct-host-tests",
         "host_revision": "a" * 40, "action_enabled": action_enabled,
+        # This isolated fake bank represents one explicitly approved ledger.
+        # Quarantine tests opt out; production defaults remain deny-first.
+        "ledger_generation": GENERATED_LEDGER_GENERATION,
+        "ledger_continuity_approved": ledger_continuity_approved,
         "principal_customers": dict(principal_customers or {"subject-a": "customer-a", "subject-b": "customer-b"}),
         "bank": {"base_url": "https://banking-mcp:8000", "ca_file": str(ca_file.resolve()),
             "service_token": "generated-bank-only-token-" + "b" * 32, "issuer": "approved-bank-host",

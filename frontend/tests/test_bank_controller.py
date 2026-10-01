@@ -77,7 +77,7 @@ class BankControllerTests(unittest.IsolatedAsyncioTestCase):
         self.rpc = RecordingRPC()
         self.controller = BankController(self.rpc)
         self.context = BankContext("fixture-subject", "fixture-bank-session", "fixture-bank-conversation",
-            str(uuid.uuid4()), "a" * 40, int(time.time()) + 3600)
+            str(uuid.uuid4()), "a" * 40, int(time.time()) + 3600, "d" * 64)
         self.request_id = str(uuid.uuid4())
 
     def prepare_payload(self, **changes):
