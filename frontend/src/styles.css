@@ -1841,13 +1841,16 @@ button svg {
   padding: 11px 0;
   font-size: 10px;
   border: 0;
-  outline: none;
   background: none;
   width: 100%;
   color: #607a4e;
 }
 .filter-search input::placeholder {
-  color: #9fad90;
+  color: #4b6044;
+}
+.filter-search input:focus-visible {
+  outline: 3px solid #4b6044;
+  outline-offset: 3px;
 }
 .filters select {
   font-size: 9px;
