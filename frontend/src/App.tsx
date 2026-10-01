@@ -162,7 +162,7 @@ function Amount({
             maximumFractionDigits: 2,
           }).format(t.amount)
         : money(t.amount, t.currency, hidden)}
-      <small>{t.currency}</small>
+      {(language !== "pt" || hidden) && <small>{t.currency}</small>}
     </span>
   );
 }
@@ -3078,10 +3078,17 @@ export default function App() {
     );
   if (authenticated === null)
     return (
-      <div className="app-boot">
+      <div
+        className="app-boot"
+        lang={actionLanguagePreference === "pt" ? "pt-BR" : "es"}
+      >
         <Brand />
         <LoaderCircle size={24} className="spin" />
-        <span>Preparando tu espacio…</span>
+        <span>
+          {actionLanguagePreference === "pt"
+            ? "Preparando seu espaço…"
+            : "Preparando tu espacio…"}
+        </span>
       </div>
     );
   const pt = actionLanguagePreference === "pt";
@@ -3306,18 +3313,37 @@ export default function App() {
           {error ? (
             <div className="error-state">
               <ShieldCheck size={36} />
-              <h1>Un momento para reconectar.</h1>
-              <p role="alert">{error}</p>
+              <h1>
+                {pt && page === "transactions"
+                  ? "Um momento para reconectar."
+                  : "Un momento para reconectar."}
+              </h1>
+              <p role="alert">
+                {pt && page === "transactions"
+                  ? "Não foi possível carregar os dados bancários. Verifique a conexão e tente novamente."
+                  : error}
+              </p>
               <button className="button primary" onClick={load}>
-                Volver a intentar
+                {pt && page === "transactions"
+                  ? "Tentar novamente"
+                  : "Volver a intentar"}
                 <ArrowRight size={17} />
               </button>
               <button className="text-button" onClick={logout}>
-                Cerrar sesión
+                {pt && page === "transactions"
+                  ? "Encerrar sessão"
+                  : "Cerrar sesión"}
               </button>
             </div>
           ) : loading || !data ? (
-            <div className="loading-state" aria-label="Cargando datos">
+            <div
+              className="loading-state"
+              aria-label={
+                pt && page === "transactions"
+                  ? "Carregando dados"
+                  : "Cargando datos"
+              }
+            >
               <div className="skeleton skeleton-heading" />
               <div className="skeleton skeleton-hero" />
               <div className="skeleton-row">
@@ -3808,7 +3834,9 @@ export default function App() {
                       query) && (
                       <div className="active-filters">
                         <SlidersHorizontal size={14} />
-                        <span>Filtros aplicados</span>
+                        <span>
+                          {pt ? "Filtros ativos" : "Filtros aplicados"}
+                        </span>
                         <button
                           onClick={() => {
                             setQuery("");
@@ -3843,6 +3871,7 @@ export default function App() {
                         <button
                           className="icon-button"
                           aria-label="Página anterior"
+                          lang={shellLang}
                           disabled={pagination === 1}
                           onClick={() => setPagination(pagination - 1)}
                         >

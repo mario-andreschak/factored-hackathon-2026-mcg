@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import App, { Assistant, Login } from "./App";
 
@@ -423,7 +424,11 @@ const portalOverview = {
     transactions_total: 2,
   },
 };
-function servePortal(language: "es" | "pt", chatAvailable = true) {
+function servePortal(
+  language: "es" | "pt",
+  chatAvailable = true,
+  overview = portalOverview,
+) {
   localStorage.setItem("flujo-bank-action-language", language);
   vi.stubGlobal("scrollTo", vi.fn());
   const calls: string[] = [];
@@ -433,7 +438,7 @@ function servePortal(language: "es" | "pt", chatAvailable = true) {
       const url = String(input);
       calls.push(url);
       if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
-      if (url === "/api/overview") return reply(portalOverview);
+      if (url === "/api/overview") return reply(overview);
       if (url === "/api/chat/status")
         return reply({
           available: chatAvailable,
@@ -478,6 +483,7 @@ test("Portuguese charge finder keeps labels and dialog names local while retaini
   ).toBeTruthy();
   const status = screen.getByRole("combobox", { name: "Filtrar por status" });
   fireEvent.change(status, { target: { value: "Pending" } });
+  expect(screen.getByText("Filtros ativos")).toBeTruthy();
   expect(
     screen.getByRole("button", { name: /Loja Lua.*Pendente/s }),
   ).toBeTruthy();
@@ -497,6 +503,108 @@ test("Portuguese charge finder keeps labels and dialog names local while retaini
     screen.getByRole("combobox", { name: "Idioma da interface" }),
   ).toBeTruthy();
   expect(calls.some((url) => url.startsWith("/api/action/"))).toBe(false);
+});
+
+test("Portuguese transaction amounts, dates, type and pagination use one currency label", async () => {
+  const transactions = Array.from({ length: 12 }, (_, index) => ({
+    ...portalCharge,
+    reference: `txn_${String(index).padStart(24, "0")}`,
+    merchant: `Loja ${index + 1}`,
+    currency: index === 0 ? "BRL" : "COP",
+  }));
+  servePortal("pt", false, {
+    ...portalOverview,
+    transactions,
+    metadata: {
+      ...portalOverview.metadata,
+      transactions_returned: transactions.length,
+      transactions_total: transactions.length,
+    },
+  });
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Movimentos" }));
+  const first = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".transaction-row"),
+  ).find((row) => row.querySelector("strong")?.textContent === "Loja 1");
+  expect(first).toBeTruthy();
+  expect(first?.querySelector(".amount")?.textContent).toContain("R$");
+  expect(first?.querySelector(".amount")?.textContent).not.toContain("BRL");
+  expect(first?.textContent).toContain("Compra");
+  expect(first?.textContent).toContain("set.");
+  fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
+  const previous = screen.getByRole("button", {
+    name: "Página anterior",
+  }) as HTMLButtonElement;
+  expect(previous.disabled).toBe(false);
+  expect(previous.getAttribute("lang")).toBe("pt-BR");
+  const cop = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".transaction-row"),
+  ).find((row) => row.querySelector("strong")?.textContent === "Loja 12");
+  expect(cop).toBeTruthy();
+  expect(
+    cop?.querySelector(".amount")?.textContent?.match(/COP/g),
+  ).toHaveLength(1);
+  fireEvent.click(previous);
+  expect(
+    Array.from(
+      document.querySelectorAll<HTMLButtonElement>(".transaction-row"),
+    ).some((row) => row.querySelector("strong")?.textContent === "Loja 1"),
+  ).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Início" }));
+  fireEvent.click(screen.getByRole("button", { name: "Ocultar saldos" }));
+  fireEvent.click(screen.getByRole("button", { name: "Movimentos" }));
+  const hidden = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".transaction-row"),
+  ).find((row) => row.querySelector("strong")?.textContent === "Loja 1");
+  expect(hidden?.querySelector(".amount")?.textContent).toContain("••••••");
+  expect(hidden?.querySelector(".amount")?.textContent).toContain("BRL");
+});
+
+test("Portuguese Movimentos snapshot error, retry and boot use Portuguese semantics", async () => {
+  localStorage.setItem("flujo-bank-action-language", "pt");
+  vi.stubGlobal("scrollTo", vi.fn());
+  let overviewCalls = 0;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+      if (url === "/api/overview") {
+        overviewCalls += 1;
+        if (overviewCalls === 1) return reply({}, 503);
+        return new Promise<Response>(() => {});
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(<App />);
+  expect(
+    screen
+      .getByText("Preparando seu espaço…")
+      .closest("[lang]")
+      ?.getAttribute("lang"),
+  ).toBe("pt-BR");
+  fireEvent.click(await screen.findByRole("button", { name: "Movimentos" }));
+  const main = screen.getByRole("main");
+  expect(main.getAttribute("lang")).toBe("pt-BR");
+  expect(
+    screen.getByRole("heading", { name: "Um momento para reconectar." }),
+  ).toBeTruthy();
+  expect(screen.getByRole("alert").textContent).toContain(
+    "Não foi possível carregar os dados bancários.",
+  );
+  expect(screen.queryByText("Un momento para reconectar.")).toBeNull();
+  expect(
+    within(main).getByRole("button", { name: "Encerrar sessão" }),
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+  expect(
+    screen
+      .getByLabelText("Carregando dados")
+      .closest("[lang]")
+      ?.getAttribute("lang"),
+  ).toBe("pt-BR");
+  expect(overviewCalls).toBe(2);
 });
 
 test("Spanish charge finder retains its navigation, filters and review entry", async () => {
