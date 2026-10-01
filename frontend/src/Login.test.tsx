@@ -669,6 +669,8 @@ test("Portuguese Movimentos snapshot error, retry and boot use Portuguese semant
     }),
   );
   render(<App />);
+  expect(document.documentElement.lang).toBe("pt-BR");
+  expect(document.title).toBe("Savia · Seu banco pessoal");
   expect(
     screen
       .getByText("Preparando seu espaço…")

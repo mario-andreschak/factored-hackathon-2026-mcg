@@ -3078,7 +3078,6 @@ export default function App() {
       "",
     );
   useLayoutEffect(() => {
-    if (authenticated !== true) return;
     document.documentElement.lang =
       actionLanguagePreference === "pt" ? "pt-BR" : "es";
     document.title =
