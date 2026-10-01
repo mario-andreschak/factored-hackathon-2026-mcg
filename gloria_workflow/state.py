@@ -197,6 +197,8 @@ def reset_workflow(state: dict) -> dict:
     result = cancel_pending(state, clear_target=True)
     result["workflow_state"] = empty_workflow()
     result["runtime"].pop("tool_attempts", None)
+    result["runtime"].pop("workflow_intent", None)
+    result["runtime"].pop("complaint_snapshot_hash", None)
     return result
 
 
@@ -227,11 +229,26 @@ def begin_turn(state: dict, binding: TrustedBinding, *, turn_id: str,
     result["workflow_state"] = deepcopy(state["workflow_state"])
     result["trace"] = deepcopy(state.get("trace", []))
     for key in ("store_revision", "workflow_id", "policy_version", "pending_created_at",
-                "pending_expires_at", "workflow_intent", "history"):
+                "pending_expires_at", "workflow_intent", "history", "prior_verified_actions",
+                "complaint_snapshot_hash"):
         if key in state.get("runtime", {}):
             result["runtime"][key] = deepcopy(state["runtime"][key])
     result["turn"].update(turn_id=turn_id, user_question=user_question)
     workflow = result["workflow_state"]
+    prior_action = workflow.get("action", {})
+    if (state["turn"].get("turn_id") != turn_id and workflow.get("action_outcome") == "verified" and
+            prior_action.get("executed") is True and prior_action.get("verified") is True and
+            prior_action.get("result_id")):
+        # Completion ends this request. Keep a private audit, never use that old
+        # receipt as current ownership/duplicate/risk evidence for a new target.
+        audits = result["runtime"].get("prior_verified_actions", [])
+        audits.append({"turn_id": state["turn"].get("turn_id"), "result_id": prior_action["result_id"],
+                       "idempotency_key": prior_action.get("idempotency_key"),
+                       "transaction_id": workflow.get("transaction_id"),
+                       "snapshot_id": workflow.get("pending", {}).get("snapshot_id")})
+        result = reset_workflow(result)
+        result["runtime"]["prior_verified_actions"] = audits[-20:]
+        workflow = result["workflow_state"]
     workflow["trusted_confirmation"] = empty_confirmation()
     workflow["action"]["authorized"] = False
     workflow["action"]["authorization_expires_at"] = None
@@ -266,6 +283,8 @@ def set_pending(state: dict, pending: dict, *, now: datetime | None = None,
 def apply_decision(state: dict, decision: dict) -> dict:
     """Apply a pure policy decision. Internal orchestration calls this, never model JSON."""
     result = deepcopy(state)
+    if decision.get("reset_workflow"):
+        result = reset_workflow(result)
     _merge(result["workflow_state"], decision.get("workflow_updates", {}))
     result["workflow_state"]["policy_decision"] = {
         key: deepcopy(decision.get(key)) for key in ("response_mode", "rule_ids",
@@ -281,6 +300,8 @@ def apply_decision(state: dict, decision: dict) -> dict:
                              ttl_seconds=decision.get("pending_ttl_seconds", 600))
     if decision.get("workflow_intent"):
         result["runtime"]["workflow_intent"] = decision["workflow_intent"]
+    if decision.get("complaint_snapshot_hash"):
+        result["runtime"]["complaint_snapshot_hash"] = decision["complaint_snapshot_hash"]
     result["runtime"]["policy_version"] = decision.get("policy_version")
     return result
 

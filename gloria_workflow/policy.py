@@ -10,6 +10,8 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 from functools import lru_cache
 import math
+import hashlib
+import json
 from pathlib import Path
 import re
 from typing import Any
@@ -271,6 +273,13 @@ def _selection_pending(state: dict, candidates: list, candidate_type: str, confi
     return pending
 
 
+def _complaint_snapshot(listing: dict) -> str:
+    """Fingerprint only an owned, complete trusted list, independent of transactions."""
+    return hashlib.sha256(json.dumps({"snapshot_id": listing.get("snapshot_id"),
+        "complaints": listing.get("complaints", [])}, sort_keys=True, ensure_ascii=False,
+        allow_nan=False, separators=(",", ":")).encode()).hexdigest()
+
+
 def decide(state: dict, config: dict | None = None) -> dict:
     """Return the first applicable rule and an explicit immutable transition.
 
@@ -328,7 +337,7 @@ def decide(state: dict, config: dict | None = None) -> dict:
         # The caller redetects intent on this same original message after reset.
         return _decision(cfg, "R5" if pending.get("type") == "awaiting_selection" else "R4",
                          "CLARIFY", "new_request", next_step="detect_intent", clear_pending=True, clear_target=True,
-                         workflow_updates={})
+                         reset_workflow=True)
     if pending.get("type") != "none" and expired:
         return _clarify(state, cfg, "R5" if pending.get("type") == "awaiting_selection" else "R3",
                         "pending_expired", missing=["transaction"], clear_pending=True, clear_target=True)
@@ -339,14 +348,19 @@ def decide(state: dict, config: dict | None = None) -> dict:
         ref = turn.get("clarification", {}).get("selected_ref")
         candidate = next((item for item in pending.get("candidates", [])
                           if isinstance(item, dict) and item.get("ref") == ref and ref is not None), None)
-        if (candidate is None or not pending.get("snapshot_hash") or
-                pending.get("snapshot_hash") != workflow.get("candidate_snapshot_hash")):
+        complaint_selection = pending.get("candidate_type", "transaction") == "complaint"
+        expected_hash = (state.get("runtime", {}).get("complaint_snapshot_hash") if complaint_selection
+                         else workflow.get("candidate_snapshot_hash"))
+        if candidate is None or not pending.get("snapshot_hash") or pending.get("snapshot_hash") != expected_hash:
             return _clarify(state, cfg, "R5", "invalid_selection", clear_pending=True, clear_target=True)
-        if pending.get("candidate_type", "transaction") == "complaint":
+        if complaint_selection:
             complaint_id = candidate.get("complaint_id")
             if not complaint_id:
                 return _clarify(state, cfg, "R5", "invalid_selection", clear_pending=True)
             complaint = results.get("get_complaint", {})
+            current_snapshot = complaint.get("snapshot_id", complaint.get("snapshot"))
+            if current_snapshot is not None and current_snapshot != pending.get("snapshot_id"):
+                return _clarify(state, cfg, "R5", "snapshot_changed", clear_pending=True)
             if complaint.get("status") != "ok" or (complaint.get("complaint") or {}).get("complaint_id") != complaint_id:
                 return _decision(cfg, "R5", "CLARIFY", "selected_complaint_revalidation",
                                  next_step="read_complaint", selected_complaint_id=complaint_id)
@@ -545,4 +559,7 @@ def _complaints(state: dict, cfg: dict) -> dict:
                    "label": item.get("label", item.get("status", ""))}
                   for i, item in enumerate(complaints)]
     pending = _selection_pending(state, candidates, "complaint", cfg)
-    return _clarify(state, cfg, "R18", "multiple_complaints", pending=pending, workflow_intent="COMPLAINT_STATUS")
+    digest = _complaint_snapshot(listing)
+    pending.update(snapshot_hash=digest, snapshot_id=listing.get("snapshot_id", digest), intent="COMPLAINT_STATUS")
+    return _clarify(state, cfg, "R18", "multiple_complaints", pending=pending, workflow_intent="COMPLAINT_STATUS",
+                    complaint_snapshot_hash=digest)

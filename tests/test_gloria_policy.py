@@ -385,6 +385,48 @@ def test_complaint_status_independent_of_transaction_matching():
     assert decide(applied)["response_mode"] == "INFORM"
 
 
+def test_complaint_selection_has_its_own_snapshot_and_no_transaction_requirements():
+    state = begin_turn(new_state(BINDING, now=NOW), BINDING, turn_id="turn-1", user_question="reclamos", now=NOW)
+    state["turn"]["intent"] = "COMPLAINT_STATUS"
+    state["tool_results"]["list_customer_complaints"] = {"status": "ok", "match_count": 2, "coverage_complete": True,
+        "snapshot_id": "complaint-snapshot-1", "complaints": [{"complaint_id": "CMP-one", "status": "Open"},
+                                                                  {"complaint_id": "CMP-two", "status": "Escalated"}]}
+    result = decide(state)
+    assert result["pending"]["snapshot_id"] == "complaint-snapshot-1"
+    assert result["complaint_snapshot_hash"] == result["pending"]["snapshot_hash"]
+    state = apply_decision(state, result)
+    state = begin_turn(state, BINDING, turn_id="turn-2", user_question="el segundo", now=NOW + timedelta(seconds=1))
+    state["turn"].update(intent="COMPLAINT_STATUS")
+    state["turn"]["clarification"].update(resolution_type="SELECTED", selected_ref="2")
+    state["tool_results"]["get_complaint"] = {"status": "ok", "snapshot_id": "complaint-snapshot-1",
+                                              "complaint": {"complaint_id": "CMP-two", "status": "Escalated"}}
+    assert decide(state)["response_mode"] == "INFORM"
+    state["tool_results"]["get_complaint"]["snapshot_id"] = "complaint-snapshot-2"
+    assert decide(state)["reason_code"] == "snapshot_changed"
+
+
+def test_new_request_clears_pending_target_and_resets_workflow_counters():
+    state = confirming()
+    state["workflow_state"]["counters"].update(clarification_attempts=1, no_match_attempts=1)
+    state["turn"]["clarification"]["resolution_type"] = "NEW_REQUEST"
+    result = decide(state)
+    applied = apply_decision(state, result)
+    assert result["next_step"] == "detect_intent"
+    assert applied["workflow_state"]["pending"]["type"] == "none"
+    assert applied["workflow_state"]["transaction_id"] is None
+    assert applied["workflow_state"]["counters"]["clarification_attempts"] == 0
+
+
+def test_canonical_transaction_status_has_precedence_over_compatibility_alias():
+    state = ready_state()
+    target = state["tool_results"]["get_transaction"]["transaction"]
+    target.update(transaction_status="Declined", status="Approved")
+    assert decide(state)["rule_ids"] == ["R14"]
+    target["transaction_status"] = "Approved"
+    target.pop("status")
+    assert decide(state)["rule_ids"] == ["R17"]
+
+
 def test_empty_incomplete_complaint_list_does_not_claim_no_cases():
     state = ready_state("COMPLAINT_STATUS")
     state["tool_results"]["list_customer_complaints"] = {"status": "ok", "match_count": 0, "complaints": [], "coverage_complete": False}

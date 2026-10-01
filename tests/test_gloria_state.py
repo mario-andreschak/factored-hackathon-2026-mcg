@@ -127,6 +127,41 @@ def test_new_workflow_resets_counters(binding):
     assert all(result["workflow_state"]["counters"][key] == 0 for key in ("clarification_attempts", "no_match_attempts", "tool_failures"))
 
 
+def test_verified_completion_starts_fresh_next_turn_without_spurious_uncertainty(binding, tmp_path):
+    store = ConversationStore(tmp_path / "state.sqlite3")
+    state = state_for(binding)
+    state["workflow_state"].update(action_attempted=True, action_outcome="verified", transaction_id="TRX-one")
+    state["workflow_state"]["action"].update(authorized=True, executed=True, verified=True,
+                                             result_id="CMP-one", idempotency_key="request-1")
+    state["workflow_state"]["counters"]["clarification_attempts"] = 1
+    store.save_turn(binding, "turn-1", state, now=NOW)
+    loaded = store.load(binding, now=NOW)
+    next_turn = begin_turn(loaded, binding, turn_id="turn-2", user_question="hola", now=NOW + timedelta(seconds=5))
+    assert next_turn["workflow_state"]["action_attempted"] is False
+    assert next_turn["workflow_state"]["action_outcome"] == "none"
+    assert next_turn["workflow_state"]["action"]["authorized"] is False
+    assert next_turn["workflow_state"]["counters"]["clarification_attempts"] == 0
+    assert next_turn["runtime"]["prior_verified_actions"][0]["result_id"] == "CMP-one"
+    # Same-turn replay retains receipt facts for a fresh host revalidation,
+    # without reconstructing live consent from durable state.
+    replay = store.load_turn(binding, "turn-1", now=NOW)
+    assert replay["workflow_state"]["action_outcome"] == "verified"
+    assert replay["workflow_state"]["action"]["verified"] is True
+    assert replay["workflow_state"]["action"]["authorized"] is False
+
+
+def test_unknown_write_cannot_be_reset_by_starting_new_turn(binding, tmp_path):
+    store = ConversationStore(tmp_path / "state.sqlite3")
+    state = pending_for(state_for(binding))
+    state["workflow_state"].update(action_attempted=True, action_outcome="unknown")
+    state["workflow_state"]["action"]["idempotency_key"] = "request-unknown"
+    store.save(binding, state, now=NOW)
+    fresh = begin_turn(store.load(binding, now=NOW), binding, turn_id="turn-2", user_question="hola", now=NOW + timedelta(minutes=11))
+    assert fresh["workflow_state"]["pending"]["type"] == "none"
+    assert fresh["workflow_state"]["action_outcome"] == "unknown"
+    assert fresh["workflow_state"]["action"]["idempotency_key"] == "request-unknown"
+
+
 def test_tool_retry_bound_separate_from_session_failure_counts(binding):
     state = state_for(binding)
     for attempt in range(3):
