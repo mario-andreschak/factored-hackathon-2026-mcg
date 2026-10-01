@@ -160,9 +160,10 @@ def aggregate(data):
         cost = row["cost_usd"]
         basis = row.get("cost_basis")
         require((cost is None and basis == "unknown") or
-                (type(cost) in (int, float) and math.isfinite(cost) and cost >= 0 and
-                 basis in ("measured", "documented_zero") and (cost != 0 or basis == "documented_zero")),
-                f"{key}: unknown cost must be null; zero requires documented_zero")
+                (type(cost) in (int, float) and math.isfinite(cost) and
+                 ((cost == 0 and basis == "documented_zero") or
+                  (cost > 0 and basis == "measured"))),
+                f"{key}: cost requires null/unknown, zero/documented_zero, or positive/measured")
         row = dict(row, _requires_handoff=by_case[case_id]["labels"]["requires_handoff"])
         groups[(system, by_case[case_id]["language"])].append(row)
     expected = {(case_id, system, repeat) for case_id in by_case for system in ("baseline", "proposed")
