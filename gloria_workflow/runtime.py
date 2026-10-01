@@ -359,7 +359,8 @@ class Workflow:
             pending["snapshot_id"] = snapshot
             return
         if status.get("state") == "intake_verified":
-            canonical = status.get("action", {})
+            raw_canonical = status.get("action")
+            canonical = raw_canonical if isinstance(raw_canonical, dict) else {}
             canonical_receipt = canonical.get("receipt", {}) if isinstance(canonical, dict) else {}
             canonical_valid = (isinstance(canonical_receipt, dict) and canonical.get("name") == "CREATE_COMPLAINT"
                 and canonical.get("authorized") is True and canonical.get("executed") is True and canonical.get("verified") is True
@@ -375,13 +376,22 @@ class Workflow:
                     if "transaction" in projection and not self._receipt_matches_target(projection, row):
                         canonical_valid = False
             native_valid = bool(native_receipt and native_receipt["snapshot"] == snapshot and self._receipt_matches_target(native_receipt, row))
-            native_present = status.get("receipt") is not None
+            native_present = "receipt" in status
             canonical_present = "action" in status
+            reference_agrees = True
+            if native_valid:
+                native_reference = native_receipt["transaction"].get("transaction_reference")
+                for projection in (canonical, canonical_receipt):
+                    supplied_facts = projection.get("transaction") if isinstance(projection, dict) else None
+                    if (isinstance(supplied_facts, dict) and native_reference is not None
+                            and supplied_facts.get("transaction_reference") is not None
+                            and supplied_facts["transaction_reference"] != native_reference):
+                        reference_agrees = False
             representations_agree = bool(
                 (not native_present or native_valid)
                 and (not canonical_present or canonical_valid)
                 and (not native_present or not canonical_present or native_receipt and native_receipt["id"] == canonical.get("result_id"))
-                and status.get("verified", True) is True)
+                and reference_agrees and status.get("verified", True) is True)
             if matches_target and matches_request and representations_agree and (native_valid or canonical_valid):
                 rid = native_receipt["id"] if native_valid else canonical["result_id"]
                 if query_id:
@@ -413,7 +423,7 @@ class Workflow:
         general = handoff and handoff.get("facts") == {} and handoff.get("snapshot") is None
         handoff_matches = bool(handoff and (general and not target or matches_target and handoff["snapshot"] == snapshot
             and self._receipt_matches_target({"transaction": handoff["facts"]}, state["tool_results"].get("get_transaction", {}).get("transaction", {}))))
-        canonical_handoff = status.get("handoff", {})
+        canonical_handoff = raw_handoff if isinstance(raw_handoff, dict) else {}
         canonical_handoff_receipt = canonical_handoff.get("receipt", {}) if isinstance(canonical_handoff, dict) else {}
         canonical_handoff_valid = (isinstance(canonical_handoff_receipt, dict)
             and canonical_handoff.get("created") is True and isinstance(canonical_handoff.get("handoff_id"), str)
@@ -429,6 +439,12 @@ class Workflow:
                 if "transaction" in projection and not self._receipt_matches_target(
                         projection, state["tool_results"].get("get_transaction", {}).get("transaction", {})):
                     canonical_handoff_valid = False
+                supplied_facts = projection.get("transaction")
+                native_facts = native_handoff.get("facts", {}) if native_handoff else {}
+                if (isinstance(supplied_facts, dict) and native_facts.get("transaction_reference") is not None
+                        and supplied_facts.get("transaction_reference") is not None
+                        and supplied_facts["transaction_reference"] != native_facts["transaction_reference"]):
+                    canonical_handoff_valid = False
         native_handoff_present = isinstance(raw_handoff, dict) and any(key in raw_handoff for key in ("id", "facts", "packet", "human_responded"))
         canonical_handoff_present = isinstance(canonical_handoff, dict) and any(key in canonical_handoff for key in ("created", "handoff_id", "receipt"))
         handoff_agrees = (status.get("verified", True) is True
@@ -438,13 +454,10 @@ class Workflow:
             handoff_agrees = bool(handoff_agrees and handoff["id"] == canonical_handoff["handoff_id"])
         if status.get("state") in {"handoff_verified", "action_unverified"} and handoff and matches_request and handoff_matches and handoff_agrees:
             w["handoff"].update(created=True, handoff_id=handoff["id"], receipt={"verified": True, "handoff_id": handoff["id"]})
-        elif status.get("state") in {"handoff_verified", "action_unverified"} and matches_target and matches_request and handoff_agrees:
-            handoff = status.get("handoff", {})
-            receipt = handoff.get("receipt", {}) if isinstance(handoff, dict) else {}
-            if (isinstance(receipt, dict) and handoff.get("created") is True and isinstance(handoff.get("handoff_id"), str)
-                    and re.fullmatch(r"HOF-[A-Za-z0-9_-]{8}", handoff["handoff_id"])
-                    and receipt.get("verified") is True and receipt.get("handoff_id") == handoff["handoff_id"]):
-                w["handoff"].update(created=True, handoff_id=handoff["handoff_id"], receipt={"verified": True, "handoff_id": handoff["handoff_id"]})
+        elif (status.get("state") in {"handoff_verified", "action_unverified"} and matches_target
+                and matches_request and handoff_agrees and canonical_handoff_valid):
+            handoff_id = canonical_handoff["handoff_id"]
+            w["handoff"].update(created=True, handoff_id=handoff_id, receipt={"verified": True, "handoff_id": handoff_id})
 
     @staticmethod
     def _status_args(state, *, previous_status=None):
@@ -664,6 +677,34 @@ class Workflow:
             if clarification:
                 t["clarification"] = clarification
                 resolution = clarification["resolution_type"]
+                if resolution in {"DENIED", "NEW_REQUEST"} and pending.get("type") == "awaiting_confirmation":
+                    # A portal confirmation can already be in flight when the
+                    # chat reply asks to stop. Its immutable outcome takes
+                    # precedence over cancellation or a change of topic.
+                    slots = deepcopy(preflight_slots) if preflight_slots is not None else await self._stage(
+                        state, "extract_slots", {"clean_query": t["user_question"],
+                            "current_date": t["current_date"], "customer_currencies": []})
+                    if slots is not None:
+                        preflight_slots = slots
+                        t["slots"]["foreign_customer_reference"] = bool(slots.get("foreign_customer_reference"))
+                    assisted = t["human_requested"] or t["emotional_context"] == "Emergencia"
+                    if slots is None or state["runtime"]["node_errors"]:
+                        t["clarification"] = {"resolution_type": "UNCLEAR", "selected_ref": None}
+                        t["intent"] = pending.get("intent") or "TRANSACTION_DISPUTE"
+                        return state
+                    if slots is not None and not assisted and not t["slots"].get("foreign_customer_reference") and not state["runtime"]["node_errors"]:
+                        await self._confirmation_target(state)
+                        status = await self._read(state, "host_action_status", self._status_args(state), optional=True)
+                        self._host_evidence(state, status, binding)
+                        if w.get("action_attempted") or w.get("action_outcome") in {"unknown", "executed", "verified"}:
+                            t["intent"] = pending.get("intent") or "TRANSACTION_DISPUTE"
+                            return state
+                        if status.get("status") == "error" or status.get("state") in {"intake_verified", "action_unverified", "handoff_verified"}:
+                            # Missing or contradictory proof cannot establish
+                            # that an already prepared action was cancelled.
+                            t["clarification"] = {"resolution_type": "UNCLEAR", "selected_ref": None}
+                            t["intent"] = pending.get("intent") or "TRANSACTION_DISPUTE"
+                            return state
                 if resolution in {"DENIED", "NEW_REQUEST"}:
                     state["runtime"]["host_cancellation_requested"] = {
                         "query_id": state["runtime"].get("active_query_id") if state["runtime"].get("query_scopes") else None,

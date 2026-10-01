@@ -355,3 +355,40 @@ def test_pending_untouched_sibling_keeps_its_own_nonempty_prompt(tmp_path):
     assert sum(name == "generate" for name, _ in stages.calls[before:]) <= 2
     assert all(name in bank.reads for name, _ in bank.calls)
 
+
+@pytest.mark.parametrize("null_field", ["action", "receipt"])
+def test_explicit_null_receipt_representation_never_borrows_the_other_proof(tmp_path, null_field):
+    runner, _, _ = workflow(tmp_path)
+    state = policy_state()
+    state["tool_results"]["get_transaction"]["snapshot_id"] = SNAPSHOT
+    status = canonical_host_receipt()
+    status["receipt"] = native_host_receipt()["receipt"]
+    status[null_field] = None
+    runner._host_evidence(state, status, TrustedBinding(**binding()))
+    assert state["workflow_state"]["action"]["verified"] is False
+    assert state["workflow_state"]["action_outcome"] == "unknown"
+
+
+def test_mixed_receipt_native_public_references_must_agree(tmp_path):
+    runner, _, _ = workflow(tmp_path)
+    state = policy_state()
+    state["tool_results"]["get_transaction"]["snapshot_id"] = SNAPSHOT
+    status = canonical_host_receipt()
+    native = native_host_receipt()["receipt"]
+    status["receipt"] = native
+    status["action"]["receipt"]["transaction"] = deepcopy(native["transaction"])
+    status["action"]["receipt"]["transaction"]["transaction_reference"] = "txn_" + "b" * 12
+    runner._host_evidence(state, status, TrustedBinding(**binding()))
+    assert state["workflow_state"]["action"]["verified"] is False
+    assert state["workflow_state"]["action_outcome"] == "unknown"
+
+
+def test_explicit_null_handoff_never_raises_or_creates_a_request(tmp_path):
+    runner, _, _ = workflow(tmp_path)
+    state = policy_state()
+    state["tool_results"]["get_transaction"]["snapshot_id"] = SNAPSHOT
+    status = canonical_host_receipt(unknown=True, handoff=True)
+    status["handoff"] = None
+    runner._host_evidence(state, status, TrustedBinding(**binding()))
+    assert state["workflow_state"]["handoff"]["created"] is False
+

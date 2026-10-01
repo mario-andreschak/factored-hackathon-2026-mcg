@@ -466,6 +466,12 @@ class ChatService:
             # Earlier proof comes only from this owner-bound saved row, never
             # from an upstream response or a browser-selected wrapper.
             result = {key: value for key, value in result.items() if key not in {"prior_receipt", "prior_handoff"}}
+            prior = self._action_result(row)
+            for field in ("request_id", "pending_handle"):
+                if prior.get(field):
+                    if field in result and result[field] != prior[field]:
+                        raise ChatError("action_mismatch", 409, "La solicitud no corresponde a la preparación guardada.")
+                    result[field] = prior[field]
             if row["target_reference"]:
                 result["target_reference"] = row["target_reference"]
             else:
@@ -473,7 +479,6 @@ class ChatService:
             saved = project_action_result(result)
             saved.update(self._retained_evidence(row, row["target_reference"]))
             if saved.get("state") in {"action_unverified", "handoff_unverified"}:
-                prior = self._action_result(row)
                 for field in ("snapshot", "transaction", "unanswered_questions"):
                     if field in prior:
                         saved.setdefault(field, prior[field])
@@ -492,6 +497,12 @@ class ChatService:
                  row["prepare_recovery_after"] if retain_prepare else 0,
                  row["prepare_recovery_deadline"] if retain_prepare else 0,
                  session_id, action_id, revision))
+            # Immediate results use the same trusted row scope as later status
+            # reads. Upstream wrappers never supply this ownership metadata.
+            if row["query_scope_id"]:
+                saved["query_id"] = row["query_scope_id"]
+            if row["query_snapshot_hash"]:
+                saved["snapshot_hash"] = row["query_snapshot_hash"]
         return saved, revision + 1
 
     def _current_action(self, session_id: str, owner: str,

@@ -414,7 +414,10 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
                 else:
                     rendered = render_action(result, language)["message"]
             return {**result, "language": language, "message": rendered}
-        return render_action(result, language)
+        rendered = render_action(result, language)
+        if isinstance(query_id, str) and re.fullmatch(r"q_[a-f0-9]{32}", query_id):
+            rendered["query_id"] = query_id
+        return rendered
 
     async def run_action(request: Request, operation: dict, language: str,
                          target_reference: str | None = None, *, target_context: dict | None = None,
@@ -497,8 +500,20 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
             target = request.app.state.repository.action_target(current.profile_id, body.transaction_reference)
             if not target:
                 raise HTTPException(404, "El movimiento seleccionado no está disponible.")
+            selected_scope = body.query_scope_id
+            service = request.app.state.chat_service
+            backend = getattr(service, "_bank_backend", None)
+            if backend is not None:
+                from .chat import ChatError
+                try:
+                    customer = request.app.state.repository.profile_customer(current.profile_id)
+                    selected_scope = backend.query_scope(service, customer, current.id,
+                        current.expires_at, body.transaction_reference, selected_scope)["query_id"]
+                except ChatError as exc:
+                    raise HTTPException(exc.status_code, exc.message) from None
             previous = await action_status(request, body.language)
-            same_target = previous.get("target_reference") == body.transaction_reference
+            same_target = (previous.get("target_reference") == body.transaction_reference
+                           and previous.get("query_id") == selected_scope)
             if same_target and previous.get("state") == "handoff_verified":
                 if ((previous.get("reason") or previous.get("handoff", {}).get("reason")) != body.reason
                         or ("unanswered_questions" in body.model_fields_set and
@@ -520,7 +535,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
                 prepared = await run_action(request, {"operation": "prepare",
                     "transactionId": target["transaction_id"], "snapshot": target["snapshot"]},
                     body.language, body.transaction_reference, target_context=target,
-                    query_scope_id=body.query_scope_id)
+                    query_scope_id=selected_scope)
                 if prepared.get("state") not in {"pending_confirmation", "existing_case_verified"}:
                     return prepared
             pending = prepared.get("pending_handle")
@@ -531,7 +546,7 @@ def create_app(settings: Settings | None = None, *, gloria_factory=None, bank_ba
                 raise HTTPException(502, "No se pudo verificar la solicitud de revisión humana.")
             handed = await run_action(request, {"operation": "handoff", "reason": body.reason,
                 "pendingHandle": pending, "requestId": request_id, **questions},
-                body.language, body.transaction_reference, query_scope_id=body.query_scope_id)
+                body.language, body.transaction_reference, query_scope_id=selected_scope)
             if handed.get("state") == "handoff_unverified":
                 handed["pending_handle"] = pending
             return handed
