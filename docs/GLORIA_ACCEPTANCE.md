@@ -1,8 +1,18 @@
 # Gloria acceptance and release qualification
 
-## Release qualification evidence
+## Current source integration evidence
 
-The final `abc90682faa5cb496c9cd3476ec7811a7e5c9281` candidate passed the
+The integrated credential correction at `d7a4f432000db0a225a010235083427f957c35b5`
+has a regenerated protected source map. Its
+[source qualification](qualification/gloria-credential-source-2026-10-01.json)
+records the exact combined source, tests and graph checks. This is source-only
+evidence: installed native/provider execution, joined live HTTP and human
+adjudication were not repeated for this correction. The existing installed
+publication and runtime activation gates still apply to any replacement image.
+
+## Historical abc9068 release qualification evidence
+
+The historical `abc90682faa5cb496c9cd3476ec7811a7e5c9281` candidate passed the
 independent source qualification and all four synthetic native-port HTTP
 journeys. The source suite passed **198/198 cases: 91 acceptance + 107 release**
 in **58.66 seconds**, with **0 failed, 0 skipped**, and one existing

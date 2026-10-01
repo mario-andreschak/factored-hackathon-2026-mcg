@@ -127,9 +127,21 @@ only its checked private auth copy after joined tests. Final source freeze
 requires a fresh context/image and a final installed report; earlier passing
 runs do not qualify later source edits.
 
-## Frozen source validation
+## Current source integration and runtime requalification
 
-The final isolated qualification uses application source
+The credential-question source correction and regenerated bridge at
+`d7a4f432000db0a225a010235083427f957c35b5` are validated separately by the
+[combined source report](qualification/gloria-credential-source-2026-10-01.json).
+They have not been installed or executed in the image below. Its report remains
+immutable historical evidence for `abc9068`; passing results cannot transfer
+across the changed protected response source and graph hashes. A replacement
+image still requires the full installation, capability, revocation, fence and
+joined qualification appropriate to its intended runtime use. The source merge
+does not activate the shared deployment or enable banking actions.
+
+## Historical abc9068 frozen source validation
+
+That isolated qualification uses application source
 `abc90682faa5cb496c9cd3476ec7811a7e5c9281`, image
 `sha256:402581eaa5df62914d91acbee60c2cdba63aacdfcca64957637825d3387243c7`,
 and external source-manifest SHA256
