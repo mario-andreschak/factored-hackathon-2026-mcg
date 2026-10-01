@@ -1,9 +1,39 @@
 # Transaction dispute workflow acceptance and release qualification
 
 The [implementation guide](DISPUTE_IMPLEMENTATION.md) records contributor credit
-and the naming cleanup. The combined renamed portal/preview source needs a fresh
-protected manifest and source qualification. Historical reports and their recorded
-paths and hashes remain unchanged; runtime use also retains the existing gates.
+and the naming cleanup. Fresh combined source qualification is recorded below.
+Historical reports and their recorded paths and hashes remain unchanged; runtime
+use also retains the existing gates.
+
+## Current combined renamed source evidence
+
+The combined descriptive rename and PR39 portal/preview source is frozen at
+`ea8f62176157cb016ff07db86c8d2e8c49272aa9`. Its
+[source qualification](qualification/dispute-naming-source-2026-10-01.json)
+records 1,725 passed tests and 428 passed subtests, including 24 retained-state
+naming compatibility cases. All 85 protected source hashes and all 28 current
+preparation hashes match the frozen Git blobs; the preparation manifest refresh
+changes only the `.gitattributes` digest and grants no execution authority.
+
+The renamed graph artifact SHA256 is
+`405e8dc990359c7caae3f5ca1b2a3acc87ed6f0121a87a834e9b268f877f99d7`,
+with graph SHA256
+`9174b0ca6496344bfd3ef26e7e4e3ffd4684dc22b51102931f05bd23cccd1895`.
+The immutable FLUJO compiler pin remains
+`0ba62296520a505e6d71eddf5aa650691f3dc311`. Frontend validation passed all
+80 tests, the production build and read-only normalized source formatting.
+Preparation/preview checks passed 36 tests and 17 subtests, with one Windows
+skip for POSIX permission bits. The frozen fictional loopback preview served
+21 transactions for each of two disjoint owners and denied reads after logout;
+chat remained unavailable.
+
+All eleven previous qualification files retain their original bytes and pins.
+The new report qualifies combined source and fictional read preview only.
+The graph remains `installed=false`, `actionsEnabled=false` with example bindings.
+Native/provider execution, exact replacement-image acceptance, human semantic
+and assistive-technology checks, deployment and submission remain separately
+gated. Passing local source checks do not replace current-head hosted CI and
+branch policy before merge.
 
 ## Historical PR39 portal/preview source evidence
 

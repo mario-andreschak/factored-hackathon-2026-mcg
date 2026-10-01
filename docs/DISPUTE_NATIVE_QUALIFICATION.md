@@ -133,11 +133,20 @@ only its checked private auth copy after joined tests. Final source freeze
 requires a fresh context/image and a final installed report; earlier passing
 runs do not qualify later source edits.
 
+## Current renamed source integration
+
+The [combined renamed source report](qualification/dispute-naming-source-2026-10-01.json)
+qualifies frozen source `ea8f62176157cb016ff07db86c8d2e8c49272aa9`, including
+85 protected hashes, 1,725 tests and 428 subtests. Its source-only graph remains
+uninstalled with actions disabled. All previous reports remain byte-identical;
+none of their installed runtime results transfers to this renamed artifact.
+Exact replacement-image/native/provider acceptance still requires the gates below.
+
 ## Previous source integration and runtime requalification
 
-The portal/preview source map now contains 85 protected files. Its
+The historical PR39 portal/preview graph covered 85 protected files. Its
 [separate source report](qualification/release-preview-source-2026-10-01.json)
-qualifies source integration and a fictional loopback read preview only.
+qualifies its original pre-rename source snapshot and fictional read preview only.
 Neither that preview nor a graph freshness pass establishes installation or
 native/provider execution. The installed image/report below remains historical
 and must not be substituted for a replacement image's exact qualification.
