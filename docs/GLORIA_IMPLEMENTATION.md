@@ -121,6 +121,13 @@ identical before and after. Latencies were 28.058, 35.128, 61.425 and 31.424
 seconds. The PT emergency recovered a slot-extraction timeout; these are
 development routing observations, not a clean-stage or speed claim.
 
+Independent read-only semantic review agreed with the four modes, languages
+and dispute facts, and found no invented receipt or completed-action claim.
+It also found unsourced conditional card-blocking advice in the PT emergency
+reply: the advice is absent from the reviewed synthetic policy chunks.
+The textual validator allowed it. Recommendation grounding therefore remains
+a known gap and must be qualified before a complete grounded-response claim.
+
 The 25 returned model calls report 371,171 prompt tokens and 1,257 completion
 tokens in total. The timed-out call has no captured provider usage. Cost remains
 unknown; latency and prompt size require investigation before activation.
