@@ -303,3 +303,34 @@ def test_overlong_intent_query_is_rejected_before_exact_copy_is_lost():
     with pytest.raises(StageError) as caught:
         asyncio.run(StageAdapters(model).detect_intent(["a" * 12001]))
     assert caught.value.errors == ("input.string_bound",)
+
+
+@pytest.mark.parametrize("identifier", ["TRX-EXACT123", "txn_abcdef012345", "CMP-SBX-Ab_Cd123"])
+def test_slots_preserve_explicit_host_and_logical_references(identifier):
+    result = {**SLOTS, "date_from": None, "date_to": None, "date_expression": None}
+    result["complaint_id" if identifier.startswith("CMP-") else "transaction_id"] = identifier
+    async def model(*_):
+        return json.dumps(result)
+    assert asyncio.run(StageAdapters(model).extract_slots(f"Consulta {identifier}.", "2026-09-30")) == result
+
+
+@pytest.mark.parametrize("identifier,query", [
+    ("txn_abcdef012345", "Consulta txn_abcdef012345é."),
+    ("txn_abcdef012345", "Consulta txn_abcdef012345\u0301."),
+    ("TRX-INVENTED", "Não reconheço uma compra."),
+    ("rev_abcdef012345", "Consulta rev_abcdef012345."),
+    ("txn_ABCDEf012345", "Consulta txn_ABCDEf012345."),
+])
+def test_slots_reject_invented_partial_or_review_references(identifier, query):
+    async def model(*_):
+        return json.dumps({**SLOTS, "transaction_id": identifier})
+    with pytest.raises(StageError):
+        asyncio.run(StageAdapters(model).extract_slots(query, "2026-09-30"))
+
+
+def test_slot_adapter_loads_executable_schema_from_canonical_yaml():
+    adapter = StageAdapters(lambda *_: None)
+    schema = adapter.output_schemas["extract_slots"]
+    assert schema["additionalProperties"] is False
+    assert schema["properties"]["transaction_id"]["pattern"] == "^(?:TRX-[A-Z0-9]+|txn_[a-f0-9]{12})$"
+    assert adapter.specs["extract_slots"].version == "2.1.0"

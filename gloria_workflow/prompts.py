@@ -12,6 +12,7 @@ import inspect
 import json
 import math
 import re
+import unicodedata
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from datetime import date
@@ -66,7 +67,7 @@ SLOT_SCHEMA["transaction_type"] = _string(nullable=True, enum=(
     "Purchase", "Withdrawal", "Transfer", "Payment", "Deposit", "Adjustment", None))
 SLOT_SCHEMA["channel"] = _string(nullable=True, enum=(
     "POS", "ATM", "Web", "App", "Branch", "Transfer", None))
-SLOT_SCHEMA["transaction_id"] = _string(nullable=True, pattern=r"TRX-[A-Z0-9]+")
+SLOT_SCHEMA["transaction_id"] = _string(nullable=True, pattern=r"(?:TRX-[A-Z0-9]+|txn_[a-f0-9]{12})")
 SLOT_SCHEMA["complaint_id"] = _string(nullable=True, pattern=r"CMP-[A-Za-z0-9_-]+")
 SLOT_SCHEMA["product_last4"] = _string(nullable=True, pattern=r"[0-9]{4}")
 SCHEMAS = {
@@ -176,6 +177,17 @@ def _calendar(value):
     return isinstance(value, str) and bool(re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value))
 
 
+def _identifier_tokens(text):
+    tokens, token = set(), []
+    for character in text + " ":
+        if character in "-_" or unicodedata.category(character)[0] in "LMN":
+            token.append(character)
+        elif token:
+            tokens.add("".join(token))
+            token = []
+    return tokens
+
+
 def _semantic_errors(stage, output, inputs):
     errors = []
     if stage == "detect_intent":
@@ -200,6 +212,10 @@ def _semantic_errors(stage, output, inputs):
         if resolution == "CONFIRMED" and pending.get("type") != "awaiting_confirmation":
             errors.append("output.resolution_type.no_confirmation_pending")
     elif stage == "extract_slots":
+        mentioned = _identifier_tokens(inputs["clean_query"])
+        for field in ("transaction_id", "complaint_id"):
+            if output[field] is not None and output[field] not in mentioned:
+                errors.append(f"output.{field}.not_in_query")
         for field in ("date_from", "date_to"):
             if output[field] is not None:
                 try:
@@ -420,6 +436,7 @@ class StageAdapters:
             raise ValueError("max_output_chars must be in [1,200000]")
         self.model, self.timeout_seconds, self.max_output_chars = model, timeout_seconds, max_output_chars
         self.specs = {}
+        self.output_schemas = dict(SCHEMAS)
         directory = Path(prompt_dir) if prompt_dir else PROMPT_DIR
         for stage, filename in STAGE_FILES.items():
             try:
@@ -436,6 +453,14 @@ class StageAdapters:
                 if placeholders != set(spec.input_variables):
                     raise ValueError()
                 self.specs[stage] = spec
+                if "output_schema" in entry:
+                    declared = entry["output_schema"]
+                    if (not isinstance(declared, dict) or declared.get("type") != "object"
+                            or declared.get("additionalProperties") is not False
+                            or set(declared.get("required", [])) != set(declared.get("properties", {}))
+                            or set(declared.get("properties", {})) != set(SCHEMAS[stage]["properties"])):
+                        raise ValueError()
+                    self.output_schemas[stage] = declared
             except (OSError, ValueError, TypeError, KeyError, yaml.YAMLError):
                 raise StageError(stage, "input", ("prompt.contract",)) from None
 
@@ -486,7 +511,7 @@ class StageAdapters:
         except Exception:
             raise StageError(stage, "model_error") from None
         output = _parse_json(stage, raw, self.max_output_chars)
-        errors = schema_errors(output, SCHEMAS[stage])
+        errors = schema_errors(output, self.output_schemas[stage])
         if not errors:
             errors = _semantic_errors(stage, output, inputs)
         if errors:
