@@ -108,6 +108,23 @@ The report therefore retains `native_execution_verified=false` until external
 installed-artifact and same-turn native callback evidence are joined to it.
 Expected scenario labels are authored assertions, not human adjudication.
 
+The first clean local release checkpoint passed **178/178** cases in 44.23
+seconds at acceptance checkout `890b9df69ebd7816e286c1e3ad6052618d41aa79`.
+Git HEAD, 69 application source hashes and both test-file hashes were identical
+before and after the run. The sorted source-map SHA256 was
+`13837db0bd77106e8088aa6b016f8672ba37cdca108ef54a3b02b8841b11b824`.
+This includes actual fictional HTTP journeys and controlled native-port
+admissions; it does not establish real provider or protected native execution.
+
+The subsequent real-worker intake diagnostic failed both scenarios. Spanish
+reached the expected confirmation mode but used the safe fallback after
+recommendation validation rejected both generated attempts. Portuguese produced
+the correct native amount, currency and event date but its `cartão` product hint
+did not match the bank's Spanish product label. The run used 13 model attempts
+and 100,454 reported tokens; provider cost remained unknown. Application source
+changed during execution. Those failures remain diagnostic gaps, with additional
+independent ES/PT product-hint cases preserving conflicting-product rejection.
+
 These independently authored development cases execute the application-owned
 `gloria_workflow` orchestration and deterministic motor. They use newly invented
 ES/PT messages and fictional records, not the frozen router evaluation files or

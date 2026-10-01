@@ -831,6 +831,8 @@ def test_complete_profile_uses_owned_source_product_details(complete_reads):
 @pytest.mark.parametrize("slots", [
     dict(city="Ciudad de México"), dict(country="México"),
     dict(product_hint="Tarjeta Crédito"), dict(product_last4="4381"),
+    dict(product_hint="cartão"), dict(product_hint="cartão de crédito"),
+    dict(product_hint="tarjeta de crédito"),
     dict(city="Ciudad de México", country="México", product_hint="Tarjeta Crédito", product_last4="4381"),
 ])
 def test_actual_source_bank_honors_location_and_product_filters(complete_reads, slots):
@@ -844,6 +846,14 @@ def test_actual_source_bank_honors_location_and_product_filters(complete_reads, 
     assert result["search_context"]["coverage_complete"] is True
     assert result["search_context"]["snapshot_id"] == complete_reads.snapshot
     assert result["snapshot_hash"] != complete_reads.snapshot
+
+
+@pytest.mark.parametrize("hint", ["conta", "cartão de débito", "Fictional Absent Product"])
+def test_product_hint_cannot_be_ignored_when_it_conflicts_with_owned_credit_card(complete_reads, hint):
+    result = read(complete_reads.reads, "search_transactions", slots=dict(transaction_id=complete_reads.reference,
+        date_from=complete_reads.source.target["transaction_date"][:10],
+        date_to=complete_reads.source.target["transaction_date"][:10], product_hint=hint))
+    assert result["status"] == "ok" and result["match_count"] == 0 and result["candidates"] == []
 
 
 def test_authoritative_near_duplicate_does_not_require_same_product_or_merchant(complete_reads):
