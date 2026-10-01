@@ -505,7 +505,7 @@
         "gloria_workflow/model.py": "2263017f07055fee04795a9412dc02d9f461ca0d22bc1cb1d1e8fb74638f343a",
         "gloria_workflow/policy.py": "5bc726a18b8a32620fd30649a7b41cf65dd2ad38ec43873f861d491401ecef86",
         "gloria_workflow/prompts.py": "02ea13c941022957989e2bc39ae082ec0ff8539dc1bdb3083f5ad56a53a67fb4",
-        "gloria_workflow/response.py": "3506823b616608b1943ea6e3ee9cc5c3347307bcc03df005631e37226d131b57",
+        "gloria_workflow/response.py": "722ada85dd5c91e32896dc30a52924336c5854b4109356dc7c71eeba0bdc550d",
         "gloria_workflow/retrieval.py": "32773a7806280db3eff8407dfa41ee4a142e34a0eb3367e4e78915399e9773fd",
         "gloria_workflow/runtime.py": "04c5b642fabc2ac38bc4cfd4109750ad017d3dc6929d3ff7bdf5f43827b8e532",
         "gloria_workflow/state.py": "fd9eeba78311948671e1e40fd34aadd9d464a458199a484da7e6727918094f4f",
@@ -548,7 +548,7 @@
         "scripts/native_gloria_compatibility_probe.mjs": "a8ba3fb3e3ba6e89b23024e0a350e82a34d700a9494172a60fe8ba50c17901a3",
         "scripts/native_gloria_qualification.Dockerfile": "c5081bde75001c88e98d2357c0b15b9116302771d3119211b9ca35a3b25f695f",
         "scripts/native_gloria_qualification.mjs": "085ba494c9291782579143465b1ce393d7daa15bbd6271891247c64e4202ff26",
-        "scripts/native_gloria_qualification.py": "b6f7e535789b4a700b35c1ffa6199ae89e5f2432f6d5e30c0dfc3083979db9e0",
+        "scripts/native_gloria_qualification.py": "3f553acbd822d2107d2229267dcdea1d90c66dc6acf7d405bb61aba50e652711",
         "scripts/native_gloria_qualification.ts": "892a09044ba68ac3badd035106fbe65763a84a1438bd50c751c52d6dd9480bce"
       },
       "coverage": "Declared canonical logical roles; handler execution and route acceptance require separate application tests."
