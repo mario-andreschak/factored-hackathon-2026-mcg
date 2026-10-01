@@ -57,6 +57,49 @@ class OutcomeReportTests(unittest.TestCase):
         self.assertEqual(proposed["cost_usd"]["per_safe_resolution"]["status"], "unknown_cost")
         self.assertEqual(report["systems"]["proposed"]["es"]["attempts"], 1)
 
+    def test_cost_basis_contract_preserves_known_and_unknown_metrics(self):
+        for cost, basis in ((None, "unknown"), (0, "documented_zero"),
+                            (0.0, "documented_zero"), (-0.0, "documented_zero"),
+                            (0.01, "measured"), (1, "measured")):
+            data = fixture()
+            data["attempts"][2].update(cost_usd=cost, cost_basis=basis)
+            before = copy.deepcopy(data)
+            with self.subTest(cost=cost, basis=basis):
+                report = aggregate(data)
+                metrics = report["systems"]["proposed"]["es"]["cost_usd"]
+                self.assertEqual(metrics["known_count"], 0 if cost is None else 1)
+                self.assertEqual(metrics["unknown_count"], 1 if cost is None else 0)
+                self.assertEqual(metrics["known_sum"], 0 if cost is None else cost)
+                expected = {"status": "unknown_cost", "usd": None} if cost is None else {"status": "known", "usd": cost}
+                self.assertEqual(metrics["per_attempt"], expected)
+                self.assertEqual(metrics["per_safe_resolution"], expected)
+                self.assertEqual(report["provenance"], data["provenance"])
+                self.assertEqual(report["lock"], data["lock"])
+                self.assertIn("not independently verified", report["qualification"])
+                self.assertEqual(data, before)
+
+    def test_contradictory_cost_basis_pairs_are_rejected(self):
+        for cost, basis in ((None, "measured"), (None, "documented_zero"),
+                            (0, "unknown"), (0, "measured"),
+                            (0.01, "unknown"), (0.01, "documented_zero"),
+                            (1, "documented_zero")):
+            data = fixture()
+            data["attempts"][2].update(cost_usd=cost, cost_basis=basis)
+            with self.subTest(cost=cost, basis=basis), self.assertRaisesRegex(InputError, "positive/measured"):
+                aggregate(data)
+
+    def test_invalid_cost_values_and_unproven_bases_are_rejected(self):
+        for cost, basis in ((-0.01, "measured"), (-1, "documented_zero"),
+                            (True, "measured"), (False, "documented_zero"),
+                            ("0.01", "measured"), ([], "measured"),
+                            (float("nan"), "measured"), (float("inf"), "measured"),
+                            (float("-inf"), "measured"), (0, None),
+                            (0.01, "estimated"), (None, None)):
+            data = fixture()
+            data["attempts"][2].update(cost_usd=cost, cost_basis=basis)
+            with self.subTest(cost=cost, basis=basis), self.assertRaises(InputError):
+                aggregate(data)
+
     def test_missing_pair_duplicate_and_unlocked_labels_rejected(self):
         for change in ("missing", "duplicate", "unlocked"):
             data = fixture()
