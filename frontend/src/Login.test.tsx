@@ -860,14 +860,12 @@ test.each([
         }) as HTMLSelectElement
       ).value,
     ).toBe("card-1");
-    fireEvent.click(
-      screen.getByRole("button", {
-        name:
-          language === "pt"
-            ? "Sobre esta experiência"
-            : "Sobre esta experiencia",
-      }),
-    );
+    const aboutTrigger = screen.getByRole("button", {
+      name:
+        language === "pt" ? "Sobre esta experiência" : "Sobre esta experiencia",
+    });
+    aboutTrigger.focus();
+    fireEvent.click(aboutTrigger);
     const about = screen.getByRole("dialog", { name: aboutTitle });
     expect(about.querySelector("h2")?.getAttribute("lang")).toBe(locale);
     expect(
@@ -884,6 +882,14 @@ test.each([
           : /asistente y el registro de casos no están disponibles/,
       ),
     ).toBeTruthy();
+    const closeButton = within(about).getByRole("button", {
+      name: language === "pt" ? "Fechar" : "Cerrar",
+    });
+    closeButton.focus();
+    expect(document.activeElement).toBe(closeButton);
+    fireEvent.click(closeButton);
+    expect(screen.queryByRole("dialog", { name: aboutTitle })).toBeNull();
+    expect(document.activeElement).toBe(aboutTrigger);
     expect(calls.some((url) => url.startsWith("/api/action/"))).toBe(false);
   },
 );

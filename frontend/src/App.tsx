@@ -941,12 +941,14 @@ function Modal({
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current!;
+    const previousFocus = document.activeElement as HTMLElement | null;
     element.showModal();
     const close = () => onClose();
     element.addEventListener("cancel", close);
     return () => {
       element.removeEventListener("cancel", close);
       element.close();
+      previousFocus?.focus();
     };
   }, [onClose]);
   return (
