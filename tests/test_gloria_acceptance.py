@@ -192,6 +192,30 @@ def test_motor_missing_risk_evidence_cannot_mean_low_risk(missing):
     assert result["reason_code"] == "missing_evidence"
 
 
+@pytest.mark.parametrize("age_seconds,span_hours,expected", [
+    (20, 24, "CONFIRM_ACTION"),
+    (21, 24, "HANDOFF"),
+    (-1, 24, "HANDOFF"),
+    (0, 23, "HANDOFF"),
+])
+def test_motor_report_window_is_exact_current_and_bounded(age_seconds, span_hours, expected):
+    state = policy_state()
+    end = NOW - timedelta(seconds=age_seconds)
+    report = state["tool_results"]["get_related_complaints"]["report_window"]
+    report.update(window_start=(end - timedelta(hours=span_hours)).isoformat(),
+                  window_end=end.isoformat())
+    result = decide(state, config=dict(risk_evidence_max_age_seconds=20))
+    assert result["response_mode"] == expected
+    applied = apply_decision(state, result)
+    if expected == "HANDOFF":
+        assert result["reason_code"] == "missing_evidence"
+        assert applied["workflow_state"]["unrecognized_count_24h"] is None
+        assert not applied["workflow_state"]["risk_data_complete"]
+    else:
+        assert applied["workflow_state"]["unrecognized_count_24h"] == 1
+    assert not applied["workflow_state"]["action"]["authorized"]
+
+
 def test_motor_verified_high_signal_escalates_even_with_other_risk_missing():
     state = policy_state()
     state["tool_results"]["get_transaction"]["risk_signals"] = {"fraud_score": 99}
@@ -427,6 +451,39 @@ def test_runtime_ambiguous_pesos_requires_currency_before_search(tmp_path):
     assert mode(state) == "CLARIFY"
     assert state["workflow_state"]["missing_fields"] == ["currency"]
     assert not any(name == "search_transactions" for name, _ in bank.calls)
+    assert_no_action_authority(state, bank)
+
+
+def test_runtime_currency_reply_retains_explicit_amount_and_business_intent(tmp_path):
+    bank = ObservedBank(candidates=[transaction(amount=500, currency="MXN")],
+        overrides={"get_customer_profile": dict(status="ok", products=[
+            dict(currency="COP"), dict(currency="MXN")])})
+    runner, stages, bank = workflow(tmp_path, ObservedStages(
+        slots=dict(amount=500, currency=None, currency_raw="pesos")), bank)
+    first = run_workflow(runner, "No reconozco la compra de 500 pesos.", turn_id="currency-first")
+    assert mode(first) == "CLARIFY"
+    stages.intent = "OOD"
+    stages.slots = dict(amount=None, currency="MXN", currency_raw="pesos mexicanos")
+    resolved = run_workflow(runner, "La moneda es pesos mexicanos.", turn_id="currency-reply")
+    assert mode(resolved) == "CONFIRM_ACTION"
+    assert resolved["turn"]["intent"] == "TRANSACTION_DISPUTE"
+    searches = [args["slots"] for name, args in bank.calls if name == "search_transactions"]
+    assert len(searches) == 1
+    assert searches[0]["amount"] == 500 and searches[0]["currency"] == "MXN"
+    assert_no_action_authority(resolved, bank)
+
+
+def test_runtime_unrelated_balance_request_does_not_supply_missing_currency(tmp_path):
+    runner, stages, bank = workflow(tmp_path, ObservedStages(
+        slots=dict(amount=500, currency=None, currency_raw="pesos")))
+    first = run_workflow(runner, "No reconozco la compra de 500 pesos.", turn_id="before-balance")
+    assert mode(first) == "CLARIFY"
+    stages.intent = "OOD"
+    stages.slots = dict(amount=None, currency="USD", currency_raw="USD")
+    state = run_workflow(runner, "Ahora quiero saber mi saldo en USD.", turn_id="new-balance")
+    assert mode(state) == "OUT_OF_SCOPE"
+    assert not any(name == "search_transactions" for name, _ in bank.calls)
+    assert not state["workflow_state"]["missing_fields"]
     assert_no_action_authority(state, bank)
 
 
@@ -736,6 +793,27 @@ def test_runtime_verified_host_readback_is_the_only_success_authority(tmp_path, 
     assert action["authorized"] and action["executed"] and action["verified"]
     assert action["result_id"] == COMPLAINT_ID
     assert COMPLAINT_ID in state["response"]["message"]
+    assert all(name in bank.reads for name, _ in bank.calls)
+
+
+@pytest.mark.parametrize("receipt_available", [True, False])
+def test_runtime_cached_success_requires_fresh_host_receipt(receipt_available, tmp_path):
+    generated = dict(message=f"El reclamo **{COMPLAINT_ID}** fue registrado.",
+        language="es", arquetipos=[], chunk_ids=[], data_sources=[], grounding_violation=0)
+    runner, stages, bank = workflow(tmp_path, ObservedStages(generated=generated),
+        ObservedBank(host_status=native_host_receipt()))
+    message = "¿Quedó registrada mi solicitud?"
+    first = run_workflow(runner, message, turn_id="cached-success")
+    assert mode(first) == "ACTION_DONE"
+    before = len(bank.calls)
+    if not receipt_available:
+        bank.host_status = dict(status="ok", state="none", binding_verified=True, binding=binding())
+    replay = run_workflow(runner, message, turn_id="cached-success")
+    assert any(name == "host_action_status" for name, _ in bank.calls[before:])
+    assert mode(replay) == ("ACTION_DONE" if receipt_available else "ACTION_UNVERIFIED")
+    if not receipt_available:
+        assert not replay["workflow_state"]["action"]["verified"]
+        assert COMPLAINT_ID not in replay["response"]["message"]
     assert all(name in bank.reads for name, _ in bank.calls)
 
 
