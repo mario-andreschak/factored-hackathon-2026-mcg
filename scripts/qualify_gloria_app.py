@@ -540,7 +540,7 @@ def _intake_scenario(fixture, native_url, authority_dir, profile, language, *, p
                 _expect(replay.get("receipt") == restored.get("receipt") and _case_count(bank, customer) == 1,
                         "replay.durable_exactly_one_case")
                 saved_cookies = httpx.Cookies(client.cookies)
-                attempts.request(client, "logout_revokes", "POST", "/api/auth/logout", status=204)
+                attempts.request(client, "logout_revokes", "POST", "/api/auth/logout", status=204, body={})
                 client.cookies = saved_cookies
                 attempts.request(client, "revoked_cookie_cannot_read_receipt", "GET", "/api/action/status", status=401)
                 attempts.request(client, "revoked_cookie_cannot_replay", "POST", "/api/action/confirm", status=401,
