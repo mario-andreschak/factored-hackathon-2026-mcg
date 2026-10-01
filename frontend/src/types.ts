@@ -133,6 +133,7 @@ export type HandoffPacket = {
 };
 export type ActionResult = {
   state: string;
+  query_id?: string;
   message?: string;
   pending_handle?: string;
   request_id?: string;

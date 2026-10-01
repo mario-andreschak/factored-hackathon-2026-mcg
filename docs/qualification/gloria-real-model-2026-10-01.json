@@ -1,0 +1,624 @@
+{
+  "schema": "gloria-development-qualification/v1",
+  "model": "model-GPT-6 Luna",
+  "source_commit": "6bee817dc74d414153cd714c9f6b4a7f2ca3e06e",
+  "source_dirty": false,
+  "source_hashes": {
+    "gloria_workflow/host.py": "9df189eecd83d836a088e9d8c8b5876eea3c3c3049d7bae3369c5bd63ac67c39",
+    "gloria_workflow/model.py": "cfa51bfe5d703250a763b7ba6eefd7fb41ec0a3d14f9ad273cca305e07f1e98d",
+    "gloria_workflow/policy.py": "0974ce2cf33eca571277ee36d9048965f8125b8fc650a27544e5e0f224df87bc",
+    "gloria_workflow/prompts.py": "768ff28a2495f69881bf1bb17fdbd860b2cadb62cb2bcc5acab414b109294393",
+    "gloria_workflow/response.py": "559dea4632302556f34907a5ec999872839eca2d1eab9043ecd6c2b955ec22ae",
+    "gloria_workflow/retrieval.py": "32773a7806280db3eff8407dfa41ee4a142e34a0eb3367e4e78915399e9773fd",
+    "gloria_workflow/runtime.py": "e01dc2b18a9f9a36c30e255a447965cf0a80857b329cf1ec78d68376c6b4b083",
+    "gloria_workflow/state.py": "46c1b584ebc24911d58b54295871f3cd459347cf36cf50c2f31380f577e14a28",
+    "gloria_workflow/tool.py": "c2370af697f2cb3fe88566b2c38d155f2f862095f6f006ef41b65d2954646f15",
+    "gloria_workflow/__init__.py": "b696fcc6d38de6dfdb0709d3789cf39fc9d973c6066b749df2c5d0f4de60d034",
+    "resources/prompts/attack_detection_prompt.yml": "8c5639d6f4ee039183b357dc4e66be2ac7e9bc58de40b4497f73c876a5b66d52",
+    "resources/prompts/clarification_resolution_prompt.yml": "d2d39ef98f3cf9eccd5c2553f69356dccbb3281c43c55cbb0b800ba98502d1c1",
+    "resources/prompts/context_detection_prompt.yml": "885ec2feee4d4217a8880b1f24eeeb3660274d7602bff6792ecc6b3ef2af5c5f",
+    "resources/prompts/generator_prompt_v3.yml": "8b64b0e2923d5feefe849ff21be6cf8082f34a94d5d14016c9e54f4e83717586",
+    "resources/prompts/handoff_summary_prompt.yml": "5cd61ee31175d27d9ff414c69bbb6a3539d04fa17d6f0ee661859903d55eef2d",
+    "resources/prompts/intent_detection_prompt.yml": "fb6a6d508a0a5833fc9d187ab03356594227d3a888c99c9c060d13eade1de44f",
+    "resources/prompts/rewrite_decompose_prompt.yml": "f67e2e517a72a30ed4c429df7a2bc0a322df365d44a51821054633e4792b798f",
+    "resources/prompts/slot_extraction_prompt.yml": "1a2bae3a6ce863e3bdad8a8589a91a27346d3bfcb9a6229d490da7f6aa234281",
+    "resources/policies/complaint_handling_policy.md": "4e37e1a2e9abe24fe9acf5c9f2c97eba8d5dbd4a9ed7af03a54cabd7d74940ff",
+    "resources/policies/customer_verification_policy.md": "6363b5b1fc1cc36541fbc78c51afd0924dcd6c3453470bea8fae728f399dd81c",
+    "resources/policies/fraud_escalation_policy.md": "49905ec77891665fc1fb52a53c2aefcaadd63f85fc77a7f5d3f944b2d49011ba",
+    "resources/policies/human_handoff_policy.md": "ffd6ebbd8ec61a5fbcb2753f6b676fb6cd4ead4c84d5c0d57d08431e5a42b673",
+    "resources/policies/transaction_dispute_policy.md": "740e7ccc8dcfef5251047e3702699831f0d45988b8f5b7455fb082b0d0cd8085",
+    "config/policy_rules.yaml": "1c143badd63fd45ef14bfe13ceb0d579e71157f4c8fcec634d0b115a1f9889cd",
+    "graph_config_v3.yaml": "ad2405a337989166ec1c469a7ab194dc030f0321a9099496aaf20634833d075e",
+    "contracts/state_schema.md": "89e1c1aad37f3868cd886ee9efd0e8beeb92f9dff0adfd259319b88f2b0b58eb",
+    "contracts/policy_engine.md": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31",
+    "scripts/qualify_gloria.py": "7ff4db5d8653918517ee72c9f8cf1ddcbb7f518562d108f6a0f35fe0c842aa5d"
+  },
+  "source_hashes_unchanged": true,
+  "evidence": "real configured language model; synthetic read fixtures; no host actions; graph not installed; no held-out accuracy claim",
+  "cases": [
+    {
+      "case": "es_dispute",
+      "expected_mode": "CONFIRM_ACTION",
+      "mode": "CONFIRM_ACTION",
+      "language": "es",
+      "pass": true,
+      "seconds": 28.058,
+      "rule_ids": [
+        "R17"
+      ],
+      "emotion": "Neutro",
+      "intent": "TRANSACTION_DISPUTE",
+      "slots": {
+        "amount": 27.25,
+        "currency": "USD",
+        "currency_raw": "USD",
+        "date_from": "2026-09-29",
+        "date_to": "2026-09-29",
+        "date_expression": "ayer",
+        "merchant": "Loja Teste",
+        "transaction_type": "Purchase",
+        "channel": null,
+        "city": null,
+        "country": null,
+        "transaction_id": null,
+        "complaint_id": null,
+        "product_hint": null,
+        "product_last4": null,
+        "amount_is_approximate": false,
+        "foreign_customer_reference": false
+      },
+      "safe_fallback": false,
+      "node_errors": [],
+      "bank_reads": [
+        "search_transactions",
+        "get_transaction",
+        "get_related_complaints",
+        "host_action_status"
+      ],
+      "response": "Confirma la transacción **TRX-DEV-QUALIFICATION**, del **2026-09-29T12:00:00**, por **27.25 USD** en Loja Teste. Si deseas registrar la solicitud simulada, usa el control explícito de confirmación del portal. Responder en este chat no autoriza ni registra la solicitud.",
+      "stage_trace": [
+        {
+          "node": "detect_attack",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 6487,
+          "model": null
+        },
+        {
+          "node": "rewrite_decompose",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 7328,
+          "model": null
+        },
+        {
+          "node": "detect_context",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 7283,
+          "model": null
+        },
+        {
+          "node": "merge_parallel",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "branches": [
+            "rewrite_decompose",
+            "detect_attack",
+            "detect_context"
+          ]
+        },
+        {
+          "node": "detect_intent",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 5577,
+          "model": null
+        },
+        {
+          "node": "extract_slots",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 6844,
+          "model": null
+        },
+        {
+          "node": "search_transactions",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 0,
+          "attempts": 1
+        },
+        {
+          "node": "get_transaction",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 0,
+          "attempts": 1
+        },
+        {
+          "node": "get_related_complaints",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 0,
+          "attempts": 1
+        },
+        {
+          "node": "host_action_status",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 0,
+          "attempts": 1
+        },
+        {
+          "node": "retrieve_policy",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 1,
+          "source": "reviewed_local_chunks"
+        },
+        {
+          "node": "generate",
+          "turn_id": "7b169e5a-96c4-45d9-972e-7cc1ff890398",
+          "latency_ms": 7598,
+          "model": null
+        }
+      ]
+    },
+    {
+      "case": "pt_dispute",
+      "expected_mode": "CONFIRM_ACTION",
+      "mode": "CONFIRM_ACTION",
+      "language": "pt",
+      "pass": true,
+      "seconds": 35.128,
+      "rule_ids": [
+        "R17"
+      ],
+      "emotion": "Neutro",
+      "intent": "TRANSACTION_DISPUTE",
+      "slots": {
+        "amount": 27.25,
+        "currency": "USD",
+        "currency_raw": "USD",
+        "date_from": "2026-09-29",
+        "date_to": "2026-09-29",
+        "date_expression": "ontem",
+        "merchant": "Loja Teste",
+        "transaction_type": "Purchase",
+        "channel": null,
+        "city": null,
+        "country": null,
+        "transaction_id": null,
+        "complaint_id": null,
+        "product_hint": null,
+        "product_last4": null,
+        "amount_is_approximate": false,
+        "foreign_customer_reference": false
+      },
+      "safe_fallback": false,
+      "node_errors": [],
+      "bank_reads": [
+        "search_transactions",
+        "get_transaction",
+        "get_related_complaints",
+        "host_action_status"
+      ],
+      "response": "Confira a transação **TRX-DEV-QUALIFICATION**, de **2026-09-29T12:00:00**, no valor de **27.25 USD** na Loja Teste. Se quiser registrar a solicitação simulada, use o controle explícito de confirmação do portal. Responder aqui no chat não autoriza nem registra a solicitação.",
+      "stage_trace": [
+        {
+          "node": "detect_attack",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 5687,
+          "model": null
+        },
+        {
+          "node": "detect_context",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 5885,
+          "model": null
+        },
+        {
+          "node": "rewrite_decompose",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 8939,
+          "model": null
+        },
+        {
+          "node": "merge_parallel",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "branches": [
+            "rewrite_decompose",
+            "detect_attack",
+            "detect_context"
+          ]
+        },
+        {
+          "node": "detect_intent",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 5512,
+          "model": null
+        },
+        {
+          "node": "extract_slots",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 8389,
+          "model": null
+        },
+        {
+          "node": "search_transactions",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 0,
+          "attempts": 1
+        },
+        {
+          "node": "get_transaction",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 0,
+          "attempts": 1
+        },
+        {
+          "node": "get_related_complaints",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 0,
+          "attempts": 1
+        },
+        {
+          "node": "host_action_status",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 0,
+          "attempts": 1
+        },
+        {
+          "node": "retrieve_policy",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 0,
+          "source": "reviewed_local_chunks"
+        },
+        {
+          "node": "generate",
+          "turn_id": "fe14883b-ccab-48a2-822d-824654814eb4",
+          "latency_ms": 12276,
+          "model": null
+        }
+      ]
+    },
+    {
+      "case": "pt_emergency",
+      "expected_mode": "HANDOFF",
+      "mode": "HANDOFF",
+      "language": "pt",
+      "pass": true,
+      "seconds": 61.425,
+      "rule_ids": [
+        "R8"
+      ],
+      "emotion": "Emergencia",
+      "intent": "TRANSACTION_DISPUTE",
+      "slots": {
+        "amount": null,
+        "currency": null,
+        "currency_raw": null,
+        "date_from": null,
+        "date_to": null,
+        "date_expression": null,
+        "merchant": null,
+        "transaction_type": null,
+        "channel": null,
+        "city": null,
+        "country": null,
+        "transaction_id": null,
+        "complaint_id": null,
+        "product_hint": null,
+        "product_last4": null,
+        "amount_is_approximate": false,
+        "foreign_customer_reference": false
+      },
+      "safe_fallback": false,
+      "node_errors": [
+        {
+          "node": "extract_slots",
+          "code": "timeout"
+        }
+      ],
+      "bank_reads": [],
+      "response": "Entendo a urgência. É necessária atenção humana, mas ainda não posso confirmar o encaminhamento. Se possível, bloqueie o cartão pelo canal oficial do emissor.",
+      "stage_trace": [
+        {
+          "node": "detect_context",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "latency_ms": 5437,
+          "model": null
+        },
+        {
+          "node": "detect_attack",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "latency_ms": 6249,
+          "model": null
+        },
+        {
+          "node": "rewrite_decompose",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "latency_ms": 6551,
+          "model": null
+        },
+        {
+          "node": "merge_parallel",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "branches": [
+            "rewrite_decompose",
+            "detect_attack",
+            "detect_context"
+          ]
+        },
+        {
+          "node": "detect_intent",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "latency_ms": 5057,
+          "model": null
+        },
+        {
+          "node": "extract_slots",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "latency_ms": 30004,
+          "model": null
+        },
+        {
+          "node": "retrieve_policy",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "latency_ms": 1,
+          "source": "reviewed_local_chunks"
+        },
+        {
+          "node": "generate_handoff_summary",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "latency_ms": 9064,
+          "model": null
+        },
+        {
+          "node": "generate",
+          "turn_id": "b773ff3b-8e77-496d-baf0-483674e4992b",
+          "latency_ms": 10734,
+          "model": null
+        }
+      ]
+    },
+    {
+      "case": "es_human",
+      "expected_mode": "HANDOFF",
+      "mode": "HANDOFF",
+      "language": "es",
+      "pass": true,
+      "seconds": 31.424,
+      "rule_ids": [
+        "R8"
+      ],
+      "emotion": "Neutro",
+      "intent": "TRANSACTION_DISPUTE",
+      "slots": {
+        "amount": null,
+        "currency": null,
+        "currency_raw": null,
+        "date_from": null,
+        "date_to": null,
+        "date_expression": null,
+        "merchant": null,
+        "transaction_type": "Purchase",
+        "channel": null,
+        "city": null,
+        "country": null,
+        "transaction_id": null,
+        "complaint_id": null,
+        "product_hint": null,
+        "product_last4": null,
+        "amount_is_approximate": false,
+        "foreign_customer_reference": false
+      },
+      "safe_fallback": false,
+      "node_errors": [],
+      "bank_reads": [],
+      "response": "Necesitas atención humana. Aún no puedo confirmar que se haya creado una derivación.",
+      "stage_trace": [
+        {
+          "node": "detect_context",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "latency_ms": 6084,
+          "model": null
+        },
+        {
+          "node": "detect_attack",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "latency_ms": 6487,
+          "model": null
+        },
+        {
+          "node": "rewrite_decompose",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "latency_ms": 7090,
+          "model": null
+        },
+        {
+          "node": "merge_parallel",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "branches": [
+            "rewrite_decompose",
+            "detect_attack",
+            "detect_context"
+          ]
+        },
+        {
+          "node": "detect_intent",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "latency_ms": 5348,
+          "model": null
+        },
+        {
+          "node": "extract_slots",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "latency_ms": 6169,
+          "model": null
+        },
+        {
+          "node": "retrieve_policy",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "latency_ms": 1,
+          "source": "reviewed_local_chunks"
+        },
+        {
+          "node": "generate_handoff_summary",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "latency_ms": 6383,
+          "model": null
+        },
+        {
+          "node": "generate",
+          "turn_id": "7c29953e-2cc9-4a8d-b9d3-1b91092829b0",
+          "latency_ms": 6425,
+          "model": null
+        }
+      ]
+    }
+  ],
+  "usage": [
+    {
+      "stage": "detect_attack",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13559,
+      "completion_tokens": 16
+    },
+    {
+      "stage": "rewrite_decompose",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13842,
+      "completion_tokens": 53
+    },
+    {
+      "stage": "detect_context",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13471,
+      "completion_tokens": 17
+    },
+    {
+      "stage": "detect_intent",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13911,
+      "completion_tokens": 39
+    },
+    {
+      "stage": "extract_slots",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 15572,
+      "completion_tokens": 105
+    },
+    {
+      "stage": "generate",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 19455,
+      "completion_tokens": 115
+    },
+    {
+      "stage": "detect_attack",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13559,
+      "completion_tokens": 16
+    },
+    {
+      "stage": "detect_context",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13471,
+      "completion_tokens": 17
+    },
+    {
+      "stage": "rewrite_decompose",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13842,
+      "completion_tokens": 51
+    },
+    {
+      "stage": "detect_intent",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13910,
+      "completion_tokens": 38
+    },
+    {
+      "stage": "extract_slots",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 15572,
+      "completion_tokens": 106
+    },
+    {
+      "stage": "generate",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 19455,
+      "completion_tokens": 117
+    },
+    {
+      "stage": "detect_context",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13464,
+      "completion_tokens": 17
+    },
+    {
+      "stage": "detect_attack",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13552,
+      "completion_tokens": 16
+    },
+    {
+      "stage": "rewrite_decompose",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13835,
+      "completion_tokens": 37
+    },
+    {
+      "stage": "detect_intent",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13903,
+      "completion_tokens": 31
+    },
+    {
+      "stage": "generate_handoff_summary",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13808,
+      "completion_tokens": 71
+    },
+    {
+      "stage": "generate",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 19424,
+      "completion_tokens": 79
+    },
+    {
+      "stage": "detect_context",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13466,
+      "completion_tokens": 17
+    },
+    {
+      "stage": "detect_attack",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13554,
+      "completion_tokens": 16
+    },
+    {
+      "stage": "rewrite_decompose",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13837,
+      "completion_tokens": 43
+    },
+    {
+      "stage": "detect_intent",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13906,
+      "completion_tokens": 34
+    },
+    {
+      "stage": "extract_slots",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 15567,
+      "completion_tokens": 90
+    },
+    {
+      "stage": "generate_handoff_summary",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 13810,
+      "completion_tokens": 58
+    },
+    {
+      "stage": "generate",
+      "model": "model-GPT-6 Luna",
+      "prompt_tokens": 19426,
+      "completion_tokens": 58
+    }
+  ],
+  "cost_usd": null
+}

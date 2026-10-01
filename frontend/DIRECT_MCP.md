@@ -27,7 +27,7 @@ approval after the handshake, immediately before signing, and before returning
 evidence. Both assertion profiles require `ledger_generation`, exactly 64
 lowercase hexadecimal characters from the existing bank ledger identity.
 
-The private listener proposed in [backend PR #32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32) requires `bank.base_url` to use
+The private listener added in [backend PR #32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32) requires `bank.base_url` to use
 `https://<approved-private-IPv4>:<configured-port>`. The literal IP and explicit
 port must match the listener's configured bind address and expected `Host`
 header. Its TLS certificate must include that same IP in its Subject Alternative

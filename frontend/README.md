@@ -12,6 +12,11 @@ guidance. Legacy worker-bound state requires explicit reconciliation and isolate
 state. A joined direct-host/MCP service image has not been built or deployed;
 local Vite builds and the fictional frontend preview do not establish that runtime.
 
+The explicit Gloria application has a separate native workflow and private
+configuration. See [Gloria setup and qualification](../docs/GLORIA_IMPLEMENTATION.md)
+for its matched frontend/bank mappings, independent ledger, and approved
+continuity settings. The direct-MCP example below configures the default service.
+
 The browser loads every owned transaction page before exposing local search,
 filters or CSV export. Each API page is limited to 500 rows; offsets and snapshot
 checks prevent an older transaction from silently disappearing. Selected chat

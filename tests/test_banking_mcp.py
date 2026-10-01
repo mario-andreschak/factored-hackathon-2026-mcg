@@ -549,11 +549,19 @@ def test_action_r16_utc_window_lower_boundary_and_incomplete_ledger(bank):
     service.actions.coverage_start = int(frozen - 90000)
     service.store.attest_sandbox_coverage(service.actions.coverage_start, "synthetic:bank-test-ledger")
     customer = service.config.principal_customers["alice"]
+    principal = principal_for(service.store, "alice", customer, "session-alice",
+                              "conversation-alice", int(time.time()) + 60)
     with service.store.connect() as db:
         for index, created_at in enumerate([frozen - 86400, frozen - 86400 - 0.001]):
+            snapshot, row = service.repository.owned_transaction_id(principal, targets[index], build)
+            facts = service.repository._visible(row, snapshot)
+            case_id = f"CMP-SBX-TEST{index:04d}"
             db.execute("INSERT INTO sandbox_cases VALUES (?,?,?,?,?,?,?)",
-                (f"CMP-SBX-TEST{index:04d}", customer, targets[index],
-                 "simulated_intake", build, created_at, "{}"))
+                (case_id, customer, targets[index], "simulated_intake", build, created_at, json.dumps(facts)))
+            receipt = {"id": case_id, "kind": "simulated_intake", "simulated": True,
+                       "snapshot": build, "created_at": datetime.fromtimestamp(created_at, timezone.utc).isoformat().replace("+00:00", "Z"),
+                       "status": "received", "transaction": facts}
+            db.execute("INSERT INTO sandbox_case_receipts VALUES (?,?)", (case_id, json.dumps(receipt)))
     prepared = action_call(bank, "prepare_unrecognized_charge",
                            {"transaction_id": targets[2], "snapshot": build})
     assert prepared["risk"]["unrecognized_count_24h"] == 2
@@ -561,6 +569,9 @@ def test_action_r16_utc_window_lower_boundary_and_incomplete_ledger(bank):
     with service.store.connect() as db:
         db.execute("UPDATE sandbox_cases SET created_at=? WHERE transaction_id=?",
                    (frozen - 86400 + 0.001, targets[1]))
+        receipt = json.loads(db.execute("SELECT receipt_json FROM sandbox_case_receipts WHERE case_id='CMP-SBX-TEST0001'").fetchone()[0])
+        receipt["created_at"] = datetime.fromtimestamp(frozen - 86400 + 0.001, timezone.utc).isoformat().replace("+00:00", "Z")
+        db.execute("UPDATE sandbox_case_receipts SET receipt_json=? WHERE case_id='CMP-SBX-TEST0001'", (json.dumps(receipt),))
     threshold = action_call(bank, "prepare_unrecognized_charge",
                             {"transaction_id": targets[2], "snapshot": build})
     assert threshold["risk"]["unrecognized_count_24h"] == 3
@@ -1242,8 +1253,14 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
                 assert not prepared.isError
                 pending = json.loads(prepared.content[0].text)
                 assert pending["transaction"]["transaction_date"].startswith("2026-06-02")
-                assert pending["decision"] == "handoff" and pending["reason"] == "missing_evidence"
-                handoff_args = {"reason": "missing_evidence", "pending_handle": pending["pending_handle"]}
+                # The launcher shares the deterministic action clock with the
+                # parent fixture; authentication and revocation use wall time.
+                event_date = datetime.fromisoformat(pending["transaction"]["transaction_date"]).date()
+                action_now = ACTION_TEST_NOW + (time.time() - ACTION_TEST_WALL_ORIGIN)
+                age = (datetime.fromtimestamp(action_now, timezone.utc).date() - event_date).days
+                expected_reason = "out_of_policy" if age > 120 else "missing_evidence"
+                assert pending["decision"] == "handoff" and pending["reason"] == expected_reason
+                handoff_args = {"reason": expected_reason, "pending_handle": pending["pending_handle"]}
                 created = await client.call_tool("create_verified_handoff", handoff_args,
                     meta=assertion(bank, "create_verified_handoff", handoff_args, scope=["bank:handoff"]))
                 assert not created.isError

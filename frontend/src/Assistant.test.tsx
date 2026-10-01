@@ -116,6 +116,79 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+test("restored request selection sends only its server scope and never confirms through chat", async () => {
+  const first = "q_" + "a".repeat(32),
+    second = "q_" + "b".repeat(32);
+  const queries = [
+    {
+      query_id: first,
+      label: "Compra en Mercado Central",
+      transaction_reference: charge.reference,
+    },
+    {
+      query_id: second,
+      label: "Estado de otra compra",
+      transaction_reference: null,
+    },
+  ];
+  const calls: { url: string; body?: string }[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      calls.push({ url, body: init?.body as string | undefined });
+      if (url === "/api/chat/history")
+        return response({
+          messages: [],
+          active: false,
+          queries,
+          active_query_id: first,
+        });
+      if (url === "/api/chat/messages")
+        return response({
+          reply: "Estado verificado.",
+          queries,
+          active_query_id: second,
+        });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: false }}
+      selected={charge}
+      transactions={[charge]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  const choice = await screen.findByRole("combobox", {
+    name: "Consulta para continuar",
+  });
+  fireEvent.change(choice, { target: { value: second } });
+  const input = screen.getByRole("textbox", {
+    name: "Mensaje para el asistente",
+  });
+  fireEvent.change(input, { target: { value: "sí" } });
+  fireEvent.submit(input.closest("form")!);
+  await screen.findByText("Estado verificado.");
+  expect(
+    JSON.parse(calls.find((call) => call.url === "/api/chat/messages")!.body!),
+  ).toEqual({
+    message: "sí",
+    language: "es",
+    transaction_reference: charge.reference,
+    query_scope_id: second,
+  });
+  expect(calls.some((call) => call.url.startsWith("/api/action/"))).toBe(false);
+  expect(document.body.textContent).not.toContain(first);
+  expect(document.body.textContent).not.toContain(second);
+});
+
 test("Portuguese consent and saved status survive refresh without submitting an action", async () => {
   const calls: { url: string; method: string; body?: string }[] = [];
   vi.stubGlobal(

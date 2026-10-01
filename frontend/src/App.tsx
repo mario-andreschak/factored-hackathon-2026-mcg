@@ -2210,6 +2210,14 @@ export function Assistant({
   onLanguageChange?: (language: ActionLanguage) => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]),
+    [queryScopes, setQueryScopes] = useState<
+      {
+        query_id: string;
+        label: string;
+        transaction_reference?: string | null;
+      }[]
+    >([]),
+    [activeQueryId, setActiveQueryId] = useState<string | null>(null),
     [input, setInput] = useState(""),
     [action, setAction] = useState<ActionResult | null>(null),
     [actionReady, setActionReady] = useState(false),
@@ -2277,15 +2285,20 @@ export function Assistant({
     setActionReady(false);
     setError("");
     function recover() {
-      api<{ messages: ChatMessage[]; active: boolean; limited?: boolean }>(
-        "/api/chat/history",
-        {
-          signal: historyController.signal,
-        },
-      )
+      api<{
+        messages: ChatMessage[];
+        active: boolean;
+        limited?: boolean;
+        queries?: typeof queryScopes;
+        active_query_id?: string | null;
+      }>("/api/chat/history", {
+        signal: historyController.signal,
+      })
         .then((result) => {
           if (historyController.signal.aborted || !alive.current) return;
           setMessages(result.messages);
+          setQueryScopes(result.queries || []);
+          setActiveQueryId(result.active_query_id || null);
           setHistoryLimited(Boolean(result.limited));
           setHistoryReady(true);
           setBusy(result.active);
@@ -2367,17 +2380,24 @@ export function Assistant({
     setBusy(true);
     controller.current = new AbortController();
     try {
-      const result = await api<{ reply: string }>("/api/chat/messages", {
+      const result = await api<{
+        reply: string;
+        queries?: typeof queryScopes;
+        active_query_id?: string | null;
+      }>("/api/chat/messages", {
         method: "POST",
         signal: controller.current.signal,
         body: JSON.stringify({
           message: text,
           language: actionLanguageRef.current,
           ...(selected ? { transaction_reference: selected.reference } : {}),
+          ...(activeQueryId ? { query_scope_id: activeQueryId } : {}),
         }),
       });
       if (!alive.current || controller.current.signal.aborted) return;
       setMessages((m) => [...m, { role: "assistant", text: result.reply }]);
+      setQueryScopes(result.queries || []);
+      setActiveQueryId(result.active_query_id || null);
     } catch (e) {
       if (!alive.current) return;
       if (e instanceof ApiError && e.status === 401) {
@@ -2470,7 +2490,17 @@ export function Assistant({
     try {
       const result = await api<ActionResult>(path, {
         method: "POST",
-        body: JSON.stringify({ ...body, language: actionLanguage }),
+        body: JSON.stringify({
+          ...body,
+          language: actionLanguage,
+          ...((continuesPendingHandle ? action?.query_id : activeQueryId)
+            ? {
+                query_scope_id: continuesPendingHandle
+                  ? action?.query_id
+                  : activeQueryId,
+              }
+            : {}),
+        }),
       });
       if (alive.current) {
         if (
@@ -3044,6 +3074,38 @@ export function Assistant({
           send(input);
         }}
       >
+        {queryScopes.length > 1 && (
+          <select
+            aria-label={
+              actionLanguage === "pt"
+                ? "Consulta a continuar"
+                : "Consulta para continuar"
+            }
+            value={activeQueryId || ""}
+            disabled={busy || actionBusy}
+            onChange={(e) => {
+              setActiveQueryId(e.target.value || null);
+              const reference = queryScopes.find(
+                (query) => query.query_id === e.target.value,
+              )?.transaction_reference;
+              const transaction = transactions.find(
+                (item) => item.reference === reference,
+              );
+              if (transaction) onSelectTransaction(transaction);
+            }}
+          >
+            <option value="">
+              {actionLanguage === "pt"
+                ? "Escolha uma consulta"
+                : "Elige una consulta"}
+            </option>
+            {queryScopes.map((query, index) => (
+              <option key={query.query_id} value={query.query_id}>
+                {index + 1}. {query.label}
+              </option>
+            ))}
+          </select>
+        )}
         <input
           aria-label={ui.messageLabel}
           lang={uiLang}
