@@ -1,8 +1,10 @@
 # Online banking frontend
 
 A customer banking portal built with React and Vite, served together with a
-FastAPI data API. Balances, products and transactions come from Carlos's
-published silver and customer-sharded gold Parquet snapshot. Demo names are aliases.
+FastAPI data API. When configured for the private organizer-data demo, balances,
+products and transactions come from Carlos's published silver and
+customer-sharded gold Parquet snapshot; names are fictional aliases. The isolated
+synthetic invitation preview below uses only generated fictional data.
 
 The browser loads every owned transaction page before exposing local search,
 filters or CSV export. Each API page is limited to 500 rows; offsets and snapshot
@@ -81,10 +83,11 @@ are intentionally disposable.
 This standalone preview uses only repository-generated fictional data. Run it
 as your host user on loopback port 43801, with a separate private state
 directory. It does not start Docker, FLUJO, MCP, a model, or a banking action.
-The generated files remain private to that user; the Compose image runs as a
-different UID and cannot directly read them on POSIX. Use a fresh output path
+Keep the generated files restricted to that host user; the Compose image runs
+as a different UID and cannot directly read them on POSIX. Use a fresh output path
 for each run. The helper refuses a nonempty target and never replaces a
-previous preview.
+previous preview. These commands apply to this checkout; recheck the helper and
+setup after integrating a different source revision.
 
 From the repository root, run these POSIX shell commands:
 
@@ -106,8 +109,9 @@ export BANKING_PUBLIC_ORIGIN=http://localhost:43801
 ```
 
 From the repository root, run these Windows PowerShell commands. The ACL
-set before preparation makes the generated files and state private to the
-current Windows user:
+command removes inherited access and grants the current Windows user full
+control before preparation. A bounded Windows check inspected generated DACLs;
+it did not test effective access from another account:
 
 ```powershell
 python -m venv .venv
