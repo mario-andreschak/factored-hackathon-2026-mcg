@@ -26,12 +26,15 @@ from frontend.server.chat import ChatError, ChatService
 from frontend.server.app import ConfirmActionBody
 from frontend.tests.action_fixtures import action_facts, action_receipt, action_selected
 from gloria_workflow.host import RepositoryBank
+from gloria_workflow.policy import decide
 from gloria_workflow.response import validate_response
+from gloria_workflow.retrieval import retrieve_policy
 from gloria_workflow.runtime import Workflow
 from gloria_workflow.state import ConversationStore
 from tests.test_gloria_acceptance import (
     NOW, ObservedBank, ObservedStages, binding, mode, related, transaction,
     canonical_host_receipt, native_host_receipt,
+    policy_state, SNAPSHOT,
 )
 
 
@@ -56,6 +59,31 @@ def test_recommendations_require_support_not_merely_a_valid_chunk_id(language, m
             source="fictional-policy.md", text="Se pueden comunicar fecha, importe y estado del movimiento propio verificado.")]))
     candidate = response(message, language, ["release-observed-facts"] if cite_unrelated else [])
     assert validate_response(candidate, inputs), "conditional advice without policy support was accepted"
+
+
+@pytest.mark.parametrize("language,message,chunk_id", [
+    ("es", "Puedes confirmar la recepción simulada en el control explícito del portal.", "dispute-03"),
+    ("pt", "Você pode confirmar a solicitação simulada no controle explícito do portal.", "dispute-03"),
+    ("es", "Puedes solicitar una revisión humana.", "handoff-01"),
+    ("pt", "Você pode solicitar uma revisão humana.", "handoff-01"),
+])
+def test_reviewed_canonical_guidance_with_relevant_citation_remains_usable(language, message, chunk_id):
+    inputs = dict(response_mode="INFORM", language=language, clean_query="Consulta del cliente.",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
+        workflow_state={}, policy_context=retrieve_policy("TRANSACTION_DISPUTE", human_required=True))
+    assert chunk_id in {chunk["chunk_id"] for chunk in inputs["policy_context"]}
+    assert validate_response(response(message, language, [chunk_id]), inputs) == []
+
+
+@pytest.mark.parametrize("language,message", [
+    ("es", "Para reclamar, confirma una transferencia en el control explícito del portal."),
+    ("pt", "Para reclamar, confirme uma transferência no controle explícito do portal."),
+])
+def test_reviewed_portal_guidance_cannot_be_repurposed_for_payment_or_transfer(language, message):
+    inputs = dict(response_mode="INFORM", language=language, clean_query="Consulta del cliente.",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
+        workflow_state={}, policy_context=retrieve_policy("TRANSACTION_DISPUTE"))
+    assert validate_response(response(message, language, ["dispute-03"]), inputs)
 
 
 @pytest.mark.parametrize("language,message", [
@@ -108,6 +136,31 @@ def test_new_target_after_verified_terminal_does_not_inherit_prior_receipt(tmp_p
     assert second["workflow_state"]["transaction_id"] == other["transaction_id"]
     assert not second["workflow_state"]["action"]["verified"]
     assert first["workflow_state"]["action"]["result_id"] not in repr(second["response"])
+
+
+@pytest.mark.parametrize("transplant", ["query_id", "request_id", "pending_handle"])
+def test_same_target_snapshot_cannot_share_authority_between_query_capsules(transplant):
+    state = policy_state()
+    state["runtime"].update(query_scope_id="q_release_A", active_query_id="q_release_A")
+    status = native_host_receipt()
+    status.update(query_id="q_release_A", request_id=str(uuid.uuid4()), pending_handle="a"*43)
+    state["tool_results"]["host_action_status"] = status
+    workflow = state["workflow_state"]
+    workflow["pending"].update(type="awaiting_confirmation", target_transaction_id=workflow["transaction_id"],
+        snapshot_id=SNAPSHOT, snapshot_hash=SNAPSHOT, request_id=status["request_id"],
+        host_pending_handle=status["pending_handle"], intent="TRANSACTION_DISPUTE", proposed_action="CREATE_COMPLAINT")
+    result_id = status["receipt"]["id"]
+    workflow.update(action_attempted=True, action_outcome="verified")
+    workflow["action"].update(name="CREATE_COMPLAINT", authorized=True, executed=True,
+        verified=True, result_id=result_id, receipt=dict(verified=True, result_id=result_id))
+    assert decide(state)["response_mode"] == "ACTION_DONE"
+    # All identity/target/snapshot facts stay equal. Only the per-query proof is
+    # transplanted: target equality is not a consent or execution event.
+    if transplant == "query_id":
+        state["runtime"].update(query_scope_id="q_release_B", active_query_id="q_release_B")
+    elif transplant == "request_id": workflow["pending"]["request_id"] = str(uuid.uuid4())
+    else: workflow["pending"]["host_pending_handle"] = "b"*43
+    assert decide(state)["response_mode"] != "ACTION_DONE"
 
 
 QUERY_A = "No reconozco la compra de 25.50 USD en Fictional Orchid."
@@ -177,6 +230,19 @@ def test_multiquery_targets_snapshots_and_pending_are_independent(tmp_path, lang
         assert not inputs["workflow_state"]["action"]["authorized"]
     assert generated[0]["workflow_state"]["pending"]["target_transaction_id"] == TARGET_A
     assert generated[1]["workflow_state"]["pending"]["type"] == "none"
+
+
+def test_replayed_turn_cannot_change_selected_query_scope_before_reads(tmp_path):
+    stages, bank = SeparateQueries(), SeparateBank()
+    runner = Workflow(stages, bank, ConversationStore(tmp_path / "scope-replay.sqlite"), clock=lambda: NOW)
+    state = asyncio.run(runner.run(binding(), QUERY_A + " " + QUERY_B, turn_id="batch"))
+    query_id = state["runtime"]["query_scope_order"][0]
+    asyncio.run(runner.run(binding(), "Consulta el movimiento seleccionado.", turn_id="resume", query_scope_id=query_id))
+    before = (len(stages.calls), len(bank.calls))
+    with pytest.raises(ValueError):
+        asyncio.run(runner.run(binding(), "Consulta el movimiento seleccionado.", turn_id="resume",
+                               query_scope_id=state["runtime"]["query_scope_order"][1]))
+    assert (len(stages.calls), len(bank.calls)) == before
 
 
 @pytest.fixture
@@ -574,15 +640,16 @@ def test_native_tool_closure_keeps_selection_and_identity_in_trusted_context():
             self.calls.append((deepcopy(context), message, deepcopy(kwargs)))
             return dict(response=dict(message="Respuesta verificada.", language="es"),
                 workflow_state=dict(policy_decision=dict(rule_ids=["R13"])), turn=dict(turn_id="same-turn"))
-    selection = dict(transaction_id="TRX-RELEASE_A", snapshot_id="fictional-build", amount="25.50", currency="USD")
+    selection = ChatService._selection(dict(reference="txn_"+"a"*24,
+        occurred_at=NOW.isoformat(), type="Purchase", amount=25.50, currency="USD", status="Approved"))
     context, runner = binding(), Recorder()
     # Selection is an already validated host value, never an extra model argument.
     server = create_mcp_server(runner, context, "original", "same-turn", selection=selection)
     context["customer_id"] = "mutated-foreign-owner"
-    selection["transaction_id"] = "TRX-MUTATED"
+    selection["reference"] = "txn_"+"b"*24
     tools = asyncio.run(server.list_tools())
     assert [item.name for item in tools] == ["gloria_run_turn"]
     assert set(tools[0].inputSchema["properties"]) == {"message"}
     asyncio.run(server.call_tool("gloria_run_turn", dict(message="original")))
     assert runner.calls[0][0]["customer_id"] == binding()["customer_id"]
-    assert runner.calls[0][2]["selection"]["transaction_id"] == "TRX-RELEASE_A"
+    assert runner.calls[0][2]["selection"]["reference"] == "txn_"+"a"*24
