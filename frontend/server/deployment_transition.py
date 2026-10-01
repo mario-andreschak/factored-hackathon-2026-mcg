@@ -346,6 +346,9 @@ def _archive_bank(db: sqlite3.Connection, path: Path) -> str:
         with open(temporary, "r+b") as stream:
             os.fsync(stream.fileno())
         os.link(temporary, path)
+        # The archive name must be durable before the adoption transaction.
+        # A sync failure leaves the original ledger untouched for review.
+        _fsync_parent_directory(path.parent)
         return _file_hash(path)
     finally:
         Path(temporary).unlink(missing_ok=True)

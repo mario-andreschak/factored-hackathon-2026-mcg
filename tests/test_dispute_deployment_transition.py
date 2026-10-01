@@ -458,6 +458,35 @@ def test_missing_or_changed_original_authority_receipt_fails_closed(tmp_path):
                           source_root=root, native_state_dir=kwargs["native_state_dir"])
 
 
+def test_archive_parent_sync_precedes_adoption_and_fault_preserves_original(tmp_path, monkeypatch):
+    kwargs, bank, proof, _ = fixture(tmp_path)
+    original = transition._ledger(bank, legacy=True)
+    plan_file, receipt = tmp_path / "plan.json", tmp_path / "receipt.json"
+    transition.plan(output=plan_file, **kwargs)
+    real_sync = transition._fsync_parent_directory
+    calls = []
+
+    def fail_archive_sync(parent):
+        calls.append(parent)
+        if parent == bank.parent:
+            raise OSError("synthetic archive directory sync failure")
+        real_sync(parent)
+
+    monkeypatch.setattr(transition, "_fsync_parent_directory", fail_archive_sync)
+    with pytest.raises(OSError, match="archive directory sync failure"):
+        transition.apply(plan_file=plan_file, bank_config_file=kwargs["bank_config_file"],
+                         operator_evidence=proof, receipt=receipt)
+    archive = bank.parent / "legacy-bank-before-native.sqlite3"
+    assert calls == [bank.parent]
+    assert archive.exists()
+    assert transition._ledger(archive, legacy=True) == original
+    assert transition._ledger(bank, legacy=True) == original
+    assert not receipt.exists()
+    assert not (bank.parent / "dispute-bank-generation.json").exists()
+    with sqlite3.connect(bank) as db:
+        assert not db.execute("SELECT name FROM sqlite_master WHERE name='sandbox_ledger_identity'").fetchone()
+
+
 def test_directory_sync_platform_branch_and_no_overwrite_after_fault(tmp_path, monkeypatch):
     with monkeypatch.context() as patch:
         patch.setattr(transition.os, "open", lambda *args, **kwargs: (_ for _ in ()).throw(
