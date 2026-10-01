@@ -19,6 +19,28 @@ FLUJO = Path(os.environ.get("FLUJO_ROOT", Path.home() / "Documents/GitHub/FLUJO"
 NODE = shutil.which("node")
 
 
+class GloriaManifestFreshnessTests(unittest.TestCase):
+    """Always runs in CI, even when native FLUJO/Node are unavailable."""
+    def test_versioned_source_artifact_matches_every_protected_source_byte(self):
+        graph = json.loads((REPO / "resources/gloria_workflow.flow.json").read_text(encoding="utf-8"))
+        metadata = graph["gloriaWorkflow"]
+        self.assertEqual(metadata["status"], "source_artifact_not_installed")
+        sources = metadata["stageManifest"]["sourceHashes"]
+        self.assertGreater(len(sources), 30)
+        for relative, expected in sources.items():
+            with self.subTest(source=relative):
+                source = REPO / relative
+                self.assertTrue(source.is_file() and not source.is_symlink())
+                self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(), expected,
+                                 "Protected source changed; regenerate and review the graph")
+        self.assertEqual(metadata["qualificationScope"], "source_only")
+        self.assertFalse(metadata["installed"])
+        self.assertFalse(metadata["actionsEnabled"])
+        self.assertTrue(metadata["exampleBindings"])
+        mcp = next(node for node in graph["nodes"] if node["type"] == "mcp")
+        self.assertEqual(mcp["data"]["properties"]["enabledTools"], ["gloria_run_turn"])
+
+
 def node_run(*args):
     return subprocess.run([NODE, *args], cwd=REPO, text=True, encoding="utf-8",
                           capture_output=True, timeout=45, check=False)
@@ -89,6 +111,8 @@ class GloriaGraphTests(unittest.TestCase):
         self.assertIn("frontend/server/action.py", sources)
         self.assertIn("frontend/server/chat.py", sources)
         self.assertIn("frontend/server/app.py", sources)
+        self.assertIn("scripts/native_gloria_qualification.py", sources)
+        self.assertIn("scripts/native_gloria_qualification.ts", sources)
         self.assertIn("resources/policies/transaction_dispute_policy.md", sources)
         for relative, expected in sources.items():
             self.assertEqual(hashlib.sha256((REPO / relative).read_bytes()).hexdigest(), expected)
@@ -194,7 +218,7 @@ try {
  const unchanged=build(process.argv[1],DEFAULT_BINDINGS,root);
  assert.equal(unchanged.report.graphHash,original.report.graphHash);
  const cases=['resources/policies/transaction_dispute_policy.md','requirements-gloria.txt',
-  'banking_mcp/actions.py','frontend/server/chat.py','frontend/server/app.py'];
+  'banking_mcp/actions.py','frontend/server/chat.py','frontend/server/app.py','scripts/native_gloria_qualification.py'];
  for(const relative of cases) {
   const filename=path.join(root,relative),before=fs.readFileSync(filename);
   fs.appendFileSync(filename,'\\n# Independent protected-source mutation for qualification.\\n');
@@ -218,7 +242,7 @@ try {
 """
         result = node_run("--input-type=module", "-e", code, str(FLUJO))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout), {"mutations": 5, "modelIndependent": True})
+        self.assertEqual(json.loads(result.stdout), {"mutations": 6, "modelIndependent": True})
 
 
 if __name__ == "__main__":
