@@ -12,6 +12,7 @@ COPY qualification/requirements-gloria.txt /tmp/requirements-gloria.txt
 COPY qualification/frontend/requirements.txt /tmp/frontend/requirements.txt
 COPY qualification/requirements-pipeline.txt qualification/requirements-s3.txt /tmp/
 RUN python3 -m pip install --no-cache-dir -r /tmp/requirements-gloria.txt
+COPY qualification/requirements-mcp.txt /tmp/requirements-mcp.txt
 COPY qualification/gloria_workflow /qualification/gloria_workflow
 COPY qualification/resources /qualification/resources
 COPY qualification/config /qualification/config
@@ -24,6 +25,7 @@ COPY qualification/graph_config_v3.yaml /qualification/graph_config_v3.yaml
 COPY qualification/native_gloria_qualification.py /qualification/native_gloria_qualification.py
 COPY qualification/qualify_gloria.py /qualification/qualify_gloria.py
 COPY qualification/native_gloria_capability_probe.mjs qualification/native_gloria_bridge_loader.mjs qualification/native_gloria_compatibility_probe.mjs /qualification/
+COPY qualification/native_gloria_revocation_probe.mjs /qualification/
 COPY qualification/build_gloria_graph.mjs qualification/native_gloria_qualification.mjs qualification/native_gloria_qualification.Dockerfile /qualification/
 COPY qualification/bin /qualification/bin
 RUN chmod 0555 /qualification/bin/codex

@@ -67,13 +67,21 @@ state = await port.run(
 host and ConversationStore and installs `StageAdapters(model)` with a bounded
 stage timeout appropriate to the qualification. Trusted selections remain in
 the application call; they never become model/tool arguments. The returned
-state contains the application's validated response. ChatService consumes
+state contains the application's validated response. GloriaChatService consumes
 this state directly, avoiding outer model paraphrasing.
 
-The host creates a private language-only admission for the turn and removes it
-in `finally`. Registry edits use a kernel lock released after process death,
+The host creates a private language-only admission for the turn and revokes it
+in `finally` before removing its registry record. Revocation publishes an
+independent fsynced 0600 marker named by the stage token's SHA256. The worker
+checks that marker before and after admission/body awaits and at every execution
+fence. Unexpected marker I/O denies execution. A permanent registry sharing
+conflict therefore leaves a denied record; it cannot extend stage authority.
+Markers are private, monotonic and scoped to one stage token. Registry edits use a kernel lock released after process death,
 0600 temporary files, atomic replacement and POSIX directory fsync. An old
-marker cannot prevent restart. Never serve the per-turn closure on shared HTTP
+marker cannot prevent restart. Windows replacement retries transient reader
+sharing conflicts for at most five seconds while retaining the writer lock and
+the same fsynced file; permanent failures preserve the original registry and
+remove the temporary file. Never serve the per-turn closure on shared HTTP
 or derive identity, selection or consent from model text.
 
 ## Reproduction
@@ -103,8 +111,11 @@ reads, transport replay, restart replay, foreign owner/session, poisoned
 native state and slow-body concurrent replay. Full synthetic diagnostics stay
 under ignored `private/`; public reports contain only reviewed projections and
 redacted measurements. Publication requires all fourteen capability and fourteen
-boundary cases to pass, installed source equality and an image credential-file
-audit. The public allowlist excludes private paths, admissions, tokens, raw
+boundary cases to pass, four installed no-provider revocation probes, five exact
+adapter fence probes, installed source equality and an image credential-file
+audit. The cancellation probe uses an actual Windows reader denying delete
+sharing, then verifies that a late callback is denied despite its retained
+registry record and that sibling admissions survive. The public allowlist excludes private paths, admissions, tokens, raw
 model content and responses; incomplete qualifications cannot be published.
 
 `--retain-runtime true` retains a successful qualification for joined HTTP
@@ -115,3 +126,29 @@ container and cleanup paths. Stop only that named owned container and remove
 only its checked private auth copy after joined tests. Final source freeze
 requires a fresh context/image and a final installed report; earlier passing
 runs do not qualify later source edits.
+
+## Frozen source validation
+
+The final isolated qualification uses application source
+`abc90682faa5cb496c9cd3476ec7811a7e5c9281`, image
+`sha256:402581eaa5df62914d91acbee60c2cdba63aacdfcca64957637825d3387243c7`,
+and external source-manifest SHA256
+`f8757e1e059370c93b32258d169d2faecbcde18b2de786e5a5bef91b91bde453`.
+All 87 application files and 1,410 FLUJO files match their installed bytes.
+The bank requirements file is copied and hashed as provenance; the image
+installs the independent Gloria application dependency closure.
+
+The [sanitized installed report](qualification/gloria-native-release-2026-10-01.json)
+records 37 passing checks: fourteen workflow boundary cases, fourteen native
+capability probes, four revocation probes and five exact adapter fences.
+The real provider returned exact validated Spanish and Portuguese tool
+projections. Timeout used the guarded fallback with zero bank reads; restart,
+foreign-session, replay, poisoned-state and late-callback cases denied execution.
+These workflow cases use the public synthetic development fixture and expose
+no banking action tools.
+
+The separately retained joined listener's readiness report has zero workflow
+cases and deliberately reports qualification false. Its installed pins and
+capability/revocation/fence gates pass, permitting the separate joined
+application qualification. It is distinct from the passing full boundary
+report. Shared deployment remains unactivated.

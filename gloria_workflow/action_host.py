@@ -20,6 +20,7 @@ from banking_mcp.security import BankError, Principal
 from frontend.server.action import project_action_result, verified_handoff
 from frontend.server.chat import ChatError
 from .state import TrustedBinding, new_state
+from .bank_read import pin_bank_generation
 
 
 class BankingActionHost:
@@ -29,6 +30,7 @@ class BankingActionHost:
         self.source_root, self.repository = source_root, None
         if bank_service.config.mode != "delegated":
             raise ValueError("delegated banking sandbox required")
+        self.ledger_generation = pin_bank_generation(bank_service, retained_state_paths=(workflow_store.path,))
         with self.bank.store.connect() as db:
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS gloria_host_actions(
@@ -84,7 +86,7 @@ class BankingActionHost:
             conversation = row["conversation_id"]
             if not conversation or (not revoke and payload.get("conversationId") != conversation):
                 raise ValueError()
-            principal = Principal(subject, customer, sid, conversation, expiry)
+            principal = Principal(subject, customer, sid, conversation, expiry, self.ledger_generation)
             if not revoke:
                 from .bank_read import assert_bank_principal
                 assert_bank_principal(self.bank, principal)
@@ -120,7 +122,7 @@ class BankingActionHost:
 
     def _record(self, principal, request_id, query_id, *, handle=None, target=None, snapshot=None, handoff_id=None):
         hashed = hashlib.sha256(handle.encode()).hexdigest() if handle else None
-        with self.bank.store.connect() as db:
+        with self.bank.store.authority(principal, write=True) as db:
             previous = db.execute("SELECT query_id,pending_hash,target,snapshot FROM gloria_host_actions WHERE binding=? AND request_id=?",
                 (principal.binding(), request_id)).fetchone()
             expected = (query_id, hashed, target, snapshot)
@@ -134,7 +136,7 @@ class BankingActionHost:
 
     def _pending_lineage(self, principal, handle, query_id=None, *, confirm=False):
         hashed = hashlib.sha256(handle.encode()).hexdigest()
-        with self.bank.store.connect() as db:
+        with self.bank.store.authority(principal) as db:
             row = db.execute("SELECT request_id,query_id,target,snapshot FROM gloria_host_actions WHERE binding=? AND pending_hash=?",
                 (principal.binding(), hashed)).fetchone()
             cancelled = db.execute("SELECT 1 FROM gloria_host_cancelled WHERE binding=? AND pending_hash=?",
@@ -147,7 +149,7 @@ class BankingActionHost:
         if result.get("state") != "created":
             return {"state": "handoff_unverified"}
         native = result["handoff"]
-        with self.bank.store.connect() as db:
+        with self.bank.store.authority(principal) as db:
             existing = db.execute("SELECT query_id,request_id,packet_json FROM gloria_handoff_packets "
                 "WHERE binding=? AND handoff_id=?", (principal.binding(), native["id"])).fetchone()
         if existing:
@@ -217,8 +219,7 @@ class BankingActionHost:
             encoded = json.dumps(packet, ensure_ascii=False, allow_nan=False, sort_keys=True)
         except (ValueError, TypeError, KeyError):
             raise BankError("action_unverified") from None
-        with self.bank.store.connect() as db:
-            self.bank.actions._assert_action_authorized(db, principal)
+        with self.bank.store.authority(principal, write=True) as db:
             db.execute("INSERT OR IGNORE INTO gloria_handoff_packets VALUES (?,?,?,?,?)",
                 (principal.binding(), native["id"], query_id, payload["requestId"], encoded))
             saved = db.execute("SELECT packet_json FROM gloria_handoff_packets WHERE binding=? AND handoff_id=?",
@@ -280,7 +281,7 @@ class BankingActionHost:
         revoke = path == "/v1/banking/session/revoke"
         principal, row = self._admission(chat, headers, payload, revoke=revoke)
         if revoke:
-            self.bank.store.revoke(principal.session)
+            self.bank.store.revoke(principal.session, principal=principal)
             return {"revoked": True}
         if path != "/v1/banking/action":
             raise ChatError("action_unavailable", 503, "La solicitud no está disponible.")
@@ -301,13 +302,12 @@ class BankingActionHost:
             row = db.execute("SELECT * FROM chat_sessions WHERE session_id=?", (sid,)).fetchone()
         if not row or row["revoked"]:
             raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
-        principal = Principal(subject, customer, sid, row["conversation_id"], expiry)
+        principal = Principal(subject, customer, sid, row["conversation_id"], expiry, self.ledger_generation)
         from .bank_read import assert_bank_principal
         assert_bank_principal(self.bank, principal)
         self._pending_lineage(principal, handle, query_id)
         hashed = hashlib.sha256(handle.encode()).hexdigest()
-        with self.bank.store.connect() as db:
-            db.execute("BEGIN IMMEDIATE")
+        with self.bank.store.authority(principal, write=True) as db:
             pending = db.execute("SELECT confirmation_state FROM action_pending WHERE id=? AND binding=?", (hashed, principal.binding())).fetchone()
             if not pending or pending[0] != "prepared":
                 return False  # An attempted write remains uncertain and readable.

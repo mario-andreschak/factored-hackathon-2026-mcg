@@ -1,0 +1,1758 @@
+{
+  "application_sources_after": {
+    "banking_mcp/__init__.py": "58aec63d481988945236d968d44584a2c3cfd46da96b144975d14bdc05c43cfb",
+    "banking_mcp/__main__.py": "34fa7946bc924e98d4c3f0e4b06ab5f2f864fbbab2f38b1a13d53861b51a6825",
+    "banking_mcp/actions.py": "9439f3b00769c07bd249de73264544c692c3c5ad35f4eca5395b90eda18c02fc",
+    "banking_mcp/config.py": "70cdff491ef6e07d68ba2725602432b32d601c4c9a22e1ca3cf0421b6ead8ceb",
+    "banking_mcp/private_host.py": "e80051b6510e3782cc0d438a609ea4bfb19d91c1caa056ac5a7dd168ea46a096",
+    "banking_mcp/repository.py": "a1882aef706b094f47fdadb50dc44bf2a1f61aa7369f02bc36ea878249577d14",
+    "banking_mcp/security.py": "eba078084ce9cb1e7808486d95c3e02f791ae3caaf2860937126b7cc495a91f8",
+    "banking_mcp/server.py": "d2853a38ab302acbf08798001dc91037fb72beb361ba486ee6847affd55434fb",
+    "banking_mcp/service.py": "3c69ff7277e5bce17437d0d43fb8307bb53a3694b065f992201f4fa830c1a576",
+    "config/policy_rules.yaml": "197dc67a00450282f78f34768c8c4c6803aad69094272abdb80c34da71b06b34",
+    "contracts/policy_engine.md": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31",
+    "contracts/state_schema.md": "89e1c1aad37f3868cd886ee9efd0e8beeb92f9dff0adfd259319b88f2b0b58eb",
+    "contracts/tools.md": "95c4896078eff5acb024badaacd3bfcdcb1acdaddf2b6d2ba2c9c43c7c60b085",
+    "frontend/requirements.txt": "4c1899ff026ac3f105e762ff1bc857560deec66ade84ec1a1aebc68f6f485b82",
+    "frontend/server/__init__.py": "919a040a827e9189ba1677a070b94e6fe19239b701b8d86c0d8f13e3f679c1f4",
+    "frontend/server/action.py": "57b03efa13a5016ee23b56ea073e941999253989abf00f3b5591fd8cea10a95d",
+    "frontend/server/app.py": "a93721ae8a9340f6ecfd1a849f992f83e70562482165d630accde15d0cce6cee",
+    "frontend/server/bank_controller.py": "511459c61447b11a0adb572639aaaa977b1ffb782fe3db419f853c7b1a447d51",
+    "frontend/server/bank_protocol.py": "e863218bb01691c7f3d7cba1e6d7f05e3456972b03a207b597a9c88b2cca2165",
+    "frontend/server/bank_rpc.py": "d67942b8349991c2ea718089830bdc3ab68973aebcc08f71d38ef04d3f58baba",
+    "frontend/server/chat.py": "cd4352ad81fbd6b44b39f84185e83e174f8dd0fdca2db005bc31386a0318551e",
+    "frontend/server/config.py": "fa3e42fc0ca59473303597a01426dd64f49ad4484ab08b50a5f35ef8cb4d1878",
+    "frontend/server/gloria_chat.py": "9ac2bfd887f4977768463d99c270f62450033063c4352a8013d585bd15b9021c",
+    "frontend/server/language.py": "8a7cc058a69e437a68fddefe1618b8956304700b7a1f225663260d8d5cc2264a",
+    "frontend/server/repository.py": "7f52e691340ef5882a050c967e0149be9a27b7f7c46ae95aeb82b9bf2ad58110",
+    "frontend/server/review.py": "e44ea22a9a8f61aa9aa78fd3e80fbfdabebdfede14b2d2b053f8f7a1a703948d",
+    "frontend/server/state.py": "b1bb9e7bbea790f4e60effb30903e81ee32e19a370b4c1fa9ad37cbd7dbe0937",
+    "gloria_workflow/__init__.py": "b696fcc6d38de6dfdb0709d3789cf39fc9d973c6066b749df2c5d0f4de60d034",
+    "gloria_workflow/action_host.py": "14c8558fd95be9bb4d28bda3b2da3eec7df4143fe3604f0562c0fc037a82669a",
+    "gloria_workflow/bank_read.py": "d9a4a88fe5f365888c5692a0d0c4ad71ada9167988ef581ea7cedbd354ce3ed9",
+    "gloria_workflow/handoff.py": "1f88cb40be2a1bcf0d217968520507862de2951dc3d2a1ba0b01cfe54982485c",
+    "gloria_workflow/host.py": "81ea00703d36b9c0820ac157ba05331b9ba614d73b5d2702e67cfed2a845e6ae",
+    "gloria_workflow/model.py": "2263017f07055fee04795a9412dc02d9f461ca0d22bc1cb1d1e8fb74638f343a",
+    "gloria_workflow/policy.py": "5bc726a18b8a32620fd30649a7b41cf65dd2ad38ec43873f861d491401ecef86",
+    "gloria_workflow/prompts.py": "02ea13c941022957989e2bc39ae082ec0ff8539dc1bdb3083f5ad56a53a67fb4",
+    "gloria_workflow/response.py": "13913a91cf634b0a718163391c848ce1047aeb1e51c9322ec5f15e246dfcfa88",
+    "gloria_workflow/retrieval.py": "32773a7806280db3eff8407dfa41ee4a142e34a0eb3367e4e78915399e9773fd",
+    "gloria_workflow/runtime.py": "04c5b642fabc2ac38bc4cfd4109750ad017d3dc6929d3ff7bdf5f43827b8e532",
+    "gloria_workflow/state.py": "fd9eeba78311948671e1e40fd34aadd9d464a458199a484da7e6727918094f4f",
+    "gloria_workflow/tool.py": "9d93554fe5506a84c554f439bb9b09590d36513db0348c49bea38966e46deed5",
+    "pipeline/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pipeline/__main__.py": "07338b5bcb70d8d37b976de0b634252472a677d14ed2b453ffd1baa75feada41",
+    "pipeline/bronze.py": "92fdbcebd827d0abf75af414883f0109e4a26e3f06f9eec25e4ae0331fdbf7b4",
+    "pipeline/common.py": "5b36a52f78cbfe6c5f65f78252bebd344e5d4a73b77a32104eca8b9f28a53cea",
+    "pipeline/contracts.yaml": "98f0add581f437c79a119682a90723451722de025b6af867e892487d8693972a",
+    "pipeline/fixture.py": "822f4dda6bbe1392d273a21fbf2ce80d2cde82d5edb4d99725abc799ea072482",
+    "pipeline/gold.py": "0c4b7b53e7b1efdf4146b57e921659372526915bdddd0bfa64cae28142064961",
+    "pipeline/lookup.py": "efa986b587dff74d902d0f2eb39002fc6964ff5a34109cb9de0bf46d00831888",
+    "pipeline/prepare_invite_preview.py": "ba01cbcdd0289d45f58b87c8b66677aa6db2741b1d639210e87805e2eb861769",
+    "pipeline/prototype_fixture.py": "2c5d61311acdbec3b0fced9fa17214e5b56ec1ce74ef9d9ab9fd879aa7c5d0eb",
+    "pipeline/report.py": "0d8a026835da5e8dc73ef62db8a00f384794c7696e8ef739c5ae0d0b7ebafb0a",
+    "pipeline/silver.py": "6dc66682d3ece6170311f6c89ef26702fa244dc37fcb1b6b0820d6704db0c595",
+    "pipeline/verify.py": "b47f7ad20aca130f51ef6c67820f24356cd7bfd061f2ed6a039012d66d0c4d92",
+    "pipeline/writer.py": "730cf37b50a6e3b7be272cbb821448fdc8011047df70726d04b08d5131d818d3",
+    "requirements-gloria.txt": "8e0220820a2f16cceb17496d03511b09da897b9433071eaa937346fec46b3659",
+    "requirements-pipeline.txt": "53e938aaf09f111a691413530abf3d193a82975c30e3d64733db30dbf398dda0",
+    "resources/policies/complaint_handling_policy.md": "4e37e1a2e9abe24fe9acf5c9f2c97eba8d5dbd4a9ed7af03a54cabd7d74940ff",
+    "resources/policies/customer_verification_policy.md": "6363b5b1fc1cc36541fbc78c51afd0924dcd6c3453470bea8fae728f399dd81c",
+    "resources/policies/fraud_escalation_policy.md": "49905ec77891665fc1fb52a53c2aefcaadd63f85fc77a7f5d3f944b2d49011ba",
+    "resources/policies/human_handoff_policy.md": "ffd6ebbd8ec61a5fbcb2753f6b676fb6cd4ead4c84d5c0d57d08431e5a42b673",
+    "resources/policies/transaction_dispute_policy.md": "740e7ccc8dcfef5251047e3702699831f0d45988b8f5b7455fb082b0d0cd8085",
+    "resources/prompts/attack_detection_prompt.yml": "ebf66676b2f2d783422a5fa7f08f4218523dc46f1a98bc92e4d7413254fb9b46",
+    "resources/prompts/clarification_resolution_prompt.yml": "459b8b3e142e93dff9ba90517fca9544a86405e4b2d5c43d48089fb33eef1d66",
+    "resources/prompts/context_detection_prompt.yml": "c5343a9987af82af44d8b1fdbc1a451996d63472fa8c8ea0597e7d6824a4adbe",
+    "resources/prompts/fallback_templates.yaml": "dd6cf378c5ae026c986813b0e74b7391cf7e0e672977a400278aeb61cb10452d",
+    "resources/prompts/generator_prompt_v3.yml": "6b76115bbd49b2554fdca3e3c88b6565245cae79b7771c687ed34c5dbed4829a",
+    "resources/prompts/handoff_summary_prompt.yml": "78faf7b6127b061e0184139b9d5e497fec50045e089599ceb45112065aca9596",
+    "resources/prompts/intent_detection_prompt.yml": "f2a1dacc022bcc3f26ac664534d2d5110a26bbd9d4c2253be562726077f03bfb",
+    "resources/prompts/rewrite_decompose_prompt.yml": "6a7a55f87a2be53d1b23556b486369d719937d5f9186c449c1a3d99f7957ff06",
+    "resources/prompts/slot_extraction_prompt.yml": "92fa8a6ac29e85841b4ea49f76e0c3fb02c29cd47d723c9c685a1d3956348012",
+    "scripts/native_gloria_qualification.mjs": "897e14348d2ae21e872627b4060da192ec9078566e7609b7c59440abd3cbf9ab",
+    "scripts/native_gloria_qualification.py": "852af16a3b3314cd5d427b71a132da78c62d88fc43557fcbac4aeb57dce6db90",
+    "scripts/native_gloria_qualification.ts": "43e89fdeac24d406d883534729c96ae9ccee0e1e5c333912d4f5efaba8756bc6",
+    "scripts/qualify_gloria_app.py": "f9a224b3c57e892e6214335558d8c3cffb1b41a2783bac863b48a9c4b56c6590",
+    "scripts/run_gloria.py": "6be3c34c4f55c1d2dd25c19f74c0aaa156c97a99cff096c0c6cb175e3b59e7ee"
+  },
+  "application_sources_before": {
+    "banking_mcp/__init__.py": "58aec63d481988945236d968d44584a2c3cfd46da96b144975d14bdc05c43cfb",
+    "banking_mcp/__main__.py": "34fa7946bc924e98d4c3f0e4b06ab5f2f864fbbab2f38b1a13d53861b51a6825",
+    "banking_mcp/actions.py": "9439f3b00769c07bd249de73264544c692c3c5ad35f4eca5395b90eda18c02fc",
+    "banking_mcp/config.py": "70cdff491ef6e07d68ba2725602432b32d601c4c9a22e1ca3cf0421b6ead8ceb",
+    "banking_mcp/private_host.py": "e80051b6510e3782cc0d438a609ea4bfb19d91c1caa056ac5a7dd168ea46a096",
+    "banking_mcp/repository.py": "a1882aef706b094f47fdadb50dc44bf2a1f61aa7369f02bc36ea878249577d14",
+    "banking_mcp/security.py": "eba078084ce9cb1e7808486d95c3e02f791ae3caaf2860937126b7cc495a91f8",
+    "banking_mcp/server.py": "d2853a38ab302acbf08798001dc91037fb72beb361ba486ee6847affd55434fb",
+    "banking_mcp/service.py": "3c69ff7277e5bce17437d0d43fb8307bb53a3694b065f992201f4fa830c1a576",
+    "config/policy_rules.yaml": "197dc67a00450282f78f34768c8c4c6803aad69094272abdb80c34da71b06b34",
+    "contracts/policy_engine.md": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31",
+    "contracts/state_schema.md": "89e1c1aad37f3868cd886ee9efd0e8beeb92f9dff0adfd259319b88f2b0b58eb",
+    "contracts/tools.md": "95c4896078eff5acb024badaacd3bfcdcb1acdaddf2b6d2ba2c9c43c7c60b085",
+    "frontend/requirements.txt": "4c1899ff026ac3f105e762ff1bc857560deec66ade84ec1a1aebc68f6f485b82",
+    "frontend/server/__init__.py": "919a040a827e9189ba1677a070b94e6fe19239b701b8d86c0d8f13e3f679c1f4",
+    "frontend/server/action.py": "57b03efa13a5016ee23b56ea073e941999253989abf00f3b5591fd8cea10a95d",
+    "frontend/server/app.py": "a93721ae8a9340f6ecfd1a849f992f83e70562482165d630accde15d0cce6cee",
+    "frontend/server/bank_controller.py": "511459c61447b11a0adb572639aaaa977b1ffb782fe3db419f853c7b1a447d51",
+    "frontend/server/bank_protocol.py": "e863218bb01691c7f3d7cba1e6d7f05e3456972b03a207b597a9c88b2cca2165",
+    "frontend/server/bank_rpc.py": "d67942b8349991c2ea718089830bdc3ab68973aebcc08f71d38ef04d3f58baba",
+    "frontend/server/chat.py": "cd4352ad81fbd6b44b39f84185e83e174f8dd0fdca2db005bc31386a0318551e",
+    "frontend/server/config.py": "fa3e42fc0ca59473303597a01426dd64f49ad4484ab08b50a5f35ef8cb4d1878",
+    "frontend/server/gloria_chat.py": "9ac2bfd887f4977768463d99c270f62450033063c4352a8013d585bd15b9021c",
+    "frontend/server/language.py": "8a7cc058a69e437a68fddefe1618b8956304700b7a1f225663260d8d5cc2264a",
+    "frontend/server/repository.py": "7f52e691340ef5882a050c967e0149be9a27b7f7c46ae95aeb82b9bf2ad58110",
+    "frontend/server/review.py": "e44ea22a9a8f61aa9aa78fd3e80fbfdabebdfede14b2d2b053f8f7a1a703948d",
+    "frontend/server/state.py": "b1bb9e7bbea790f4e60effb30903e81ee32e19a370b4c1fa9ad37cbd7dbe0937",
+    "gloria_workflow/__init__.py": "b696fcc6d38de6dfdb0709d3789cf39fc9d973c6066b749df2c5d0f4de60d034",
+    "gloria_workflow/action_host.py": "14c8558fd95be9bb4d28bda3b2da3eec7df4143fe3604f0562c0fc037a82669a",
+    "gloria_workflow/bank_read.py": "d9a4a88fe5f365888c5692a0d0c4ad71ada9167988ef581ea7cedbd354ce3ed9",
+    "gloria_workflow/handoff.py": "1f88cb40be2a1bcf0d217968520507862de2951dc3d2a1ba0b01cfe54982485c",
+    "gloria_workflow/host.py": "81ea00703d36b9c0820ac157ba05331b9ba614d73b5d2702e67cfed2a845e6ae",
+    "gloria_workflow/model.py": "2263017f07055fee04795a9412dc02d9f461ca0d22bc1cb1d1e8fb74638f343a",
+    "gloria_workflow/policy.py": "5bc726a18b8a32620fd30649a7b41cf65dd2ad38ec43873f861d491401ecef86",
+    "gloria_workflow/prompts.py": "02ea13c941022957989e2bc39ae082ec0ff8539dc1bdb3083f5ad56a53a67fb4",
+    "gloria_workflow/response.py": "13913a91cf634b0a718163391c848ce1047aeb1e51c9322ec5f15e246dfcfa88",
+    "gloria_workflow/retrieval.py": "32773a7806280db3eff8407dfa41ee4a142e34a0eb3367e4e78915399e9773fd",
+    "gloria_workflow/runtime.py": "04c5b642fabc2ac38bc4cfd4109750ad017d3dc6929d3ff7bdf5f43827b8e532",
+    "gloria_workflow/state.py": "fd9eeba78311948671e1e40fd34aadd9d464a458199a484da7e6727918094f4f",
+    "gloria_workflow/tool.py": "9d93554fe5506a84c554f439bb9b09590d36513db0348c49bea38966e46deed5",
+    "pipeline/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pipeline/__main__.py": "07338b5bcb70d8d37b976de0b634252472a677d14ed2b453ffd1baa75feada41",
+    "pipeline/bronze.py": "92fdbcebd827d0abf75af414883f0109e4a26e3f06f9eec25e4ae0331fdbf7b4",
+    "pipeline/common.py": "5b36a52f78cbfe6c5f65f78252bebd344e5d4a73b77a32104eca8b9f28a53cea",
+    "pipeline/contracts.yaml": "98f0add581f437c79a119682a90723451722de025b6af867e892487d8693972a",
+    "pipeline/fixture.py": "822f4dda6bbe1392d273a21fbf2ce80d2cde82d5edb4d99725abc799ea072482",
+    "pipeline/gold.py": "0c4b7b53e7b1efdf4146b57e921659372526915bdddd0bfa64cae28142064961",
+    "pipeline/lookup.py": "efa986b587dff74d902d0f2eb39002fc6964ff5a34109cb9de0bf46d00831888",
+    "pipeline/prepare_invite_preview.py": "ba01cbcdd0289d45f58b87c8b66677aa6db2741b1d639210e87805e2eb861769",
+    "pipeline/prototype_fixture.py": "2c5d61311acdbec3b0fced9fa17214e5b56ec1ce74ef9d9ab9fd879aa7c5d0eb",
+    "pipeline/report.py": "0d8a026835da5e8dc73ef62db8a00f384794c7696e8ef739c5ae0d0b7ebafb0a",
+    "pipeline/silver.py": "6dc66682d3ece6170311f6c89ef26702fa244dc37fcb1b6b0820d6704db0c595",
+    "pipeline/verify.py": "b47f7ad20aca130f51ef6c67820f24356cd7bfd061f2ed6a039012d66d0c4d92",
+    "pipeline/writer.py": "730cf37b50a6e3b7be272cbb821448fdc8011047df70726d04b08d5131d818d3",
+    "requirements-gloria.txt": "8e0220820a2f16cceb17496d03511b09da897b9433071eaa937346fec46b3659",
+    "requirements-pipeline.txt": "53e938aaf09f111a691413530abf3d193a82975c30e3d64733db30dbf398dda0",
+    "resources/policies/complaint_handling_policy.md": "4e37e1a2e9abe24fe9acf5c9f2c97eba8d5dbd4a9ed7af03a54cabd7d74940ff",
+    "resources/policies/customer_verification_policy.md": "6363b5b1fc1cc36541fbc78c51afd0924dcd6c3453470bea8fae728f399dd81c",
+    "resources/policies/fraud_escalation_policy.md": "49905ec77891665fc1fb52a53c2aefcaadd63f85fc77a7f5d3f944b2d49011ba",
+    "resources/policies/human_handoff_policy.md": "ffd6ebbd8ec61a5fbcb2753f6b676fb6cd4ead4c84d5c0d57d08431e5a42b673",
+    "resources/policies/transaction_dispute_policy.md": "740e7ccc8dcfef5251047e3702699831f0d45988b8f5b7455fb082b0d0cd8085",
+    "resources/prompts/attack_detection_prompt.yml": "ebf66676b2f2d783422a5fa7f08f4218523dc46f1a98bc92e4d7413254fb9b46",
+    "resources/prompts/clarification_resolution_prompt.yml": "459b8b3e142e93dff9ba90517fca9544a86405e4b2d5c43d48089fb33eef1d66",
+    "resources/prompts/context_detection_prompt.yml": "c5343a9987af82af44d8b1fdbc1a451996d63472fa8c8ea0597e7d6824a4adbe",
+    "resources/prompts/fallback_templates.yaml": "dd6cf378c5ae026c986813b0e74b7391cf7e0e672977a400278aeb61cb10452d",
+    "resources/prompts/generator_prompt_v3.yml": "6b76115bbd49b2554fdca3e3c88b6565245cae79b7771c687ed34c5dbed4829a",
+    "resources/prompts/handoff_summary_prompt.yml": "78faf7b6127b061e0184139b9d5e497fec50045e089599ceb45112065aca9596",
+    "resources/prompts/intent_detection_prompt.yml": "f2a1dacc022bcc3f26ac664534d2d5110a26bbd9d4c2253be562726077f03bfb",
+    "resources/prompts/rewrite_decompose_prompt.yml": "6a7a55f87a2be53d1b23556b486369d719937d5f9186c449c1a3d99f7957ff06",
+    "resources/prompts/slot_extraction_prompt.yml": "92fa8a6ac29e85841b4ea49f76e0c3fb02c29cd47d723c9c685a1d3956348012",
+    "scripts/native_gloria_qualification.mjs": "897e14348d2ae21e872627b4060da192ec9078566e7609b7c59440abd3cbf9ab",
+    "scripts/native_gloria_qualification.py": "852af16a3b3314cd5d427b71a132da78c62d88fc43557fcbac4aeb57dce6db90",
+    "scripts/native_gloria_qualification.ts": "43e89fdeac24d406d883534729c96ae9ccee0e1e5c333912d4f5efaba8756bc6",
+    "scripts/qualify_gloria_app.py": "f9a224b3c57e892e6214335558d8c3cffb1b41a2783bac863b48a9c4b56c6590",
+    "scripts/run_gloria.py": "6be3c34c4f55c1d2dd25c19f74c0aaa156c97a99cff096c0c6cb175e3b59e7ee"
+  },
+  "event_rates_sha256": "2b1f5bc1406c32b9870a88571e5b815e1e62d525a0fd4d5320c360fb34bce9c7",
+  "execution_mode": "native_port_http",
+  "finished_at": "2026-10-01T10:06:08.891392+00:00",
+  "fixture_event_calendar_anchor": "2026-10-01",
+  "generated_source_after": {
+    "QUALIFICATION_SYNTHETIC.json": "bd5fcffb1957dd5e9600472446fc3c67b0b909e99a84c53fb2e5e6a6266e907d",
+    "call_center_interactions/year=2026/month=09/day=29/part-0000.csv": "65f80a107caaaa347f5b61957df7157b8c2e10402f8df09e48628f66ea255b74",
+    "call_transcripts/year=2026/month=09/day=29/part-0000.csv": "ab9e7e9acbefb2fba55cdd53262c738d8fdd0212b01128a836dbf458e31bdc3a",
+    "complaints/year=2026/month=08/day=31/part-0000.csv": "0522043c6a6f330ae4c2fc3b63193d6d4118e9bde3c10956fb16619316624724",
+    "customers.csv": "7bc4602bfe4ccc21d12ca91aa45df87a518f888db6438234311b641b111c69f2",
+    "products.csv": "fbc321e4bd47b2f950a3e82200f656b4f4204c704aadcbd1bff6c14416adb092",
+    "transactions/year=2026/month=06/day=12/part-0000.csv": "88944c727c1c0ec8ec0bc788d0dbea5de3b47259e7cc334bbcbd7e5340a76dda",
+    "transactions/year=2026/month=06/day=16/part-0000.csv": "b44a8c9d33730f798d78c055e97eba04a336d40651876ec3a6e99e4d5ff99d9a",
+    "transactions/year=2026/month=06/day=24/part-0000.csv": "1e67a64b810896472ee325b4984e3206238a7018e6e829e4dad392957245cbd3",
+    "transactions/year=2026/month=06/day=26/part-0000.csv": "9ed7d45bd847e7fd744f1d1a16bbfd5a150c71f794e2a8f4db418240580467d2",
+    "transactions/year=2026/month=07/day=12/part-0000.csv": "1cd5153840dc389717fc8e9d01d81032d06099ee1f35d37ec474c41211fb8644",
+    "transactions/year=2026/month=07/day=16/part-0000.csv": "fc5cc2204a9671c785f8a6ae0404e7504cfb94b2584be4edba77782b0ccbc7ae",
+    "transactions/year=2026/month=07/day=24/part-0000.csv": "86b73724987bcf76a9ef088af9e25f7869b060ec73d942cf419c4a1a3e564c2a",
+    "transactions/year=2026/month=07/day=26/part-0000.csv": "787d700cededd3e769eb4457755d67cf536fb4b986857d223a57aded7439bccf",
+    "transactions/year=2026/month=08/day=01/part-0000.csv": "e0cd51acf1d2eae02fbd0df52880d809a56de2d56d71452365e6b4e9ff4cc76e",
+    "transactions/year=2026/month=08/day=12/part-0000.csv": "f45d8deb190d53c23541a4ee42432c69e7bc56817e84ccb5722eea5a57190f9e",
+    "transactions/year=2026/month=08/day=16/part-0000.csv": "d089ff37aa5f6062dd3c86b8f8e9a4acecd9830a8ce6fe9cad40fc4c03522a95",
+    "transactions/year=2026/month=08/day=24/part-0000.csv": "11e365b28de53f0cab6b01218792d015f3bd37fee7c3fe46d779f294cbbfb7aa",
+    "transactions/year=2026/month=08/day=26/part-0000.csv": "c640162bb9f48dc3dbc47375c6642cd91be5751af38857bc76fbbd66d2ff8d5f",
+    "transactions/year=2026/month=08/day=31/part-0000.csv": "9668a97557ac257244bd01f6cbcf4d855686ab3639d4f0a8d330d6f11c357333",
+    "transactions/year=2026/month=09/day=12/part-0000.csv": "e0c7ca70110703e66e3936b17609f19fa23b7ee87c7c47e0a320268bb06f2118",
+    "transactions/year=2026/month=09/day=16/part-0000.csv": "b7293f51ee4f7599065e3e72e3fff030d0fd52dcde67ff61c01f83f800ffcc3c",
+    "transactions/year=2026/month=09/day=22/part-0000.csv": "8b2d8fe9b807a63d84307f34791b3fd9b7fa9f0b3163ce47ff5540c63a6ae3d7",
+    "transactions/year=2026/month=09/day=24/part-0000.csv": "2cbc93b8ef40e92733d1c1f3821b9920640e0c98fc61cbebee91ce76bd3707b1",
+    "transactions/year=2026/month=09/day=26/part-0000.csv": "26be6e08bcd9cc30b09eb04f0a8d9d754dcbed7087462074345a815df5450360",
+    "transactions/year=2026/month=09/day=28/part-0000.csv": "e64686d7b7ab7cec4bb3429d42aa893e44c9bc622ab8d46974fb41892c75a66e",
+    "transactions/year=2026/month=09/day=29/part-0000.csv": "22b32d46c8af1de5e88f57ea6ec6f83484a48b679f827fae6d42adb48d5dbe79"
+  },
+  "generated_source_before": {
+    "QUALIFICATION_SYNTHETIC.json": "bd5fcffb1957dd5e9600472446fc3c67b0b909e99a84c53fb2e5e6a6266e907d",
+    "call_center_interactions/year=2026/month=09/day=29/part-0000.csv": "65f80a107caaaa347f5b61957df7157b8c2e10402f8df09e48628f66ea255b74",
+    "call_transcripts/year=2026/month=09/day=29/part-0000.csv": "ab9e7e9acbefb2fba55cdd53262c738d8fdd0212b01128a836dbf458e31bdc3a",
+    "complaints/year=2026/month=08/day=31/part-0000.csv": "0522043c6a6f330ae4c2fc3b63193d6d4118e9bde3c10956fb16619316624724",
+    "customers.csv": "7bc4602bfe4ccc21d12ca91aa45df87a518f888db6438234311b641b111c69f2",
+    "products.csv": "fbc321e4bd47b2f950a3e82200f656b4f4204c704aadcbd1bff6c14416adb092",
+    "transactions/year=2026/month=06/day=12/part-0000.csv": "88944c727c1c0ec8ec0bc788d0dbea5de3b47259e7cc334bbcbd7e5340a76dda",
+    "transactions/year=2026/month=06/day=16/part-0000.csv": "b44a8c9d33730f798d78c055e97eba04a336d40651876ec3a6e99e4d5ff99d9a",
+    "transactions/year=2026/month=06/day=24/part-0000.csv": "1e67a64b810896472ee325b4984e3206238a7018e6e829e4dad392957245cbd3",
+    "transactions/year=2026/month=06/day=26/part-0000.csv": "9ed7d45bd847e7fd744f1d1a16bbfd5a150c71f794e2a8f4db418240580467d2",
+    "transactions/year=2026/month=07/day=12/part-0000.csv": "1cd5153840dc389717fc8e9d01d81032d06099ee1f35d37ec474c41211fb8644",
+    "transactions/year=2026/month=07/day=16/part-0000.csv": "fc5cc2204a9671c785f8a6ae0404e7504cfb94b2584be4edba77782b0ccbc7ae",
+    "transactions/year=2026/month=07/day=24/part-0000.csv": "86b73724987bcf76a9ef088af9e25f7869b060ec73d942cf419c4a1a3e564c2a",
+    "transactions/year=2026/month=07/day=26/part-0000.csv": "787d700cededd3e769eb4457755d67cf536fb4b986857d223a57aded7439bccf",
+    "transactions/year=2026/month=08/day=01/part-0000.csv": "e0cd51acf1d2eae02fbd0df52880d809a56de2d56d71452365e6b4e9ff4cc76e",
+    "transactions/year=2026/month=08/day=12/part-0000.csv": "f45d8deb190d53c23541a4ee42432c69e7bc56817e84ccb5722eea5a57190f9e",
+    "transactions/year=2026/month=08/day=16/part-0000.csv": "d089ff37aa5f6062dd3c86b8f8e9a4acecd9830a8ce6fe9cad40fc4c03522a95",
+    "transactions/year=2026/month=08/day=24/part-0000.csv": "11e365b28de53f0cab6b01218792d015f3bd37fee7c3fe46d779f294cbbfb7aa",
+    "transactions/year=2026/month=08/day=26/part-0000.csv": "c640162bb9f48dc3dbc47375c6642cd91be5751af38857bc76fbbd66d2ff8d5f",
+    "transactions/year=2026/month=08/day=31/part-0000.csv": "9668a97557ac257244bd01f6cbcf4d855686ab3639d4f0a8d330d6f11c357333",
+    "transactions/year=2026/month=09/day=12/part-0000.csv": "e0c7ca70110703e66e3936b17609f19fa23b7ee87c7c47e0a320268bb06f2118",
+    "transactions/year=2026/month=09/day=16/part-0000.csv": "b7293f51ee4f7599065e3e72e3fff030d0fd52dcde67ff61c01f83f800ffcc3c",
+    "transactions/year=2026/month=09/day=22/part-0000.csv": "8b2d8fe9b807a63d84307f34791b3fd9b7fa9f0b3163ce47ff5540c63a6ae3d7",
+    "transactions/year=2026/month=09/day=24/part-0000.csv": "2cbc93b8ef40e92733d1c1f3821b9920640e0c98fc61cbebee91ce76bd3707b1",
+    "transactions/year=2026/month=09/day=26/part-0000.csv": "26be6e08bcd9cc30b09eb04f0a8d9d754dcbed7087462074345a815df5450360",
+    "transactions/year=2026/month=09/day=28/part-0000.csv": "e64686d7b7ab7cec4bb3429d42aa893e44c9bc622ab8d46974fb41892c75a66e",
+    "transactions/year=2026/month=09/day=29/part-0000.csv": "22b32d46c8af1de5e88f57ea6ec6f83484a48b679f827fae6d42adb48d5dbe79"
+  },
+  "human_adjudicated": false,
+  "latency_ms": 334183,
+  "limits": [
+    "All people, customer records, rates and ledger coverage are explicit generated fiction.",
+    "Application prompts and policy are the actual versioned implementation sources listed by their hashes.",
+    "Expected labels are scenario-author assertions; no human semantic adjudication occurred.",
+    "This report covers selected local HTTP paths and observed calls through the configured model port.",
+    "It does not establish deployment, shared worker activation, real banking writes, or general model accuracy.",
+    "Unavailable provider usage remains null; provider cost is not inferred from token counts.",
+    "Scripted ports/transports do not establish native execution.",
+    "Native execution verification requires separate retained-worker installed-manifest and callback evidence."
+  ],
+  "model_attempt_count": 39,
+  "model_call_observed": true,
+  "native_execution_verified": false,
+  "native_port_invoked": true,
+  "native_profile_sha256": "00a0217bd0e3a3ff152292311a7d1adfe939dce1c035655fa407b4ff765d2f3a",
+  "passed": true,
+  "passed_scenarios": 4,
+  "results": [
+    {
+      "attempts": [
+        {
+          "http_status": 200,
+          "latency_ms": 122,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/auth/login",
+          "step": "login",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 116,
+          "method": "GET",
+          "passed": true,
+          "path": "/api/transactions",
+          "step": "owned_transactions",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 61642,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/chat",
+          "step": "selected_dispute",
+          "workflow_turns": [
+            {
+              "completed": true,
+              "language": "es",
+              "latency_ms": 61452,
+              "model_observations": [
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 17,
+                  "cost_usd": null,
+                  "latency_ms": 13196,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 5787,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 1785,
+                  "request_user_chars": 131,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_context",
+                  "status": "ok",
+                  "total_tokens": 5804
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 16,
+                  "cost_usd": null,
+                  "latency_ms": 15821,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6243,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3562,
+                  "request_user_chars": 103,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_attack",
+                  "status": "ok",
+                  "total_tokens": 6259
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 77,
+                  "cost_usd": null,
+                  "latency_ms": 18226,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6155,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3594,
+                  "request_user_chars": 131,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "rewrite_decompose",
+                  "status": "ok",
+                  "total_tokens": 6232
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 51,
+                  "cost_usd": null,
+                  "latency_ms": 16331,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6224,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3515,
+                  "request_user_chars": 99,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_intent",
+                  "status": "ok",
+                  "total_tokens": 6275
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 110,
+                  "cost_usd": null,
+                  "latency_ms": 14856,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 7885,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 9191,
+                  "request_user_chars": 156,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "extract_slots",
+                  "status": "ok",
+                  "total_tokens": 7995
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 115,
+                  "cost_usd": null,
+                  "latency_ms": 10764,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 12034,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 21884,
+                  "request_user_chars": 2993,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate",
+                  "status": "ok",
+                  "total_tokens": 12149
+                }
+              ],
+              "node_errors": [],
+              "reason_code": null,
+              "response_mode": "CONFIRM_ACTION",
+              "rule_ids": [
+                "R17"
+              ],
+              "safe_fallback_used": false,
+              "stage_output_hashes": [
+                {
+                  "output_hmac_sha256": "4bdc530bffa35081e85c3f6f266643fccc1ec0fc88f1031bcd93002978fcaddf",
+                  "stage": "detect_context"
+                },
+                {
+                  "output_hmac_sha256": "17a39afdc435dd00a65d1536b227ccd19506c0d153a561e285a1b1471da5cf20",
+                  "stage": "detect_attack"
+                },
+                {
+                  "output_hmac_sha256": "87eab29e3ac5daecb964bb4bac309628e615645c75906c70e89c4d255348ed52",
+                  "stage": "rewrite_decompose"
+                },
+                {
+                  "output_hmac_sha256": "e15fb2aea32a29078e69f91eb4b1364897912b400d49a86de7e4a10040e3c0ee",
+                  "stage": "detect_intent"
+                },
+                {
+                  "output_hmac_sha256": "ffe8b5c2c2a88d25d39a9f76d846708f852474e185bd4e6648055337bcbf20cd",
+                  "stage": "extract_slots"
+                },
+                {
+                  "output_hmac_sha256": "165fee932c806b360a5e23c3015b5f75a84ef208828245e54841fd30ebee8ace",
+                  "stage": "generate"
+                }
+              ],
+              "trace": [
+                {
+                  "latency_ms": 18227,
+                  "node": "rewrite_decompose"
+                },
+                {
+                  "latency_ms": 18227,
+                  "node": "detect_attack"
+                },
+                {
+                  "latency_ms": 18227,
+                  "node": "detect_context"
+                },
+                {
+                  "latency_ms": 16332,
+                  "node": "detect_intent"
+                },
+                {
+                  "latency_ms": 14858,
+                  "node": "extract_slots"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 226,
+                  "node": "search_transactions"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 508,
+                  "node": "get_transaction"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 432,
+                  "node": "get_related_complaints"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 33,
+                  "node": "host_action_status"
+                },
+                {
+                  "latency_ms": 1,
+                  "node": "retrieve_policy"
+                },
+                {
+                  "latency_ms": 10766,
+                  "node": "generate"
+                }
+              ],
+              "turn_hash": "82e663a51dab2a6587b60ea84bf70f994ed2bc7e6ce150aac65b6886127878de",
+              "validation_attempts": 0,
+              "validation_errors": []
+            }
+          ]
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 823,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/prepare",
+          "step": "prepare",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 422,
+          "latency_ms": 5,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/confirm",
+          "step": "reject_false_consent",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 808,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/confirm",
+          "step": "confirm",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 45,
+          "method": "GET",
+          "passed": true,
+          "path": "/api/action/status?language=es",
+          "step": "receipt_after_restart",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 46082,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/chat",
+          "step": "native_receipt_followup",
+          "workflow_turns": [
+            {
+              "completed": true,
+              "language": "es",
+              "latency_ms": 45984,
+              "model_observations": [
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 17,
+                  "cost_usd": null,
+                  "latency_ms": 9606,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 5872,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 1785,
+                  "request_user_chars": 471,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_context",
+                  "status": "ok",
+                  "total_tokens": 5889
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 94,
+                  "cost_usd": null,
+                  "latency_ms": 11620,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6237,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3594,
+                  "request_user_chars": 471,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "rewrite_decompose",
+                  "status": "ok",
+                  "total_tokens": 6331
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 16,
+                  "cost_usd": null,
+                  "latency_ms": 15223,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6223,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3562,
+                  "request_user_chars": 56,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_attack",
+                  "status": "ok",
+                  "total_tokens": 6239
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 16,
+                  "cost_usd": null,
+                  "latency_ms": 8555,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6113,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 2536,
+                  "request_user_chars": 701,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "resolve_clarification",
+                  "status": "ok",
+                  "total_tokens": 6129
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 90,
+                  "cost_usd": null,
+                  "latency_ms": 9553,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 7868,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 9191,
+                  "request_user_chars": 109,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "extract_slots",
+                  "status": "ok",
+                  "total_tokens": 7958
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 109,
+                  "cost_usd": null,
+                  "latency_ms": 11966,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 11996,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 21884,
+                  "request_user_chars": 2917,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate",
+                  "status": "ok",
+                  "total_tokens": 12105
+                }
+              ],
+              "node_errors": [],
+              "reason_code": null,
+              "response_mode": "ACTION_DONE",
+              "rule_ids": [
+                "R3"
+              ],
+              "safe_fallback_used": false,
+              "stage_output_hashes": [
+                {
+                  "output_hmac_sha256": "4bdc530bffa35081e85c3f6f266643fccc1ec0fc88f1031bcd93002978fcaddf",
+                  "stage": "detect_context"
+                },
+                {
+                  "output_hmac_sha256": "8e17bc07d00a05e011324a446d96846c9d7d5d183a53e03d7e76c16531d186ce",
+                  "stage": "rewrite_decompose"
+                },
+                {
+                  "output_hmac_sha256": "17a39afdc435dd00a65d1536b227ccd19506c0d153a561e285a1b1471da5cf20",
+                  "stage": "detect_attack"
+                },
+                {
+                  "output_hmac_sha256": "9485f7f75a0a3983e78cff1744c8fef4404a377298f337df1e7c2f9c2500186e",
+                  "stage": "resolve_clarification"
+                },
+                {
+                  "output_hmac_sha256": "bcf169ddaf774baddbacbd562341c7008bf43913a751e0dd1eae7319dabf6dba",
+                  "stage": "extract_slots"
+                },
+                {
+                  "output_hmac_sha256": "caa0f6b127472b9e2aa12443b83ba3ad5d71a1b77a8e5220f6e9db51fc5ec939",
+                  "stage": "generate"
+                }
+              ],
+              "trace": [
+                {
+                  "latency_ms": 15505,
+                  "node": "rewrite_decompose"
+                },
+                {
+                  "latency_ms": 15505,
+                  "node": "detect_attack"
+                },
+                {
+                  "latency_ms": 15505,
+                  "node": "detect_context"
+                },
+                {
+                  "latency_ms": 8556,
+                  "node": "resolve_clarification"
+                },
+                {
+                  "latency_ms": 9554,
+                  "node": "extract_slots"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 307,
+                  "node": "get_transaction"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 25,
+                  "node": "host_action_status"
+                },
+                {
+                  "latency_ms": 0,
+                  "node": "retrieve_policy"
+                },
+                {
+                  "latency_ms": 11967,
+                  "node": "generate"
+                }
+              ],
+              "turn_hash": "6d26c8f856c9b39b9e04d74dc52abd25c9446b0dbee21e0d8b3a337f7b560118",
+              "validation_attempts": 0,
+              "validation_errors": []
+            }
+          ]
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 103,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/confirm",
+          "step": "confirm_replay",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 204,
+          "latency_ms": 19,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/auth/logout",
+          "step": "logout_revokes",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 401,
+          "latency_ms": 4,
+          "method": "GET",
+          "passed": true,
+          "path": "/api/action/status",
+          "step": "revoked_cookie_cannot_read_receipt",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 401,
+          "latency_ms": 4,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/confirm",
+          "step": "revoked_cookie_cannot_replay",
+          "workflow_turns": []
+        }
+      ],
+      "language": "es",
+      "passed": true,
+      "pending_handle_hash": "ee06f74e5f44a36e2894667471ace89c8a5dc9ef95ebd8ec65b8e1371ad7a55f",
+      "receipt_id_hash": "a1e1a7873f6909aaf8d92deaa74a357413d05ef252fd27d66833eb7cae938bb6",
+      "scenario": "intake-es",
+      "snapshot_id_hash": "4ef15b22dce5b7a008fd26a7db753a5067f55ac9b7bf3f55e6ead18f262f85a4",
+      "synthetic_expected": "CONFIRM_ACTION then ACTION_DONE",
+      "target_reference_hash": "6f71be26c1f8354ff2b1b3b794386c5945232868193fb44ee5a82c96c7c7daa5"
+    },
+    {
+      "attempts": [
+        {
+          "http_status": 200,
+          "latency_ms": 79,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/auth/login",
+          "step": "login",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 119,
+          "method": "GET",
+          "passed": true,
+          "path": "/api/transactions",
+          "step": "owned_transactions",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 63333,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/chat",
+          "step": "selected_dispute",
+          "workflow_turns": [
+            {
+              "completed": true,
+              "language": "pt",
+              "latency_ms": 63117,
+              "model_observations": [
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 16,
+                  "cost_usd": null,
+                  "latency_ms": 11353,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6241,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3562,
+                  "request_user_chars": 104,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_attack",
+                  "status": "ok",
+                  "total_tokens": 6257
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 71,
+                  "cost_usd": null,
+                  "latency_ms": 11735,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6150,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3594,
+                  "request_user_chars": 132,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "rewrite_decompose",
+                  "status": "ok",
+                  "total_tokens": 6221
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 17,
+                  "cost_usd": null,
+                  "latency_ms": 11786,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 5788,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 1785,
+                  "request_user_chars": 132,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_context",
+                  "status": "ok",
+                  "total_tokens": 5805
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 48,
+                  "cost_usd": null,
+                  "latency_ms": 11191,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6218,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3515,
+                  "request_user_chars": 100,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_intent",
+                  "status": "ok",
+                  "total_tokens": 6266
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 109,
+                  "cost_usd": null,
+                  "latency_ms": 17438,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 7886,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 9191,
+                  "request_user_chars": 157,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "extract_slots",
+                  "status": "ok",
+                  "total_tokens": 7995
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 123,
+                  "cost_usd": null,
+                  "latency_ms": 21197,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 12024,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 21884,
+                  "request_user_chars": 2982,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate",
+                  "status": "ok",
+                  "total_tokens": 12147
+                }
+              ],
+              "node_errors": [],
+              "reason_code": null,
+              "response_mode": "CONFIRM_ACTION",
+              "rule_ids": [
+                "R17"
+              ],
+              "safe_fallback_used": false,
+              "stage_output_hashes": [
+                {
+                  "output_hmac_sha256": "17a39afdc435dd00a65d1536b227ccd19506c0d153a561e285a1b1471da5cf20",
+                  "stage": "detect_attack"
+                },
+                {
+                  "output_hmac_sha256": "f885352c629bf9d9f22b2ec7fd04896687e67b0cb3e0e5ba44381ce4f8953d71",
+                  "stage": "rewrite_decompose"
+                },
+                {
+                  "output_hmac_sha256": "990535bf5cccd1c3ca64a7738b3e390378ad7e3cb812d53e72341e9127cd9424",
+                  "stage": "detect_context"
+                },
+                {
+                  "output_hmac_sha256": "d1d2dc2e4495d5709f7c17785bdc8080c05708870673b86012f5fe3fe3173e00",
+                  "stage": "detect_intent"
+                },
+                {
+                  "output_hmac_sha256": "13e7018ff773ddabe65164c926cb416c60f04df8785d2133590e302a1184c0e2",
+                  "stage": "extract_slots"
+                },
+                {
+                  "output_hmac_sha256": "e700d52d738f6fe83adb5dceaca3032ec0c43375225e75587c90706fdfd07692",
+                  "stage": "generate"
+                }
+              ],
+              "trace": [
+                {
+                  "latency_ms": 12351,
+                  "node": "rewrite_decompose"
+                },
+                {
+                  "latency_ms": 12351,
+                  "node": "detect_attack"
+                },
+                {
+                  "latency_ms": 12351,
+                  "node": "detect_context"
+                },
+                {
+                  "latency_ms": 11192,
+                  "node": "detect_intent"
+                },
+                {
+                  "latency_ms": 17439,
+                  "node": "extract_slots"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 160,
+                  "node": "search_transactions"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 329,
+                  "node": "get_transaction"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 275,
+                  "node": "get_related_complaints"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 28,
+                  "node": "host_action_status"
+                },
+                {
+                  "latency_ms": 0,
+                  "node": "retrieve_policy"
+                },
+                {
+                  "latency_ms": 21199,
+                  "node": "generate"
+                }
+              ],
+              "turn_hash": "35d8b1cd4ee3b1e35dc29e5c47b059b176c0894d4fc33e614c82e5435e7ac9da",
+              "validation_attempts": 0,
+              "validation_errors": []
+            }
+          ]
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 1086,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/prepare",
+          "step": "prepare",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 422,
+          "latency_ms": 3,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/confirm",
+          "step": "reject_false_consent",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 904,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/confirm",
+          "step": "confirm",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 52,
+          "method": "GET",
+          "passed": true,
+          "path": "/api/action/status?language=pt",
+          "step": "receipt_after_restart",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 48248,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/chat",
+          "step": "native_receipt_followup",
+          "workflow_turns": [
+            {
+              "completed": true,
+              "language": "pt",
+              "latency_ms": 48143,
+              "model_observations": [
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 29,
+                  "cost_usd": null,
+                  "latency_ms": 13151,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 5876,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 1785,
+                  "request_user_chars": 485,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_context",
+                  "status": "ok",
+                  "total_tokens": 5905
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 88,
+                  "cost_usd": null,
+                  "latency_ms": 14205,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6253,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3594,
+                  "request_user_chars": 485,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "rewrite_decompose",
+                  "status": "ok",
+                  "total_tokens": 6341
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 16,
+                  "cost_usd": null,
+                  "latency_ms": 15463,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6222,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3562,
+                  "request_user_chars": 53,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_attack",
+                  "status": "ok",
+                  "total_tokens": 6238
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 16,
+                  "cost_usd": null,
+                  "latency_ms": 9146,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6115,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 2536,
+                  "request_user_chars": 661,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "resolve_clarification",
+                  "status": "ok",
+                  "total_tokens": 6131
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 90,
+                  "cost_usd": null,
+                  "latency_ms": 11861,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 7861,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 9191,
+                  "request_user_chars": 106,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "extract_slots",
+                  "status": "ok",
+                  "total_tokens": 7951
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 98,
+                  "cost_usd": null,
+                  "latency_ms": 10905,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 11992,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 21884,
+                  "request_user_chars": 2871,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate",
+                  "status": "ok",
+                  "total_tokens": 12090
+                }
+              ],
+              "node_errors": [],
+              "reason_code": null,
+              "response_mode": "ACTION_DONE",
+              "rule_ids": [
+                "R3"
+              ],
+              "safe_fallback_used": false,
+              "stage_output_hashes": [
+                {
+                  "output_hmac_sha256": "990535bf5cccd1c3ca64a7738b3e390378ad7e3cb812d53e72341e9127cd9424",
+                  "stage": "detect_context"
+                },
+                {
+                  "output_hmac_sha256": "55b6e378b859cc43f804d0915095f720fa85c593f600c196753b0088e80349a7",
+                  "stage": "rewrite_decompose"
+                },
+                {
+                  "output_hmac_sha256": "17a39afdc435dd00a65d1536b227ccd19506c0d153a561e285a1b1471da5cf20",
+                  "stage": "detect_attack"
+                },
+                {
+                  "output_hmac_sha256": "9485f7f75a0a3983e78cff1744c8fef4404a377298f337df1e7c2f9c2500186e",
+                  "stage": "resolve_clarification"
+                },
+                {
+                  "output_hmac_sha256": "bcf169ddaf774baddbacbd562341c7008bf43913a751e0dd1eae7319dabf6dba",
+                  "stage": "extract_slots"
+                },
+                {
+                  "output_hmac_sha256": "617b5a1c54fdee2a867a859874938e0ac705a9ecb2b7f3933056ddfb13c1e5b6",
+                  "stage": "generate"
+                }
+              ],
+              "trace": [
+                {
+                  "latency_ms": 15819,
+                  "node": "rewrite_decompose"
+                },
+                {
+                  "latency_ms": 15819,
+                  "node": "detect_attack"
+                },
+                {
+                  "latency_ms": 15819,
+                  "node": "detect_context"
+                },
+                {
+                  "latency_ms": 9147,
+                  "node": "resolve_clarification"
+                },
+                {
+                  "latency_ms": 11862,
+                  "node": "extract_slots"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 322,
+                  "node": "get_transaction"
+                },
+                {
+                  "attempts": 1,
+                  "latency_ms": 29,
+                  "node": "host_action_status"
+                },
+                {
+                  "latency_ms": 1,
+                  "node": "retrieve_policy"
+                },
+                {
+                  "latency_ms": 10907,
+                  "node": "generate"
+                }
+              ],
+              "turn_hash": "e035c83aaffad3bd12207eb28f9080782495bf42affe661e8b4dd95a71061203",
+              "validation_attempts": 0,
+              "validation_errors": []
+            }
+          ]
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 133,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/confirm",
+          "step": "confirm_replay",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 204,
+          "latency_ms": 22,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/auth/logout",
+          "step": "logout_revokes",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 401,
+          "latency_ms": 5,
+          "method": "GET",
+          "passed": true,
+          "path": "/api/action/status",
+          "step": "revoked_cookie_cannot_read_receipt",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 401,
+          "latency_ms": 4,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/confirm",
+          "step": "revoked_cookie_cannot_replay",
+          "workflow_turns": []
+        }
+      ],
+      "language": "pt",
+      "passed": true,
+      "pending_handle_hash": "7af2ff0f96ce3293a4d27618951ea888d87fcde380da3e9eacca01e105520980",
+      "receipt_id_hash": "72f182d05fc58b25acae2ef563c36777bf9a44cc1ff7a8b88c550a62770e10d1",
+      "scenario": "intake-pt",
+      "snapshot_id_hash": "4ef15b22dce5b7a008fd26a7db753a5067f55ac9b7bf3f55e6ead18f262f85a4",
+      "synthetic_expected": "CONFIRM_ACTION then ACTION_DONE",
+      "target_reference_hash": "6242e63141380bb64d6167f58d499860c31ef6dfeb066e149217d500b2eba940"
+    },
+    {
+      "attempts": [
+        {
+          "http_status": 200,
+          "latency_ms": 73,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/auth/login",
+          "step": "login",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 48275,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/chat",
+          "step": "native_handoff_request",
+          "workflow_turns": [
+            {
+              "completed": true,
+              "language": "es",
+              "latency_ms": 48185,
+              "model_observations": [
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 41,
+                  "cost_usd": null,
+                  "latency_ms": 10384,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6138,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3594,
+                  "request_user_chars": 108,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "rewrite_decompose",
+                  "status": "ok",
+                  "total_tokens": 6179
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 16,
+                  "cost_usd": null,
+                  "latency_ms": 10169,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6226,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3562,
+                  "request_user_chars": 80,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_attack",
+                  "status": "ok",
+                  "total_tokens": 6242
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 17,
+                  "cost_usd": null,
+                  "latency_ms": 9958,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 5767,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 1785,
+                  "request_user_chars": 108,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_context",
+                  "status": "ok",
+                  "total_tokens": 5784
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 47,
+                  "cost_usd": null,
+                  "latency_ms": 10230,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6206,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3515,
+                  "request_user_chars": 76,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_intent",
+                  "status": "ok",
+                  "total_tokens": 6253
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 90,
+                  "cost_usd": null,
+                  "latency_ms": 8943,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 7868,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 9191,
+                  "request_user_chars": 133,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "extract_slots",
+                  "status": "ok",
+                  "total_tokens": 7958
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 51,
+                  "cost_usd": null,
+                  "latency_ms": 8173,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6108,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 2692,
+                  "request_user_chars": 864,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate_handoff_summary",
+                  "status": "ok",
+                  "total_tokens": 6159
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 63,
+                  "cost_usd": null,
+                  "latency_ms": 10337,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 11633,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 21884,
+                  "request_user_chars": 1718,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate",
+                  "status": "ok",
+                  "total_tokens": 11696
+                }
+              ],
+              "node_errors": [],
+              "reason_code": "customer_request",
+              "response_mode": "HANDOFF",
+              "rule_ids": [
+                "R8"
+              ],
+              "safe_fallback_used": false,
+              "stage_output_hashes": [
+                {
+                  "output_hmac_sha256": "048e0a7511bf5e2695ff1a9d72b796127905d7615275a446b98c3c29b98d424f",
+                  "stage": "rewrite_decompose"
+                },
+                {
+                  "output_hmac_sha256": "17a39afdc435dd00a65d1536b227ccd19506c0d153a561e285a1b1471da5cf20",
+                  "stage": "detect_attack"
+                },
+                {
+                  "output_hmac_sha256": "4bdc530bffa35081e85c3f6f266643fccc1ec0fc88f1031bcd93002978fcaddf",
+                  "stage": "detect_context"
+                },
+                {
+                  "output_hmac_sha256": "0b5141a8f4b9a6b7cb5fe4d7cfe57f18c4179a10894c0390ff49f94e3c496bfe",
+                  "stage": "detect_intent"
+                },
+                {
+                  "output_hmac_sha256": "bcf169ddaf774baddbacbd562341c7008bf43913a751e0dd1eae7319dabf6dba",
+                  "stage": "extract_slots"
+                },
+                {
+                  "output_hmac_sha256": "0e6961b47d0a8885c3a105de42b609e6a66e74be5c6ebb003b0bb5e396337667",
+                  "stage": "generate_handoff_summary"
+                },
+                {
+                  "output_hmac_sha256": "d63a4f71b50671acfe782eff551ae03eb1aaaf43ae1278a2e3bc91c0a1d3f824",
+                  "stage": "generate"
+                }
+              ],
+              "trace": [
+                {
+                  "latency_ms": 10446,
+                  "node": "rewrite_decompose"
+                },
+                {
+                  "latency_ms": 10446,
+                  "node": "detect_attack"
+                },
+                {
+                  "latency_ms": 10446,
+                  "node": "detect_context"
+                },
+                {
+                  "latency_ms": 10231,
+                  "node": "detect_intent"
+                },
+                {
+                  "latency_ms": 8944,
+                  "node": "extract_slots"
+                },
+                {
+                  "latency_ms": 0,
+                  "node": "retrieve_policy"
+                },
+                {
+                  "latency_ms": 8176,
+                  "node": "generate_handoff_summary"
+                },
+                {
+                  "latency_ms": 10339,
+                  "node": "generate"
+                }
+              ],
+              "turn_hash": "9a2cfe1f31953f4c41da7395fa5fb7ff8441c244d8928b9473f8070f83c363e4",
+              "validation_attempts": 0,
+              "validation_errors": []
+            }
+          ]
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 77,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/handoff",
+          "step": "explicit_handoff",
+          "workflow_turns": []
+        }
+      ],
+      "handoff_id_hash": "62ce5e2c7f53ab0a6f2eb8525f5c4d9b27835dbe064756ed438eb44dba74093f",
+      "language": "es",
+      "passed": true,
+      "scenario": "handoff-customer_request",
+      "synthetic_expected": "HANDOFF: customer_request"
+    },
+    {
+      "attempts": [
+        {
+          "http_status": 200,
+          "latency_ms": 80,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/auth/login",
+          "step": "login",
+          "workflow_turns": []
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 56418,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/chat",
+          "step": "native_handoff_request",
+          "workflow_turns": [
+            {
+              "completed": true,
+              "language": "pt",
+              "latency_ms": 56317,
+              "model_observations": [
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 17,
+                  "cost_usd": null,
+                  "latency_ms": 9553,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 5775,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 1785,
+                  "request_user_chars": 127,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_context",
+                  "status": "ok",
+                  "total_tokens": 5792
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 16,
+                  "cost_usd": null,
+                  "latency_ms": 10658,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6234,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3562,
+                  "request_user_chars": 99,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_attack",
+                  "status": "ok",
+                  "total_tokens": 6250
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 51,
+                  "cost_usd": null,
+                  "latency_ms": 10980,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6143,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3594,
+                  "request_user_chars": 127,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "rewrite_decompose",
+                  "status": "ok",
+                  "total_tokens": 6194
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 37,
+                  "cost_usd": null,
+                  "latency_ms": 8587,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6208,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 3515,
+                  "request_user_chars": 95,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "detect_intent",
+                  "status": "ok",
+                  "total_tokens": 6245
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 90,
+                  "cost_usd": null,
+                  "latency_ms": 8598,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 7870,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 9191,
+                  "request_user_chars": 152,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "extract_slots",
+                  "status": "ok",
+                  "total_tokens": 7960
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 79,
+                  "cost_usd": null,
+                  "latency_ms": 9358,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 6116,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 2692,
+                  "request_user_chars": 876,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate_handoff_summary",
+                  "status": "ok",
+                  "total_tokens": 6195
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 96,
+                  "cost_usd": null,
+                  "latency_ms": 9032,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 11632,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 21884,
+                  "request_user_chars": 1734,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate",
+                  "status": "ok",
+                  "total_tokens": 11728
+                },
+                {
+                  "cache_write_tokens": null,
+                  "cached_prompt_tokens": null,
+                  "completion_tokens": 75,
+                  "cost_usd": null,
+                  "latency_ms": 9701,
+                  "model": "model-gloria-native-model",
+                  "prompt_tokens": 11668,
+                  "reasoning_tokens": null,
+                  "request_system_chars": 22058,
+                  "request_user_chars": 1734,
+                  "response_id_kind": "chatcmpl",
+                  "response_model_sha256": "32622ee7082ff06477d88a2ea676018d0b89e2b67b5ab415dfe5190e21381525",
+                  "stage": "generate",
+                  "status": "ok",
+                  "total_tokens": 11743
+                }
+              ],
+              "node_errors": [],
+              "reason_code": "emergency",
+              "response_mode": "HANDOFF",
+              "rule_ids": [
+                "R8"
+              ],
+              "safe_fallback_used": false,
+              "stage_output_hashes": [
+                {
+                  "output_hmac_sha256": "1d3f42be9d9a595a7a9fa45b9e866f5def4e51ec6ff5dde846b8128cde7a80b7",
+                  "stage": "detect_context"
+                },
+                {
+                  "output_hmac_sha256": "17a39afdc435dd00a65d1536b227ccd19506c0d153a561e285a1b1471da5cf20",
+                  "stage": "detect_attack"
+                },
+                {
+                  "output_hmac_sha256": "0f2a0b1cd269414a0b7f5c5060dab545a07b14c6d0d19e462f1f6763a1474a8a",
+                  "stage": "rewrite_decompose"
+                },
+                {
+                  "output_hmac_sha256": "97cd4969f7ae489877874a060e864e146228c92bc2bc40b2900d8e0faa884b7f",
+                  "stage": "detect_intent"
+                },
+                {
+                  "output_hmac_sha256": "bcf169ddaf774baddbacbd562341c7008bf43913a751e0dd1eae7319dabf6dba",
+                  "stage": "extract_slots"
+                },
+                {
+                  "output_hmac_sha256": "03991b2c7e4bd079a0518632543de8419776e95822df92c27605dda8c9cf7fa5",
+                  "stage": "generate_handoff_summary"
+                },
+                {
+                  "output_hmac_sha256": "4589baece0101726b22980da8d9d35d5a444a7e84f7f13c803328f23411f5e20",
+                  "stage": "generate"
+                },
+                {
+                  "output_hmac_sha256": "b9dafc21cb4432f7b84396b7d9cc05b7349e432037b70adee3fb76e455af5536",
+                  "stage": "generate"
+                }
+              ],
+              "trace": [
+                {
+                  "latency_ms": 10981,
+                  "node": "rewrite_decompose"
+                },
+                {
+                  "latency_ms": 10981,
+                  "node": "detect_attack"
+                },
+                {
+                  "latency_ms": 10981,
+                  "node": "detect_context"
+                },
+                {
+                  "latency_ms": 8587,
+                  "node": "detect_intent"
+                },
+                {
+                  "latency_ms": 8599,
+                  "node": "extract_slots"
+                },
+                {
+                  "latency_ms": 0,
+                  "node": "retrieve_policy"
+                },
+                {
+                  "latency_ms": 9361,
+                  "node": "generate_handoff_summary"
+                },
+                {
+                  "latency_ms": 9033,
+                  "node": "generate"
+                },
+                {
+                  "latency_ms": 9703,
+                  "node": "generate"
+                }
+              ],
+              "turn_hash": "cbb22c8990f4527e7a2bd17ebfb9bb731a4b7435e830c007859c53a668bf0981",
+              "validation_attempts": 1,
+              "validation_errors": []
+            }
+          ]
+        },
+        {
+          "http_status": 200,
+          "latency_ms": 194,
+          "method": "POST",
+          "passed": true,
+          "path": "/api/action/handoff",
+          "step": "explicit_handoff",
+          "workflow_turns": []
+        }
+      ],
+      "handoff_id_hash": "f83457edd11b52678951f805a85496f91ecf91bb4150cee578641ad9134b2962",
+      "language": "pt",
+      "passed": true,
+      "scenario": "handoff-emergency",
+      "synthetic_expected": "HANDOFF: emergency"
+    }
+  ],
+  "scenario_count": 4,
+  "schema": "gloria-joined-native-http-qualification/v1",
+  "source_stable": true,
+  "started_at": "2026-10-01T10:00:34.707956+00:00",
+  "synthetic": true,
+  "timeouts": {
+    "local_http_request_seconds": 600.0,
+    "native_stage_seconds": 90.0
+  },
+  "usage": {
+    "attempts_with_unknown_cost": 39,
+    "attempts_with_unknown_tokens": 0,
+    "cost_usd": null,
+    "failed_model_attempts": 0,
+    "total_tokens": 291090
+  }
+}

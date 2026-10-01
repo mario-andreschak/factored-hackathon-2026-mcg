@@ -1,12 +1,47 @@
 """Host admission lifecycle tests; actual native provider evidence is separate."""
 import asyncio
+from contextlib import contextmanager
+import ctypes
+import inspect
 import json
+import os
 from pathlib import Path
+import re
+import shlex
 import tempfile
+import threading
 import time
 import unittest
+from unittest.mock import patch
 
 from scripts.native_gloria_qualification import NativeGloriaPort, BOUNDARY_CASES, CAPABILITY_CASES, public_report
+from scripts.native_gloria_qualification import digest
+from scripts.native_gloria_qualification import prepare
+from scripts.native_gloria_qualification import REVOCATION_CASES, REVOCATION_FENCE_CASES
+
+
+class NativeImageSourceClosureTests(unittest.TestCase):
+    def test_hashed_dependency_sources_are_copied_without_installing_bank_provenance(self):
+        root = Path(__file__).resolve().parents[1]
+        requirements = set(re.findall(r'ROOT / "([^"\n]*requirements[^"\n]*\.txt)"', inspect.getsource(prepare)))
+        self.assertIn("requirements-mcp.txt", requirements)
+        placements = {}
+        install_commands = []
+        for line in (root / "scripts/native_gloria_qualification.Dockerfile").read_text().splitlines():
+            words = shlex.split(line)
+            if words and words[0] == "COPY":
+                sources, destination = words[1:-1], words[-1]
+                for source in sources:
+                    if source.startswith("qualification/"):
+                        relative = source.removeprefix("qualification/")
+                        target = destination + Path(source).name if destination.endswith("/") else destination
+                        placements[relative] = target
+            if line.startswith("RUN ") and "pip install" in line:
+                install_commands.append(line)
+        for relative in requirements:
+            with self.subTest(source=relative):
+                self.assertEqual(placements.get(relative), "/tmp/" + relative)
+        self.assertEqual(install_commands, ["RUN python3 -m pip install --no-cache-dir -r /tmp/requirements-gloria.txt"])
 
 
 class PublicQualificationReportTests(unittest.TestCase):
@@ -16,10 +51,12 @@ class PublicQualificationReportTests(unittest.TestCase):
                 "imageIdentity": "sha256:" + checksum, "externalManifestSha256": checksum,
                 "imageCredentialAudit": {"checked": 5, "credential_files_present": 0},
                 "sourceContext": {"application_revision": "1" * 40,
-                    "application_files": {"gloria_workflow/tool.py": checksum},
+                    "application_files": {"gloria_workflow/tool.py": checksum,
+                        "scripts/native_gloria_qualification.ts": checksum,
+                        "scripts/native_gloria_revocation_probe.mjs": checksum},
                     "flujo_files": {"package-lock.json": checksum}},
                 "installedSourceHashes": {"pass": True, "manifest_sha256": checksum,
-                    "application_files": 1, "flujo_files": 1},
+                    "application_files": 3, "flujo_files": 1},
                 "nativeProfile": {"verifiedCliVersion": "0.157.1", "verifiedCliSha256": checksum,
                     "verifiedModelCatalogSha256": checksum, "private_path": "PRIVATE_MARKER"},
                 "installedModel": {"id": "gloria-native-model", "name": "gpt-6-sol", "provider": "codex",
@@ -31,6 +68,11 @@ class PublicQualificationReportTests(unittest.TestCase):
                 "nativeCapabilityProbes": {"bridgeSourceSha256": checksum, "fixtureSha256": checksum,
                     "cases": [{"model": model, "tool": tool, "passed": True,
                                "private_output": "PRIVATE_MARKER"} for model, tool in sorted(CAPABILITY_CASES)]},
+                "revocationProbes": {"cases": [{"case": name, "pass": True, "noProviderOrMcpBeforeDenial": True,
+                    "private_output": "PRIVATE_MARKER"} for name in sorted(REVOCATION_CASES)]},
+                "revocationFenceProbes": {"adapterSourceSha256": checksum, "fixtureSha256": checksum,
+                    "scope": "PRIVATE_MARKER", "cases": [{"case": name, "pass": True, "provider_calls": 0,
+                    "private_output": "PRIVATE_MARKER"} for name in sorted(REVOCATION_FENCE_CASES)]},
                 "admissions": [{"token": "PRIVATE_MARKER"}]}
 
     def test_public_report_excludes_private_payloads_and_retains_measurements(self):
@@ -44,6 +86,8 @@ class PublicQualificationReportTests(unittest.TestCase):
     def test_incomplete_or_source_drift_report_cannot_be_published(self):
         for mutate in (lambda value: value["cases"].pop(),
                        lambda value: value["nativeCapabilityProbes"]["cases"].pop(),
+                       lambda value: value["revocationProbes"]["cases"].pop(),
+                       lambda value: value["revocationFenceProbes"].update(fixtureSha256="b" * 64),
                        lambda value: value["nativeCapabilityProbes"]["cases"].__setitem__(0,
                            value["nativeCapabilityProbes"]["cases"][1].copy()),
                        lambda value: value.update({"pass": False}),
@@ -86,6 +130,9 @@ class NativeHostAdmissionTests(unittest.IsolatedAsyncioTestCase):
             actual = await port.run(binding, "Original exacto", turn_id="turn-A", selection=selection, query_scope_id="query-A")
             self.assertIs(actual, expected)
             self.assertEqual(json.loads(location.read_text()), [])
+            markers = list((Path(directory) / "revocations").glob("*.revoked"))
+            self.assertEqual(len(markers), 1)
+            self.assertEqual(markers[0].read_bytes(), b"revoked\n")
             self.assertTrue((Path(directory) / ".admissions-host.lock").exists())
             with port._edit_admissions() as records:
                 self.assertEqual(records, [])
@@ -137,6 +184,155 @@ class NativeHostAdmissionTests(unittest.IsolatedAsyncioTestCase):
                     return {"validated": True}
             port = NativeGloriaPort(lambda _model: Workflow(), "http://127.0.0.1:43921", directory)
             self.assertEqual(await port.run(self.binding(), "Original", turn_id="turn-A"), {"validated": True})
+
+    async def test_revocation_publish_failure_still_cleans_own_record_and_preserves_sibling(self):
+        with tempfile.TemporaryDirectory() as directory:
+            location = Path(directory) / "admissions.json"
+            location.write_text('[{"stageToken":"sibling"}]', encoding="utf-8")
+            class Workflow:
+                async def run(self, *_args, **_kwargs):
+                    return {"validated": True}
+            port = NativeGloriaPort(lambda _model: Workflow(), "http://127.0.0.1:43921", directory)
+            with patch.object(port, "_revoke_stage", side_effect=PermissionError("synthetic_marker_io")):
+                with self.assertRaises(PermissionError):
+                    await port.run(self.binding(), "Original", turn_id="turn-A")
+            self.assertEqual(json.loads(location.read_text()), [{"stageToken": "sibling"}])
+
+    async def test_preexisting_revocation_is_idempotent_and_preserves_cancellation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            location = Path(directory) / "admissions.json"
+            port = None
+            class Workflow:
+                async def run(self, *_args, **_kwargs):
+                    own = json.loads(location.read_text())[0]
+                    port._revoke_stage(own["stageToken"])
+                    raise asyncio.CancelledError()
+            port = NativeGloriaPort(lambda _model: Workflow(), "http://127.0.0.1:43921", directory)
+            with self.assertRaises(asyncio.CancelledError):
+                await port.run(self.binding(), "Original", turn_id="turn-A")
+            self.assertEqual(json.loads(location.read_text()), [])
+            self.assertEqual(len(list((Path(directory) / "revocations").glob("*.revoked"))), 1)
+
+
+class NativeAdmissionReplacementTests(unittest.TestCase):
+    @contextmanager
+    def windows_reader_without_delete_sharing(self, location):
+        from ctypes import wintypes
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+            wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+        kernel.CreateFileW.restype = wintypes.HANDLE
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.restype = wintypes.BOOL
+        handle = kernel.CreateFileW(str(location), 0x80000000, 1, None, 3, 0x80, None)
+        self.assertNotEqual(handle, ctypes.c_void_p(-1).value)
+        closed = False
+        def close():
+            nonlocal closed
+            if not closed:
+                self.assertTrue(kernel.CloseHandle(handle))
+                closed = True
+        try:
+            yield close
+        finally:
+            close()
+
+    @unittest.skipUnless(os.name == "nt", "Requires actual Windows delete-sharing semantics")
+    def test_transient_reader_retry_preserves_siblings_and_serializes_another_writer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            location = Path(directory) / "admissions.json"
+            location.write_text('[{"stageToken":"sibling"}]', encoding="utf-8")
+            first = NativeGloriaPort(None, "http://unused", directory)
+            second = NativeGloriaPort(None, "http://unused", directory)
+            failures = []
+            def other_writer():
+                try:
+                    with second._edit_admissions() as records:
+                        records.append({"stageToken": "second"})
+                except BaseException as error:
+                    failures.append(type(error).__name__)
+            with self.windows_reader_without_delete_sharing(location) as close:
+                release = threading.Thread(target=lambda: (time.sleep(0.15), close()))
+                release.start()
+                with first._edit_admissions() as records:
+                    records.append({"stageToken": "first"})
+                    sibling = threading.Thread(target=other_writer)
+                    sibling.start()
+                release.join(timeout=2)
+                sibling.join(timeout=2)
+            self.assertFalse(failures)
+            self.assertFalse(sibling.is_alive())
+            self.assertEqual({item["stageToken"] for item in json.loads(location.read_text())},
+                             {"sibling", "first", "second"})
+            self.assertEqual(list(Path(directory).glob("admissions-*.json")), [])
+
+    @unittest.skipUnless(os.name == "nt", "Requires actual Windows delete-sharing semantics")
+    def test_permanent_reader_failure_is_bounded_and_keeps_original_registry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            location = Path(directory) / "admissions.json"
+            original = b'[{"stageToken":"sibling"}]'
+            location.write_bytes(original)
+            port = NativeGloriaPort(None, "http://unused", directory)
+            with self.windows_reader_without_delete_sharing(location):
+                began = time.monotonic()
+                with self.assertRaises(PermissionError):
+                    with port._edit_admissions() as records:
+                        records.append({"stageToken": "rejected"})
+                elapsed = time.monotonic() - began
+            self.assertGreaterEqual(elapsed, 4.9)
+            self.assertLess(elapsed, 7)
+            self.assertEqual(location.read_bytes(), original)
+            self.assertEqual(list(Path(directory).glob("admissions-*.json")), [])
+            with port._edit_admissions() as records:
+                self.assertEqual(records, [{"stageToken": "sibling"}])
+
+    def test_unrelated_permission_failure_does_not_retry_or_truncate_registry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            location = Path(directory) / "admissions.json"
+            original = b'[{"stageToken":"sibling"}]'
+            location.write_bytes(original)
+            port = NativeGloriaPort(None, "http://unused", directory)
+            with patch("scripts.native_gloria_qualification.os.replace", side_effect=PermissionError("synthetic")) as replace:
+                with self.assertRaises(PermissionError):
+                    with port._edit_admissions() as records:
+                        records.append({"stageToken": "rejected"})
+            replace.assert_called_once()
+            self.assertEqual(location.read_bytes(), original)
+            self.assertEqual(list(Path(directory).glob("admissions-*.json")), [])
+
+    @unittest.skipUnless(os.name == "nt", "Requires actual Windows delete-sharing semantics")
+    def test_completed_and_cancelled_turn_revoke_before_permanent_cleanup_failure(self):
+        for cancelled in (False, True):
+            with self.subTest(cancelled=cancelled), tempfile.TemporaryDirectory() as directory:
+                location = Path(directory) / "admissions.json"
+                location.write_text('[{"stageToken":"sibling"}]', encoding="utf-8")
+                held = None
+                own = None
+                outer = self
+                class Workflow:
+                    async def run(inner, *_args, **_kwargs):
+                        nonlocal held, own
+                        own = next(item for item in json.loads(location.read_text()) if item.get("turnId") == "turn-A")
+                        held = outer.windows_reader_without_delete_sharing(location)
+                        held.__enter__()
+                        if cancelled:
+                            raise asyncio.CancelledError()
+                        return {"validated": True}
+                port = NativeGloriaPort(lambda _model: Workflow(), "http://127.0.0.1:43921", directory)
+                try:
+                    with self.assertRaises(PermissionError):
+                        asyncio.run(port.run({"owner": "owner-A", "customer_id": "public-synthetic",
+                            "session_id": "session-A", "conversation_id": "conversation-A",
+                            "expires_at": time.time() + 60}, "Original", turn_id="turn-A"))
+                    self.assertIsNotNone(own)
+                    own_marker = Path(directory) / "revocations" / (digest(own["stageToken"].encode()) + ".revoked")
+                    self.assertEqual(own_marker.read_bytes(), b"revoked\n")
+                    self.assertFalse((own_marker.parent / (digest(b"sibling") + ".revoked")).exists())
+                    self.assertEqual(len(json.loads(location.read_text())), 2)
+                    self.assertEqual(list(Path(directory).glob("admissions-*.json")), [])
+                finally:
+                    if held:
+                        held.__exit__(None, None, None)
 
 
 if __name__ == "__main__":

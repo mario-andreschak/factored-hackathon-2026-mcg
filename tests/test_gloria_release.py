@@ -25,7 +25,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from frontend.server.chat import ChatError, ChatService
+from frontend.server.gloria_chat import ChatError, GloriaChatService as ChatService
 from frontend.server.app import ConfirmActionBody
 from frontend.tests.action_fixtures import action_facts, action_receipt, action_selected
 from gloria_workflow.host import RepositoryBank
@@ -109,6 +109,81 @@ def test_present_processing_claim_requires_an_execution_receipt(language, claim)
     assert validate_response(response(prefix, language), inputs) == []
     assert validate_response(response(prefix + " " + claim, language), inputs), \
         "present processing was claimed without any execution or receipt"
+
+
+@pytest.mark.parametrize("suffix,safe", [
+    ("", True),
+    ("; o encaminhamento foi realizado.", False),
+    (" Um atendente já respondeu.", False),
+])
+def test_handoff_uncertainty_preserves_the_exact_negative_scope(suffix, safe):
+    inputs = dict(response_mode="HANDOFF", language="pt", clean_query="Preciso de revisão humana.",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
+        workflow_state=dict(action=dict(authorized=False, executed=False, verified=False, result_id=None),
+            handoff=dict(created=False, handoff_id=None)),
+        policy_context=retrieve_policy("HUMAN_REQUEST", human_required=True))
+    text = "Ainda não posso confirmar que o encaminhamento foi realizado." + suffix
+    errors = validate_response(response(text, "pt"), inputs)
+    assert (errors == []) is safe, "truthful uncertainty must not grant a completed handoff or human response"
+
+
+def test_captured_emergency_contact_advice_remains_unsupported():
+    inputs = dict(response_mode="HANDOFF", language="pt", clean_query="Estou em perigo agora.",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
+        workflow_state=dict(action=dict(authorized=False, executed=False, verified=False, result_id=None),
+            handoff=dict(created=False, handoff_id=None)),
+        policy_context=retrieve_policy("HUMAN_REQUEST", human_required=True))
+    text = "Se o perigo for imediato, procure um local seguro e ligue para o serviço de emergência da sua região."
+    assert "unsupported_operation_guidance" in validate_response(response(text, "pt"), inputs)
+
+
+@pytest.mark.parametrize("detail", [
+    "referente à compra de **2026-09-16** no valor de **209944.00 COP**",
+    "referente à compra de **209944.00 COP** de **2026-09-16**",
+])
+def test_verified_receipt_sentence_keeps_its_decimal_amount_and_bound_id(detail):
+    target = transaction(amount=209944.00, currency="COP", transaction_date="2026-09-16T12:00:00+00:00")
+    action = canonical_host_receipt()["action"]
+    inputs = dict(response_mode="ACTION_DONE", language="pt", clean_query="Qual é o estado desta solicitação?",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[target], data_sources=["transactions"]),
+        workflow_state=dict(transaction_id=target["transaction_id"], action=action),
+        policy_context=retrieve_policy("TRANSACTION_DISPUTE"))
+    text = (f"A solicitação simulada **{action['result_id']}**, {detail}, "
+            "foi registrada e teve o registro verificado no ambiente de teste.")
+    assert validate_response(response(text, "pt"), inputs) == [], \
+        "a decimal point inside a verified amount must not detach the receipt ID from its sentence"
+
+
+def test_verified_decimal_receipt_does_not_authorize_a_separate_success_sentence():
+    target = transaction(amount=209944.00, currency="COP", transaction_date="2026-09-16T12:00:00+00:00")
+    action = canonical_host_receipt()["action"]
+    inputs = dict(response_mode="ACTION_DONE", language="pt", clean_query="Qual é o estado desta solicitação?",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[target], data_sources=["transactions"]),
+        workflow_state=dict(transaction_id=target["transaction_id"], action=action),
+        policy_context=retrieve_policy("TRANSACTION_DISPUTE"))
+    text = (f"A solicitação simulada **{action['result_id']}**. "
+            "A compra de **209944.00 COP** foi registrada no ambiente de teste.")
+    assert "action_success_unverified" in validate_response(response(text, "pt"), inputs), \
+        "a decimal amount must not join an unrelated success sentence to the preceding receipt ID"
+
+
+@pytest.mark.parametrize("extra_contact,safe", [("", True),
+    (" Ligue para o serviço de emergência local.", False)])
+def test_captured_human_request_restatement_does_not_grant_contact_guidance(extra_contact, safe):
+    inputs = dict(response_mode="HANDOFF", language="pt",
+        clean_query="É uma emergência. Estou em perigo agora e preciso falar com um atendente humano.",
+        historic_conversation="", structured_data=dict(status="ok", candidates=[], data_sources=[]),
+        workflow_state=dict(action=dict(authorized=False, executed=False, verified=False, result_id=None),
+            handoff=dict(required=True, created=False, handoff_id=None, reason_code="emergency"),
+            policy_decision=dict(response_mode="HANDOFF", reason_code="emergency")),
+        policy_context=retrieve_policy("HUMAN_REQUEST", human_required=True))
+    text = ("Entendo que é uma emergência e que você precisa falar com um atendente humano. "
+            "Sua solicitação precisa de atendimento humano, mas ainda não posso confirmar o encaminhamento."
+            + extra_contact)
+    errors = validate_response(response(text, "pt"), inputs)
+    assert (errors == []) is safe, "restating the customer's human request must not grant unsourced contact instructions"
+    if not safe:
+        assert "unsupported_operation_guidance" in errors
 
 
 @pytest.mark.parametrize("language,message", [
@@ -772,13 +847,17 @@ def complete_reads(release_source, tmp_path):
         principal_customers={"release-subject": source.person.customer_id,
                             "other-release-subject": "SYNTH-CO-001"},
         event_rates_file=rates, event_rates_sha256=hashlib.sha256(rates.read_bytes()).hexdigest(),
-        sandbox_report_coverage_start=int(NOW.timestamp())-90000))
+        sandbox_report_coverage_start=int(NOW.timestamp())-90000, ledger_continuity_approved=True))
+    from gloria_workflow.bank_read import pin_bank_generation
+    pin_bank_generation(service)
     service.store.attest_sandbox_coverage(int(NOW.timestamp())-90000, "synthetic:release-complete-empty-ledger")
     public_state = State(tmp_path / "public-state")
     settings = Settings(data_dir=source.data, state_dir=tmp_path / "public-state", static_dir=tmp_path / "static",
         demo_code="fictional-code", profiles={source.person.profile: dict(customer_id=source.person.customer_id)})
     repository = Repository(settings, public_state)
-    principal = Principal("release-subject", source.person.customer_id, "release-session", "release-conversation", int(time.time())+3600)
+    from tests.banking_authority_fixtures import principal_for
+    principal = principal_for(service.store, "release-subject", source.person.customer_id,
+                              "release-session", "release-conversation", int(time.time())+3600)
     reads = OwnedBankReads(service, repository, principal, source_root=source.source, clock=lambda: NOW.timestamp())
     ref = repository.reference("txn", principal.customer, source.target["transaction_id"])
     yield SimpleNamespace(reads=reads, service=service, repository=repository, principal=principal,
@@ -1085,7 +1164,8 @@ def test_actual_frontend_workflow_source_and_portal_receipt_join(complete_reads,
     # This owner has complete closed history and no invented exact-case link.
     snapshot = bank.repository.snapshot()
     from banking_mcp.security import Principal
-    principal = Principal("other-release-subject", customer, "fixture-session", "fixture-conversation", int(time.time())+3600)
+    principal = Principal("other-release-subject", customer, "fixture-session", "fixture-conversation",
+                          int(time.time())+3600, bank._gloria_ledger_generation)
     _, raw = bank.repository.owned_transaction_id(principal, raw_target, snapshot.id)
     slots = {key: None for key in ("amount", "currency", "currency_raw", "date_from", "date_to",
         "date_expression", "merchant", "transaction_type", "channel", "city", "country", "transaction_id",

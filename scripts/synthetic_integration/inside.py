@@ -15,7 +15,7 @@ def main() -> int:
     require_runtime_release(dict(os.environ))
     root = Path("/run/synthetic-integration/state")
     root.mkdir(mode=0o700)
-    # This provider is a pending reviewed dependency, absent from bank71/FLUJO51.
+    # New assembly source is separately reviewed; absent from bank71/FLUJO51.
     results = []
     active_phase = "startup"
     result = {"status": "failed", "failure": "fixture_startup_failed"}
@@ -37,7 +37,8 @@ def main() -> int:
                   "phases": results,
                   "unproven": ["real_model_es_pt", "human_adjudication", "customer_acceptance",
                                "observed_24h_operation", "future_business_clock_r16",
-                               "browser_ui", "capacity", "held_out_baseline_comparison", "shared_deployment"]}
+                               "browser_ui", "capacity", "held_out_baseline_comparison", "shared_deployment",
+                               "uninstrumented_flujo_acceptance", "all_filesystem_or_database_writes"]}
     except CheckpointError:
         result = {"status": "failed", "failure": "scenario_assertion_failed"}
     except Exception:

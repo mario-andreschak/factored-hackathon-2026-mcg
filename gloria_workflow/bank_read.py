@@ -14,15 +14,18 @@ import hashlib
 import io
 import json
 import math
+import os
 from pathlib import Path
 import re
+import stat
+import tempfile
 import time
 import unicodedata
 
 import duckdb
 
-from banking_mcp.actions import ACTION
-from banking_mcp.security import BankError, Principal
+from banking_mcp.actions import ACTION, _object
+from banking_mcp.security import BankError, Principal, valid_ledger_generation
 from pipeline.common import bucket_for, load_env
 
 
@@ -35,6 +38,77 @@ MAX_RATE_ROWS = 100000
 _TABLES = {"customers", "products", "transactions", "complaints", "call_center_interactions"}
 _CLOSED = {"closed", "resolved", "cancelled", "canceled", "rejected"}
 _OPEN = {"open", "inprocess", "escalated"}
+
+
+def pin_bank_generation(service, *, retained_state_paths=()) -> str:
+    """Pin the explicitly approved ledger once during trusted host startup.
+
+    Reusing this Service never adopts a replacement generation. Normal reads
+    and writes still compare the pinned principal against the actual ledger.
+    """
+    generation = getattr(service, "_gloria_ledger_generation", None)
+    if generation is not None:
+        if not valid_ledger_generation(generation):
+            raise BankError("authorization_denied")
+        return generation
+    if service.config.mode != "delegated" or service.config.ledger_continuity_approved is not True:
+        raise BankError("action_unverified")
+    location = service.config.state_db.parent / "gloria-bank-generation.json"
+    with service.store.connect() as db:
+        row = db.execute("SELECT generation FROM sandbox_ledger_identity WHERE id=1").fetchone()
+        if not row or not valid_ledger_generation(row[0]):
+            raise BankError("authorization_denied")
+        actual = row[0]
+        if not location.exists():
+            # A missing startup pin cannot adopt an existing admission or
+            # recover a lost ledger beside old frontend/workflow bindings.
+            tables = {item[0] for item in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            guarded = {"sessions", "replays", "revoked", "capabilities", "action_pending", "sandbox_cases",
+                       "sandbox_case_receipts", "sandbox_handoffs", "gloria_host_actions",
+                       "gloria_host_cancelled", "gloria_handoff_packets"}
+            if (any(db.execute("SELECT 1 FROM " + table + " LIMIT 1").fetchone() for table in sorted(tables & guarded))
+                    or any((location.parent / name).exists() for name in ("frontend-chat.sqlite3", "gloria-workflow.sqlite3"))
+                    or any(Path(path).exists() for path in retained_state_paths)):
+                raise BankError("action_unverified")
+    expected = {"schema": "gloria-bank-generation/v1", "ledger_file": service.config.state_db.name,
+                "ledger_generation": actual}
+    try:
+        if not location.exists():
+            descriptor, temporary = tempfile.mkstemp(prefix=".gloria-bank-generation-", suffix=".tmp", dir=location.parent)
+            temporary = Path(temporary)
+            try:
+                with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                    json.dump(expected, stream, sort_keys=True)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                # Same-directory hard-link publication is atomic on POSIX and
+                # Windows NTFS and cannot replace a pin another startup wrote.
+                try:
+                    os.link(temporary, location)
+                except FileExistsError:
+                    pass
+            finally:
+                temporary.unlink()
+        info = location.stat()
+        if (location.is_symlink() or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size > 1024
+                or os.name == "posix" and (stat.S_IMODE(info.st_mode) != 0o600 or info.st_uid != os.geteuid()
+                    or stat.S_IMODE(location.parent.stat().st_mode) & 0o077)):
+            raise ValueError("invalid durable generation pin")
+        saved = _object(location.read_text(encoding="utf-8"))
+        if saved != expected:
+            raise ValueError("ledger generation changed")
+    except (OSError, ValueError, TypeError):
+        raise BankError("authorization_denied") from None
+    service._gloria_ledger_generation = saved["ledger_generation"]
+    return saved["ledger_generation"]
+
+
+def pinned_bank_generation(service) -> str:
+    """Use only the startup pin; a per-turn port cannot initialize/adopt it."""
+    generation = getattr(service, "_gloria_ledger_generation", None)
+    if not valid_ledger_generation(generation):
+        raise BankError("authorization_denied")
+    return generation
 
 
 def assert_bank_principal(service, principal: Principal) -> None:

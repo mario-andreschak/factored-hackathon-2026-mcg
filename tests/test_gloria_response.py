@@ -256,6 +256,31 @@ def test_action_done_requires_all_flags_and_exact_reread(language, registered):
     assert "CMP-SBX" not in fallback_response(data)["message"]
 
 
+@pytest.mark.parametrize("language,registered", [("es", "fue registrado"), ("pt", "foi registrada")])
+@pytest.mark.parametrize("amount", ["1234.56", "1.234,56"])
+def test_verified_success_keeps_decimal_display_facts_in_its_bound_sentence(language, registered, amount):
+    data = verified_action(inputs("ACTION_DONE", language))
+    environment = "en el entorno de prueba" if language == "es" else "no ambiente de teste"
+    text = f"**CMP-SBX-Case_123**, **2026-09-29**, **{amount} COP**, {registered} {environment}."
+    assert validate_response(response(text, language), data) == []
+
+
+@pytest.mark.parametrize("boundary", [".", "!", "?", ";", "\n", "．", "！", "？", "；"])
+def test_decimal_amount_does_not_join_success_to_an_id_in_a_previous_sentence(boundary):
+    data = verified_action(inputs("ACTION_DONE", "pt"))
+    text = f"**CMP-SBX-Case_123**{boundary} A compra de **1234.56 COP** foi registrada."
+    assert "action_success_unverified" in validate_response(response(text, "pt"), data)
+
+
+def test_id_masking_cannot_shift_decimal_claim_boundaries_and_borrow_a_later_id():
+    data = verified_action(inputs("ACTION_DONE", "pt"))
+    text = (
+        "A solicitação **CMP-SBX-Case_123** foi registrada. "
+        "CMP-SBX-Case_123.1234.56 COP. A solicitação foi registrada. **CMP-SBX-Case_123**."
+    )
+    assert "action_success_unverified" in validate_response(response(text, "pt"), data)
+
+
 def test_native_readback_receipt_accepts_verified_envelope_only():
     data = verified_action(inputs("ACTION_DONE"))
     native = {"id": "CMP-SBX-Case_123", "kind": "simulated_intake", "simulated": True, "status": "received", "snapshot": "fixture-snapshot", "created_at": "2026-09-30T10:00:00Z", "transaction": data["structured_data"]["candidates"][0]}
@@ -420,6 +445,106 @@ def test_completed_execution_receipt_does_not_prove_current_processing(language,
 ])
 def test_processing_uncertainty_does_not_assert_an_active_operation(language, text):
     assert validate_response(response(text, language), inputs("ACTION_UNVERIFIED", language)) == []
+
+
+@pytest.mark.parametrize("language,text", [
+    ("pt", "Sinto muito que você esteja em perigo. Sua situação precisa de atendimento humano. Ainda não posso confirmar que o encaminhamento foi realizado."),
+    ("es", "Tu solicitud necesita atención humana. Aún no puedo confirmar que la derivación fue realizada."),
+])
+def test_native_handoff_uncertainty_does_not_assert_completion(language, text):
+    assert validate_response(response(text, language), inputs("HANDOFF", language)) == []
+
+
+@pytest.mark.parametrize("suffix", [
+    " e o encaminhamento foi realizado.",
+    ". O encaminhamento foi realizado.",
+    "; o encaminhamento foi realizado.",
+    ", mas o encaminhamento foi realizado.",
+])
+def test_negative_handoff_uncertainty_cannot_launder_completion(suffix):
+    text = "Ainda não posso confirmar que o encaminhamento foi realizado" + suffix
+    assert "handoff_success_unverified" in validate_response(response(text, "pt"), inputs("HANDOFF", "pt"))
+
+
+def test_native_emergency_contact_advice_remains_unsupported_after_handoff_uncertainty():
+    text = (
+        "Sinto muito que você esteja em perigo. Você precisa de atendimento humano, "
+        "mas ainda não posso confirmar o encaminhamento. Se o perigo for imediato, "
+        "procure um local seguro e ligue para o serviço de emergência da sua região."
+    )
+    assert "unsupported_operation_guidance" in validate_response(response(text, "pt"), inputs("HANDOFF", "pt"))
+
+
+def emergency_request_inputs():
+    data = inputs("HANDOFF", "pt")
+    data["clean_query"] = "É uma emergência. Estou em perigo agora e preciso falar com um atendente humano."
+    data["workflow_state"]["handoff"].update(required=True, reason_code="emergency")
+    data["workflow_state"]["policy_decision"] = {"response_mode": "HANDOFF", "reason_code": "emergency"}
+    return data
+
+
+def emergency_request_acknowledgment():
+    return "Entendo que é uma emergência e que você precisa falar com um atendente humano."
+
+
+@pytest.mark.parametrize("query", [
+    "É uma emergência, estou em perigo agora e preciso falar com um atendente humano.",
+    "É uma emergência. Estou em perigo agora e preciso falar com um atendente humano.",
+])
+def test_captured_human_request_acknowledgment_remains_grounded_after_host_projection(query):
+    from gloria_workflow.prompts import safe_workflow_state
+    data = emergency_request_inputs()
+    data["clean_query"] = query
+    data["workflow_state"] = safe_workflow_state(data["workflow_state"])
+    text = emergency_request_acknowledgment() + " Sua solicitação precisa de atendimento humano, mas ainda não posso confirmar o encaminhamento."
+    assert validate_response(response(text, "pt"), data) == []
+
+
+@pytest.mark.parametrize("field,value", [
+    ("response_mode", "INFORM"),
+    ("handoff.required", False),
+    ("handoff.required", 1),
+    ("policy_decision.response_mode", "INFORM"),
+    ("policy_decision.reason_code", "missing_evidence"),
+    ("policy_decision.reason_code", None),
+    ("clean_query", "Estou em perigo agora."),
+    ("clean_query", "Não estou em perigo agora e preciso falar com um atendente humano."),
+    ("clean_query", "É uma emergência. Não estou em perigo agora e preciso falar com um atendente humano."),
+    ("clean_query", "É uma emergência. Estou em perigo agora e preciso falar com um atendente humano pelo telefone."),
+])
+def test_human_request_acknowledgment_requires_the_current_need_and_trusted_emergency_scope(field, value):
+    data = emergency_request_inputs()
+    if "." in field:
+        projection, key = field.split(".")
+        data["workflow_state"][projection][key] = value
+    else:
+        data[field] = value
+    assert "unsupported_operation_guidance" in validate_response(response(emergency_request_acknowledgment(), "pt"), data)
+
+
+def test_historical_human_request_does_not_authorize_a_current_contact_acknowledgment():
+    data = emergency_request_inputs()
+    data["historic_conversation"] = data["clean_query"]
+    data["clean_query"] = "Estou em perigo agora."
+    assert "unsupported_operation_guidance" in validate_response(response(emergency_request_acknowledgment(), "pt"), data)
+
+
+@pytest.mark.parametrize("suffix", [
+    " e ligue para o serviço de emergência local.",
+    ", ligue para o serviço de emergência local.",
+    "; ligue para o serviço de emergência local.",
+    ". Ligue para o serviço de emergência local.",
+    " por telefone.",
+    " pelo canal do banco.",
+])
+def test_human_request_acknowledgment_never_authorizes_extra_contact_guidance(suffix):
+    text = emergency_request_acknowledgment().rstrip(".") + suffix
+    assert "unsupported_operation_guidance" in validate_response(response(text, "pt"), emergency_request_inputs())
+
+
+def test_human_request_acknowledgment_does_not_prove_an_attendant_has_received_the_case():
+    text = emergency_request_acknowledgment() + " Um atendente já recebeu seu caso."
+    assert "human_service_unverified" in validate_response(response(text, "pt"), emergency_request_inputs())
 
 
 @pytest.mark.parametrize("language,text", [

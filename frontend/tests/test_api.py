@@ -9,15 +9,15 @@ from dataclasses import replace
 from pathlib import Path
 
 import duckdb
-import httpx
 import pytest
 from fastapi.testclient import TestClient
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from frontend.server.app import COOKIE, create_app
+from frontend.server.bank_rpc import BankRPCError
 from frontend.server.chat import ChatService
+from frontend.server.language import MinimizedFacts
 from frontend.tests.action_fixtures import action_facts, action_handoff, action_receipt
+from frontend.tests.direct_host_fixtures import attach_direct_fakes, make_direct_config
 from frontend.server.config import Settings
 from frontend.server.repository import DatasetUnavailable, Repository
 from frontend.server.state import State
@@ -280,44 +280,44 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
 
 
 def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(settings, monkeypatch):
-    settings.state_dir.mkdir(parents=True, exist_ok=True)
-    signer = Ed25519PrivateKey.generate()
-    key_file = settings.state_dir / "test-signer.pem"
-    key_file.write_bytes(signer.private_bytes(serialization.Encoding.PEM,
-        serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
-    config = {"base_url": "http://flujo:4200", "model": "flow-Banking_Customer",
-        "execution_token": "only-the-server-knows-this-token", "frontend_signing_key_file": str(key_file),
-        "frontend_kid": "approved-front", "frontend_issuer": "approved-frontend",
-        "frontend_audience": "flujo-banking-ingress", "action_enabled": True,
-        "principal_customers": {"subject-a": "private-customer-co"}}
-    conversation = str(uuid.uuid4())
+    config = make_direct_config(settings.state_dir / "generated-action-host",
+        principal_customers={"subject-a": "private-customer-co"}, action_enabled=True)
     actions = []
     repository = Repository(settings, State(settings.state_dir))
     prepared_transactions = {}
-    def respond(request):
-        if request.url.path == "/v1/chat/completions":
-            return httpx.Response(200, json={"conversation_id": conversation, "status": "completed",
-                "choices": [{"message": {"role": "assistant", "content": "Consulta verificada."}}]})
-        body = json.loads(request.content)
-        actions.append(body)
-        if body["operation"] == "prepare":
+    async def respond(tool, body, context):
+        flags = {"synthetic": False, "operator_test": False}
+        if tool == "prepare_unrecognized_charge":
+            assert set(body) == {"transaction_id", "snapshot", "request_id"}
+            actions.append(body)
             selected = repository.action_target("colombia", repository.reference(
-                "txn", "private-customer-co", body["transactionId"]))["transaction"]
-            handle = ("a" if len([item for item in actions if item["operation"] == "prepare"]) == 1 else "b") * 43
+                "txn", "private-customer-co", body["transaction_id"]))["transaction"]
+            handle = ("a" if len(prepared_transactions) == 0 else "b") * 43
             prepared_transactions[handle] = selected
-            return httpx.Response(200, json={"state": "pending_confirmation",
-                "snapshot": body["snapshot"], "transaction": action_facts(selected), "pending_handle": handle})
-        if body["operation"] == "confirm":
-            return httpx.Response(200, json={"state": "intake_verified",
-                "receipt": action_receipt(snapshot="fixture-1", selected=prepared_transactions[body["pendingHandle"]])})
-        return httpx.Response(200, json={"state": "handoff_verified",
-            "handoff": action_handoff(reason=body["reason"],
-                snapshot="fixture-1" if body.get("pendingHandle") else None,
-                selected=prepared_transactions.get(body.get("pendingHandle")))})
+            result = bank.answer(tool, body)
+            return {**result, "snapshot": body["snapshot"], "transaction": action_facts(selected), "pending_handle": handle}
+        if tool == "confirm_simulated_intake":
+            assert set(body) == {"pending_handle", "confirmed"} and body["confirmed"] is True
+            actions.append(body)
+            bank.receipt = action_receipt(snapshot="fixture-1", selected=prepared_transactions[body["pending_handle"]])
+            return {**flags, "state": "created", "receipt": bank.receipt}
+        if tool == "read_intake_receipt":
+            return {**flags, "state": "created", "receipt": bank.receipt}
+        if tool == "create_verified_handoff":
+            actions.append(body)
+            bank.handoff = action_handoff(reason=body["reason"],
+                snapshot="fixture-1" if body.get("pending_handle") else None,
+                selected=prepared_transactions.get(body.get("pending_handle")), questions=body["unanswered_questions"])
+            return {**flags, "state": "created", "handoff": bank.handoff}
+        if tool == "read_verified_handoff":
+            assert body["handoff_id"] == bank.handoff["id"]
+            return {**flags, "state": "created", "handoff": bank.handoff}
+        raise AssertionError("Unexpected direct bank tool")
     with TestClient(create_app(settings)) as client:
         assert login(client).status_code == 200
         service = ChatService(config, settings.state_dir)
-        service._transport = httpx.MockTransport(respond)
+        bank, language = attach_direct_fakes(service)
+        bank.call_handler = respond
         client.app.state.chat_service = service
         refs = [entry["reference"] for entry in client.get("/api/overview").json()["transactions"]]
         first_ref, second_ref = refs[:2]
@@ -338,15 +338,18 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
             "transaction_reference": first_ref, "request_id": browser_request_id})
         assert first.status_code == 200 and first.json()["target_reference"] == first_ref
         assert first.json()["request_id"] != browser_request_id
-        assert actions[-1]["requestId"] == first.json()["request_id"]
+        assert actions[-1]["request_id"] == first.json()["request_id"]
         assert client.post("/api/action/prepare", json={"transaction_reference": second_ref}).status_code == 409
         assert client.get("/api/action/status").json()["target_reference"] == first_ref
         confirmed = client.post("/api/action/confirm", json={"transaction_reference": first_ref,
             "pending_handle": first.json()["pending_handle"], "confirmed": True})
         assert confirmed.status_code == 200 and confirmed.json()["target_reference"] == first_ref
+        assert confirmed.json()["state"] == "intake_verified"
+        assert [tool for tool, _, _ in bank.calls][-2:] == ["confirm_simulated_intake", "read_intake_receipt"]
         second = client.post("/api/action/prepare", json={"transaction_reference": second_ref})
         assert second.status_code == 200 and second.json()["target_reference"] == second_ref
         calls_before_mismatch = len(actions)
+        bank_calls_before_mismatch = len(bank.calls)
         original_target = client.app.state.repository.action_target
         with service._connection() as db:
             saved_pending = dict(db.execute("SELECT * FROM action_status").fetchone())
@@ -360,6 +363,7 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
                     "pending_handle": second.json()["pending_handle"], "confirmed": True})
                 assert mismatch.status_code == 409
             assert len(actions) == calls_before_mismatch
+            assert len(bank.calls) == bank_calls_before_mismatch
             with service._connection() as db:
                 assert dict(db.execute("SELECT * FROM action_status").fetchone()) == saved_pending
         for reference in (first_ref, second_ref):
@@ -374,17 +378,21 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         assert client.post("/api/action/confirm", json={"transaction_reference": foreign,
             "pending_handle": second.json()["pending_handle"], "confirmed": True}).status_code == 404
         assert len(actions) == calls_before_mismatch
+        assert len(bank.calls) == bank_calls_before_mismatch
         assert client.get("/api/action/status").json()["target_reference"] == second_ref
         matched = client.post("/api/action/handoff", json={"reason": "customer_request",
             "transaction_reference": second_ref, "pending_handle": second.json()["pending_handle"],
             "request_id": browser_request_id})
         assert matched.status_code == 200 and matched.json()["target_reference"] == second_ref
         assert len(actions) == calls_before_mismatch + 1
-        assert actions[-1]["requestId"] == second.json()["request_id"] != browser_request_id
+        assert len(bank.calls) == bank_calls_before_mismatch + 2
+        assert actions[-1]["request_id"] == second.json()["request_id"] != browser_request_id
+        assert [tool for tool, _, _ in bank.calls][-2:] == ["create_verified_handoff", "read_verified_handoff"]
         replay = client.post("/api/action/handoff", json={"reason": "customer_request",
             "transaction_reference": second_ref, "request_id": matched.json()["request_id"]})
         assert replay.status_code == 200 and replay.json()["handoff"] == matched.json()["handoff"]
         assert len(actions) == calls_before_mismatch + 1
+        assert len(bank.calls) == bank_calls_before_mismatch + 2
         general = client.post("/api/action/handoff", json={"reason": "customer_request",
             "request_id": "123e4567-e89b-42d3-a456-426614174002"})
         assert general.status_code == 200 and "target_reference" not in general.json()
@@ -393,68 +401,72 @@ def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(se
         assert "target_reference" not in general_status.json()
         assert all("target_reference" not in operation and "transaction_reference" not in operation
                    for operation in actions)
+        assert all("conversationId" not in arguments for _, arguments, _ in bank.calls)
+        assert len(language.calls) == 1
 
 
 def test_handoff_api_normalizes_and_freezes_questions_through_lost_response_and_restart(settings):
-    settings.state_dir.mkdir(parents=True, exist_ok=True)
-    signer = Ed25519PrivateKey.generate()
-    key_file = settings.state_dir / "test-question-signer.pem"
-    key_file.write_bytes(signer.private_bytes(serialization.Encoding.PEM,
-        serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
-    config = {"base_url": "http://flujo:4200", "model": "flow-Banking_Customer",
-        "execution_token": "only-the-server-knows-this-token", "frontend_signing_key_file": str(key_file),
-        "frontend_kid": "approved-front", "frontend_issuer": "approved-frontend",
-        "frontend_audience": "flujo-banking-ingress", "action_enabled": True,
-        "principal_customers": {"subject-a": "private-customer-co"}}
-    conversation, request_id = str(uuid.uuid4()), str(uuid.uuid4())
+    config = make_direct_config(settings.state_dir / "generated-question-host",
+        principal_customers={"subject-a": "private-customer-co"}, action_enabled=True)
+    request_id = str(uuid.uuid4())
     questions = ["¿Cuál cargo debo revisar?", "Qual o próximo passo?"]
     writes = []
-    def respond(request):
-        if request.url.path == "/v1/chat/completions":
-            return httpx.Response(200, json={"conversation_id": conversation, "status": "completed",
-                "choices": [{"message": {"role": "assistant", "content": "Consulta verificada."}}]})
-        body = json.loads(request.content)
-        writes.append(body)
-        # Final pinned FLUJO actionBody is strict and rejects the camel alias.
-        assert set(body) == {"conversationId", "operation", "reason", "requestId", "unanswered_questions"}
-        assert "unansweredQuestions" not in body
-        if len(writes) <= 2:
-            raise httpx.ReadTimeout("response lost after packet commit")
-        return httpx.Response(200, json={"state": "handoff_verified", "handoff": action_handoff(
-            snapshot=None, reason=body["reason"], questions=body["unanswered_questions"])})
+    async def respond(tool, body, context):
+        flags = {"synthetic": False, "operator_test": False}
+        if tool == "create_verified_handoff":
+            writes.append(body)
+            assert set(body) == {"reason", "request_id", "unanswered_questions"}
+            bank.handoff = action_handoff(snapshot=None, reason=body["reason"], questions=body["unanswered_questions"])
+            if len(writes) == 1:
+                raise BankRPCError("bank_timeout", possibly_sent=True)
+            return {**flags, "state": "created", "handoff": bank.handoff}
+        assert tool == "read_verified_handoff" and body["handoff_id"] == bank.handoff["id"]
+        return {**flags, "state": "created", "handoff": bank.handoff}
     with TestClient(create_app(settings)) as client:
         assert login(client).status_code == 200
         service = ChatService(config, settings.state_dir)
-        service._transport = httpx.MockTransport(respond)
+        bank, language = attach_direct_fakes(service)
+        bank.call_handler = respond
         client.app.state.chat_service = service
         assert client.post("/api/chat/messages", json={"message": "Quero uma pessoa"}).status_code == 200
         first = client.post("/api/action/handoff", json={"reason": "customer_request", "request_id": request_id,
             "unanswered_questions": ["  ¿Cuál cargo debo revisar?  ", " Qual o próximo passo? "]})
         assert first.status_code == 200 and first.json()["state"] == "handoff_unverified"
         assert first.json()["unanswered_questions"] == questions
-        assert len(writes) == 2 and writes[0] == writes[1]
+        assert len(writes) == 1
+        original_context = bank.calls[0][2]
         assert writes[0]["unanswered_questions"] == questions
+        host_request_id = first.json()["request_id"]
+        assert host_request_id != request_id
+        assert writes[0]["request_id"] == host_request_id
         cookie = client.cookies.get(COOKIE)
     with TestClient(create_app(settings)) as restarted:
         restarted.cookies.set(COOKIE, cookie)
         service = ChatService(config, settings.state_dir)
-        service._transport = httpx.MockTransport(respond)
+        attach_direct_fakes(service, bank=bank, language=language)
         restarted.app.state.chat_service = service
         changed = restarted.post("/api/action/handoff", json={"reason": "customer_request",
-            "request_id": request_id, "unanswered_questions": ["Outra pergunta?"]})
-        assert changed.status_code == 409 and len(writes) == 2
+            "request_id": host_request_id, "unanswered_questions": ["Outra pergunta?"]})
+        assert changed.status_code == 409 and len(writes) == 1
         recovered = restarted.post("/api/action/handoff", json={"reason": "customer_request",
-            "request_id": request_id, "language": "pt"})
+            "request_id": host_request_id, "language": "pt"})
         assert recovered.status_code == 200 and recovered.json()["state"] == "handoff_verified"
         assert recovered.json()["handoff"]["unanswered_questions"] == questions
-        assert len(writes) == 3 and writes[-1] == writes[0]
+        assert len(writes) == 2 and writes[-1] == writes[0]
+        retry_context = bank.calls[1][2]
+        assert (retry_context.subject, retry_context.session_id, retry_context.conversation_id) == (
+            original_context.subject, original_context.session_id, original_context.conversation_id)
+        assert retry_context.operation_id != original_context.operation_id
+        assert [tool for tool, _, _ in bank.calls] == [
+            "create_verified_handoff", "create_verified_handoff", "read_verified_handoff"]
         with service._connection() as db:
             saved_row = dict(db.execute("SELECT * FROM action_status").fetchone())
         for fields in ({}, {"unanswered_questions": [" ¿Cuál cargo debo revisar? ", " Qual o próximo passo? "]}):
             replay = restarted.post("/api/action/handoff", json={"reason": "customer_request",
-                "request_id": request_id, "language": "es", **fields})
+                "request_id": host_request_id, "language": "es", **fields})
             assert replay.status_code == 200 and replay.json()["handoff"] == recovered.json()["handoff"]
-            assert len(writes) == 3
+            assert len(writes) == 2
+            assert len(bank.calls) == 3
             with service._connection() as db:
                 assert dict(db.execute("SELECT * FROM action_status").fetchone()) == saved_row
 
@@ -728,10 +740,13 @@ def test_history_pages_and_older_chat_selection_keep_strict_ownership(expanded_h
         def __init__(self):
             self.calls = []
             self.public_calls = []
+            self.context_calls = []
 
-        async def send(self, customer, session_id, expires_at, message, *, display_message=None, selection=None):
+        async def send(self, customer, session_id, expires_at, message, *, display_message=None, selection=None,
+                       facts=None, language="es"):
             self.calls.append((customer, session_id, expires_at, message))
             self.public_calls.append((display_message, selection))
+            self.context_calls.append((facts, language))
             return {"reply": "Movimiento recibido", "mode": "flujo", "status": "completed"}
 
     with TestClient(create_app(settings)) as client:
@@ -788,20 +803,30 @@ def test_history_pages_and_older_chat_selection_keep_strict_ownership(expanded_h
         assert customer == "private-customer-co"
         current_session = client.app.state.bank_state.session(client.cookies.get(COOKIE))
         assert (session_id, expires_at) == (current_session.id, current_session.expires_at)
-        assert '"type": "Purchase"' in message and '"amount": 50.0' in message
-        assert '"occurred_at": "2026-06-17T11:00:00"' in message
+        assert message == "Explícame este movimiento"
+        facts, language = chat.context_calls[0]
+        assert type(facts) is MinimizedFacts and language == "es"
+        assert facts.public() == {"event_date": "2026-06-17", "amount": "50.00", "currency": "COP",
+                                  "merchant": None, "recorded_status": "approved"}
+        assert selected["reference"] not in json.dumps(facts.public())
         display_message, public_selection = chat.public_calls[0]
         assert display_message == "Explícame este movimiento"
         assert public_selection["reference"] == selected["reference"]
         assert public_selection["amount"] == 50 and public_selection["type"] == "Purchase"
 
-        # A displayed next-day movement must carry its separate MCP query date.
-        response = client.post("/api/chat/messages", json={"message": "Explícame este movimiento", "transaction_reference": newer["reference"]})
+        # Generic guidance uses the actual event date without banking tool/query metadata.
+        response = client.post("/api/chat/messages", json={"message": "Explícame este movimiento",
+            "transaction_reference": newer["reference"], "language": "pt"})
         assert response.status_code == 200 and len(chat.calls) == 2
         message = chat.calls[1][3]
-        assert '"occurred_at": "2026-06-18T00:00:00"' in message
-        assert '"process_date": "2026-06-17"' in message
-        assert '"mcp_date_window_basis": "transaction_date"' in message
+        assert message == "Explícame este movimiento"
+        facts, language = chat.context_calls[1]
+        assert type(facts) is MinimizedFacts and language == "pt"
+        assert facts.event_date == "2026-06-18"
+        assert facts.amount == f'{newer["amount"]:.2f}'
+        assert set(facts.public()) == {"event_date", "amount", "currency", "merchant", "recorded_status"}
+        for private in (newer["reference"], "process_date", "transaction_id", "mcp_date_window_basis"):
+            assert private not in message and private not in json.dumps(facts.public())
         display_message, public_selection = chat.public_calls[1]
         assert display_message == "Explícame este movimiento"
         assert public_selection["occurred_at"].startswith("2026-06-18")

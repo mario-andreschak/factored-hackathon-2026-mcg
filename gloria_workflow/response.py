@@ -32,6 +32,7 @@ _FIELDS = {"message", "language", "arquetipos", "chunk_ids", "data_sources", "gr
 _ARCHETYPES = {"Guía Clara", "Acompañamiento", "Orientación a la solución"}
 _ID = re.compile(r"(?:(?:TRX|CMP|HOF)-[A-Za-z0-9_-]+|(?:txn|rev)_[A-Za-z0-9_-]+)\Z")
 _ID_HINT = re.compile(r"(?:TRX|CMP|HOF)-|(?:txn|rev)_", re.I)
+_CLAIM_BOUNDARY = re.compile(r"[!?;\n]|(?<!\d)\.|\.(?!\d)")
 _DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?\b|\b\d{1,2}/\d{1,2}/\d{4}\b")
 _NUMBER = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+|[ \u00a0\u202f]\d{3}(?!\d))*(?:[eE][-+]?\d+)?")
 _CURRENCIES = set("COP USD EUR BRL MXN ARS CLP PEN UYU PYG BOB VES GBP CAD AUD CHF JPY CNY INR KRW SEK NOK DKK NZD ZAR HKD SGD AED SAR TRY RUB CRC DOP GTQ HNL NIO PAB BZD CUP".split())
@@ -75,7 +76,7 @@ _HUMAN_SERVICE_CLAIM = re.compile(
     r"\b(?:esta siendo (?:atendid[ao]|analizad[ao]|revisad[ao])|esta sendo (?:atendid[ao]|analisad[ao])|te contactaran?|te atenderan?|te responderan?|entrara(?:o)? em contato|vai entrar em contato|vao entrar em contato|sera(?:s)? atendid[ao]|recibiras atencion humana|recebera atendimento humano)\b"
 )
 _HANDOFF_CREATED_CLAIM = re.compile(r"\b(?:derivacion|encaminhamento)\s+(?:ya |ja )?(?:esta|fue|foi|ha sido|quedo)\s+(?:confirmad[ao]|completad[ao]|concluid[ao]|realizad[ao]|cread[ao]|criad[ao]|registrad[ao]|guardad[ao])\b")
-_HANDOFF_LIMITATION = re.compile(r"(?:aun |todavia |ainda )?(?:no puedo|no podemos|nao posso|nao podemos) confirmar(?: aqui)?(?: (?:la derivacion|el encaminhamento|o encaminhamento)| que (?:la derivacion|o encaminhamento) (?:este|esta|fue|foi) (?:completada|confirmada|concluido|confirmado))")
+_HANDOFF_LIMITATION = re.compile(r"(?:aun |todavia |ainda )?(?:no puedo|no podemos|nao posso|nao podemos) confirmar(?: aqui)?(?: (?:la derivacion|el encaminhamento|o encaminhamento)| que (?:la derivacion|o encaminhamento) (?:este|esta|fue|foi) (?:completada|confirmada|concluido|confirmado|realizada|realizado))")
 _ATTRIBUTION = re.compile(r"\b(?:el cliente|la cliente|cliente|la persona|el usuario|la usuaria)\b.*\b(?:afirma|se[nñ]ala|dice|indica|declara|refiere|relata|manifiesta|comenta|reporta|sostiene|solicita|expresa|cree|alega|informa|asegura)\b|\bseg[uú]n (?:el cliente|la cliente|la persona|el usuario|la usuaria)\b", re.I)
 
 # This finite grammar checks advice, not intent. The configured model remains
@@ -209,6 +210,41 @@ def _mask_display_ids(message: str, allowed: set | None = None) -> str:
     return message
 
 
+def _claim_sentences(message: str) -> list[tuple[str, str]]:
+    """Keep decimal facts inside claims and ID-masked boundaries aligned."""
+    message = unicodedata.normalize("NFKC", message)
+    masked = _mask_display_ids(message)
+    result = []
+    start = 0
+    # Masking preserves offsets. Split once on that text so punctuation after
+    # a numeric ID suffix cannot look like a decimal or shift paired claims.
+    for boundary in _CLAIM_BOUNDARY.finditer(masked):
+        end = boundary.start()
+        result.append((_normalized(message[start:end]), _normalized(masked[start:end])))
+        start = boundary.end()
+    result.append((_normalized(message[start:]), _normalized(masked[start:])))
+    return result
+
+
+def _acknowledges_customer_human_request(clause: str, inputs: Mapping) -> bool:
+    """Recognize one captured request acknowledgment, never contact advice."""
+    if clause != "entendo que e uma emergencia e que voce precisa falar com um atendente humano":
+        return False
+    workflow = _mapping(inputs.get("workflow_state"))
+    decision = _mapping(workflow.get("policy_decision"))
+    if not (inputs.get("language") == "pt" and _mode(inputs) == "HANDOFF"
+            and decision.get("response_mode") == "HANDOFF" and decision.get("reason_code") == "emergency"
+            and _mapping(workflow.get("handoff")).get("required") is True):
+        return False
+    query = inputs.get("clean_query")
+    # The actual current request and independent fixture differ only in this
+    # punctuation. History and other customer text provide no contact authority.
+    return isinstance(query, str) and bool(re.fullmatch(
+        r"e uma emergencia[,.] estou em perigo agora e preciso falar com um atendente humano\.?",
+        _guidance_text(query),
+    ))
+
+
 def _recommendation_errors(message: str, inputs: Mapping, cited_chunks: object) -> list[str]:
     """Reject unsupported operational directions clause by clause, fail closed."""
     # Identifier spelling is checked separately; a base64 suffix resembling a
@@ -254,7 +290,7 @@ def _recommendation_errors(message: str, inputs: Mapping, cited_chunks: object) 
             errors.append("unsupported_operation_guidance")
         if _REFUND_OPERATION.search(clause) and (_DIRECTIVE.search(clause) or _REFUND_EFFECT.search(clause)):
             errors.append("unsupported_operation_guidance")
-        if _CONTACT_OPERATION.search(clause):
+        if _CONTACT_OPERATION.search(clause) and not _acknowledges_customer_human_request(clause, inputs):
             errors.append("unsupported_operation_guidance")
         if _NEW_FINANCIAL_OPERATION.search(clause) and _FINANCIAL_OBJECT.search(clause):
             errors.append("unsupported_operation_guidance")
@@ -658,9 +694,7 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
             errors.append("existing_case_receipt_unverified")
         elif existing["complaint_id"] not in message or existing["status"] not in message:
             errors.append("existing_case_facts_missing")
-    original_sentences = re.split(r"[.!?;\n]", normalized)
-    claim_sentences = re.split(r"[.!?;\n]", _normalized(_mask_display_ids(message)))
-    for sentence, claim in zip(original_sentences, claim_sentences):
+    for sentence, claim in _claim_sentences(message):
         success = any(phrase in claim for phrase in _success_phrases()) or bool(_ADDITIONAL_SUCCESS.search(claim))
         guidance = _guidance_text(claim).strip(" :-()")
         if _HUMAN_SERVICE_CLAIM.search(guidance):

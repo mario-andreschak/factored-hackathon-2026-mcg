@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import secrets
 import sqlite3
 import threading
@@ -20,6 +21,10 @@ from .config import Config
 ASSERTION_META = "com.flujo.bank/assertion"
 TOKEN_TYPE = "bank-mcp+jwt"
 MAX_ASSERTION_TTL = 60
+
+
+def valid_ledger_generation(value) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[a-f0-9]{64}", value) is not None
 
 
 class _DatabaseGate:
@@ -59,10 +64,14 @@ class Principal:
     session: str
     conversation: str
     expires: int
+    ledger_generation: str | None = None
 
     def binding(self) -> str:
-        return arguments_digest({"sub": self.subject, "customer": self.customer,
-                                 "session": self.session, "conversation": self.conversation})
+        bound = {"sub": self.subject, "customer": self.customer,
+                 "session": self.session, "conversation": self.conversation}
+        if self.ledger_generation is not None:
+            bound["ledger_generation"] = self.ledger_generation
+        return arguments_digest(bound)
 
 
 class StateStore:
@@ -73,12 +82,18 @@ class StateStore:
     last-connection WAL checkpoints/recovery on Windows. No data/provider work
     runs under this gate. Other processes still use SQLite locking and timeout.
     """
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, *, ledger_continuity_approved: bool = False,
+                 require_ledger_generation: bool = True):
+        if type(ledger_continuity_approved) is not bool or type(require_ledger_generation) is not bool:
+            raise ValueError("ledger policy requires booleans")
+        self._ledger_continuity_approved = ledger_continuity_approved
+        self._require_ledger_generation = require_ledger_generation
         path.parent.mkdir(parents=True, exist_ok=True)
         self.path = path.resolve()
         self._gate = _database_gate(self.path)
         with self.connect() as db:
             db.execute("PRAGMA journal_mode=WAL")
+            fresh = not db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS replays(jti TEXT PRIMARY KEY, expires INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS revoked(session TEXT PRIMARY KEY);
@@ -131,8 +146,11 @@ class StateStore:
                 # manufacture saved questions or charge evidence for them.
                 db.execute("ALTER TABLE sandbox_handoffs ADD COLUMN packet_json TEXT")
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS action_pending_request_key ON action_pending(request_key)")
-            db.execute("INSERT OR IGNORE INTO sandbox_ledger_identity VALUES (1, ?)",
-                       (secrets.token_hex(32),))
+            # Initialize only a new ledger. A missing identity in existing state
+            # is uncertainty, never permission to silently adopt a new identity.
+            if fresh:
+                db.execute("INSERT INTO sandbox_ledger_identity VALUES (1, ?)",
+                           (secrets.token_hex(32),))
 
     def attest_sandbox_coverage(self, start: int, provenance: str) -> None:
         """Explicit trusted initialization; config alone never backdates a new DB."""
@@ -144,7 +162,7 @@ class StateStore:
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             identity = db.execute("SELECT generation FROM sandbox_ledger_identity WHERE id=1").fetchone()
-            if not identity or len(identity[0]) != 64:
+            if not identity or not valid_ledger_generation(identity[0]):
                 raise BankError("risk_data_unavailable")
             existing = db.execute("SELECT generation,coverage_start,provenance_digest FROM sandbox_coverage WHERE id=1").fetchone()
             if existing:
@@ -160,7 +178,7 @@ class StateStore:
             return False
         row = db.execute("""SELECT i.generation,c.generation,c.coverage_start,c.provenance_digest
             FROM sandbox_ledger_identity i LEFT JOIN sandbox_coverage c ON c.id=1 WHERE i.id=1""").fetchone()
-        return bool(row and isinstance(row[0], str) and len(row[0]) == 64
+        return bool(row and valid_ledger_generation(row[0])
                     and row[1] == row[0] and type(row[2]) is int
                     and row[2] == configured_start and isinstance(row[3], str)
                     and len(row[3]) == 64)
@@ -175,8 +193,65 @@ class StateStore:
             finally:
                 db.close()
 
-    def consume(self, jti: str, expires: int):
+    def assert_authorized(self, db, principal: Principal, *, revocation: bool = False) -> None:
+        """Read actual identity and deny state in the caller's SQLite transaction."""
+        expected = principal.ledger_generation
+        if self._require_ledger_generation or expected is not None:
+            if not valid_ledger_generation(expected):
+                raise BankError("authorization_denied")
+            row = db.execute("SELECT generation FROM sandbox_ledger_identity WHERE id=1").fetchone()
+            if (not row or not valid_ledger_generation(row[0])
+                    or not secrets.compare_digest(row[0], expected)):
+                raise BankError("authorization_denied")
+        if principal.expires <= time.time():
+            raise BankError("authorization_denied")
+        if not revocation:
+            if db.execute("SELECT 1 FROM revoked WHERE session=?", (principal.session,)).fetchone():
+                raise BankError("authorization_denied")
+            if (self._require_ledger_generation or expected is not None) and not self._ledger_continuity_approved:
+                raise BankError("action_unverified")
+        if principal.expires <= time.time():
+            raise BankError("authorization_denied")
+
+    @contextmanager
+    def authority(self, principal: Principal, *, write: bool = False, revocation: bool = False):
+        """Fence reads and writes at entry and before commit; exceptions roll back."""
         with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE" if write else "BEGIN")
+            self.assert_authorized(db, principal, revocation=revocation)
+            yield db
+            self.assert_authorized(db, principal, revocation=revocation)
+
+    def assert_current(self, principal: Principal, *, revocation: bool = False) -> None:
+        with self.authority(principal, revocation=revocation):
+            pass
+
+    def admit(self, principal: Principal, jti: str, *, revocation: bool = False) -> None:
+        """Bind/consume or add revoke atomically after generation admission."""
+        with self.authority(principal, write=True, revocation=revocation) as db:
+            if not revocation:
+                db.execute("INSERT OR IGNORE INTO sessions VALUES (?,?,?)",
+                           (principal.session, principal.subject, principal.customer))
+            row = db.execute("SELECT subject,customer FROM sessions WHERE session=?", (principal.session,)).fetchone()
+            if row is not None and row != (principal.subject, principal.customer):
+                raise BankError("authorization_denied")
+            db.execute("DELETE FROM replays WHERE expires < ?", (int(time.time()) - 5,))
+            try:
+                db.execute("INSERT INTO replays VALUES (?,?)", (jti, principal.expires))
+            except sqlite3.IntegrityError:
+                raise BankError("authorization_denied") from None
+            if revocation:
+                db.execute("INSERT OR IGNORE INTO revoked VALUES (?)", (principal.session,))
+        self.assert_current(principal, revocation=revocation)
+
+    def consume(self, jti: str, expires: int, *, principal: Principal | None = None):
+        # Delegated JWT admission uses admit(), which binds and consumes atomically.
+        if principal is None and self._require_ledger_generation:
+            raise BankError("authorization_denied")
+        if principal is not None and expires != principal.expires:
+            raise BankError("authorization_denied")
+        context = self.authority(principal, write=True) if principal is not None else self.connect()
+        with context as db:
             db.execute("DELETE FROM replays WHERE expires < ?", (int(time.time()) - 5,))
             try:
                 db.execute("INSERT INTO replays VALUES (?,?)", (jti, expires))
@@ -184,15 +259,19 @@ class StateStore:
                 raise BankError("authorization_denied") from None
 
     def bind_session(self, principal: Principal):
-        with self.connect() as db:
+        with self.authority(principal, write=True) as db:
             db.execute("INSERT OR IGNORE INTO sessions VALUES (?,?,?)",
                        (principal.session, principal.subject, principal.customer))
             row = db.execute("SELECT subject,customer FROM sessions WHERE session=?", (principal.session,)).fetchone()
             if row != (principal.subject, principal.customer):
                 raise BankError("authorization_denied")
 
-    def revoke(self, session: str):
-        with self.connect() as db:
+    def revoke(self, session: str, *, principal: Principal | None = None):
+        if ((principal is None and self._require_ledger_generation)
+                or (principal is not None and session != principal.session)):
+            raise BankError("authorization_denied")
+        context = self.authority(principal, write=True, revocation=True) if principal is not None else self.connect()
+        with context as db:
             db.execute("INSERT OR IGNORE INTO revoked VALUES (?)", (session,))
 
     def is_revoked(self, session: str) -> bool:
@@ -201,22 +280,25 @@ class StateStore:
 
     def put(self, kind: str, principal: Principal, payload: dict) -> str:
         token = secrets.token_urlsafe(32)
-        with self.connect() as db:
+        with self.authority(principal, write=True) as db:
             db.execute("DELETE FROM capabilities WHERE expires < ?", (int(time.time()),))
             db.execute("INSERT INTO capabilities VALUES (?,?,?,?,?)", (
                 hashlib.sha256(token.encode()).hexdigest(), kind, principal.binding(),
                 int(time.time()) + 900, json.dumps(payload)))
+        self.assert_current(principal)
         return token
 
     def get(self, token: str, kind: str, principal: Principal) -> dict:
         if not isinstance(token, str) or not 32 <= len(token) <= 64:
             raise BankError("reference_unavailable")
-        with self.connect() as db:
+        with self.authority(principal) as db:
             row = db.execute("SELECT binding, expires, payload FROM capabilities WHERE id=? AND kind=?",
                              (hashlib.sha256(token.encode()).hexdigest(), kind)).fetchone()
         if not row or row[1] <= time.time() or not secrets.compare_digest(row[0], principal.binding()):
             raise BankError("reference_unavailable")
-        return json.loads(row[2])
+        result = json.loads(row[2])
+        self.assert_current(principal)
+        return result
 
 
 class Authorizer:
@@ -250,8 +332,7 @@ class Authorizer:
     def revoke_assertion(self, token: str):
         if self.config.mode != "delegated":
             raise BankError("authorization_denied")
-        principal = self._verify(token, "revoke_session", {}, "bank-revoke+jwt", "bank:revoke", revocation=True)
-        self.store.revoke(principal.session)
+        self._verify(token, "revoke_session", {}, "bank-revoke+jwt", "bank:revoke", revocation=True)
 
     def _verify(self, token, tool: str, args: dict, token_type: str, scope: str, revocation=False) -> Principal:
         if not isinstance(token, str):
@@ -267,10 +348,12 @@ class Authorizer:
                                 issuer=self.config.issuer, leeway=0,
                                 options={"require": ["iss", "aud", "sub", "iat", "nbf", "exp", "jti",
                                                      "session_id", "conversation_id", "run_id", "graph_revision",
-                                                     "tool", "scope", "args_sha256"]})
+                                                     "tool", "scope", "args_sha256", "ledger_generation"]})
             if set(claims) != {"iss", "aud", "sub", "iat", "nbf", "exp", "jti", "session_id",
-                               "conversation_id", "run_id", "graph_revision", "tool", "scope", "args_sha256"}:
+                               "conversation_id", "run_id", "graph_revision", "tool", "scope", "args_sha256", "ledger_generation"}:
                 raise ValueError("claims")
+            if not valid_ledger_generation(claims["ledger_generation"]):
+                raise ValueError("generation")
             for name in ("sub", "jti", "session_id", "conversation_id", "run_id", "graph_revision"):
                 if not isinstance(claims[name], str) or not 1 <= len(claims[name]) <= 128:
                     raise ValueError("claim")
@@ -284,11 +367,8 @@ class Authorizer:
                 raise ValueError("arguments")
             customer = self.config.principal_customers[claims["sub"]]
             principal = Principal(claims["sub"], customer, claims["session_id"],
-                                  claims["conversation_id"], claims["exp"])
-            self.store.bind_session(principal)
-            if not revocation:
-                self.assert_current(principal)
-            self.store.consume(claims["jti"], claims["exp"])
+                                  claims["conversation_id"], claims["exp"], claims["ledger_generation"])
+            self.store.admit(principal, claims["jti"], revocation=revocation)
             return principal
         except BankError:
             raise
@@ -300,5 +380,6 @@ class Authorizer:
             raise BankError("authorization_denied")
         # A state operation can wait behind a writer. Recheck expiry after that
         # wait, including at the final result fence; never extend the assertion.
-        if self.store.is_revoked(principal.session) or principal.expires <= time.time():
+        if self.config.mode == "delegated" and not valid_ledger_generation(principal.ledger_generation):
             raise BankError("authorization_denied")
+        self.store.assert_current(principal)

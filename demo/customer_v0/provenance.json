@@ -1,95 +1,31 @@
 {
-  "schema": "customer-v0-prompt-provenance/v1",
-  "fragment": "customer-v0-readonly",
-  "version": "1.1.0",
-  "promptSha256": "b245f06b0961472d16437a1dd316fcf40f431e9b6f1f3220a80f429c1e30e0a1",
-  "flujoCommit": "3037c1423f7d39ede4d4a9b50afae038e4dd7baa",
+  "schema": "customer-v0-prompt-provenance/v2",
+  "fragment": "customer-v0-language-only",
+  "version": "2.0.0",
+  "promptSha256": "caeeac23385cabb5c48a0e95933782f753652d7573c46fa93af3a17c4347b33b",
+  "flujoCommit": "3fccc557df97aba0e96ce28a8e6eebaa8e71d7d9",
   "sources": [
     {
-      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
-      "path": "resources/prompts/generator_prompt_v3.yml",
-      "sha256": "e881edbf5be21fbbb191f42c4356a99ef9a2d4196de3a2929de5739079638027"
+      "commit": "33a07442bca62fdd438472610285dd8c427241e0",
+      "path": "resources/prompts/customer_v0.md",
+      "sha256": "b245f06b0961472d16437a1dd316fcf40f431e9b6f1f3220a80f429c1e30e0a1"
     },
     {
-      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
+      "commit": "33a07442bca62fdd438472610285dd8c427241e0",
       "path": "resources/prompts/fallback_templates.yaml",
       "sha256": "dd6cf378c5ae026c986813b0e74b7391cf7e0e672977a400278aeb61cb10452d"
-    },
-    {
-      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
-      "path": "contracts/v0_reconciliation.md",
-      "sha256": "fa708b748bca88e1b4474379015f7f08a8340ee9e228372dbfd74b79c0ef6864"
-    },
-    {
-      "commit": "974f92787f84fc65ae425f693f79213f82b513f6",
-      "path": "contracts/policy_engine.md",
-      "sha256": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31"
-    },
-    {
-      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
-      "path": "banking_mcp/service.py",
-      "sha256": "2a829158a7ea96805bc09b01cc1ca8c13e7ed4e334d9eaf99a41f7385c134258"
-    },
-    {
-      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
-      "path": "banking_mcp/repository.py",
-      "sha256": "a1882aef706b094f47fdadb50dc44bf2a1f61aa7369f02bc36ea878249577d14"
-    },
-    {
-      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
-      "path": "frontend/server/action.py",
-      "sha256": "e13fc14ecc5af7f3ed1d558d0275cc3fcb1605a7e1780f5fba41716f0eecea27"
-    },
-    {
-      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
-      "path": "docs/SIMULATED_INTAKE_V0.md",
-      "sha256": "bcd3791b12bc91e01f22fa16d0ec6e7fa22ce7872d9355eeedf2d3a781c028ac"
-    },
-    {
-      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
-      "path": "banking_mcp/actions.py",
-      "sha256": "31c660ad53723b650958e59dd4bb7de037b526ba2262f45c3a208cd16276208a"
-    },
-    {
-      "commit": "f07cadf3dd75a20ec945cd22ed4dd4a6b4b6d344",
-      "path": "docs/ISSUE21_DATA_AND_RECEIPTS.md",
-      "sha256": "b1963b438fc224159d31bf177eecd3c6898d3e0e2490fd669deac17b964f1d42"
-    },
-    {
-      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
-      "path": "frontend/server/app.py",
-      "sha256": "914a78e220eb9e1f2a2fa6f8e0b14f880e780fca719251a49f9c2e13ae9a980f"
-    },
-    {
-      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
-      "path": "frontend/server/chat.py",
-      "sha256": "03ee4047c52a0103d6647ac760f208d656a09329d9951a42f17b694e9f7bab81"
-    },
-    {
-      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
-      "path": "frontend/server/repository.py",
-      "sha256": "139203f805fa118e51f64e84ac3838eaffc4be0b5dbdfd97dafed11a1653b64f"
-    },
-    {
-      "commit": "2cf54ae5dd8bddfb875903ed61150a2b29853abe",
-      "path": "docs/CHARGE_JOURNEY_UI.md",
-      "sha256": "bf2f4c9c354bda037357be17b865e1aa49ab2d27bf5d4e3f7e84f91ea2259f1a"
     }
   ],
+  "sourceScope": "Historical ES/PT wording and consent boundaries only; not current tool permissions, authentication or deployed evidence.",
   "adaptations": [
-    "Embed the ES/PT style and verified-fact grounding in the actual customer Process flow.",
-    "Use the three banking read tools pinned at f07cadf and event-date windows of at most 90 inclusive dates within disclosed serving-snapshot bounds.",
-    "Require list-returned selection handles and a successful get before explaining a selected charge.",
-    "Treat frontend display context as user data, not a banking handle or verified read.",
-    "Leave consent, handoff and action recovery wording to UI and host action results; explain exact get_my_transaction existing_case evidence only within its local sandbox scope.",
-    "Preserve explicit event-date windows and source calendar semantics, keeping historical snapshot coverage separate from the unchanged real-time 120-day intake policy.",
-    "Use resources/prompts/customer_v0.md as the sole reviewed customer prompt; generated flows embed its exact bytes.",
-    "Explain that only the UI button for the saved named charge grants consent; chat yes/sí/sim does not.",
-    "Describe interface-verified local simulated receipts and saved human-request packets without inventing case lifecycle state, questions, or human response.",
-    "Adapt the corrected PR12 confirmation contract at merged main 974f927; model text cannot replace the host consent event.",
-    "Pin the matching FLUJO #533 source at 3037c14; compile and validate Git blobs without activating a worker, graph, policy or model.",
-    "Pin the corrected frontend host and charge-journey contract at 2cf54ae and the current simulated-intake contract at f07cadf; source checks do not establish deployed acceptance.",
-    "Retain earlier owner/target-bound verified receipts and general handoff packets only as read-only evidence while a follow-up remains unresolved; new terminal general-request intents use fresh UUIDs."
+    "Replace the former banking-read graph with Start, Process and Finish only, bound solely to a public configured model ID.",
+    "Use restored generic FLUJO Git blobs for the ordinary compiler, snapshot schema, validator and execution hash; load no banking integration code.",
+    "Accept only the agreed host-language-request/v1 data projection: schema, es/pt language, bounded user request and optional event_date, amount, currency, merchant and recorded_status display facts.",
+    "Return only host-language-guidance/v1 with schema, language and one of explain_selected, ask_date_or_amount, ask_selection, suggest_human or unavailable.",
+    "The project host validates guidance and renders deterministic localized prose; model output cannot grant authority, mutate actions or establish a ledger, receipt or human-request state.",
+    "Customer and merchant text remain untrusted data. Private identities, credentials, handles, customer selectors and bank tools do not enter the language graph.",
+    "Keep resources/prompts/customer_v0.md as the sole canonical prompt and embed its exact bytes in generated source artifacts.",
+    "Compilation and pure mutation checks are source evidence only; no installation, provider request, MCP call or customer-language acceptance is claimed."
   ],
   "canonicalPrompt": "resources/prompts/customer_v0.md"
 }

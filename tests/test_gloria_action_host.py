@@ -9,7 +9,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import pytest
 
-from frontend.server.chat import ChatError, ChatService
+from frontend.server.chat import ChatError
+from frontend.server.gloria_chat import GloriaChatService as ChatService
 from gloria_workflow.action_host import BankingActionHost
 from gloria_workflow.state import ConversationStore, TrustedBinding, new_state
 from tests.test_gloria_bank_read import dataset, bank

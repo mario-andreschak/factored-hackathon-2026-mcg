@@ -1850,6 +1850,7 @@ export function Assistant({
         signal: controller.current.signal,
         body: JSON.stringify({
           message: text,
+          language: actionLanguageRef.current,
           ...(selected ? { transaction_reference: selected.reference } : {}),
           ...(activeQueryId ? { query_scope_id: activeQueryId } : {}),
         }),

@@ -1,9 +1,4 @@
-"""Customer-bound frontend adapter for the deployed FLUJO banking ingress.
-
-Credentials, dataset identities, assertions and upstream conversation IDs never
-leave this server. The browser submits only a user message. The existing FLUJO
-adapter independently pins the approved graph and enforces customer ownership.
-"""
+"""Durable banking host and separate, untrusted generic language guidance."""
 from __future__ import annotations
 
 import asyncio
@@ -16,13 +11,11 @@ import re
 import sqlite3
 import time
 from typing import Any, Iterator
-from urllib.parse import urlsplit
 import uuid
 
-import httpx
-import jwt
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from .bank_rpc import BankContext, BankRPC, BankRPCError
+from .bank_controller import BankController
+from .language import GenericLanguageClient, LanguageConfig, MinimizedFacts, render_guidance
 
 from .review import review_reference
 from .action import (handoff_questions, matches_selected_transaction, normalize_handoff_questions,
@@ -33,6 +26,7 @@ _CONVERSATION = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9
 _PUBLIC_TRANSACTION = re.compile(r"^txn_[a-f0-9]{24}$")
 _PENDING_HANDLE = re.compile(r"^[A-Za-z0-9_-]{32,64}$")
 _REQUEST_ID = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
+_LEDGER_GENERATION = re.compile(r"^[a-f0-9]{64}$")
 _CUSTOMER_HANDOFF_REASONS = frozenset({"out_of_policy", "emergency", "customer_request",
                                        "clarification_exhausted"})
 _RECOVERABLE_HANDOFF_REASONS = _CUSTOMER_HANDOFF_REASONS | {
@@ -52,32 +46,50 @@ _PREPARE_RECOVERY_MAX_ATTEMPTS = 6
 class ChatError(Exception):
     """Public, fixed errors; upstream responses and credentials are never echoed."""
 
-    def __init__(self, code: str, status_code: int, message: str):
+    def __init__(self, code: str, status_code: int, message: str, *, possibly_sent: bool | None = None):
         super().__init__(message)
         self.code = code
         self.status_code = status_code
         self.message = message
+        # Internal delivery provenance; never serialized into a customer error.
+        self.possibly_sent = possibly_sent
 
 
 class ChatService:
-    def __init__(self, config: dict[str, Any] | None, state_dir: Path, *, bank_backend=None):
+    def __init__(self, config: dict[str, Any] | None, state_dir: Path):
         self._configured = False
         self._reason = "El asistente de FLUJO todavía no está conectado a esta demo."
         self._customer_subjects: dict[str, str] = {}
         self._action_enabled = False
-        self._bank_backend = bank_backend
+        self._ledger_continuity_approved = False
+        self._ledger_generation: str | None = None
         self._approved_subject_customers: dict[str, str] = {}
         self._approved_owner_subjects: dict[str, tuple[str, str]] = {}
         self._db_path = Path(state_dir) / "frontend-chat.sqlite3"
-        # Injectable only by trusted server/test code, never request data.
-        self._transport: httpx.AsyncBaseTransport | None = None
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            # Never reinterpret a worker-owned capability as direct host state.
+            # Inspect before any legacy schema migration or row mutation.
+            tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            marker = ("chat_migrations" in tables and db.execute(
+                "SELECT 1 FROM chat_migrations WHERE name='host-direct-mcp-v1'").fetchone())
+            if not marker:
+                for table in ("chat_sessions", "action_status", "pending_revocations", "chat_messages"):
+                    if table in tables and db.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone():
+                        raise RuntimeError("Legacy worker-bound state requires isolated state and explicit reconciliation")
+            # Inspect the original pin and every retained authority before any
+            # migration/outbox repair. Old direct-host rows are not new grants.
+            self._ledger_generation = self._retained_ledger_generation(db, tables)
+            candidate = config.get("ledger_generation") if isinstance(config, dict) else None
+            if self._ledger_generation is not None and candidate is not None and candidate != self._ledger_generation:
+                raise RuntimeError("Bank ledger generation changed; preserve state and reconcile explicitly")
             db.execute("""CREATE TABLE IF NOT EXISTS chat_sessions (
                 session_id TEXT PRIMARY KEY, owner TEXT NOT NULL, expires INTEGER NOT NULL,
                 conversation_id TEXT, revoked INTEGER NOT NULL DEFAULT 0,
                 active_id TEXT, active_until INTEGER NOT NULL DEFAULT 0,
-                subject TEXT, customer_id TEXT
+                subject TEXT, customer_id TEXT, bank_context_id TEXT, language_policy TEXT,
+                ledger_generation TEXT NOT NULL
             )""")
             # Persist the approved admission identity, never credentials. An
             # existing volume gets the same columns without discarding history.
@@ -86,6 +98,12 @@ class ChatService:
                 db.execute("ALTER TABLE chat_sessions ADD COLUMN subject TEXT")
             if "customer_id" not in columns:
                 db.execute("ALTER TABLE chat_sessions ADD COLUMN customer_id TEXT")
+            if "bank_context_id" not in columns:
+                db.execute("ALTER TABLE chat_sessions ADD COLUMN bank_context_id TEXT")
+            if "language_policy" not in columns:
+                db.execute("ALTER TABLE chat_sessions ADD COLUMN language_policy TEXT")
+            if "ledger_generation" not in columns:
+                db.execute("ALTER TABLE chat_sessions ADD COLUMN ledger_generation TEXT")
             db.execute("""CREATE TABLE IF NOT EXISTS chat_messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT NOT NULL,
                 operation TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('user','assistant')),
@@ -98,12 +116,14 @@ class ChatService:
                 result_json TEXT NOT NULL, updated_at INTEGER NOT NULL,
                 action_id TEXT, target_reference TEXT, revision INTEGER NOT NULL DEFAULT 0,
                 prepare_transaction_id TEXT, prepare_snapshot TEXT,
-                prepare_conversation_id TEXT,
+                prepare_conversation_id TEXT, prepare_expected_json TEXT,
                 prepare_recovery_attempts INTEGER NOT NULL DEFAULT 0,
                 prepare_recovery_after INTEGER NOT NULL DEFAULT 0,
                 prepare_recovery_deadline INTEGER NOT NULL DEFAULT 0
             )""")
             action_columns = {row[1] for row in db.execute("PRAGMA table_info(action_status)")}
+            if "prepare_expected_json" not in action_columns:
+                db.execute("ALTER TABLE action_status ADD COLUMN prepare_expected_json TEXT")
             if "action_id" not in action_columns:
                 db.execute("ALTER TABLE action_status ADD COLUMN action_id TEXT")
             if "target_reference" not in action_columns:
@@ -122,95 +142,124 @@ class ChatService:
                 db.execute("ALTER TABLE action_status ADD COLUMN prepare_recovery_after INTEGER NOT NULL DEFAULT 0")
             if "prepare_recovery_deadline" not in action_columns:
                 db.execute("ALTER TABLE action_status ADD COLUMN prepare_recovery_deadline INTEGER NOT NULL DEFAULT 0")
-            if "query_scope_id" not in action_columns:
-                db.execute("ALTER TABLE action_status ADD COLUMN query_scope_id TEXT")
-            if "action_conversation_id" not in action_columns:
-                db.execute("ALTER TABLE action_status ADD COLUMN action_conversation_id TEXT")
-            if "query_snapshot_hash" not in action_columns:
-                db.execute("ALTER TABLE action_status ADD COLUMN query_snapshot_hash TEXT")
-            db.execute("""CREATE TABLE IF NOT EXISTS cancelled_action_handles(
-                session_id TEXT NOT NULL, handle_hash TEXT NOT NULL, owner TEXT NOT NULL,
-                expires INTEGER NOT NULL, query_scope_id TEXT, cancelled_at INTEGER NOT NULL,
-                PRIMARY KEY(session_id,handle_hash))""")
             # Legacy status can still be recovered, but without a saved public
             # target it cannot authorize a new confirmation.
             db.execute("UPDATE action_status SET action_id=lower(hex(randomblob(16))) WHERE action_id IS NULL")
             db.execute("CREATE TABLE IF NOT EXISTS chat_migrations (name TEXT PRIMARY KEY)")
+            db.execute("INSERT OR IGNORE INTO chat_migrations VALUES ('host-direct-mcp-v1')")
+            db.execute("CREATE TABLE IF NOT EXISTS host_policy (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             db.execute("""CREATE TABLE IF NOT EXISTS pending_revocations (
                 session_id TEXT PRIMARY KEY, owner TEXT NOT NULL, subject TEXT NOT NULL,
-                expires INTEGER NOT NULL,
+                expires INTEGER NOT NULL, ledger_generation TEXT NOT NULL,
                 state TEXT NOT NULL CHECK(state IN ('pending','confirmed','expired_unconfirmed')),
                 attempts INTEGER NOT NULL DEFAULT 0, next_attempt_at INTEGER NOT NULL,
                 lease_token TEXT, lease_until INTEGER NOT NULL DEFAULT 0,
                 last_error_code TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
             )""")
+            revoke_columns = {row[1] for row in db.execute("PRAGMA table_info(pending_revocations)")}
+            if "ledger_generation" not in revoke_columns:
+                db.execute("ALTER TABLE pending_revocations ADD COLUMN ledger_generation TEXT")
             db.execute("CREATE INDEX IF NOT EXISTS pending_revocations_due ON pending_revocations(state, next_attempt_at)")
-            if not db.execute("SELECT 1 FROM chat_migrations WHERE name='public-transcript-v1'").fetchone():
-                # An earlier frontend retained private worker context without a
-                # displayable transcript. Start those sessions afresh once so a
-                # restored welcome screen cannot conceal previous model context.
-                db.execute("""UPDATE chat_sessions SET conversation_id=NULL, active_id=NULL, active_until=0
-                    WHERE NOT EXISTS (SELECT 1 FROM chat_messages m WHERE m.session_id=chat_sessions.session_id)""")
-                db.execute("INSERT INTO chat_migrations VALUES ('public-transcript-v1')")
-        # Persisted admission tuples can be queued even if the signer config
-        # is temporarily absent. The configured pass also recovers old rows.
-        self._migrate_legacy_revocations()
+        # Preserve local denial during temporary configuration loss. With a
+        # candidate authority present, check its pin before repairing the outbox;
+        # a rejected authority must not mutate the original bank binding.
         if not config:
+            self._restore_pending_revocations()
             return
         try:
             self._configure(config)
         except (ValueError, TypeError, KeyError, OSError):
             self._reason = "La conexión segura del asistente requiere configuración."
+            self._restore_pending_revocations()
             return
         self._configured = True
-        self._migrate_legacy_revocations()
+        self._restore_pending_revocations()
 
     def _configure(self, config: dict[str, Any]) -> None:
-        if not isinstance(config, dict) or not isinstance(config.get("base_url"), str):
-            raise ValueError("Invalid ingress configuration")
-        self._base_url = config["base_url"].rstrip("/")
-        endpoint = urlsplit(self._base_url)
-        if (endpoint.scheme not in {"https", "http"} or not endpoint.hostname
-                or endpoint.username or endpoint.password or endpoint.query
-                or endpoint.fragment or endpoint.path not in {"", "/"}
-                or (endpoint.scheme == "http" and endpoint.hostname not in
-                    {"flujo", "localhost", "127.0.0.1", "::1", "host.docker.internal"})):
-            raise ValueError("Private service URL required")
-        self._model = config["model"]
-        if not isinstance(config.get("action_enabled", False), bool):
-            raise ValueError("Invalid action configuration")
-        self._action_enabled = config.get("action_enabled", False)
-        self._execution_token = config["execution_token"]
-        self._issuer = config["frontend_issuer"]
-        self._kid = config["frontend_kid"]
-        if (not isinstance(self._model, str) or not self._model.startswith("flow-")
-                or not 6 <= len(self._model) <= 256
-                or not isinstance(self._execution_token, str)
-                or not 16 <= len(self._execution_token) <= 4096
-                or any(char.isspace() for char in self._execution_token)
-                or not all(isinstance(value, str) and 1 <= len(value) <= 128
-                           for value in [self._issuer, self._kid])
-                or config["frontend_audience"] != "flujo-banking-ingress"):
-            raise ValueError("Invalid ingress configuration")
-        key_file = Path(config["frontend_signing_key_file"])
-        if not key_file.is_absolute():
-            raise ValueError("Absolute signer path required")
-        key = serialization.load_pem_private_key(key_file.read_bytes(), password=None)
-        if not isinstance(key, Ed25519PrivateKey):
-            raise ValueError("Ed25519 signer required")
-        self._key = key
+        if not isinstance(config, dict) or config.get("mode") != "host-direct-mcp/v1":
+            raise ValueError("Direct host configuration required")
+        if (set(config) - {"mode", "namespace", "host_revision", "action_enabled", "ledger_generation",
+                          "ledger_continuity_approved", "bank", "language", "principal_customers"}
+                or not isinstance(config.get("action_enabled", False), bool)
+                or type(config.get("ledger_continuity_approved", False)) is not bool
+                or not isinstance(config.get("ledger_generation"), str)
+                or not _LEDGER_GENERATION.fullmatch(config["ledger_generation"])
+                or not isinstance(config.get("host_revision"), str)
+                or not re.fullmatch(r"[a-f0-9]{40}", config["host_revision"])
+                or not isinstance(config.get("namespace"), str)
+                or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", config["namespace"])):
+            raise ValueError("Invalid host configuration")
+        self._bank = BankRPC(config["bank"])
+        self._language = GenericLanguageClient(LanguageConfig(**config["language"]))
+        if config["bank"]["service_token"] == config["language"]["service_token"]:
+            raise ValueError("Separate bank and language credentials required")
+        self._language_policy = hashlib.sha256(json.dumps(config["language"],
+            sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        self._issuer = config["bank"]["issuer"]
+        self._namespace, self._host_revision = config["namespace"], config["host_revision"]
         mappings = config["principal_customers"]
         if not isinstance(mappings, dict) or not mappings or len(mappings) > 1000:
             raise ValueError("Approved principal mapping required")
         for subject, customer in mappings.items():
-            if not all(isinstance(value, str) and 1 <= len(value) <= 128
-                       for value in [subject, customer]):
+            if not all(isinstance(value, str) and 1 <= len(value) <= 128 for value in [subject, customer]):
                 raise ValueError("Invalid principal mapping")
-            # The deployed bank may have multiple preapproved subjects for one
-            # customer. A fixed first subject is used for the life of this config.
             self._approved_subject_customers[subject] = customer
             self._approved_owner_subjects[self._owner_for_subject(subject)] = (subject, customer)
             self._customer_subjects.setdefault(customer, subject)
+        policy = hashlib.sha256(json.dumps({"mode": config["mode"], "namespace": self._namespace,
+            "issuer": self._issuer, "audience": config["bank"]["audience"], "principals": mappings,
+            "bank_authority": self._bank.authority_identity,
+            "ledger_generation": config["ledger_generation"]},
+            sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            generation = db.execute("SELECT value FROM host_policy WHERE key='ledger_generation'").fetchone()
+            if generation and generation[0] != config["ledger_generation"]:
+                raise RuntimeError("Bank ledger generation changed; preserve state and reconcile explicitly")
+            old = db.execute("SELECT value FROM host_policy WHERE key='bank_binding'").fetchone()
+            if old and old[0] != policy:
+                raise RuntimeError("Bank authority policy changed; isolate state and reconcile revocation explicitly")
+            db.execute("INSERT OR IGNORE INTO host_policy VALUES ('bank_binding', ?)", (policy,))
+            db.execute("INSERT OR IGNORE INTO host_policy VALUES ('ledger_generation', ?)",
+                       (config["ledger_generation"],))
+        self._ledger_generation = config["ledger_generation"]
+        self._action_enabled = config.get("action_enabled", False)
+        self._ledger_continuity_approved = config.get("ledger_continuity_approved", False)
+
+    @staticmethod
+    def _retained_ledger_generation(db: sqlite3.Connection, tables: set[str]) -> str | None:
+        pin = (db.execute("SELECT value FROM host_policy WHERE key='ledger_generation'").fetchone()
+               if "host_policy" in tables else None)
+        nonempty = any(table in tables and db.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
+                       for table in ("chat_sessions", "action_status", "pending_revocations", "chat_messages"))
+        if pin is None and not nonempty:
+            return None
+        if pin is None or not isinstance(pin[0], str) or not _LEDGER_GENERATION.fullmatch(pin[0]):
+            raise RuntimeError("Unpinned bank history requires explicit reconciliation; no generation adoption")
+        for table in ("chat_sessions", "pending_revocations"):
+            if table in tables:
+                columns = {row[1] for row in db.execute(f"PRAGMA table_info({table})")}
+                if "ledger_generation" not in columns or db.execute(
+                        f"SELECT 1 FROM {table} WHERE ledger_generation IS NULL OR ledger_generation != ? LIMIT 1",
+                        (pin[0],)).fetchone():
+                    raise RuntimeError("Bank history generation is unverified; preserve state and reconcile explicitly")
+        return pin[0]
+
+    def _assert_ledger_binding(self, db: sqlite3.Connection) -> str:
+        expected = self._ledger_generation
+        pin = db.execute("SELECT value FROM host_policy WHERE key='ledger_generation'").fetchone()
+        if (not isinstance(expected, str) or not _LEDGER_GENERATION.fullmatch(expected)
+                or pin is None or pin[0] != expected):
+            raise ChatError("authorization_denied", 503, "La continuidad de la solicitud no está verificada.")
+        return expected
+
+    def _require_action_admission(self, db: sqlite3.Connection | None = None) -> None:
+        if not self._action_enabled:
+            raise ChatError("action_unavailable", 503, "La recepción simulada no está habilitada.")
+        if not self._ledger_continuity_approved:
+            raise ChatError("action_unverified", 503, "La continuidad de la solicitud requiere revisión.")
+        if db is not None:
+            self._assert_ledger_binding(db)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:
@@ -226,8 +275,8 @@ class ChatService:
     def status(self, customer_id: str) -> dict[str, Any]:
         available = self._configured and customer_id in self._customer_subjects
         return {"available": available, "mode": "flujo" if available else "unavailable",
-                "read_only": not (available and self._action_enabled),
-                "sandbox_intake_available": available and self._action_enabled,
+                "read_only": not (available and self._action_enabled and self._ledger_continuity_approved),
+                "sandbox_intake_available": available and self._action_enabled and self._ledger_continuity_approved,
                 **({} if available else {"reason": self._reason if not self._configured
                     else "El asistente no está habilitado para este perfil de demostración."})}
 
@@ -310,10 +359,6 @@ class ChatService:
         else:
             result.pop("target_reference", None)
         result = project_action_result(result)
-        if "query_scope_id" in row.keys() and row["query_scope_id"]:
-            result["query_id"] = row["query_scope_id"]
-        if "query_snapshot_hash" in row.keys() and row["query_snapshot_hash"]:
-            result["snapshot_hash"] = row["query_snapshot_hash"]
         if (result.get("state") == "handoff_verified" and row["target_reference"] is None
                 and not result.get("pending_handle")
                 and not ChatService._general_handoff(result["handoff"])):
@@ -349,7 +394,7 @@ class ChatService:
     @classmethod
     def _safe_prepare_result(cls, result: dict[str, Any], expected_snapshot: str | None = None,
                              expected_transaction: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Only a verified worker result may resolve a saved prepare intent."""
+        """Only a verified host result may resolve a saved prepare intent."""
         projected = project_action_result(result)
         if projected.get("state") in {"handoff_verified", "existing_case_verified", "pending_confirmation"}:
             if (not isinstance(projected.get("snapshot"), str)
@@ -371,26 +416,29 @@ class ChatService:
             return result
         return {"state": "prepare_unverified"}
 
-    @staticmethod
-    def _assert_action_session(db: sqlite3.Connection, session_id: str,
+    def _assert_action_session(self, db: sqlite3.Connection, session_id: str,
                                owner: str, session_exp: int) -> None:
-        session = db.execute("SELECT owner,expires,revoked FROM chat_sessions WHERE session_id=?",
+        generation = self._assert_ledger_binding(db)
+        session = db.execute("SELECT owner,expires,revoked,ledger_generation FROM chat_sessions WHERE session_id=?",
                              (session_id,)).fetchone()
         if (not session or session["owner"] != owner or session["expires"] != session_exp
                 or session["revoked"] or session_exp <= int(time.time())):
             raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
+        if session["ledger_generation"] != generation:
+            raise ChatError("authorization_denied", 503, "La continuidad de la solicitud no está verificada.")
 
     def _reserve_action(self, session_id: str, owner: str, session_exp: int,
                         target_reference: str | None, initial: dict[str, Any],
                         *, prepare_transaction_id: str | None = None,
                         prepare_snapshot: str | None = None,
                         prepare_conversation_id: str | None = None,
-                        query_scope_id: str | None = None, query_snapshot_hash: str | None = None
+                        prepare_expected: dict[str, Any] | None = None
                         ) -> tuple[str, int, sqlite3.Row | None]:
         now = int(time.time())
         action_id = str(uuid.uuid4())
         with self._connection() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._require_action_admission(db)
             self._assert_action_session(db, session_id, owner, session_exp)
             row = self._action_row(db, session_id, owner, session_exp)
             if row and not self._verified_terminal(self._action_result(row)):
@@ -403,25 +451,22 @@ class ChatService:
             result.update(self._retained_evidence(row, target_reference))
             db.execute("""INSERT INTO action_status
                 (session_id,owner,expires,result_json,updated_at,action_id,target_reference,revision,
-                 prepare_transaction_id,prepare_snapshot,prepare_conversation_id,
-                 prepare_recovery_attempts,prepare_recovery_after,prepare_recovery_deadline,query_scope_id,action_conversation_id,query_snapshot_hash)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(session_id) DO UPDATE SET
+                 prepare_transaction_id,prepare_snapshot,prepare_conversation_id,prepare_expected_json,
+                 prepare_recovery_attempts,prepare_recovery_after,prepare_recovery_deadline)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(session_id) DO UPDATE SET
                 result_json=excluded.result_json,updated_at=excluded.updated_at,
                 action_id=excluded.action_id,target_reference=excluded.target_reference,
                 revision=excluded.revision,
                 prepare_transaction_id=excluded.prepare_transaction_id,
                 prepare_snapshot=excluded.prepare_snapshot,
                 prepare_conversation_id=excluded.prepare_conversation_id,
+                prepare_expected_json=excluded.prepare_expected_json,
                 prepare_recovery_attempts=0,prepare_recovery_after=0,
-                prepare_recovery_deadline=excluded.prepare_recovery_deadline,
-                query_scope_id=excluded.query_scope_id,
-                action_conversation_id=excluded.action_conversation_id,
-                query_snapshot_hash=excluded.query_snapshot_hash""",
+                prepare_recovery_deadline=excluded.prepare_recovery_deadline""",
                 (session_id, owner, session_exp, json.dumps(result), now, action_id,
                  target_reference, revision, prepare_transaction_id, prepare_snapshot,
-                 prepare_conversation_id, 0, 0,
-                 now + _PREPARE_RECOVERY_WINDOW if prepare_transaction_id else 0, query_scope_id,
-                 prepare_conversation_id, query_snapshot_hash))
+                 prepare_conversation_id, json.dumps(prepare_expected, allow_nan=False) if prepare_expected else None, 0, 0,
+                 now + _PREPARE_RECOVERY_WINDOW if prepare_transaction_id else 0))
         return action_id, revision, row
 
     def _rollback_unadmitted_action(self, session_id: str, owner: str, session_exp: int,
@@ -444,15 +489,14 @@ class ChatService:
             else:
                 db.execute("""UPDATE action_status SET result_json=?,updated_at=?,action_id=?,
                     target_reference=?,revision=?,prepare_transaction_id=?,prepare_snapshot=?,
-                    prepare_conversation_id=?,prepare_recovery_attempts=?,prepare_recovery_after=?,
-                    prepare_recovery_deadline=?,query_scope_id=?,action_conversation_id=?,query_snapshot_hash=?
+                    prepare_conversation_id=?,prepare_expected_json=?,prepare_recovery_attempts=?,prepare_recovery_after=?,
+                    prepare_recovery_deadline=?
                     WHERE session_id=?""",
                     (previous["result_json"], int(time.time()), previous["action_id"],
                      previous["target_reference"], revision + 1,
                      previous["prepare_transaction_id"], previous["prepare_snapshot"],
-                     previous["prepare_conversation_id"], previous["prepare_recovery_attempts"],
-                     previous["prepare_recovery_after"], previous["prepare_recovery_deadline"],
-                     previous["query_scope_id"], previous["action_conversation_id"], previous["query_snapshot_hash"], session_id))
+                     previous["prepare_conversation_id"], previous["prepare_expected_json"], previous["prepare_recovery_attempts"],
+                     previous["prepare_recovery_after"], previous["prepare_recovery_deadline"], session_id))
 
     def _advance_action(self, session_id: str, owner: str, session_exp: int,
                         action_id: str, revision: int, result: dict[str, Any]) -> tuple[dict[str, Any], int]:
@@ -466,19 +510,16 @@ class ChatService:
             # Earlier proof comes only from this owner-bound saved row, never
             # from an upstream response or a browser-selected wrapper.
             result = {key: value for key, value in result.items() if key not in {"prior_receipt", "prior_handoff"}}
-            prior = self._action_result(row)
-            for field in ("request_id", "pending_handle"):
-                if prior.get(field):
-                    if field in result and result[field] != prior[field]:
-                        raise ChatError("action_mismatch", 409, "La solicitud no corresponde a la preparación guardada.")
-                    result[field] = prior[field]
             if row["target_reference"]:
                 result["target_reference"] = row["target_reference"]
             else:
                 result.pop("target_reference", None)
             saved = project_action_result(result)
+            if self._verified_terminal(saved) or saved.get("state") == "pending_confirmation":
+                self._require_action_admission(db)
             saved.update(self._retained_evidence(row, row["target_reference"]))
             if saved.get("state") in {"action_unverified", "handoff_unverified"}:
+                prior = self._action_result(row)
                 for field in ("snapshot", "transaction", "unanswered_questions"):
                     if field in prior:
                         saved.setdefault(field, prior[field])
@@ -486,23 +527,18 @@ class ChatService:
                 saved["target_reference"] = row["target_reference"]
             retain_prepare = saved.get("state") in {"preparing", "prepare_unverified"}
             db.execute("""UPDATE action_status SET result_json=?,updated_at=?,revision=?,
-                prepare_transaction_id=?,prepare_snapshot=?,prepare_conversation_id=?,
+                prepare_transaction_id=?,prepare_snapshot=?,prepare_conversation_id=?,prepare_expected_json=?,
                 prepare_recovery_attempts=?,prepare_recovery_after=?,prepare_recovery_deadline=?
                 WHERE session_id=? AND action_id=? AND revision=?""",
                 (json.dumps(saved), int(time.time()), revision + 1,
                  row["prepare_transaction_id"] if retain_prepare else None,
                  row["prepare_snapshot"] if retain_prepare else None,
                  row["prepare_conversation_id"] if retain_prepare else None,
+                 row["prepare_expected_json"] if retain_prepare else None,
                  row["prepare_recovery_attempts"] if retain_prepare else 0,
                  row["prepare_recovery_after"] if retain_prepare else 0,
                  row["prepare_recovery_deadline"] if retain_prepare else 0,
                  session_id, action_id, revision))
-            # Immediate results use the same trusted row scope as later status
-            # reads. Upstream wrappers never supply this ownership metadata.
-            if row["query_scope_id"]:
-                saved["query_id"] = row["query_scope_id"]
-            if row["query_snapshot_hash"]:
-                saved["snapshot_hash"] = row["query_snapshot_hash"]
         return saved, revision + 1
 
     def _current_action(self, session_id: str, owner: str,
@@ -514,17 +550,18 @@ class ChatService:
 
     def _claim_prepare_recovery(self, session_id: str, owner: str, session_exp: int,
                                 action_id: str, revision: int, conversation: str
-                                ) -> tuple[dict[str, Any], int] | None:
+                                ) -> tuple[dict[str, Any], int, int] | None:
         """Claim one bounded exact replay without changing the action CAS revision.
 
         A status read can run beside the original POST or another status read.
         The persisted delay admits only one replay at a time and survives a
-        process restart. The worker/MCP idempotency key makes a later replay
+        process restart. The MCP idempotency key makes a later replay
         return the original pending identity, never a second prepare.
         """
         now = int(time.time())
         with self._connection() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._require_action_admission(db)
             self._assert_action_session(db, session_id, owner, session_exp)
             row = self._action_row(db, session_id, owner, session_exp)
             if not row or row["action_id"] != action_id or row["revision"] != revision:
@@ -544,7 +581,12 @@ class ChatService:
             transaction_id = row["prepare_transaction_id"]
             snapshot = row["prepare_snapshot"]
             stored_conversation = row["prepare_conversation_id"]
+            try:
+                expected = json.loads(row["prepare_expected_json"])
+            except (TypeError, ValueError):
+                return None
             if (not isinstance(request_id, str) or not _REQUEST_ID.fullmatch(request_id)
+                    or not isinstance(expected, dict)
                     or not isinstance(transaction_id, str) or not 1 <= len(transaction_id) <= 128
                     or not isinstance(snapshot, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", snapshot)
                     or not isinstance(stored_conversation, str)
@@ -553,7 +595,7 @@ class ChatService:
                     or not isinstance(row["target_reference"], str)
                     or not _PUBLIC_TRANSACTION.fullmatch(row["target_reference"])):
                 # Old/invalid rows cannot choose a new target or be cleared by
-                # an uncorrelated worker response.
+                # an uncorrelated MCP response.
                 return None
             attempts = row["prepare_recovery_attempts"] + 1
             delay = min(2 ** attempts, 60)
@@ -563,17 +605,17 @@ class ChatService:
                  session_id, action_id, revision))
         return {"conversationId": stored_conversation, "operation": "prepare",
                 "transactionId": transaction_id, "snapshot": snapshot,
-                "requestId": request_id,
-                **({"queryId": row["query_scope_id"]} if row["query_scope_id"] else {})}, revision
+                "requestId": request_id, "expected_transaction": expected}, revision, attempts
 
     def _release_rejected_prepare_recovery(self, session_id: str, owner: str, session_exp: int,
-                                           action_id: str, revision: int) -> None:
-        """A definitive worker 429 is not an admitted replay attempt."""
+                                           action_id: str, revision: int, reserved_attempt: int) -> None:
+        """Release only this proven unadmitted reservation, never the action."""
         with self._connection() as db:
             db.execute("BEGIN IMMEDIATE")
             self._assert_action_session(db, session_id, owner, session_exp)
             row = self._action_row(db, session_id, owner, session_exp)
             if (row and row["action_id"] == action_id and row["revision"] == revision
+                    and row["prepare_recovery_attempts"] == reserved_attempt
                     and self._action_result(row).get("state") in {"preparing", "prepare_unverified"}):
                 db.execute("""UPDATE action_status SET prepare_recovery_attempts=?,
                     prepare_recovery_after=? WHERE session_id=? AND action_id=? AND revision=?""",
@@ -583,11 +625,9 @@ class ChatService:
     async def action(self, customer_id: str, session_id: str, session_exp: int,
                      operation: dict[str, Any], *, target_reference: str | None = None,
                      expected_snapshot: str | None = None,
-                     expected_transaction: dict[str, Any] | None = None,
-                     query_scope_id: str | None = None) -> dict[str, Any]:
+                     expected_transaction: dict[str, Any] | None = None) -> dict[str, Any]:
         """A trusted frontend control, separate from model text and tool arguments."""
-        if not self._action_enabled:
-            raise ChatError("action_unavailable", 503, "La recepción simulada no está habilitada.")
+        self._require_action_admission()
         kind = operation.get("operation")
         if kind not in {"prepare", "confirm", "handoff"}:
             raise ChatError("invalid_action", 400, "La solicitud no está disponible.")
@@ -606,11 +646,14 @@ class ChatService:
             if (not isinstance(operation.get("transactionId"), str)
                     or not 1 <= len(operation["transactionId"]) <= 128
                     or not isinstance(operation.get("snapshot"), str)
-                    or not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", operation["snapshot"])):
+                    or not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", operation["snapshot"])
+                    or not isinstance(expected_transaction, dict)):
                 raise ChatError("invalid_action", 400, "La solicitud no está disponible.")
             # The browser cannot choose an idempotency key or bind it to a
             # different charge. Mint it before the durable intent and POST.
             operation["requestId"] = str(uuid.uuid4())
+        if kind == "confirm" and operation.get("confirmed") is not True:
+            raise ChatError("confirmation_required", 400, "Confirma explícitamente la solicitud.")
         if kind == "handoff" and operation.get("reason") not in _RECOVERABLE_HANDOFF_REASONS:
             raise ChatError("invalid_action", 400, "La solicitud no está disponible.")
         handle = operation.get("pendingHandle")
@@ -623,19 +666,17 @@ class ChatService:
             row = self._bind(db, session_id, owner, session_exp)
             if row["revoked"]:
                 raise ChatError("session_expired", 401, "Tu sesión expiró. Vuelve a ingresar.")
-            conversation = row["conversation_id"]
+            conversation = row["bank_context_id"]
+            if row["subject"] is None and row["customer_id"] is None:
+                db.execute("UPDATE chat_sessions SET subject=?,customer_id=? WHERE session_id=?",
+                           (subject, customer_id, session_id))
+            elif row["subject"] != subject or row["customer_id"] != customer_id:
+                raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
             if row["active_until"] > int(time.time()):
                 raise ChatError("chat_busy", 429, "Espera la respuesta de tu consulta anterior.")
         if not isinstance(conversation, str) or not _CONVERSATION.fullmatch(conversation):
             raise ChatError("inquiry_required", 409,
                             "Primero consulta el movimiento con Savia para iniciar una conversación segura.")
-        query_snapshot_hash = None
-        if self._bank_backend is not None and kind in {"prepare", "handoff"}:
-            scope = self._bank_backend.query_scope(self, customer_id, session_id,
-                session_exp, target_reference, query_scope_id)
-            query_scope_id, query_snapshot_hash = scope["query_id"], scope["snapshot_hash"]
-            if query_scope_id:
-                operation["queryId"] = query_scope_id
         action_id: str | None = None
         revision: int | None = None
         previous: sqlite3.Row | None = None
@@ -647,25 +688,14 @@ class ChatService:
                 target_reference, {"state": "preparing", "request_id": operation["requestId"]},
                 prepare_transaction_id=operation.get("transactionId"),
                 prepare_snapshot=operation.get("snapshot"),
-                prepare_conversation_id=conversation, query_scope_id=query_scope_id,
-                query_snapshot_hash=query_snapshot_hash)
+                prepare_conversation_id=conversation, prepare_expected=expected_transaction)
         elif kind == "confirm" or handle:
             if not isinstance(handle, str) or not _PENDING_HANDLE.fullmatch(handle):
                 raise ChatError("action_mismatch", 409, "La solicitud no corresponde al movimiento seleccionado.")
             current, saved = self._current_action(session_id, owner, session_exp)
-            with self._connection() as db:
-                denied = db.execute("SELECT owner,expires FROM cancelled_action_handles WHERE session_id=? AND handle_hash=?",
-                    (session_id, hashlib.sha256(handle.encode()).hexdigest())).fetchone()
-            if denied:
-                raise ChatError("action_cancelled", 409, "La solicitud anterior fue cancelada. Inicia una nueva preparación.")
             if (not current or current["target_reference"] != target_reference
                     or saved.get("pending_handle") != handle):
                 raise ChatError("action_mismatch", 409, "La solicitud no corresponde al movimiento seleccionado.")
-            stored_scope = current["query_scope_id"]
-            if query_scope_id is not None and stored_scope != query_scope_id:
-                raise ChatError("action_mismatch", 409, "La solicitud no corresponde a esta consulta.")
-            if stored_scope:
-                operation["queryId"] = stored_scope
             bound_snapshot = saved.get("snapshot")
             bound_transaction = saved.get("transaction")
             if kind == "confirm" and saved.get("state") == "pending_confirmation" and (
@@ -748,10 +778,6 @@ class ChatService:
             # A general handoff has no transaction target or pending handle,
             # but still needs an identity before the upstream write begins.
             current, saved = self._current_action(session_id, owner, session_exp)
-            if (current and not saved.get("pending_handle") and current["target_reference"] is None
-                    and supplied_request_id is not None and saved.get("request_id") == supplied_request_id
-                    and current["query_scope_id"] != query_scope_id):
-                raise ChatError("action_mismatch", 409, "La solicitud no corresponde a esta consulta.")
             if (current and saved.get("state") == "handoff_verified"
                     and not saved.get("pending_handle")
                     and current["target_reference"] is None
@@ -785,19 +811,23 @@ class ChatService:
                 if operation["reason"] not in _CUSTOMER_HANDOFF_REASONS:
                     raise ChatError("action_mismatch", 409,
                                     "La solicitud no corresponde a una revisión pendiente.")
-                operation.setdefault("requestId", str(uuid.uuid4()))
+                operation["requestId"] = str(uuid.uuid4())
                 operation.setdefault("unansweredQuestions", [])
                 initial = {"state": "handoff_unverified",
                            "unanswered_questions": operation["unansweredQuestions"],
                            "request_id": operation["requestId"], "reason": operation["reason"]}
                 action_id, revision, previous = self._reserve_action(session_id, owner,
-                    session_exp, None, initial, prepare_conversation_id=conversation,
-                    query_scope_id=query_scope_id, query_snapshot_hash=query_snapshot_hash)
+                                                                       session_exp, None, initial)
 
         payload = {"conversationId": conversation, **operation}
+        if kind == "prepare":
+            payload["expected_transaction"] = expected_transaction
+        elif handle:
+            payload["expected_transaction"] = bound_transaction
+            payload["expected_snapshot"] = bound_snapshot
         if kind == "handoff":
-            # The pinned FLUJO HTTP schema uses this snake_case wire field;
-            # the internal operation retains its frozen request representation.
+            # The project MCP schema uses this snake_case wire field;
+            # the local operation retains its frozen request representation.
             payload["unanswered_questions"] = payload.pop("unansweredQuestions")
 
         def finish(result: dict[str, Any]) -> dict[str, Any]:
@@ -836,8 +866,8 @@ class ChatService:
                                                        action_id, revision, saved)
             return saved
         try:
-            result = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
-                                      payload, timeout_seconds=45)
+            result = await self._bank_post(subject, session_id, session_exp, payload, timeout_seconds=45,
+                                           expected_action=(action_id, revision))
             if kind == "prepare":
                 return finish(self._safe_prepare_result(result, operation["snapshot"], expected_transaction))
             if kind == "confirm" and result.get("state") == "handoff_unverified" and (
@@ -863,8 +893,8 @@ class ChatService:
             if kind == "handoff" and exc.code in {
                     "chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                 try:
-                    retry = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
-                                             payload, timeout_seconds=20)
+                    retry = await self._bank_post(subject, session_id, session_exp, payload, timeout_seconds=20,
+                                                  expected_action=(action_id, revision))
                 except ChatError as retry_error:
                     if retry_error.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                         raise
@@ -878,17 +908,17 @@ class ChatService:
             # The write may have committed before its response was lost. Read
             # the same pending identity; never issue a second confirm.
             try:
-                receipt = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
+                receipt = await self._bank_post(subject, session_id, session_exp,
                     {"conversationId": conversation, "operation": "receipt",
-                     "pendingHandle": handle}, timeout_seconds=20)
+                     "pendingHandle": handle}, timeout_seconds=20, expected_action=(action_id, revision))
             except ChatError as receipt_error:
                 if receipt_error.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
                     raise
                 return finish({"state": "action_unverified"})
             if receipt.get("state") == "intake_verified" and self._verified_terminal(receipt):
                 return finish(receipt)
-            # Receipt absence does not identify whether FLUJO made a policy
-            # handoff under another reason before the response was lost.
+            # Receipt absence does not establish the outcome of an uncertain
+            # confirmation. Never invent a follow-up write.
             return finish({"state": "action_unverified"})
 
     def _remember_action(self, session_id: str, owner: str, session_exp: int,
@@ -901,11 +931,10 @@ class ChatService:
         self._advance_action(session_id, owner, session_exp, row["action_id"], row["revision"], result)
 
     async def action_status(self, customer_id: str, session_id: str, session_exp: int) -> dict[str, Any]:
-        if not self._action_enabled:
-            raise ChatError("action_unavailable", 503, "La recepción simulada no está habilitada.")
+        self._require_action_admission()
         subject, owner = self._identity(customer_id, session_id, session_exp)
         with self._connection() as db:
-            session = db.execute("SELECT owner,expires,revoked,conversation_id FROM chat_sessions WHERE session_id=?",
+            session = db.execute("SELECT owner,expires,revoked,bank_context_id FROM chat_sessions WHERE session_id=?",
                                  (session_id,)).fetchone()
         if (not session or session["owner"] != owner or session["expires"] != session_exp
                 or session["revoked"]):
@@ -916,21 +945,23 @@ class ChatService:
         if saved.get("state") in {"preparing", "prepare_unverified"}:
             claim = self._claim_prepare_recovery(session_id, owner, session_exp,
                                                  row["action_id"], row["revision"],
-                                                 session["conversation_id"])
+                                                 session["bank_context_id"])
             if claim:
-                payload, revision = claim
+                payload, revision, reserved_attempt = claim
                 try:
-                    replayed = await self._post("/v1/banking/action",
-                        self._headers(subject, session_id, session_exp), payload,
-                        timeout_seconds=_PREPARE_RECOVERY_TIMEOUT)
+                    replayed = await self._bank_post(subject, session_id, session_exp, payload,
+                        timeout_seconds=_PREPARE_RECOVERY_TIMEOUT, expected_action=(row["action_id"], revision))
                 except ChatError as exc:
-                    if exc.code == "chat_busy":
+                    if exc.code == "chat_busy" or (exc.possibly_sent is False
+                            and exc.code in {"authorization_denied", "action_unverified"}):
                         self._release_rejected_prepare_recovery(session_id, owner, session_exp,
-                                                                row["action_id"], revision)
-                    elif exc.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
+                                                                row["action_id"], revision, reserved_attempt)
+                        if exc.code != "chat_busy":
+                            raise
+                    elif exc.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed", "action_changed"}:
                         raise
                 else:
-                    recovered = self._safe_prepare_result(replayed, payload["snapshot"])
+                    recovered = self._safe_prepare_result(replayed, payload["snapshot"], payload["expected_transaction"])
                     recovered["request_id"] = saved["request_id"]
                     try:
                         result, _ = self._advance_action(session_id, owner, session_exp,
@@ -944,14 +975,14 @@ class ChatService:
                         # this exact action. Never replace their result.
         if saved.get("state") == "action_unverified" and isinstance(saved.get("pending_handle"), str):
             try:
-                receipt = await self._post("/v1/banking/action", self._headers(subject, session_id, session_exp),
-                    {"conversationId": session["conversation_id"], "operation": "receipt",
-                     "pendingHandle": saved["pending_handle"],
-                     **({"queryId": row["query_scope_id"]} if row["query_scope_id"] else {})}, timeout_seconds=20)
+                receipt = await self._bank_post(subject, session_id, session_exp,
+                    {"conversationId": session["bank_context_id"], "operation": "receipt",
+                     "pendingHandle": saved["pending_handle"]}, timeout_seconds=20,
+                    expected_action=(row["action_id"], row["revision"]))
             except ChatError as exc:
                 # A lost receipt response leaves the durable uncertain state.
                 # Local ownership/revocation errors must still propagate.
-                if exc.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed"}:
+                if exc.code not in {"chat_timeout", "chat_unreachable", "chat_upstream_failed", "action_changed"}:
                     raise
             else:
                 if (self._verified_terminal(receipt) and receipt.get("state") == "intake_verified"
@@ -1021,13 +1052,13 @@ class ChatService:
         return None
 
     def _owner_for_subject(self, subject: str) -> str:
-        return hashlib.sha256(json.dumps([self._issuer, subject, self._model],
+        return hashlib.sha256(json.dumps(["direct-host-v1", self._namespace, self._issuer, subject],
                                          separators=(",", ":")).encode()).hexdigest()
 
-    def _migrate_legacy_revocations(self) -> None:
+    def _restore_pending_revocations(self) -> None:
         """Queue older local revoke markers without inventing a subject.
 
-        Retrying an already applied revoke is safe under the worker's idempotent
+        Retrying an already applied revoke is safe under the bank's idempotent
         contract. Historic owner-only rows require a current approved mapping.
         """
         now = int(time.time())
@@ -1041,7 +1072,7 @@ class ChatService:
                     db.execute("""UPDATE chat_sessions SET subject=?,customer_id=?
                         WHERE session_id=? AND subject IS NULL AND customer_id IS NULL""",
                         (approved[0], approved[1], row["session_id"]))
-            rows = db.execute("""SELECT s.session_id,s.owner,s.expires,s.subject,s.customer_id FROM chat_sessions s
+            rows = db.execute("""SELECT s.session_id,s.owner,s.expires,s.subject,s.customer_id,s.ledger_generation FROM chat_sessions s
                 WHERE s.revoked=1 AND s.expires>? AND NOT EXISTS
                 (SELECT 1 FROM pending_revocations p WHERE p.session_id=s.session_id)""",
                 (now,)).fetchall()
@@ -1051,69 +1082,84 @@ class ChatService:
                            approved[0] if approved else None)
                 if subject:
                     db.execute("""INSERT OR IGNORE INTO pending_revocations
-                        (session_id,owner,subject,expires,state,next_attempt_at,created_at,updated_at)
-                        VALUES (?,?,?,?,'pending',?,?,?)""",
-                        (row["session_id"], row["owner"], subject, row["expires"], now, now, now))
+                        (session_id,owner,subject,expires,ledger_generation,state,next_attempt_at,created_at,updated_at)
+                        VALUES (?,?,?,?,?,'pending',?,?,?)""",
+                        (row["session_id"], row["owner"], subject, row["expires"], row["ledger_generation"], now, now, now))
 
     def _bind(self, db: sqlite3.Connection, session_id: str, owner: str, session_exp: int) -> sqlite3.Row:
-        db.execute("INSERT OR IGNORE INTO chat_sessions(session_id, owner, expires) VALUES (?, ?, ?)",
-                   (session_id, owner, session_exp))
+        generation = self._assert_ledger_binding(db)
+        db.execute("""INSERT OR IGNORE INTO chat_sessions
+                   (session_id, owner, expires, bank_context_id, ledger_generation) VALUES (?, ?, ?, ?, ?)""",
+                   (session_id, owner, session_exp, str(uuid.uuid4()), generation))
         row = db.execute("SELECT * FROM chat_sessions WHERE session_id = ?", (session_id,)).fetchone()
-        if row is None or row["owner"] != owner or row["expires"] != session_exp:
+        if (row is None or row["owner"] != owner or row["expires"] != session_exp
+                or not isinstance(row["bank_context_id"], str) or not _CONVERSATION.fullmatch(row["bank_context_id"])):
             raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+        if row["ledger_generation"] != generation:
+            raise ChatError("authorization_denied", 503, "La continuidad de la solicitud no está verificada.")
         return row
 
-    def _headers(self, subject: str, session_id: str, session_exp: int) -> dict[str, str]:
-        now = int(time.time())
-        assertion = jwt.encode({"iss": self._issuer, "aud": "flujo-banking-ingress",
-            "sub": subject, "session_id": session_id, "session_exp": session_exp,
-            "iat": now, "nbf": now, "exp": min(now + 120, session_exp),
-            "jti": str(uuid.uuid4()), "scope": ["bank:read"]}, self._key, algorithm="EdDSA",
-            headers={"kid": self._kid, "typ": "flujo-ingress+jwt"})
-        return {"Content-Type": "application/json", "Authorization": "Bearer " + self._execution_token,
-                "X-Flujo-User-Assertion": assertion}
+    def _bank_context(self, subject: str, session_id: str, session_exp: int,
+                      conversation: str, operation_id: str, *, ledger_generation: str,
+                      admission_check=None) -> BankContext:
+        bank_session = hashlib.sha256(json.dumps(["direct-host-v1", self._namespace,
+            self._issuer, session_id], separators=(",", ":")).encode()).hexdigest()
+        return BankContext(subject=subject, session_id=bank_session, conversation_id=conversation,
+                           operation_id=operation_id, host_revision=self._host_revision,
+                           session_expires=session_exp, ledger_generation=ledger_generation,
+                           admission_check=admission_check)
 
-    async def _post(self, path: str, headers: dict[str, str], payload: dict[str, Any],
-                    timeout_seconds: float = _TIMEOUT) -> dict[str, Any]:
-        if self._bank_backend is not None and path in {"/v1/banking/action", "/v1/banking/session/revoke"}:
-            try:
-                async with asyncio.timeout(timeout_seconds):
-                    return await self._bank_backend.post(path, headers, payload, self)
-            except TimeoutError:
-                raise ChatError("chat_timeout", 504, "La solicitud sigue sin verificar. Consulta su estado.") from None
+    async def _bank_post(self, subject: str, session_id: str, session_exp: int,
+                         payload: dict, *, timeout_seconds: float = 45,
+                         expected_action: tuple[str, int] | None = None) -> dict:
+        conversation = payload.get("conversationId")
+        owner = self._owner_for_subject(subject)
+        with self._connection() as db:
+            self._assert_action_session(db, session_id, owner, session_exp)
+            session = db.execute("SELECT ledger_generation FROM chat_sessions WHERE session_id=?", (session_id,)).fetchone()
+            generation = session["ledger_generation"]
+        def admitted():
+            with self._connection() as db:
+                db.execute("BEGIN")
+                try:
+                    self._require_action_admission(db)
+                    self._assert_action_session(db, session_id, owner, session_exp)
+                except ChatError as exc:
+                    if exc.code in {"action_unavailable", "action_unverified", "authorization_denied"}:
+                        raise BankRPCError("authorization_denied" if exc.code == "authorization_denied"
+                                           else "action_unverified") from None
+                    raise
+                row = db.execute("SELECT bank_context_id,ledger_generation FROM chat_sessions WHERE session_id=?", (session_id,)).fetchone()
+                if not row or row["bank_context_id"] != conversation:
+                    raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+                if row["ledger_generation"] != generation:
+                    raise BankRPCError("authorization_denied")
+                if expected_action:
+                    action = self._action_row(db, session_id, owner, session_exp)
+                    if not action or (action["action_id"], action["revision"]) != expected_action:
+                        raise ChatError("action_changed", 409,
+                                        "La solicitud cambió. Actualiza su estado antes de continuar.")
         try:
-            # HTTPX's read timeout applies to each chunk. A total deadline also
-            # bounds a slow response stream and the complete logout request.
-            async with asyncio.timeout(timeout_seconds), httpx.AsyncClient(
-                    timeout=httpx.Timeout(timeout_seconds, connect=10),
-                    trust_env=False, follow_redirects=False, transport=self._transport) as client:
-                async with client.stream("POST", self._base_url + path, headers=headers, json=payload) as response:
-                    if response.status_code != 200:
-                        if response.status_code == 429:
-                            raise ChatError("chat_busy", 429, "El asistente está ocupado. Inténtalo en un momento.")
-                        if response.status_code in {401, 403}:
-                            raise ChatError("chat_authorization_failed", 503,
-                                            "La conexión segura del asistente no está disponible.")
-                        raise ChatError("chat_upstream_failed", 502,
-                                        "FLUJO no pudo completar esta consulta. Puedes volver a intentarlo.")
-                    parts: list[bytes] = []
-                    size = 0
-                    async for chunk in response.aiter_bytes():
-                        size += len(chunk)
-                        if size > _MAX_RESPONSE:
-                            raise ChatError("chat_invalid_response", 502, "No se pudo verificar la respuesta de FLUJO.")
-                        parts.append(chunk)
-                    result = json.loads(b"".join(parts))
-                    if not isinstance(result, dict):
-                        raise ValueError()
-                    return result
-        except ChatError:
-            raise
-        except (httpx.TimeoutException, TimeoutError):
-            raise ChatError("chat_timeout", 504,
-                            "La consulta tardó más de lo esperado. No se ha reenviado automáticamente.") from None
-        except (httpx.HTTPError, ValueError, UnicodeError):
-            raise ChatError("chat_unreachable", 502, "No fue posible conectar con el asistente de FLUJO.") from None
+            admitted()
+            context = self._bank_context(subject, session_id, session_exp, conversation, str(uuid.uuid4()),
+                                         ledger_generation=generation, admission_check=admitted)
+            return await BankController(self._bank, admitted).execute(payload, context, timeout_seconds=timeout_seconds)
+        except BankRPCError as exc:
+            if exc.code == "action_unverified":
+                # This may be a final fence after a durable write. Leave the
+                # original locked intent/counters intact, with no write replay.
+                raise ChatError("action_unverified", 503, "La continuidad de la solicitud requiere revisión.",
+                                possibly_sent=exc.possibly_sent) from None
+            if exc.code == "authorization_denied":
+                raise ChatError("authorization_denied", 503, "La conexión segura no está disponible.",
+                                possibly_sent=exc.possibly_sent) from None
+            if exc.code == "server_busy" and not exc.possibly_sent:
+                raise ChatError("chat_busy", 429, "El servicio está ocupado. Inténtalo en un momento.") from None
+            if exc.code in {"authorization_required", "reference_unavailable"}:
+                raise ChatError("chat_authorization_failed", 503, "La conexión segura no está disponible.") from None
+            # A fixed MCP error or uncertain transport does not authorize replay
+            # of confirm. Preserve the durable pending/uncertain state.
+            raise ChatError("chat_upstream_failed", 502, "No se pudo verificar la solicitud.") from None
 
     @staticmethod
     def _selection(selection: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -1132,10 +1178,11 @@ class ChatService:
 
     async def send(self, customer_id: str, session_id: str, session_exp: int, message: str, *,
                    display_message: str | None = None, selection: dict[str, Any] | None = None,
-                   workflow=None, query_scope_id: str | None = None) -> dict[str, Any]:
+                   facts: MinimizedFacts | None = None, language: str = "es") -> dict[str, Any]:
         subject, owner = self._identity(customer_id, session_id, session_exp)
         if (not isinstance(message, str) or not message.strip() or len(message.strip()) > 4096
-                or len(message.encode("utf-8")) > 12000):
+                or len(message.encode("utf-8")) > 12000 or language not in {"es", "pt"}
+                or facts is not None and type(facts) is not MinimizedFacts):
             raise ChatError("invalid_message", 400, "Escribe una consulta de hasta 4096 caracteres.")
         public_message = message.strip() if display_message is None else display_message
         if (not isinstance(public_message, str) or not public_message.strip()
@@ -1156,57 +1203,46 @@ class ChatService:
                            (subject, customer_id, session_id))
             elif row["subject"] != subject or row["customer_id"] != customer_id:
                 raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+            bank_context = row["bank_context_id"]
             conversation = row["conversation_id"]
-            if workflow is not None and conversation is None:
+            context_reset = bool(conversation and row["language_policy"] != self._language_policy)
+            if not conversation or context_reset:
+                # Generic metadata accepts a new caller-owned conversation UUID.
+                # Persist before dispatch, independently of model output/timeout.
                 conversation = str(uuid.uuid4())
-                db.execute("UPDATE chat_sessions SET conversation_id=? WHERE session_id=?",
-                    (conversation, session_id))
+                db.execute("UPDATE chat_sessions SET conversation_id=?,language_policy=? WHERE session_id=?",
+                           (conversation, self._language_policy, session_id))
+            pending = db.execute("SELECT prepare_transaction_id,result_json FROM action_status WHERE session_id=?", (session_id,)).fetchone()
+            forbidden = [customer_id, subject, session_id, bank_context,
+                row["ledger_generation"],
+                self._bank_context(subject, session_id, session_exp, bank_context, operation,
+                                   ledger_generation=row["ledger_generation"]).session_id]
+            forbidden.extend(value for value in (getattr(self._bank, "_service_token", None),
+                getattr(getattr(self._language, "config", None), "service_token", None)) if isinstance(value, str))
+            if public_selection:
+                forbidden.append(public_selection["reference"])
+            if pending:
+                if pending["prepare_transaction_id"]:
+                    forbidden.append(pending["prepare_transaction_id"])
+                result = json.loads(pending["result_json"])
+                forbidden.extend(result[key] for key in ("pending_handle", "request_id", "snapshot", "target_reference")
+                                 if isinstance(result.get(key), str))
             db.execute("UPDATE chat_sessions SET active_id = ?, active_until = ? WHERE session_id = ?",
                        (operation, min(now + _TIMEOUT + 15, session_exp), session_id))
         try:
-            if workflow is not None:
-                # Explicit trusted server injection. The browser supplies neither
-                # a model, identity, workflow state nor an authorization event.
-                returned_conversation = conversation or str(uuid.uuid4())
-                try:
-                    async with asyncio.timeout(_TIMEOUT):
-                        state = await workflow.run({"owner": owner, "customer_id": customer_id,
-                            "session_id": session_id, "conversation_id": returned_conversation,
-                            "expires_at": session_exp}, public_message.strip(), turn_id=operation,
-                            selection=public_selection,
-                            **({"query_scope_id": query_scope_id} if query_scope_id is not None else {}))
-                except TimeoutError:
-                    raise ChatError("chat_timeout", 504, "La consulta tardó más de lo esperado. No se ha reenviado automáticamente.") from None
-                reply = state["response"]["message"]
-                cancellation = state.get("runtime", {}).get("host_cancellation_requested")
-                signals = cancellation if isinstance(cancellation, list) else [cancellation] if cancellation else []
-                signals.extend(state.get("runtime", {}).get("host_cancellation_queue", []))
-                for capsule in state.get("runtime", {}).get("query_scopes", {}).values():
-                    signal = capsule.get("runtime", {}).get("host_cancellation_requested")
-                    if signal:
-                        signals.extend(signal if isinstance(signal, list) else [signal])
-                if signals:
-                    for signal in signals:
-                        if not signal.get("prior_pending_handle"):
-                            continue
-                        self.cancel_pending(customer_id, session_id, session_exp,
-                            query_scope_id=signal.get("query_id"), handle=signal.get("prior_pending_handle"))
-                status = ("waiting_for_input" if state["workflow_state"]["pending"]["type"] != "none"
-                          else "completed")
-            else:
-                reply = None
-            metadata = {"flujo": "true", "appendMessages": "true"}
-            if conversation:
-                if not _CONVERSATION.fullmatch(conversation):
-                    raise ChatError("chat_invalid_state", 503, "La sesión del asistente no está disponible.")
-                metadata["conversationId"] = conversation
-            if workflow is None:
-                result = await self._post("/v1/chat/completions", self._headers(subject, session_id, session_exp),
-                    {"model": self._model, "messages": [{"role": "user", "content": message.strip()}],
-                     "stream": False, "metadata": metadata})
-                reply, returned_conversation, status = self._public_reply(result)
-            if conversation and returned_conversation != conversation:
-                raise ChatError("chat_invalid_response", 502, "No se pudo verificar la respuesta de FLUJO.")
+            # Worker receives only the typed display projection, sanitized text,
+            # generic bearer and its own conversation. Model text is never shown.
+            guided = await self._language.guide(message.strip(), language, facts=facts,
+                conversation_id=conversation, forbidden_values=tuple(forbidden))
+            reply = render_guidance(guided.guidance, language, facts)
+            if context_reset:
+                reply = (("La conexión del asistente cambió; esta consulta inicia un nuevo contexto. " if language == "es"
+                          else "A conexão do assistente mudou; esta consulta inicia um novo contexto. ") + reply)
+            returned_conversation = guided.conversation_id or conversation
+            if (returned_conversation is not None and (not _CONVERSATION.fullmatch(returned_conversation)
+                    or returned_conversation == bank_context)
+                    or conversation and returned_conversation != conversation):
+                raise ChatError("chat_invalid_response", 502, "No se pudo verificar la respuesta del asistente.")
             with self._connection() as db:
                 db.execute("BEGIN IMMEDIATE")
                 current = self._bind(db, session_id, owner, session_exp)
@@ -1219,68 +1255,19 @@ class ChatService:
                      json.dumps(public_selection, ensure_ascii=False, allow_nan=False) if public_selection else None),
                     (session_id, operation, "assistant", reply, None),
                 ])
-            result = {"reply": reply, "mode": "gloria" if workflow is not None else "flujo", "status": status}
-            if workflow is not None:
-                runtime = state.get("runtime", {})
-                if runtime.get("query_scopes"):
-                    result["active_query_id"] = runtime.get("active_query_id")
-                    result["queries"] = [{"query_id": key, "label": capsule["query_text"],
-                        "transaction_reference": capsule.get("workflow_state", {}).get("transaction_id")}
-                        for key, capsule in runtime["query_scopes"].items()]
-            return result
+            return {"reply": reply, "mode": "flujo", "status": "completed",
+                    "guidance": guided.guidance, "banking_authority": False,
+                    "language_context_reset": context_reset}
         finally:
             with self._connection() as db:
                 db.execute("UPDATE chat_sessions SET active_id = NULL, active_until = 0 WHERE session_id = ? AND active_id = ?",
                            (session_id, operation))
 
-    def cancel_pending(self, customer_id, session_id, session_exp, *, query_scope_id=None, handle=None):
-        """Deny an old prepared handle durably before publishing cancellation."""
-        _, owner = self._identity(customer_id, session_id, session_exp)
-        with self._connection() as db:
-            db.execute("BEGIN IMMEDIATE")
-            self._assert_action_session(db, session_id, owner, session_exp)
-            current = self._action_row(db, session_id, owner, session_exp)
-            if not current:
-                return False
-            saved = self._action_result(current)
-            if saved.get("state") != "pending_confirmation":
-                return False  # Attempted or uncertain writes remain recoverable.
-            old_handle = saved.get("pending_handle")
-            if (not old_handle or (handle is not None and handle != old_handle)
-                    or current["query_scope_id"] != query_scope_id):
-                return False
-            # Hold the frontend writer lock while the bank decides. A concurrent
-            # confirmation either wins first and remains readable, or loses to
-            # this durable bank cancellation before it can start its write.
-            if self._bank_backend is not None and not self._bank_backend.cancel(
-                    self, customer_id, session_id, session_exp, old_handle, query_scope_id):
-                return False
-            db.execute("INSERT OR IGNORE INTO cancelled_action_handles VALUES (?,?,?,?,?,?)",
-                (session_id, hashlib.sha256(old_handle.encode()).hexdigest(), owner,
-                 session_exp, query_scope_id, int(time.time())))
-            db.execute("DELETE FROM action_status WHERE session_id=? AND action_id=? AND revision=?",
-                (session_id, current["action_id"], current["revision"]))
-        return True
-
-    @staticmethod
-    def _public_reply(result: dict[str, Any]) -> tuple[str, str, str]:
-        try:
-            conversation = result["conversation_id"]
-            status = result["status"]
-            reply = result["choices"][0]["message"]["content"]
-            if (not isinstance(conversation, str) or not _CONVERSATION.fullmatch(conversation)
-                    or status not in {"completed", "waiting_for_input"}
-                    or not isinstance(reply, str) or not reply.strip() or len(reply) > 32768):
-                raise ValueError()
-            return reply, conversation, status
-        except (KeyError, IndexError, TypeError, ValueError):
-            raise ChatError("chat_invalid_response", 502, "No se pudo verificar la respuesta de FLUJO.") from None
-
     def queue_revoke(self, customer_id: str, session_id: str, session_exp: int) -> str:
-        """Atomically deny local chat and persist an idempotent worker revoke intent.
+        """Atomically deny local chat and persist an idempotent bank revoke intent.
 
         The caller must do this before deleting the browser session. A storage
-        error propagates, so it cannot be mistaken for a worker acknowledgement.
+        error propagates, so it cannot be mistaken for a bank acknowledgement.
         """
         identity = self._revoke_identity(customer_id, session_id, session_exp)
         now = int(time.time())
@@ -1307,13 +1294,14 @@ class ChatService:
                 raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
             db.execute("UPDATE chat_sessions SET revoked = 1 WHERE session_id = ?", (session_id,))
             db.execute("""INSERT OR IGNORE INTO pending_revocations
-                (session_id,owner,subject,expires,state,next_attempt_at,created_at,updated_at)
-                VALUES (?,?,?,?,'pending',?,?,?)""",
-                (session_id, owner, subject, session_exp, now, now, now))
-            row = db.execute("SELECT owner,subject,expires,state FROM pending_revocations WHERE session_id=?",
+                (session_id,owner,subject,expires,ledger_generation,state,next_attempt_at,created_at,updated_at)
+                VALUES (?,?,?,?,?,'pending',?,?,?)""",
+                (session_id, owner, subject, session_exp, row["ledger_generation"], now, now, now))
+            generation = row["ledger_generation"]
+            row = db.execute("SELECT owner,subject,expires,state,ledger_generation FROM pending_revocations WHERE session_id=?",
                              (session_id,)).fetchone()
             if (row is None or row["owner"] != owner or row["subject"] != subject
-                    or row["expires"] != session_exp):
+                    or row["expires"] != session_exp or row["ledger_generation"] != generation):
                 raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
             return row["state"]
 
@@ -1343,19 +1331,24 @@ class ChatService:
                  now + _REVOKE_LEASE, now, session_id))
             return row, lease
 
-    def _finish_revoke(self, session_id: str, lease: str, *, confirmed: bool,
+    def _finish_revoke(self, session_id: str, lease: str, *, expected_intent: tuple[str, str, int, str], confirmed: bool,
                        error_code: str | None = None) -> str:
         now = int(time.time())
         with self._connection() as db:
             db.execute("BEGIN IMMEDIATE")
-            row = db.execute("SELECT state,attempts,lease_token FROM pending_revocations WHERE session_id=?",
+            row = db.execute("""SELECT owner,subject,expires,ledger_generation,state,attempts,lease_token
+                FROM pending_revocations WHERE session_id=?""",
                              (session_id,)).fetchone()
             if row is None:
                 return "absent"
+            if (row["owner"], row["subject"], row["expires"], row["ledger_generation"]) != expected_intent:
+                # A late ACK/failed lease belongs to the original intent only.
+                # Never confirm or clean up a replacement/reconciled authority.
+                return "unresolved"
             if row["state"] == "confirmed":
                 return "confirmed"
             if confirmed:
-                # An exact worker acknowledgement remains authoritative even
+                # An exact bank acknowledgement remains authoritative even
                 # if this lease expired while the response was in flight.
                 db.execute("""UPDATE pending_revocations SET state='confirmed',lease_token=NULL,
                     lease_until=0,last_error_code=NULL,updated_at=? WHERE session_id=?""", (now, session_id))
@@ -1376,34 +1369,36 @@ class ChatService:
         if isinstance(claim, str):
             return claim
         row, lease = claim
+        expected_intent = (row["owner"], row["subject"], row["expires"], row["ledger_generation"])
         with self._connection() as db:
-            binding = db.execute("""SELECT owner,expires,subject,customer_id FROM chat_sessions
+            binding = db.execute("""SELECT owner,expires,subject,customer_id,bank_context_id,ledger_generation FROM chat_sessions
                 WHERE session_id=?""", (session_id,)).fetchone()
         mapped_customer = self._approved_subject_customers.get(row["subject"]) if self._configured else None
         if (not binding or binding["owner"] != row["owner"] or binding["expires"] != row["expires"]
+                or not isinstance(row["ledger_generation"], str) or not _LEDGER_GENERATION.fullmatch(row["ledger_generation"])
+                or binding["ledger_generation"] != row["ledger_generation"]
                 or (binding["subject"] and binding["subject"] != row["subject"])
                 or not mapped_customer or (binding["customer_id"] and binding["customer_id"] != mapped_customer)
                 or row["owner"] != self._owner_for_subject(row["subject"])):
-            return self._finish_revoke(session_id, lease, confirmed=False,
+            return self._finish_revoke(session_id, lease, expected_intent=expected_intent, confirmed=False,
                                        error_code="revoke_configuration_unavailable")
         try:
-            result = await self._post("/v1/banking/session/revoke",
-                self._headers(row["subject"], session_id, row["expires"]), {},
-                timeout_seconds=_REVOKE_TIMEOUT)
-            if result != {"revoked": True}:
-                raise ChatError("chat_revocation_failed", 502, "No se pudo confirmar el cierre del asistente.")
+            context = self._bank_context(row["subject"], session_id, row["expires"],
+                                         binding["bank_context_id"], str(uuid.uuid4()),
+                                         ledger_generation=row["ledger_generation"])
+            await self._bank.revoke(context, timeout_seconds=_REVOKE_TIMEOUT)
         except asyncio.CancelledError:
-            self._finish_revoke(session_id, lease, confirmed=False,
+            self._finish_revoke(session_id, lease, expected_intent=expected_intent, confirmed=False,
                                 error_code="revoke_interrupted")
             raise
-        except ChatError as exc:
-            return self._finish_revoke(session_id, lease, confirmed=False, error_code=exc.code)
+        except (ChatError, BankRPCError) as exc:
+            return self._finish_revoke(session_id, lease, expected_intent=expected_intent, confirmed=False, error_code=exc.code)
         except Exception:
             # Neither response bodies nor credential-bearing exceptions enter
             # persistent diagnostics. The intent remains retryable.
-            return self._finish_revoke(session_id, lease, confirmed=False,
+            return self._finish_revoke(session_id, lease, expected_intent=expected_intent, confirmed=False,
                                        error_code="revoke_internal_error")
-        return self._finish_revoke(session_id, lease, confirmed=True)
+        return self._finish_revoke(session_id, lease, expected_intent=expected_intent, confirmed=True)
 
     async def revoke(self, customer_id: str, session_id: str, session_exp: int) -> str:
         """Compatibility helper for callers that do not own session deletion."""

@@ -1,0 +1,25 @@
+{
+  "schema": "private-synthetic-policy-template/v1",
+  "workspace": "synthetic-checkpoint",
+  "frontendIssuer": "synthetic-checkpoint-frontend",
+  "frontendAudience": "flujo-banking-ingress",
+  "frontendKeyId": "fixture-front",
+  "bankIssuer": "synthetic-checkpoint-runtime",
+  "bankAudience": "banking-mcp",
+  "bankKeyId": "fixture-bank",
+  "bankServerName": "Synthetic Banking MCP",
+  "bankCommand": "/opt/banking-mcp/.venv/bin/python",
+  "bankCwd": "/opt/banking-mcp",
+  "maxActiveRuns": 1,
+  "maxQueuedRuns": 8,
+  "maxPendingPerSubject": 3,
+  "maxQueueWaitSeconds": 30,
+  "maxRunSeconds": 110,
+  "ephemeralFields": ["deploymentId", "executionToken", "stateDir", "frontendKeys", "bankSigningKeyFile", "bankConfigFile", "flowId", "graphHash"],
+  "profiles": {
+    "es": {"profile": "mexico", "customer": "CUS900000", "transaction": "TXN90000000"},
+    "pt": {"profile": "colombia", "customer": "CUS900001", "transaction": "TXN90000001"},
+    "third": {"profile": "argentina", "customer": "CUS900002", "transaction": null}
+  },
+  "disclosure": "Supported demo login and fully delegated bank assertions. Private phase files owned by container node, mode0400 in mode0700 directories; stock policy loader does not require root ownership. No restricted CLI or auth bypass."
+}

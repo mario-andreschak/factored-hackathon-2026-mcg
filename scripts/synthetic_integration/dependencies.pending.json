@@ -64,7 +64,7 @@
   "surface": "api_only",
   "pending_requirements": [
     "required_hosted_CI_green_after_account_billing_block_is_resolved",
-    "actual_fixture_provider_graph_policy_and_adapter_source_review",
+    "independent_exact_commit_review_of_implemented_fixture_provider_graph_policy_and_observer_instrumentation",
     "private_bundle_source_head_manifest_and_artifact_digest",
     "independent_root_review_of_exact_integration_head",
     "separate_reviewed_revision_to_remove_preparation_hold"
@@ -74,5 +74,30 @@
     "stock-prepare-response-loss",
     "authored-empty-history",
     "authored-confirm-response-loss"
-  ]
+  ],
+  "fixture_assembly_source": {
+    "status": "implemented_held_source_candidate; pending_independent_exact_commit_review",
+    "source_binding": "containing_Git_commit",
+    "files": {
+      "deterministic_provider.py": "9ec882deaeb3b4615a9409f26816e49ac5638616cc5331178e8c9405013d7a5d",
+      "dispatch_observer.cjs": "1e2248d33c8c224beab0b8fb2d85c0005458b6f654d5f20baa9b3f1d41b7565c",
+      "fixture_setup.py": "a98a53ea04a5d13b8fbba22bcf88664cfc9453d8b83db72238d48aa89feddae2",
+      "flow-snapshot.json": "03f027688a7748fd145535f09467fb4a1b3529a12454d759986aef480eb84790",
+      "integration_provider.py": "47f3aebd90ac2d9d336e22404ad4dc03c78c7cae3bf9730ac193de54822e9e43",
+      "observer_adapter.py": "07c3989e537bdadcb47d93a7c26c90a28cd38c3426da3f4cb102810331dbd30d",
+      "policy-template.json": "5c2e2b26658b9f7b7d1bdf1ee56e3499cafdea6d6a9e8927a489fa70b8f6769b"
+    },
+    "source_bundle_producer": "scripts/synthetic_integration/assemble_source.py",
+    "hosted_bundle_artifact": null,
+    "runtime_verified": false,
+    "dispatch_observation": "instrumented_actual_child_stdin_write_callback_acknowledgments; not bank response or all filesystem/database writes",
+    "model_fixture_wire": "OpenAI JSON and SSE Finish routing only",
+    "frontend_auth": "supported_private_demo_login; bank fully delegated assertions",
+    "bootstrap_admission": "completed frontend flujo reply; zero provider rejections; independent stock owner/conversation/logical run/recovery/Finish/handoff and emitted routing-call/result correlation; counters alone insufficient",
+    "source_digest_scopes": {
+      "inner_preview": "inner_preview_zip_sha256; local code-only preview ZIP",
+      "outer_hosted": "outer_github_artifact.zip_sha256; actual downloadable GitHub source artifact; independently verify completed run/metadata/download",
+      "publication_receipts": "separate source receipts artifact; not execution authorization"
+    }
+  }
 }
