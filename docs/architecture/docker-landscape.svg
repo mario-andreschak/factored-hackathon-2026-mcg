@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1320" width="2400" height="1320" role="img" aria-labelledby="title desc">
+<title id="title">Docker · local deployment landscape</title><desc id="desc">Separate containers on Docker Desktop; host ports are published on loopback only.</desc>
+<defs>
+<marker id="request" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2869b2"/></marker>
+<marker id="data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#117f72"/></marker>
+<marker id="batch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b87412"/></marker>
+<marker id="state" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8052a2"/></marker>
+</defs><style>
+text{font-family:Arial,Helvetica,sans-serif;fill:#18323d}
+.title{font-size:43px;font-weight:700}.sub{font-size:22px;fill:#57707c}
+.boundary{font-size:22px;font-weight:700;letter-spacing:.5px}
+.kicker{font-size:17px;font-weight:700;letter-spacing:1.1px;fill:#57707c}
+.node-title{font-size:27px;font-weight:700}.body{font-size:21px;fill:#365460}
+.small{font-size:19px;fill:#57707c}.label{font-size:19px;font-weight:600}
+.foot{font-size:21px;fill:#365460}
+</style><rect width="2400" height="1320" fill="#f7fafb"/>
+<text x="45" y="60" class="title">Docker · local deployment landscape</text>
+<text x="45" y="100" class="sub">Separate containers on Docker Desktop; host ports are published on loopback only.</text>
+<rect x="380" y="145" width="1595" height="1015" rx="22" fill="#edf3f6" stroke="#91a7b2" stroke-width="2"/>
+<text x="405" y="180" class="boundary">LOCAL HOST · Windows workstation + Docker Desktop Linux VM</text>
+<rect x="410" y="425" width="1535" height="345" rx="22" fill="#e8f0f7" stroke="#9eafc1" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="435" y="460" class="boundary">PRIVATE DOCKER NETWORK · flujo-slack_default</text>
+<rect x="855" y="465" width="1060" height="280" rx="22" fill="#f0f4f8" stroke="#a8bac8" stroke-width="2"/>
+<text x="880" y="500" class="boundary">FLUJO WORKER CONTAINER</text>
+<g data-node="Organizer S3" data-box="45,205,280,150">
+<rect x="45" y="205" width="280" height="150" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="67" y="235" class="kicker">EXTERNAL SOURCE</text>
+<text x="67" y="272" class="node-title">Organizer S3</text>
+<text x="67" y="306" class="body">Read-only source CSVs</text>
+<text x="67" y="335" class="body">Customers + products</text>
+</g>
+<g data-node="DuckDB pipeline" data-box="435,205,470,150">
+<rect x="435" y="205" width="470" height="150" rx="18" fill="#fff9ed" stroke="#d3b27b" stroke-width="2"/>
+<text x="457" y="235" class="kicker">OFFLINE · HOST PROCESS</text>
+<text x="457" y="272" class="node-title">DuckDB pipeline</text>
+<text x="457" y="306" class="small">Bronze → silver → gold; rejects → quarantine</text>
+<text x="457" y="335" class="small">Publish CURRENT only after checks pass</text>
+</g>
+<g data-node="Published snapshot · /banking-data" data-box="1110,205,805,150">
+<rect x="1110" y="205" width="805" height="150" rx="18" fill="#effaf6" stroke="#6bb9a2" stroke-width="2"/>
+<text x="1132" y="235" class="kicker">HOST FILES · SHARED READ-ONLY BINDS</text>
+<text x="1132" y="272" class="node-title">Published snapshot · /banking-data</text>
+<text x="1132" y="306" class="body">CURRENT + manifests; silver customers/products; gold transaction shards</text>
+<text x="1132" y="335" class="body">Same data/ directory mounted into Savia and the worker</text>
+</g>
+<g data-node="Browser / Savia" data-box="45,525,280,190">
+<rect x="45" y="525" width="280" height="190" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="67" y="555" class="kicker">LOCAL USER</text>
+<text x="67" y="592" class="node-title">Browser / Savia</text>
+<text x="67" y="626" class="body">http://localhost:43800</text>
+<text x="67" y="655" class="body">Runs the JS/CSS UI</text>
+<text x="67" y="684" class="body">Sends /api/* requests</text>
+</g>
+<g data-node="Savia API · :8080" data-box="435,525,325,190">
+<rect x="435" y="525" width="325" height="190" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="457" y="555" class="kicker">SAVIA CONTAINER</text>
+<text x="457" y="592" class="node-title">Savia API · :8080</text>
+<text x="457" y="626" class="body">Serves UI assets + /api/*</text>
+<text x="457" y="655" class="body">Session → approved customer</text>
+<text x="457" y="684" class="body">DuckDB returns owned rows</text>
+</g>
+<g data-node="FLUJO · :4200" data-box="975,525,350,190">
+<rect x="975" y="525" width="350" height="190" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="997" y="555" class="kicker">PRIVATE BACKEND</text>
+<text x="997" y="592" class="node-title">FLUJO · :4200</text>
+<text x="997" y="626" class="body">Execution token + signed user</text>
+<text x="997" y="655" class="body">Pinned graph / restricted run</text>
+<text x="997" y="684" class="body">Sandbox :4201 stays internal</text>
+</g>
+<g data-node="Banking MCP" data-box="1515,525,360,190">
+<rect x="1515" y="525" width="360" height="190" rx="18" fill="#effaf6" stroke="#6bb9a2" stroke-width="2"/>
+<text x="1537" y="555" class="kicker">DATA ACCESS SERVICE</text>
+<text x="1537" y="592" class="node-title">Banking MCP</text>
+<text x="1537" y="626" class="body">stdio; read-only customer tools</text>
+<text x="1537" y="655" class="body">Checks product ownership</text>
+<text x="1537" y="684" class="body">Masked facts + opaque handles</text>
+</g>
+<g data-node="Model provider" data-box="2100,350,260,175">
+<rect x="2100" y="350" width="260" height="175" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="2122" y="380" class="kicker">EXTERNAL COMPUTE</text>
+<text x="2122" y="417" class="node-title">Model provider</text>
+<text x="2122" y="451" class="small">Codex / configured LLM</text>
+<text x="2122" y="480" class="small">Prompt + minimized facts</text>
+<text x="2122" y="509" class="small">Reply → FLUJO → Savia</text>
+</g>
+<g data-node="Optional recheck" data-box="2100,605,260,175">
+<rect x="2100" y="605" width="260" height="175" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="2122" y="635" class="kicker">SAME SOURCE S3</text>
+<text x="2122" y="672" class="node-title">Optional recheck</text>
+<text x="2122" y="706" class="small">Only with verify_source</text>
+<text x="2122" y="735" class="small">Pinned ETag HEAD / GET</text>
+<text x="2122" y="764" class="small">No S3 writes</text>
+</g>
+<g data-node="Frontend state" data-box="435,850,325,190">
+<rect x="435" y="850" width="325" height="190" rx="18" fill="#f7f0fb" stroke="#b5a0c6" stroke-width="2"/>
+<text x="457" y="880" class="kicker">FRONTEND VOLUME · RW</text>
+<text x="457" y="917" class="node-title">Frontend state</text>
+<text x="457" y="951" class="body">/banking-state</text>
+<text x="457" y="980" class="body">Sessions + public chat history</text>
+<text x="457" y="1009" class="body">Queued logout revocations</text>
+</g>
+<g data-node="FLUJO state" data-box="975,850,350,190">
+<rect x="975" y="850" width="350" height="190" rx="18" fill="#f7f0fb" stroke="#b5a0c6" stroke-width="2"/>
+<text x="997" y="880" class="kicker">worker-data VOLUME · RW</text>
+<text x="997" y="917" class="node-title">FLUJO state</text>
+<text x="997" y="951" class="body">/data/flujo</text>
+<text x="997" y="980" class="body">Flows, models, credentials</text>
+<text x="997" y="1009" class="body">Conversations + owner ledger</text>
+</g>
+<g data-node="Banking state" data-box="1515,850,360,190">
+<rect x="1515" y="850" width="360" height="190" rx="18" fill="#f7f0fb" stroke="#b5a0c6" stroke-width="2"/>
+<text x="1537" y="880" class="kicker">BANK VOLUMES · RW</text>
+<text x="1537" y="917" class="node-title">Banking state</text>
+<text x="1537" y="951" class="body">/banking-state/banking.db</text>
+<text x="1537" y="980" class="body">Handles + authorization state</text>
+<text x="1537" y="1009" class="body">Separate synthetic demo state</text>
+</g>
+<path d="M 325 275 L 435 275" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<path d="M 905 275 L 1110 275" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<rect x="960.65" y="236" width="92.7" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1007" y="258" class="label" text-anchor="middle" style="fill:#b87412">publish</text>
+<path d="M 1170 355 L 1170 385 L 595 385 L 595 525" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)"/>
+<rect x="733.05" y="354" width="213.9" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="840" y="376" class="label" text-anchor="middle" style="fill:#117f72">Owned snapshot rows</text>
+<path d="M 1710 355 L 1710 525" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)"/>
+<rect x="1723.35" y="426" width="153.29999999999998" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1800" y="448" class="label" text-anchor="middle" style="fill:#117f72">Snapshot read</text>
+<text x="1800" y="472" class="label" text-anchor="middle" style="fill:#117f72">via DuckDB</text>
+<path d="M 325 620 L 435 620" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="308.4" y="562" width="143.2" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="380" y="584" class="label" text-anchor="middle" style="fill:#2869b2">HTTP</text>
+<text x="380" y="608" class="label" text-anchor="middle" style="fill:#2869b2">43800 → 8080</text>
+<path d="M 760 620 L 975 620" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="780.25" y="557" width="173.5" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="867" y="579" class="label" text-anchor="middle" style="fill:#2869b2">Private HTTP</text>
+<text x="867" y="603" class="label" text-anchor="middle" style="fill:#2869b2">signed identity</text>
+<path d="M 1325 620 L 1515 620" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="1318.1" y="568" width="203.79999999999998" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1420" y="590" class="label" text-anchor="middle" style="fill:#2869b2">stdio MCP</text>
+<text x="1420" y="614" class="label" text-anchor="middle" style="fill:#2869b2">signed run context</text>
+<path d="M 1290 525 L 1290 405 L 2045 405 L 2045 425 L 2100 425" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="1853.45" y="375" width="133.1" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1920" y="397" class="label" text-anchor="middle" style="fill:#2869b2">HTTPS / LLM</text>
+<path d="M 1875 680 L 2100 680" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)" marker-start="url(#data)" stroke-dasharray="9 7"/>
+<rect x="1915.4" y="624" width="143.2" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1987" y="646" class="label" text-anchor="middle" style="fill:#117f72">Bounded S3</text>
+<text x="1987" y="670" class="label" text-anchor="middle" style="fill:#117f72">verification</text>
+<path d="M 595 715 L 595 850" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<rect x="523.4" y="782" width="143.2" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="595" y="804" class="label" text-anchor="middle" style="fill:#8052a2">read / write</text>
+<path d="M 1150 715 L 1150 850" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<rect x="1078.4" y="782" width="143.2" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1150" y="804" class="label" text-anchor="middle" style="fill:#8052a2">read / write</text>
+<path d="M 1695 715 L 1695 850" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<rect x="1623.4" y="782" width="143.2" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1695" y="804" class="label" text-anchor="middle" style="fill:#8052a2">read / write</text>
+<text x="435" y="1083" class="foot">PRIVATE CONFIG · RO host mounts → server signers, policy, S3 credentials; never sent to browser or model.</text>
+<text x="435" y="1122" class="small">OTHER ENTRY POINTS · Operator: localhost:43420 → UI proxy → worker. Slack → Socket Mode gateway → worker loopback.</text>
+<text x="45" y="174" class="kicker">DATA ORIGIN</text>
+<text x="2100" y="174" class="kicker">OUTBOUND ONLY</text>
+<text x="45" y="1130" class="kicker">IMAGE STATUS</text>
+<text x="45" y="1160" class="small">Banking adapter missing*</text>
+<text x="45" y="1208" class="kicker">READING THE ARROWS</text>
+<path d="M 45 1235 L 100 1235" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<text x="119" y="1242" class="small">Request ↔ response</text>
+<path d="M 465 1235 L 520 1235" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)"/>
+<text x="539" y="1242" class="small">Data returned to reader</text>
+<path d="M 970 1235 L 1025 1235" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<text x="1044" y="1242" class="small">Batch / migration</text>
+<path d="M 1410 1235 L 1465 1235" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<text x="1484" y="1242" class="small">Persistent state read / write</text>
+<text x="45" y="1293" class="small">* Recorded source Docker image: banking adapter missing; customer chat/revocation can fail. Configured topology · 30 Sep 2026.</text>
+</svg>
