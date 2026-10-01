@@ -9,6 +9,7 @@ import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from datetime import datetime, timezone
 
 import jwt
@@ -102,18 +103,57 @@ def owned_action_target(bank, subject="alice"):
     return snapshot.id, [r["transaction_id"] for r in rows]
 
 
-def _confirm_in_process(config_json, handle, ready, barrier, results, wall_origin):
+def _confirm_in_process(config_json, handle, ready, barrier, results, wall_origin,
+                        attempted, release_case, receipt_verified, prior_handle=None):
     service = Service(Config.model_validate_json(config_json))
     fixed_action_clock(service, wall_origin)
     principal = principal_for(service.store, "alice", cid(3), "session-alice", "conversation-alice", int(time.time()) + 60)
     try:
         ready.wait(timeout=15)
         barrier.wait(timeout=15)
-        results.put(service.actions.confirm(principal, handle, True)["state"])
+        if prior_handle is None:
+            authority = service.store.authority
+            first_writer = True
+
+            @contextmanager
+            def pause_after_attempt(principal, *, write=False, revocation=False):
+                nonlocal first_writer
+                pause = write and first_writer
+                if pause:
+                    first_writer = False
+                with authority(principal, write=write, revocation=revocation) as db:
+                    yield db
+                if pause:
+                    # Publish only after the attempted marker commits and the
+                    # writer closes, before this confirmation writes its case.
+                    attempted.set()
+                    assert release_case.wait(10), "in-flight denial was not exercised"
+
+            service.store.authority = pause_after_attempt
+            result = service.actions.confirm(principal, handle, True)
+            assert result["state"] == "created"
+            receipt_verified.set()
+            results.put({"phase": "final", "outcome": result["state"]})
+        else:
+            assert attempted.wait(10), "first attempted marker did not commit"
+            try:
+                before = authority_state(service.store)
+                with pytest.raises(BankError, match="^risk_data_unavailable$"):
+                    service.actions.confirm(principal, handle, True)
+                assert authority_state(service.store) == before
+                results.put({"phase": "inflight", "outcome": "risk_data_unavailable",
+                             "authority_unchanged": True})
+            finally:
+                release_case.set()
+            assert receipt_verified.wait(10), "first confirmation did not verify its receipt"
+            # The signal only orders the real owned readback. It cannot supply
+            # receipt evidence or authorize retrying an uncertain action.
+            assert service.actions.receipt(principal, prior_handle)["state"] == "created"
+            results.put({"phase": "final", "outcome": service.actions.confirm(principal, handle, True)["state"]})
     except BankError as exc:
-        results.put(exc.code)
+        results.put({"phase": "final", "outcome": exc.code})
     except Exception as exc:
-        results.put(type(exc).__name__)
+        results.put({"phase": "error", "outcome": type(exc).__name__, "detail": str(exc)})
     finally:
         service.close()
 
@@ -491,16 +531,20 @@ def test_cross_process_distinct_confirmations_serialize_r16_threshold(bank):
     assert all(item["decision"] == "intake" for item in pending)
     ctx = multiprocessing.get_context("spawn")
     ready, barrier, results = ctx.Barrier(3), ctx.Barrier(3), ctx.Queue()
+    attempted, release_case, receipt_verified = ctx.Event(), ctx.Event(), ctx.Event()
     config_json = service.config.model_copy(update={"sandbox_report_coverage_start": start}).model_dump_json()
     children = [ctx.Process(target=_confirm_in_process,
                             args=(config_json, item["pending_handle"], ready, barrier, results,
-                                  ACTION_TEST_WALL_ORIGIN)) for item in pending]
+                                  ACTION_TEST_WALL_ORIGIN, attempted, release_case, receipt_verified,
+                                  pending[0]["pending_handle"] if index else None))
+                for index, item in enumerate(pending)]
     for child in children:
         child.start()
     ready.wait(timeout=15)
-    # Hold the writer while both children enter confirm. On the old path both
-    # captured a stale upper window bound before acquiring the writer, then
-    # each excluded the other's later case and incorrectly created two cases.
+    # Both confirmations start behind the same writer. Force the second to
+    # encounter the first's durable attempted marker before its receipt: this
+    # must deny without mutation. Retry only after an exact owned readback;
+    # the completed distinct receipts must then require R16 handoff.
     with service.store.connect() as db:
         db.execute("BEGIN IMMEDIATE")
         barrier.wait(timeout=15)
@@ -508,7 +552,11 @@ def test_cross_process_distinct_confirmations_serialize_r16_threshold(bank):
     for child in children:
         child.join(25)
         assert child.exitcode == 0
-    assert sorted(results.get(timeout=2) for _ in children) == ["created", "handoff_required"]
+    outcomes = [results.get(timeout=2) for _ in range(3)]
+    assert [item for item in outcomes if item["phase"] == "inflight"] == [
+        {"phase": "inflight", "outcome": "risk_data_unavailable", "authority_unchanged": True}]
+    assert sorted(item["outcome"] for item in outcomes if item["phase"] == "final") == ["created", "handoff_required"]
+    assert not any(item["phase"] == "error" for item in outcomes)
     with service.store.connect() as db:
         assert db.execute("SELECT count(*) FROM sandbox_cases").fetchone()[0] == 2
 
@@ -1210,6 +1258,11 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
     from mcp.client.stdio import stdio_client
     service, _ = bank
     build, targets = owned_action_target(bank)
+    # The child action clock is synthetic; the 120-day policy boundary must
+    # not depend on the wall date used by authentication and revocation.
+    action_day = datetime.fromtimestamp(ACTION_TEST_NOW, timezone.utc).date()
+    assert (action_day - datetime(2026, 6, 2, tzinfo=timezone.utc).date()).days == 119
+    assert (action_day - datetime(2026, 5, 31, tzinfo=timezone.utc).date()).days == 121
     config = tmp_path / "bank.json"
     config.write_text(service.config.model_dump_json())
     repo = Path(__file__).resolve().parents[1]
@@ -1247,6 +1300,7 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
                     meta=assertion(bank, "prepare_unrecognized_charge", prepare_args, scope=["bank:prepare"]))
                 assert not prepared.isError
                 pending = json.loads(prepared.content[0].text)
+                assert pending["transaction"]["transaction_date"].startswith("2026-06-02")
                 # The launcher shares the deterministic action clock with the
                 # parent fixture; authentication and revocation use wall time.
                 event_date = datetime.fromisoformat(pending["transaction"]["transaction_date"]).date()

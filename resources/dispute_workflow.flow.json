@@ -526,6 +526,7 @@
         "pipeline/gold.py": "0c4b7b53e7b1efdf4146b57e921659372526915bdddd0bfa64cae28142064961",
         "pipeline/lookup.py": "efa986b587dff74d902d0f2eb39002fc6964ff5a34109cb9de0bf46d00831888",
         "pipeline/prepare_invite_preview.py": "ba01cbcdd0289d45f58b87c8b66677aa6db2741b1d639210e87805e2eb861769",
+        "pipeline/prepare_release_preview.py": "aa38ac4ee5ab5b0ffbf3489ba9400bc915e1c14b6230f82d0edabac8641cb4f1",
         "pipeline/prototype_fixture.py": "2c5d61311acdbec3b0fced9fa17214e5b56ec1ce74ef9d9ab9fd879aa7c5d0eb",
         "pipeline/report.py": "0d8a026835da5e8dc73ef62db8a00f384794c7696e8ef739c5ae0d0b7ebafb0a",
         "pipeline/silver.py": "6dc66682d3ece6170311f6c89ef26702fa244dc37fcb1b6b0820d6704db0c595",

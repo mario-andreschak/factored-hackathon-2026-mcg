@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { useState } from "react";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -80,6 +82,9 @@ const generalHandoff: HandoffPacket = {
   unanswered_questions: ["Pregunta guardada anterior?"],
 };
 
+const effectiveLanguage = (element: Element) =>
+  element.closest("[lang]")?.getAttribute("lang");
+
 const response = (body: unknown) =>
   ({
     ok: true,
@@ -113,7 +118,126 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("restored request selection sends only its server scope and never confirms through chat", async () => {
+test.each([
+  ["es", "charge", "Mensaje para el asistente", "Consulta para continuar"],
+  ["pt", "general", "Mensagem para o assistente", "Consulta a continuar"],
+] as const)(
+  "%s parent reopen to %s clears an incompatible hidden query before sending",
+  async (language, destination, messageLabel, queryLabel) => {
+    const queryId = "q_" + "a".repeat(32);
+    const previousMessage =
+      language === "pt"
+        ? "Consulta anterior em português"
+        : "Consulta anterior";
+    const message =
+      language === "pt" ? "E esta consulta?" : "¿Y esta consulta?";
+    const otherCharge: Transaction = {
+      ...charge,
+      reference: "txn_bbbbbbbbbbbbbbbbbbbbbbbb",
+      merchant: language === "pt" ? "Outra loja" : "Otra tienda",
+    };
+    const chatPosts: Record<string, unknown>[] = [];
+    const onExpired = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/api/chat/history")
+          return response({
+            active: false,
+            messages: [{ role: "assistant", text: previousMessage }],
+            queries: [
+              {
+                query_id: queryId,
+                label: "Compra anterior",
+                transaction_reference: charge.reference,
+              },
+            ],
+            active_query_id: queryId,
+          });
+        if (url === "/api/chat/messages") {
+          chatPosts.push(JSON.parse(init!.body as string));
+          return response({
+            reply: language === "pt" ? "Resposta atual." : "Respuesta actual.",
+          });
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+
+    function Parent() {
+      const [open, setOpen] = useState(true);
+      const [selected, setSelected] = useState<Transaction | null>(charge);
+      return (
+        <>
+          <button
+            onClick={() => {
+              setOpen(false);
+              setSelected(null);
+            }}
+          >
+            Close from parent
+          </button>
+          <button
+            onClick={() => {
+              setSelected(destination === "charge" ? otherCharge : null);
+              setOpen(true);
+            }}
+          >
+            Reopen from parent
+          </button>
+          <Assistant
+            open={open}
+            status={{ available: true, sandbox_intake_available: false }}
+            selected={selected}
+            transactions={[charge, otherCharge]}
+            onSelectTransaction={setSelected}
+            hidden={false}
+            synthetic
+            onClose={() => {
+              setOpen(false);
+              setSelected(null);
+            }}
+            onExpired={onExpired}
+            initialLanguage={language}
+          />
+        </>
+      );
+    }
+
+    render(<Parent />);
+    await screen.findByText(previousMessage);
+    expect(document.querySelector(".chat-selection")?.textContent).toContain(
+      charge.merchant,
+    );
+    expect(screen.queryByRole("combobox", { name: queryLabel })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close from parent" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reopen from parent" }));
+    const visibleSelection = document.querySelector(".chat-selection");
+    if (destination === "charge") {
+      expect(visibleSelection?.textContent).toContain(otherCharge.merchant);
+      expect(visibleSelection?.textContent).not.toContain(charge.merchant);
+    } else {
+      expect(visibleSelection).toBeNull();
+    }
+    expect(screen.queryByRole("combobox", { name: queryLabel })).toBeNull();
+
+    const input = screen.getByRole("textbox", { name: messageLabel });
+    fireEvent.change(input, { target: { value: message } });
+    fireEvent.submit(input.closest("form")!);
+    await waitFor(() => expect(chatPosts).toHaveLength(1));
+    expect(chatPosts[0]).toEqual({
+      message,
+      language,
+      ...(destination === "charge"
+        ? { transaction_reference: otherCharge.reference }
+        : {}),
+    });
+  },
+);
+
+test("restored null-reference query clears the stale charge on chat submit", async () => {
   const first = "q_" + "a".repeat(32),
     second = "q_" + "b".repeat(32);
   const queries = [
@@ -150,10 +274,160 @@ test("restored request selection sends only its server scope and never confirms 
       throw new Error(`Unexpected request: ${url}`);
     }),
   );
+  const onSelectTransaction = vi.fn();
   render(
     <Assistant
       open
       status={{ available: true, sandbox_intake_available: false }}
+      selected={charge}
+      transactions={[charge]}
+      onSelectTransaction={onSelectTransaction}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  const choice = await screen.findByRole("combobox", {
+    name: "Consulta para continuar",
+  });
+  fireEvent.change(choice, { target: { value: second } });
+  expect(onSelectTransaction).toHaveBeenCalledWith(null);
+  const input = screen.getByRole("textbox", {
+    name: "Mensaje para el asistente",
+  });
+  fireEvent.change(input, { target: { value: "sí" } });
+  fireEvent.submit(input.closest("form")!);
+  await screen.findByText("Estado verificado.");
+  expect(
+    JSON.parse(calls.find((call) => call.url === "/api/chat/messages")!.body!),
+  ).toEqual({
+    message: "sí",
+    language: "es",
+    query_scope_id: second,
+  });
+  expect(calls.some((call) => call.url.startsWith("/api/action/"))).toBe(false);
+  expect(document.body.textContent).not.toContain(first);
+  expect(document.body.textContent).not.toContain(second);
+});
+
+test("rapid Portuguese query switch submits its different charge reference", async () => {
+  localStorage.setItem("flujo-bank-action-language", "pt");
+  const first = "q_" + "a".repeat(32);
+  const second = "q_" + "b".repeat(32);
+  const otherCharge = {
+    ...charge,
+    reference: "txn_bbbbbbbbbbbbbbbbbbbbbbbb",
+    merchant: "Outra loja",
+  };
+  const queries = [
+    {
+      query_id: first,
+      label: "Compra no Mercado Central",
+      transaction_reference: charge.reference,
+    },
+    {
+      query_id: second,
+      label: "Compra em outra loja",
+      transaction_reference: otherCharge.reference,
+    },
+  ];
+  const calls: Record<string, unknown>[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/chat/history")
+        return response({
+          messages: [],
+          active: false,
+          queries,
+          active_query_id: first,
+        });
+      if (url === "/api/chat/messages") {
+        calls.push(JSON.parse(init!.body as string));
+        return response({
+          reply: "Consulta concluída.",
+          queries,
+          active_query_id: second,
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  const onSelectTransaction = vi.fn();
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: false }}
+      selected={charge}
+      transactions={[charge, otherCharge]}
+      onSelectTransaction={onSelectTransaction}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  const choice = await screen.findByRole("combobox", {
+    name: "Consulta a continuar",
+  });
+  const message = screen.getByRole("textbox", {
+    name: "Mensagem para o assistente",
+  });
+  fireEvent.change(message, { target: { value: "E esta compra?" } });
+  act(() => {
+    fireEvent.change(choice, { target: { value: second } });
+    fireEvent.submit(message.closest("form")!);
+  });
+  await screen.findByText("Consulta concluída.");
+  expect(onSelectTransaction).toHaveBeenCalledWith(otherCharge);
+  expect(calls).toEqual([
+    {
+      message: "E esta compra?",
+      language: "pt",
+      transaction_reference: otherCharge.reference,
+      query_scope_id: second,
+    },
+  ]);
+});
+
+test("mismatched stored query blocks a stale charge action before POST", async () => {
+  const first = "q_" + "a".repeat(32);
+  const second = "q_" + "b".repeat(32);
+  const calls: { url: string; method: string }[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      calls.push({ url, method: init?.method || "GET" });
+      if (url === "/api/chat/history")
+        return response({
+          active: false,
+          messages: [{ role: "assistant", text: "Consulta anterior" }],
+          queries: [
+            {
+              query_id: first,
+              label: "Cargo inicial",
+              transaction_reference: charge.reference,
+            },
+            {
+              query_id: second,
+              label: "Consulta general",
+              transaction_reference: null,
+            },
+          ],
+          active_query_id: first,
+        });
+      if (url.startsWith("/api/action/status"))
+        return response({ state: "none" });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: true }}
       selected={charge}
       transactions={[charge]}
       onSelectTransaction={vi.fn()}
@@ -166,24 +440,23 @@ test("restored request selection sends only its server scope and never confirms 
   const choice = await screen.findByRole("combobox", {
     name: "Consulta para continuar",
   });
-  fireEvent.change(choice, { target: { value: second } });
-  const input = screen.getByRole("textbox", {
-    name: "Mensaje para el asistente",
+  const prepare = await screen.findByRole("button", {
+    name: "Revisar recepción simulada",
   });
-  fireEvent.change(input, { target: { value: "sí" } });
-  fireEvent.submit(input.closest("form")!);
-  await screen.findByText("Estado verificado.");
+  act(() => {
+    fireEvent.change(choice, { target: { value: second } });
+    fireEvent.click(prepare);
+  });
   expect(
-    JSON.parse(calls.find((call) => call.url === "/api/chat/messages")!.body!),
-  ).toEqual({
-    message: "sí",
-    language: "es",
-    transaction_reference: charge.reference,
-    query_scope_id: second,
-  });
-  expect(calls.some((call) => call.url.startsWith("/api/action/"))).toBe(false);
-  expect(document.body.textContent).not.toContain(first);
-  expect(document.body.textContent).not.toContain(second);
+    await screen.findByText(
+      "Esta consulta corresponde a otro movimiento. Elige la consulta de este movimiento antes de continuar.",
+    ),
+  ).toBeTruthy();
+  expect(
+    calls.filter(
+      ({ url, method }) => url.startsWith("/api/action/") && method === "POST",
+    ),
+  ).toHaveLength(0);
 });
 
 test("Portuguese consent and saved status survive refresh without submitting an action", async () => {
@@ -245,7 +518,28 @@ test("Portuguese consent and saved status survive refresh without submitting an 
   await screen.findByRole("button", {
     name: /Confirmo o registro simulado para Mercado Central/,
   });
-  await screen.findByText("Estado em português para este lançamento.");
+  const actionStatus = await screen.findByText(
+    "Estado em português para este lançamento.",
+  );
+  expect(effectiveLanguage(actionStatus)).toBe("pt-BR");
+  expect(actionStatus.getAttribute("role")).toBe("status");
+  const consentButton = screen.getByRole("button", {
+    name: /Confirmo o registro simulado para Mercado Central/,
+  });
+  expect(effectiveLanguage(consentButton)).toBe("pt-BR");
+  const consentSummary = screen
+    .getByText(/Solicitação pendente para este lançamento/)
+    .closest('[role="status"]');
+  expect(consentSummary).not.toBeNull();
+  expect(effectiveLanguage(consentSummary!)).toBe("pt-BR");
+  expect(
+    effectiveLanguage(
+      within(consentSummary as HTMLElement).getByText(charge.merchant!),
+    ),
+  ).toBe("");
+  expect(
+    effectiveLanguage(within(consentButton).getByText(charge.merchant!)),
+  ).toBe("");
   expect(screen.getByText(/O registro é uma simulação/)).toBeTruthy();
   expect(
     calls.some(({ url }) => url === "/api/action/status?language=pt"),
@@ -374,12 +668,22 @@ test.each([
     expect(summary!.textContent).toContain("42");
 
     fireEvent.change(
-      screen.getByRole("textbox", { name: "Mensaje para el asistente" }),
+      screen.getByRole("textbox", {
+        name:
+          language === "pt"
+            ? "Mensagem para o assistente"
+            : "Mensaje para el asistente",
+      }),
       { target: { value: yes } },
     );
     fireEvent.submit(
       screen
-        .getByRole("textbox", { name: "Mensaje para el asistente" })
+        .getByRole("textbox", {
+          name:
+            language === "pt"
+              ? "Mensagem para o assistente"
+              : "Mensaje para el asistente",
+        })
         .closest("form")!,
     );
     await screen.findByText("Consulta de solo lectura.");
@@ -697,6 +1001,12 @@ test.each([
     const view = render(<Assistant {...props} />);
     fireEvent.click(await screen.findByRole("button", { name: reviewLabel }));
     const evidence = await screen.findByRole("region", { name: receiptLabel });
+    expect(effectiveLanguage(evidence)).toBe(
+      language === "pt" ? "pt-BR" : "es",
+    );
+    expect(
+      effectiveLanguage(within(evidence).getByText(charge.merchant!)),
+    ).toBe("");
     expect(within(evidence).getByText(receipt.id)).toBeTruthy();
     expect(within(evidence).getByText(charge.reference)).toBeTruthy();
     expect(within(evidence).getByText(received)).toBeTruthy();
@@ -1094,10 +1404,13 @@ test.each([
       onExpired: vi.fn(),
     };
     const view = render(<Assistant {...props} />);
-    fireEvent.change(
-      await screen.findByRole("textbox", { name: questionsLabel }),
-      { target: { value: ` ${question} \nSegunda pergunta?` } },
-    );
+    const questionDraft = await screen.findByRole("textbox", {
+      name: questionsLabel,
+    });
+    expect(effectiveLanguage(questionDraft)).toBe("");
+    fireEvent.change(questionDraft, {
+      target: { value: ` ${question} \nSegunda pergunta?` },
+    });
     const prefer = screen.getByRole("button", { name: preferLabel });
     expect((prefer as HTMLButtonElement).disabled).toBe(false);
     expect(writes).toHaveLength(0);
@@ -1126,7 +1439,10 @@ test.each([
       name:
         language === "pt" ? "Referência da análise" : "Referencia de revisión",
     });
-    expect(within(evidence).getByText(question)).toBeTruthy();
+    expect(effectiveLanguage(evidence)).toBe(
+      language === "pt" ? "pt-BR" : "es",
+    );
+    expect(effectiveLanguage(within(evidence).getByText(question))).toBe("");
     expect(within(evidence).getByText(handoff.id)).toBeTruthy();
     expect(writes).toHaveLength(2);
     expect(writes[1]).toEqual({
@@ -1604,4 +1920,98 @@ test("exhausted recovery shows one opaque review code and the ES/PT sharing rout
   expect(screen.getByText(/não avisa a equipe/)).toBeTruthy();
   expect(calls).toContain("GET /api/action/status?language=pt");
   expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+});
+
+test("Portuguese is selectable before history loads and stays available when chat is unavailable", async () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal("fetch", fetchMock);
+  const props = {
+    open: true,
+    status: { available: false, sandbox_intake_available: false },
+    selected: null,
+    transactions: [],
+    onSelectTransaction: vi.fn(),
+    hidden: false,
+    synthetic: true,
+    onClose: vi.fn(),
+    onExpired: vi.fn(),
+  };
+  render(<Assistant {...props} />);
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    {
+      target: { value: "pt" },
+    },
+  );
+  const dialog = screen.getByRole("dialog", { name: "Seu assistente Savia" });
+  expect(within(dialog).getByRole("button", { name: "Fechar" })).toBeTruthy();
+  expect(
+    screen.getByRole("combobox", { name: "Idioma da interface" }),
+  ).toBeTruthy();
+  expect(
+    screen.getByText("O assistente não está disponível agora"),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole("heading", { name: "Vamos entender seus lançamentos." }),
+  ).toBeTruthy();
+  expect(
+    screen
+      .getByRole("button", { name: "Mostre meus lançamentos recentes" })
+      .hasAttribute("disabled"),
+  ).toBe(true);
+  expect(dialog.querySelector("h2")?.getAttribute("lang")).toBe("pt-BR");
+  expect(
+    screen
+      .getByRole("textbox", { name: "Mensagem para o assistente" })
+      .getAttribute("lang"),
+  ).toBe("pt-BR");
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+test("Portuguese recovery copy permits retry while server transcript remains unlabelled", async () => {
+  let historyAttempts = 0;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      if (String(input) !== "/api/chat/history")
+        throw new Error(`Unexpected request: ${input}`);
+      historyAttempts += 1;
+      if (historyAttempts === 1) throw new Error("temporary failure");
+      return response({
+        active: false,
+        messages: [
+          { role: "assistant", text: "Respuesta guardada en español" },
+        ],
+      });
+    }),
+  );
+  render(
+    <Assistant
+      open={true}
+      status={{ available: true, sandbox_intake_available: false }}
+      selected={null}
+      transactions={[]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic={true}
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  await screen.findByRole("button", { name: "Recuperar conversación" });
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    { target: { value: "pt" } },
+  );
+  const retry = screen.getByRole("button", { name: "Recuperar conversa" });
+  expect(screen.getByRole("alert").textContent).toContain(
+    "Não foi possível recuperar sua conversa",
+  );
+  fireEvent.click(retry);
+  const transcript = await screen.findByText("Respuesta guardada en español");
+  expect(transcript.closest(".chat-message")?.getAttribute("lang")).toBeNull();
+  expect(
+    screen.getByRole("dialog", { name: "Seu assistente Savia" }),
+  ).toBeTruthy();
+  expect(historyAttempts).toBe(2);
 });

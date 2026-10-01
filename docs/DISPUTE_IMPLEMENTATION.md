@@ -21,6 +21,41 @@ protected source bytes and graph paths: the old source and installed/native/HTTP
 results below do not qualify the renamed source. Runtime use requires a fresh
 image and qualification under the existing gates.
 
+## Combined renamed portal/preview source
+
+The current candidate combines the descriptive naming cleanup with PR39's ES/PT
+portal and fictional invitation preview. It needs a regenerated protected source
+manifest that includes `pipeline/prepare_release_preview.py`, followed by fresh
+source qualification of the combined renamed artifact. Neither the previous
+rename-only checks nor the pre-rename PR39 report qualifies these combined bytes.
+The artifact must retain `installed=false`, `actionsEnabled=false` and the
+immutable FLUJO revision `0ba62296520a505e6d71eddf5aa650691f3dc311`.
+Source qualification does not install a worker or activate banking actions;
+runtime use requires the existing exact replacement-image qualification.
+
+## Historical PR39 portal/preview source qualification
+
+PR39 published at `92054ac15bb455303217fa501fbd7c13ceb14e93` and merged as
+`eea3e29d081c30840e0512a6438e5de81a0ea70c`. Its
+[portal/preview source qualification](qualification/release-preview-source-2026-10-01.json)
+records the frozen pre-rename snapshot
+`37a14f4d2ae330cd32db6cc65f6f0dfda0c1407a`. That graph covered 85 protected
+files, including `pipeline/prepare_release_preview.py`, with graph SHA256
+`210c5bab0c4fec943163a17ce6f3c622b2664751a3745c98cdd0a338a83cb30c`
+and artifact SHA256
+`29dfc2823d41c116de59da77182c00278152d4a896b3727e270681ee04c97dd0`.
+The report retains its original pre-rename file paths and hashes.
+
+That snapshot passed 1,701 source tests and 428 subtests, 80 UI tests, the frontend
+build and read-only LF-normalized formatting checks. Preview preparation passed
+two tests with one Windows skip for POSIX permission bits. The isolated fictional
+loopback preview returned 21 transactions for each of two disjoint owners and
+denied further reads after logout. It started no worker, model or banking action;
+installation, native/provider execution, deployment and human adjudication flags
+remained false. These results qualify that pre-rename source and read preview
+only. They do not qualify the renamed graph or transfer historical runtime
+acceptance to it.
+
 ## Retained state during the rename
 
 Startup migrates the workflow's old SQLite table names in one transaction,
@@ -37,16 +72,19 @@ handoff packets remain readable with their original schema and must still pass
 the owner, query and verified-receipt checks. These compatibility references
 explain the remaining old identifiers in the code.
 
-## Naming cleanup validation
+## Historical rename-only source validation
 
-The renamed source passed `python scripts/test_dispute.py`: 1,725 tests and
+Before PR39 integration, renamed candidate
+`3b8c37aede3224117650ffde6f27e493456793c4` passed
+`python scripts/test_dispute.py`: 1,725 tests and
 427 subtests, including 24 retained-state naming compatibility cases. The
-regenerated example flow passes the immutable FLUJO compiler check, and all
-84 protected source hashes match the staged Git blobs. Dependency and local
-documentation-link checks also pass. These are source checks; the historical
-installed runtime and provider reports below retain their original scope.
+regenerated example flow passed the immutable FLUJO compiler check, and all
+84 protected source hashes matched the staged Git blobs. Dependency and local
+documentation-link checks also passed. These are source checks for that earlier
+candidate; the combined renamed portal/preview source needs fresh qualification.
+The historical installed runtime and provider reports below retain their original scope.
 
-## Previous source integration
+## Historical credential source integration
 
 The credential-question correction was integrated with the frozen `94f8c82`
 successor at `d7a4f432000db0a225a010235083427f957c35b5`. Customer replies reject

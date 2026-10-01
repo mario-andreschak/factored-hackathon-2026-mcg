@@ -1,11 +1,31 @@
 # Transaction dispute workflow acceptance and release qualification
 
 The [implementation guide](DISPUTE_IMPLEMENTATION.md) records contributor credit
-and the naming cleanup. The evidence below belongs to the pre-rename source;
-renamed source needs fresh qualification before runtime use. Historical reports
-and their recorded paths and hashes remain unchanged.
+and the naming cleanup. The combined renamed portal/preview source needs a fresh
+protected manifest and source qualification. Historical reports and their recorded
+paths and hashes remain unchanged; runtime use also retains the existing gates.
 
-## Previous source integration evidence
+## Historical PR39 portal/preview source evidence
+
+The portal/preview integration adds its fictional preparation helper to the
+protected graph closure. PR39 published that source at
+`92054ac15bb455303217fa501fbd7c13ceb14e93` and merged it as
+`eea3e29d081c30840e0512a6438e5de81a0ea70c`. Its
+[source qualification](qualification/release-preview-source-2026-10-01.json)
+records the frozen pre-rename snapshot
+`37a14f4d2ae330cd32db6cc65f6f0dfda0c1407a`: all 85 protected hashes,
+1,701 source tests and 428 subtests, 80 UI tests, and isolated read-only preview
+checks. The preview preparation passed two tests with one Windows skip for POSIX
+permission bits. Two disjoint fictional owners each returned 21 transactions;
+logout denied further reads. No native worker, provider or banking action was
+installed or activated by those checks.
+
+The report retains the original pre-rename paths and hashes. Its source and
+preview results do not transfer to the renamed graph. The combined rename and
+portal/preview candidate must be qualified with its own exact source capture;
+the credential and native reports below also retain their original captures.
+
+## Historical credential source integration evidence
 
 The integrated credential correction at `d7a4f432000db0a225a010235083427f957c35b5`
 has a regenerated protected source map. Its

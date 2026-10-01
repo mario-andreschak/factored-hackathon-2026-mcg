@@ -30,13 +30,15 @@ revisions. Restoring main or preserving the branch does not upgrade the old
 running image or migrate legacy banking conversation state. See the
 [deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md).
 
-An alternative is being implemented in this repository in draft PRs #31/#32:
-the trusted Savia host resolves owned selections, authorizes consent, signs exact MCP calls,
-verifies receipts and handles recovery/revocation. The banking MCP owns its
-data, policy and durable state. Generic FLUJO supplies language handling over
-bounded, permitted display facts through ordinary interfaces; bank signing
-keys, raw record identifiers and action/selection capabilities stay outside it.
-This source direction is not a claim of deployment or joined acceptance.
+Project PRs #31/#32 merged the trusted Savia host/direct-MCP source at observed
+project main `e967e7e` and it is included in the local release integration
+`af3b22d`. That host resolves owned selections, authorizes consent, signs exact
+MCP calls, verifies receipts and handles recovery/revocation. The banking MCP
+owns its data, policy and durable state. Generic FLUJO supplies language
+handling over bounded, permitted display facts through ordinary interfaces;
+bank signing keys, raw record identifiers and action/selection capabilities stay
+outside it. Source integration does not establish joined runtime or deployment
+acceptance.
 
 The dedicated branch is the permitted place for FLUJO changes needed by this
 hackathon. Keep its source and build clearly identified and separate from main;
