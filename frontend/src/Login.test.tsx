@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -546,6 +547,56 @@ test.each([
       }),
     );
     await waitFor(() => expect(document.activeElement).toBe(trigger));
+  },
+);
+
+test.each([
+  ["es", "Menú de navegación", "Abrir menú", "Cerrar menú", "Inicio"],
+  ["pt", "Menu de navegação", "Abrir menu", "Fechar menu", "Início"],
+] as const)(
+  "%s responsive menu close focuses visible desktop navigation",
+  async (language, menuName, openName, closeName, desktopName) => {
+    let mobile = true;
+    let onChange: (() => void) | undefined;
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        get matches() {
+          return mobile;
+        },
+        addEventListener: (_type: string, listener: () => void) => {
+          onChange = listener;
+        },
+        removeEventListener: vi.fn(),
+      })),
+    );
+    servePortal(language, false);
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: language === "pt" ? /Olá, Bia/ : /Hola, Bia/,
+    });
+    const trigger = screen.getByRole("button", { name: openName });
+    fireEvent.click(trigger);
+    const close = within(
+      screen.getByRole("dialog", { name: menuName }),
+    ).getByRole("button", { name: closeName });
+    expect(document.activeElement).toBe(close);
+    expect(onChange).toBeDefined();
+
+    act(() => {
+      mobile = false;
+      onChange?.();
+    });
+
+    const desktopNavigation = screen.getByRole("button", {
+      name: desktopName,
+    });
+    expect(screen.queryByRole("dialog", { name: menuName })).toBeNull();
+    expect(document.querySelector(".main-shell")?.hasAttribute("inert")).toBe(
+      false,
+    );
+    expect(document.activeElement).toBe(desktopNavigation);
+    expect(document.activeElement).not.toBe(trigger);
   },
 );
 
