@@ -809,15 +809,6 @@ button svg {
 .global-search input::placeholder {
   color: #9ba693;
 }
-.global-search kbd {
-  font-family: inherit;
-  font-size: 10px;
-  background: #f0f3eb;
-  color: #a1ac98;
-  padding: 3px 6px;
-  border: 1px solid #e7ece0;
-  border-radius: 4px;
-}
 .snapshot-pill {
   background: #eef3e8;
   display: flex;
