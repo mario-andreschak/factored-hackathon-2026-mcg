@@ -532,7 +532,7 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
                     selected_scope = backend.query_scope(service, customer, current.id,
                         current.expires_at, body.transaction_reference, selected_scope)["query_id"]
                 except ChatError as exc:
-                    raise HTTPException(exc.status_code, render_action_error(exc.code, language)) from None
+                    raise HTTPException(exc.status_code, render_action_error(exc.code, body.language)) from None
             previous = await action_status(request, body.language)
             same_target = (previous.get("target_reference") == body.transaction_reference
                            and previous.get("query_id") == selected_scope)
