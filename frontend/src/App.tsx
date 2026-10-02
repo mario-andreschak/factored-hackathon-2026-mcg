@@ -3630,7 +3630,6 @@ export default function App() {
                   setPage("transactions");
                 }}
               />
-              <kbd>⌕</kbd>
             </label>
             <button className="snapshot-pill" onClick={() => setInfo(true)}>
               <span className="live-dot" />
