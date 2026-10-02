@@ -33,13 +33,20 @@ repository lock and immutable inputs. Do not run the Windows worker directly.
 
 ## Protect development resources
 
-The reviewed controller bounds the whole Windows worker process tree before its
-commands execute. Docker Linux jobs have a 4 GiB memory limit, two CPU cores and
-a bounded PID allowance. Only one workflow worker runs at a time, with fresh
-memory admission before each gate and owned-resource cleanup after execution.
+The reviewed controller bounds the whole Windows worker process tree with a
+4 GiB Job Object before its commands execute. Docker Linux jobs have a 2 GiB
+memory and swap limit, two CPU cores and a 512 PID allowance. Only one workflow
+worker runs at a time. Fresh admission requires 6 GiB free physical memory
+(4 GiB worker plus 2 GiB headroom on Windows; 2 GiB worker plus 4 GiB headroom
+for Linux) and 16 GiB available commit before each gate. The private runbook
+pins the reviewed controller and its owned-resource cleanup checks.
 Keep actual bounds and resource refusals in the receipts; a refusal is incomplete
 infrastructure execution, not a passed test. Do not stop unrelated apps or reclaim
 their caches to create CI headroom.
+
+After a power outage, reconcile the recorded controller and its owned resource
+IDs before releasing its exact stale lock. Retain valid completed same-head
+receipts and run the unfinished gates; the outage does not pause local CI.
 
 ## GitHub evidence and merge
 
