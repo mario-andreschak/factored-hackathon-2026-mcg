@@ -1,0 +1,48 @@
+services:
+  avatar:
+    build: .
+    ports:
+      - "127.0.0.1:4318:4318"
+    environment:
+      NODE_ENV: production
+      AVATAR_HOST: "0.0.0.0"
+      AVATAR_PORT: "4318"
+      AVATAR_ALLOW_PUBLIC_BIND: "true"
+      AVATAR_PUBLIC_ORIGIN: "${AVATAR_PUBLIC_ORIGIN:-http://localhost:4318}"
+      AVATAR_ACCESS_GATE_TOKEN: "${AVATAR_ACCESS_GATE_TOKEN:-}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY:-}"
+      GEMINI_LIVE_MODEL: "${GEMINI_LIVE_MODEL:-gemini-3.8-live}"
+      GEMINI_LIVE_VOICE_MOSS: "${GEMINI_LIVE_VOICE_MOSS:-Charon}"
+      GEMINI_LIVE_VOICE_ORBIT: "${GEMINI_LIVE_VOICE_ORBIT:-Kore}"
+      GEMINI_LIVE_VOICE_SPARK: "${GEMINI_LIVE_VOICE_SPARK:-Puck}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_REALTIME_MODEL: "${OPENAI_REALTIME_MODEL:-gpt-realtime-2.1}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      AVATAR_VOICE_PROVIDER: "${AVATAR_VOICE_PROVIDER:-}"
+      AVATAR_BACKGROUND_ASR: "${AVATAR_BACKGROUND_ASR:-}"
+      AVATAR_NATIVE_READ_BRIDGE: "${AVATAR_NATIVE_READ_BRIDGE:-}"
+      OPENROUTER_STT_MODEL: "${OPENROUTER_STT_MODEL:-openai/whisper-large-v3}"
+      OPENROUTER_CHAT_MODEL: "${OPENROUTER_CHAT_MODEL:-google/gemini-3.1-flash-lite}"
+      OPENROUTER_TTS_MODEL: "${OPENROUTER_TTS_MODEL:-google/gemini-3.8-flash-lite-tts}"
+      OPENROUTER_TTS_VOICE_MOSS: "${OPENROUTER_TTS_VOICE_MOSS:-}"
+      OPENROUTER_TTS_VOICE_ORBIT: "${OPENROUTER_TTS_VOICE_ORBIT:-}"
+      OPENROUTER_TTS_VOICE_SPARK: "${OPENROUTER_TTS_VOICE_SPARK:-}"
+      SAVIA_UPSTREAM: "${SAVIA_UPSTREAM:-}"
+      SAVIA_PUBLIC_ORIGIN: "${SAVIA_PUBLIC_ORIGIN:-}"
+      AVATAR_TASK_TIMEOUT_MS: "${AVATAR_TASK_TIMEOUT_MS:-460000}"
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4318/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
