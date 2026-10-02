@@ -39,11 +39,11 @@ MAX_TABLE_BYTES = 512 * 1024 * 1024
 MAX_SOURCE_OBJECTS = 2048
 MAX_RATE_BYTES = 4 * 1024 * 1024
 MAX_RATE_ROWS = 100000
-# The actual 1,097-object complaint inventory took ~0.9 s per conditional
-# GET even with a reused client. 128 concurrent sockets leave time for the
-# complete inventory, private query, and fresh returned-row checks in 20 s.
-# This is a ceiling, not a claim that an unmeasured deployment meets its budget.
-SOURCE_READ_WORKERS = 128
+# Bound the fresh client's connection burst as well as its steady work.
+# The measured 128-worker run completed every GET but exceeded the 20 s
+# budget before 107 of 1,097 bodies could be verified. The smaller pool
+# still needs an actual complete read; it does not establish qualification.
+SOURCE_READ_WORKERS = 64
 MAX_IN_FLIGHT_SOURCE_BYTES = 32 * 1024 * 1024
 SOURCE_READ_SECONDS = 20
 SOURCE_READ_CHUNK = 64 * 1024

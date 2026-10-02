@@ -129,7 +129,7 @@ def test_complete_1097_inventory_is_fresh_conditional_and_client_is_prepared_bef
             assert isinstance(verified, set), "table bytes must not be retained as reusable clearance"
     assert len(transport.sessions) == len(transport.clients) == 2
     assert transport.sessions == [controller, controller]
-    assert all(config.max_pool_connections == reads.SOURCE_READ_WORKERS == 128 for config in transport.configs)
+    assert all(config.max_pool_connections == reads.SOURCE_READ_WORKERS == 64 for config in transport.configs)
     assert all(config.retries["total_max_attempts"] == 1 for config in transport.configs)
     assert Counter(call["Key"] for call in transport.calls) == Counter({"data/" + key: 2 for key in records})
     assert transport.active_bodies == 0 and transport.close_observations == [0, 0]
