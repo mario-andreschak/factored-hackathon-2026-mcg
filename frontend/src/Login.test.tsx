@@ -554,7 +554,7 @@ test.each([
   ["es", "Menú de navegación", "Abrir menú", "Cerrar menú", "Inicio"],
   ["pt", "Menu de navegação", "Abrir menu", "Fechar menu", "Início"],
 ] as const)(
-  "%s responsive menu close focuses visible desktop navigation",
+  "%s responsive 390→900→390 menu focus follows the visible navigation",
   async (language, menuName, openName, closeName, desktopName) => {
     let mobile = true;
     let onChange: (() => void) | undefined;
@@ -597,6 +597,46 @@ test.each([
     );
     expect(document.activeElement).toBe(desktopNavigation);
     expect(document.activeElement).not.toBe(trigger);
+
+    act(() => {
+      mobile = true;
+      // jsdom does not apply the mobile CSS that hides the sidebar. Simulate
+      // the browser clearing focus before the media-query event is delivered.
+      desktopNavigation.blur();
+      expect(document.activeElement).toBe(document.body);
+      onChange?.();
+    });
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+
+    // A visible main-shell control keeps focus across the same resize.
+    act(() => {
+      mobile = false;
+      onChange?.();
+    });
+    const snapshot =
+      document.querySelector<HTMLButtonElement>(".snapshot-pill");
+    expect(snapshot).not.toBeNull();
+    snapshot!.focus();
+    act(() => {
+      mobile = true;
+      onChange?.();
+    });
+    expect(document.activeElement).toBe(snapshot);
+
+    // A prior, intentional blur on desktop is not a hidden-control transfer.
+    act(() => {
+      mobile = false;
+      onChange?.();
+    });
+    desktopNavigation.focus();
+    desktopNavigation.blur();
+    expect(document.activeElement).toBe(document.body);
+    act(() => {
+      mobile = true;
+      onChange?.();
+    });
+    expect(document.activeElement).toBe(document.body);
   },
 );
 
