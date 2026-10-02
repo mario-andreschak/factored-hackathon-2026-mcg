@@ -10,6 +10,8 @@ import { pathToFileURL } from 'node:url';
 const HOST = 'flujo-factored-2026.fly.dev';
 const PRIVATE = '/data/private/joined';
 const CONTROL = '/data/native-authority/control';
+const EVIDENCE = '/data/native-transition-evidence';
+const BANK_ARCHIVE = '/data/banking-state/legacy-bank-before-native.sqlite3';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 async function directory(filename, uid, gid, mode) {
   await fs.mkdir(filename, { recursive: true, mode });
@@ -38,14 +40,41 @@ async function publish(filename, bytes, uid, gid, mode) {
     await fs.rename(temporary, filename);
   } finally { await file?.close(); await fs.unlink(temporary).catch(() => {}); }
 }
-async function sealTree(root, uid, gid, directoryMode, fileMode) {
+async function sealTree(root, uid, gid, directoryMode, fileMode, excluded = new Set()) {
   const pending = [root];
   while (pending.length) {
-    const filename = pending.pop(), stat = await fs.lstat(filename);
-    if (stat.isSymbolicLink() || !stat.isFile() && !stat.isDirectory()) throw Error('Unsupported persistent state file.');
+    const filename = pending.pop();
+    if (excluded.has(filename)) continue;
+    const stat = await fs.lstat(filename);
+    if (stat.isSymbolicLink() || !stat.isFile() && !stat.isDirectory()
+      || stat.isFile() && stat.nlink !== 1) throw Error('Unsupported persistent state file.');
     if (stat.isDirectory()) for (const name of await fs.readdir(filename)) pending.push(path.join(filename, name));
     await fs.chown(filename, uid, gid); await fs.chmod(filename, stat.isDirectory() ? directoryMode : fileMode);
   }
+}
+/** Pin evidence paths before migration; never relocate paths inside a saved receipt. */
+export function transitionEvidenceFiles(saved) {
+  const proof = saved?.operator_proof;
+  if (!proof || !Array.isArray(proof.obligation_artifacts) || !proof.archives
+    || saved.archive_path !== BANK_ARCHIVE) throw Error('Incomplete retained transition evidence.');
+  const files = [proof.path, proof.coverage_proof_path, proof.lease_artifact?.path,
+    proof.authority_artifact?.path, ...proof.obligation_artifacts.map(item => item?.path),
+    proof.archives.frontend?.path, proof.archives.worker?.path];
+  if (files.some(filename => typeof filename !== 'string' || !filename.startsWith(EVIDENCE + '/')
+    || path.posix.normalize(filename) !== filename || filename.includes('\0')))
+    throw Error('Transition evidence must use the retained bank-only directory.');
+  return [...new Set(files), BANK_ARCHIVE];
+}
+async function sealTransitionEvidence(saved) {
+  const files = transitionEvidenceFiles(saved);
+  for (const filename of files) {
+    const stat = await fs.lstat(filename);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1 || stat.uid !== 0
+      || (stat.mode & 0o022) !== 0 || await fs.realpath(filename) !== filename)
+      throw Error('Unsafe retained transition evidence file.');
+  }
+  await sealTree(EVIDENCE, 0, 10001, 0o550, 0o440);
+  return files;
 }
 export async function bootstrap() {
   if (process.platform !== 'linux' || process.getuid() !== 0) throw Error('Linux root bootstrap required.');
@@ -57,7 +86,9 @@ export async function bootstrap() {
   const receipt = await privateBytes(PRIVATE + '/transition-receipt.json');
   const bank = await privateBytes(PRIVATE + '/bank-config.json');
   const frontend = await privateBytes(PRIVATE + '/frontend.json');
-  if (!JSON.parse(receipt.toString()) || !JSON.parse(bank.toString()) || !JSON.parse(frontend.toString())) throw Error('Incomplete joined deployment inputs.');
+  const savedReceipt = JSON.parse(receipt.toString());
+  if (!savedReceipt || !JSON.parse(bank.toString()) || !JSON.parse(frontend.toString())) throw Error('Incomplete joined deployment inputs.');
+  await sealTransitionEvidence(savedReceipt);
   await directory('/data', 0, 0, 0o755);
   await directory('/data/private', 0, 0, 0o700);
   await directory('/data/native-authority', 0, 10002, 0o751);
@@ -68,7 +99,8 @@ export async function bootstrap() {
   await directory('/data/native-frontend-state', 10001, 10001, 0o700);
   await directory('/run/dispute', 0, 10001, 0o750);
   // Bank state and dataset never become readable by the worker UID.
-  await sealTree('/data/banking-state', 10001, 10001, 0o700, 0o600);
+  await sealTree('/data/banking-state', 10001, 10001, 0o700, 0o600, new Set([BANK_ARCHIVE]));
+  await fs.chown(BANK_ARCHIVE, 0, 10001); await fs.chmod(BANK_ARCHIVE, 0o440);
   await sealTree('/data/banking-data', 0, 10001, 0o550, 0o440);
   await publish('/run/dispute/bank-config.json', bank, 0, 10001, 0o440);
   await publish('/run/dispute/frontend.json', frontend, 0, 10001, 0o440);
