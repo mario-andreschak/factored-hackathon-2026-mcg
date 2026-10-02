@@ -1,0 +1,48 @@
+{
+  "note": "Editorial milestones pinned to original captured events. Missing evidence is omitted; timestamps always come from source events.",
+  "chapters": [
+    {
+      "id": "slack-bot",
+      "title": "FLUJO joins the conversation",
+      "description": "The first team-channel ping reaches FLUJO, and its response is persisted in the local conversation history.",
+      "evidenceIds": ["slack:C0C4T2FK24C:1790561006.727949", "flujo:default-workspace:slack-1a1ac049bc62a2444a206a247d778b22411397c23d404cf7:stream_a855b9c2-64a8-40d1-b823-abde9059afa2"]
+    },
+    {
+      "id": "governance",
+      "title": "Codex takes the supervisor role",
+      "description": "A dedicated supervisor reviews pull requests while parallel sessions own frontend, backend, dataset and MCP work.",
+      "evidenceIds": ["codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba", "slack:C0C4T2FK24C:1790696885.134539"]
+    },
+    {
+      "id": "parallel",
+      "title": "Development splits into workstreams",
+      "description": "The team reports five parallel sessions: frontend, backend, dataset, MCP, and supervision/review.",
+      "evidenceIds": ["slack:C0C4T2FK24C:1790696885.134539"]
+    },
+    {
+      "id": "self-governed",
+      "title": "A FLUJO team governs the release loop",
+      "description": "Codex sets up a FLUJO release team with a supervisor, builder, product auditor, independent reviewer and watchdog. A recurring coordinator keeps the work moving.",
+      "evidenceIds": ["flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3", "codex:message:msg_01a0f586-28d3-7cd2-ab7b-5c59c59dd352", "codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3", "flujo:default-workspace:9aeb217b-308d-4bd0-a114-5ec4740c6033:509f28a7-91b6-4196-83de-5c83e3c50e26", "flujo:default-workspace:873ab7c7-2c50-47bf-9066-6ef736c0cf8d:bdc7ed90-8182-4753-8c5d-0a6f547b388c"]
+    },
+    {
+      "id": "ci",
+      "title": "Local and Modal CI become recurring",
+      "description": "The team chooses hourly Windows/Docker verification and a daily Modal run. The saved automation and a later completed local run provide distinct configuration and execution evidence.",
+      "evidenceIds": ["codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a", "codex:automation:daily-private-modal-ci:created:2026-10-01T16:41:58.302000Z", "codex:message:msg_093875e3f38f84e2016abee5a284f087d28c77e382c8a96d80"]
+    }
+  ],
+  "nodes": [
+    {"id":"codex-team","label":"Codex supervisors","source":"codex","description":"Parallel project threads and their subagents supervise PRs and coordinate workstreams.","evidenceIds":["codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba","slack:C0C4T2FK24C:1790696885.134539"]},
+    {"id":"flujo-team","label":"FLUJO dev team","source":"flujo","description":"Recurring coordinator · supervisor · builder · product auditor · independent reviewer · watchdog.","evidenceIds":["flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3","codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"]},
+    {"id":"local-ci","label":"Local Docker CI","source":"ci","description":"Hourly local verification across Windows and Docker Linux jobs.","evidenceIds":["codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a","codex:message:msg_093875e3f38f84e2016abee5a284f087d28c77e382c8a96d80"]},
+    {"id":"modal-ci","label":"Modal CI","source":"ci","description":"Daily cloud verification configured as a saved automation.","evidenceIds":["codex:automation:daily-private-modal-ci:created:2026-10-01T16:41:58.302000Z","codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a"]}
+  ],
+  "edges": [
+    {"id":"slack-flujo-direct","from":"slack","to":"flujo","label":"Bot request & response","evidenceIds":["slack:C0C4T2FK24C:1790561006.727949","flujo:default-workspace:slack-1a1ac049bc62a2444a206a247d778b22411397c23d404cf7:stream_a855b9c2-64a8-40d1-b823-abde9059afa2"]},
+    {"id":"codex-codex-team","from":"codex","to":"codex-team","label":"Parallel supervision","evidenceIds":["codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba","slack:C0C4T2FK24C:1790696885.134539"]},
+    {"id":"codex-flujo-team","from":"codex","to":"flujo-team","label":"Launch & steer","evidenceIds":["codex:message:msg_01a0f586-28d3-7cd2-ab7b-5c59c59dd352","codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"]},
+    {"id":"flujo-flujo-team","from":"flujo","to":"flujo-team","label":"Recurring release loop","evidenceIds":["flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3","codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"]},
+    {"id":"github-codex-team","from":"github","to":"codex-team","label":"PR supervision","evidenceIds":["codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba"]}
+  ]
+}

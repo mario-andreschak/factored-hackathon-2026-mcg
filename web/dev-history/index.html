@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <meta name="description" content="A playable, timestamped record of the Factored 2026 development process.">
+  <title>SAVIA · Development history</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="v2.css">
+  <script src="data/history-data.js" defer></script>
+  <script src="replay-engine.js" defer></script>
+  <script src="graph-scene.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#archive">Skip to searchable history</a>
+  <div class="app-wrap">
+    <header class="masthead">
+      <a class="brand" href="#top" aria-label="SAVIA development history home"><span class="brand-mark" aria-hidden="true">s<span>.</span></span><span>SAVIA <b>FACTORED 2026</b></span></a>
+      <div class="masthead-center"><span class="status-light" aria-hidden="true"></span> DEVELOPMENT OBSERVATORY</div>
+      <a id="repo-link" class="repo-link" href="#archive">Explore the archive <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main id="top">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow"><span class="small-cross" aria-hidden="true">+</span> HUMANS · AGENTS · MACHINES</p>
+          <h1 id="page-title">Replay <span>the making.</span></h1>
+          <p class="intro-copy" id="project-description">Follow the messages, the agents, and the machines behind SAVIA.</p>
+        </div>
+        <div class="intro-meta">
+          <div class="archive-stat"><strong id="total-events">—</strong><span>DEVELOPMENT EVENTS</span></div>
+          <div class="range-label"><span id="date-range">Loading history…</span><span id="coverage-summary">Connecting the dots</span></div>
+        </div>
+      </section>
+
+      <div class="metrics-ribbon" aria-label="Captured development system">
+          <div><span class="metric-glyph">⌘</span><strong id="metric-chats">—</strong><span>DEVELOPMENT CHATS</span></div>
+          <div><span class="metric-glyph">↳</span><strong id="metric-dispatches">—</strong><span>AGENT RELATIONS</span></div>
+          <div><span class="metric-glyph">◇</span><strong id="metric-flows">—</strong><span>SAVED FLOW GRAPHS</span></div>
+          <div><span class="metric-glyph">▣</span><strong id="metric-machines">—</strong><span>MACHINES & APP IDENTITIES</span></div>
+        </div>
+      <div id="load-state" class="load-state" role="status">Reading the development archive…</div>
+
+      <section class="player-section" aria-label="Playable development timeline">
+        <div class="transport" id="transport">
+          <div class="transport-main">
+            <button id="play-button" class="play-button" type="button" aria-label="Play development history" disabled><span id="play-icon" aria-hidden="true">▶</span></button>
+            <div class="play-caption"><strong id="play-caption">Play the build</strong><span id="play-time">00:00 / 03:00</span></div>
+            <div class="scrub-control"><label for="scrubber" class="sr-only">Playback position</label><input id="scrubber" type="range" min="0" max="10000" value="0" disabled><div class="scrub-labels"><span id="playhead-time">—</span><span id="compression-label">IDLE GAPS COMPRESSED</span></div></div>
+            <div class="speed-control"><label class="sr-only" for="playback-mode">Playback mode</label><select id="playback-mode"><option value="all" selected>Every record · in order</option><option value="story">Narrated chapters</option></select><label class="sr-only" for="playback-speed">Playback speed</label><select id="playback-speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option><option value="32">32×</option></select></div>
+            <label class="dwell-control" for="event-dwell">Dwell<select id="event-dwell"><option value="350">0.35 s</option><option value="850" selected>0.85 s</option><option value="2000">2 s</option><option value="5000">5 s</option></select></label><button id="cinema-toggle" type="button" aria-pressed="false">Cinema</button><button id="restart-button" class="icon-button" type="button" aria-label="Restart timeline" title="Restart" disabled>↺</button>
+          </div>
+        </div>
+        <div class="flight-deck">
+          <div class="trajectory-panel">
+            <div class="panel-heading"><span class="eyebrow"><span class="status-light" aria-hidden="true"></span> <span id="scene-heading">ACTIVITY CONSTELLATION</span></span><div class="view-switch" aria-label="Playback visualization"><button type="button" id="activity-view" aria-pressed="true">Activity</button><button type="button" id="landscape-view" aria-pressed="false">Landscape</button><button type="button" id="agents-view" aria-pressed="false">Agent chats</button><button type="button" id="flows-view" aria-pressed="false">FLUJO graphs</button><button type="button" id="infrastructure-view" aria-pressed="false">Machines</button></div></div>
+            <div class="scene-tools" id="scene-tools" hidden>
+              <label for="session-filter" id="session-filter-label">CONVERSATION</label><select id="session-filter"><option value="">All session families</option></select>
+              <label for="flow-filter" id="flow-filter-label">FLOW</label><select id="flow-filter"><option value="">Follow selected event</option></select>
+              <button id="reset-camera" type="button">Fit view</button>
+            </div>
+            <div class="canvas-wrap" id="canvas-wrap">
+              <canvas id="timeline-canvas" aria-label="Five source lanes show activity across time. Use the playback controls or event archive to explore." role="img" tabindex="0"></canvas>
+              <div class="scene-empty" id="scene-empty" hidden>No events match these filters.<span>Try another source or search.</span></div>
+              <div class="canvas-tooltip" id="canvas-tooltip" hidden></div>
+              <div class="scene-instruction" id="scene-instruction" aria-hidden="true">CLICK A SIGNAL TO EXPLORE <span>↗</span></div>
+            </div>
+            <div class="scene-axis"><span id="axis-start">—</span><span class="axis-center">TIMESTAMPED EVIDENCE · SHARED CLOCK</span><span id="axis-end">—</span></div>
+            <div class="source-legend" id="source-legend" aria-label="Timeline source filters"></div>
+            <div id="landscape-caption" class="landscape-caption" hidden></div>
+            <label id="landscape-links-label" class="scope-toggle landscape-links-toggle" hidden><input type="checkbox" id="landscape-all-links">Show all reference links</label>
+            <details id="landscape-evidence" class="landscape-evidence" hidden><summary>Explore the connections and their evidence</summary><div id="connection-list"></div></details>
+          </div>
+
+          <article class="event-focus" aria-label="Current event">
+            <div class="focus-top"><span id="focus-source" class="source-label">ARCHIVE</span><span class="capture-badge">CAPTURED RECORD</span><span class="mono" id="focus-position">000 / 000</span></div>
+            <div class="source-app-header"><span id="source-app-name">Development record</span><strong id="source-app-context">Shared clock</strong><span class="source-app-menu" aria-hidden="true">•••</span></div><div id="source-thread-context" class="source-thread-context"></div>
+            <p class="focus-date" id="focus-date">A record of how we got here.</p>
+            <h2 id="focus-title">Your development story, ready to play.</h2>
+            <div class="focus-byline" id="focus-byline"></div>
+            <div id="source-chat-context" class="source-chat-context"></div><div class="focus-body" id="focus-body">The timeline combines the original events from each connected source into a single chronological view.</div>
+            <div id="focus-media" class="chat-media" hidden></div><div id="focus-reactions" class="chat-reactions" hidden></div>
+            <button id="read-event" class="text-button" type="button" disabled>Open full event <span aria-hidden="true">↗</span></button>
+            <div class="focus-bottom"><span class="mono subtle" id="focus-kind">TIMESTAMPED ORIGINALS</span><div class="mini-nav"><button id="focus-prev" type="button" aria-label="Previous event" disabled>←</button><button id="focus-next" type="button" aria-label="Next event" disabled>→</button></div></div>
+          </article>
+        </div>
+
+
+      </section>
+
+      <section class="narrative-stage" id="narrative-stage" aria-label="Narrated development chapters" hidden>
+        <div class="narrative-number"><span id="narrative-number">01</span><span>NARRATED CHAPTER</span><div class="narrative-progress"><i id="narrative-progress"></i></div></div>
+        <div class="narrative-copy"><p id="narrative-date" class="eyebrow"></p><h2 id="narrative-heading"></h2><div id="narrative-body"></div><div id="narrative-evidence" class="narrative-evidence"></div></div>
+      </section>
+      <section class="system-inspector" id="system-inspector" aria-label="System evidence inspector" hidden><div class="section-kicker"><h2 id="inspector-title">Selected system</h2><button type="button" id="close-inspector">Close</button></div><p id="inspector-summary"></p><div id="inspector-evidence"></div><details><summary>Recorded structure and provenance</summary><pre id="inspector-data"></pre></details></section>
+
+      <section class="chapters-section" aria-labelledby="chapters-title">
+        <div class="section-kicker"><h2 id="chapters-title">Jump through the story</h2><label class="sr-only" for="chapter-select">Jump to a chapter</label><select id="chapter-select"><option value="">All chapters</option></select></div>
+        <div id="chapter-list" class="chapter-list"></div>
+      </section>
+
+      <section id="archive" class="archive-section" aria-labelledby="archive-title">
+        <aside class="coverage-panel" aria-labelledby="coverage-title">
+          <div class="section-kicker"><h2 id="coverage-title">Source coverage</h2><span class="mono subtle">SOURCE COVERAGE</span></div>
+          <p class="coverage-copy">Original records, one shared clock. Coverage reflects the latest rebuild.</p>
+          <div id="coverage-list" class="coverage-list"></div>
+          <div class="generated-note"><span class="eyebrow">LAST CAPTURE</span><span id="generated-at">—</span><span id="dataset-size"></span></div>
+        </aside>
+
+        <div class="archive-main">
+          <div class="archive-heading"><div><p class="eyebrow">THE COMPLETE RECORD</p><h2 id="archive-title">Look closer.</h2></div><span id="result-count" class="mono subtle">— events</span></div>
+          <div class="search-field"><span aria-hidden="true">⌕</span><label for="event-search" class="sr-only">Search titles, message previews, authors, and tags</label><input id="event-search" type="search" placeholder="Search titles, message previews, and authors…" autocomplete="off"><kbd>/</kbd></div>
+          <div class="archive-filters" id="archive-filters" aria-label="Filter events by source"></div>
+          <div class="scope-controls"><div><label for="workstream-filter">WORKSTREAM</label><select id="workstream-filter"><option value="">All workstreams</option></select></div><label class="scope-toggle"><input type="checkbox" id="include-all" checked>All captured activity</label></div>
+          <div class="archive-list-labels" aria-hidden="true"><span>WHEN</span><span>SOURCE</span><span>WHAT HAPPENED</span></div>
+          <div id="event-list" class="event-list" aria-label="Development events"></div>
+          <div class="archive-pagination"><span class="mono subtle" id="page-label">—</span><div><button type="button" id="page-prev" class="page-button" disabled>← Previous</button><button type="button" id="page-next" class="page-button" disabled>Next →</button></div></div>
+          <p class="archive-note">Search covers titles, previews, authors, and tags. Full event bodies open on demand. <a href="data/history.json" download="savia-development-history.json">Download the complete JSON ↗</a></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer"><div><span class="brand-mark small" aria-hidden="true">s<span>.</span></span><span>Built in the open. Preserved in time.</span></div><div class="rebuild-note"><span>REBUILDABLE ARCHIVE</span><code id="rebuild-command">python scripts/build_dev_history.py</code></div></footer>
+  </div>
+
+  <dialog id="event-dialog" class="event-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-top"><span id="dialog-source" class="source-label">EVENT</span><button id="close-dialog" type="button" class="icon-button" aria-label="Close full event">×</button></div>
+    <p id="dialog-date" class="focus-date"></p>
+    <h2 id="dialog-title"></h2>
+    <div id="dialog-byline" class="focus-byline"></div>
+    <div id="dialog-tags" class="dialog-tags"></div>
+    <div id="dialog-body" class="dialog-body"></div>
+    <div id="dialog-media" class="chat-media expanded-media" hidden></div><div id="dialog-reactions" class="chat-reactions" hidden></div>
+    <details class="event-metadata" id="event-metadata"><summary>Record details</summary><pre id="dialog-metadata"></pre></details>
+    <div class="dialog-footer"><span id="dialog-id" class="mono subtle"></span><a id="dialog-url" class="external-link" target="_blank" rel="noopener noreferrer" hidden>View original <span aria-hidden="true">↗</span></a></div>
+  </dialog>
+  <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

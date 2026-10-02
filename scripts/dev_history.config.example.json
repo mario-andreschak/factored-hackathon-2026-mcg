@@ -1,0 +1,18 @@
+{
+  "history_start": "2026-09-25T00:00:00-05:00",
+  "github_repository": "mario-andreschak/factored-hackathon-2026-mcg",
+  "slack_mcp_server": "slack-flujo",
+  "slack_workers": 3,
+  "slack_exclude_channels": [],
+  "slack_images": true,
+  "flujo_url": "http://localhost:43420",
+  "flujo_container": "flujo-slack-flujo-1",
+  "flujo_workspace_path": "/data/flujo/workspaces",
+  "infrastructure": {
+    "fly_apps": ["flujo-factored-2026", "flujo-factored-dev-2026"]
+  },
+  "codex": {
+    "include_tools": true,
+    "user_actor": "Mario"
+  }
+}

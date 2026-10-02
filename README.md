@@ -55,6 +55,7 @@ these diagrams do not establish successful live acceptance.
 
 ## Start here
 
+- [Playable development history and rebuild instructions](docs/DEVELOPMENT_HISTORY.md)
 - [FLUJO product boundary for this hackathon](docs/FLUJO_PRODUCT_BOUNDARY.md)
 - [Dedicated FLUJO hackathon branch and deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md)
 - [Data recovery review and local runbook (September 29)](docs/DATA_RECOVERY_2026-09-29.md)
