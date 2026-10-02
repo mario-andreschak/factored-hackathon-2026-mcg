@@ -61,6 +61,8 @@ import {
   money,
   number,
   productShort,
+  ptStatusNames,
+  ptTypeNames,
   statusNames,
   typeNames,
 } from "./lib";
@@ -114,7 +116,7 @@ function Badge({
     <span className={`badge ${status.toLowerCase()}`}>
       <span />
       {language === "pt"
-        ? ptStatus[status] || statusNames[status] || status
+        ? ptStatusNames[status] || statusNames[status] || status
         : statusNames[status] || status}
     </span>
   );
@@ -1275,17 +1277,6 @@ function AssistantText({ text }: { text: string }) {
 }
 
 type ActionLanguage = "es" | "pt";
-const ptStatus: Record<string, string> = {
-  Approved: "Aprovado",
-  Pending: "Pendente",
-  Declined: "Recusado",
-  Reversed: "Estornado",
-  Active: "Ativo",
-  Blocked: "Bloqueado",
-  Closed: "Encerrado",
-  Suspended: "Suspenso",
-  Inactive: "Inativo",
-};
 const ptCategories: Record<string, string> = {
   Food: "Alimentação",
   Other: "Outros",
@@ -1306,14 +1297,6 @@ const ptCategories: Record<string, string> = {
   Efectivo: "Dinheiro",
   Suscripción: "Assinaturas",
 };
-const ptTypes: Record<string, string> = {
-  Purchase: "Compra",
-  Withdrawal: "Saque",
-  Transfer: "Transferência",
-  Payment: "Pagamento",
-  Deposit: "Depósito",
-  Adjustment: "Ajuste",
-};
 const ptProducts: Record<string, string> = {
   "Cuenta Ahorro": "Conta poupança",
   "Préstamo Personal": "Empréstimo pessoal",
@@ -1326,7 +1309,7 @@ const ptProducts: Record<string, string> = {
 };
 const portalType = (value: string, language: ActionLanguage) =>
   language === "pt"
-    ? ptTypes[value] || typeNames[value] || value
+    ? ptTypeNames[value] || typeNames[value] || value
     : typeNames[value] || value;
 const portalProduct = (value: string, language: ActionLanguage) =>
   language === "pt"
@@ -3524,7 +3507,7 @@ export default function App() {
           label(t),
           t.type,
           typeNames[t.type],
-          ptTypes[t.type],
+          ptTypeNames[t.type],
           t.channel,
           t.currency,
           t.reference,
@@ -3542,7 +3525,7 @@ export default function App() {
     products.find((p) => /tarjeta.*cr[eé]dito/i.test(p.type)) || products[0];
   const paginationTotal = Math.max(1, Math.ceil(filtered.length / 10));
   function download(items: Transaction[]) {
-    csv(items);
+    csv(items, actionLanguagePreference);
     setToast(
       pt
         ? "Seus movimentos foram baixados em CSV."
@@ -4329,7 +4312,7 @@ export default function App() {
                           {["Approved", "Pending", "Declined", "Reversed"].map(
                             (s) => (
                               <option key={s} value={s}>
-                                {pt ? ptStatus[s] : statusNames[s]}
+                                {pt ? ptStatusNames[s] : statusNames[s]}
                               </option>
                             ),
                           )}
