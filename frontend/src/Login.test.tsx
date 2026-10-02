@@ -459,6 +459,97 @@ function servePortal(
 }
 
 test.each([
+  ["es", "Menú de navegación", "Abrir menú", "Cerrar menú", "Movimientos"],
+  ["pt", "Menu de navegação", "Abrir menu", "Fechar menu", "Movimentos"],
+] as const)(
+  "%s mobile menu keeps keyboard focus inside and restores the trigger",
+  async (language, menuName, openName, closeName, destination) => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    servePortal(language, false);
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: language === "pt" ? /Olá, Bia/ : /Hola, Bia/,
+    });
+    const trigger = screen.getByRole("button", { name: openName });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const menu = screen.getByRole("dialog", { name: menuName });
+    const close = within(menu).getByRole("button", { name: closeName });
+    const mainShell = document.querySelector(".main-shell");
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(mainShell?.hasAttribute("inert")).toBe(true);
+    expect(document.activeElement).toBe(close);
+    fireEvent.keyDown(close, { key: "Tab", shiftKey: true });
+    const last = within(menu).getByRole("button", {
+      name: language === "pt" ? "Encerrar sessão" : "Cerrar sesión",
+    });
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(close);
+    fireEvent.keyDown(close, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: menuName })).toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(mainShell?.hasAttribute("inert")).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+
+    fireEvent.click(trigger);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: menuName })).getByRole(
+        "button",
+        { name: closeName },
+      ),
+    );
+    expect(document.activeElement).toBe(trigger);
+    fireEvent.click(trigger);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: menuName })).getByRole(
+        "button",
+        { name: destination },
+      ),
+    );
+    expect(document.activeElement).toBe(trigger);
+    expect(mainShell?.hasAttribute("inert")).toBe(false);
+
+    fireEvent.click(trigger);
+    fireEvent.click(document.querySelector(".mobile-shade")!);
+    expect(document.activeElement).toBe(trigger);
+    fireEvent.click(trigger);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: menuName })).getByRole(
+        "button",
+        {
+          name:
+            language === "pt"
+              ? "Sobre esta experiência"
+              : "Sobre esta experiencia",
+        },
+      ),
+    );
+    expect(mainShell?.hasAttribute("inert")).toBe(false);
+    expect(screen.queryByRole("dialog", { name: menuName })).toBeNull();
+    const about = screen.getByRole("dialog", {
+      name:
+        language === "pt"
+          ? "Um cenário para explorar"
+          : "Un escenario para explorar",
+    });
+    fireEvent.click(
+      within(about).getByRole("button", {
+        name: language === "pt" ? "Fechar" : "Cerrar",
+      }),
+    );
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  },
+);
+
+test.each([
   ["pt", "COP"],
   ["pt", "ARS"],
   ["es", "COP"],
