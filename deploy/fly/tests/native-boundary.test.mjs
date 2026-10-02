@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Module, { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { pinnedEngineFixture, FLUJO_PIN } from './pinned-native-engine.mjs';
 import { validateInvocation, buildBubblewrapArgs, SDK_HOME_PARENT, RAW_CLI_PATH, RAW_CLI_SHA256 } from '../native-codex-wrapper.mjs';
 
 const home = SDK_HOME_PARENT + '/codex-private-aB123456';
@@ -63,7 +64,7 @@ test('bubblewrap hides host data and process trees while retaining provider netw
 // Exercise the real adapter declarations with synthetic controls and actual Request/Response.
 // Only FLUJO graph/runtime wiring and disk are substituted; no provider is executed.
 const sourceFile = fileURLToPath(new URL('../native-execution.mts', import.meta.url));
-function adapterFixture() {
+function adapterFixture(extensionRuntime) {
   const flujoRoot = process.env.FLUJO_SOURCE_ROOT;
   assert.ok(flujoRoot, 'Set FLUJO_SOURCE_ROOT to the pinned FLUJO source with installed TypeScript.');
   const requirePackage = createRequire(path.join(flujoRoot, 'package.json'));
@@ -76,7 +77,7 @@ function adapterFixture() {
     conversation: 'synthetic-conversation', runId: 'synthetic-run', turnId: 'synthetic-turn', message: 'synthetic',
     graphHash: '', flowId: '', server: 'dispute-language-only', expires: Date.now() + 60000, bindingFingerprint: 'c'.repeat(64) };
   const files = new Map([[control + '/admissions.json', JSON.stringify([record])]]), writes = [];
-  let currentInput, afterRead, permissions;
+  let currentInput, afterRead, permissions, runValue;
   const profile = { verifiedCliVersion: '0.157.1', verifiedCliPath: '/opt/native/codex-wrapper.mjs', verifiedCliSha256: 'd'.repeat(64),
     verifiedModelCatalogPath: '/opt/native/model-catalog.json', verifiedModelCatalogSha256: '5a1ddcef609e52bd057b247d9487f2c8c4d9453d3d802745ba5325c2e10700e0' };
   files.set('/opt/native/native-profile.json', JSON.stringify(profile));
@@ -94,20 +95,33 @@ function adapterFixture() {
   const disk = { lstatSync: stat, existsSync: location => files.has(location), readFileSync: location => files.get(location),
     writeFileSync: write, appendFileSync: (location, bytes) => write(location, (files.get(location) ?? '') + bytes),
     renameSync: (from, to) => { write(to, files.get(from)); files.delete(from); }, openSync: () => 1, fsyncSync() {}, closeSync() {} };
-  class ExecutionExtensionError extends Error { constructor(code, status = 403) { super(code); this.code = code; this.status = status; } }
+  class FixtureExtensionError extends Error { constructor(code, status = 403) { super(code); this.code = code; this.status = status; } }
+  const extensionBridge = extensionRuntime ? {
+    ...extensionRuntime,
+    createExecutionExtensionContext: (adapter, value) => {
+      runValue = value; return extensionRuntime.createExecutionExtensionContext(adapter, value);
+    },
+    runWithExecutionInput: (input, task) => {
+      currentInput = input; return extensionRuntime.runWithExecutionInput(input, task);
+    },
+  } : {
+    ExecutionExtensionError: FixtureExtensionError,
+    createExecutionExtensionContext: (_adapter, value) => ({ value }),
+    runWithExecutionInput: (input, task) => { currentInput = input; return task(); },
+  };
   const overrides = {
     'node:path': path.posix, 'node:fs': disk, 'node:fs/promises': { readFile: async location => { const value = files.get(location); afterRead?.(location); return value; } },
     'next/server': { NextRequest: Request }, '@/utils/workspace': { runWithWorkspace: (_workspace, task) => task() },
     '@/backend/services/workspace/workspaceMutationGate': { withWorkspaceMutation: task => task() },
     '@/backend/services/flow/executionSnapshot': { createFlowExecutionSnapshot: (_workspace, flow) => ({ flow, contentHash: 'e'.repeat(64) }) },
-    '@/backend/execution/extensions': { ExecutionExtensionError, createExecutionExtensionContext: (_adapter, value) => ({ value }),
-      runWithExecutionInput: (input, task) => { currentInput = input; return task(); } },
+    '@/backend/execution/extensions': extensionBridge,
   };
   const module = new Module(sourceFile); module.filename = sourceFile;
   module.require = name => Object.hasOwn(overrides, name) ? overrides[name] : requirePackage(name);
   module._compile(compiled.outputText, sourceFile);
   return { adapter: module.exports.configuredExecutionAdapter, record, files, writes, control,
-    input: () => currentInput, setAfterRead: hook => { afterRead = hook; }, setPermissions: hook => { permissions = hook; } };
+    input: () => currentInput, runValue: () => runValue,
+    setAfterRead: hook => { afterRead = hook; }, setPermissions: hook => { permissions = hook; } };
 }
 function stageRequest(record, overrides = {}) {
   return new Request('http://127.0.0.1:4200/v1/chat/completions', { method: 'POST',
@@ -121,7 +135,7 @@ test('real adapter admits only fresh tool-free graphs and writes only worker sta
   assert.equal(delegated.headers.get('authorization'), null);
   assert.equal(f.input().mode, 'ephemeral');
   assert.equal(f.input().debug, false);
-  assert.equal(f.input().flowDefinition.nodes.length, 3);
+  assert.equal(f.input().flowDefinition.nodes.length, 2);
   assert.ok(f.writes.length > 0 && f.writes.every(value => value.startsWith('/data/native-authority/worker/')));
   await f.adapter.assertRun(f.input().executionExtensionContext.value);
   await f.adapter.codexProfile(f.input().executionExtensionContext.value);
@@ -154,4 +168,97 @@ test('mutable profile and unbranded run cannot reach the native adapter', async 
   await assert.rejects(f.adapter.assertRun({ ...f.input().executionExtensionContext.value }));
   f.setPermissions((location, stat) => { if (location === '/opt/native/native-profile.json') stat.mode = 0o664; });
   await assert.rejects(f.adapter.codexProfile(f.input().executionExtensionContext.value));
+});
+
+// Targeted engine routing proof: no ProcessNode.execCore or provider is executed.
+// The exact pinned engine converts/prepares the actual adapter graph, and its post
+// method receives a visibly synthetic success value only to verify leaf routing.
+async function admittedEngineFixture() {
+  const engine = pinnedEngineFixture();
+  const f = adapterFixture(engine.extensions);
+  const handoffNames = [];
+  const denyHandoffs = f.adapter.authorizeHandoffs;
+  f.adapter.authorizeHandoffs = function (value, names) {
+    handoffNames.push([...names]); return denyHandoffs.call(this, value, names);
+  };
+  const unregister = engine.extensions.registerExecutionExtension(f.adapter);
+  try {
+    const response = await f.adapter.withRoute(stageRequest(f.record), () => Response.json({ fixture: true }));
+    assert.equal(response.status, 200);
+    const input = f.input();
+    assert.ok(input.executionExtensionContext);
+    await engine.extensions.assertExecutionExtensionCurrent(input.executionExtensionContext);
+    return { engine, f, input, handoffNames, unregister };
+  } catch (error) { unregister(); throw error; }
+}
+function engineState(input, graph = input.flowDefinition) {
+  return { flowId: graph.id, flowSnapshot: graph, conversationId: input.conversationId,
+    logicalRunId: input.runId, executionExtensionContext: input.executionExtensionContext,
+    ephemeral: true, debugMode: false, requireApproval: false, onApprovalRequired: 'fail',
+    trackingInfo: { nodeExecutionTracker: [] },
+    messages: [{ id: 'synthetic-user', role: 'user', content: 'Synthetic request.', timestamp: 1 }] };
+}
+async function preparedProcess(engine, state, graph) {
+  const flow = engine.FlowConverter.convert(graph);
+  const start = await flow.getStartNode();
+  assert.ok(start instanceof engine.StartNode);
+  const startResult = await start.run(state);
+  assert.equal(startResult.action, 'start-process');
+  const process = start.getSuccessor(startResult.action);
+  assert.ok(process instanceof engine.ProcessNode);
+  return process;
+}
+test('pinned FLUJO converts the real restricted graph to a tool-free Process leaf and retains its final response', async () => {
+  const fixture = await admittedEngineFixture();
+  const { engine, input, handoffNames } = fixture;
+  try {
+    assert.equal(engine.pin, FLUJO_PIN);
+    assert.deepEqual(input.flowDefinition.nodes.map(node => node.type), ['start', 'process']);
+    assert.deepEqual(input.flowDefinition.edges.map(edge => edge.id), ['start-process']);
+    const state = engineState(input);
+    const process = await preparedProcess(engine, state, input.flowDefinition);
+    assert.equal(process.successors.size, 0);
+    const prep = await process.prep(state, process.node_params);
+    assert.deepEqual(prep.availableTools, []);
+    assert.deepEqual(handoffNames, [[]]);
+    assert.deepEqual(state.toolNameMap, {});
+    assert.equal(state.currentMCPNodes, undefined);
+    assert.equal(prep.executionExtensionContext, input.executionExtensionContext);
+    const syntheticResult = { success: true, content: 'TEST_ONLY_SYNTHETIC_ENGINE_RESULT', toolCalls: [],
+      effectiveMaxTurns: 1, messages: [{ id: 'synthetic-engine-output', role: 'assistant',
+        content: 'TEST_ONLY_SYNTHETIC_ENGINE_RESULT', timestamp: 2 }] };
+    const action = await process.post(prep, syntheticResult, state, process.node_params);
+    assert.equal(action, engine.FINAL_RESPONSE_ACTION);
+    assert.equal(process.getSuccessor(action), undefined);
+    assert.equal(state.lastResponse, syntheticResult.content);
+    assert.ok(state.messages.some(message => message.id === 'synthetic-engine-output'
+      && message.content === syntheticResult.content));
+    assert.equal(engine.providerCalls(), 0);
+    assert.equal(engine.unexpectedCapabilityCalls(), 0);
+  } finally { fixture.unregister(); }
+});
+test('pinned FLUJO reproduces the old Finish handoff denial before any provider execution', async () => {
+  const fixture = await admittedEngineFixture();
+  const { engine, input, handoffNames, f } = fixture;
+  try {
+    const graph = structuredClone(input.flowDefinition);
+    graph.nodes.push({ id: 'finish', type: 'finish', position: { x: 0, y: 400 },
+      data: { type: 'finish', label: 'Finish', properties: {} } });
+    graph.edges.push({ id: 'process-finish', source: 'process', target: 'finish',
+      sourceHandle: 'process-bottom', targetHandle: 'finish-top', type: 'custom', data: { edgeType: 'standard' } });
+    const state = engineState(input, graph);
+    const process = await preparedProcess(engine, state, graph);
+    assert.equal(process.successors.size, 1);
+    await assert.rejects(process.prep(state, process.node_params), error =>
+      error instanceof engine.extensions.ExecutionExtensionError && error.code === 'dispute_native_tools_forbidden');
+    assert.deepEqual(handoffNames, [['handoff_to_finish']]);
+    assert.equal(engine.providerCalls(), 0);
+    assert.equal(engine.unexpectedCapabilityCalls(), 0);
+    assert.throws(() => f.adapter.authorizeHandoffs(f.runValue(), ['handoff_to_finish']));
+    await assert.rejects(f.adapter.assertModelTool(f.runValue(), 'bank_read', { server: 'bank', tool: 'read' }));
+    await assert.rejects(f.adapter.assertDispatch(f.runValue(), 'bank', 'model'));
+    assert.throws(() => f.adapter.normalizeArguments(f.runValue(), 'bank_read', {}));
+    await assert.rejects(f.adapter.requestMeta(f.runValue(), 'bank', 'read', {}));
+    assert.throws(() => f.adapter.validateResult(f.runValue(), 'bank_read', {}));
+  } finally { fixture.unregister(); }
 });

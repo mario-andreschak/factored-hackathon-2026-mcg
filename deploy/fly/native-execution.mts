@@ -141,15 +141,15 @@ export const configuredExecutionAdapter: ExecutionExtensionAdapter = {
           || Object.keys(message).some(key => !['role', 'content'].includes(key))
           || typeof message.content !== 'string' || message.content.length > 120000)) fail('dispute_stage_request_denied');
       const id = randomUUID();
+      // A terminal Process completes normally. FLUJO advertises each successor
+      // as a handoff, which this language-only adapter must deny.
       const graph = { id, name: 'dispute_restricted_language_stage', nodes: [
         { id: 'start', type: 'start', position: { x: 0, y: 0 }, data: { type: 'start', label: 'Start', properties: { promptTemplate: body.messages[0].content } } },
         { id: 'process', type: 'process', position: { x: 0, y: 200 }, data: { type: 'process', label: 'Restricted language stage', properties: {
           boundModel: 'dispute-native-model', promptTemplate: 'Return only the JSON required by the system contract. Do not use tools or inspect the runtime.',
           inputMode: 'latest-message', outputMode: 'latest-message', maxTurns: 1, excludeModelPrompt: true, excludeSystemPrompt: true } } },
-        { id: 'finish', type: 'finish', position: { x: 0, y: 400 }, data: { type: 'finish', label: 'Finish', properties: {} } },
       ], edges: [
         { id: 'start-process', source: 'start', target: 'process', sourceHandle: 'start-bottom', targetHandle: 'process-top', type: 'custom', data: { edgeType: 'standard' } },
-        { id: 'process-finish', source: 'process', target: 'finish', sourceHandle: 'process-bottom', targetHandle: 'finish-top', type: 'custom', data: { edgeType: 'standard' } },
       ] };
       const snapshot = createFlowExecutionSnapshot('default-workspace', graph);
       const run = { ...stage, conversation: id, runId: randomUUID(), graphHash: snapshot.contentHash, signal: request.signal };
