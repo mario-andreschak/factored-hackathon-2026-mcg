@@ -447,7 +447,8 @@ def verify(*, receipt: Path, bank_config_file: Path, source_root: Path,
     # Revocation tombstones and bound sessions must remain in the active ledger.
     # Expired replay/capability rows may be pruned only after the private archive
     # has retained their original bytes.
-    with _connect_ro(Path(saved["archive_path"])) as old, _connect_ro(bank_path) as active:
+    with (contextlib.closing(_connect_ro(Path(saved["archive_path"]))) as old, old,
+          contextlib.closing(_connect_ro(bank_path)) as active, active):
         for table in ("revoked", "sessions"):
             retained = set(old.execute("SELECT * FROM " + table))
             present = set(active.execute("SELECT * FROM " + table))
@@ -517,7 +518,7 @@ def preflight_unreceipted(bank_path: Path, native_state_dir: Path, *,
                                                         for name in RETAINED_APP_FILES):
             raise ValueError("missing ledger beside prior application state")
         return {"new": True, "source_path": source_path, "source_sha256": source_sha}
-    with _connect_ro(bank_path) as db:
+    with contextlib.closing(_connect_ro(bank_path)) as db, db:
         tables = {row[0] for row in db.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
         if not tables:

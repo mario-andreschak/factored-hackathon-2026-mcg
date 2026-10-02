@@ -583,3 +583,111 @@ def test_nonregular_retained_binding_refused_before_service(tmp_path):
         transition.preflight_unreceipted(state / "banking.db", state,
                                          source_root=None, data_dir=data)
     assert not (state / "banking.db").exists()
+
+
+class _TrackedReadOnlyConnection:
+    """Keep the real SQLite handle reachable after a readonly helper returns."""
+
+    def __init__(self, db):
+        self.db = db
+        self.entered = 0
+        self.exited = 0
+        self.closed = False
+        self.query_only = db.execute("PRAGMA query_only").fetchone()[0]
+
+    def __getattr__(self, name):
+        return getattr(self.db, name)
+
+    def __enter__(self):
+        self.entered += 1
+        return self.db.__enter__()
+
+    def __exit__(self, *args):
+        self.exited += 1
+        return self.db.__exit__(*args)
+
+    def close(self):
+        self.db.close()
+        self.closed = True
+
+
+def _track_readonly_connections(monkeypatch):
+    opened = []
+    original = transition._connect_ro
+
+    def connect(path):
+        wrapped = _TrackedReadOnlyConnection(original(path))
+        opened.append((Path(path), wrapped))
+        return wrapped
+
+    monkeypatch.setattr(transition, "_connect_ro", connect)
+    return opened
+
+
+def _assert_readonly_connections_released(opened):
+    assert opened
+    for _, handle in opened:
+        assert handle.query_only == 1
+        assert handle.entered == handle.exited == 1
+        assert handle.closed
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            handle.db.execute("SELECT 1")
+
+
+def test_verify_closes_archive_and_active_readers_on_success_and_failure(tmp_path, monkeypatch):
+    kwargs, bank, proof, root = fixture(tmp_path)
+    plan_file, receipt = tmp_path / "plan.json", tmp_path / "receipt.json"
+    transition.plan(output=plan_file, **kwargs)
+    transition.apply(plan_file=plan_file, bank_config_file=kwargs["bank_config_file"],
+                     operator_evidence=proof, receipt=receipt)
+    archive = tmp_path / "bank/legacy-bank-before-native.sqlite3"
+    opened = _track_readonly_connections(monkeypatch)
+    assert transition.verify(receipt=receipt, bank_config_file=kwargs["bank_config_file"],
+        source_root=root, native_state_dir=kwargs["native_state_dir"])["generation"]
+    assert [path for path, _ in opened].count(archive) == 2
+    assert [path for path, _ in opened].count(bank) == 2
+    _assert_readonly_connections_released(opened)
+
+    opened.clear()
+    with sqlite3.connect(bank) as db:
+        db.execute("DELETE FROM revoked WHERE session='old-revoked'")
+    with pytest.raises(ValueError, match="revocation lost"):
+        transition.verify(receipt=receipt, bank_config_file=kwargs["bank_config_file"],
+                          source_root=root, native_state_dir=kwargs["native_state_dir"])
+    assert [path for path, _ in opened].count(archive) == 2
+    assert [path for path, _ in opened].count(bank) == 1
+    _assert_readonly_connections_released(opened)
+
+
+def test_preflight_closes_existing_ledger_reader_on_success_and_failure(tmp_path, monkeypatch):
+    state, data = tmp_path / "bank", tmp_path / "data"
+    state.mkdir()
+    data.mkdir()
+    (data / "QUALIFICATION_SYNTHETIC.json").write_text(
+        '{"synthetic":true,"origin":"tracked-readonly-test"}')
+    bank = state / "banking.db"
+    new = transition.preflight_unreceipted(bank, state, source_root=None, data_dir=data)
+    with sqlite3.connect(bank) as db:
+        db.execute("CREATE TABLE sandbox_ledger_identity(id INTEGER PRIMARY KEY, generation TEXT)")
+        db.execute("INSERT INTO sandbox_ledger_identity VALUES (1,?)", ("a" * 64,))
+    transition.publish_fresh_origin(state, bank.name, "a" * 64, new)
+    (state / "dispute-bank-generation.json").write_text(json.dumps({
+        "schema": "dispute-bank-generation/v1", "ledger_file": bank.name,
+        "ledger_generation": "a" * 64}))
+    opened = _track_readonly_connections(monkeypatch)
+    assert transition.preflight_unreceipted(bank, state, source_root=None, data_dir=data)["new"] is False
+    assert [path for path, _ in opened] == [bank]
+    _assert_readonly_connections_released(opened)
+
+    opened.clear()
+    marker = state / "native-fresh-origin.json"
+    saved = json.loads(marker.read_text())
+    marker.write_text(json.dumps({**saved, "ledger_generation": "b" * 64}))
+    with pytest.raises(ValueError, match="fresh origin provenance changed"):
+        transition.preflight_unreceipted(bank, state, source_root=None, data_dir=data)
+    assert [path for path, _ in opened] == [bank]
+    _assert_readonly_connections_released(opened)
+    # Local synthetic file is removable after both exits. Linux permits unlink of
+    # open files too, so the tracked handle assertions carry the close proof.
+    bank.unlink()
+    assert not bank.exists()
