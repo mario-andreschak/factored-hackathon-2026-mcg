@@ -294,10 +294,19 @@ def observe_retirement(spec):
     observer = retirement.get("guardObserver", {})
     require(set(observer) == {"path", "sha256"} and hex_value(observer.get("sha256")),
             "actual_retirement_guard_observer_unimplemented")
-    require(sha(raw_file(observer["path"])) == observer["sha256"], "retirement_observer_source_changed")
-    result = json_command([sys.executable, "-I", "-B", observer["path"],
-                           "--retirement-proof", spec["evidence"]["retirement"]["path"],
-                           "--retirement-proof-sha256", spec["evidence"]["retirement"]["sha256"]], timeout=20)
+    # Preflight observes retirement before run() freezes the full release. Hold
+    # the observer and its ancestors before its first digest read, including
+    # plan-only calls, so Python cannot reopen replacement bytes after approval.
+    # Keep the original interpreter, script path, __file__ and argv contract.
+    frozen = FrozenInputs()
+    try:
+        frozen.freeze(observer["path"])
+        require(sha(raw_file(observer["path"])) == observer["sha256"], "retirement_observer_source_changed")
+        result = json_command([sys.executable, "-I", "-B", observer["path"],
+                               "--retirement-proof", spec["evidence"]["retirement"]["path"],
+                               "--retirement-proof-sha256", spec["evidence"]["retirement"]["sha256"]], timeout=20)
+    finally:
+        frozen.close()
     expected = [{"id": item["id"], "imageId": item["imageId"], "guardMechanismSha256": item["guardMechanismSha256"]}
                 for item in retirement["retiredRwConsumers"]]
     require(result.get("schema") == "savia-local-native-retirement-observation/v1"
