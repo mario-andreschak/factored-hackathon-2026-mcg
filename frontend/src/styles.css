@@ -1201,7 +1201,8 @@ button svg {
   color: #c1d3b6;
 }
 .bank-card-bottom > span:last-child {
-  color: #8faa8a;
+  color: #c1d7b0;
+  font-size: 10px;
   letter-spacing: 0.8px;
 }
 .quick-actions {
@@ -1258,9 +1259,9 @@ button svg {
 }
 .section-heading h2 > span {
   font-family: "DM Sans";
-  font-size: 8px;
+  font-size: 10px;
   background: #e9eee2;
-  color: #87977b;
+  color: #4b6044;
   width: 18px;
   height: 18px;
   display: grid;
@@ -1596,8 +1597,8 @@ button svg {
   gap: 8px;
 }
 .donut small {
-  color: #a0ab94;
-  font-size: 8px;
+  color: #4b6044;
+  font-size: 10px;
 }
 .donut strong {
   font-family: Manrope, sans-serif;
@@ -1606,8 +1607,8 @@ button svg {
   letter-spacing: -0.6px;
 }
 .donut span {
-  font-size: 7px;
-  color: #b0b9a6;
+  font-size: 10px;
+  color: #4b6044;
 }
 .spending-groups {
   display: flex;
