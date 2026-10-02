@@ -660,6 +660,7 @@ def test_verify_closes_archive_and_active_readers_on_success_and_failure(tmp_pat
 
 
 def test_preflight_closes_existing_ledger_reader_on_success_and_failure(tmp_path, monkeypatch):
+    import contextlib
     state, data = tmp_path / "bank", tmp_path / "data"
     state.mkdir()
     data.mkdir()
@@ -667,7 +668,7 @@ def test_preflight_closes_existing_ledger_reader_on_success_and_failure(tmp_path
         '{"synthetic":true,"origin":"tracked-readonly-test"}')
     bank = state / "banking.db"
     new = transition.preflight_unreceipted(bank, state, source_root=None, data_dir=data)
-    with sqlite3.connect(bank) as db:
+    with contextlib.closing(sqlite3.connect(bank)) as db, db:
         db.execute("CREATE TABLE sandbox_ledger_identity(id INTEGER PRIMARY KEY, generation TEXT)")
         db.execute("INSERT INTO sandbox_ledger_identity VALUES (1,?)", ("a" * 64,))
     transition.publish_fresh_origin(state, bank.name, "a" * 64, new)
