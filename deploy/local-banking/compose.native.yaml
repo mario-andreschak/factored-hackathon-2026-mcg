@@ -1,0 +1,65 @@
+# Append ONLY to the existing hackathon-banking frontend Compose file list.
+# Explicit externally prepared volumes; this file creates no DATA or authority.
+services:
+  frontend:
+    image: ${SAVIA_LOCAL_JOINED_IMAGE:?Set the approved registry digest}
+    entrypoint: ["tini", "--", "node", "/opt/local-native/native-local.mjs"]
+    command: []
+    environment:
+      SAVIA_LOCAL_JOINED_IMAGE: ${SAVIA_LOCAL_JOINED_IMAGE:?Set the approved registry digest}
+      SAVIA_LOCAL_NATIVE_VOLUME: ${SAVIA_LOCAL_NATIVE_VOLUME:?Set the owned retained-native volume}
+    labels:
+      io.savia.local-native.scope: actual-retained-existing-frontend
+      io.savia.local-native.application: "676466111e7013136488b0aa7a0cf1ecbee45a86"
+      io.savia.local-native.companion: ${SAVIA_LOCAL_COMPANION_REVISION:?Set reviewed companion Git revision}
+      io.savia.local-native.lease-owner: ${SAVIA_LOCAL_LEASE_OWNER:?Set owned runtime lease UUID}
+    ports: !override
+      - "127.0.0.1:43800:8080"
+    volumes: !override
+      - type: bind
+        source: ${SAVIA_LOCAL_COMPANION_DIR:?Set reviewed public deploy/local-banking directory}
+        target: /opt/local-native
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${SAVIA_LOCAL_HOST_LEASE_DIR:?Set live owned lease and heartbeat directory}
+        target: /run/local-owner/host
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${SAVIA_LOCAL_REAL_DATA:?Set the existing complete actual DATA root}
+        target: /run/local-bank/data
+        read_only: true
+        bind: { create_host_path: false }
+      - canonical-bank:/data/banking-state
+      - native-state:/data
+    read_only: true
+    tmpfs: !override
+      - /tmp:size=384m,mode=1777
+      - /run:size=64m,mode=0755
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, DAC_OVERRIDE, SETUID, SETGID, KILL]
+    security_opt: !override
+      - no-new-privileges:true
+      # Qualify nested namespaces on actual Docker; wrapper remains mandatory.
+      - seccomp=unconfined
+    mem_limit: 2g
+    memswap_limit: 2g
+    cpus: 2.0
+    pids_limit: 512
+    restart: "no"
+    init: false
+    stop_grace_period: 45s
+    healthcheck:
+      test: ["CMD", "/opt/joined/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8082/healthz',timeout=4).read()"]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3
+volumes:
+  canonical-bank:
+    external: true
+    name: hackathon-banking-mcp-state
+  native-state:
+    external: true
+    name: ${SAVIA_LOCAL_NATIVE_VOLUME:?Set the separately owned prepared volume}
