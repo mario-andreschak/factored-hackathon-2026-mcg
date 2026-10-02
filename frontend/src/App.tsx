@@ -3276,20 +3276,29 @@ export default function App() {
   const dataController = useRef<AbortController | null>(null);
   const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
   const mobileMenuClose = useRef<HTMLButtonElement>(null);
+  const desktopNavigationTarget = useRef<HTMLButtonElement>(null);
   const wasMobileMenuOpen = useRef(false);
   const menuLaunchedModal = useRef(false);
+  const restoreMenuFocus = () => {
+    const mobile = window.matchMedia?.("(max-width: 640px)").matches;
+    if (mobile === false) {
+      desktopNavigationTarget.current?.focus();
+    } else {
+      mobileMenuTrigger.current?.focus();
+    }
+  };
   useLayoutEffect(() => {
     if (mobileMenu) {
       mobileMenuClose.current?.focus();
     } else if (wasMobileMenuOpen.current && !assistant && !info) {
-      mobileMenuTrigger.current?.focus();
+      restoreMenuFocus();
     }
     wasMobileMenuOpen.current = mobileMenu;
   }, [mobileMenu, assistant, info]);
   useEffect(() => {
     if (!assistant && !info && menuLaunchedModal.current) {
       menuLaunchedModal.current = false;
-      mobileMenuTrigger.current?.focus();
+      restoreMenuFocus();
     }
   }, [assistant, info]);
   useEffect(() => {
@@ -3581,6 +3590,7 @@ export default function App() {
             <button
               className={page === n.id ? "active" : ""}
               key={n.id}
+              ref={page === n.id ? desktopNavigationTarget : undefined}
               onClick={() => navigate(n.id)}
             >
               <n.icon size={20} />
