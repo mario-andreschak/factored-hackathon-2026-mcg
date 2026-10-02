@@ -511,6 +511,7 @@
         "frontend/server/bank_rpc.py": "d67942b8349991c2ea718089830bdc3ab68973aebcc08f71d38ef04d3f58baba",
         "frontend/server/chat.py": "cd4352ad81fbd6b44b39f84185e83e174f8dd0fdca2db005bc31386a0318551e",
         "frontend/server/config.py": "4f213b88bd0d7c530114e527d57799de83138b992dd00aae0109dfcf4df6e75b",
+        "frontend/server/deployment_transition.py": "de97138ddff1e4b1c2e91f818358a335dbb520d69b146a3adb6f8197bb38fced",
         "frontend/server/dispute_chat.py": "5b377bd764a22a235a9aad616683c218ac28fc2720978c9cf04986d2e6e44c04",
         "frontend/server/language.py": "8a7cc058a69e437a68fddefe1618b8956304700b7a1f225663260d8d5cc2264a",
         "frontend/server/repository.py": "7f52e691340ef5882a050c967e0149be9a27b7f7c46ae95aeb82b9bf2ad58110",
@@ -556,7 +557,7 @@
         "scripts/native_dispute_compatibility_probe.mjs": "7020ad22bec3a6bdc503facfc22081bffd18ba209801de45408e3035bfbb54df",
         "scripts/native_dispute_qualification.Dockerfile": "d050d6800bdbb98bad450a1f22aa529c4768461c12aeb8a0e7161357ab70e34d",
         "scripts/native_dispute_qualification.mjs": "cfffd5af40685e94be6d5ae739a309026feead3ac2fc25cf8b7f9d0de622e0b4",
-        "scripts/native_dispute_qualification.py": "0d7fb53beedd2a9c470b399b19e05f71e4cc2f10236bb4b2edcac7360e93b2dc",
+        "scripts/native_dispute_qualification.py": "694a3956d1589a69fa613c340bd1f4452d000d8ce4ffbd1cb5111952f9e9e889",
         "scripts/native_dispute_qualification.ts": "f5f55132d281b312022ac3b3b2c781a59c1dde252c0956cc3ac534a1ef39ac17",
         "scripts/native_dispute_revocation_probe.mjs": "da9b831724423d5c3e72e2dfe6bb058078b6c73aeaf071e677bf4dcd795d8cce"
       },
