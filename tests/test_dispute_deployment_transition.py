@@ -489,6 +489,8 @@ def test_archive_parent_sync_precedes_adoption_and_fault_preserves_original(tmp_
 
 def test_directory_sync_platform_branch_and_no_overwrite_after_fault(tmp_path, monkeypatch):
     with monkeypatch.context() as patch:
+        # Windows lacks O_DIRECTORY; supply only the flag needed to reach the mocked POSIX open.
+        patch.setattr(transition.os, "O_DIRECTORY", 0, raising=False)
         patch.setattr(transition.os, "open", lambda *args, **kwargs: (_ for _ in ()).throw(
             PermissionError("synthetic Windows directory open")))
         transition._fsync_parent_directory(tmp_path, platform_name="nt")

@@ -6,6 +6,7 @@ evidence. Missing or changed evidence closes the transition.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
@@ -143,7 +144,7 @@ def _cell(value):
 
 
 def _ledger(path: Path, *, legacy: bool) -> dict:
-    with _connect_ro(path) as db:
+    with contextlib.closing(_connect_ro(path)) as db, db:
         db.execute("BEGIN")
         tables = {name for (name,) in db.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
