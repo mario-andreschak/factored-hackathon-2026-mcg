@@ -6,6 +6,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
+import { nativeStartupPreflight } from './native-preflight.mjs';
+export { nativeStartupPreflight };
 
 const HOST = 'flujo-factored-2026.fly.dev';
 const PRIVATE = '/data/private/joined';
@@ -222,6 +224,7 @@ export function supervise({ commands, graceMs = 10000, onStarted } = {}) {
 async function main() {
   if (process.argv[2] === '--bootstrap') return bootstrap();
   if (process.getuid?.() !== 0) throw Error('UID-separated supervisor requires root.');
+  await nativeStartupPreflight();
   process.exit(await supervise({ commands: runtimeCommands(), onStarted: initializeNativeModel }));
 }
-if (import.meta.url === pathToFileURL(process.argv[1] || '').href) main().catch(error => { console.error('[Savia Fly] ' + error.message); process.exit(1); });
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) main().catch(error => { console.error('[Savia Fly] ' + error.message); process.exit([130, 143].includes(error.exitCode) ? error.exitCode : 1); });
