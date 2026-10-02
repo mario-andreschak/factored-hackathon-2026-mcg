@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 
 from frontend.server.app import COOKIE, create_app
 from frontend.server.bank_rpc import BankRPCError
-from frontend.server.chat import ChatService
+from frontend.server.chat import ChatError, ChatService
 from frontend.server.language import MinimizedFacts
 from frontend.tests.action_fixtures import action_facts, action_handoff, action_receipt
 from frontend.tests.direct_host_fixtures import attach_direct_fakes, make_direct_config
@@ -277,6 +277,59 @@ def test_action_api_resolves_owned_reference_and_localizes_verified_state(settin
         denied = client.post("/api/action/prepare", json={"transaction_reference": foreign})
         assert denied.status_code == 404
         assert len(service.calls) == 4
+
+
+@pytest.mark.parametrize("language", ["es", "pt"])
+@pytest.mark.parametrize("code,status,messages", [
+    ("session_expired", 401, {
+        "es": "Tu sesión expiró. Vuelve a ingresar.",
+        "pt": "Sua sessão expirou. Entre novamente.",
+    }),
+    ("action_mismatch", 409, {
+        "es": "La solicitud no corresponde al movimiento o la revisión guardada.",
+        "pt": "A solicitação não corresponde ao lançamento ou à revisão salva.",
+    }),
+])
+def test_selected_handoff_scope_error_preserves_locale_and_does_not_dispatch(
+        settings, language, code, status, messages):
+    scope_calls = []
+    action_calls = []
+    status_calls = []
+    upstream_message = "fictional-private-scope-error"
+
+    class ScopeBackend:
+        def query_scope(self, service, customer, session_id, expires, target_reference, query_id=None):
+            scope_calls.append((service, customer, session_id, expires, target_reference, query_id))
+            raise ChatError(code, status, upstream_message)
+
+    class ActionService:
+        _bank_backend = ScopeBackend()
+
+        async def action_status(self, *args, **kwargs):
+            status_calls.append((args, kwargs))
+            return {"state": "none"}
+
+        async def action(self, *args, **kwargs):
+            action_calls.append((args, kwargs))
+            raise AssertionError("Rejected query scope must not prepare, confirm or hand off an action")
+
+    with TestClient(create_app(settings)) as client:
+        assert login(client).status_code == 200
+        own = client.get("/api/overview").json()["transactions"][0]["reference"]
+        current = client.app.state.bank_state.session(client.cookies.get(COOKIE))
+        service = ActionService()
+        client.app.state.chat_service = service
+        query_id = "q_" + "a" * 32
+        response = client.post("/api/action/handoff", json={
+            "reason": "customer_request", "transaction_reference": own,
+            "query_scope_id": query_id, "language": language,
+        })
+        assert response.status_code == status
+        assert response.json() == {"detail": messages[language]}
+        assert upstream_message not in response.text
+        assert scope_calls == [(service, "private-customer-co", current.id, current.expires_at, own, query_id)]
+        assert status_calls == []
+        assert action_calls == []
 
 
 def test_action_confirm_and_pending_handoff_require_displayed_owned_reference(settings, monkeypatch):
