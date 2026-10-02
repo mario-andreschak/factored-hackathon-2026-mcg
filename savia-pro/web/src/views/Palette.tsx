@@ -24,14 +24,21 @@ export default function Palette(props: {
   /* The transaction search runs on the server, so the palette can look through
    * the whole ledger instead of only the page already loaded. */
   useEffect(() => {
+    let current = true;
+    const controller = new AbortController();
     window.clearTimeout(timer.current);
-    if (query.trim().length < 2) { setHits([]); return; }
+    setHits([]);
+    if (query.trim().length < 2) return;
     timer.current = window.setTimeout(() => {
-      api.ledger({ q: query.trim() }, 0, 7)
-        .then((result) => setHits(result.transactions))
-        .catch(() => setHits([]));
+      api.ledger({ q: query.trim() }, 0, 7, controller.signal)
+        .then((result) => { if (current) setHits(result.transactions); })
+        .catch(() => { if (current) setHits([]); });
     }, 220);
-    return () => window.clearTimeout(timer.current);
+    return () => {
+      current = false;
+      window.clearTimeout(timer.current);
+      controller.abort();
+    };
   }, [query]);
 
   const navHits = useMemo(() => {

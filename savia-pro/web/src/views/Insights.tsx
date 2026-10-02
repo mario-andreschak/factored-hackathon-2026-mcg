@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import type { Insights as InsightsData } from "../types";
 import { compact, count, formatDay, money, percent } from "../format";
@@ -12,15 +12,26 @@ export default function Insights() {
   const [data, setData] = useState<InsightsData | null>(null);
   const [currency, setCurrency] = useState<string | undefined>(undefined);
   const [error, setError] = useState("");
+  const requestGeneration = useRef(0);
 
   function load(code?: string) {
+    const generation = ++requestGeneration.current;
     setError("");
     api.insights(code)
-      .then((result) => { setData(result); setCurrency(result.currency ?? undefined); })
-      .catch((caught) => setError(caught?.message ?? "failed"));
+      .then((result) => {
+        if (generation !== requestGeneration.current) return;
+        setData(result);
+        setCurrency(result.currency ?? undefined);
+      })
+      .catch((caught) => {
+        if (generation === requestGeneration.current) setError(caught?.message ?? "failed");
+      });
   }
 
-  useEffect(() => { load(currency); }, [currency]);
+  useEffect(() => {
+    load(currency);
+    return () => { requestGeneration.current += 1; };
+  }, [currency]);
 
   if (error) return <ErrorBox message={error} onRetry={() => load(currency)} t={t} />;
   if (!data) return <Skeleton kind="card" count={3} />;
