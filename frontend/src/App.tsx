@@ -3274,10 +3274,38 @@ export default function App() {
     };
   }, [authenticated, actionLanguagePreference]);
   const dataController = useRef<AbortController | null>(null);
+  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
+  const mobileMenuClose = useRef<HTMLButtonElement>(null);
+  const wasMobileMenuOpen = useRef(false);
+  const menuLaunchedModal = useRef(false);
+  useLayoutEffect(() => {
+    if (mobileMenu) {
+      mobileMenuClose.current?.focus();
+    } else if (wasMobileMenuOpen.current && !assistant && !info) {
+      mobileMenuTrigger.current?.focus();
+    }
+    wasMobileMenuOpen.current = mobileMenu;
+  }, [mobileMenu, assistant, info]);
+  useEffect(() => {
+    if (!assistant && !info && menuLaunchedModal.current) {
+      menuLaunchedModal.current = false;
+      mobileMenuTrigger.current?.focus();
+    }
+  }, [assistant, info]);
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const mobile = window.matchMedia("(max-width: 640px)");
+    const closeOnWiderViewport = () => {
+      if (!mobile.matches) setMobileMenu(false);
+    };
+    mobile.addEventListener("change", closeOnWiderViewport);
+    return () => mobile.removeEventListener("change", closeOnWiderViewport);
+  }, []);
   const expired = useCallback(() => {
     dataController.current?.abort();
     setAuthenticated(false);
     setData(null);
+    setMobileMenu(false);
     setAssistant(false);
     setSelectedTx(null);
     setSelectedProduct(null);
@@ -3414,6 +3442,7 @@ export default function App() {
     if (next !== "transactions") setQuery("");
   }
   function openChat(t: Transaction | null = null) {
+    if (mobileMenu) menuLaunchedModal.current = true;
     setChatSelection(t);
     setSelectedTx(null);
     setAssistant(true);
@@ -3500,10 +3529,43 @@ export default function App() {
       <aside
         className={`sidebar ${mobileMenu ? "mobile-open" : ""}`}
         lang={shellLang}
+        role={mobileMenu ? "dialog" : undefined}
+        aria-modal={mobileMenu ? true : undefined}
+        aria-label={
+          mobileMenu
+            ? pt
+              ? "Menu de navegação"
+              : "Menú de navegación"
+            : undefined
+        }
+        onKeyDown={(event) => {
+          if (!mobileMenu) return;
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setMobileMenu(false);
+            return;
+          }
+          if (event.key !== "Tab") return;
+          const controls = Array.from(
+            event.currentTarget.querySelectorAll<HTMLElement>(
+              'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter((control) => control.tabIndex >= 0);
+          const first = controls[0];
+          const last = controls.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first?.focus();
+          }
+        }}
       >
         <div className="sidebar-brand">
           <Brand />
           <button
+            ref={mobileMenuClose}
             className="icon-button mobile-close"
             aria-label={pt ? "Fechar menu" : "Cerrar menú"}
             onClick={() => setMobileMenu(false)}
@@ -3556,7 +3618,12 @@ export default function App() {
                   ? "Confira os detalhes de cada cobrança no seu histórico."
                   : "Revisa los detalles de cada cargo en tu historial."}
             </p>
-            <button onClick={() => openChat()}>
+            <button
+              onClick={() => {
+                openChat();
+                setMobileMenu(false);
+              }}
+            >
               {chatStatus.available
                 ? pt
                   ? "Vamos conversar"
@@ -3567,7 +3634,14 @@ export default function App() {
               <ArrowUpRight size={16} />
             </button>
           </div>
-          <button className="sidebar-info" onClick={() => setInfo(true)}>
+          <button
+            className="sidebar-info"
+            onClick={() => {
+              if (mobileMenu) menuLaunchedModal.current = true;
+              setInfo(true);
+              setMobileMenu(false);
+            }}
+          >
             <ShieldCheck size={18} />
             {pt ? "Sobre esta experiência" : "Sobre esta experiencia"}
             <ArrowUpRight size={14} />
@@ -3596,16 +3670,19 @@ export default function App() {
       {mobileMenu && (
         <button
           className="mobile-shade"
-          aria-label={pt ? "Fechar menu" : "Cerrar menú"}
+          aria-hidden="true"
+          tabIndex={-1}
           onClick={() => setMobileMenu(false)}
         />
       )}
-      <div className="main-shell">
+      <div className="main-shell" inert={mobileMenu}>
         <header className="topbar" lang={shellLang}>
           <div className="topbar-title">
             <button
+              ref={mobileMenuTrigger}
               className="icon-button mobile-menu"
               aria-label={pt ? "Abrir menu" : "Abrir menú"}
+              aria-expanded={mobileMenu}
               onClick={() => setMobileMenu(true)}
             >
               <Menu size={21} />
