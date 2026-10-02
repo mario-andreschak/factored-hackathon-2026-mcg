@@ -7,6 +7,9 @@ transaction identities use the frontend's customer-bound opaque references.
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from contextlib import contextmanager
+import contextvars
 import csv
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, DecimalException, InvalidOperation
@@ -19,6 +22,7 @@ from pathlib import Path
 import re
 import stat
 import tempfile
+import threading
 import time
 import unicodedata
 
@@ -35,6 +39,16 @@ MAX_TABLE_BYTES = 512 * 1024 * 1024
 MAX_SOURCE_OBJECTS = 2048
 MAX_RATE_BYTES = 4 * 1024 * 1024
 MAX_RATE_ROWS = 100000
+# Bound the fresh client's connection burst as well as its steady work.
+# The measured 128-worker run completed every GET but exceeded the 20 s
+# budget before 107 of 1,097 bodies could be verified. The smaller pool
+# still needs an actual complete read; it does not establish qualification.
+SOURCE_READ_WORKERS = 64
+MAX_IN_FLIGHT_SOURCE_BYTES = 32 * 1024 * 1024
+SOURCE_READ_SECONDS = 20
+SOURCE_READ_CHUNK = 64 * 1024
+MAX_ACTIVE_HISTORY_READS = 2
+_HISTORY_READ_SLOTS = threading.BoundedSemaphore(MAX_ACTIVE_HISTORY_READS)
 _TABLES = {"customers", "products", "transactions", "complaints", "call_center_interactions"}
 _CLOSED = {"closed", "resolved", "cancelled", "canceled", "rejected"}
 _OPEN = {"open", "inprocess", "escalated"}
@@ -180,6 +194,193 @@ def _utc(value):
     return datetime.fromtimestamp(value, timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+class _SourceReadOperation:
+    """One fresh read's private I/O, joined before client or caller teardown.
+
+    SDK calls are not interruptible Python threads. Cancellation stops dispatch
+    and is checked between body reads; a blocked call can exceed the logical
+    deadline while its configured socket timeout completes. Nothing reports
+    success or closes the shared client until all running source work drains.
+    """
+    def __init__(self, source_env, source_root, *, seconds=SOURCE_READ_SECONDS):
+        self.source_env, self.source_root = source_env, source_root
+        self.deadline = time.monotonic() + seconds
+        self.cancelled, self.finished = threading.Event(), threading.Event()
+        self._dispatch_lock = threading.Lock()
+        self.client, self.bucket, self.executor = None, None, None
+
+    def check(self):
+        if self.cancelled.is_set() or time.monotonic() >= self.deadline:
+            raise BankError("tool_unavailable")
+
+    def cancel(self):
+        # Publish cancellation even if the controller is currently filling a
+        # window. Taking the dispatch lock then joins that short submission
+        # section; no subsequent window can pass its cancellation check.
+        self.cancelled.set()
+        with self._dispatch_lock:
+            pass
+
+    def prepare(self):
+        self.check()
+        if self.source_root is not None or self.client is not None:
+            return
+        if self.source_env is None:
+            raise BankError("source_verification_unavailable")
+        import boto3
+        from botocore.config import Config as AwsConfig
+        try:
+            env = load_env(self.source_env)
+            # Create a dedicated Session/client on the orchestration thread,
+            # before any pool work. Workers share no mutable client metadata.
+            self.client = boto3.session.Session().client("s3", region_name=env["Region"],
+                aws_access_key_id=env["AccessKeyID"], aws_secret_access_key=env["SecretAccessKey"],
+                config=AwsConfig(connect_timeout=3, read_timeout=3, max_pool_connections=SOURCE_READ_WORKERS,
+                                 retries={"total_max_attempts": 1, "mode": "standard"}))
+            self.bucket = env["BucketName"]
+        except Exception:
+            raise BankError("source_verification_unavailable") from None
+
+    def source(self, key, obj):
+        self.check()
+        if (not obj or type(obj.get("bytes")) is not int or not 0 <= obj["bytes"] <= MAX_SOURCE_BYTES
+                or not isinstance(obj.get("etag"), str) or not obj["etag"]):
+            raise BankError("source_verification_unavailable")
+        body = None
+        try:
+            if self.source_root is not None:
+                location = (self.source_root / key).resolve()
+                if self.source_root not in location.parents:
+                    raise BankError("source_verification_unavailable")
+                body = location.open("rb")
+            else:
+                if self.client is None:
+                    raise BankError("source_verification_unavailable")
+                response = self.client.get_object(Bucket=self.bucket, Key="data/" + key, IfMatch=obj["etag"])
+                body = response.get("Body")
+                if (body is None or type(response.get("ContentLength")) is not int
+                        or response["ContentLength"] != obj["bytes"]
+                        or not isinstance(response.get("ETag"), str)
+                        or response["ETag"].strip('"') != obj["etag"].strip('"')):
+                    raise BankError("source_verification_unavailable")
+            chunks, count = [], 0
+            while True:
+                self.check()
+                chunk = body.read(min(SOURCE_READ_CHUNK, obj["bytes"] + 1 - count))
+                self.check()
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                count += len(chunk)
+                if count > obj["bytes"]:
+                    raise BankError("source_verification_unavailable")
+            raw = b"".join(chunks)
+            if len(raw) != obj["bytes"]:
+                raise BankError("source_verification_unavailable")
+            if self.source_root is not None and "sha256:" + hashlib.sha256(raw).hexdigest()[:32] != obj["etag"]:
+                raise BankError("source_verification_unavailable")
+            self.check()
+            return raw
+        except BankError:
+            raise
+        except Exception:
+            raise BankError("source_verification_unavailable") from None
+        finally:
+            if body is not None:
+                body.close()
+
+    def all_sources(self, objects, read):
+        """Verify every declared object with a bounded, uncached I/O window.
+
+        At most W reads and 32 MiB of declared bodies are in flight. A single
+        larger permitted object runs alone. Completed bodies are discarded;
+        returned rows still require their own fresh conditional source read.
+        Joining chunks can transiently duplicate payload memory; the declared
+        byte window does not include that copy or SDK/thread overhead.
+        """
+        # Native host reads do not traverse Service.call's generic MCP limiter.
+        # Bound this expensive pool across admitted sessions in this process;
+        # the slot remains held through all_sources' actual executor shutdown.
+        held = False
+        try:
+            while not held:
+                self.check()
+                held = _HISTORY_READ_SLOTS.acquire(timeout=min(0.05, max(0, self.deadline - time.monotonic())))
+            self.check()
+            return self._all_sources(objects, read)
+        finally:
+            if held:
+                _HISTORY_READ_SLOTS.release()
+
+    def _all_sources(self, objects, read):
+        self.prepare()
+        keys = [item["key"] for item in objects]
+        if (len(keys) != len(set(keys)) or len(objects) > MAX_SOURCE_OBJECTS
+                or any(type(item.get("bytes")) is not int or not 0 <= item["bytes"] <= MAX_SOURCE_BYTES
+                       for item in objects)
+                or sum(item["bytes"] for item in objects) > MAX_TABLE_BYTES):
+            raise BankError("data_unavailable")
+        iterator, pending, verified = iter(objects), {}, set()
+        next_object = next(iterator, None)
+        pending_bytes, verified_bytes = 0, 0
+        self.executor = ThreadPoolExecutor(max_workers=SOURCE_READ_WORKERS, thread_name_prefix="savia-source")
+        try:
+            def dispatch():
+                nonlocal next_object, pending_bytes
+                with self._dispatch_lock:
+                    self.check()
+                    while next_object is not None and len(pending) < SOURCE_READ_WORKERS:
+                        self.check()
+                        if pending and pending_bytes + next_object["bytes"] > MAX_IN_FLIGHT_SOURCE_BYTES:
+                            break
+                        obj = next_object
+                        pending[self.executor.submit(read, obj["key"])] = obj
+                        pending_bytes += obj["bytes"]
+                        next_object = next(iterator, None)
+            dispatch()
+            while pending:
+                self.check()
+                done, _ = wait(pending, timeout=min(0.05, max(0, self.deadline - time.monotonic())),
+                               return_when=FIRST_COMPLETED)
+                # Observe every completed failure before dispatching more work.
+                for future in done:
+                    obj = pending[future]
+                    if len(future.result()) != obj["bytes"]:
+                        raise BankError("source_verification_unavailable")
+                    verified.add(obj["key"])
+                    verified_bytes += obj["bytes"]
+                    pending_bytes -= obj["bytes"]
+                    del pending[future]
+                # Remove completed futures' body references before admitting
+                # the next window, rather than retaining the full table.
+                future = None
+                done.clear()
+                dispatch()
+            self.check()
+            if verified != set(keys) or verified_bytes != sum(item["bytes"] for item in objects):
+                raise BankError("history_coverage_incomplete")
+            return verified
+        except BaseException:
+            self.cancel()
+            for future in pending:
+                future.cancel()
+            raise
+        finally:
+            self.executor.shutdown(wait=True, cancel_futures=True)
+            self.executor = None
+
+    def close(self):
+        try:
+            if self.executor is not None:
+                self.cancel()
+                self.executor.shutdown(wait=True, cancel_futures=True)
+                self.executor = None
+            if self.client is not None:
+                self.client.close()
+        finally:
+            self.finished.set()
+
+
 class OwnedBankReads:
     def __init__(self, service, public_repository, principal: Principal, *, source_root=None,
                  guard=None, clock=None, duplicate_minutes=2):
@@ -194,19 +395,63 @@ class OwnedBankReads:
             raise ValueError("canonical nearby duplicate window must be two minutes")
         self.duplicate_minutes = duplicate_minutes
         self._snapshot_id = None
+        self._source_local = threading.local()
         self._fence()
 
+    def _operation(self):
+        # Direct diagnostic callers may construct a port without __init__.
+        if not hasattr(self, "_source_local"):
+            self._source_local = threading.local()
+        return getattr(self._source_local, "operation", None)
+
+    @contextmanager
+    def _source_scope(self, operation=None):
+        current = self._operation()
+        if current is not None:
+            yield current
+            return
+        operation = operation or _SourceReadOperation(self.service.config.source_env, self.source_root)
+        self._source_local.operation = operation
+        try:
+            operation.check()
+            yield operation
+        finally:
+            try:
+                operation.close()
+            finally:
+                del self._source_local.operation
+
+    def _source_in_operation(self, snapshot, key, operation):
+        previous = self._operation()
+        self._source_local.operation = operation
+        try:
+            return self._source(snapshot, key)
+        finally:
+            if previous is None:
+                del self._source_local.operation
+            else:
+                self._source_local.operation = previous
+
     def _fence(self):
+        operation = self._operation()
+        if operation is not None:
+            operation.check()
         if self.guard:
             self.guard()
         assert_bank_principal(self.service, self.principal)
 
     def _query(self, sql, params):
+        operation = self._operation()
+        if operation is not None:
+            operation.check()
         cursor = self.repository.con.cursor()
         try:
             cursor.execute(sql, params)
             names = [item[0] for item in cursor.description]
-            return [dict(zip(names, row)) for row in cursor.fetchall()]
+            result = [dict(zip(names, row)) for row in cursor.fetchall()]
+            if operation is not None:
+                operation.check()
+            return result
         except duckdb.Error:
             raise BankError("data_unavailable") from None
         finally:
@@ -224,47 +469,9 @@ class OwnedBankReads:
 
     def _source(self, snapshot, key):
         """Read only a declared object, conditionally pinned to this snapshot."""
-        obj = snapshot.objects.get(key)
-        if not obj or type(obj.get("bytes")) is not int or obj["bytes"] > MAX_SOURCE_BYTES:
-            raise BankError("source_verification_unavailable")
-        if self.source_root is not None:
-            path = (self.source_root / key).resolve()
-            if self.source_root not in path.parents:
-                raise BankError("source_verification_unavailable")
-            try:
-                with path.open("rb") as stream:
-                    raw = stream.read(MAX_SOURCE_BYTES + 1)
-            except OSError:
-                raise BankError("source_verification_unavailable") from None
-            etag = "sha256:" + hashlib.sha256(raw).hexdigest()[:32]
-            if len(raw) != obj["bytes"] or etag != obj["etag"]:
-                raise BankError("source_verification_unavailable")
-            return raw
-        if self.service.config.source_env is None:
-            raise BankError("source_verification_unavailable")
-        import boto3
-        from botocore.config import Config as AwsConfig
-        try:
-            env = load_env(self.service.config.source_env)
-            client = boto3.client("s3", region_name=env["Region"],
-                aws_access_key_id=env["AccessKeyID"], aws_secret_access_key=env["SecretAccessKey"],
-                config=AwsConfig(connect_timeout=3, read_timeout=10, retries={"max_attempts": 2}))
-            try:
-                response = client.get_object(Bucket=env["BucketName"], Key="data/" + key, IfMatch=obj["etag"])
-                body = response["Body"]
-                try:
-                    raw = body.read(MAX_SOURCE_BYTES + 1)
-                finally:
-                    body.close()
-                if len(raw) != obj["bytes"] or len(raw) > MAX_SOURCE_BYTES:
-                    raise BankError("source_verification_unavailable")
-                return raw
-            finally:
-                client.close()
-        except BankError:
-            raise
-        except Exception:
-            raise BankError("source_verification_unavailable") from None
+        with self._source_scope() as operation:
+            operation.prepare()
+            return operation.source(key, snapshot.objects.get(key))
 
     @staticmethod
     def _csv(raw):
@@ -451,22 +658,32 @@ class OwnedBankReads:
                 "possible_duplicate_of": [self._ref(row["transaction_id"]) for row in nearby[:5]] or None}
 
     def _historical(self, snapshot):
+        if self._operation() is None:
+            with self._source_scope():
+                return self._historical(snapshot)
         self._table_complete(snapshot, "complaints")
         objects = self._table_sources(snapshot, "complaints")
-        for obj in objects:
-            self._source(snapshot, obj["key"])
+        operation = self._operation()
+        verified = operation.all_sources(objects,
+            lambda key: self._source_in_operation(snapshot, key, operation))
         rows = self._query("SELECT complaint_id,customer_id,status,category,subcategory,creation_date,_source_file "
             "FROM read_parquet(?) WHERE customer_id=? ORDER BY creation_date DESC,complaint_id LIMIT ?",
             [str(snapshot.build / "silver/complaints.parquet"), self.principal.customer, MAX_OWNED_ROWS + 1])
         if len(rows) > MAX_OWNED_ROWS:
             raise BankError("history_coverage_incomplete")
         for row in rows:
+            operation.check()
+            if row["_source_file"] not in verified:
+                raise BankError("data_unavailable")
+            # Keep the original fresh conditional re-read for every returned
+            # row; inventory verification is not reusable source clearance.
             source = [item for item in self._csv(self._source(snapshot, row["_source_file"]))
                       if item.get("complaint_id") == row["complaint_id"]]
             if len(source) != 1 or source[0].get("customer_id") != self.principal.customer:
                 raise BankError("data_unavailable")
             if any((source[0].get(key) or "").strip() != (row.get(key) or "") for key in ("status", "category", "subcategory")):
                 raise BankError("data_unavailable")
+        operation.check()
         return rows
 
     @staticmethod
@@ -564,6 +781,10 @@ class OwnedBankReads:
             return None, {"source": "unavailable", "date": event_date, "currency": row["currency"]}
 
     def _read(self, name, args):
+        with self._source_scope():
+            return self._read_impl(name, args)
+
+    def _read_impl(self, name, args):
         self._fence()
         snapshot = self._snapshot()
         if args.get("snapshot_id") and args["snapshot_id"] != snapshot.id:
@@ -754,8 +975,33 @@ class OwnedBankReads:
             return {"status": "error", "code": "authorization_denied"}
         if isinstance(args.get("slots"), dict) and args["slots"].get("foreign_customer_reference") is True:
             return {"status": "error", "code": "authorization_denied"}
+        operation = _SourceReadOperation(self.service.config.source_env, self.source_root)
+        def work():
+            with self._source_scope(operation):
+                return self._read(name, args)
+        context = contextvars.copy_context()
+        worker = asyncio.get_running_loop().run_in_executor(None, context.run, work)
         try:
-            return await asyncio.to_thread(self._read, name, args)
+            return await asyncio.shield(worker)
+        except asyncio.CancelledError:
+            operation.cancel()
+            # A cancelled asyncio Future is not proof that its Python thread
+            # stopped. Wait for the actual controller future, whose terminal
+            # state follows all pool/body/client and thread-local teardown.
+            # Repeated caller cancellation cannot skip that resource barrier.
+            while not worker.done():
+                try:
+                    await asyncio.shield(worker)
+                except asyncio.CancelledError:
+                    operation.cancel()
+                except BaseException:
+                    # A failure is consumed only after the executor future is
+                    # terminal; it cannot replace the caller's cancellation.
+                    if not worker.done():
+                        continue
+            if worker.done() and not worker.cancelled():
+                worker.exception()  # consume late failure without publishing it
+            raise
         except BankError as exc:
             return {"status": "error", "code": exc.code}
         except (OSError, ValueError, TypeError, KeyError, duckdb.Error):

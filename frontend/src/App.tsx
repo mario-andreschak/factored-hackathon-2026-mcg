@@ -2787,11 +2787,17 @@ export function Assistant({
         <div className="chat-selection">
           <TxIcon transaction={selected} />
           <span>
-            <strong>{label(selected)}</strong>
+            <strong>
+              {selected.merchant || portalType(selected.type, actionLanguage)}
+            </strong>
             <small>
-              {date(selected.occurred_at)} ·{" "}
-              {money(selected.amount, selected.currency, hidden)}{" "}
-              {selected.currency}
+              {portalDate(selected.occurred_at, actionLanguage)} ·{" "}
+              {portalBalance(
+                selected.amount,
+                selected.currency,
+                hidden,
+                actionLanguage,
+              )}
             </small>
           </span>
           <CheckCheck size={18} />
@@ -2960,6 +2966,7 @@ export function Assistant({
                     <button
                       type="button"
                       className="button outline"
+                      disabled={actionBusy || actionStatusLoading || busy}
                       onClick={() => setConsentAmountVisible(true)}
                     >
                       {copy.showConsentAmount}
@@ -2970,7 +2977,10 @@ export function Assistant({
                     className="button primary action-confirm"
                     aria-describedby={consentSummaryId}
                     disabled={
-                      actionBusy || busy || (hidden && !consentAmountVisible)
+                      actionBusy ||
+                      actionStatusLoading ||
+                      busy ||
+                      (hidden && !consentAmountVisible)
                     }
                     onClick={() =>
                       runAction("/api/action/confirm", {
@@ -3114,9 +3124,14 @@ export function Assistant({
                 <div className="chat-message-selection">
                   <CreditCard size={14} />
                   <span>
-                    {typeNames[m.selection.type] || m.selection.type} ·{" "}
-                    {date(m.selection.occurred_at)} ·{" "}
-                    {money(m.selection.amount, m.selection.currency, hidden)}
+                    {portalType(m.selection.type, actionLanguage)} ·{" "}
+                    {portalDate(m.selection.occurred_at, actionLanguage)} ·{" "}
+                    {portalBalance(
+                      m.selection.amount,
+                      m.selection.currency,
+                      hidden,
+                      actionLanguage,
+                    )}
                   </span>
                 </div>
               )}

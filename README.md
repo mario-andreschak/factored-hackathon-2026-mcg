@@ -2,6 +2,14 @@
 
 This repository contains the data audit, DuckDB pipeline, classifier baseline, banking MCP and **Savia**, a customer-facing prototype for unrecognized-charge inquiries. The runnable, isolated preview uses fictional customers, products and transactions; a separate private mode can read an approved organizer silver/gold snapshot with fictional name aliases. The merged direct-host/MCP source candidate is described in [frontend/DIRECT_MCP.md](frontend/DIRECT_MCP.md). The [earlier worker-ingress intake and handoff prototype](docs/SIMULATED_INTAKE_V0.md) is historical. An intake does not resolve a dispute or issue a refund.
 
+## CI runs locally
+
+Hourly CI runs on the local Windows computer and disposable Docker Linux
+containers: five Windows jobs and six Linux jobs for one exact source commit.
+The daily Modal CPU run is an additional Linux cross-check. The avatar-server
+memory incident does not pause CI. See [the local CI policy](docs/LOCAL_CI.md)
+for execution, resource bounds and truthful GitHub evidence.
+
 ## FLUJO product boundary
 
 FLUJO is a long-lived, general-purpose product. Keep its main branch and default
@@ -99,8 +107,12 @@ The script reads S3 objects and writes only aggregate counts to `docs/DATA_PROFI
 | `notes/` | Team idea notes |
 | `private/` | Local-only original credential-bearing reference |
 
-The banking MCP uses Carlos's customer-sharded Parquet snapshots for lookup and conditional S3 read-back of a selected transaction. Customer reads require signed per-call authority outside model arguments. FLUJO #534 removed the banking adapter and in-worker integration from generic main; their combined source remains on the dedicated hackathon branch. Existing runtime measurements retain their original revisions.
+The banking MCP uses Carlos's customer-sharded Parquet snapshots for lookup and conditional S3 read-back of a selected transaction. Customer reads require signed per-call authority outside model arguments. FLUJO #534 removed the banking adapter and in-worker integration from generic main; their combined source is now preserved on the dedicated hackathon branch. Existing measurements describe older revisions, not acceptance of a newly deployed branch.
 
-Hackathon main at `eea3e29d081c30840e0512a6438e5de81a0ea70c` includes PRs #31, #32, #35 and #39. The current transaction dispute workflow naming candidate incorporates that portal/preview source and fixes its preparation manifest hash. Its [combined source qualification](docs/qualification/dispute-naming-source-2026-10-01.json) records frozen `ea8f62176157cb016ff07db86c8d2e8c49272aa9`: 1,725 source tests and 428 subtests, all 85 protected hashes, 80 UI tests/build, and fictional owner-bound read-preview checks. The earlier `ad685790` manifest and R16 test failures were repaired; historical reports remain pinned to their measured snapshots. Current-head CI and branch policy still govern merging this candidate.
+At the October 1, 2026 observation, project PRs [#31](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/31), [#32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32), [#35](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/35) and [#39](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/39) were merged into `origin/main` at `eea3e29d081c30840e0512a6438e5de81a0ea70c`. The merged PR #39 source includes the protected graph hash and R16 denial-test corrections at `92054ac15bb455303217fa501fbd7c13ceb14e93`. Independent checks of that source were limited to source and synthetic tests; the exact-head [push](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/36873585491) and [PR](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/36873593351) GitHub Actions runs passed 11/11 jobs each.
+
+The later main-merge Actions run [started no test steps](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/36878918305): all 11 jobs were blocked by a GitHub account billing or spending-limit annotation, so that run gives no source-test result.
+
+[PR #40](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/40) subsequently merged normally at `331056831aebb4e484e82356f74af86cc97d2284` on October 1, 2026, after all eleven exact-head private workflow jobs passed at `f150c989eee9d3cbd5ac4870b66b56e5addd8fb3` and independent source review completed. This PR #41 integration incorporates that descriptive transaction dispute workflow source while retaining the mobile sidebar scroll fix. The naming source preserves the portal/preview source and corrects its preparation manifest hash. Its [combined source qualification](docs/qualification/dispute-naming-source-2026-10-01.json) records frozen `ea8f62176157cb016ff07db86c8d2e8c49272aa9`: 1,725 source tests and 428 subtests, all 85 protected hashes, 80 UI tests/build, and fictional owner-bound read-preview checks. Those results retain that frozen scope; the mobile CSS change requires its own current-head CI and does not extend the report's 190-file source capture. The earlier `ad685790` manifest and R16 test failures were repaired; all historical reports remain pinned to their measured snapshots. The [private workflow CI route](docs/DISPUTE_ACCEPTANCE.md) executes all eleven exact-head jobs on Windows and Docker Linux, publishes separately named external evidence only after complete receipt validation, and respects branch policy. GitHub-hosted billing refusals retain their original conclusions.
 
 The graph remains uninstalled with actions disabled. Native/provider execution, verified customer outcomes, human acceptance and deployment remain unqualified for this renamed artifact. Bank keys, raw record identifiers, selection/action capabilities and generic S3 credentials must not reach the language flow.

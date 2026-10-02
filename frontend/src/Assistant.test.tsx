@@ -119,6 +119,203 @@ afterEach(() => {
 });
 
 test.each([
+  ["es", "Retiro", "20 sep 2026", "1,234.50", "Saque", "1.234,50"],
+  ["pt", "Saque", "20 de setembro de 2026", "1.234,50", "Retiro", "1,234.50"],
+] as const)(
+  "%s assistant selection and transcript use localized type, date and amount",
+  async (
+    language,
+    type,
+    expectedDate,
+    expectedAmount,
+    otherType,
+    otherAmount,
+  ) => {
+    const selected: Transaction = {
+      ...charge,
+      type: "Withdrawal",
+      merchant: null,
+      amount: 1234.5,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input) === "/api/chat/history")
+          return response({
+            active: false,
+            messages: [
+              {
+                role: "user",
+                text: "Consulta de prueba",
+                selection: {
+                  reference: selected.reference,
+                  occurred_at: selected.occurred_at,
+                  type: selected.type,
+                  amount: selected.amount,
+                  currency: selected.currency,
+                  status: selected.status,
+                },
+              },
+            ],
+          });
+        throw new Error(`Unexpected request: ${input}`);
+      }),
+    );
+    const props = {
+      open: true,
+      status: { available: true, sandbox_intake_available: false },
+      selected,
+      transactions: [selected],
+      onSelectTransaction: vi.fn(),
+      hidden: false,
+      synthetic: true,
+      onClose: vi.fn(),
+      onExpired: vi.fn(),
+      initialLanguage: language as "es" | "pt",
+    };
+    const view = render(<Assistant {...props} />);
+    await screen.findByText("Consulta de prueba");
+
+    const summary = document.querySelector(".chat-selection")!;
+    const transcript = document.querySelector(".chat-message-selection")!;
+    expect(summary.querySelector("strong")?.textContent).toBe(type);
+    for (const surface of [summary, transcript]) {
+      expect(surface.textContent).toContain(expectedDate);
+      expect(surface.textContent).toContain(expectedAmount);
+      expect(surface.textContent).not.toContain(otherType);
+      expect(surface.textContent).not.toContain(otherAmount);
+    }
+    expect(transcript.textContent).toContain(type);
+
+    view.rerender(<Assistant {...props} hidden />);
+    expect(summary.textContent).toContain("••••••");
+    expect(transcript.textContent).toContain("••••••");
+    expect(summary.textContent).not.toContain(expectedAmount);
+    expect(transcript.textContent).not.toContain(expectedAmount);
+
+    view.rerender(
+      <Assistant
+        {...props}
+        selected={{ ...selected, merchant: "Mercado Central" }}
+        hidden={false}
+      />,
+    );
+    expect(summary.querySelector("strong")?.textContent).toBe(
+      "Mercado Central",
+    );
+  },
+);
+
+test("assistant selection and transcript metadata follow ES to PT to ES without changing the charge", async () => {
+  const selected: Transaction = {
+    ...charge,
+    reference: "txn_locale_switch_123456789abc",
+    occurred_at: "2026-09-20",
+    type: "Withdrawal",
+    merchant: null,
+    amount: 1234.5,
+  };
+  const original = { ...selected };
+  const onSelectTransaction = vi.fn();
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input) === "/api/chat/history")
+      return response({
+        active: false,
+        messages: [
+          {
+            role: "user",
+            text: "Consulta de prueba",
+            selection: {
+              reference: selected.reference,
+              occurred_at: selected.occurred_at,
+              type: selected.type,
+              amount: selected.amount,
+              currency: selected.currency,
+              status: selected.status,
+            },
+          },
+        ],
+      });
+    throw new Error(`Unexpected request: ${input}`);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  const props = {
+    open: true,
+    status: { available: true, sandbox_intake_available: false },
+    selected,
+    transactions: [selected],
+    onSelectTransaction,
+    hidden: false,
+    synthetic: true,
+    onClose: vi.fn(),
+    onExpired: vi.fn(),
+    initialLanguage: "es" as const,
+  };
+  const view = render(<Assistant {...props} />);
+  await screen.findByText("Consulta de prueba");
+  const summary = document.querySelector(".chat-selection")!;
+  const transcript = document.querySelector(".chat-message-selection")!;
+  const checkMetadata = (
+    type: string,
+    expectedDate: string,
+    expectedAmount: string,
+    excludedAmount: string,
+    hidden = false,
+  ) => {
+    expect(summary.querySelector("strong")?.textContent).toBe(type);
+    for (const surface of [summary, transcript]) {
+      expect(surface.textContent).toContain(expectedDate);
+      expect(surface.textContent).toContain(type);
+      expect(surface.textContent?.match(/COP/g)).toHaveLength(1);
+      if (hidden) {
+        expect(surface.textContent).toContain("•••••• COP");
+        expect(surface.textContent).not.toContain(expectedAmount);
+        expect(surface.textContent).not.toContain(excludedAmount);
+      } else {
+        expect(surface.textContent).toContain(expectedAmount);
+        expect(surface.textContent).not.toContain(excludedAmount);
+        expect(surface.textContent).not.toContain("••••••");
+      }
+    }
+  };
+  checkMetadata("Retiro", "20 sep 2026", "1,234.50", "1.234,50");
+
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    {
+      target: { value: "pt" },
+    },
+  );
+  checkMetadata("Saque", "20 de setembro de 2026", "1.234,50", "1,234.50");
+
+  view.rerender(<Assistant {...props} hidden />);
+  checkMetadata(
+    "Saque",
+    "20 de setembro de 2026",
+    "1.234,50",
+    "1,234.50",
+    true,
+  );
+
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma da interface" }),
+    {
+      target: { value: "es" },
+    },
+  );
+  checkMetadata("Retiro", "20 sep 2026", "1,234.50", "1.234,50", true);
+
+  view.rerender(<Assistant {...props} hidden={false} />);
+  checkMetadata("Retiro", "20 sep 2026", "1,234.50", "1.234,50");
+  expect(selected).toEqual(original);
+  expect(selected.reference).toBe(original.reference);
+  expect(onSelectTransaction).not.toHaveBeenCalled();
+  expect(fetchMock.mock.calls.map(([input]) => String(input))).toEqual([
+    "/api/chat/history",
+  ]);
+});
+
+test.each([
   ["es", "charge", "Mensaje para el asistente", "Consulta para continuar"],
   ["pt", "general", "Mensagem para o assistente", "Consulta a continuar"],
 ] as const)(
@@ -760,6 +957,15 @@ test("hidden amount requires a local review before explicit consent", async () =
   const confirm = await screen.findByRole("button", {
     name: /Confirmo la recepción simulada/,
   });
+  await waitFor(() =>
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Consultar estado de la solicitud",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false),
+  );
   expect((confirm as HTMLButtonElement).disabled).toBe(true);
   const summary = document.getElementById(
     confirm.getAttribute("aria-describedby")!,
@@ -768,9 +974,95 @@ test("hidden amount requires a local review before explicit consent", async () =
   fireEvent.click(
     screen.getByRole("button", { name: "Mostrar monto para confirmar" }),
   );
+  await waitFor(() => {
+    expect((confirm as HTMLButtonElement).disabled).toBe(false);
+    expect(summary!.textContent).toContain("42");
+    expect(summary!.textContent).not.toContain("••••••");
+  });
+  expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+});
+
+test("amount review and confirmation wait for status recovery", async () => {
+  const calls: string[] = [];
+  const heldStatus: Array<(result: Response) => void> = [];
+  let statusRequests = 0;
+  const pending = {
+    state: "pending_confirmation",
+    ...preparedEvidence,
+    pending_handle: "b".repeat(43),
+    target_reference: charge.reference,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      calls.push(`${init?.method || "GET"} ${url}`);
+      if (url === "/api/chat/history")
+        return response({ active: false, messages: [] });
+      if (url.startsWith("/api/action/status")) {
+        statusRequests += 1;
+        if (statusRequests === 1) return response(pending);
+        return new Promise<Response>((resolve) => heldStatus.push(resolve));
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: true }}
+      selected={charge}
+      transactions={[charge]}
+      onSelectTransaction={vi.fn()}
+      hidden
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+  const confirm = await screen.findByRole("button", {
+    name: /Confirmo la recepción simulada/,
+  });
+  const status = screen.getByRole("button", {
+    name: "Consultar estado de la solicitud",
+  }) as HTMLButtonElement;
+  await waitFor(() => expect(status.disabled).toBe(false));
+  const summary = document.getElementById(
+    confirm.getAttribute("aria-describedby")!,
+  )!;
+  const reveal = screen.getByRole("button", {
+    name: "Mostrar monto para confirmar",
+  }) as HTMLButtonElement;
+  expect((confirm as HTMLButtonElement).disabled).toBe(true);
+  expect(summary.textContent).toContain("••••••");
+
+  fireEvent.click(status);
+  await waitFor(() => expect(reveal.disabled).toBe(true));
+  fireEvent.click(reveal);
+  fireEvent.click(confirm);
+  expect((confirm as HTMLButtonElement).disabled).toBe(true);
+  expect(summary.textContent).toContain("••••••");
+  expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+  await act(async () => heldStatus.shift()!(response(pending)));
+  await waitFor(() => expect(status.disabled).toBe(false));
+
+  fireEvent.click(reveal);
+  await waitFor(() => {
+    expect((confirm as HTMLButtonElement).disabled).toBe(false);
+    expect(summary.textContent).toContain("42");
+    expect(summary.textContent).not.toContain("••••••");
+  });
+
+  fireEvent.click(status);
+  await waitFor(() =>
+    expect((confirm as HTMLButtonElement).disabled).toBe(true),
+  );
+  fireEvent.click(confirm);
+  expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
+  await act(async () => heldStatus.shift()!(response(pending)));
+  await waitFor(() => expect(status.disabled).toBe(false));
   expect((confirm as HTMLButtonElement).disabled).toBe(false);
-  expect(summary!.textContent).toContain("42");
-  expect(summary!.textContent).not.toContain("••••••");
+  expect(summary.textContent).toContain("42");
   expect(calls.every((call) => call.startsWith("GET "))).toBe(true);
 });
 
