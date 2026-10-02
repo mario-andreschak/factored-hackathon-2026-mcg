@@ -78,8 +78,9 @@ state are supplied from the volume, never committed or uploaded as build inputs.
    restricted native provider execution and immutable profile readback. The
    wrapper fails closed; never bypass its namespace when a probe fails.
 3. Complete application qualification and customer-path acceptance against the
-   selected source/image/configuration. `scripts/qualify_dispute_app.py` supports
-   fresh authored synthetic fixtures; label them as fixtures. HTTP health,
+   selected source/image/configuration and the existing supplied actual dataset.
+   Synthetic fixtures are for tests only. The release candidate requires real
+   processes and actual provider/browser execution. HTTP health,
    model registration, source tests and a successful language-stage call alone
    do not prove connected banking inquiry or verified simulated intake.
 4. Require independent retained-state review, an exclusive deployment lease,
