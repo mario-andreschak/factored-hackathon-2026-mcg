@@ -3277,6 +3277,9 @@ export default function App() {
   const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
   const mobileMenuClose = useRef<HTMLButtonElement>(null);
   const desktopNavigationTarget = useRef<HTMLButtonElement>(null);
+  const sidebar = useRef<HTMLElement>(null);
+  // CSS can blur a sidebar control to BODY before the media-query change fires.
+  const sidebarHadFocus = useRef(false);
   const wasMobileMenuOpen = useRef(false);
   const menuLaunchedModal = useRef(false);
   const restoreMenuFocus = () => {
@@ -3304,12 +3307,25 @@ export default function App() {
   useEffect(() => {
     if (!window.matchMedia) return;
     const mobile = window.matchMedia("(max-width: 640px)");
-    const closeOnWiderViewport = () => {
-      if (!mobile.matches) setMobileMenu(false);
+    const onViewportChange = () => {
+      if (!mobile.matches) {
+        setMobileMenu(false);
+      } else if (
+        !mobileMenu &&
+        !assistant &&
+        !info &&
+        sidebarHadFocus.current
+      ) {
+        const focused = document.activeElement;
+        if (sidebar.current?.contains(focused) || focused === document.body) {
+          mobileMenuTrigger.current?.focus();
+          sidebarHadFocus.current = false;
+        }
+      }
     };
-    mobile.addEventListener("change", closeOnWiderViewport);
-    return () => mobile.removeEventListener("change", closeOnWiderViewport);
-  }, []);
+    mobile.addEventListener("change", onViewportChange);
+    return () => mobile.removeEventListener("change", onViewportChange);
+  }, [mobileMenu, assistant, info]);
   const expired = useCallback(() => {
     dataController.current?.abort();
     setAuthenticated(false);
@@ -3536,8 +3552,23 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside
+        ref={sidebar}
         className={`sidebar ${mobileMenu ? "mobile-open" : ""}`}
         lang={shellLang}
+        onFocusCapture={() => {
+          sidebarHadFocus.current = true;
+        }}
+        onBlurCapture={(event) => {
+          const next = event.relatedTarget;
+          if (
+            (next &&
+              next !== document.body &&
+              !event.currentTarget.contains(next as Node)) ||
+            !window.matchMedia?.("(max-width: 640px)").matches
+          ) {
+            sidebarHadFocus.current = false;
+          }
+        }}
         role={mobileMenu ? "dialog" : undefined}
         aria-modal={mobileMenu ? true : undefined}
         aria-label={
