@@ -20,21 +20,24 @@ from dispute_workflow.host import DisputeHostFactory, RepositoryBank
 from dispute_workflow.prompts import StageAdapters
 from dispute_workflow.runtime import Workflow
 from scripts.native_dispute_qualification import NativeDisputePort
+from frontend.server.deployment_transition import verify as verify_transition, preflight_unreceipted, publish_fresh_origin
 
 
 class NativeHostFactory(DisputeHostFactory):
     def __init__(self, state_path, bank_service, native_url, authority_dir, *, source_root=None,
-                 batch_preflight=False):
+                 batch_preflight=False, native_reader_group=None):
         super().__init__(None, state_path, bank_service=bank_service, source_root=source_root)
         self.native_url, self.authority_dir = native_url, authority_dir
         self.batch_preflight = batch_preflight
+        self.native_reader_group = native_reader_group
 
     def __call__(self, repository, chat, profile, sid, expiry):
         bank = RepositoryBank(repository, chat, profile, sid, expiry,
             bank_service=self.bank_service, source_root=self.source_root)
         return NativeDisputePort(lambda model: Workflow(
             StageAdapters(model, timeout_seconds=90, batch_preflight=self.batch_preflight),
-            bank, self.store), self.native_url, self.authority_dir)
+            bank, self.store), self.native_url, self.authority_dir,
+            reader_group=self.native_reader_group)
 
 
 def workflow_state_path(state: Path) -> Path:
@@ -46,7 +49,8 @@ def workflow_state_path(state: Path) -> Path:
 
 
 def application(settings, bank_config, state, native_url, authority_dir, *, source_root=None,
-                enable_simulated_intake=False, batch_preflight=False):
+                enable_simulated_intake=False, batch_preflight=False, transition_receipt=None,
+                native_reader_group=None, bank_config_file=None, application_source_root=None):
     state, authority_dir = Path(state).resolve(), Path(authority_dir).resolve()
     if state == settings.state_dir.resolve() or settings.state_dir.resolve() in state.parents:
         raise ValueError("independent application state directory required")
@@ -56,13 +60,34 @@ def application(settings, bank_config, state, native_url, authority_dir, *, sour
         raise ValueError("frontend and bank must share the same serving dataset")
     if bank_config.mode != "delegated" or bank_config.principal_customers != settings.chat.get("principal_customers"):
         raise ValueError("frontend and bank require the same explicit delegated customer mapping")
+    fresh_preflight = None
+    if transition_receipt is not None:
+        if application_source_root is None:
+            raise ValueError("application source root required for retained transition")
+        receipt = verify_transition(receipt=Path(transition_receipt),
+            bank_config_file=Path(bank_config_file) if bank_config_file is not None else Path(""),
+            source_root=Path(application_source_root), native_state_dir=state)
+        if (receipt["native_authority_dir"] != str(authority_dir)
+                or receipt["new_frontend_state_dir"] != str(settings.state_dir.resolve())
+                or receipt["native_reader_group"] != native_reader_group):
+            raise ValueError("transition runtime paths or reader group changed")
+    else:
+        fresh_preflight = preflight_unreceipted(bank_config.state_db, state,
+            source_root=source_root, data_dir=bank_config.data_dir)
     if not (authority_dir / "admissions.json").is_file() or not (authority_dir / "native-profile.json").is_file():
         raise ValueError("installed isolated native authority directory required")
+    if native_reader_group is not None:
+        NativeDisputePort(lambda _: None, native_url, authority_dir,
+                          reader_group=native_reader_group)
     state.mkdir(parents=True, exist_ok=True, mode=0o700)
     bank = Service(bank_config)
     try:
         factory = NativeHostFactory(workflow_state_path(state), bank, native_url, authority_dir,
-            source_root=source_root, batch_preflight=batch_preflight)
+            source_root=source_root, batch_preflight=batch_preflight,
+            native_reader_group=native_reader_group)
+        if fresh_preflight is not None:
+            publish_fresh_origin(state, bank_config.state_db.name,
+                                 factory.ledger_generation, fresh_preflight)
         backend = BankingActionHost(bank, factory.store, source_root=source_root)
         configured = replace(settings, state_dir=state,
             chat={**settings.chat, "mode": "dispute-host/v1", "ledger_generation": factory.ledger_generation,
@@ -79,7 +104,12 @@ def main():
     parser.add_argument("--bank-config-file", required=True)
     parser.add_argument("--native-url", required=True)
     parser.add_argument("--native-authority-dir", required=True)
-    parser.add_argument("--source-root", type=Path)
+    parser.add_argument("--source-root", type=Path,
+        help="private bank object root; never use for application code inventory")
+    parser.add_argument("--application-source-root", type=Path,
+        help="installed application code root for transition receipt verification")
+    parser.add_argument("--transition-receipt", type=Path)
+    parser.add_argument("--native-reader-group", type=int)
     parser.add_argument("--enable-simulated-intake", action="store_true")
     parser.add_argument("--batch-preflight", action="store_true")
     parser.add_argument("--port", type=int, default=43900)
@@ -88,7 +118,10 @@ def main():
         parser.error("private loopback port required")
     app, bank = application(Settings.from_env(), load_config(args.bank_config_file), args.state_dir,
         args.native_url, args.native_authority_dir, source_root=args.source_root,
-        enable_simulated_intake=args.enable_simulated_intake, batch_preflight=args.batch_preflight)
+        enable_simulated_intake=args.enable_simulated_intake, batch_preflight=args.batch_preflight,
+        transition_receipt=args.transition_receipt, native_reader_group=args.native_reader_group,
+        bank_config_file=args.bank_config_file,
+        application_source_root=args.application_source_root)
     try:
         import uvicorn
         uvicorn.run(app, host="127.0.0.1", port=args.port, access_log=False)
