@@ -37,6 +37,7 @@ export type Transaction = {
   city: string | null;
   direction: "credit" | "debit" | "unknown";
 };
+export type HistoryPeriod = "week" | "month" | "quarter";
 export type Overview = {
   profile: Profile;
   products: Product[];
@@ -70,6 +71,9 @@ export type Overview = {
     transactions_returned: number;
     transactions_total: number;
     filtered_count: number;
+    period?: HistoryPeriod | null;
+    period_days?: number | null;
+    period_start?: string | null;
     transactions_limit: number;
     transactions_offset: number;
     transactions_truncated: boolean;

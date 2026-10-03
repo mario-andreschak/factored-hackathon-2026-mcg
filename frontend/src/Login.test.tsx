@@ -933,3 +933,48 @@ test("Portuguese invite uses organizer source wording when metadata identifies o
     ),
   ).toBeNull();
 });
+
+test("Spanish movements period selector fetches only the chosen window", async () => {
+  localStorage.setItem("flujo-bank-action-language", "es");
+  vi.stubGlobal("scrollTo", vi.fn());
+  const calls: string[] = [];
+  const weekly = {
+    ...portalOverview,
+    transactions: [],
+    metadata: {
+      ...portalOverview.metadata,
+      period: "week",
+      transactions_returned: 0,
+      transactions_total: 0,
+      filtered_count: 0,
+    },
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      const url = String(input);
+      calls.push(url);
+      if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+      if (url === "/api/overview") return reply(portalOverview);
+      if (url === "/api/overview?period=week") return reply(weekly);
+      if (url === "/api/chat/status")
+        return reply({ available: false, sandbox_intake_available: false });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Movimientos" }));
+  const period = () =>
+    screen.getByRole("combobox", {
+      name: "Periodo de los movimientos",
+    }) as HTMLSelectElement;
+  expect(period().value).toBe("quarter");
+  expect(document.querySelectorAll(".transaction-row")).toHaveLength(2);
+  fireEvent.change(period(), { target: { value: "week" } });
+  await waitFor(() => {
+    expect(period().value).toBe("week");
+    expect(document.querySelectorAll(".transaction-row")).toHaveLength(0);
+  });
+  expect(calls).toContain("/api/overview?period=week");
+  expect(calls.filter((url) => url.includes("period=quarter"))).toEqual([]);
+});

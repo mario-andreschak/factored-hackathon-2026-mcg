@@ -45,6 +45,7 @@ import type {
   ChatMessage,
   ChatStatus,
   HandoffPacket,
+  HistoryPeriod,
   IntakeReceipt,
   Overview,
   Product,
@@ -57,9 +58,12 @@ import {
   categoryNames,
   csv,
   date,
+  defaultHistoryPeriod,
+  historyDays,
   label,
   money,
   number,
+  periodParam,
   productShort,
   statusNames,
   typeNames,
@@ -647,10 +651,20 @@ function ActivityChart({
   asOf: string;
   hidden: boolean;
 }) {
-  const base = new Date(asOf.slice(0, 10) + "T12:00:00Z");
-  const months = Array.from({ length: 6 }, (_, i) => {
+  // Monthly activity covers the longest history window, which can touch four
+  // calendar months; show every month it reaches.
+  const end = new Date(asOf.slice(0, 10) + "T12:00:00Z");
+  const start = new Date(
+    end.getTime() - (historyDays.quarter - 1) * 86_400_000,
+  );
+  const span =
+    (end.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+    end.getUTCMonth() -
+    start.getUTCMonth() +
+    1;
+  const months = Array.from({ length: span }, (_, i) => {
     const d = new Date(
-      Date.UTC(base.getUTCFullYear(), base.getUTCMonth() - 5 + i, 1),
+      Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1),
     );
     const key = d.toISOString().slice(0, 7);
     const match = data.summary.monthly_activity.find(
@@ -676,8 +690,8 @@ function ActivityChart({
         role="img"
         aria-label={
           language === "pt"
-            ? `Entradas e saídas identificadas em ${currency} durante seis meses. Somente operações aprovadas.`
-            : `Entradas y salidas identificadas en ${currency} durante seis meses. Solo operaciones aprobadas.`
+            ? `Entradas e saídas identificadas em ${currency} nos últimos três meses. Somente operações aprovadas.`
+            : `Entradas y salidas identificadas en ${currency} en los últimos tres meses. Solo operaciones aprobadas.`
         }
       >
         {months.map((m) => (
@@ -3247,6 +3261,7 @@ export default function App() {
     [status, setStatus] = useState("all"),
     [productFilter, setProductFilter] = useState("all"),
     [month, setMonth] = useState("all"),
+    [period, setPeriod] = useState<HistoryPeriod>(defaultHistoryPeriod),
     [pagination, setPagination] = useState(1),
     [selectedTx, setSelectedTx] = useState<Transaction | null>(null),
     [selectedProduct, setSelectedProduct] = useState<Product | null>(null),
@@ -3274,6 +3289,8 @@ export default function App() {
     };
   }, [authenticated, actionLanguagePreference]);
   const dataController = useRef<AbortController | null>(null);
+  // Read by load() so login, retry and period changes all fetch the same window.
+  const periodRef = useRef<HistoryPeriod>(defaultHistoryPeriod);
   const expired = useCallback(() => {
     dataController.current?.abort();
     setAuthenticated(false);
@@ -3290,14 +3307,16 @@ export default function App() {
     setLoading(true);
     setError("");
     try {
-      const result = await api<Overview>("/api/overview", {
-        signal: controller.signal,
-      });
+      const scope = periodParam(periodRef.current);
+      const result = await api<Overview>(
+        scope ? `/api/overview?${scope}` : "/api/overview",
+        { signal: controller.signal },
+      );
       const transactions = [...result.transactions];
       let offset = result.metadata.next_offset ?? null;
       while (offset !== null) {
         const next = await api<Pick<Overview, "transactions" | "metadata">>(
-          `/api/transactions?limit=500&offset=${offset}`,
+          `/api/transactions?limit=500&offset=${offset}${scope ? `&${scope}` : ""}`,
           { signal: controller.signal },
         );
         if (
@@ -3363,7 +3382,7 @@ export default function App() {
   }, [load]);
   useEffect(() => {
     setPagination(1);
-  }, [query, status, productFilter, month]);
+  }, [query, status, productFilter, month, period]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [page]);
@@ -3383,6 +3402,8 @@ export default function App() {
       setProductFilter("all");
       setStatus("all");
       setMonth("all");
+      periodRef.current = defaultHistoryPeriod;
+      setPeriod(defaultHistoryPeriod);
     } catch (error) {
       if (
         error instanceof ApiError &&
@@ -3408,6 +3429,13 @@ export default function App() {
       setChatSelection(null);
     }, []),
     closeInfo = useCallback(() => setInfo(false), []);
+  function changePeriod(next: HistoryPeriod) {
+    // The server bounds the history, so a new window is a new fetch.
+    periodRef.current = next;
+    setPeriod(next);
+    setMonth("all");
+    load();
+  }
   function navigate(next: Page) {
     setPage(next);
     setMobileMenu(false);
@@ -4219,6 +4247,28 @@ export default function App() {
                         </select>
                       </label>
                       <label>
+                        <span className="sr-only">
+                          {pt ? "Período" : "Periodo"}
+                        </span>
+                        <select
+                          aria-label={
+                            pt
+                              ? "Período dos movimentos"
+                              : "Periodo de los movimientos"
+                          }
+                          value={period}
+                          onChange={(e) =>
+                            changePeriod(e.target.value as HistoryPeriod)
+                          }
+                        >
+                          <option value="week">Última semana</option>
+                          <option value="month">
+                            {pt ? "Último mês" : "Último mes"}
+                          </option>
+                          <option value="quarter">Últimos 3 meses</option>
+                        </select>
+                      </label>
+                      <label>
                         <span className="sr-only">{pt ? "Mês" : "Mes"}</span>
                         <select
                           aria-label={
@@ -4230,7 +4280,7 @@ export default function App() {
                           onChange={(e) => setMonth(e.target.value)}
                         >
                           <option value="all">
-                            {pt ? "Todo o histórico" : "Todo el historial"}
+                            {pt ? "Todo o período" : "Todo el periodo"}
                           </option>
                           {months.map((m) => (
                             <option value={m} key={m}>
