@@ -251,7 +251,7 @@ const loginCopy = {
       "Experiência de demonstração com dados sintéticos do hackathon. Os nomes são apelidos; os produtos e lançamentos vêm do conjunto de dados.",
     footer: "Seu dinheiro, com tranquilidade.",
     portalLanguageNotice:
-      "Após entrar, a navegação, os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português. O Assistente usa o idioma escolhido aqui. Nomes de estabelecimentos, cidades e canais da origem são exibidos como recebidos.",
+      "Após entrar, a navegação, os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português. O Assistente usa o idioma escolhido aqui. Nomes de estabelecimentos e cidades são exibidos como recebidos. Canais conhecidos podem aparecer traduzidos; os demais mantêm o nome da origem.",
     sessionNotice:
       "O acesso deste navegador foi removido, mas não foi possível confirmar o encerramento completo da sessão e do Assistente. Peça ajuda antes de usar outra conta.",
     errors: {
@@ -892,7 +892,9 @@ function TransactionTable({
                 {t.merchant ? (
                   portalType(t.type, language)
                 ) : (
-                  <span lang="">{t.channel}</span>
+                  <span lang={t.channel === "Card" ? undefined : ""}>
+                    {portalChannel(t.channel, language)}
+                  </span>
                 )}{" "}
                 {!compact && (
                   <span>
@@ -1186,7 +1188,9 @@ function TransactionDetail({
           </div>
           <div>
             <dt>Canal</dt>
-            <dd lang="">{t.channel}</dd>
+            <dd lang={t.channel === "Card" ? undefined : ""}>
+              {portalChannel(t.channel, language)}
+            </dd>
           </div>
           <div>
             <dt>{pt ? "Estabelecimento" : "Comercio"}</dt>
@@ -1325,6 +1329,8 @@ const portalType = (value: string, language: ActionLanguage) =>
   language === "pt"
     ? ptTypeNames[value] || typeNames[value] || value
     : typeNames[value] || value;
+const portalChannel = (value: string, language: ActionLanguage) =>
+  value === "Card" ? (language === "pt" ? "Cartão" : "Tarjeta") : value;
 const portalProduct = (value: string, language: ActionLanguage) =>
   language === "pt"
     ? ptProducts[value] || productShort(value)
@@ -4295,9 +4301,13 @@ export default function App() {
               {page === "transactions" && (
                 <>
                   {pt && (
-                    <p className="data-footnote transaction-origin-note" lang="pt-BR">
-                      Nomes de estabelecimentos, cidades e canais da origem são
-                      exibidos como recebidos.
+                    <p
+                      className="data-footnote transaction-origin-note"
+                      lang="pt-BR"
+                    >
+                      Nomes de estabelecimentos e cidades são exibidos como
+                      recebidos. Canais conhecidos podem aparecer traduzidos; os
+                      demais mantêm o nome da origem.
                     </p>
                   )}
                   <div className="transactions-toolbar">

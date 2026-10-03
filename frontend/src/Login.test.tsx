@@ -9,7 +9,7 @@ import {
   within,
 } from "@testing-library/react";
 import App, { Assistant, Login } from "./App";
-import type { Overview } from "./types";
+import type { Overview, Transaction } from "./types";
 
 const reply = (body: unknown, status = 200) =>
   ({
@@ -98,7 +98,7 @@ test("Portuguese demo sign-in preserves selected profile and Assistant locale", 
   ).toBeTruthy();
   expect(
     screen.getByText(
-      /Nomes de estabelecimentos, cidades e canais da origem são exibidos como recebidos/,
+      /Nomes de estabelecimentos e cidades são exibidos como recebidos. Canais conhecidos podem aparecer traduzidos; os demais mantêm o nome da origem/,
     ),
   ).toBeTruthy();
   await screen.findByRole("group", {
@@ -384,7 +384,7 @@ test("Assistant language returns to Login during the same storage-denied visit",
   ).toBeTruthy();
 });
 
-const portalCharge = {
+const portalCharge: Transaction = {
   reference: "txn_aaaaaaaaaaaaaaaaaaaaaaaa",
   product_reference: "card-1",
   occurred_at: "2026-09-20T12:00:00Z",
@@ -400,7 +400,7 @@ const portalCharge = {
   city: "São Paulo",
   direction: "debit",
 };
-const portalOverview = {
+const portalOverview: Overview = {
   ...syntheticOverview,
   products: [
     {
@@ -744,7 +744,9 @@ test("Portuguese charge finder keeps labels and dialog names local across the po
     screen.getByRole("heading", { name: "Seu dinheiro em movimento." }),
   ).toBeTruthy();
   expect(
-    screen.getByText(/Nomes de estabelecimentos, cidades e canais da origem/),
+    screen.getByText(
+      /Nomes de estabelecimentos e cidades são exibidos como recebidos. Canais conhecidos podem aparecer traduzidos; os demais mantêm o nome da origem/,
+    ),
   ).toBeTruthy();
   expect(
     screen.getByRole("combobox", { name: "Filtrar por produto" }),
@@ -901,6 +903,67 @@ test("Spanish charge finder retains its navigation, filters and review entry", a
     screen.getByRole("button", { name: "Revisar este cargo" }),
   ).toBeTruthy();
 });
+
+test.each([
+  ["es", "Card", "Tarjeta", "es"],
+  ["pt", "Card", "Cartão", "pt-BR"],
+  ["es", "Kiosk", "Kiosk", ""],
+  ["pt", "Kiosk", "Kiosk", ""],
+] as const)(
+  "%s merchantless transaction displays source channel %s as %s in row and detail",
+  async (language, sourceChannel, visibleChannel, channelLang) => {
+    const transaction: Transaction = {
+      ...portalCharge,
+      merchant: null,
+      channel: sourceChannel,
+    };
+    const overview: Overview = {
+      ...portalOverview,
+      transactions: [transaction],
+      metadata: {
+        ...portalOverview.metadata,
+        transactions_returned: 1,
+        transactions_total: 1,
+      },
+    };
+    servePortal(language, false, overview);
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: language === "pt" ? "Movimentos" : "Movimientos",
+      }),
+    );
+    const row = document.querySelector(".transaction-row") as HTMLButtonElement;
+    expect(row).toBeTruthy();
+    const rowChannel = row.querySelector(
+      ".transaction-description small > span",
+    );
+    expect(rowChannel?.textContent?.trim()).toBe(visibleChannel);
+    expect(rowChannel?.getAttribute("lang")).toBe(
+      channelLang === "" ? "" : null,
+    );
+    expect(rowChannel?.closest("[lang]")?.getAttribute("lang")).toBe(
+      channelLang,
+    );
+    fireEvent.click(row);
+    const detail = screen.getByRole("dialog", {
+      name:
+        language === "pt" ? "Detalhes do movimento" : "Detalle del movimiento",
+    });
+    const channelLabel = Array.from(detail.querySelectorAll("dt")).find(
+      (node) => node.textContent === "Canal",
+    );
+    const detailChannel = channelLabel?.nextElementSibling;
+    expect(detailChannel?.textContent?.trim()).toBe(visibleChannel);
+    expect(detailChannel?.getAttribute("lang")).toBe(
+      channelLang === "" ? "" : null,
+    );
+    expect(detailChannel?.closest("[lang]")?.getAttribute("lang")).toBe(
+      channelLang,
+    );
+    expect(transaction.channel).toBe(sourceChannel);
+  },
+);
 
 test("Portuguese charge review says when the Assistant is unavailable", async () => {
   const calls = servePortal("pt", false);
