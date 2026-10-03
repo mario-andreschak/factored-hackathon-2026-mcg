@@ -403,7 +403,7 @@ button svg {
   gap: 8px;
   font-size: 9px;
   letter-spacing: 1.2px;
-  color: #80917e;
+  color: #426149;
 }
 .login-form-wrap {
   width: 100%;
@@ -448,7 +448,7 @@ button svg {
 }
 .login-intro {
   font-size: 13px;
-  color: #8a958d;
+  color: #426149;
   margin: 10px 0 31px;
 }
 .login-loading {
@@ -581,7 +581,7 @@ button svg {
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  color: #919d8e;
+  color: #426149;
 }
 .form-error {
   color: #a34d3c;
@@ -2976,7 +2976,7 @@ button svg {
     position: absolute;
     top: 38px;
     right: 27px;
-    font-size: 6px;
+    font-size: 8px;
     letter-spacing: 0.7px;
     gap: 5px;
   }
