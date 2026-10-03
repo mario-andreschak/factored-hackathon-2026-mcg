@@ -15,8 +15,8 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
 
     build_cmd = commands.add_parser("build", help="rebuild the analytics database from operational state")
-    build_cmd.add_argument("--state-dir", type=Path, help="directory holding the Savia/Gloria *.sqlite3 files")
-    build_cmd.add_argument("--workflow-db", type=Path, action="append", default=[], help="explicit gloria_turns store")
+    build_cmd.add_argument("--state-dir", type=Path, help="directory holding the Savia chat and transaction dispute *.sqlite3 files")
+    build_cmd.add_argument("--workflow-db", type=Path, action="append", default=[], help="explicit dispute_turns or legacy gloria_turns store")
     build_cmd.add_argument("--chat-db", type=Path, action="append", default=[], help="explicit chat_messages store")
     build_cmd.add_argument("--out", type=Path, required=True, help="analytics SQLite output (separate file)")
     build_cmd.add_argument("--key", type=Path, help="pseudonym HMAC key file (default: <out>.key)")
@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
             workflow += found_workflow
             chat += found_chat
         if not workflow and not chat:
-            parser.error("no gloria_turns or chat_messages store found; pass --state-dir or explicit databases")
+            parser.error("no dispute_turns, legacy gloria_turns or chat_messages store found; pass --state-dir or explicit databases")
         counts = build(args.out, workflow_dbs=workflow, chat_dbs=chat, key_path=args.key)
         print(json.dumps({"sources": {"workflow": [str(path) for path in workflow],
                                       "chat": [str(path) for path in chat]}, **counts}, indent=2))

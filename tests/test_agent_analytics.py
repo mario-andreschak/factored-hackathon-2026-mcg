@@ -10,7 +10,7 @@ import pytest
 from analytics.__main__ import main
 from analytics.extract import add_feedback, build, discover
 from analytics.report import summarize
-from gloria_workflow.state import ConversationStore, TrustedBinding, begin_turn, new_state
+from dispute_workflow.state import ConversationStore, TrustedBinding, begin_turn, new_state
 
 
 NOW = datetime(2026, 10, 1, 15, 0, tzinfo=timezone.utc)
@@ -49,7 +49,7 @@ def _turn(store, binding, turn_id, *, minutes, previous=None, revision=0, **chan
 
 @pytest.fixture
 def state_dir(tmp_path):
-    store = ConversationStore(tmp_path / "gloria-workflow.sqlite3")
+    store = ConversationStore(tmp_path / "dispute-workflow.sqlite3")
     first = _binding(1)
     loaded = _turn(store, first, "turn-a1", minutes=0, mode="CLARIFY",
         workflow={"missing_fields": ["date_from"]},
@@ -104,7 +104,7 @@ def _rows(out, sql, *args):
 
 
 def test_discovers_sources_and_projects_each_turn(state_dir, tmp_path_factory):
-    assert [path.name for path in discover(state_dir)[0]] == ["gloria-workflow.sqlite3"]
+    assert [path.name for path in discover(state_dir)[0]] == ["dispute-workflow.sqlite3"]
     out, counts = _built(state_dir, tmp_path_factory)
     assert counts == {"turns": 4, "conversations": 3, "node_calls": 6, "skipped_states": 0}
     turn = _rows(out, "SELECT * FROM turns WHERE turn_id='turn-a1'")[0]
@@ -115,6 +115,29 @@ def test_discovers_sources_and_projects_each_turn(state_dir, tmp_path_factory):
     assert json.loads(turn["node_errors"]) == ["slot_extraction:schema_invalid"]
     assert turn["user_chars"] == len("no reconozco 87500") and turn["reply_chars"] == len("¿En qué fecha?")
     assert turn["node_latency_ms"] == 900 + 1500 + 40
+
+
+def test_discovers_and_reads_legacy_workflow_store(state_dir, tmp_path_factory):
+    legacy_dir = tmp_path_factory.mktemp("legacy-workflow")
+    legacy = legacy_dir / "legacy-workflow.sqlite3"
+    with closing(sqlite3.connect(state_dir / "dispute-workflow.sqlite3")) as source, closing(sqlite3.connect(legacy)) as target:
+        source.backup(target)
+        target.execute("ALTER TABLE dispute_turns RENAME TO gloria_turns")
+        target.commit()
+    workflow, chat = discover(legacy_dir)
+    assert workflow == [legacy] and chat == []
+    before = legacy.read_bytes()
+    counts = build(legacy_dir / "analytics.sqlite3", workflow_dbs=workflow, now=NOW)
+    assert counts["turns"] == 3 and counts["skipped_states"] == 0
+    assert legacy.read_bytes() == before
+
+
+def test_current_turn_table_takes_precedence_over_legacy(state_dir, tmp_path_factory):
+    with closing(sqlite3.connect(state_dir / "dispute-workflow.sqlite3")) as db, db:
+        db.execute("CREATE TABLE gloria_turns AS SELECT * FROM dispute_turns WHERE 0")
+    out, counts = _built(state_dir, tmp_path_factory)
+    assert counts["turns"] == 4
+    assert _rows(out, "SELECT count(*) AS n FROM turns WHERE source='workflow'")[0]["n"] == 3
 
 
 def test_trace_is_attributed_only_to_its_own_turn(state_dir, tmp_path_factory):
@@ -161,7 +184,7 @@ def test_sources_are_unchanged_and_output_must_be_separate(state_dir, tmp_path_f
     _built(state_dir, tmp_path_factory)
     assert {path.name: path.read_bytes() for path in state_dir.glob("*.sqlite3")} == before
     with pytest.raises(ValueError):
-        build(state_dir / "gloria-workflow.sqlite3", workflow_dbs=[state_dir / "gloria-workflow.sqlite3"])
+        build(state_dir / "dispute-workflow.sqlite3", workflow_dbs=[state_dir / "dispute-workflow.sqlite3"])
 
 
 def test_rebuild_is_idempotent_and_keeps_feedback(state_dir, tmp_path_factory):

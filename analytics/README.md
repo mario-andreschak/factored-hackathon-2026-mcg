@@ -1,12 +1,14 @@
 # Agent analytics (offline)
 
-Builds a separate, metadata-only SQLite database for tracing Savia/Gloria agent
+Builds a separate, metadata-only SQLite database for tracing Savia transaction dispute workflow
 behaviour over time: what the customer wanted, how the policy decided, whether
 the case was resolved or handed off, where the agent struggled, and how long
 each stage took.
 
+Gloria Yanta Salc designed the transaction dispute prompts.
+
 It reads the operational state **read-only** and changes neither the chat
-service, the Gloria workflow, the banking MCP nor FLUJO.
+service, the transaction dispute workflow, the banking MCP nor FLUJO.
 
 ```powershell
 python -m analytics build  --state-dir <BANKING_STATE_DIR> --out <dir>\agent-analytics.sqlite3
@@ -14,9 +16,10 @@ python -m analytics report --db <dir>\agent-analytics.sqlite3          # or --js
 python -m analytics feedback --db <dir>\agent-analytics.sqlite3 --turn <turn_id> --rating -1 --label intent_incorrect
 ```
 
-`--state-dir` finds every `*.sqlite3` that holds `gloria_turns` (Gloria
-workflow store, e.g. `gloria-workflow.sqlite3`) or `chat_messages`
-(`frontend-chat.sqlite3`). Explicit `--workflow-db`/`--chat-db` are also
+`--state-dir` finds every `*.sqlite3` that holds current `dispute_turns`
+(e.g. `dispute-workflow.sqlite3`), legacy `gloria_turns`, or `chat_messages`
+(e.g. `frontend-chat.sqlite3`). When both workflow tables exist in one file,
+the current table is read. Explicit `--workflow-db`/`--chat-db` are also
 accepted. `build` rebuilds the derived tables each run; `feedback` rows are
 kept.
 
@@ -38,7 +41,7 @@ Conversation `outcome` values: `action_verified`, `handoff`,
 `abandoned_pending` (left while choosing a candidate), `abandoned_clarify`,
 `no_match`, `out_of_scope`, `out_of_policy`, `tool_error`,
 `action_unverified`, `cancelled`, `blocked`, `informed`, `transcript_only`
-(chat without Gloria state) and `other`.
+(chat without transaction dispute workflow state) and `other`.
 
 Portal confirmation and handoff creation happen in the trusted host
 (`action_status` and the banking MCP), not in the workflow store, so

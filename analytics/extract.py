@@ -1,4 +1,4 @@
-"""Build a metadata-only analytics database from Savia/Gloria operational state.
+"""Build a metadata-only analytics database from Savia transaction dispute operational state.
 
 Sources are opened read-only. The output keeps categories, counts, flags and
 durations; it never copies message text, slot values, amounts, merchants,
@@ -118,12 +118,19 @@ def _tables(path: Path) -> set[str]:
         return set()
 
 
+_WORKFLOW_TABLES = ("dispute_turns", "gloria_turns")
+
+
+def _workflow_table(tables: set[str]) -> str | None:
+    return next((table for table in _WORKFLOW_TABLES if table in tables), None)
+
+
 def discover(state_dir: Path) -> tuple[list[Path], list[Path]]:
-    """Find workflow stores (gloria_turns) and chat stores (chat_messages)."""
+    """Find current or legacy workflow stores and chat stores."""
     workflow, chat = [], []
     for path in sorted(Path(state_dir).glob("*.sqlite3")):
         tables = _tables(path)
-        if "gloria_turns" in tables:
+        if _workflow_table(tables):
             workflow.append(path)
         if "chat_messages" in tables:
             chat.append(path)
@@ -290,7 +297,12 @@ def conversation_record(conversation_id: str, turns: list[dict]) -> dict:
 
 def _workflow_rows(path: Path) -> Iterable[sqlite3.Row]:
     with closing(_readonly(path)) as db:
-        yield from db.execute("SELECT customer,session,conversation,turn_id,state_json FROM gloria_turns")
+        tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        table = _workflow_table(tables)
+        if table is None:
+            raise ValueError(f"no transaction dispute turn table found in {path}")
+        # The table name comes only from the fixed allowlist above.
+        yield from db.execute(f"SELECT customer,session,conversation,turn_id,state_json FROM {table}")
 
 
 def _chat_rows(path: Path) -> tuple[dict[str, dict], dict[str, dict]]:
@@ -343,7 +355,7 @@ def build(out_path: Path, *, workflow_dbs: Iterable[Path] = (), chat_dbs: Iterab
     for operation, entry in operations.items():
         record = turns.get(operation)
         if record is None:
-            # Transcript-only turn, e.g. a FLUJO-mode chat without Gloria state.
+            # Transcript-only turn, e.g. a FLUJO-mode chat without transaction dispute workflow state.
             session = sessions.get(entry["session_id"], {})
             record = turns[operation] = {
                 "turn_id": operation, "source": "transcript",
