@@ -15,3 +15,7 @@ frontend/*.tsbuildinfo
 frontend/.state/
 frontend/test-results/
 demo/customer_v0/node_modules/
+
+# Agent analytics output and pseudonym key
+agent-analytics*.sqlite3
+agent-analytics*.key

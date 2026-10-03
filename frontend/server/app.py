@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_vali
 import duckdb
 
 from .config import PROFILE_IDS, Settings
-from .repository import DatasetUnavailable, Repository
+from .repository import HISTORY_PERIODS, MAX_HISTORY_PERIOD, DatasetUnavailable, Repository
 from .state import Session, State
 from .action import render_action_error
 
@@ -312,17 +312,21 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         result.delete_cookie(COOKIE, httponly=True, secure=settings.secure_cookie, samesite="strict", path="/")
         return result
 
+    # The portal lists at most the longest history window; it defaults to that window.
+    period_query = Query(MAX_HISTORY_PERIOD, pattern="^(?:" + "|".join(HISTORY_PERIODS) + ")$")
+
     @app.get("/api/overview")
-    def overview(request: Request, limit: int = Query(500, ge=1, le=500)):
-        return request.app.state.repository.overview(session(request).profile_id, limit)
+    def overview(request: Request, limit: int = Query(500, ge=1, le=500), period: str = period_query):
+        return request.app.state.repository.overview(session(request).profile_id, limit, period=period)
 
     @app.get("/api/transactions")
     def transactions(request: Request, product: str | None = Query(None, max_length=64),
                      status: str | None = Query(None, max_length=24), q: str | None = Query(None, max_length=200),
                      limit: int = Query(500, ge=1, le=500), offset: int = Query(0, ge=0, le=2_147_483_647),
-                     month: str | None = Query(None, pattern=r"^\d{4}-(?:0[1-9]|1[0-2])$")):
-        data = request.app.state.repository.overview(session(request).profile_id, limit,
-                                                    product=product, status=status, q=q, offset=offset, month=month)
+                     month: str | None = Query(None, pattern=r"^\d{4}-(?:0[1-9]|1[0-2])$"),
+                     period: str = period_query):
+        data = request.app.state.repository.overview(session(request).profile_id, limit, product=product,
+                                                    status=status, q=q, offset=offset, month=month, period=period)
         return {"transactions": data["transactions"], "metadata": data["metadata"]}
 
     @app.get("/api/chat/status")
@@ -532,7 +536,7 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
                     selected_scope = backend.query_scope(service, customer, current.id,
                         current.expires_at, body.transaction_reference, selected_scope)["query_id"]
                 except ChatError as exc:
-                    raise HTTPException(exc.status_code, render_action_error(exc.code, language)) from None
+                    raise HTTPException(exc.status_code, render_action_error(exc.code, body.language)) from None
             previous = await action_status(request, body.language)
             same_target = (previous.get("target_reference") == body.transaction_reference
                            and previous.get("query_id") == selected_scope)

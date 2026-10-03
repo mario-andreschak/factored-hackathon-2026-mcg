@@ -1,4 +1,15 @@
-import type { Transaction } from "./types";
+import type { HistoryPeriod, Transaction } from "./types";
+// Mirrors HISTORY_PERIODS in server/repository.py. The server never lists more
+// than the longest window, counted back from the latest published event.
+export const historyDays: Record<HistoryPeriod, number> = {
+  week: 7,
+  month: 30,
+  quarter: 90,
+};
+export const defaultHistoryPeriod: HistoryPeriod = "quarter";
+// The default window is the server default, so its requests carry no parameter.
+export const periodParam = (period: HistoryPeriod) =>
+  period === defaultHistoryPeriod ? "" : `period=${period}`;
 export class ApiError extends Error {
   status: number;
   revokeStatus: string | null;

@@ -8,7 +8,7 @@ import threading
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -29,6 +29,11 @@ CREDIT_TYPES = {"Tarjeta Crédito", "Préstamo Personal", "Préstamo Hipotecario
 # The dataset supplies positive magnitudes. Transfer, Payment and Adjustment do not
 # identify the account leg, so they must not be presented as invented debit signs.
 DIRECTIONS = {"Deposit": "credit", "Purchase": "debit", "Withdrawal": "debit"}
+# Customer-facing history windows, in days counted back from the snapshot's latest
+# event. The portal never lists more than the longest one, and the window advances
+# by itself as newer daily data is published.
+HISTORY_PERIODS = {"week": 7, "month": 30, "quarter": 90}
+MAX_HISTORY_PERIOD = "quarter"
 TRANSACTION_FIELDS = """transaction_id, product_id, transaction_date AS occurred_at,
     process_date, transaction_type AS type, transaction_category AS category,
     amount, currency, transaction_status AS status, channel, merchant_name AS merchant,
@@ -283,7 +288,14 @@ class Repository:
         keys = self.settings.profiles if self.settings.auth_mode == "invite" else PROFILE_DEFAULTS
         return [self.profile(key, snapshot) for key in keys if self.state.customer(key)]
 
-    def _scoped(self, con, snapshot: Snapshot, customer: str):
+    @staticmethod
+    def history_start(snapshot: Snapshot, period: str) -> date | None:
+        """First event day of a history window ending on the snapshot's latest event day."""
+        if not snapshot.data_as_of:
+            return None
+        return date.fromisoformat(snapshot.data_as_of[:10]) - timedelta(days=HISTORY_PERIODS[period] - 1)
+
+    def _scoped(self, con, snapshot: Snapshot, customer: str, since: date | None = None):
         con.read_parquet(str(snapshot.build / "silver" / "customers.parquet")).create_view("customers")
         con.read_parquet(str(snapshot.build / "silver" / "products.parquet")).create_view("products")
         bucket = int(hashlib.md5(customer.encode()).hexdigest()[:8], 16) % 128
@@ -293,10 +305,13 @@ class Repository:
         con.read_parquet([str(p) for p in files]).create_view("transactions")
         # Bound parameters cannot appear in a CREATE VIEW in every supported DuckDB
         # version; create the relation with execute and materialize this one customer.
-        con.execute("""CREATE TEMP TABLE scoped AS SELECT t.*, p.product_type AS owned_product_type FROM transactions t
+        # A history window is pushed into the scan so a growing history is never
+        # materialized beyond what the caller can display.
+        window = " AND t.transaction_date >= ?" if since else ""
+        con.execute(f"""CREATE TEMP TABLE scoped AS SELECT t.*, p.product_type AS owned_product_type FROM transactions t
             JOIN products p ON p.product_id=t.product_id AND p.customer_id=t.customer_id
             JOIN customers c ON c.customer_id=t.customer_id
-            WHERE t.customer_id=? AND t.ownership_valid""", [customer])
+            WHERE t.customer_id=? AND t.ownership_valid{window}""", [customer, *([since] if since else [])])
         return True
 
     def _public_transaction(self, transaction: dict, customer: str) -> dict:
@@ -307,13 +322,20 @@ class Repository:
 
     def overview(self, profile_id: str, limit: int = 500, *, product: str | None = None,
                  status: str | None = None, q: str | None = None, offset: int = 0,
-                 month: str | None = None) -> dict:
+                 month: str | None = None, period: str | None = None) -> dict:
+        """Owner-scoped overview. ``period`` bounds the listed history to a HISTORY_PERIODS
+        window; ``None`` keeps the full history for internal callers such as disputes."""
+        if period is not None and period not in HISTORY_PERIODS:
+            raise ValueError(f"unknown history period: {period}")
         snapshot = self.snapshot()
         profile = self.profile(profile_id, snapshot)
         customer = self.state.customer(profile_id)
         page_limit, page_offset = max(1, min(limit, 500)), max(0, offset)
+        period_start = self.history_start(snapshot, period) if period else None
+        # Monthly activity always covers the longest window, whatever period is listed.
+        scope_start = self.history_start(snapshot, MAX_HISTORY_PERIOD) if period else None
         with self.connection() as con:
-            have_transactions = self._scoped(con, snapshot, customer)
+            have_transactions = self._scoped(con, snapshot, customer, scope_start)
             product_rows = records(con.execute("""SELECT p.product_id, p.product_type AS type, p.currency,
                 p.current_balance AS balance, p.credit_limit, p.interest_rate, p.product_status AS status,
                 p.opening_date AS opened_at, p.expiration_date AS expires_at, p.last_updated,
@@ -323,7 +345,8 @@ class Repository:
                     WHEN p.product_type='Tarjeta Crédito' THEN 1 ELSE 2 END, p.product_id""", [customer]))
             txn_rows, monthly, total, filtered_count = [], [], 0, 0
             if have_transactions:
-                clauses, params = [], []
+                period_clauses, period_params = (["transaction_date >= ?"], [period_start]) if period_start else ([], [])
+                clauses, params = list(period_clauses), list(period_params)
                 if product:
                     owned_product = next((p["product_id"] for p in product_rows
                         if hmac.compare_digest(self.reference("prod", customer, p["product_id"]).encode(), product.encode())), None)
@@ -345,7 +368,9 @@ class Repository:
                     FROM scoped {where} ORDER BY transaction_date DESC, transaction_id LIMIT ? OFFSET ?""",
                     [*params, page_limit, page_offset]))
                 filtered_count = con.execute("SELECT count(*) FROM scoped" + where, params).fetchone()[0]
-                total = con.execute("SELECT count(*) FROM scoped").fetchone()[0]
+                total = con.execute("SELECT count(*) FROM scoped"
+                                    + (" WHERE " + " AND ".join(period_clauses) if period_clauses else ""),
+                                    period_params).fetchone()[0]
                 monthly = records(con.execute("""SELECT strftime(transaction_date,'%Y-%m') AS month, currency,
                     sum(CASE WHEN transaction_status='Approved' AND transaction_type='Deposit' THEN amount ELSE 0 END) AS inflow,
                     sum(CASE WHEN transaction_status='Approved' AND transaction_type IN ('Purchase','Withdrawal') THEN amount ELSE 0 END) AS outflow,
@@ -370,6 +395,8 @@ class Repository:
                          "source_validation": snapshot.source_validation,
                          "freshness": SYNTHETIC_MARKER if self.settings.auth_mode == "invite" else "derived_snapshot",
                          "filtered_count": filtered_count,
+                         "period": period, "period_days": HISTORY_PERIODS[period] if period else None,
+                         "period_start": period_start.isoformat() if period_start else None,
                          "transactions_limit": page_limit, "transactions_offset": page_offset,
                          "transactions_truncated": len(txn_rows) < filtered_count,
                          "next_offset": page_offset + len(txn_rows) if page_offset + len(txn_rows) < filtered_count else None,
