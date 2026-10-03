@@ -4497,7 +4497,9 @@ export default function App() {
                       <div>
                         <button
                           className="icon-button"
-                          aria-label="Página anterior"
+                          aria-label={
+                            pt ? "Ir para a página anterior" : "Página anterior"
+                          }
                           lang={shellLang}
                           disabled={pagination === 1}
                           onClick={() => setPagination(pagination - 1)}

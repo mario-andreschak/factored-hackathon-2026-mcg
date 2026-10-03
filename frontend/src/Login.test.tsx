@@ -808,7 +808,7 @@ test("Portuguese transaction amounts, dates, type and pagination use one currenc
   expect(first?.textContent).toContain("set.");
   fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
   const previous = screen.getByRole("button", {
-    name: "Página anterior",
+    name: "Ir para a página anterior",
   }) as HTMLButtonElement;
   expect(previous.disabled).toBe(false);
   expect(previous.getAttribute("lang")).toBe("pt-BR");
@@ -833,6 +833,32 @@ test("Portuguese transaction amounts, dates, type and pagination use one currenc
   ).find((row) => row.querySelector("strong")?.textContent === "Loja 1");
   expect(hidden?.querySelector(".amount")?.textContent).toContain("••••••");
   expect(hidden?.querySelector(".amount")?.textContent).toContain("BRL");
+});
+
+test("Spanish transaction pagination keeps its previous-page accessible name", async () => {
+  const transactions = Array.from({ length: 12 }, (_, index) => ({
+    ...portalCharge,
+    reference: `txn_${String(index).padStart(24, "0")}`,
+    merchant: `Tienda ${index + 1}`,
+  }));
+  servePortal("es", false, {
+    ...portalOverview,
+    transactions,
+    metadata: {
+      ...portalOverview.metadata,
+      transactions_returned: transactions.length,
+      transactions_total: transactions.length,
+    },
+  });
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Movimientos" }));
+  fireEvent.click(screen.getByRole("button", { name: "Página siguiente" }));
+  expect(screen.getByRole("button", { name: /Tienda 12/ })).toBeTruthy();
+  const previous = screen.getByRole("button", {
+    name: "Página anterior",
+  }) as HTMLButtonElement;
+  expect(previous.disabled).toBe(false);
+  expect(previous.getAttribute("lang")).toBe("es");
 });
 
 test("Portuguese Movimentos snapshot error, retry and boot use Portuguese semantics", async () => {
