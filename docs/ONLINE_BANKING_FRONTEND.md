@@ -88,7 +88,10 @@ paired transcript and conversation binding atomically. Restored history is bound
 to recent exchanges, with a visible disclosure when limited.
 
 Transaction API pages contain at most 500 rows and expose offsets, matching counts
-and `next_offset`. Filtering occurs before pagination. The browser loads all pages
+and `next_offset`. They list only a `period` window (`week`, `month` or the
+default and maximum `quarter`: 7, 30 or 90 days ending on the latest published
+event), applied in the scan before materializing the customer's rows. Filtering
+occurs before pagination. The browser loads all pages of the selected window
 and verifies the build ID, fingerprint, unique references and full owned count
 before allowing local filters or CSV export. Inconsistent or incomplete history
 fails closed. Selected transaction references resolve over the complete
