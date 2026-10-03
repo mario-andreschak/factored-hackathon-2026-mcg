@@ -1646,6 +1646,12 @@ button svg {
   color: #4b6044;
   margin-top: 20px;
 }
+
+.transaction-origin-note {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .clarity-banner {
   display: flex;
   align-items: center;

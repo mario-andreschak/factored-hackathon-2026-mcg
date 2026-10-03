@@ -4295,7 +4295,7 @@ export default function App() {
               {page === "transactions" && (
                 <>
                   {pt && (
-                    <p className="data-footnote" lang="pt-BR">
+                    <p className="data-footnote transaction-origin-note" lang="pt-BR">
                       Nomes de estabelecimentos, cidades e canais da origem são
                       exibidos como recebidos.
                     </p>
