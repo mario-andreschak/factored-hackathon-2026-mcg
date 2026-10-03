@@ -2891,7 +2891,7 @@ button svg {
   .full-history .transaction-description small {
     font-size: 8px;
   }
-  .full-history .transaction-description small span {
+  .full-history .transaction-description .transaction-reference {
     display: none;
   }
   .full-history .transaction-icon {

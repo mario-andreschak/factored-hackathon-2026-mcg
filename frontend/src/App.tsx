@@ -897,7 +897,7 @@ function TransactionTable({
                   </span>
                 )}{" "}
                 {!compact && (
-                  <span>
+                  <span className="transaction-reference">
                     · Ref. {t.product_reference.slice(-6).toUpperCase()}
                   </span>
                 )}
