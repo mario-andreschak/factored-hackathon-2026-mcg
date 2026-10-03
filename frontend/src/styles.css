@@ -1967,12 +1967,17 @@ button svg {
   width: 540px;
 }
 .modal-top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid #e7eedf;
+  background: #fafcf6;
+  box-shadow: 0 -26px 0 #fafcf6;
 }
 .modal-top h2 {
   font-size: 16px;
