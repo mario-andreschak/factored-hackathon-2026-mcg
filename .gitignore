@@ -19,3 +19,7 @@ demo/customer_v0/node_modules/
 # Agent analytics output and pseudonym key
 agent-analytics*.sqlite3
 agent-analytics*.key
+
+# Private offline bank review reports and reviewer exports
+bank-review*.html
+bank-review-drafts*.json

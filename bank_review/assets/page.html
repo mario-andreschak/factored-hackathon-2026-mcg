@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <title>Savia · Bank review</title>
+  <style>/* BANK_REVIEW_CSS */</style>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#">savia<span>bank review</span></a>
+    <p class="nav-label">WORKSPACE</p>
+    <nav aria-label="Workspace">
+      <button data-view="review" class="active">Quality review <span id="sample-count"></span></button>
+      <button data-view="oversight">Bank oversight</button>
+      <button data-view="comparison">Paired evaluation</button>
+    </nav>
+    <div class="side-note"><span class="dot"></span>Offline snapshot<p>Review notes stay in memory until you export them. Reloading clears drafts.</p></div>
+  </aside>
+  <main>
+    <header><div><p class="eyebrow">SAVIA / OPERATIONS & QUALITY</p><h1 id="view-title">Every answer deserves a second look.</h1></div><span class="badge" id="origin"></span></header>
+    <div class="notice" id="qualification" role="note"></div>
+    <section id="review-view" aria-label="Quality review">
+      <div class="toolbar"><div><h2>Review sample</h2><p id="sample-scope"></p></div><div class="filters"><label>Language<select id="language"><option value="all">All languages</option><option value="es">Español</option><option value="pt">Português</option><option value="unknown">Unknown</option></select></label><label>Signals<select id="signal"><option value="all">All turns</option><option value="flagged">With review signals</option><option value="drafted">With a draft review</option></select></label><button id="export" class="primary">Export drafts <span id="draft-count">0</span></button></div></div>
+      <div class="review-layout"><div class="queue" id="queue" aria-label="Review turns"></div><article id="detail" class="detail" aria-label="Selected turn"></article></div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+    <section id="oversight-view" hidden aria-label="Bank oversight"><div id="oversight"></div></section>
+    <section id="comparison-view" hidden aria-label="Paired evaluation"><div id="comparison"></div></section>
+    <footer>Bank review adds human judgment. Execution evidence remains in FLUJO and the trusted banking services.</footer>
+  </main>
+  <script id="review-data" type="application/json">BANK_REVIEW_DATA</script>
+  <script>/* BANK_REVIEW_JS */</script>
+</body>
+</html>
