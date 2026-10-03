@@ -3272,6 +3272,9 @@ export default function App() {
     };
   }, [authenticated, actionLanguagePreference]);
   const dataController = useRef<AbortController | null>(null);
+  const periodSelect = useRef<HTMLSelectElement>(null);
+  const periodRetry = useRef<HTMLButtonElement>(null);
+  const periodFocusPending = useRef(false);
   const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
   const mobileMenuClose = useRef<HTMLButtonElement>(null);
   const desktopNavigationTarget = useRef<HTMLButtonElement>(null);
@@ -3324,10 +3327,38 @@ export default function App() {
     mobile.addEventListener("change", onViewportChange);
     return () => mobile.removeEventListener("change", onViewportChange);
   }, [mobileMenu, assistant, info]);
+  // A refetch unmounts the select. Restore focus only if the customer has not
+  // focused or interacted with another control during the request.
+  useEffect(() => {
+    const movedFocus = (event: FocusEvent) => {
+      if (periodFocusPending.current && event.target !== periodSelect.current) {
+        periodFocusPending.current = false;
+      }
+    };
+    const pointerAway = (event: PointerEvent) => {
+      if (periodFocusPending.current && event.target !== periodSelect.current) {
+        periodFocusPending.current = false;
+      }
+    };
+    const tabAway = (event: KeyboardEvent) => {
+      if (periodFocusPending.current && event.key === "Tab") {
+        periodFocusPending.current = false;
+      }
+    };
+    document.addEventListener("focusin", movedFocus);
+    document.addEventListener("pointerdown", pointerAway);
+    document.addEventListener("keydown", tabAway);
+    return () => {
+      document.removeEventListener("focusin", movedFocus);
+      document.removeEventListener("pointerdown", pointerAway);
+      document.removeEventListener("keydown", tabAway);
+    };
+  }, []);
   // Read by load() so login, retry and period changes all fetch the same window.
   const periodRef = useRef<HistoryPeriod>(defaultHistoryPeriod);
   const expired = useCallback(() => {
     dataController.current?.abort();
+    periodFocusPending.current = false;
     setAuthenticated(false);
     setData(null);
     setMobileMenu(false);
@@ -3405,6 +3436,13 @@ export default function App() {
       if (!controller.signal.aborted) setLoading(false);
     }
   }, [expired]);
+  useLayoutEffect(() => {
+    if (!periodFocusPending.current || loading || authenticated !== true)
+      return;
+    const target = error ? periodRetry.current : periodSelect.current;
+    if (document.activeElement === document.body) target?.focus();
+    periodFocusPending.current = false;
+  }, [authenticated, error, loading, page, period]);
   useEffect(() => () => dataController.current?.abort(), []);
   useEffect(() => {
     api<{ auth_mode?: "demo" | "invite" }>("/api/auth/me", {
@@ -3467,6 +3505,8 @@ export default function App() {
     closeInfo = useCallback(() => setInfo(false), []);
   function changePeriod(next: HistoryPeriod) {
     // The server bounds the history, so a new window is a new fetch.
+    periodFocusPending.current =
+      document.activeElement === periodSelect.current;
     periodRef.current = next;
     setPeriod(next);
     setMonth("all");
@@ -3796,7 +3836,11 @@ export default function App() {
                   ? "Não foi possível carregar os dados bancários. Verifique a conexão e tente novamente."
                   : error}
               </p>
-              <button className="button primary" onClick={load}>
+              <button
+                ref={periodRetry}
+                className="button primary"
+                onClick={load}
+              >
                 {pt ? "Tentar novamente" : "Volver a intentar"}
                 <ArrowRight size={17} />
               </button>
@@ -4351,6 +4395,7 @@ export default function App() {
                           {pt ? "Período" : "Periodo"}
                         </span>
                         <select
+                          ref={periodSelect}
                           aria-label={
                             pt
                               ? "Período dos movimentos"

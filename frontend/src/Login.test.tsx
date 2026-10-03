@@ -1116,47 +1116,173 @@ test("Portuguese invite uses organizer source wording when metadata identifies o
   ).toBeNull();
 });
 
-test("Spanish movements period selector fetches only the chosen window", async () => {
-  localStorage.setItem("flujo-bank-action-language", "es");
-  vi.stubGlobal("scrollTo", vi.fn());
-  const calls: string[] = [];
-  const weekly = {
-    ...portalOverview,
-    transactions: [],
-    metadata: {
-      ...portalOverview.metadata,
-      period: "week",
-      transactions_returned: 0,
-      transactions_total: 0,
-      filtered_count: 0,
-    },
-  };
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async (input: string) => {
-      const url = String(input);
-      calls.push(url);
-      if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
-      if (url === "/api/overview") return reply(portalOverview);
-      if (url === "/api/overview?period=week") return reply(weekly);
-      if (url === "/api/chat/status")
-        return reply({ available: false, sandbox_intake_available: false });
-      throw new Error(`Unexpected request: ${url}`);
-    }),
-  );
-  render(<App />);
-  fireEvent.click(await screen.findByRole("button", { name: "Movimientos" }));
-  const period = () =>
-    screen.getByRole("combobox", {
-      name: "Periodo de los movimientos",
-    }) as HTMLSelectElement;
-  expect(period().value).toBe("quarter");
-  expect(document.querySelectorAll(".transaction-row")).toHaveLength(2);
-  fireEvent.change(period(), { target: { value: "week" } });
-  await waitFor(() => {
-    expect(period().value).toBe("week");
-    expect(document.querySelectorAll(".transaction-row")).toHaveLength(0);
-  });
-  expect(calls).toContain("/api/overview?period=week");
-  expect(calls.filter((url) => url.includes("period=quarter"))).toEqual([]);
-});
+const periodNames = [
+  [
+    "es",
+    "Periodo de los movimientos",
+    "Buscar movimientos",
+    "Volver a intentar",
+  ],
+  ["pt", "Período dos movimentos", "Buscar movimentos", "Tentar novamente"],
+] as const;
+
+test.each(periodNames)(
+  "%s period change restores focus after the chosen window loads",
+  async (language, periodName) => {
+    localStorage.setItem("flujo-bank-action-language", language);
+    vi.stubGlobal("scrollTo", vi.fn());
+    const calls: string[] = [];
+    let resolveWeek!: (response: Response) => void;
+    const pendingWeek = new Promise<Response>((resolve) => {
+      resolveWeek = resolve;
+    });
+    const weekly = {
+      ...portalOverview,
+      transactions: [{ ...portalCharge, merchant: "Loja Semana" }],
+      metadata: {
+        ...portalOverview.metadata,
+        period: "week",
+        transactions_returned: 1,
+        transactions_total: 1,
+        filtered_count: 1,
+      },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        const url = String(input);
+        calls.push(url);
+        if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+        if (url === "/api/overview") return reply(portalOverview);
+        if (url === "/api/overview?period=week") return pendingWeek;
+        if (url === "/api/chat/status")
+          return reply({ available: false, sandbox_intake_available: false });
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: language === "pt" ? "Movimentos" : "Movimientos",
+      }),
+    );
+    const period = () =>
+      screen.getByRole("combobox", { name: periodName }) as HTMLSelectElement;
+    expect(period().value).toBe("quarter");
+    expect(
+      Array.from(period().options).map((option) => [option.value, option.text]),
+    ).toEqual([
+      ["week", "Última semana"],
+      ["month", language === "pt" ? "Último mês" : "Último mes"],
+      ["quarter", "Últimos 3 meses"],
+    ]);
+    expect(document.querySelectorAll(".transaction-row")).toHaveLength(2);
+    period().focus();
+    fireEvent.change(period(), { target: { value: "week" } });
+    expect(
+      screen.getByLabelText(
+        language === "pt" ? "Carregando dados" : "Cargando datos",
+      ),
+    ).toBeTruthy();
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => resolveWeek(reply(weekly)));
+    await waitFor(() => expect(period().value).toBe("week"));
+    expect(document.activeElement).toBe(period());
+    expect(document.querySelectorAll(".transaction-row")).toHaveLength(1);
+    expect(screen.getByText("Loja Semana")).toBeTruthy();
+    expect(screen.queryByText("Loja Lua")).toBeNull();
+    expect(calls).toContain("/api/overview?period=week");
+    expect(calls.filter((url) => url.includes("period=quarter"))).toEqual([]);
+  },
+);
+
+test.each(periodNames)(
+  "%s failed period fetch focuses the visible retry control",
+  async (language, periodName, _searchName, retryName) => {
+    localStorage.setItem("flujo-bank-action-language", language);
+    vi.stubGlobal("scrollTo", vi.fn());
+    let resolveWeek!: (response: Response) => void;
+    const pendingWeek = new Promise<Response>((resolve) => {
+      resolveWeek = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        const url = String(input);
+        if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+        if (url === "/api/overview") return reply(portalOverview);
+        if (url === "/api/overview?period=week") return pendingWeek;
+        if (url === "/api/chat/status")
+          return reply({ available: false, sandbox_intake_available: false });
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: language === "pt" ? "Movimentos" : "Movimientos",
+      }),
+    );
+    const period = screen.getByRole("combobox", { name: periodName });
+    period.focus();
+    fireEvent.change(period, { target: { value: "week" } });
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => resolveWeek(reply({}, 503)));
+    const retry = await screen.findByRole("button", { name: retryName });
+    expect(document.activeElement).toBe(retry);
+    expect(screen.getByRole("alert")).toBeTruthy();
+  },
+);
+
+test.each(periodNames)(
+  "%s period loading leaves focus on another chosen control",
+  async (language, periodName, searchName) => {
+    localStorage.setItem("flujo-bank-action-language", language);
+    vi.stubGlobal("scrollTo", vi.fn());
+    let resolveWeek!: (response: Response) => void;
+    const pendingWeek = new Promise<Response>((resolve) => {
+      resolveWeek = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        const url = String(input);
+        if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+        if (url === "/api/overview") return reply(portalOverview);
+        if (url === "/api/overview?period=week") return pendingWeek;
+        if (url === "/api/chat/status")
+          return reply({ available: false, sandbox_intake_available: false });
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: language === "pt" ? "Movimentos" : "Movimientos",
+      }),
+    );
+    const period = screen.getByRole("combobox", { name: periodName });
+    period.focus();
+    fireEvent.change(period, { target: { value: "week" } });
+    const search = screen.getByRole("textbox", { name: searchName });
+    search.focus();
+    expect(document.activeElement).toBe(search);
+    await act(async () =>
+      resolveWeek(
+        reply({
+          ...portalOverview,
+          transactions: [],
+          metadata: {
+            ...portalOverview.metadata,
+            period: "week",
+            transactions_returned: 0,
+            transactions_total: 0,
+            filtered_count: 0,
+          },
+        }),
+      ),
+    );
+    await screen.findByRole("combobox", { name: periodName });
+    expect(document.activeElement).toBe(search);
+  },
+);
