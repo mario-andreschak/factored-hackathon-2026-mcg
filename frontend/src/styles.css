@@ -1003,10 +1003,11 @@ button svg {
   background: #345d46;
 }
 .chart-month > span {
-  font-size: 8px;
-  color: #9da995;
+  font-size: 12px;
+  line-height: 1.25;
+  color: #4b6044;
   height: 20px;
-  padding-top: 8px;
+  padding-top: 3px;
 }
 .chart-legend {
   display: flex;
