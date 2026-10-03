@@ -1323,6 +1323,90 @@ test.each(periodNames)(
   },
 );
 
+for (const moveFocusDuringRetry of [false, true]) {
+  test.each(periodNames)(
+    `%s failed period retry ${moveFocusDuringRetry ? "keeps later customer focus" : "restores period focus"}`,
+    async (language, periodName, _searchName, retryName) => {
+      localStorage.setItem("flujo-bank-action-language", language);
+      vi.stubGlobal("scrollTo", vi.fn());
+      const calls: string[] = [];
+      let weekAttempt = 0;
+      let resolveRetry!: (response: Response) => void;
+      const pendingRetry = new Promise<Response>((resolve) => {
+        resolveRetry = resolve;
+      });
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: string) => {
+          const url = String(input);
+          calls.push(url);
+          if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+          if (url === "/api/overview") return reply(portalOverview);
+          if (url === "/api/overview?period=week") {
+            weekAttempt += 1;
+            return weekAttempt === 1 ? reply({}, 503) : pendingRetry;
+          }
+          if (url === "/api/chat/status")
+            return reply({ available: false, sandbox_intake_available: false });
+          throw new Error(`Unexpected request: ${url}`);
+        }),
+      );
+      render(<App />);
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: language === "pt" ? "Movimentos" : "Movimientos",
+        }),
+      );
+      const period = () =>
+        screen.getByRole("combobox", { name: periodName }) as HTMLSelectElement;
+      period().focus();
+      fireEvent.change(period(), { target: { value: "week" } });
+      const retry = await screen.findByRole("button", { name: retryName });
+      expect(screen.getByRole("alert")).toBeTruthy();
+      expect(document.activeElement).toBe(retry);
+      fireEvent.click(retry);
+      expect(
+        calls.filter((url) => url === "/api/overview?period=week"),
+      ).toHaveLength(2);
+      expect(
+        screen.getByLabelText(
+          language === "pt" ? "Carregando dados" : "Cargando datos",
+        ),
+      ).toBeTruthy();
+      expect(screen.queryByRole("button", { name: retryName })).toBeNull();
+      let laterFocus: HTMLElement | null = null;
+      if (moveFocusDuringRetry) {
+        laterFocus = screen.getByRole("button", {
+          name: language === "pt" ? "Meus produtos" : "Mis productos",
+        });
+        laterFocus.focus();
+        expect(document.activeElement).toBe(laterFocus);
+      }
+      await act(async () =>
+        resolveRetry(
+          reply({
+            ...portalOverview,
+            transactions: [{ ...portalCharge, merchant: "Loja Semana" }],
+            metadata: {
+              ...portalOverview.metadata,
+              period: "week",
+              transactions_returned: 1,
+              transactions_total: 1,
+              filtered_count: 1,
+            },
+          }),
+        ),
+      );
+      await waitFor(() => expect(period().value).toBe("week"));
+      expect(document.activeElement).toBe(laterFocus ?? period());
+      expect(screen.getByText("Loja Semana")).toBeTruthy();
+      expect(
+        calls.filter((url) => url === "/api/overview?period=week"),
+      ).toHaveLength(2);
+    },
+  );
+}
+
 test.each(periodNames)(
   "%s period loading leaves focus on another chosen control",
   async (language, periodName, searchName) => {

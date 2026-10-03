@@ -3845,7 +3845,12 @@ export default function App() {
               <button
                 ref={periodRetry}
                 className="button primary"
-                onClick={load}
+                onClick={() => {
+                  periodFocusPending.current =
+                    page === "transactions" &&
+                    document.activeElement === periodRetry.current;
+                  load();
+                }}
               >
                 {pt ? "Tentar novamente" : "Volver a intentar"}
                 <ArrowRight size={17} />
