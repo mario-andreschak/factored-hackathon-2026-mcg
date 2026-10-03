@@ -1362,7 +1362,19 @@ for (const moveFocusDuringRetry of [false, true]) {
       period().focus();
       fireEvent.change(period(), { target: { value: "week" } });
       const retry = await screen.findByRole("button", { name: retryName });
-      expect(screen.getByRole("alert")).toBeTruthy();
+      expect(
+        screen.getByRole("heading", {
+          name:
+            language === "pt"
+              ? "Um momento para reconectar."
+              : "Un momento para reconectar.",
+        }),
+      ).toBeTruthy();
+      expect(screen.getByRole("alert").textContent).toBe(
+        language === "pt"
+          ? "Não foi possível carregar os dados bancários. Verifique a conexão e tente novamente."
+          : "No pudimos cargar el snapshot bancario. Comprueba la conexión y vuelve a intentar.",
+      );
       expect(document.activeElement).toBe(retry);
       fireEvent.click(retry);
       expect(
