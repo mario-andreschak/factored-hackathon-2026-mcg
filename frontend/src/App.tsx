@@ -3435,7 +3435,7 @@ export default function App() {
       else {
         setAuthenticated(true);
         setError(
-          "No pudimos cargar el snapshot bancario. Comprueba la conexión y vuelve a intentar.",
+          "No pudimos cargar los datos bancarios. Comprueba la conexión y vuelve a intentar.",
         );
       }
     } finally {

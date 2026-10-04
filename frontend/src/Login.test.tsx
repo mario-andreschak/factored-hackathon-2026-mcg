@@ -1373,7 +1373,7 @@ for (const moveFocusDuringRetry of [false, true]) {
       expect(screen.getByRole("alert").textContent).toBe(
         language === "pt"
           ? "Não foi possível carregar os dados bancários. Verifique a conexão e tente novamente."
-          : "No pudimos cargar el snapshot bancario. Comprueba la conexión y vuelve a intentar.",
+          : "No pudimos cargar los datos bancarios. Comprueba la conexión y vuelve a intentar.",
       );
       expect(document.activeElement).toBe(retry);
       fireEvent.click(retry);
