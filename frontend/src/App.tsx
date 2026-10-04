@@ -3834,8 +3834,8 @@ export default function App() {
               <ShieldCheck size={36} />
               <h1>
                 {pt
-                  ? "Um momento para reconectar."
-                  : "Un momento para reconectar."}
+                  ? "Não foi possível carregar seus dados."
+                  : "No pudimos cargar tus datos."}
               </h1>
               <p role="alert">
                 {pt

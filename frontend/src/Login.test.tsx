@@ -891,12 +891,14 @@ test("Portuguese Movimentos snapshot error, retry and boot use Portuguese semant
   const main = screen.getByRole("main");
   expect(main.getAttribute("lang")).toBe("pt-BR");
   expect(
-    screen.getByRole("heading", { name: "Um momento para reconectar." }),
+    screen.getByRole("heading", {
+      name: "Não foi possível carregar seus dados.",
+    }),
   ).toBeTruthy();
   expect(screen.getByRole("alert").textContent).toContain(
     "Não foi possível carregar os dados bancários.",
   );
-  expect(screen.queryByText("Un momento para reconectar.")).toBeNull();
+  expect(screen.queryByText("No pudimos cargar tus datos.")).toBeNull();
   expect(
     within(main).getByRole("button", { name: "Encerrar sessão" }),
   ).toBeTruthy();
@@ -1366,8 +1368,8 @@ for (const moveFocusDuringRetry of [false, true]) {
         screen.getByRole("heading", {
           name:
             language === "pt"
-              ? "Um momento para reconectar."
-              : "Un momento para reconectar.",
+              ? "Não foi possível carregar seus dados."
+              : "No pudimos cargar tus datos.",
         }),
       ).toBeTruthy();
       expect(screen.getByRole("alert").textContent).toBe(
