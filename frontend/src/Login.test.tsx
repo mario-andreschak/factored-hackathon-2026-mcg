@@ -1372,8 +1372,8 @@ for (const moveFocusDuringRetry of [false, true]) {
       ).toBeTruthy();
       expect(screen.getByRole("alert").textContent).toBe(
         language === "pt"
-          ? "Não foi possível carregar os dados bancários. Verifique a conexão e tente novamente."
-          : "No pudimos cargar los datos bancarios. Comprueba la conexión y vuelve a intentar.",
+          ? "Não foi possível carregar os dados bancários. Tente novamente em alguns instantes."
+          : "No pudimos cargar los datos bancarios. Vuelve a intentarlo en unos momentos.",
       );
       expect(document.activeElement).toBe(retry);
       fireEvent.click(retry);

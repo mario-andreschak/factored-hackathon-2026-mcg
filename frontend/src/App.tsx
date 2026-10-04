@@ -3435,7 +3435,7 @@ export default function App() {
       else {
         setAuthenticated(true);
         setError(
-          "No pudimos cargar los datos bancarios. Comprueba la conexión y vuelve a intentar.",
+          "No pudimos cargar los datos bancarios. Vuelve a intentarlo en unos momentos.",
         );
       }
     } finally {
@@ -3839,7 +3839,7 @@ export default function App() {
               </h1>
               <p role="alert">
                 {pt
-                  ? "Não foi possível carregar os dados bancários. Verifique a conexão e tente novamente."
+                  ? "Não foi possível carregar os dados bancários. Tente novamente em alguns instantes."
                   : error}
               </p>
               <button
