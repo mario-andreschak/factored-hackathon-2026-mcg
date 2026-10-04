@@ -127,3 +127,90 @@ def test_unconfigured_voice_answers_unavailable(settings):  # noqa: F811
     with TestClient(create_app(settings)) as client:
         client.post("/api/auth/login", json={"profile": "colombia", "code": settings.demo_code}, headers=ORIGIN)
         assert client.post("/api/voice/speak", json={"text": "Hola"}, headers=ORIGIN).status_code == 503
+
+
+def sse(*deltas):
+    lines = [json.dumps({"choices": [{"index": 0, "delta": delta}]}) for delta in deltas]
+    return "".join(f"data: {line}\n\n" for line in [*lines, "[DONE]"])
+
+
+def audio_model(script):
+    """A scripted native audio model beside the scripted speech providers."""
+    seen = []
+
+    def handler(request: httpx.Request):
+        if request.url.path.endswith("/chat/completions"):
+            seen.append(json.loads(request.content))
+            return httpx.Response(200, text=script(seen[-1]), headers={"content-type": "text/event-stream"})
+        return httpx.Response(200, json={"text": "¿Cuánto tengo en ahorros?"})
+
+    return httpx.MockTransport(handler), seen
+
+
+PCM = base64.b64encode(b"\x10\x00" * 300).decode()
+ASKS = sse({"audio": {"transcript": "Claro, "}}, {"audio": {"data": PCM}}, {"audio": {"transcript": "lo reviso."}},
+           {"tool_calls": [{"index": 0, "function": {"name": "consultar_savia", "arguments": '{"solicitud": "Quiero '}}]},
+           {"tool_calls": [{"index": 0, "function": {"arguments": 'saber mi saldo de ahorros."}'}}]})
+TELLS = sse({"audio": {"transcript": "Tienes 1.250.000 pesos."}}, {"audio": {"data": PCM}})
+
+
+def test_the_voice_answers_itself_and_hands_bank_requests_to_savia():
+    async def run():
+        from frontend.server.conversation import Conversation
+        transport, seen = audio_model(lambda body: TELLS if body["tool_choice"] == "none" else ASKS)
+        voice = VoiceService({"providers": [GPU, ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        first = [e async for e in await talk.turn("s", "es", audio=wav(), fresh=True)]
+        told = [e async for e in await talk.turn("s", "es", result="Saldo de ahorros: **$1.250.000 COP**.")]
+        busy = [e async for e in await talk.turn("s", "es", audio=wav(), working=True)]
+        await talk.close(), await voice.close()
+        return talk, first, told, busy, seen
+
+    talk, first, told, busy, seen = asyncio.run(run())
+    assert talk.status() == {"conversation": True, "persona": "moss"}
+    kinds = [e["type"] for e in first]
+    assert kinds[0] == "start" and kinds[-3:] == ["delegate", "heard", "complete"]
+    assert next(e for e in first if e["type"] == "heard")["text"] == "¿Cuánto tengo en ahorros?"
+    assert first[-3]["request"] == "Quiero saber mi saldo de ahorros."
+    assert first[-1]["text"] == "Claro, lo reviso."
+    assert base64.b64decode(next(e for e in first if e["type"] == "audio")["data"]) == b"\x10\x00" * 300
+    # The recording goes to the model as audio; Moss is the default, calm persona.
+    assert seen[0]["model"] == "openai/gpt-audio" and seen[0]["audio"] == {"voice": "coral", "format": "pcm16"}
+    assert seen[0]["messages"][-1]["content"][0]["type"] == "input_audio"
+    assert "Moss" in seen[0]["messages"][0]["content"] and "tortuga" in seen[0]["messages"][0]["content"]
+    # Savia's reply is retold without tools, after what was already said.
+    assert seen[1]["tool_choice"] == "none" and "$1.250.000 COP" in seen[1]["messages"][-1]["content"]
+    assert [m["role"] for m in seen[1]["messages"][1:-1]] == ["user", "assistant", "tool"]
+    assert seen[1]["messages"][2]["content"] == "Claro, lo reviso."
+    assert "Quiero saber mi saldo" in seen[1]["messages"][2]["tool_calls"][0]["function"]["arguments"]
+    assert [e["type"] for e in told] == ["start", "caption", "audio", "complete"]
+    # While Savia works, the voice keeps talking but cannot send a second request.
+    assert seen[2]["tool_choice"] == "none" and "todavía está trabajando" in seen[2]["messages"][0]["content"]
+    assert len(seen[2]["messages"]) == 7 and "delegate" not in [e["type"] for e in busy]
+
+
+def test_conversation_needs_a_key_and_can_be_turned_off():
+    from frontend.server.conversation import Conversation
+    assert Conversation({}, VoiceService({"providers": [GPU]})).status() == {}
+    assert Conversation({"conversation": False}, VoiceService({"providers": [ROUTER]})).status() == {}
+    spark = Conversation({"conversation": {"api_key": "k", "persona": "spark"}}, VoiceService({"providers": [GPU]}))
+    assert spark.status() == {"conversation": True, "persona": "spark"}
+    with pytest.raises(ValueError):
+        Conversation({"conversation": {"api_key": "k", "persona": "hare"}}, VoiceService({}))
+    with pytest.raises(VoiceError):
+        asyncio.run(Conversation({}, VoiceService({})).turn("s", "es", message="Hola"))
+
+
+def test_voice_turn_route_streams_events_for_a_session(settings):  # noqa: F811
+    transport, _ = audio_model(lambda body: ASKS)
+    configured = replace(settings, voice={"providers": [GPU, ROUTER]})
+    with TestClient(create_app(configured, voice_transport=transport)) as client:
+        assert client.post("/api/voice/turn", json={"audio": wav()}, headers=ORIGIN).status_code == 401
+        client.post("/api/auth/login", json={"profile": "colombia", "code": settings.demo_code}, headers=ORIGIN)
+        reply = client.post("/api/voice/turn", json={"audio": wav(), "fresh": True}, headers=ORIGIN)
+        assert reply.status_code == 200 and reply.headers["content-type"].startswith("application/x-ndjson")
+        events = [json.loads(line) for line in reply.text.splitlines()]
+        assert events[0] == {"type": "start", "sample_rate": 24000} and events[-1]["type"] == "complete"
+        assert {"type": "delegate", "request": "Quiero saber mi saldo de ahorros."} in events
+        assert client.post("/api/voice/turn", json={"audio": wav(), "result": "x"}, headers=ORIGIN).status_code == 422
+        assert client.post("/api/voice/turn", json={}, headers=ORIGIN).status_code == 422

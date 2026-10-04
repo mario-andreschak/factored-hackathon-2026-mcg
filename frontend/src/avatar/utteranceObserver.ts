@@ -39,6 +39,10 @@ export class UtteranceCollector {
     this.active = false;
     this.draining = false;
   }
+  /** The utterance so far, for recognition while the person is still speaking. */
+  snapshot(): Float32Array[] {
+    return this.active ? this.chunks.slice() : [];
+  }
   push(samples: Float32Array, voiced: boolean): Utterance | undefined {
     if (
       !(samples instanceof Float32Array) ||

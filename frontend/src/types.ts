@@ -86,13 +86,21 @@ export type ChatStatus = {
   reason?: string;
   read_only?: boolean;
   sandbox_intake_available?: boolean;
-  voice?: { available: boolean };
+  voice?: {
+    available: boolean;
+    /** A conversational voice answers; without it speech is dictation. */
+    conversation?: boolean;
+    persona?: "moss" | "orbit" | "spark";
+  };
 };
 export type ChatSelection = Pick<
   Transaction,
   "reference" | "occurred_at" | "type" | "amount" | "currency" | "status"
 >;
 export type ChatMessage = {
+  /** A spoken turn shown only in this visit; `pending` while it is still arriving. */
+  voiceId?: string;
+  pending?: boolean;
   role: "user" | "assistant";
   text: string;
   selection?: ChatSelection;

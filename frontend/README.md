@@ -53,14 +53,37 @@ Legacy worker-owned volumes are refused, never automatically transplanted.
 
 The assistant dialog shows the FLUJO Avatar eyes. They look around while idle,
 narrow while Savia is working and move with the voice while it speaks. When the
-server has voice providers configured, **Hablar con Savia** turns on the
-microphone: what the customer says is transcribed and sent through the same
-chat request as typed text, and the reply (and the result of a dispute step) is
-read aloud. Speaking over Savia stops the playback. Typing keeps working.
+server has voice configured, **Hablar con Savia** turns on the microphone and
+the customer talks with **Moss**, the calm voice.
 
-Voice never answers by itself and receives no bank data beyond the reply text
-it reads. Recordings are sent to the configured provider for transcription and
-are not stored by the portal.
+There are two layers, as in flujo-avatar:
+
+- **The conversational voice** is a native audio model (`openai/gpt-audio`,
+  voice `coral`, through OpenRouter). It hears the recording itself and answers
+  in its own voice, so greetings, reassurance and small talk are immediate. It
+  has no bank access and is told never to state account facts on its own.
+- **Savia** is the existing chat worker in the background. When the customer
+  asks about their money or a dispute, the voice says a short line and calls
+  `consultar_savia`; the browser sends that request through the same
+  `/api/chat/messages` call as typed text. The verified reply appears in the
+  chat as always and is handed back to the voice, which retells it briefly.
+  The result of a dispute step is retold the same way. The customer can keep
+  talking while Savia works; the voice cannot send a second request meanwhile.
+
+What the customer says appears in the chat while they speak: the utterance so
+far is recognized about once a second, then replaced by the final text. What
+Moss says appears as it is spoken. These spoken turns are shown for the visit
+only; the saved history holds the requests Savia received and its replies.
+Speaking over the voice stops it. Typing keeps working.
+
+The spoken retelling can differ in wording from the verified reply, which is
+why the exact reply always stays on screen. Dispute consent stays on the
+on-screen buttons. Recordings and the reply text go to the configured
+providers and are not stored by the portal.
+
+Moss is one of three presentation styles (`moss` calm, `orbit` measured,
+`spark` lively) defined in `server/conversation.py`. Only Moss is offered now;
+`"conversation": {"persona": "orbit"}` switches the server to another.
 
 Configure providers under `voice` in the private `frontend.json`, or point
 `SAVIA_VOICE_CONFIG_FILE` at a separate file. They are tried in order:
@@ -77,6 +100,13 @@ Configure providers under `voice` in the private `frontend.json`, or point
   ]
 }
 ```
+
+The conversational voice uses the `openrouter` provider's key unless
+`"conversation": {"api_key": "...", "model": "...", "voice": "...", "persona": "..."}`
+says otherwise; `"conversation": false` turns it off. Without it, or when it
+fails, voice is dictation: the recognized text goes to the chat and the reply
+is read aloud by the providers above. The providers also supply the on-screen
+recognition.
 
 [`deploy/modal-voice`](../deploy/modal-voice/README.md) deploys the GPU provider
 and writes this object to `~/.savia-voice/voice.json`. Without providers the

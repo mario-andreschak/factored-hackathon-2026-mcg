@@ -2226,6 +2226,25 @@ button svg {
   padding: 13px 15px;
   border-radius: 11px;
 }
+.chat-message.spoken.assistant {
+  background: #f6f9ef;
+  border-style: dashed;
+}
+.chat-message[aria-busy="true"] p::after {
+  content: " ▍";
+  opacity: 0.55;
+  animation: voice-caret 1s steps(2) infinite;
+}
+@keyframes voice-caret {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-message[aria-busy="true"] p::after {
+    animation: none;
+  }
+}
 .chat-message.user {
   background: #244e40;
   border: 0;

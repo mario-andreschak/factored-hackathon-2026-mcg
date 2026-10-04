@@ -4,10 +4,17 @@
 `../../public/avatar-audio-capture.js` come from
 [flujo-avatar](https://github.com/flujo-app/flujo-avatar) at
 `23955370541c93786db1840a40cf31c87aae2e90`. Edit them there and copy again.
-They are formatted with this project's Prettier. Two local changes: `Eyes.tsx` drops the Next.js `'use client'` line and skips
-its animation loop where `matchMedia` is missing (jsdom tests).
+They are formatted with this project's Prettier. Three local changes: `Eyes.tsx`
+drops the Next.js `'use client'` line and skips its animation loop where
+`matchMedia` is missing (jsdom tests), and `UtteranceCollector` gains
+`snapshot()` so the utterance can be recognized while it is still being spoken.
 
 `useSaviaVoice.ts` is Savia's own hook. It keeps flujo-avatar's microphone
-capture and end-of-utterance detection, and replaces the native conversation
-transport: speech is transcribed and sent through the normal Savia chat, and
-the bank's actual reply is read aloud. The voice layer never answers on its own.
+capture, end-of-utterance detection and approach: a finished utterance goes as
+audio to a native audio model that answers in its own voice
+(`/api/voice/turn`, `server/conversation.py`, the counterpart of flujo-avatar's
+`openrouter-native.mjs`). Where flujo-avatar routes work through a separate
+recognition lane, here the voice model itself hands bank requests to the Savia
+chat with a tool call, and Savia's verified reply is given back to it to
+retell. When the native model is unavailable the hook falls back to dictation:
+recognize, send through the chat, read the reply aloud.

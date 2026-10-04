@@ -28,7 +28,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function open(status: { available: boolean; voice?: { available: boolean } }) {
+function open(status: {
+  available: boolean;
+  voice?: { available: boolean; conversation?: boolean; persona?: "moss" };
+}) {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL) => {
@@ -68,6 +71,19 @@ test("the assistant shows the eyes, and offers voice only when the server does",
   expect(
     screen.getByRole("button", { name: "Hablar con Savia" }),
   ).toHaveProperty("ariaPressed", "false");
+});
+
+test("the calm persona's eyes are the default, with or without the conversational voice", async () => {
+  open({ available: true, voice: { available: true } });
+  await screen.findByText("Vamos a entender tus movimientos.");
+  expect(document.querySelector("[data-avatar='moss']")).not.toBeNull();
+  cleanup();
+  open({
+    available: true,
+    voice: { available: true, conversation: true, persona: "moss" },
+  });
+  await screen.findByText("Vamos a entender tus movimientos.");
+  expect(document.querySelector("[data-avatar='moss']")).not.toBeNull();
 });
 
 test("a browser without a microphone explains itself and keeps the chat usable", async () => {

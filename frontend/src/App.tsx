@@ -1434,6 +1434,12 @@ const assistantCopy = {
     voiceListening: "Te escucho. Habla con naturalidad.",
     voiceThinking: "Un momento, estoy revisando…",
     voiceSpeaking: "Habla encima para interrumpirme.",
+    voiceMessage: "Mensaje de voz",
+    voicePersona: {
+      moss: "Moss · voz tranquila",
+      orbit: "Orbit",
+      spark: "Spark",
+    },
     voiceErrors: {
       browser:
         "La voz necesita un navegador con micrófono en una conexión segura. Puedes escribir.",
@@ -1491,6 +1497,12 @@ const assistantCopy = {
     voiceListening: "Estou ouvindo. Fale com naturalidade.",
     voiceThinking: "Um momento, estou verificando…",
     voiceSpeaking: "Fale por cima para me interromper.",
+    voiceMessage: "Mensagem de voz",
+    voicePersona: {
+      moss: "Moss · voz tranquila",
+      orbit: "Orbit",
+      spark: "Spark",
+    },
     voiceErrors: {
       browser:
         "A voz precisa de um navegador com microfone em uma conexão segura. Você pode escrever.",
@@ -2296,11 +2308,36 @@ export function Assistant({
     actionStatusSequence = useRef(0);
   const copy = actionCopy[actionLanguage];
   const ui = assistantCopy[actionLanguage];
-  const sendRef = useRef<(text: string) => void>(() => {});
+  const sendRef = useRef<(text: string, spoken?: boolean) => void>(() => {});
+  const persona = status.voice?.persona ?? "moss";
+  // A spoken turn fills in as it is recognized or said, in the place it began.
+  const voiceTurn = (
+    role: ChatMessage["role"],
+    voiceId: string,
+    text: string,
+    final: boolean,
+  ) =>
+    setMessages((m) => {
+      const at = m.findIndex(
+        (item) => item.voiceId === voiceId && item.role === role,
+      );
+      const value =
+        text || (at >= 0 ? m[at].text : "") || (final ? ui.voiceMessage : "");
+      if (final && role === "assistant" && !value)
+        return m.filter((_, index) => index !== at);
+      const entry = { role, text: value, voiceId, pending: !final };
+      return at < 0
+        ? [...m, entry]
+        : m.map((item, index) => (index === at ? entry : item));
+    });
   const voice = useSaviaVoice({
     language: actionLanguage,
     paused: busy || actionBusy || !historyReady || !status.available,
-    onUtterance: (text) => sendRef.current(text),
+    conversation: Boolean(status.voice?.conversation),
+    onUtterance: (text) => sendRef.current(text, true),
+    onHeard: (id, text, final) => voiceTurn("user", id, text, final),
+    onCaption: (id, text, final) => voiceTurn("assistant", id, text, final),
+    onDelegate: (request) => sendRef.current(request, true),
     onExpired,
   });
   const voiceRef = useRef(voice);
@@ -2469,7 +2506,8 @@ export function Assistant({
       clearTimeout(timer);
     };
   }, [status.available, historyAttempt, onExpired]);
-  async function send(text: string) {
+  /** `spoken`: the request was said aloud, and its text is already in the chat. */
+  async function send(text: string, spoken = false) {
     if (!text.trim() || busy || !status.available || !historyReady) return;
     const queryScopeId = compatibleQueryId(
       activeQueryIdRef.current,
@@ -2493,14 +2531,15 @@ export function Assistant({
       : chatSelection?.reference;
     setInput("");
     setError("");
-    setMessages((m) => [
-      ...m,
-      {
-        role: "user",
-        text,
-        ...(chatSelection ? { selection: chatSelection } : {}),
-      },
-    ]);
+    if (!spoken)
+      setMessages((m) => [
+        ...m,
+        {
+          role: "user",
+          text,
+          ...(chatSelection ? { selection: chatSelection } : {}),
+        },
+      ]);
     setBusy(true);
     controller.current = new AbortController();
     try {
@@ -2522,7 +2561,7 @@ export function Assistant({
       });
       if (!alive.current || controller.current.signal.aborted) return;
       setMessages((m) => [...m, { role: "assistant", text: result.reply }]);
-      if (voiceRef.current.active) void voiceRef.current.speak(result.reply);
+      if (voiceRef.current.active) voiceRef.current.narrate(result.reply);
       setQueryScopes(result.queries || []);
       activeQueryIdRef.current = compatibleQueryId(
         result.active_query_id || null,
@@ -2667,7 +2706,7 @@ export function Assistant({
         });
         if (actionIsTerminal(result)) setHandoffRequestId(crypto.randomUUID());
         if (voiceRef.current.active)
-          void voiceRef.current.speak(
+          voiceRef.current.narrate(
             result.message || fallbackActionMessage(result, actionLanguage),
           );
       }
@@ -2837,7 +2876,7 @@ export function Assistant({
         <span className="assistant-eyes">
           <Eyes
             small
-            avatar="orbit"
+            avatar={persona}
             level={voice.level}
             phase={
               voice.active
@@ -2861,6 +2900,9 @@ export function Assistant({
           </span>
           {(voice.active || voice.connecting) && (
             <span className="voice-state" role="status">
+              {status.voice?.conversation && !voice.connecting && (
+                <b>{ui.voicePersona[persona]} · </b>
+              )}
               {voice.connecting
                 ? ui.voiceConnecting
                 : voice.phase === "speaking"
@@ -3222,9 +3264,17 @@ export function Assistant({
           </div>
         ) : (
           messages.map((m, i) => (
-            <div key={i} className={`chat-message ${m.role}`}>
+            <div
+              key={m.voiceId ? `${m.voiceId}-${m.role}` : i}
+              className={`chat-message ${m.role}${m.voiceId ? " spoken" : ""}`}
+              aria-busy={m.pending || undefined}
+            >
               <span lang={uiLang}>
-                {m.role === "assistant" ? "Savia" : ui.you}
+                {m.role !== "assistant"
+                  ? ui.you
+                  : m.voiceId
+                    ? ui.voicePersona[persona].split(" · ")[0]
+                    : "Savia"}
               </span>
               {m.selection && (
                 <div className="chat-message-selection">
@@ -3241,10 +3291,10 @@ export function Assistant({
                   </span>
                 </div>
               )}
-              {m.role === "assistant" ? (
+              {m.role === "assistant" && !m.voiceId ? (
                 <AssistantText text={m.text} />
               ) : (
-                <p>{m.text}</p>
+                <p>{m.text || "…"}</p>
               )}
             </div>
           ))

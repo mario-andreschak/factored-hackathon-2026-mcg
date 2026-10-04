@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { base64Bytes, Pcm16Stream, splitSpeechText, wavFromPcm } from "./audio";
+import {
+  base64Bytes,
+  Pcm16Stream,
+  readNdjson,
+  splitSpeechText,
+  wavFromPcm,
+} from "./audio";
 import type { EyePhase } from "./Eyes";
 import { UtteranceCollector } from "./utteranceObserver";
 
@@ -9,10 +15,18 @@ export type VoiceErrorCode =
 
 interface Options {
   language: VoiceLanguage;
-  /** The chat is working: speech captured meanwhile is dropped, not queued. */
+  /** The Savia chat is working on a request. */
   paused: boolean;
-  /** A recognized request. The caller sends it through the normal Savia chat. */
+  /** The server offers the conversational voice; otherwise speech is only dictation. */
+  conversation: boolean;
+  /** Dictation only: a recognized request for the normal Savia chat. */
   onUtterance: (text: string) => void;
+  /** What the person is saying, as it is recognized. `final` closes that utterance. */
+  onHeard?: (id: string, text: string, final: boolean) => void;
+  /** What the voice is saying in its own conversational turn. */
+  onCaption?: (id: string, text: string, final: boolean) => void;
+  /** The voice hands a request to Savia. The caller sends it through the chat. */
+  onDelegate?: (request: string) => void;
   onExpired?: () => void;
 }
 
@@ -30,6 +44,12 @@ interface Session {
   transcribing: number;
   serial: number;
   speech?: AbortController;
+  turn?: AbortController;
+  turns: number;
+  pendingResult?: string;
+  partialBusy: boolean;
+  partialAt: number;
+  finalId: string;
   sources: Set<AudioBufferSourceNode>;
   playUntil: number;
   raf: number;
@@ -38,6 +58,19 @@ interface Session {
 const WORKLET = "/avatar-audio-capture.js";
 const UPLOAD_RATE = 16000;
 const MAX_SPOKEN_CHUNKS = 2;
+const PARTIAL_EVERY_MS = 1000;
+let sessions = 0;
+
+function pcmSamples(data: string): Float32Array {
+  const binary = atob(data),
+    samples = new Float32Array(binary.length >> 1);
+  for (let i = 0; i < samples.length; i++) {
+    const value =
+      binary.charCodeAt(2 * i) | (binary.charCodeAt(2 * i + 1) << 8);
+    samples[i] = (value >= 0x8000 ? value - 0x10000 : value) / 32768;
+  }
+  return samples;
+}
 
 /** Markdown and references are for the screen; the voice reads plain sentences. */
 export function spokenText(text: string): string {
@@ -52,9 +85,11 @@ export function spokenText(text: string): string {
 }
 
 /**
- * Microphone in, Savia's own reply out. Recognition and speech are transport:
- * every request still goes through the authenticated chat, and only text the
- * chat actually returned is read aloud.
+ * A spoken conversation in front of the Savia chat. The voice model hears the
+ * recording, answers in its own voice and hands bank requests to the caller,
+ * which sends them through the authenticated chat; `narrate` gives the chat's
+ * verified reply back to be told. Without the conversational voice this falls
+ * back to dictation: recognize, send, read the reply aloud.
  */
 export function useSaviaVoice(options: Options) {
   const opts = useRef(options);
@@ -70,18 +105,22 @@ export function useSaviaVoice(options: Options) {
     (s: Session) => session.current === s && !s.abort.signal.aborted,
     [],
   );
-  const speaking = (s: Session) =>
-    s.sources.size > 0 || Boolean(s.speech && !s.speech.signal.aborted);
+  const speaking = (s: Session) => s.sources.size > 0;
+  const waiting = (s: Session) =>
+    Boolean(
+      (s.speech && !s.speech.signal.aborted) ||
+      (s.turn && !s.turn.signal.aborted),
+    );
   const refresh = useCallback(
     (s: Session) => {
       if (!current(s)) return;
       setPhase(
         s.capturing
           ? "listening"
-          : s.transcribing || opts.current.paused
-            ? "thinking"
-            : speaking(s)
-              ? "speaking"
+          : speaking(s)
+            ? "speaking"
+            : s.transcribing || waiting(s) || opts.current.paused
+              ? "thinking"
               : "listening",
       );
     },
@@ -90,6 +129,8 @@ export function useSaviaVoice(options: Options) {
   const silence = useCallback((s: Session) => {
     s.speech?.abort();
     s.speech = undefined;
+    s.turn?.abort();
+    s.turn = undefined;
     for (const source of s.sources) {
       source.onended = null;
       try {
@@ -107,6 +148,7 @@ export function useSaviaVoice(options: Options) {
     session.current = null;
     if (s) {
       s.abort.abort();
+      s.pendingResult = undefined;
       silence(s);
       cancelAnimationFrame(s.raf);
       s.collector.reset();
@@ -137,8 +179,29 @@ export function useSaviaVoice(options: Options) {
     [current, stop],
   );
 
+  const enqueue = useCallback(
+    (s: Session, samples: Float32Array, rate: number) => {
+      if (!samples.length) return;
+      const buffer = s.context.createBuffer(1, samples.length, rate);
+      buffer.getChannelData(0).set(samples);
+      const source = s.context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(s.output);
+      const at = Math.max(s.context.currentTime + 0.05, s.playUntil);
+      s.playUntil = at + buffer.duration;
+      s.sources.add(source);
+      source.onended = () => {
+        s.sources.delete(source);
+        refresh(s);
+      };
+      source.start(at);
+      refresh(s);
+    },
+    [refresh],
+  );
+
   const transcribe = useCallback(
-    async (s: Session, audio: string, serial: number) => {
+    async (s: Session, audio: string, serial: number, id: string) => {
       s.transcribing++;
       refresh(s);
       try {
@@ -156,6 +219,8 @@ export function useSaviaVoice(options: Options) {
             : "";
         // A newer utterance, or a chat that started meanwhile, wins.
         if (!current(s) || serial !== s.serial || opts.current.paused) return;
+        s.finalId = id;
+        opts.current.onHeard?.(id, text.slice(0, 2000), true);
         if (text) opts.current.onUtterance(text.slice(0, 2000));
         else setError("unrecognized");
       } catch (e) {
@@ -170,6 +235,122 @@ export function useSaviaVoice(options: Options) {
       }
     },
     [current, post, refresh],
+  );
+
+  /** Recognize the utterance so far, so its text appears while the person speaks. */
+  const partial = useCallback(
+    async (s: Session, id: string, serial: number) => {
+      const chunks = s.collector.snapshot(),
+        rate = s.context.sampleRate;
+      let samples = 0;
+      for (const chunk of chunks) samples += chunk.length;
+      if (samples < rate * 0.7) return;
+      s.partialBusy = true;
+      s.partialAt = performance.now();
+      try {
+        const response = await post(
+          s,
+          "/api/voice/transcribe",
+          {
+            audio: base64Bytes(wavFromPcm(chunks, rate, UPLOAD_RATE)),
+            language: opts.current.language,
+          },
+          AbortSignal.timeout(15_000),
+        );
+        if (!response.ok) return;
+        const body: unknown = await response.json();
+        const text =
+          body && typeof body === "object" && "text" in body
+            ? String(body.text).trim()
+            : "";
+        if (text && current(s) && serial === s.serial && s.finalId !== id)
+          opts.current.onHeard?.(id, text.slice(0, 2000), false);
+      } catch {
+        // Interim text is a convenience; the finished utterance is still sent.
+      } finally {
+        s.partialBusy = false;
+      }
+    },
+    [current, post],
+  );
+
+  const speakRef = useRef<(text: string) => Promise<void>>(async () => {});
+  const converse = useCallback(
+    async (
+      s: Session,
+      input: { audio: string } | { result: string },
+      id: string,
+      serial: number,
+    ) => {
+      silence(s);
+      const turn = new AbortController(),
+        own = "audio" in input;
+      let started = false,
+        heard = false;
+      s.turn = turn;
+      if (own) opts.current.onHeard?.(id, "", false);
+      refresh(s);
+      try {
+        const response = await post(
+          s,
+          "/api/voice/turn",
+          {
+            ...input,
+            language: opts.current.language,
+            working: own && opts.current.paused,
+            fresh: s.turns++ === 0,
+          },
+          AbortSignal.any([turn.signal, AbortSignal.timeout(60_000)]),
+        );
+        if (!response.ok) throw new Error("unavailable");
+        let rate = 24000;
+        await readNdjson(response, (event) => {
+          if (turn.signal.aborted || !current(s))
+            throw new DOMException("Interrupted.", "AbortError");
+          const text = typeof event.text === "string" ? event.text : "";
+          if (event.type === "start") {
+            started = true;
+            const sent = Number(event.sample_rate);
+            if (Number.isInteger(sent) && sent >= 8000 && sent <= 48000)
+              rate = sent;
+          } else if (event.type === "heard" && own) {
+            heard = true;
+            s.finalId = id;
+            opts.current.onHeard?.(id, text.trim(), true);
+          } else if (event.type === "caption" && own)
+            opts.current.onCaption?.(id, text, false);
+          else if (event.type === "audio" && typeof event.data === "string")
+            enqueue(s, pcmSamples(event.data), rate);
+          else if (event.type === "delegate" && own) {
+            if (typeof event.request === "string" && event.request.trim())
+              opts.current.onDelegate?.(event.request.trim());
+          } else if (event.type === "complete" && own)
+            opts.current.onCaption?.(id, text, true);
+          else if (event.type === "error") throw new Error("unavailable");
+        });
+      } catch (e) {
+        const interrupted =
+          turn.signal.aborted ||
+          !current(s) ||
+          (e instanceof DOMException && e.name === "AbortError");
+        if (!interrupted && !started) {
+          // The conversational voice is down: this turn falls back to dictation.
+          if (s.turn === turn) s.turn = undefined;
+          if ("audio" in input) {
+            heard = true;
+            void transcribe(s, input.audio, serial, id);
+          } else void speakRef.current(input.result);
+        } else if (!interrupted) setError("unavailable");
+      } finally {
+        if (s.turn === turn) s.turn = undefined;
+        if (own && !heard && current(s)) {
+          s.finalId = id;
+          opts.current.onHeard?.(id, "", true);
+        }
+        refresh(s);
+      }
+    },
+    [current, enqueue, post, refresh, silence, transcribe],
   );
 
   const start = useCallback(async () => {
@@ -208,6 +389,10 @@ export function useSaviaVoice(options: Options) {
         inputLevel: 0,
         transcribing: 0,
         serial: 0,
+        turns: 0,
+        partialBusy: false,
+        partialAt: 0,
+        finalId: "",
         sources: new Set(),
         playUntil: 0,
         raf: 0,
@@ -220,7 +405,8 @@ export function useSaviaVoice(options: Options) {
         .connect(capture)
         .connect(muted)
         .connect(context.destination);
-      const rate = context.sampleRate;
+      const rate = context.sampleRate,
+        epoch = ++sessions;
       capture.port.onmessage = (event) => {
         if (!current(s)) return;
         const pcm = event.data as Float32Array;
@@ -232,8 +418,9 @@ export function useSaviaVoice(options: Options) {
           seconds = pcm.length / rate,
           playing = speaking(s);
         s.inputLevel = Math.min(1, rms * 5);
-        if (s.transcribing || opts.current.paused) {
-          // Savia is working on the previous request.
+        const native = opts.current.conversation;
+        if (!native && (s.transcribing || opts.current.paused)) {
+          // Dictation: Savia is working on the previous request.
           if (s.capturing) s.collector.reset();
           s.capturing = false;
           s.onset = 0;
@@ -248,10 +435,12 @@ export function useSaviaVoice(options: Options) {
           if (s.onset >= (playing ? 0.25 : 0.12)) {
             s.capturing = true;
             s.serial++;
+            s.partialAt = performance.now();
             silence(s);
             setError(null);
           }
         }
+        const id = `voice-${epoch}-${s.serial}`;
         const utterance = s.collector.push(pcm, voiced);
         if (utterance) {
           s.capturing = false;
@@ -261,10 +450,16 @@ export function useSaviaVoice(options: Options) {
             const audio = base64Bytes(
               wavFromPcm(utterance.chunks, rate, UPLOAD_RATE),
             );
-            void transcribe(s, audio, s.serial);
+            if (native) void converse(s, { audio }, id, s.serial);
+            else void transcribe(s, audio, s.serial, id);
           }
           utterance.chunks.forEach((chunk) => chunk.fill(0));
-        }
+        } else if (
+          s.capturing &&
+          !s.partialBusy &&
+          performance.now() - s.partialAt >= PARTIAL_EVERY_MS
+        )
+          void partial(s, id, s.serial);
         refresh(s);
       };
       const meter = new Float32Array(analyser.fftSize);
@@ -279,6 +474,12 @@ export function useSaviaVoice(options: Options) {
             for (const sample of meter) power += sample * sample;
             setLevel(Math.min(1, Math.sqrt(power / meter.length) * 5));
           } else setLevel(s.capturing ? s.inputLevel : 0);
+          // Savia's reply waits for a pause: nobody speaking, nothing playing.
+          if (s.pendingResult && !s.capturing && !s.turn && !s.sources.size) {
+            const result = s.pendingResult;
+            s.pendingResult = undefined;
+            void converse(s, { result }, "result", s.serial);
+          }
           refresh(s);
         }
         s.raf = requestAnimationFrame(measure);
@@ -301,7 +502,7 @@ export function useSaviaVoice(options: Options) {
             : "unavailable",
       );
     }
-  }, [connecting, current, refresh, silence, transcribe]);
+  }, [connecting, converse, current, partial, refresh, silence, transcribe]);
 
   const speak = useCallback(
     async (text: string) => {
@@ -337,22 +538,7 @@ export function useSaviaVoice(options: Options) {
               await reader.cancel().catch(() => {});
               return;
             }
-            const samples = pcm.decode(value);
-            if (!samples.length) continue;
-            const buffer = s.context.createBuffer(1, samples.length, rate);
-            buffer.getChannelData(0).set(samples);
-            const source = s.context.createBufferSource();
-            source.buffer = buffer;
-            source.connect(s.output);
-            const at = Math.max(s.context.currentTime + 0.05, s.playUntil);
-            s.playUntil = at + buffer.duration;
-            s.sources.add(source);
-            source.onended = () => {
-              s.sources.delete(source);
-              refresh(s);
-            };
-            source.start(at);
-            refresh(s);
+            enqueue(s, pcm.decode(value), rate);
           }
         }
       } catch (e) {
@@ -367,7 +553,19 @@ export function useSaviaVoice(options: Options) {
         refresh(s);
       }
     },
-    [current, post, refresh, silence],
+    [current, enqueue, post, refresh, silence],
+  );
+  speakRef.current = speak;
+
+  /** Tell the person what Savia answered, in the conversational voice when there is one. */
+  const narrate = useCallback(
+    (text: string) => {
+      const s = session.current;
+      if (!s || !current(s)) return;
+      if (!opts.current.conversation) void speak(text);
+      else s.pendingResult = spokenText(text).slice(0, 4000) || undefined;
+    },
+    [current, speak],
   );
 
   const interrupt = useCallback(() => {
@@ -391,7 +589,7 @@ export function useSaviaVoice(options: Options) {
     error,
     start,
     stop,
-    speak,
+    narrate,
     interrupt,
     clearError: () => setError(null),
   };

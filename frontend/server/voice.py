@@ -127,7 +127,8 @@ class VoiceService:
         if not isinstance(raw, list) or len(raw) > 4:
             raise ValueError("Voice providers must be a list of at most four entries")
         self.providers = [Provider.parse(item) for item in raw]
-        self.rate_limit = int((config or {}).get("requests_per_minute", 40))
+        # Live recognition asks about once a second while the customer speaks.
+        self.rate_limit = int((config or {}).get("requests_per_minute", 120))
         self._transport, self._clock = transport, clock
         self._client: httpx.AsyncClient | None = None
         self._recent: dict[str, deque] = {}
