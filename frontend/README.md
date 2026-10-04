@@ -49,6 +49,40 @@ reports aggregate delivery counts; queued intents do not establish acknowledgeme
 See [DIRECT_MCP.md](DIRECT_MCP.md) for exact action, signing, replay and state rules.
 Legacy worker-owned volumes are refused, never automatically transplanted.
 
+## Eyes and voice in the assistant
+
+The assistant dialog shows the FLUJO Avatar eyes. They look around while idle,
+narrow while Savia is working and move with the voice while it speaks. When the
+server has voice providers configured, **Hablar con Savia** turns on the
+microphone: what the customer says is transcribed and sent through the same
+chat request as typed text, and the reply (and the result of a dispute step) is
+read aloud. Speaking over Savia stops the playback. Typing keeps working.
+
+Voice never answers by itself and receives no bank data beyond the reply text
+it reads. Recordings are sent to the configured provider for transcription and
+are not stored by the portal.
+
+Configure providers under `voice` in the private `frontend.json`, or point
+`SAVIA_VOICE_CONFIG_FILE` at a separate file. They are tried in order:
+
+```json
+"voice": {
+  "providers": [
+    {"name": "savia-gpu", "kind": "openai", "base_url": "https://<modal-endpoint>/v1",
+     "api_key": "<token>", "stt_model": "whisper-large-v3", "tts_model": "kokoro",
+     "voices": {"es": "ef_dora", "pt": "pf_dora"}, "timeout": 12},
+    {"name": "openrouter", "kind": "openrouter", "api_key": "<key>",
+     "stt_model": "openai/whisper-large-v3", "tts_model": "google/gemini-3.8-flash-lite-tts",
+     "voices": {"es": "Kore", "pt": "Kore"}}
+  ]
+}
+```
+
+[`deploy/modal-voice`](../deploy/modal-voice/README.md) deploys the GPU provider
+and writes this object to `~/.savia-voice/voice.json`. Without providers the
+eyes still appear and the voice button is hidden. The microphone needs HTTPS or
+`localhost`. Source and provenance are in [`src/avatar`](src/avatar/README.md).
+
 ## Run beside the existing FLUJO worker
 
 Run the following in this `frontend/` directory. Use absolute paths to the

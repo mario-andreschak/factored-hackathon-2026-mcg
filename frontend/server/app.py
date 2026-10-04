@@ -8,8 +8,8 @@ import re
 from contextlib import asynccontextmanager, suppress
 from typing import Annotated, Literal
 
-from fastapi import FastAPI, HTTPException, Query, Request, Response
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, Response
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 import duckdb
 
@@ -17,6 +17,7 @@ from .config import PROFILE_IDS, Settings
 from .repository import HISTORY_PERIODS, MAX_HISTORY_PERIOD, DatasetUnavailable, Repository
 from .state import Session, State
 from .action import render_action_error
+from .voice import VoiceError, VoiceService, load_config as load_voice_config
 
 
 COOKIE = "flujo_bank_session"
@@ -40,6 +41,18 @@ class ChatBody(BaseModel):
     language: Literal["es", "pt"] = "es"
     transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
     query_scope_id: str | None = Field(default=None, pattern=r"^q_[a-f0-9]{32}$")
+
+
+class TranscribeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    audio: str = Field(min_length=60, max_length=2_800_000, pattern=r"^[A-Za-z0-9+/]+={0,2}$")
+    language: Literal["es", "pt"] = "es"
+
+
+class SpeakBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    text: str = Field(min_length=1, max_length=1200)
+    language: Literal["es", "pt"] = "es"
 
 
 class PrepareActionBody(BaseModel):
@@ -81,7 +94,8 @@ class HandoffActionBody(BaseModel):
         return normalized
 
 
-def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_backend=None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_backend=None,
+               voice_transport=None) -> FastAPI:
     # Initialize lazily, allowing imports/build checks without a dataset mount.
     settings = settings or Settings.from_env()
 
@@ -146,6 +160,7 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         # Even an unconfigured restart retains and accounts for past pending
         # revocations; it cannot sign a worker request without approved config.
         app.state.chat_service = chat_service
+        app.state.voice_service = VoiceService(load_voice_config(settings.voice), transport=voice_transport)
         stop_retries = asyncio.Event()
         app.state.revoke_retry_task = asyncio.create_task(
             app.state.chat_service.retry_pending_loop(stop_retries))
@@ -162,6 +177,7 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
             app.state.revoke_retry_task.cancel()
             with suppress(asyncio.CancelledError):
                 await app.state.revoke_retry_task
+            await app.state.voice_service.close()
 
     app = FastAPI(title="FLUJO banking demo", version="0.1.0", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
@@ -330,12 +346,40 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         return {"transactions": data["transactions"], "metadata": data["metadata"]}
 
     @app.get("/api/chat/status")
-    def chat_status(request: Request):
+    def chat_status(request: Request, background: BackgroundTasks):
         current = session(request)
         customer = request.app.state.repository.profile_customer(current.profile_id)
         if service := request.app.state.chat_service:
-            return service.status(customer)
+            status = service.status(customer)
+            # Voice only carries the chat's own text, so it follows the chat.
+            if status.get("available") and request.app.state.voice_service.status()["available"]:
+                status = {**status, "voice": {"available": True}}
+                background.add_task(request.app.state.voice_service.warm)
+            return status
         return {"available": False, "mode": "unconfigured", "reason": "El asistente FLUJO aún no está conectado."}
+
+    @app.post("/api/voice/transcribe")
+    async def voice_transcribe(body: TranscribeBody, request: Request):
+        current = session(request)
+        voice = request.app.state.voice_service
+        try:
+            voice.admit(current.id)
+            return {"text": await voice.transcribe(body.audio, body.language)}
+        except VoiceError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+
+    @app.post("/api/voice/speak")
+    async def voice_speak(body: SpeakBody, request: Request):
+        current = session(request)
+        voice = request.app.state.voice_service
+        try:
+            voice.admit(current.id)
+            sample_rate, stream = await voice.speak(body.text, body.language)
+        except VoiceError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+        return StreamingResponse(stream, media_type="audio/pcm", headers={
+            "X-Audio-Sample-Rate": str(sample_rate), "X-Audio-Channels": "1",
+            "X-Audio-Format": "s16le", "X-Accel-Buffering": "no"})
 
     @app.get("/api/chat/history")
     def chat_history(request: Request):

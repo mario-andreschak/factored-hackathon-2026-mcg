@@ -31,6 +31,8 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  Mic,
+  MicOff,
   Search,
   Send,
   ShieldCheck,
@@ -68,6 +70,8 @@ import {
   statusNames,
   typeNames,
 } from "./lib";
+import Eyes from "./avatar/Eyes";
+import { useSaviaVoice } from "./avatar/useSaviaVoice";
 
 type Page = "home" | "products" | "transactions";
 const nav = [
@@ -1424,6 +1428,20 @@ const assistantCopy = {
     messagePlaceholder: "Escribe tu consulta…",
     disconnectedPlaceholder: "Asistente temporalmente desconectado",
     sendLabel: "Enviar mensaje",
+    voiceStart: "Hablar con Savia",
+    voiceStop: "Terminar voz",
+    voiceConnecting: "Conectando el micrófono…",
+    voiceListening: "Te escucho. Habla con naturalidad.",
+    voiceThinking: "Un momento, estoy revisando…",
+    voiceSpeaking: "Habla encima para interrumpirme.",
+    voiceErrors: {
+      browser:
+        "La voz necesita un navegador con micrófono en una conexión segura. Puedes escribir.",
+      microphone: "Habilita el micrófono o usa el teclado.",
+      unrecognized: "No pude reconocer lo que dijiste. Intenta de nuevo.",
+      too_long: "Hablemos en frases de menos de 25 segundos.",
+      unavailable: "La voz no está disponible ahora. Puedes escribir.",
+    },
     syntheticDisclosure:
       "Las respuestas usan un escenario sintético del equipo. Una respuesta del asistente no confirma un caso ni una acción bancaria.",
     dataDisclosure:
@@ -1467,6 +1485,20 @@ const assistantCopy = {
     messagePlaceholder: "Escreva sua pergunta…",
     disconnectedPlaceholder: "Assistente temporariamente desconectado",
     sendLabel: "Enviar mensagem",
+    voiceStart: "Falar com a Savia",
+    voiceStop: "Encerrar voz",
+    voiceConnecting: "Conectando o microfone…",
+    voiceListening: "Estou ouvindo. Fale com naturalidade.",
+    voiceThinking: "Um momento, estou verificando…",
+    voiceSpeaking: "Fale por cima para me interromper.",
+    voiceErrors: {
+      browser:
+        "A voz precisa de um navegador com microfone em uma conexão segura. Você pode escrever.",
+      microphone: "Ative o microfone ou use o teclado.",
+      unrecognized: "Não reconheci o que você disse. Tente novamente.",
+      too_long: "Vamos falar em frases de menos de 25 segundos.",
+      unavailable: "A voz está indisponível agora. Você pode escrever.",
+    },
     syntheticDisclosure:
       "As respostas usam um cenário sintético da equipe. Uma resposta do assistente não confirma um caso nem uma ação bancária.",
     dataDisclosure:
@@ -2264,6 +2296,19 @@ export function Assistant({
     actionStatusSequence = useRef(0);
   const copy = actionCopy[actionLanguage];
   const ui = assistantCopy[actionLanguage];
+  const sendRef = useRef<(text: string) => void>(() => {});
+  const voice = useSaviaVoice({
+    language: actionLanguage,
+    paused: busy || actionBusy || !historyReady || !status.available,
+    onUtterance: (text) => sendRef.current(text),
+    onExpired,
+  });
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
+  const stopVoice = voice.stop;
+  useEffect(() => {
+    if (!open) stopVoice();
+  }, [open, stopVoice]);
   const uiLang = actionLanguage === "pt" ? "pt-BR" : "es";
   selectedReferenceRef.current = selected?.reference || null;
   function compatibleQueryId(
@@ -2477,6 +2522,7 @@ export function Assistant({
       });
       if (!alive.current || controller.current.signal.aborted) return;
       setMessages((m) => [...m, { role: "assistant", text: result.reply }]);
+      if (voiceRef.current.active) void voiceRef.current.speak(result.reply);
       setQueryScopes(result.queries || []);
       activeQueryIdRef.current = compatibleQueryId(
         result.active_query_id || null,
@@ -2495,6 +2541,7 @@ export function Assistant({
       if (alive.current) setBusy(false);
     }
   }
+  sendRef.current = send;
   async function loadActionStatus(
     language: ActionLanguage = actionLanguageRef.current,
   ) {
@@ -2619,6 +2666,10 @@ export function Assistant({
             (continuesPendingHandle ? action?.target_reference : undefined),
         });
         if (actionIsTerminal(result)) setHandoffRequestId(crypto.randomUUID());
+        if (voiceRef.current.active)
+          void voiceRef.current.speak(
+            result.message || fallbackActionMessage(result, actionLanguage),
+          );
       }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
@@ -2782,9 +2833,22 @@ export function Assistant({
           </option>
         </select>
       </label>
-      <div className="assistant-status" lang={uiLang}>
-        <span className="assistant-orb">
-          <Sparkles size={18} />
+      <div className="assistant-status assistant-stage" lang={uiLang}>
+        <span className="assistant-eyes">
+          <Eyes
+            small
+            avatar="orbit"
+            level={voice.level}
+            phase={
+              voice.active
+                ? voice.phase
+                : !status.available
+                  ? "waiting"
+                  : busy || actionBusy
+                    ? "thinking"
+                    : "idle"
+            }
+          />
         </span>
         <div>
           <strong>{ui.tagline}</strong>
@@ -2795,7 +2859,35 @@ export function Assistant({
                 : ui.connectedReadOnly
               : ui.unavailable}
           </span>
+          {(voice.active || voice.connecting) && (
+            <span className="voice-state" role="status">
+              {voice.connecting
+                ? ui.voiceConnecting
+                : voice.phase === "speaking"
+                  ? ui.voiceSpeaking
+                  : voice.phase === "thinking"
+                    ? ui.voiceThinking
+                    : ui.voiceListening}
+            </span>
+          )}
+          {voice.error && (
+            <span className="voice-state" role="alert">
+              {ui.voiceErrors[voice.error]}
+            </span>
+          )}
         </div>
+        {status.available && status.voice?.available && (
+          <button
+            type="button"
+            className="voice-toggle"
+            aria-pressed={voice.active}
+            disabled={voice.connecting}
+            onClick={() => (voice.active ? voice.stop() : void voice.start())}
+          >
+            {voice.active ? <MicOff size={16} /> : <Mic size={16} />}
+            {voice.active ? ui.voiceStop : ui.voiceStart}
+          </button>
+        )}
       </div>
       {selected && (
         <div className="chat-selection">

@@ -86,6 +86,7 @@ export type ChatStatus = {
   reason?: string;
   read_only?: boolean;
   sandbox_intake_available?: boolean;
+  voice?: { available: boolean };
 };
 export type ChatSelection = Pick<
   Transaction,
