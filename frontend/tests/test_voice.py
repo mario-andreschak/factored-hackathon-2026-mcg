@@ -137,7 +137,7 @@ def sse(*deltas):
     return "".join(f"data: {line}\n\n" for line in [*lines, "[DONE]"])
 
 
-def audio_model(script, heard="¿Cuánto tengo en ahorros?"):
+def audio_model(script, heard="¿Cuánto tengo en ahorros?", *, speech_seen=None):
     """A scripted native audio model beside the scripted speech providers."""
     seen = []
 
@@ -145,6 +145,10 @@ def audio_model(script, heard="¿Cuánto tengo en ahorros?"):
         if request.url.path.endswith("/chat/completions"):
             seen.append(json.loads(request.content))
             return httpx.Response(200, text=script(seen[-1]), headers={"content-type": "text/event-stream"})
+        if request.url.path.endswith("/audio/speech"):
+            if speech_seen is not None:
+                speech_seen.append(json.loads(request.content))
+            return httpx.Response(200, content=b"\x10\x00" * 300, headers={"content-type": "audio/pcm"})
         return httpx.Response(200, json={"text": heard})
 
     return httpx.MockTransport(handler), seen
@@ -184,15 +188,16 @@ def test_the_voice_answers_itself_and_hands_bank_requests_to_savia():
     assert seen[0]["model"] == "openai/gpt-audio" and seen[0]["audio"] == {"voice": "coral", "format": "pcm16"}
     assert seen[0]["messages"][-1]["content"][0]["type"] == "input_audio"
     assert "Moss" in seen[0]["messages"][0]["content"] and "tortuga" in seen[0]["messages"][0]["content"]
-    # Savia's reply is retold without tools, after what was already said.
-    assert seen[1]["tool_choice"] == "none" and "$1.250.000 COP" in seen[1]["messages"][-1]["content"]
-    assert [m["role"] for m in seen[1]["messages"][1:-1]] == ["user", "user", "assistant"]
+    # Savia's reply is read verbatim by TTS, never retold by the native model.
+    assert told[-1]["text"] == "Saldo de ahorros: $1.250.000 COP ."
+    assert [m["role"] for m in seen[1]["messages"][1:-1]] == ["user", "user", "assistant", "user", "assistant"]
     assert seen[1]["messages"][3]["content"] == "Claro, lo reviso."
     assert "¿Cuánto tengo en ahorros?" in seen[1]["messages"][2]["content"]
     assert [e["type"] for e in told] == ["start", "caption", "audio", "complete"]
     # While Savia works, the voice keeps talking but cannot send a second request.
-    assert seen[2]["tool_choice"] == "none" and "todavía está trabajando" in seen[2]["messages"][0]["content"]
-    assert len(seen[2]["messages"]) == 7 and "delegate" not in [e["type"] for e in busy]
+    assert len(seen) == 2
+    assert seen[1]["tool_choice"] == "none" and "todavía está trabajando" in seen[1]["messages"][0]["content"]
+    assert len(seen[1]["messages"]) == 7 and "delegate" not in [e["type"] for e in busy]
 
 
 def test_conversation_needs_a_key_and_can_be_turned_off():
@@ -225,30 +230,231 @@ def test_voice_turn_route_streams_events_for_a_session(settings):  # noqa: F811
         assert client.post("/api/voice/played", json={**receipt, "complete": "yes"}, headers=ORIGIN).status_code == 422
         assert client.post("/api/voice/played", json=receipt, headers=ORIGIN).status_code == 200
         assert client.post("/api/voice/played", json=receipt, headers=ORIGIN).status_code == 409
+        current = client.app.state.bank_state.session(client.cookies.get("flujo_bank_session"))
+        host_reply = "Recepción simulada registrada. No se emitió un reembolso."
+        client.app.state.conversation.remember_result(current.id, host_reply)
+        told = client.post("/api/voice/turn", json={"result": host_reply}, headers=ORIGIN)
+        canonical = [json.loads(line) for line in told.text.splitlines()]
+        assert told.status_code == 200 and canonical[-1]["text"] == host_reply
+        assert canonical[0]["sample_rate"] == 24000 and canonical[-1]["samples"] == 300
+        result_receipt = {"turn_id": canonical[-1]["turn_id"], "played_samples": 300, "complete": True}
+        assert client.post("/api/voice/played", json=result_receipt, headers=ORIGIN).status_code == 200
+        assert client.post("/api/voice/turn", json={"result": host_reply}, headers=ORIGIN).status_code == 409
         client.cookies.clear()
         assert client.post("/api/voice/played", json=receipt, headers=ORIGIN).status_code == 401
 
 
-def test_native_result_is_exact_current_session_once_and_replayed_host_read_cannot_reissue_it():
+def test_result_is_exact_current_session_once_and_replayed_or_expired_host_read_cannot_reissue_it():
     async def run():
         from frontend.server.conversation import Conversation
-        transport, seen = audio_model(lambda body: TELLS)
+        speech_seen = []
+        transport, seen = audio_model(lambda body: TELLS, speech_seen=speech_seen)
         voice = VoiceService({"providers": [ROUTER]}, transport=transport)
-        talk = Conversation({}, voice, transport=transport)
+        now = [0.0]
+        talk = Conversation({}, voice, transport=transport, clock=lambda: now[0])
         reply = "Saldo de ahorros: **$1.250.000 COP**."
         talk.remember_result("owner", reply)
         for session, text in [("foreign", reply), ("owner", "Tu disputa fue resuelta.")]:
             with pytest.raises(VoiceError) as rejected:
                 await talk.turn(session, "es", result=text)
             assert rejected.value.status_code == 409
-        assert not seen
+        assert not seen and not speech_seen
         events = [e async for e in await talk.turn("owner", "es", result=reply)]
         talk.remember_result("owner", reply)
         with pytest.raises(VoiceError):
             await talk.turn("owner", "es", result=reply)
         with pytest.raises(VoiceError):
             talk.played("foreign", events[-1]["turn_id"], events[-1]["samples"], True)
-        assert len(seen) == 1
+        talk.remember_result("expired", reply)
+        now[0] = 301
+        with pytest.raises(VoiceError) as expired:
+            await talk.turn("expired", "es", result=reply)
+        assert expired.value.status_code == 409
+        assert not seen and len(speech_seen) == 1
+        await talk.close(), await voice.close()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("language,reply,hostile", [
+    ("es", "**Recepción simulada** registrada. No se movió dinero ni se emitió un reembolso.",
+     "Reembolsé 500 USD y el banco resolvió tu disputa."),
+    ("pt", "Solicitação simulada registrada. Nenhuma disputa foi resolvida e não houve reembolso.",
+     "Sua disputa foi resolvida e o reembolso de 500 USD foi emitido."),
+    ("es", "Se guardó una solicitud de revisión humana. Aún no hay respuesta de una persona.",
+     "Una persona resolvió tu caso y confirmó el reembolso."),
+    ("pt", "Confirme se deseja registrar uma solicitação simulada. Isto não é reembolso nem resolução bancária.",
+     "Sua solicitação foi registrada."),
+    ("es", "Tarjeta bloqueada en la demostración. Ningún banco real fue modificado.",
+     "Bloqueé tu tarjeta en el banco real."),
+])
+def test_registered_outcomes_are_read_verbatim_without_false_native_claims_or_omitted_caveats(language, reply, hostile):
+    async def run():
+        from frontend.server.conversation import Conversation
+        seen = []
+
+        def handler(request):
+            seen.append((request.url.path, json.loads(request.content)))
+            if request.url.path.endswith("/chat/completions"):
+                return httpx.Response(200, text=sse({"audio": {"transcript": hostile, "data": PCM}}))
+            return httpx.Response(200, content=base64.b64decode(PCM))
+
+        transport = httpx.MockTransport(handler)
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        talk.remember_result("owner", reply)
+        events = [e async for e in await talk.turn("owner", language, result=reply)]
+        expected = reply.replace("**", "")
+        assert len(seen) == 1 and seen[0][0].endswith("/audio/speech")
+        assert seen[0][1]["input"] == expected
+        assert events[-1]["type"] == "complete" and events[-1]["text"] == expected
+        assert [e["type"] for e in events] == ["start", "caption", "audio", "complete"]
+        assert events[0]["sample_rate"] == 24000 and events[-1]["samples"] == 300
+        assert not any(m["role"] == "assistant" for m in talk._ledgers["owner"][1])
+        with pytest.raises(VoiceError):
+            talk.played("owner", events[-1]["turn_id"], 299, True)
+        talk.played("owner", events[-1]["turn_id"], 300, True)
+        assert talk._ledgers["owner"][1][-1] == {"role": "assistant", "content": expected}
+        assert hostile not in str(talk._ledgers)
+        with pytest.raises(VoiceError):
+            talk.played("owner", events[-1]["turn_id"], 300, True)
+        await talk.close(), await voice.close()
+    asyncio.run(run())
+
+
+def test_canonical_result_reads_every_bounded_chunk_including_the_last_caveat():
+    async def run():
+        from frontend.server.conversation import Conversation
+        inputs = []
+
+        def handler(request):
+            assert request.url.path.endswith("/audio/speech")
+            inputs.append(json.loads(request.content)["input"])
+            return httpx.Response(200, content=base64.b64decode(PCM))
+
+        transport = httpx.MockTransport(handler)
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        reply = "Detalle verificado. " * 100 + "No se movió dinero ni se emitió un reembolso."
+        talk.remember_result("s", reply)
+        events = [e async for e in await talk.turn("s", "es", result=reply)]
+        assert len(inputs) == 2 and all(len(part) <= 1200 for part in inputs)
+        assert " ".join(inputs) == reply
+        assert events[-1]["text"] == reply and events[-1]["samples"] == 600
+        talk.played("s", events[-1]["turn_id"], 600, True)
+        assert talk._ledgers["s"][1][-1]["content"] == reply
+        await talk.close(), await voice.close()
+    asyncio.run(run())
+
+
+def test_canonical_result_enforces_24khz_and_restores_safe_fallback_on_start_failure():
+    async def run(provider_configs):
+        from frontend.server.conversation import Conversation
+        transport, seen = providers()
+        voice = VoiceService({"providers": provider_configs}, transport=transport)
+        talk = Conversation({"conversation": {"api_key": "k"}}, voice, transport=transport)
+        reply = "Recepción simulada registrada. No hubo reembolso."
+        talk.remember_result("s", reply)
+        if len(provider_configs) == 1:
+            with pytest.raises(VoiceError) as unavailable:
+                await talk.turn("s", "es", result=reply)
+            assert unavailable.value.status_code == 503 and not seen
+            # The existing dictation fallback can still read the same safe host text.
+            talk.consume_speech("s", reply)
+        else:
+            events = [e async for e in await talk.turn("s", "es", result=reply)]
+            assert events[0]["sample_rate"] == 24000
+            assert [request.url.host for request in seen] == ["openrouter.ai"]
+        await talk.close(), await voice.close()
+    lower_rate = {**GPU, "sample_rate": 16000}
+    asyncio.run(run([lower_rate]))
+    asyncio.run(run([lower_rate, ROUTER]))
+
+
+@pytest.mark.parametrize("failure", ["transport", "odd_pcm", "interrupted"])
+def test_failed_or_interrupted_canonical_synthesis_never_gains_a_playback_receipt(failure):
+    class BrokenSpeech(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b"\x10\x00" * 300
+            raise httpx.ReadError("scripted speech interruption")
+
+    async def run():
+        from frontend.server.conversation import Conversation
+        def handler(request):
+            assert request.url.path.endswith("/audio/speech")
+            return (httpx.Response(200, stream=BrokenSpeech()) if failure == "transport" else
+                    httpx.Response(200, content=b"x" if failure == "odd_pcm" else base64.b64decode(PCM)))
+        transport = httpx.MockTransport(handler)
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        reply = "Recepción simulada registrada. No hubo reembolso."
+        talk.remember_result("s", reply)
+        events = await talk.turn("s", "es", result=reply)
+        if failure == "interrupted":
+            await anext(events), await anext(events), await anext(events)
+            await events.aclose()
+        else:
+            received = [e async for e in events]
+            assert received[-1]["type"] == "error"
+        assert "s" not in talk._pending
+        assert not any(m["role"] == "assistant" for m in talk._ledgers["s"][1])
+        await talk.close(), await voice.close()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("chunks,content_type", [
+    ([b"RI", b"FF" + b"\0" * 40], "audio/pcm"),
+    ([b"R", b"I", b"F", b"F" + b"\0" * 40], None),
+    ([b" ", b'{"error":"synthesis failed"}'], "application/octet-stream"),
+    ([b"    ", b'{"error":"synthesis failed"}'], None),
+    ([b'{', b'"error":"synthesis failed"}'], None),
+    ([b"\x10\x00" * 300], "audio/wav"),
+    ([b"\x10\x00" * 300], "application/json"),
+    ([b"ID", b"3" + b"\0" * 40], "application/octet-stream"),
+])
+def test_container_or_error_speech_body_never_starts_a_canonical_result(chunks, content_type):
+    class ScriptedSpeech(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            for chunk in chunks:
+                yield chunk
+
+    async def run():
+        from frontend.server.conversation import Conversation
+        def handler(request):
+            assert request.url.path.endswith("/audio/speech")
+            return httpx.Response(200, stream=ScriptedSpeech(),
+                                  headers={"content-type": content_type} if content_type else {})
+        transport = httpx.MockTransport(handler)
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        reply = "Recepción simulada registrada. No hubo reembolso."
+        talk.remember_result("s", reply)
+        with pytest.raises(VoiceError) as rejected:
+            await talk.turn("s", "es", result=reply)
+        assert rejected.value.status_code == 503 and "s" not in talk._pending
+        assert not any(m["role"] == "assistant" for m in talk._ledgers["s"][1])
+        await talk.close(), await voice.close()
+    asyncio.run(run())
+
+
+def test_valid_pcm_prefix_split_across_transport_fragments_keeps_exact_samples():
+    class SplitSpeech(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            for chunk in (b"\x10", b"\x00", b"\x10\x00" * 299):
+                yield chunk
+
+    async def run():
+        from frontend.server.conversation import Conversation
+        transport = httpx.MockTransport(lambda request: httpx.Response(
+            200, stream=SplitSpeech(), headers={"content-type": "audio/pcm"}))
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        reply = "Recepción simulada registrada. No hubo reembolso."
+        talk.remember_result("s", reply)
+        events = [e async for e in await talk.turn("s", "es", result=reply)]
+        actual = b"".join(base64.b64decode(e["data"]) for e in events if e["type"] == "audio")
+        assert actual == b"\x10\x00" * 300 and events[-1]["samples"] == 300
+        talk.played("s", events[-1]["turn_id"], 300, True)
+        assert talk._ledgers["s"][1][-1]["content"] == reply
         await talk.close(), await voice.close()
     asyncio.run(run())
 
