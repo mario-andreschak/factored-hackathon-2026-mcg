@@ -3,7 +3,7 @@
   "execution_enabled": false,
   "source_binding": "containing_Git_commit; not execution approval",
   "files": {
-    ".gitattributes": "de88e9e022061f5d1364bcb3c23e384af09fee32e24f0c8b2491689830049abc",
+    ".gitattributes": "9e0a9c69106c4261f04f8cc2dd85b413c66c04538e5306f25c88dc4cc3389a34",
     ".github/workflows/banking-synthetic-integration.yml": "ccd8b7f25413b4cf34114d506e41321b1f2a9f45b329204240620f3b36e8263c",
     ".github/workflows/banking-synthetic-source-bundle.yml": "f940302383f86cb6ebe37f60b6bd9d7f455ae55774713a2a6e3c9d2afbed128d",
     "docs/SYNTHETIC_INTEGRATION_CHECKPOINT.md": "4dba62415b9346498449d7ace6f88dcaf63db360e54e341f6e88d0878827efbd",
