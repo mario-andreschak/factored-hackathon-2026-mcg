@@ -69,7 +69,7 @@ def prepare(root: Path) -> None:
 def application(root: Path, *, port: int, base_url: str, model_id: str,
                 provider: str = "flujo", provider_key: str | None = None,
                 public_origin: str | None = None, demo_code: str | None = None,
-                voice_config: dict | None = None):
+                voice_config: dict | None = None, inquiry_config: dict | None = None):
     from scripts.qualify_dispute_app import Fixture, application_source_hashes
     from banking_mcp.config import Config
     from banking_mcp.service import Service
@@ -158,7 +158,7 @@ def application(root: Path, *, port: int, base_url: str, model_id: str,
     settings = Settings(data_dir=fixture.data, state_dir=state, static_dir=ROOT / "frontend/dist",
         demo_code=demo_code or fixture.demo_code, profiles=fixture.profiles, public_origin=origin,
         secure_cookie=origin.startswith("https://"),
-        voice=voice_config or {},
+        voice=voice_config or {}, inquiries=inquiry_config or {},
         chat={"mode": "dispute-host/v1", "base_url": base_url, "model": "flow-Dispute",
               "execution_token": fixture.execution_token,
               "frontend_signing_key_file": str(fixture.signer), "frontend_kid": "qualification",
@@ -208,6 +208,8 @@ def main():
     if args.prepare:
         prepare(root)
         return
+    from frontend.server.config import Settings
+    inquiry_config = Settings.from_env().inquiries
     import httpx
     key = None
     if args.provider == "openrouter":
@@ -234,7 +236,8 @@ def main():
     app, bank = application(root, port=args.port, base_url=args.flujo_url, model_id=args.model,
                             provider=args.provider, provider_key=key, public_origin=args.public_origin,
                             demo_code=__import__("os").environ.get("RC_DEMO_CODE"),
-                            voice_config=native_voice_config() if args.provider == "openrouter" else None)
+                            voice_config=native_voice_config() if args.provider == "openrouter" else None,
+                            inquiry_config=inquiry_config)
     try:
         import uvicorn
         uvicorn.run(app, host="127.0.0.1", port=args.port, access_log=False)
