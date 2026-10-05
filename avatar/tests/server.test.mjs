@@ -396,3 +396,25 @@ test('portal scope and language stay in the cookie-owned proxy, while follow-up 
   assert.equal((await post('/savia/api/action/confirm', { language: 'es' })).status, 404);
   assert.equal(calls.length, 5);
 });
+
+test('informational inquiry routes admit bounded intake and explicit guidance acceptance without bank action routes', async t => {
+  const calls = [];
+  const { request } = await fixture(t, { saviaUpstream: 'http://127.0.0.1:43800', saviaOrigin: 'http://127.0.0.1:43800' }, async (url, options) => {
+    calls.push({ url, body: options.body ? JSON.parse(Buffer.from(options.body).toString()) : undefined });
+    return Response.json({ items: [] });
+  });
+  const post = (path, body) => request(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const intake = { message: 'Exploren dos perspectivas sobre mi cargo.', language: 'es', transaction_reference: 'txn_' + 'a'.repeat(24) };
+  assert.equal((await post('/savia/api/assistant/cases', intake)).status, 200);
+  assert.deepEqual(calls.at(-1).body, intake);
+  for (const extra of [{ facts: {} }, { message: 'x'.repeat(1001) }, { language: 'en' }, { transaction_reference: 7 }])
+    assert.equal((await post('/savia/api/assistant/cases', { ...intake, ...extra })).status, 400);
+  assert.equal((await request('/savia/api/assistant/cases?language=pt')).status, 200);
+  const resolve = '/savia/api/assistant/cases/i_' + 'b'.repeat(32) + '/resolve';
+  assert.equal((await post(resolve, { resolved: true })).status, 200);
+  for (const body of [{ resolved: false }, { resolved: true, bank_authority: true }]) assert.equal((await post(resolve, body)).status, 400);
+  assert.equal((await post(resolve + '?override=1', { resolved: true })).status, 400);
+  assert.equal((await post('/savia/api/assistant/cases/private/resolve', { resolved: true })).status, 404);
+  assert.equal((await post('/savia/api/action/confirm', { language: 'es' })).status, 404);
+  assert.equal(calls.length, 3);
+});

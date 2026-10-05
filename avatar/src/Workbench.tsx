@@ -3,9 +3,10 @@ import { ArrowUpRight, Check, ChevronRight, MousePointer2, ShieldCheck, X } from
 import type { AvatarId } from './domain';
 import type { TaskReply } from './useVoice';
 import { type Locale, localeTag } from './locale';
+import { validInquiryNotification } from './useInquiryVoiceUpdates';
 
 export interface WorkbenchHandle { execute: (message: string, options?: { signal?: AbortSignal }) => Promise<TaskReply>; }
-interface Props { avatar: AvatarId; open: boolean; mode: 'demo' | 'connected'; saviaUrl: string; locale?: Locale; onClose: () => void; onLoad: () => void; onAccountChange?: (reason?: 'login' | 'logout' | 'unauthorized' | 'navigation') => void; }
+interface Props { avatar: AvatarId; open: boolean; mode: 'demo' | 'connected'; saviaUrl: string; locale?: Locale; onClose: () => void; onLoad: () => void; onAccountChange?: (reason?: 'login' | 'logout' | 'unauthorized' | 'navigation') => void; onInquiryUpdate?: (caseId: string, eventId: number) => void; }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const spanish = {
   privacy: 'Tu cuenta se consulta después de iniciar sesión. Solo lectura.',
@@ -94,7 +95,7 @@ const demoRows = [
   { name: 'bookshop', date: '2026-09-29T00:00:00Z', amount: -18.75 },
 ] as const;
 
-export default forwardRef<WorkbenchHandle, Props>(function Workbench({ avatar, open, mode, saviaUrl, locale = 'es', onClose, onLoad, onAccountChange }, ref) {
+export default forwardRef<WorkbenchHandle, Props>(function Workbench({ avatar, open, mode, saviaUrl, locale = 'es', onClose, onLoad, onAccountChange, onInquiryUpdate }, ref) {
   const copy = copyByLocale[locale];
   const dateFormat = useMemo(() => new Intl.DateTimeFormat(localeTag(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' }), [locale]);
   const amountFormat = useMemo(() => new Intl.NumberFormat(localeTag(locale), { style: 'currency', currency: 'USD' }), [locale]);
@@ -107,12 +108,21 @@ export default forwardRef<WorkbenchHandle, Props>(function Workbench({ avatar, o
   const loadedOnce = useRef(false);
   const [computerInitialized, setComputerInitialized] = useState(false);
   const accountCallback = useRef(onAccountChange); accountCallback.current = onAccountChange;
+  const inquiryCallback = useRef(onInquiryUpdate); inquiryCallback.current = onInquiryUpdate;
   const [cursor, setCursor] = useState({ x: 50, y: 60, active: false });
   const [step, setStep] = useState<keyof typeof spanish>('privacy');
   const [demoSelected, setDemoSelected] = useState(-1);
   const [demoRunning, setDemoRunning] = useState(false);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => { if (open && mode === 'connected' && saviaUrl) setComputerInitialized(true); }, [open, mode, saviaUrl]);
+  useEffect(() => {
+    const update = (event: MessageEvent) => {
+      if (event.source !== frame.current?.contentWindow || event.origin !== window.location.origin || !validInquiryNotification(event.data)) return;
+      inquiryCallback.current?.(event.data.case_id, event.data.event_id);
+    };
+    window.addEventListener('message', update);
+    return () => window.removeEventListener('message', update);
+  }, []);
 
   useImperativeHandle(ref, () => ({
     async execute(message: string, options = {}) {
@@ -162,7 +172,7 @@ export default forwardRef<WorkbenchHandle, Props>(function Workbench({ avatar, o
         };
         let input = doc.querySelector<HTMLInputElement>('input[aria-label="Mensaje para el asistente"]');
         if (!input) {
-          const findLaunch = () => [...doc!.querySelectorAll('button')].find(b => /Hablemos|Estado del asistente/.test(b.textContent ?? '') && visible(b));
+          const findLaunch = () => [...doc!.querySelectorAll('button')].find(b => /Hablemos|Estado del asistente|Asistente|Assistente/.test(b.textContent ?? '') && visible(b));
           let launch = findLaunch();
           if (!launch) {
             const menu = [...doc.querySelectorAll('button')].find(b => /Abrir men[uú]|Open menu/i.test(`${b.getAttribute('aria-label') ?? ''} ${b.textContent ?? ''}`) && visible(b));
@@ -212,7 +222,10 @@ export default forwardRef<WorkbenchHandle, Props>(function Workbench({ avatar, o
           const messages = [...doc.querySelectorAll('.chat-message.assistant')];
           const latest = messages.at(-1);
           if (messages.length > oldCount && latest?.textContent?.trim() && !doc.querySelector('.chat-thinking')) {
-            const reply = latest.textContent.trim(); setStep('returned'); setCursor(p => ({ ...p, active: false }));
+            // Savia renders speaker labels and Markdown separately. Preserve its
+            // original response for the server's exact, owned receipt match.
+            const reply = latest.getAttribute('data-savia-reply') ?? latest.textContent.trim();
+            setStep('returned'); setCursor(p => ({ ...p, active: false }));
             return { reply, mode: 'flujo', status: 'completed' };
           }
           const error = doc.querySelector('[role="alert"]');

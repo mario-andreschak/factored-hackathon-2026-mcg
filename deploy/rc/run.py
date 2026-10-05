@@ -135,6 +135,10 @@ def application(root: Path, *, port: int, base_url: str, model_id: str,
               "ledger_generation": factory.ledger_generation})
     app = create_app(settings, dispute_factory=factory,
         bank_backend=BankingActionHost(bank, factory.store, source_root=fixture.source))
+    source_hashes = application_source_hashes(ROOT)
+    for file in sorted((ROOT / "savia_assistant").rglob("*.py")):
+        if "__pycache__" not in file.parts:
+            source_hashes[file.relative_to(ROOT).as_posix()] = hashlib.sha256(file.read_bytes()).hexdigest()
     receipt = {"schema": "savia-fictional-rc-runtime/v1", "url": settings.public_origin,
                "fixture": "new generated current-date fiction", "bank": "shipped MCP Service in process",
                "language": {"url": language.base_url, "model": model_id, "provider": provider,
@@ -142,7 +146,7 @@ def application(root: Path, *, port: int, base_url: str, model_id: str,
                "simulated_intake": True, "real_bank_actions": False, "native_flow_execution": False,
                "source_snapshot": "startup Git revision plus exact application and served UI hashes",
                "git_head": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
-               "application_sources": application_source_hashes(ROOT),
+               "application_sources": source_hashes,
                "served_ui": {file.relative_to(settings.static_dir).as_posix(): hashlib.sha256(file.read_bytes()).hexdigest()
                              for file in sorted(settings.static_dir.rglob("*")) if file.is_file()},
                "launcher_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}

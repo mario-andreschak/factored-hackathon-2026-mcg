@@ -945,7 +945,31 @@ class Workflow:
             f"assistant: {sanitize(state['response']['message'])}", f"language: {state['turn']['effective_language']}"])[-9:]
         return state
 
-    async def _execute_batch(self, state, binding, history_items):
+    @staticmethod
+    def _selection_for_query(selection, intent, slots):
+        """Retain a host selection without attaching it to another query target."""
+        if not selection or intent not in {"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY"}:
+            return None
+        if (slots.get("transaction_id") not in (None, selection["reference"])
+                or slots.get("complaint_id") or any(slots.get(key) for key in
+                    ("merchant", "product_hint", "product_last4", "city", "country", "channel"))):
+            return None
+        try:
+            if slots.get("amount") is not None and Decimal(str(slots["amount"])) != Decimal(str(selection["amount"])):
+                return None
+            if slots.get("currency") and slots["currency"] != selection["currency"]:
+                return None
+            if slots.get("transaction_type") and slots["transaction_type"] != selection["type"]:
+                return None
+            event = datetime.fromisoformat(selection["occurred_at"].replace("Z", "+00:00")).date()
+            if (slots.get("date_from") and event < datetime.fromisoformat(slots["date_from"]).date()
+                    or slots.get("date_to") and event > datetime.fromisoformat(slots["date_to"]).date()):
+                return None
+        except (KeyError, TypeError, ValueError, InvalidOperation, AttributeError):
+            return None
+        return selection
+
+    async def _execute_batch(self, state, binding, history_items, selection=None):
         from .state import StateError, start_query_batch, activate_query_scope, checkpoint_query_scope
         intents = state["runtime"].pop("multi_intents")
         original = deepcopy(state)
@@ -968,7 +992,8 @@ class Workflow:
             frame["turn"]["sub_queries"] = [{"query_text": intents[index]["query_text"]}]
             # The original human remains authoritative for guard and replay identity.
             frame["turn"]["user_question"] = original["turn"]["user_question"]
-            frame = await self._process_scope(frame, binding, "", None,
+            scoped_selection = self._selection_for_query(selection, intents[index]["domain"], slots[index])
+            frame = await self._process_scope(frame, binding, "", scoped_selection,
                 prepared_intents=[intents[index]], preflight_slots=slots[index])
             frame = await self._complete(frame, binding, "", [], max_output_chars=max(1200, 11000 // len(intents)))
             frame["runtime"]["query_history"] = [f"user: {intents[index]['query_text']}",
@@ -1017,7 +1042,7 @@ class Workflow:
         local_history = "\n".join(local_items)
         frame = await self._process_scope(frame, binding, local_history, selection, preflight_slots=current_slots)
         if frame["runtime"].get("multi_intents"):
-            return await self._execute_batch(frame, binding, history_items)
+            return await self._execute_batch(frame, binding, history_items, selection)
         frame = await self._complete(frame, binding, local_history, local_items, max_output_chars=max(1200, 11000 // len(scopes)))
         if (frame["turn"].get("clarification", {}).get("resolution_type") == "NEW_REQUEST"
                 or frame["turn"].get("intent") != scopes[query_id]["intent"] and not frame["runtime"].get("field_clarification_resumed")):
@@ -1208,7 +1233,7 @@ class Workflow:
                 else:
                     state = await self._process_scope(state, binding, history, selection)
         if state["runtime"].get("multi_intents"):
-            state = await self._execute_batch(state, binding, history_items)
+            state = await self._execute_batch(state, binding, history_items, selection)
         elif not state["runtime"].get("batch_response_completed"):
             state = await self._complete(state, binding, history, history_items)
         # DENIED/NEW_REQUEST and deterministic expiry can create a cancellation

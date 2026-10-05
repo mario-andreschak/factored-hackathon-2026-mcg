@@ -96,3 +96,14 @@ test('fresh dispute-host display facts acquire one server-owned result receipt w
   assert.throws(() => state.consumeReceipt({ taskId, avatar: 'moss', locale: 'es' }, 'fictional-owner'));
   assert.equal(state.receipt({ ...result, capability: 'forged' }, 'fictional-owner'), null);
 });
+
+test('actual informational team updates consume one owned receipt without acquiring bank authority', () => {
+  const state = createNativeTurns();
+  const result = { reply: 'Las dos perspectivas están listas. ¿Te ayudan a decidir?', mode: 'assistant', status: 'completed' };
+  const taskId = state.receipt(result, 'fictional-owner');
+  assert.ok(taskId);
+  assert.throws(() => state.receiptFor({ reply: 'Un humano resolvió el banco.', locale: 'es' }, 'fictional-owner'));
+  assert.deepEqual(state.consumeReceipt({ taskId, avatar: 'moss', locale: 'es' }, 'fictional-owner'), result);
+  assert.throws(() => state.consumeReceipt({ taskId, avatar: 'moss', locale: 'es' }, 'fictional-owner'));
+  assert.equal(state.receipt({ ...result, bank_authority: true }, 'fictional-owner'), null);
+});

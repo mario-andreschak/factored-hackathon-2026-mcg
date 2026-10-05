@@ -54,6 +54,8 @@ Production TypeScript/Vite build and the full unit suite passed (298 checks,
 one optional upstream skip). Two subsequent compatibility checks passed in
 the targeted 51-check suite, with one optional upstream skip. Eight existing
 movie/read-bridge browser cases and one new held-read continuity case passed.
+The queued-before-ready typed-input regression also passed after the setup
+race was corrected.
 An initial browser trace failure came from concurrent test output cleanup;
 the isolated barge-in rerun passed. Browser provider/bank fixtures are
 synthetic. Actual recording and latency results belong in
@@ -71,3 +73,40 @@ those results cannot be claimed from this pilot. The completed WAV is at
 save actual completed native response audio and usage alongside browser
 recordings. It does not initiate calls. `experiments/rc_voice_pilot.mjs`
 requires `--execute` and refuses an already-recorded pilot; reuse its output.
+
+One separate actual audio-input call completed at 19:57 Bogota time on
+October 4. It sent only an existing public synthetic Spanish WAV (4.137 s)
+to the current native provider: 41 input audio tokens, first PCM in 2.153 s,
+completed generation in 3.935 s, 9.4 s of output, USD 0.014559. The
+[report](RC-VOICE-AUDIO-INPUT.json) gives the fixture hash and exact utterance.
+This qualifies prerecorded audio input; it does not qualify a physical
+microphone, browser playback or a banking inquiry. Reuse
+`avatar/.local/rc-voice-audio-input/reply.wav`; the guarded
+`experiments/rc_voice_audio_input.mjs` refuses a second dispatch.
+
+The first actual background browser capture failed before any banking query:
+fresh authenticated portal state returned 401 from its action status endpoint
+before a conversation existed, expiring the embedded session. Its partial
+private evidence is retained at `private/rc-voice-background-20261004/`.
+It is not accepted evidence of background overlap or completed playback.
+The portal status defect was repaired and a fresh login/auth/status preflight
+then returned 200 for all three endpoints. The real frontend also exposed a
+second compatibility issue: speaker labels and rendered Markdown changed the
+reply's DOM text. The workbench now reads Savia's passive original-reply data
+attribute, retaining the server's strict receipt match. The two focused browser
+cases passed with a fixture that includes the real speaker-label/formatting
+transformations.
+
+The third actual browser capture qualified foreground/background overlap:
+one real inquiry ran for 7.399 s; foreground native PCM began while it was
+pending, and its 10 s reply completed with a server-accepted played receipt.
+The result waited for that foreground drain and was spoken once with another
+accepted played receipt. The initial response was interrupted. The backend
+inquiry itself failed with `invalid_date_window` (`TOOL_ERROR`/R9); its spoken
+result reported that failure honestly. This is concurrency proof, not a
+successful banking answer. The [bounded receipt](RC-VOICE-BACKGROUND.json)
+records source hashes, counts and timing. Selected fictional WAVs, visual-only
+WebM and timing evidence are saved under
+`docs/submission/measurements/voice-overlap/` for media reuse. Typed input and a
+file-backed silent microphone were used; prerecorded speech input is qualified
+separately above.

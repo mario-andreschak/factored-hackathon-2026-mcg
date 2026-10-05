@@ -15,6 +15,7 @@ import { usePersonaPlex } from './experiments/usePersonaPlex';
 import { useAmbience } from './useAmbience';
 import { isNativeReadRequest } from './nativeReadBridge';
 import { voiceMilestone } from './voiceTelemetry';
+import { useInquiryVoiceUpdates } from './useInquiryVoiceUpdates';
 import './game.css';
 
 const DEFAULT_CONFIG: AvatarConfig = { voiceAvailable: false, backendAvailable: false, saviaUrl: '', mode: 'demo', realtimeModel: '', voiceProvider: 'none' };
@@ -134,6 +135,9 @@ export default function Game() {
     transcript(id, 'user', text, true); nativeBridge.current.observe(text);
   } });
   const voice = config.voiceProvider === 'gemini-live' ? gemini : config.voiceProvider === 'openrouter-native' ? native : config.voiceProvider === 'openrouter' ? router : config.voiceProvider === 'personaplex' ? personaplex : realtime;
+  const inquiryVoice = useInquiryVoiceUpdates({ enabled: config.voiceProvider === 'openrouter-native' && native.connected,
+    locale, getOwner: native.getSessionOwner, sendResult: native.sendTaskResult,
+    onError: () => setNotice(getMessages(state.current.locale).game.previousResponseWithheld) });
   liveVoice.current = { connected: voice.connected, native: native.connected };
   useEffect(() => {
     if (config.voiceProvider !== 'gemini-live') gemini.disconnect();
@@ -327,6 +331,7 @@ export default function Game() {
     } else { setPreview(true); say(demoReply(message, chosen, locale), chosen); }
   };
   const accountChanged = useCallback((reason?: 'login' | 'logout' | 'unauthorized' | 'navigation') => {
+    inquiryVoice.clear();
     personaplex.resetObserver();
     if (reason === 'unauthorized' && !bankSeen.current && !bankSessionKnown.current && !state.current.taskBusy) return;
     if (reason === 'login' && !bankSeen.current && !bankSessionKnown.current && !state.current.taskBusy) {
@@ -337,7 +342,7 @@ export default function Game() {
     taskEpoch.current++; taskOwner.current = null; bankSeen.current = false; setTaskBusy(false); setHistory([]); setCaption('');
     bankSessionKnown.current = reason === 'login';
     stopPreview(); realtime.disconnect(); native.disconnect(); router.disconnect(); gemini.disconnect(); personaplex.disconnect(); void loadConfig();
-  }, [stopPreview, realtime.disconnect, native.disconnect, native.resetAccountContext, router.disconnect, gemini.disconnect, personaplex.disconnect, personaplex.resetObserver, loadConfig]);
+  }, [stopPreview, realtime.disconnect, native.disconnect, native.resetAccountContext, router.disconnect, gemini.disconnect, personaplex.disconnect, personaplex.resetObserver, loadConfig, inquiryVoice.clear]);
   const changeLocale = (next: Locale) => {
     if (next === locale || taskBusy) return;
     interrupt(); nativeBridge.current.cancel();
@@ -378,7 +383,7 @@ export default function Game() {
     <div className="sr-only" aria-live="polite">{caption}</div>
     {taskBusy && <div className="quiet-work" aria-label={copy.status.saviaWorking}><span /><span /><span /></div>}
 
-    <Workbench locale={locale} ref={workbench} avatar={avatar} open={computerOpen} mode={config.backendAvailable ? 'connected' : 'demo'} saviaUrl={config.saviaUrl} onClose={() => setComputerOpen(false)} onLoad={computerLoaded} onAccountChange={accountChanged} />
+    <Workbench locale={locale} ref={workbench} avatar={avatar} open={computerOpen} mode={config.backendAvailable ? 'connected' : 'demo'} saviaUrl={config.saviaUrl} onClose={() => setComputerOpen(false)} onLoad={computerLoaded} onAccountChange={accountChanged} onInquiryUpdate={inquiryVoice.notify} />
     {paused && <div className="game-pause-overlay"><section className="game-pause-menu" aria-label={copy.ui.pauseMenu}>
       <p className="pause-title">elsewhere.</p>
       <button className="resume-game" onClick={() => setPaused(false)}><Play size={15} />{copy.ui.returnWorld}</button>

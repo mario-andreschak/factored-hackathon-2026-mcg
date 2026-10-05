@@ -3,7 +3,7 @@ import { mockedNative } from './fixtures/native-router-transport';
 
 const inquiry = 'Consulta mis pagos recientes: el cargo de Café La Esquina por $42.17 del 2 de octubre.';
 const foreground = '¿Me explicas qué significa que no tenga una disputa abierta?';
-const chargeReply = 'El cargo seleccionado de Café La Esquina por $42.17 del 2 de octubre no tiene una disputa abierta. No se realizó ninguna acción.';
+const chargeReply = 'El cargo seleccionado de **Café La Esquina** por $42.17 del 2 de octubre no tiene una disputa abierta.\n\nNo se realizó ninguna acción.';
 const transactionReference = 'txn_a1b2c3d4e5f60718293a4b5c';
 const taskId = 'synthetic-charge-read-01';
 
@@ -40,7 +40,7 @@ async function setup(page: Page, options: { connect?: boolean } = {}) {
   await page.route('**/savia/', route => route.fulfill({ contentType: 'text/html', body: `<!doctype html><html><head><meta charset="utf-8"><style>body{padding:24px;font:16px system-ui}button,input{padding:12px}input{width:65%}.selected{background:#dcefd8}</style></head><body>
     <h1>Savia sintética · movimientos</h1>
     <button id="charge" aria-pressed="true" aria-label="Cargo seleccionado" data-reference="${transactionReference}" class="selected">Café La Esquina · 2 oct · $42.17</button>
-    <button id="launch">Hablemos</button><div id="chat"></div><script>
+    <button id="launch">Asistente<span>FLUJO</span></button><div id="chat"></div><script>
     window.evidence = { selectedCharge: document.querySelector('#charge').textContent, selectedReference: document.querySelector('#charge').dataset.reference, submitted: [], setters: 0, inputEvents: 0 };
     const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
     Object.defineProperty(HTMLInputElement.prototype, 'value', {...descriptor, set(value) { window.evidence.setters++; descriptor.set.call(this, value); }});
@@ -51,7 +51,7 @@ async function setup(page: Page, options: { connect?: boolean } = {}) {
       form.onsubmit = async event => { event.preventDefault(); const message = input.value; const transaction_reference = document.querySelector('#charge[aria-pressed="true"]')?.dataset.reference; window.evidence.submitted.push({message, transaction_reference}); send.disabled = true;
         const busy = document.createElement('div'); busy.className = 'chat-thinking'; busy.textContent = 'Consultando datos sintéticos'; document.body.append(busy);
         const response = await fetch('/savia/api/chat', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message, transaction_reference})});
-        const body = await response.json(); busy.remove(); const answer = document.createElement('div'); answer.className = 'chat-message assistant'; answer.textContent = body.reply; document.body.append(answer); send.disabled = false;
+        const body = await response.json(); busy.remove(); const answer = document.createElement('div'); answer.className = 'chat-message assistant'; answer.dataset.saviaReply = body.reply; const speaker = document.createElement('span'); speaker.textContent = 'Savia'; answer.append(speaker); const rendered = document.createElement('p'); rendered.textContent = body.reply.replaceAll('**', '').replaceAll(String.fromCharCode(10), ' '); answer.append(rendered); document.body.append(answer); send.disabled = false;
       };
     };
     </script></body></html>` }));
@@ -67,7 +67,7 @@ async function setup(page: Page, options: { connect?: boolean } = {}) {
 
 async function bankFrame(page: Page): Promise<Frame> {
   await expect(page.locator('.workbench-open')).toBeVisible();
-  await expect(page.frameLocator('iframe').getByRole('button', { name: 'Hablemos' })).toBeVisible();
+  await expect(page.frameLocator('iframe').getByRole('button', { name: 'AsistenteFLUJO' })).toBeVisible();
   return page.frames().find(frame => new URL(frame.url()).pathname === '/savia/')!;
 }
 async function submitText(page: Page, message: string) {
@@ -106,13 +106,17 @@ test('a held selected-charge read does not block foreground voice and returns on
 
   // Interrupt a foreground reply while the same read remains pending, then
   // continue in the same native session and let the queued result return.
-  await page.evaluate(() => { window.__nativeTransport.autoComplete = false; });
+  const sourcesBeforeInterrupt = await page.evaluate(() => {
+    window.__nativeTransport.autoComplete = false; window.__nativeTransport.duration = 3;
+    return window.__nativeTransport.sourcesStarted;
+  });
   await submitText(page, 'Espera, déjame terminar la pregunta.');
   await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(3);
+  await expect.poll(() => page.evaluate(() => window.__nativeTransport.sourcesStarted)).toBeGreaterThan(sourcesBeforeInterrupt);
   await page.getByRole('button', { name: 'Pausar la historia' }).click();
   await expect.poll(() => page.evaluate(() => window.__nativeTransport.sourcesStopped)).toBeGreaterThan(0);
   await page.getByRole('button', { name: 'Volver al mundo' }).click();
-  await page.evaluate(() => { window.__nativeTransport.autoComplete = true; });
+  await page.evaluate(() => { window.__nativeTransport.autoComplete = true; window.__nativeTransport.duration = .25; });
   await submitText(page, 'Ya estoy listo, sigue con la explicación.');
   await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(4);
   await expect.poll(async () => (await requests(page, 'native-played')).filter(item => item.body.complete === true && item.body.turnId === 'fixture-native-4').length).toBe(1);
@@ -120,7 +124,8 @@ test('a held selected-charge read does not block foreground voice and returns on
   expect(evidence.receipts).toEqual([]);
 
   releaseRead();
-  await expect(frame.locator('.chat-message.assistant')).toHaveText(chargeReply);
+  await expect(frame.locator('.chat-message.assistant')).toHaveAttribute('data-savia-reply', chargeReply);
+  await expect(frame.locator('.chat-message.assistant')).toContainText('Savia');
   await expect.poll(() => evidence.receipts).toEqual([{ reply: chargeReply, locale: 'es' }]);
   await expect.poll(async () => (await requests(page, 'native-result')).length).toBe(1);
   await expect.poll(async () => (await requests(page, 'native-played')).filter(item => item.body.complete === true && item.body.turnId === 'fixture-native-5').length).toBe(1);
@@ -169,4 +174,60 @@ test('a typed turn submitted during native reset waits for readiness and runs on
   await expect.poll(() => page.evaluate(() => window.__nativeTransport.requests.filter(item => item.path.endsWith('native-played') && item.body.complete === true).length)).toBe(1);
   expect(await page.evaluate(() => window.__nativeTransport.requests.filter(item => item.path.endsWith('native-result')).length)).toBe(0);
   expect(await page.evaluate(() => window.__nativeTransport.tracksStopped)).toBe(0);
+});
+
+test('an owned inquiry pointer queues its verified update after foreground speech and suppresses repeated status copy', async ({ page }) => {
+  await setup(page);
+  const caseId = 'i_' + 'c'.repeat(32), reply = 'El equipo tiene dos perspectivas útiles. ¿Te ayudan a decidir?';
+  const queries: string[] = [], receipts: Record<string, unknown>[] = [];
+  let version = 7;
+  await page.route('**/savia/api/assistant/voice-update?**', route => {
+    const url = new URL(route.request().url()); queries.push(url.search);
+    return route.fulfill({ json: { reply, mode: 'assistant', status: 'completed', event_id: version,
+      inquiry_state: url.searchParams.get('case_id') === caseId ? 'team_completed' : 'informational_resolved', bank_authority: false } });
+  });
+  await page.route('**/api/avatar/native-result-receipt', route => {
+    const body = route.request().postDataJSON() as Record<string, unknown>; receipts.push(body);
+    if (body.reply !== reply || body.locale !== 'es' || Object.keys(body).length !== 2)
+      return route.fulfill({ status: 409, json: { error: 'Unverified update' } });
+    return route.fulfill({ json: { taskId } });
+  });
+  await submitText(page, 'Hola, quiero entender el siguiente paso.');
+  await expect.poll(async () => (await requests(page, 'native-played')).filter(item => item.body.complete === true).length).toBe(1);
+  await page.getByRole('button', { name: 'Mirar el estanque' }).click();
+  const frame = await bankFrame(page);
+  const pointer = { type: 'savia:inquiry-update', case_id: caseId, event_id: version };
+  await page.evaluate(pointer => window.postMessage(pointer, location.origin), pointer);
+  expect(queries).toEqual([]); // A parent-window spoof is not the mounted frame.
+
+  await page.evaluate(() => { window.__nativeTransport.autoComplete = false; });
+  await submitText(page, 'Mientras espero, sigo pensando qué información guardar.');
+  await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(2);
+  await frame.evaluate(pointer => window.parent.postMessage(pointer, location.origin), pointer);
+  await expect.poll(() => receipts).toEqual([{ reply, locale: 'es' }]);
+  expect(await requests(page, 'native-result')).toHaveLength(0);
+  expect(queries).toEqual([`?case_id=${caseId}&after_event_id=0&language=es`]);
+
+  await frame.evaluate(pointer => {
+    window.parent.postMessage(pointer, location.origin);
+    window.parent.postMessage({ ...pointer, reply: 'Invented human resolution' }, location.origin);
+  }, pointer);
+  version = 8;
+  await frame.evaluate(pointer => window.parent.postMessage(pointer, location.origin), { ...pointer, event_id: version });
+  await expect.poll(() => queries.length).toBe(2);
+  expect(queries[1]).toBe(`?case_id=${caseId}&after_event_id=7&language=es`);
+  expect(receipts).toEqual([{ reply, locale: 'es' }]); // Same copy, newer worker event.
+
+  await page.evaluate(() => { window.__nativeTransport.autoComplete = true; window.__nativeTransport.finish('fixture-native-2'); });
+  await expect.poll(async () => (await requests(page, 'native-result')).length).toBe(1);
+  await expect.poll(async () => (await requests(page, 'native-played')).filter(item => item.body.turnId === 'fixture-native-3' && item.body.complete === true).length).toBe(1);
+  expect(await requests(page, 'native-reset')).toHaveLength(1);
+  expect(await requests(page, 'native-result')).toHaveLength(1);
+  expect(receipts).toHaveLength(1);
+  await frame.evaluate(pointer => window.parent.postMessage(pointer, location.origin), {
+    type: 'savia:inquiry-update', case_id: 'i_' + 'd'.repeat(32), event_id: version,
+  });
+  await expect.poll(() => queries.length).toBe(3);
+  expect(receipts).toHaveLength(1); // An old closed inquiry is not a new closure announcement.
+  expect(await requests(page, 'native-result')).toHaveLength(1);
 });

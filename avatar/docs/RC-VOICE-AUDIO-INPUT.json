@@ -1,0 +1,35 @@
+{
+  "schema": "savia-prerecorded-spanish-native-input/v1",
+  "recorded_at": "2026-10-05T00:57:31.005Z",
+  "http_status": 200,
+  "actual_provider_calls": 1,
+  "provider": "openrouter-native",
+  "model": "openai/gpt-audio",
+  "input": {
+    "kind": "public synthetic prerecorded Spanish WAV",
+    "sha256": "3956bc585e5bac204010593ea5ae37182ac47828d034ffcb36f8e8daca481d6c",
+    "sample_rate_hz": 24000,
+    "seconds": 4.136875,
+    "utterance": "Tranquilo, respira hondo. Todo va a salir bien.",
+    "typed_message_sent": false
+  },
+  "bank_calls": 0,
+  "generic_flujo_calls": 0,
+  "physical_microphone": false,
+  "browser_playback": false,
+  "playback_ack_sent": false,
+  "output_sample_rate_hz": 24000,
+  "output_sample_rate_qualification": "assumed",
+  "first_audio_ms": 2153,
+  "completion_ms": 3935,
+  "audio_seconds": 9.4,
+  "reply": "Claro, respiro profundo y me calmo, vamos paso a paso, como una hoja cayendo suavemente.",
+  "usage": {
+    "promptTokens": 379,
+    "completionTokens": 225,
+    "totalTokens": 604,
+    "inputAudioTokens": 41,
+    "outputAudioTokens": 188,
+    "costUsd": 0.014559
+  }
+}

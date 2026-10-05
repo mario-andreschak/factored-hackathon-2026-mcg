@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-04T19:30:56-05:00",
+  "updated_at": "2026-10-04T20:25:15-05:00",
   "state": "complete-owned-work",
   "completed": [
     "Rewrote README around Savia's unrecognized-charge story, setup choices, consent and honest receipt/follow-up limits; removed duplicate navigation and stale current metrics.",
@@ -11,7 +11,8 @@
     "Focused public docs/scripts review retained true preparation-only/source-artifact flags; updated older unbuilt/undeployed statements with dated scope and RC pointers.",
     "Legacy source inspected remains used by CI/build or retained-state contracts; no source deletion justified. Voice owner removed malformed zero-byte avatar artifact.",
     "133 owned-document local links resolve; broader general-doc scan has no missing targets; owned git diff --check passes; docs/qualification unchanged.",
-    "Applied human product-led investor briefing: README leads with customer/bank value; submission guide records Why-What-How and video90/10, slides60/40 priorities separately from original PDF requirements, with business impact scoped honestly."
+    "Applied human product-led investor briefing: README leads with customer/bank value; submission guide records Why-What-How and video90/10, slides60/40 priorities separately from original PDF requirements, with business impact scoped honestly.",
+    "Root-authorized concise README refresh after assistant API readiness: ask once/team/return story, actual informational agent status and new-chat archive controls, separate inquiry/bank consent/receipt records, actual MCP proof link and generic/direct provider profiles. Week observation and bank resolution remain unclaimed."
   ],
   "next": [
     "Available for final reviewer corrections; root report owns final video, metrics and source/runtime acceptance."
@@ -37,5 +38,14 @@
     "contracts/v0_reconciliation.md",
     "requirements-mcp.txt",
     "docs/submission/cleanup-status.json"
-  ]
+  ],
+  "readme_delta": {
+    "paths": [
+      "README.md",
+      "docs/submission/cleanup-status.json"
+    ],
+    "sha256": "837405719535de050b4ca4268b4fcdd77808542e560bd15913c17a4270f7a971",
+    "local_links_checked": 21,
+    "source_scope": "assistant API loaded; final joined recordings owned by root/measurement"
+  }
 }

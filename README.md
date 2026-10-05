@@ -1,10 +1,15 @@
 # Savia — Factored AI & Data Hackathon 2026 — MCG
 
 A charge you don't recognize leaves you with two questions: what happened, and
-what happens next? **Savia gives customers one place to understand the charge,
-take the next step and check back without starting over.** It is a Spanish and
-Portuguese banking-service prototype that brings the selected transaction,
-conversation and follow-up together.
+what happens next? **Ask once. Explore options with Savia's team. Return for a
+clear next step.** Savia is a friendly Spanish and Portuguese voice assistant
+that brings the question, verified transaction facts and follow-up together.
+
+Customers can ask two Savia AI agents to consider an informational inquiry from
+different perspectives: evidence to compare and useful next steps. Their actual
+work status and suggestions are saved so the customer can return without losing
+the thread. Voice and keyboard conversation sit alongside the guarded banking
+workbench; bank consent and receipt verification remain separate.
 
 For customers, the value is a clear explanation and useful status during the
 day. For the bank, the opportunity is fewer repeat contacts and a better-informed
@@ -16,7 +21,8 @@ application services.
 
 Public demos use fictional customers and a simulated dispute service. A verified
 intake receipt records intake; it does not establish a refund or resolution of
-the underlying dispute. A saved handoff packet does not establish human pickup.
+the underlying dispute. Marking an informational answer helpful does not resolve
+a bank case. A saved handoff packet does not establish human pickup.
 
 ## Release and demo
 
@@ -30,11 +36,18 @@ the [editable submission deck](docs/submission/media/decks/savia-submission-deck
 and [pitch deck](docs/submission/media/decks/savia-pitch-deck.pptx). The release
 report records final review, exports, recording and claim verification.
 
-The intended demonstration follows one fictional customer from an unrecognized
-charge to a useful answer or consented simulated intake, then a status check or
-helpful next step. It includes Portuguese clarification, an honest failure or
-human-required path, and voice conversation while work runs in the background.
-See the release report for which parts were actually measured and recorded.
+The product story follows one fictional customer from an unrecognized charge to
+a useful answer, team exploration and a return visit with helpful status. A
+consented simulated intake, Portuguese clarification and honest failure/handoff
+show how the experience handles uncertainty. The [inquiry guide and actual
+proof](docs/submission/assistant/README.md) distinguish the two-agent provider run
+from the generic FLUJO MCP wiring. The release report owns final recorded claims.
+
+The portal's new-chat control archives the visible transcript and clears its
+selected context; the previous conversation remains viewable. Saved inquiries,
+bank receipts, pending consent and follow-ups remain separate. Inquiry tracking
+runs while the host is running, with quiet unchanged checks and a seven-day
+limit. Scheduling tests do not establish a week of observed operation.
 
 ## Run locally
 
@@ -43,8 +56,8 @@ Choose the setup that matches what you want to exercise:
 | Setup | Instructions | Scope |
 | --- | --- | --- |
 | Fictional portal preview | [Frontend setup](frontend/README.md#isolated-synthetic-invitation-preview) | Generates isolated fixtures and invitations, builds the UI, and serves a loopback API. No model, FLUJO, MCP or action is started. |
-| Fictional local customer workflow | [RC startup](deploy/rc/README.md) | Generates fresh fixtures and a durable simulated ledger, calls the banking service in process, and uses an existing generic FLUJO model. Network MCP and native-flow deployment remain separate qualification scopes. |
-| Voice companion | [Avatar setup](avatar/README.md) | Optional conversational interface; provider and joined banking acceptance have their own evidence. |
+| Fictional local customer workflow | [RC startup](deploy/rc/README.md) | Fresh fixtures, durable inquiries and simulated ledger; banking service in process. Select the generic FLUJO model or explicit direct OpenRouter profile. Native-flow and network bank-MCP deployment remain separate scopes. |
+| Savia voice interface | [Avatar setup](avatar/README.md) | Foreground voice and keyboard conversation with background status; provider, interruption and joined acceptance have their own evidence. |
 | Data pipeline | [Pipeline setup](pipeline/README.md) | Repeatable ingestion, ownership checks, lineage and customer-sharded snapshots. Organizer data requires approved private access. |
 
 The fictional preview runbook includes Windows PowerShell and POSIX commands,
@@ -54,9 +67,10 @@ access code or provider credential is included in source. Keep private config,
 customer rows and state outside tracked files.
 
 The integrated fictional candidate opens at [127.0.0.1:43900](http://127.0.0.1:43900)
-after following the RC startup guide. It requires an available configured generic
-FLUJO model. Its generated fixture and state are separate from the organizer-data
-portal and the hosted Fly build; the release report identifies each runtime.
+after following the RC startup guide. The default profile uses an available
+generic FLUJO model; `--provider openrouter` explicitly selects the separate
+direct-provider profile. Its generated fixture and state are separate from the
+organizer-data portal and hosted Fly build; the release report identifies each runtime.
 
 ## Why this workflow
 
@@ -78,8 +92,10 @@ Current comparisons must cite their actual workload in the release report.
 The pipeline prepares validated snapshots. The Savia host authenticates the
 customer, resolves owned selections, handles explicit consent and verifies
 receipts. The banking MCP owns banking data, policy and durable action state.
-FLUJO supplies orchestration and language through existing interfaces; banking
-keys and action capabilities stay outside generic language inputs. See the
+The app owns informational inquiry events and follow-up independently of banking
+consent and receipts. FLUJO supplies generic interfaces and the scoped MCP flow;
+language execution uses the explicitly selected profile. Banking keys and action
+capabilities stay outside generic language inputs. See the
 [direct-host contract](frontend/DIRECT_MCP.md) and
 [workflow implementation](docs/DISPUTE_IMPLEMENTATION.md).
 
@@ -102,6 +118,7 @@ replay backed by private caches; it is not a public submission artifact.
 | Directory | Purpose |
 | --- | --- |
 | `frontend/`, `avatar/` | Customer portal and voice companion |
+| `savia_assistant/` | Durable informational inquiries, two-agent exploration and scoped MCP |
 | `banking_mcp/`, `dispute_workflow/` | Scoped banking tools and dispute workflow |
 | `pipeline/`, `ml/` | Data preparation and diagnostic intent-router evaluation |
 | `resources/`, `contracts/` | Prompts, synthetic policy and workflow contracts |

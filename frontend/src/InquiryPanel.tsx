@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { ApiError, api } from "./lib";
 import "./InquiryPanel.css";
 
@@ -42,9 +48,18 @@ const copy = {
     suggestions: "Sugerencias del equipo",
     next: "Siguiente paso",
     refreshError: "No pudimos cargar las consultas. Intenta de nuevo.",
-    serviceError: "El servicio de ayuda no está disponible ahora. Intenta más tarde.",
+    serviceError:
+      "El servicio de ayuda no está disponible ahora. Intenta más tarde.",
     genericError: "No pudimos enviar la consulta. Intenta de nuevo.",
-    states: { queued: "En espera", team_working: "En revisión", human_working: "En revisión por una persona", team_completed: "Respuesta disponible", awaiting_customer: "Esperando tu respuesta", needs_attention: "Requiere tu atención", informational_resolved: "Consulta informativa completada" },
+    states: {
+      queued: "En espera",
+      team_working: "En revisión",
+      human_working: "En revisión por una persona",
+      team_completed: "Respuesta disponible",
+      awaiting_customer: "Esperando tu respuesta",
+      needs_attention: "Requiere tu atención",
+      informational_resolved: "Consulta informativa completada",
+    },
     resolved: "Marcaste esta respuesta como útil para tu consulta.",
     status: "Estado informado por el equipo",
     updated: "Actualización de tu consulta",
@@ -63,9 +78,18 @@ const copy = {
     suggestions: "Sugestões da equipe",
     next: "Próximo passo",
     refreshError: "Não foi possível carregar as consultas. Tente novamente.",
-    serviceError: "O serviço de ajuda não está disponível agora. Tente mais tarde.",
+    serviceError:
+      "O serviço de ajuda não está disponível agora. Tente mais tarde.",
     genericError: "Não foi possível enviar a consulta. Tente novamente.",
-    states: { queued: "Na fila", team_working: "Em análise", human_working: "Em análise por uma pessoa", team_completed: "Resposta disponível", awaiting_customer: "Aguardando sua resposta", needs_attention: "Precisa da sua atenção", informational_resolved: "Consulta informativa concluída" },
+    states: {
+      queued: "Na fila",
+      team_working: "Em análise",
+      human_working: "Em análise por uma pessoa",
+      team_completed: "Resposta disponível",
+      awaiting_customer: "Aguardando sua resposta",
+      needs_attention: "Precisa da sua atenção",
+      informational_resolved: "Consulta informativa concluída",
+    },
     resolved: "Você marcou esta resposta como útil para sua consulta.",
     status: "Status informado pela equipe",
     updated: "Atualização da sua consulta",
@@ -82,14 +106,20 @@ function formatUnix(value: number, language: Language) {
   return {
     dateTime: date.toISOString(),
     label: new Intl.DateTimeFormat(language === "es" ? "es-ES" : "pt-BR", {
-      year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZoneName: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
     }).format(date),
   };
 }
 
 function friendlyError(error: unknown, language: Language, fallback: string) {
   if (error instanceof ApiError && error.status === 401) return null;
-  if (error instanceof ApiError && error.status === 503) return copy[language].serviceError;
+  if (error instanceof ApiError && error.status === 503)
+    return copy[language].serviceError;
   return fallback;
 }
 
@@ -117,55 +147,109 @@ export function InquiryPanel({
   const voiceEventCursors = useRef<Map<string, number>>(new Map());
   const hasLoadedCases = useRef(false);
   const [formOpen, setFormOpen] = useState(Boolean(message));
-  const pollDelay = items.some((item) => ["queued", "team_working"].includes(item.state)) ? 2_000 : 15_000;
+  const pollDelay = items.some((item) =>
+    ["queued", "team_working"].includes(item.state),
+  )
+    ? 2_000
+    : 15_000;
 
-  const notifyVoiceHost = useCallback((cases: InquiryCase[], fromCreate = false) => {
-    const isVoiceCase = (item: InquiryCase) => {
-      const eventId = item.events?.at(-1)?.id;
-      return /^i_[a-f0-9]{32}$/.test(item.id) && typeof eventId === "number" && Number.isSafeInteger(eventId) && eventId > 0;
-    };
-    const initialCaseId = cases.find(isVoiceCase)?.id;
-    for (const item of cases) {
-      if (!/^i_[a-f0-9]{32}$/.test(item.id)) continue;
-      const lastEvent = item.events?.at(-1);
-      if (!lastEvent || typeof lastEvent.id !== "number" || !Number.isSafeInteger(lastEvent.id) || lastEvent.id <= 0) continue;
-      const previousEventId = voiceEventCursors.current.get(item.id);
-      const isNewEvent = previousEventId !== undefined && previousEventId !== lastEvent.id;
-      const isInitialCase = previousEventId === undefined && !hasLoadedCases.current && item.id === initialCaseId;
-      const isNewCase = previousEventId === undefined && hasLoadedCases.current;
-      if (window.parent !== window && (isInitialCase || isNewCase || isNewEvent)) {
-        window.parent.postMessage({ type: "savia:inquiry-update", case_id: item.id, event_id: lastEvent.id }, window.location.origin);
+  const notifyVoiceHost = useCallback(
+    (cases: InquiryCase[], fromCreate = false) => {
+      const isVoiceCase = (item: InquiryCase) => {
+        const eventId = item.events?.at(-1)?.id;
+        return (
+          /^i_[a-f0-9]{32}$/.test(item.id) &&
+          typeof eventId === "number" &&
+          Number.isSafeInteger(eventId) &&
+          eventId > 0
+        );
+      };
+      const initialCaseId = cases.find(isVoiceCase)?.id;
+      for (const item of cases) {
+        if (!/^i_[a-f0-9]{32}$/.test(item.id)) continue;
+        const lastEvent = item.events?.at(-1);
+        if (
+          !lastEvent ||
+          typeof lastEvent.id !== "number" ||
+          !Number.isSafeInteger(lastEvent.id) ||
+          lastEvent.id <= 0
+        )
+          continue;
+        const previousEventId = voiceEventCursors.current.get(item.id);
+        const isNewEvent =
+          previousEventId !== undefined && previousEventId !== lastEvent.id;
+        const isInitialCase =
+          previousEventId === undefined &&
+          !hasLoadedCases.current &&
+          item.id === initialCaseId;
+        const isNewCase =
+          previousEventId === undefined && hasLoadedCases.current;
+        if (
+          window.parent !== window &&
+          (isInitialCase || isNewCase || isNewEvent)
+        ) {
+          window.parent.postMessage(
+            {
+              type: "savia:inquiry-update",
+              case_id: item.id,
+              event_id: lastEvent.id,
+            },
+            window.location.origin,
+          );
+        }
+        voiceEventCursors.current.set(item.id, lastEvent.id);
       }
-      voiceEventCursors.current.set(item.id, lastEvent.id);
-    }
-    if (!fromCreate) hasLoadedCases.current = true;
-  }, []);
+      if (!fromCreate) hasLoadedCases.current = true;
+    },
+    [],
+  );
 
   const refresh = useCallback(async () => {
     try {
-      const result = await api<CaseList>(`/api/assistant/cases?language=${language}`);
+      const result = await api<CaseList>(
+        `/api/assistant/cases?language=${language}`,
+      );
       const nextItems = Array.isArray(result.items) ? result.items : [];
       notifyVoiceHost(nextItems);
       const priorStates = previousStates.current;
-      const changedItems = priorStates ? nextItems.filter((item) => priorStates.has(item.id) && priorStates.get(item.id) !== item.state) : [];
+      const changedItems = priorStates
+        ? nextItems.filter(
+            (item) =>
+              priorStates.has(item.id) &&
+              priorStates.get(item.id) !== item.state,
+          )
+        : [];
       if (changedItems.length) {
         const changed = changedItems[0];
         setNotice(changed.status_message || t.updated);
-        window.dispatchEvent(new CustomEvent("savia:inquiries", {
-          detail: {
-            items: changedItems.map((item) => ({
-              message: item.message,
-              state: item.state,
-              status_message: item.status_message,
-              next_step: item.next_step,
-              suggestions: ["team_completed", "awaiting_customer", "informational_resolved"].includes(item.state)
-                ? item.workers.filter((worker) => worker.state === "completed" && worker.suggestion).map((worker) => worker.suggestion as string)
-                : [],
-            })),
-          },
-        }));
+        window.dispatchEvent(
+          new CustomEvent("savia:inquiries", {
+            detail: {
+              items: changedItems.map((item) => ({
+                message: item.message,
+                state: item.state,
+                status_message: item.status_message,
+                next_step: item.next_step,
+                suggestions: [
+                  "team_completed",
+                  "awaiting_customer",
+                  "informational_resolved",
+                ].includes(item.state)
+                  ? item.workers
+                      .filter(
+                        (worker) =>
+                          worker.state === "completed" && worker.suggestion,
+                      )
+                      .map((worker) => worker.suggestion as string)
+                  : [],
+              })),
+            },
+          }),
+        );
       }
-      previousStates.current = new Map(nextItems.map((item) => [item.id, item.state]));
+      previousStates.current = new Map(
+        nextItems.map((item) => [item.id, item.state]),
+      );
       setItems(nextItems);
       setError("");
     } catch (reason) {
@@ -191,14 +275,19 @@ export function InquiryPanel({
     setError("");
     setNotice("");
     try {
-      const created = await api<CaseList & { id: string }>("/api/assistant/cases", {
-        method: "POST",
-        body: JSON.stringify({
-          message: text,
-          language,
-          ...(transactionReference ? { transaction_reference: transactionReference } : {}),
-        }),
-      });
+      const created = await api<CaseList & { id: string }>(
+        "/api/assistant/cases",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            message: text,
+            language,
+            ...(transactionReference
+              ? { transaction_reference: transactionReference }
+              : {}),
+          }),
+        },
+      );
       const createdCase = created.items?.find((item) => item.id === created.id);
       if (createdCase) notifyVoiceHost([createdCase], true);
       setDraft("");
@@ -239,46 +328,113 @@ export function InquiryPanel({
           <p>{t.intro}</p>
         </div>
       </header>
-      {error && <p className="inquiry-panel__error" role="alert">{error}</p>}
-      {notice && <p className="inquiry-panel__notice" role="status" aria-live="polite">{notice}</p>}
-      {loading ? <p className="inquiry-panel__muted">{t.loading}</p> : items.length === 0 ? <p className="inquiry-panel__muted">{t.empty}</p> : (
+      {error && (
+        <p className="inquiry-panel__error" role="alert">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p className="inquiry-panel__notice" role="status" aria-live="polite">
+          {notice}
+        </p>
+      )}
+      {loading ? (
+        <p className="inquiry-panel__muted">{t.loading}</p>
+      ) : items.length === 0 ? (
+        <p className="inquiry-panel__muted">{t.empty}</p>
+      ) : (
         <div className="inquiry-panel__list">
           {items.map((item) => (
             <article className="inquiry-card" key={item.id}>
               <div className="inquiry-card__top">
                 <p className="inquiry-card__message">{item.message}</p>
-                <span className="inquiry-card__state">{stateLabel(item.state, language)}</span>
+                <span className="inquiry-card__state">
+                  {stateLabel(item.state, language)}
+                </span>
               </div>
-              {item.status_message && <p className="inquiry-card__status-message">{item.status_message}</p>}
-              {item.next_step && item.next_step !== item.status_message && <p className="inquiry-card__next"><strong>{t.next}:</strong> {item.next_step}</p>}
+              {item.status_message && (
+                <p className="inquiry-card__status-message">
+                  {item.status_message}
+                </p>
+              )}
+              {item.next_step && item.next_step !== item.status_message && (
+                <p className="inquiry-card__next">
+                  <strong>{t.next}:</strong> {item.next_step}
+                </p>
+              )}
               {item.events?.length > 0 && (
                 <details>
-                  <summary>{t.events} ({item.events.length})</summary>
+                  <summary>
+                    {t.events} ({item.events.length})
+                  </summary>
                   <ol className="inquiry-card__events">
                     {item.events.map((entry) => {
                       const timestamp = formatUnix(entry.at, language);
-                      return <li key={entry.id}><p>{entry.message}</p>{timestamp && <time dateTime={timestamp.dateTime}>{timestamp.label}</time>}</li>;
+                      return (
+                        <li key={entry.id}>
+                          <p>{entry.message}</p>
+                          {timestamp && (
+                            <time dateTime={timestamp.dateTime}>
+                              {timestamp.label}
+                            </time>
+                          )}
+                        </li>
+                      );
                     })}
                   </ol>
                 </details>
               )}
-              {(["team_completed", "awaiting_customer", "informational_resolved"].includes(item.state)) && item.workers?.some((worker) => worker.state === "completed" && worker.suggestion) && (
-                <ul className="inquiry-card__suggestions" aria-label={t.suggestions}>
-                  {item.workers.filter((worker) => worker.state === "completed" && worker.suggestion).map((worker, index) => <li key={`${worker.role}-${index}`}>{worker.suggestion}</li>)}
-                </ul>
-              )}
+              {[
+                "team_completed",
+                "awaiting_customer",
+                "informational_resolved",
+              ].includes(item.state) &&
+                item.workers?.some(
+                  (worker) => worker.state === "completed" && worker.suggestion,
+                ) && (
+                  <ul
+                    className="inquiry-card__suggestions"
+                    aria-label={t.suggestions}
+                  >
+                    {item.workers
+                      .filter(
+                        (worker) =>
+                          worker.state === "completed" && worker.suggestion,
+                      )
+                      .map((worker, index) => (
+                        <li key={`${worker.role}-${index}`}>
+                          {worker.suggestion}
+                        </li>
+                      ))}
+                  </ul>
+                )}
               {["team_completed", "awaiting_customer"].includes(item.state) && (
-                <button className="inquiry-card__helpful" type="button" onClick={() => void markHelpful(item.id)}>{t.helpful}</button>
+                <button
+                  className="inquiry-card__helpful"
+                  type="button"
+                  onClick={() => void markHelpful(item.id)}
+                >
+                  {t.helpful}
+                </button>
               )}
             </article>
           ))}
         </div>
       )}
-      <details className="inquiry-panel__new" open={formOpen} onToggle={(event) => setFormOpen(event.currentTarget.open)}>
+      <details
+        className="inquiry-panel__new"
+        open={formOpen}
+        onToggle={(event) => setFormOpen(event.currentTarget.open)}
+      >
         <summary>{t.newInquiry}</summary>
         <form className="inquiry-panel__form" onSubmit={submit}>
           <label htmlFor="inquiry-message">{t.prompt}</label>
-          <textarea id="inquiry-message" value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} />
+          <textarea
+            id="inquiry-message"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            rows={3}
+          />
           <button type="submit" disabled={!draft.trim() || sending}>
             {sending ? t.submitting : t.submit}
           </button>

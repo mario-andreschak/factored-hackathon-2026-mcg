@@ -17,7 +17,7 @@ const APP_ROOTS = new Set(['.gitattributes', 'graph_config_v3.yaml', 'requiremen
   'requirements-mcp.txt', 'requirements-pipeline.txt', 'requirements-s3.txt', 'frontend/package.json', 'frontend/package-lock.json',
   'frontend/index.html', 'frontend/vite.config.ts', 'frontend/tsconfig.json', 'frontend/requirements.txt']);
 const APP_PREFIXES = ['frontend/src/', 'frontend/public/', 'frontend/server/', 'banking_mcp/',
-  'pipeline/', 'dispute_workflow/', 'resources/', 'config/', 'contracts/', 'deploy/fly/'];
+  'pipeline/', 'dispute_workflow/', 'savia_assistant/', 'resources/', 'config/', 'contracts/', 'deploy/fly/'];
 const APP_SCRIPTS = new Set(['scripts/run_dispute.py', 'scripts/native_dispute_qualification.py',
   'scripts/native_dispute_qualification.ts', 'scripts/native_dispute_qualification.mjs',
   'scripts/native_dispute_qualification.Dockerfile',

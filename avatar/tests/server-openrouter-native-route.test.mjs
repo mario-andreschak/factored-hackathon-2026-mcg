@@ -555,3 +555,60 @@ test('foreground native audio sees only host-owned pending read status and can c
   const next = f.calls.filter(item => item.kind === 'native').at(-1).body.messages[0].content;
   assert.ok(!next.includes('Trusted host status:'));
 });
+
+test('authenticated inquiry updates alone acquire a strict once-only voice receipt and omit pointers from the model', async t => {
+  const caseId = 'i_' + 'a'.repeat(32), reply = 'El equipo tiene dos perspectivas útiles. La guía es informativa.';
+  let bankAuthority = false;
+  const f = await fixture(t, { env: { SAVIA_UPSTREAM: BANK }, bank: call => {
+    if (call.url.endsWith('/api/auth/login')) return jsonResponse({ authenticated: true }, { headers: { 'Set-Cookie': `flujo_bank_session=${BANK_A}; Path=/; HttpOnly` } });
+    if (call.url.endsWith('/api/auth/me')) return jsonResponse({ authenticated: true });
+    if (call.url.includes('/api/assistant/voice-update?')) {
+      assert.equal(call.options.headers.Cookie, `flujo_bank_session=${BANK_A}`);
+      if (new URL(call.url).searchParams.get('after_event_id') === '7') return new Response(null, { status: 204 });
+      return jsonResponse({ reply, mode: 'assistant', status: 'completed', event_id: 7,
+        inquiry_state: 'team_completed', bank_authority: bankAuthority });
+    }
+    throw new Error('Unowned synthetic inquiry path.');
+  } });
+  await f.post('/savia/api/auth/login', { profile: 'synthetic', code: 'synthetic' });
+  const get = query => fetch(`${f.base}/savia/api/assistant/voice-update?${query}`, { headers: { Cookie: f.cookie } });
+  const valid = `case_id=${caseId}&after_event_id=0&language=es`;
+  const count = f.calls.length;
+  for (const query of ['case_id=private', valid + '&reply=forged', valid + '&case_id=' + caseId,
+    `case_id=${caseId}&after_event_id=-1`, `case_id=${caseId}&language=en`]) assert.equal((await get(query)).status, 400);
+  assert.equal(f.calls.length, count);
+  assert.equal((await get(valid)).status, 200);
+  const bound = await (await f.post('native-result-receipt', { reply, locale: 'es' })).json();
+  assert.ok(bound.taskId);
+  await lines(await f.post('native-result', { taskId: bound.taskId, avatar: 'moss', locale: 'es' }));
+  const prompt = JSON.stringify(f.calls.filter(call => call.kind === 'native').at(-1).body.messages);
+  assert.ok(prompt.includes(reply)); assert.ok(!prompt.includes(caseId)); assert.ok(!prompt.includes(BANK_A));
+  assert.ok(!prompt.includes('event_id')); assert.ok(!prompt.includes('bank_authority'));
+  await error(await f.post('native-result', { taskId: bound.taskId, avatar: 'moss', locale: 'es' }), 409, 'native_turn_ended');
+  assert.equal((await get(`case_id=${caseId}&after_event_id=7&language=es`)).status, 204);
+  bankAuthority = true;
+  assert.equal((await get(valid)).status, 200);
+  await error(await f.post('native-result-receipt', { reply, locale: 'es' }), 409, 'native_turn_ended');
+});
+
+test('a delayed informational update is withheld after account rebind and cannot enter voice history', async t => {
+  const delayed = deferred(); let login = 0;
+  const oldReply = 'A previous account has an informational suggestion; do not expose it.';
+  const f = await fixture(t, { env: { SAVIA_UPSTREAM: BANK }, bank: call => {
+    if (call.url.endsWith('/api/auth/login')) return jsonResponse({ authenticated: true }, { headers: { 'Set-Cookie': `flujo_bank_session=${++login === 1 ? BANK_A : BANK_B}; Path=/; HttpOnly` } });
+    if (call.url.includes('/api/assistant/voice-update?')) return delayed.promise;
+    throw new Error('Unowned synthetic informational path.');
+  } });
+  await f.post('/savia/api/auth/login', { profile: 'synthetic', code: 'synthetic' });
+  const previous = fetch(`${f.base}/savia/api/assistant/voice-update?case_id=i_${'a'.repeat(32)}&language=es`, { headers: { Cookie: f.cookie } });
+  await until(() => f.calls.some(call => call.url.includes('/api/assistant/voice-update?')));
+  await f.post('/savia/api/auth/login', { profile: 'other-synthetic', code: 'synthetic' });
+  delayed.resolve(jsonResponse({ reply: oldReply, mode: 'assistant', status: 'completed', event_id: 7,
+    inquiry_state: 'team_completed', bank_authority: false }));
+  const withheld = await previous;
+  assert.equal(withheld.status, 409);
+  const body = await withheld.json(); assert.equal(body.code, 'bank_session_changed');
+  assert.ok(!JSON.stringify(body).includes(oldReply));
+  await error(await f.post('native-result-receipt', { reply: oldReply, locale: 'es' }), 409, 'native_turn_ended');
+  assert.equal(f.calls.filter(call => call.kind === 'native').length, 0);
+});

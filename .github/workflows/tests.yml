@@ -123,4 +123,5 @@ jobs:
       - run: python -m pip install -r requirements-dispute.txt pytest pytest-subtests
       - run: python -m pip check
       - run: python scripts/test_dispute.py
-      - run: python -m compileall -q dispute_workflow scripts/run_dispute.py
+      - run: python -m pytest -q --import-mode=importlib savia_assistant/tests
+      - run: python -m compileall -q dispute_workflow savia_assistant scripts/run_dispute.py

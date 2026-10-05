@@ -75,6 +75,39 @@ def capsule_states(state):
     return [scopes[key] for key in order]
 
 
+def selected_charge():
+    row = transaction()
+    return {"reference": TRANSACTION_ID, "occurred_at": row["transaction_date"],
+        "amount": row["amount"], "currency": row["currency"],
+        "type": row["transaction_type"], "status": row["transaction_status"]}
+
+
+def test_pt_rewritten_questions_retain_owned_selected_charge_when_slots_omit_known_facts(tmp_path):
+    queries = ["Não reconheço esta compra.", "Explique os dados e o que posso fazer agora."]
+    empty = {"amount": None, "currency": None}
+    stages = MultiStages(language="pt", queries=queries,
+        slot_changes={query: empty for query in [*queries, " ".join(queries)]})
+    runner, _, bank = workflow(tmp_path, stages, ScopedBank())
+    result = run_workflow(runner, " ".join(queries), selection=selected_charge(), turn_id="selected-pt")
+    scopes = capsule_states(result)
+    assert [c["workflow_state"]["policy_decision"]["response_mode"] for c in scopes] == ["CONFIRM_ACTION", "INFORM"]
+    assert all(c["workflow_state"]["transaction_id"] == TRANSACTION_ID for c in scopes)
+    assert all(not c["workflow_state"]["missing_fields"] for c in scopes)
+    assert result["response"]["language"] == "pt"
+    assert "25.5" in result["response"]["message"]
+    assert all(name in bank.reads for name, _ in bank.calls)
+
+
+def test_selected_charge_is_not_grafted_to_a_different_independent_query(tmp_path):
+    runner, _, bank = workflow(tmp_path, MultiStages(), ScopedBank())
+    result = run_workflow(runner, ORIGINAL, selection=selected_charge(), turn_id="selected-independent")
+    first, second = capsule_states(result)
+    assert first["workflow_state"]["transaction_id"] == TRANSACTION_ID
+    assert second["workflow_state"]["transaction_id"] == OTHER_TRANSACTION_ID
+    assert second["workflow_state"]["policy_decision"]["response_mode"] == "INFORM"
+    assert all(name in bank.reads for name, _ in bank.calls)
+
+
 def test_two_independent_queries_keep_targets_and_pending_separate(tmp_path):
     runner, stages, bank = workflow(tmp_path, MultiStages(), ScopedBank())
     result = run_workflow(runner, ORIGINAL, turn_id="multi-1")
@@ -94,10 +127,11 @@ def test_two_independent_queries_keep_targets_and_pending_separate(tmp_path):
     assert all(name in bank.reads for name, _ in bank.calls)
 
 
-def test_every_query_ownership_preflight_finishes_before_private_reads(tmp_path):
+@pytest.mark.parametrize("selection", [None, selected_charge()])
+def test_every_query_ownership_preflight_finishes_before_private_reads(tmp_path, selection):
     stages = MultiStages(slot_changes={SECOND: {"foreign_customer_reference": True}})
     runner, _, bank = workflow(tmp_path, stages, ScopedBank())
-    result = run_workflow(runner, ORIGINAL)
+    result = run_workflow(runner, ORIGINAL, selection=selection)
     assert result["workflow_state"]["policy_decision"]["response_mode"] == "BLOCKED"
     assert bank.calls == []
     assert len([call for call in stages.calls if call[0] == "extract_slots"]) == 3

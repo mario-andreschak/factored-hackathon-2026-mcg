@@ -16,6 +16,8 @@ export const SAVIA_API_ROUTES = Object.freeze({
   '/api/action/status': ['GET'],
   '/api/followups': ['GET', 'POST'],
   '/api/followups/check': ['POST'],
+  '/api/assistant/cases': ['GET', 'POST'],
+  '/api/assistant/voice-update': ['GET'],
 });
 
 export function cookieValue(header, name) {
@@ -34,6 +36,8 @@ export function saviaRoute(pathname, method) {
   const path = pathname.slice('/savia'.length) || '/';
   const methods = SAVIA_API_ROUTES[path];
   if (methods) return methods.includes(method) ? { path, api: true } : null;
+  if (/^\/api\/assistant\/cases\/i_[a-f0-9]{32}\/resolve$/.test(path))
+    return method === 'POST' ? { path, api: true } : null;
   if (method !== 'GET' && method !== 'HEAD') return null;
   if (path === '/' || path === '/index.html' || path === '/favicon.svg' ||
       /^\/assets\/[a-zA-Z0-9._/-]+\.(?:js|css|svg|png|jpe?g|webp|avif|woff2?)$/.test(path) &&
@@ -86,6 +90,14 @@ export async function proxySavia(req, res, url, config, session, fetchImpl, sign
   if (!config.saviaUpstream) throw new PublicError(503, 'backend_unconfigured', 'Savia is not connected in this installation.');
   const route = saviaRoute(url.pathname, req.method);
   if (!route) throw new PublicError(404, 'not_found', 'This route is not available.');
+  if (route.path === '/api/assistant/voice-update') {
+    const query = url.searchParams;
+    if ([...query.keys()].some(key => !['case_id', 'after_event_id', 'language'].includes(key) || query.getAll(key).length !== 1) ||
+        !/^i_[a-f0-9]{32}$/.test(query.get('case_id') || '') ||
+        !/^(?:0|[1-9][0-9]{0,12})$/.test(query.get('after_event_id') || '0') ||
+        !['es', 'pt'].includes(query.get('language') || 'es'))
+      throw new PublicError(400, 'invalid_task', 'Send only a public inquiry reference, event cursor and supported language.');
+  }
   const incomingToken = bindBankToken(session, cookieValue(req.headers.cookie, BANK_COOKIE));
   const requestBankToken = session.bankToken;
   let body;
@@ -106,6 +118,19 @@ export async function proxySavia(req, res, url, config, session, fetchImpl, sign
       const payload = parseJson(body);
       if (Object.keys(payload).some(key => key !== 'language') || !['es', 'pt'].includes(payload.language))
         throw new PublicError(400, 'invalid_task', 'Send only a supported follow-up language.');
+    }
+    if (route.path === '/api/assistant/cases') {
+      const payload = parseJson(body);
+      if (Object.keys(payload).some(key => !['message', 'language', 'transaction_reference'].includes(key)) ||
+          typeof payload.message !== 'string' || !payload.message.trim() || payload.message.length > 1000 ||
+          (payload.language !== undefined && !['es', 'pt'].includes(payload.language)) ||
+          (payload.transaction_reference !== undefined && (typeof payload.transaction_reference !== 'string' || !/^txn_[a-f0-9]{24}$/.test(payload.transaction_reference))))
+        throw new PublicError(400, 'invalid_task', 'Send only a bounded inquiry, language and optional selected movement reference.');
+    }
+    if (route.path.endsWith('/resolve')) {
+      const payload = parseJson(body);
+      if (url.search || Object.keys(payload).length !== 1 || payload.resolved !== true)
+        throw new PublicError(400, 'invalid_task', 'Confirm only that the informational inquiry helped.');
     }
     // Login codes are passed only to the existing, fixed Savia login endpoint.
     // The avatar never accepts them in its own task or Realtime configuration.
@@ -156,8 +181,9 @@ export async function proxySavia(req, res, url, config, session, fetchImpl, sign
     json(res, error.status, { error: error.message, detail: error.message, code: error.code }, responseHeaders);
     return;
   }
+  if (response.status === 204) { res.writeHead(204, responseHeaders); res.end(); return; }
   let result = await readResponse(response, route.api ? 4 * 1024 * 1024 : 12 * 1024 * 1024);
-  if (req.method === 'POST' && ['/api/chat', '/api/chat/messages'].includes(route.path) && session.bankToken !== requestBankToken)
+  if ((req.method === 'POST' && ['/api/chat', '/api/chat/messages'].includes(route.path) || route.path === '/api/assistant/voice-update') && session.bankToken !== requestBankToken)
     throw new PublicError(409, 'bank_session_changed', 'The account changed before this response was delivered.');
   if (req.method === 'POST' && ['/api/chat', '/api/chat/messages'].includes(route.path) &&
       requestBankToken && session.bankToken === requestBankToken && !signal.aborted && onTaskResult) {
@@ -167,6 +193,17 @@ export async function proxySavia(req, res, url, config, session, fetchImpl, sign
           ['completed', 'waiting_for_input'].includes(parsed.status))
         onTaskResult({ reply: parsed.reply, mode: parsed.mode, status: parsed.status }, requestBankToken);
     } catch { /* An unrecognized upstream shape never becomes trusted narration. */ }
+  }
+  if (route.path === '/api/assistant/voice-update' && requestBankToken && session.bankToken === requestBankToken &&
+      !signal.aborted && onTaskResult) {
+    try {
+      const parsed = JSON.parse(result.toString('utf8'));
+      if (parsed.mode === 'assistant' && parsed.status === 'completed' && parsed.bank_authority === false &&
+          Number.isSafeInteger(parsed.event_id) && parsed.event_id > 0 && typeof parsed.reply === 'string' &&
+          parsed.reply.trim() && parsed.reply.length <= 8000 &&
+          ['queued', 'team_working', 'team_completed', 'awaiting_customer', 'needs_attention', 'informational_resolved', 'human_working'].includes(parsed.inquiry_state))
+        onTaskResult({ reply: parsed.reply, mode: 'assistant', status: 'completed' }, requestBankToken);
+    } catch { /* Only an actual, bounded host status can become spoken context. */ }
   }
   if (!route.api) result = transformStatic(result, responseHeaders['Content-Type']);
   responseHeaders['Content-Length'] = result.length;
