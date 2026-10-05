@@ -85,6 +85,32 @@ function assertNoOverlap(hits, description) {
 }
 const capturedOptions = { skip: !fs.existsSync(snapshotFile) && 'Run the development-history rebuild to enable actual-data regression coverage.' };
 
+test('Savia product scope excludes development hosts and preserves their separate view', () => {
+  const story = JSON.parse(fs.readFileSync(path.join(__dirname, '../scripts/history_story.json'), 'utf8'));
+  const productNodes = story.nodes.filter(node => node.group === 'product');
+  assert.equal(productNodes.length, 12);
+  for (const [width, height] of [[950, 650], [650, 460], [390, 560]]) {
+    const { scene, commands } = harness(width, height), { data, event } = fixture();
+    data.landscape.nodes.push(...productNodes.map(node => ({ ...node, firstTimestamp: TIME })));
+    data.landscape.nodes.push({ id:'reviewer-machine', source:'infrastructure', label:'Reviewer test Machine', firstTimestamp:TIME });
+    data.landscape.edges.push(...story.edges.filter(edge => edge.from.startsWith('savia-')).map(edge => ({ ...edge, firstTimestamp:TIME })));
+    scene.setData(data); scene.render(frame('landscape', event));
+    let nodes = scene.hits.filter(hit => hit.type === 'system');
+    assert.equal(nodes.length, 12);
+    assert.ok(nodes.every(hit => hit.item.group === 'product'));
+    assert.ok(nodes.some(hit => hit.id === 'savia-fleet' && /10.*10|100/.test(JSON.stringify(hit.item))));
+    assertNoOverlap(nodes, `Savia product at ${width}px`);
+    assert.match(scene.caption, /Development\/reviewer hosts are excluded/);
+    assert.ok(commands.some(command => command[0] === 'fillText' && /^100 /.test(command[1])));
+    commands.length = 0;
+    scene.render({ ...frame('landscape', event), landscapeScope:'development' });
+    nodes = scene.hits.filter(hit => hit.type === 'system');
+    assert.ok(nodes.some(hit => hit.id === 'reviewer-machine'));
+    assert.ok(nodes.every(hit => hit.item.group !== 'product'));
+    assertNoOverlap(nodes, `Development scope at ${width}px`);
+  }
+});
+
 for (const [width, height] of [[950, 650], [390, 560]]) {
   test(`all graph modes draw stable paused frames at ${width}×${height}`, () => {
     const { scene, commands } = harness(width, height), { data, event, flowEvent } = fixture();

@@ -21,7 +21,7 @@
     base: document.createElement('canvas'), eventById: new Map(), hitNodes: [], hitEdges: [],
     plotLeft: 96, plotRight: 12, laneY: [], min: 0, max: 0, chapters: [],
     now: 0, connectionStamp: '', searchCache: new Map(), bodyLoads: new Map(), bodyRequest: 0,
-    playbackMode: 'all', storyIndices: [], allLinks: false, dwell:850, engine:new window.HistoryReplayEngine(), eventProgress:0, episodes:[], episode:-1, graph:null, sessionFilter:'', flowId:'', chatEvents:new Map(), sessions:new Map(), focusTimer:0, focusToken:0
+    playbackMode: 'all', storyIndices: [], allLinks: false, landscapeScope:'product', dwell:850, engine:new window.HistoryReplayEngine(), eventProgress:0, episodes:[], episode:-1, graph:null, sessionFilter:'', flowId:'', chatEvents:new Map(), sessions:new Map(), focusTimer:0, focusToken:0
   };
   const canvas = $('timeline-canvas');
   const ctx = canvas.getContext('2d');
@@ -407,7 +407,7 @@
   function draw(time=0) {
     if(!state.width)return;ctx.clearRect(0,0,state.width,state.height);ctx.drawImage(state.base,0,0,state.width,state.height);
     if(state.view!=='activity'){
-      const result=state.graph?.render({view:state.view,now:state.now,selectedEvent:state.filtered[state.selected],eventCursor:state.selected,playing:state.playing,progress:state.eventProgress,reducedMotion:reducedMotion.matches,sessionFilter:state.sessionFilter,flowId:state.flowId,sourceFilter:[...state.enabled],allLinks:state.allLinks});
+      const result=state.graph?.render({view:state.view,landscapeScope:state.landscapeScope,now:state.now,selectedEvent:state.filtered[state.selected],eventCursor:state.selected,playing:state.playing,progress:state.eventProgress,reducedMotion:reducedMotion.matches,sessionFilter:state.sessionFilter,flowId:state.flowId,sourceFilter:[...state.enabled],allLinks:state.allLinks});
       if(result?.caption)$('landscape-caption').textContent=result.caption;return;
     }
     if(state.graph)state.graph.lastState={view:'activity'};
@@ -420,8 +420,11 @@
   }
 
   function renderConnections() {
-    const container=$('connection-list');container.replaceChildren();const edges=Array.isArray(state.data?.landscape?.edges)?state.data.landscape.edges:[];
-    const nodes=new Map((state.data?.landscape?.nodes||[]).map(n=>[n.id,n]));
+    const container=$('connection-list');container.replaceChildren();
+    const allNodes=state.data?.landscape?.nodes||[],hasProduct=allNodes.some(n=>n.group==='product');
+    const visibleNodes=hasProduct?allNodes.filter(n=>state.landscapeScope==='development'?n.group!=='product':n.group==='product'):allNodes;
+    const nodes=new Map(visibleNodes.map(n=>[n.id,n]));
+    const edges=(state.data?.landscape?.edges||[]).filter(e=>nodes.has(e.from)&&nodes.has(e.to));
     for(const node of nodes.values()){
       const ms=safeTimestamp(node.firstTimestamp)??0,active=ms<=(state.now||state.events[0]?.ms||0);const button=el('button','connection-button');button.type='button';
       button.append(document.createTextNode(node.label||node.id),el('span','',`${str(node.description)||'Captured system component'} · ${active?'active':'appears'} ${ms?shortFormat.format(ms):'undated'}`));
@@ -443,7 +446,7 @@
     state.view=view;state.connectionStamp='';
     for(const name of ['activity','landscape','agents','flows','infrastructure'])$(`${name}-view`).setAttribute('aria-pressed',String(view===name));
     const graph=view!=='activity';$('scene-instruction').hidden=graph;$('canvas-wrap').classList.toggle('landscape-mode',graph);$('source-legend').hidden=graph;$('landscape-caption').hidden=!graph;
-    $('landscape-evidence').hidden=view!=='landscape';$('landscape-links-label').hidden=view!=='landscape';$('scene-tools').hidden=!graph;$('scene-tools').classList.toggle('compact-tools',!['agents','flows'].includes(view));
+    $('landscape-evidence').hidden=view!=='landscape';$('landscape-links-label').hidden=view!=='landscape';$('landscape-scope-label').hidden=view!=='landscape';$('scene-tools').hidden=!graph;$('scene-tools').classList.toggle('compact-tools',!['agents','flows'].includes(view));
     for(const id of ['session-filter','session-filter-label'])$(id).hidden=view!=='agents';
     for(const id of ['flow-filter','flow-filter-label'])$(id).hidden=view!=='flows';
     const names={activity:'THE DEVELOPMENT SIGNAL',landscape:'THE SYSTEM, EVOLVING',agents:'PARALLEL CHATS & AGENT HANDOFFS',flows:'FLUJO · RECORDED EXECUTION GRAPHS',infrastructure:'MACHINES · BUILDS · DEPLOYMENTS'};
@@ -475,6 +478,7 @@
     $('cinema-toggle').addEventListener('click',()=>{const active=document.body.classList.toggle('cinema-mode');$('cinema-toggle').setAttribute('aria-pressed',String(active));$('cinema-toggle').textContent=active?'Exit cinema':'Cinema';resize();});
     $('close-inspector').addEventListener('click',()=>{$('system-inspector').hidden=true;});
     $('landscape-all-links').addEventListener('change',()=>{state.allLinks=$('landscape-all-links').checked;draw();});
+    $('landscape-scope').addEventListener('change',()=>{state.landscapeScope=$('landscape-scope').value;draw();renderConnections();});
     canvas.addEventListener('pointermove',event=>{
       if(state.view!=='activity')return;
       const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top,hit=hitTest(x,y);const tip=$('canvas-tooltip');tip.hidden=!hit;canvas.style.cursor=hit?'pointer':'crosshair';if(!hit)return;

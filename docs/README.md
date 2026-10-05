@@ -9,6 +9,7 @@ This index keeps older evidence discoverable without treating it as today's resu
 
 | Document | Use |
 | --- | --- |
+| [Technical system landscape](architecture/system-landscape.md) and [viewer](architecture/deployment-landscapes.html#system) | Savia lifecycle, ten-by-ten FLUJO swarm template, voice, data, human ticket and status delivery; current implementation mapped separately |
 | [Frontend runbook](../frontend/README.md) | Fictional invitation preview and private portal setup |
 | [Fictional RC startup](../deploy/rc/README.md) | Fresh local customer workflow; banking service in process and generic FLUJO language |
 | [Transaction dispute workflow](DISPUTE_IMPLEMENTATION.md) | Workflow setup, contributor credit and retained-state compatibility |
@@ -16,7 +17,7 @@ This index keeps older evidence discoverable without treating it as today's resu
 | [Banking MCP](../banking_mcp/README.md) | Scoped tools and private identity/configuration contract |
 | [Pipeline](../pipeline/README.md) | Snapshot preparation, quality checks and lineage |
 | [Savia eyes and voice](../frontend/src/avatar/README.md) | Integrated assistant dialog and authenticated Python voice; use the release report for runtime acceptance |
-| [Frozen Savia runtime](submission/runtime-source-final.json) | Accepted integrated Savia source and checks; current runtime identity and freeze receipt pointers |
+| [Frozen Savia runtime](submission/runtime-source-final.json) | Original rc.1 integrated source and checks; the release record identifies the qualified live successor |
 | [Local CI](LOCAL_CI.md) | Exact-source Windows/Linux checks and resource bounds |
 | [FLUJO product boundary](FLUJO_PRODUCT_BOUNDARY.md) | Where generic and banking code belong |
 | [FLUJO deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md) | Dated branch/image identities; use the release report for current deployment |
