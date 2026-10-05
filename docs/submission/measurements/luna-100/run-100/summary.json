@@ -1,0 +1,63 @@
+{
+  "model_requested": "gpt-6-luna",
+  "route": "installed_codex_app_server_stdio",
+  "cli_version": "codex-cli 0.160.0",
+  "authentication": "existing_ChatGPT_login",
+  "runtime_isolated": true,
+  "scope": "synthetic bilingual read-only provider benchmark; no FLUJO/Savia app end-to-end or bank writes",
+  "workload_sha256": "0090c1b237881df790ae5abd5bfa7f38de921b87e0b1fa87995b2a6e3eece1e6",
+  "output_schema_sha256": "8f88ce65498f405624d664f851a523fa79935d6d1f1f68a780ca892c6835ed71",
+  "started_utc": "2026-10-05T21:23:26.918601+00:00",
+  "account_type": "chatgpt",
+  "catalog_target": {
+    "id": "gpt-6-luna",
+    "model": "gpt-6-luna",
+    "defaultReasoningEffort": "medium",
+    "supportedReasoningEfforts": [
+      {
+        "reasoningEffort": "low",
+        "description": "Fast responses with lighter reasoning"
+      },
+      {
+        "reasoningEffort": "medium",
+        "description": "Balances speed and reasoning depth for everyday tasks"
+      },
+      {
+        "reasoningEffort": "high",
+        "description": "Greater reasoning depth for complex problems"
+      },
+      {
+        "reasoningEffort": "xhigh",
+        "description": "Extra high reasoning depth for complex problems"
+      },
+      {
+        "reasoningEffort": "max",
+        "description": "Maximum reasoning depth for the hardest problems"
+      }
+    ]
+  },
+  "turn_release_utc": "2026-10-05T21:23:32.970700+00:00",
+  "finished_utc": "2026-10-05T21:24:24.530641+00:00",
+  "requested_cases": 100,
+  "completed": 100,
+  "correct": 100,
+  "safe": 100,
+  "errors": 0,
+  "rerouted": 0,
+  "p50_seconds": 37.40046834999521,
+  "p95_seconds": 50.69310960001894,
+  "client_submission_concurrency": 100,
+  "peak_inflight_app_server_turns": 100,
+  "provider_generation_overlap": "not_observable: app-server turn intervals include network/admission/queueing; no GPU simultaneity claim",
+  "submission_spread_seconds": 0.002726,
+  "deterministic_baseline_correct": 100,
+  "oracle": "predeclared deterministic fixture ownership/count/request facts; no human-labelled population claim",
+  "cost": "ChatGPT subscription usage; provider dollar charge not returned or estimated",
+  "stderr_line_count": 2021,
+  "limits": [
+    "Structured bounded display task, not open conversation, voice, fleet collaboration or bank resolution",
+    "Generated balanced ES/PT scenarios do not estimate traffic prevalence",
+    "No measured improvement over deterministic baseline",
+    "Existing account subscription usage is shared with other tasks"
+  ]
+}

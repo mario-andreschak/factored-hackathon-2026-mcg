@@ -1,0 +1,1342 @@
+[
+  {
+    "case_id": "luna-000",
+    "output": {
+      "case_id": "luna-000",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-000",
+        "merchant": "Luna Tienda 000",
+        "date": "2026-10-01",
+        "amount": "100.00",
+        "currency": "MXN",
+        "status": "Approved"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-001",
+    "output": {
+      "case_id": "luna-001",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-002",
+    "output": {
+      "case_id": "luna-002",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-003",
+    "output": {
+      "case_id": "luna-003",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-004",
+    "output": {
+      "case_id": "luna-004",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-005",
+    "output": {
+      "case_id": "luna-005",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-005",
+        "merchant": "Luna Tienda 005",
+        "date": "2026-10-01",
+        "amount": "105.05",
+        "currency": "COP",
+        "status": "Reversed"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-006",
+    "output": {
+      "case_id": "luna-006",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-007",
+    "output": {
+      "case_id": "luna-007",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-008",
+    "output": {
+      "case_id": "luna-008",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-009",
+    "output": {
+      "case_id": "luna-009",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-010",
+    "output": {
+      "case_id": "luna-010",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-010",
+        "merchant": "Luna Tienda 010",
+        "date": "2026-10-01",
+        "amount": "110.10",
+        "currency": "BRL",
+        "status": "Pending"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-011",
+    "output": {
+      "case_id": "luna-011",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-012",
+    "output": {
+      "case_id": "luna-012",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-013",
+    "output": {
+      "case_id": "luna-013",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-014",
+    "output": {
+      "case_id": "luna-014",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-015",
+    "output": {
+      "case_id": "luna-015",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-015",
+        "merchant": "Luna Tienda 015",
+        "date": "2026-10-01",
+        "amount": "115.15",
+        "currency": "ARS",
+        "status": "Approved"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-016",
+    "output": {
+      "case_id": "luna-016",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-017",
+    "output": {
+      "case_id": "luna-017",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-018",
+    "output": {
+      "case_id": "luna-018",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-019",
+    "output": {
+      "case_id": "luna-019",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-020",
+    "output": {
+      "case_id": "luna-020",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-020",
+        "merchant": "Luna Tienda 020",
+        "date": "2026-10-01",
+        "amount": "120.20",
+        "currency": "MXN",
+        "status": "Reversed"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-021",
+    "output": {
+      "case_id": "luna-021",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-022",
+    "output": {
+      "case_id": "luna-022",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-023",
+    "output": {
+      "case_id": "luna-023",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-024",
+    "output": {
+      "case_id": "luna-024",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-025",
+    "output": {
+      "case_id": "luna-025",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-025",
+        "merchant": "Luna Tienda 025",
+        "date": "2026-10-01",
+        "amount": "125.25",
+        "currency": "COP",
+        "status": "Pending"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-026",
+    "output": {
+      "case_id": "luna-026",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-027",
+    "output": {
+      "case_id": "luna-027",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-028",
+    "output": {
+      "case_id": "luna-028",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-029",
+    "output": {
+      "case_id": "luna-029",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-030",
+    "output": {
+      "case_id": "luna-030",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-030",
+        "merchant": "Luna Tienda 030",
+        "date": "2026-10-01",
+        "amount": "130.30",
+        "currency": "BRL",
+        "status": "Approved"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-031",
+    "output": {
+      "case_id": "luna-031",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-032",
+    "output": {
+      "case_id": "luna-032",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-033",
+    "output": {
+      "case_id": "luna-033",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-034",
+    "output": {
+      "case_id": "luna-034",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-035",
+    "output": {
+      "case_id": "luna-035",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-035",
+        "merchant": "Luna Tienda 035",
+        "date": "2026-10-01",
+        "amount": "135.35",
+        "currency": "ARS",
+        "status": "Reversed"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-036",
+    "output": {
+      "case_id": "luna-036",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-037",
+    "output": {
+      "case_id": "luna-037",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-038",
+    "output": {
+      "case_id": "luna-038",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-039",
+    "output": {
+      "case_id": "luna-039",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-040",
+    "output": {
+      "case_id": "luna-040",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-040",
+        "merchant": "Luna Tienda 040",
+        "date": "2026-10-01",
+        "amount": "140.40",
+        "currency": "MXN",
+        "status": "Pending"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-041",
+    "output": {
+      "case_id": "luna-041",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-042",
+    "output": {
+      "case_id": "luna-042",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-043",
+    "output": {
+      "case_id": "luna-043",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-044",
+    "output": {
+      "case_id": "luna-044",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-045",
+    "output": {
+      "case_id": "luna-045",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-045",
+        "merchant": "Luna Tienda 045",
+        "date": "2026-10-01",
+        "amount": "145.45",
+        "currency": "COP",
+        "status": "Approved"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-046",
+    "output": {
+      "case_id": "luna-046",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-047",
+    "output": {
+      "case_id": "luna-047",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-048",
+    "output": {
+      "case_id": "luna-048",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-049",
+    "output": {
+      "case_id": "luna-049",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-050",
+    "output": {
+      "case_id": "luna-050",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-050",
+        "merchant": "Luna Tienda 050",
+        "date": "2026-10-01",
+        "amount": "150.50",
+        "currency": "BRL",
+        "status": "Reversed"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-051",
+    "output": {
+      "case_id": "luna-051",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-052",
+    "output": {
+      "case_id": "luna-052",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-053",
+    "output": {
+      "case_id": "luna-053",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-054",
+    "output": {
+      "case_id": "luna-054",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-055",
+    "output": {
+      "case_id": "luna-055",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-055",
+        "merchant": "Luna Tienda 055",
+        "date": "2026-10-01",
+        "amount": "155.55",
+        "currency": "ARS",
+        "status": "Pending"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-056",
+    "output": {
+      "case_id": "luna-056",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-057",
+    "output": {
+      "case_id": "luna-057",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-058",
+    "output": {
+      "case_id": "luna-058",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-059",
+    "output": {
+      "case_id": "luna-059",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-060",
+    "output": {
+      "case_id": "luna-060",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-060",
+        "merchant": "Luna Tienda 060",
+        "date": "2026-10-01",
+        "amount": "160.60",
+        "currency": "MXN",
+        "status": "Approved"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-061",
+    "output": {
+      "case_id": "luna-061",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-062",
+    "output": {
+      "case_id": "luna-062",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-063",
+    "output": {
+      "case_id": "luna-063",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-064",
+    "output": {
+      "case_id": "luna-064",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-065",
+    "output": {
+      "case_id": "luna-065",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-065",
+        "merchant": "Luna Tienda 065",
+        "date": "2026-10-01",
+        "amount": "165.65",
+        "currency": "COP",
+        "status": "Reversed"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-066",
+    "output": {
+      "case_id": "luna-066",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-067",
+    "output": {
+      "case_id": "luna-067",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-068",
+    "output": {
+      "case_id": "luna-068",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-069",
+    "output": {
+      "case_id": "luna-069",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-070",
+    "output": {
+      "case_id": "luna-070",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-070",
+        "merchant": "Luna Tienda 070",
+        "date": "2026-10-01",
+        "amount": "170.70",
+        "currency": "BRL",
+        "status": "Pending"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-071",
+    "output": {
+      "case_id": "luna-071",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-072",
+    "output": {
+      "case_id": "luna-072",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-073",
+    "output": {
+      "case_id": "luna-073",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-074",
+    "output": {
+      "case_id": "luna-074",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-075",
+    "output": {
+      "case_id": "luna-075",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-075",
+        "merchant": "Luna Tienda 075",
+        "date": "2026-10-01",
+        "amount": "175.75",
+        "currency": "ARS",
+        "status": "Approved"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-076",
+    "output": {
+      "case_id": "luna-076",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-077",
+    "output": {
+      "case_id": "luna-077",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-078",
+    "output": {
+      "case_id": "luna-078",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-079",
+    "output": {
+      "case_id": "luna-079",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-080",
+    "output": {
+      "case_id": "luna-080",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-080",
+        "merchant": "Luna Tienda 080",
+        "date": "2026-10-01",
+        "amount": "180.80",
+        "currency": "MXN",
+        "status": "Reversed"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-081",
+    "output": {
+      "case_id": "luna-081",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-082",
+    "output": {
+      "case_id": "luna-082",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-083",
+    "output": {
+      "case_id": "luna-083",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-084",
+    "output": {
+      "case_id": "luna-084",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-085",
+    "output": {
+      "case_id": "luna-085",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-085",
+        "merchant": "Luna Tienda 085",
+        "date": "2026-10-01",
+        "amount": "185.85",
+        "currency": "COP",
+        "status": "Pending"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-086",
+    "output": {
+      "case_id": "luna-086",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-087",
+    "output": {
+      "case_id": "luna-087",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-088",
+    "output": {
+      "case_id": "luna-088",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-089",
+    "output": {
+      "case_id": "luna-089",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-090",
+    "output": {
+      "case_id": "luna-090",
+      "language": "es",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-090",
+        "merchant": "Luna Tienda 090",
+        "date": "2026-10-01",
+        "amount": "190.90",
+        "currency": "BRL",
+        "status": "Approved"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-091",
+    "output": {
+      "case_id": "luna-091",
+      "language": "pt",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-092",
+    "output": {
+      "case_id": "luna-092",
+      "language": "es",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-093",
+    "output": {
+      "case_id": "luna-093",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-094",
+    "output": {
+      "case_id": "luna-094",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-095",
+    "output": {
+      "case_id": "luna-095",
+      "language": "pt",
+      "decision": "inform",
+      "selected_transaction": {
+        "transaction_id": "SYNTH-TX-095",
+        "merchant": "Luna Tienda 095",
+        "date": "2026-10-01",
+        "amount": "195.95",
+        "currency": "ARS",
+        "status": "Reversed"
+      },
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-096",
+    "output": {
+      "case_id": "luna-096",
+      "language": "es",
+      "decision": "clarify",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-097",
+    "output": {
+      "case_id": "luna-097",
+      "language": "pt",
+      "decision": "deny",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-098",
+    "output": {
+      "case_id": "luna-098",
+      "language": "es",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  },
+  {
+    "case_id": "luna-099",
+    "output": {
+      "case_id": "luna-099",
+      "language": "pt",
+      "decision": "handoff",
+      "selected_transaction": null,
+      "bank_action": false,
+      "refund_confirmed": false
+    },
+    "matches_frozen_oracle": true
+  }
+]

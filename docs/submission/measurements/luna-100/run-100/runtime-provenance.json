@@ -1,0 +1,9 @@
+{
+  "cli_version": "codex-cli 0.160.0",
+  "executable_sha256": "37762753b554982eef1c109303d1be652b6397f1479e844794353a85650199c6",
+  "identity_observation": "Version observed by benchmark before starting app-server; installed executable hash checked offline after run",
+  "benchmark_script_sha256": "b96026587b7ecb4449ddd09207c64feaafc7b0a5dc0a5c7296d2d9f99fcdbf82",
+  "source_observation": "Executed script was unchanged between 100-turn run and offline hashing; source file and records are committed together",
+  "credential_scope": "Existing ChatGPT login used internally in private temporary runtime; no secret/account id written to repository",
+  "model_scope": "gpt-6-luna requested, returned as selected thread model, successful turns, no observed reroute notifications"
+}
