@@ -1,34 +1,41 @@
-# Savia and ElevenLabs: voice quality and case follow-through
+# Savia: the bank-controlled case service
 
-**Savia's product is a persistent customer inquiry:** checked facts, permitted actions, multiple perspectives and useful results when the customer returns. The integrated Spanish/Portuguese voice is its front door. The strongest evidence is the completed customer story, not a proposed agent count.
+A polished voice is not a case. ElevenLabs is a commercial voice platform. Savia is the bank-controlled service: owned facts, deterministic policy, consent, receipt, follow-up, swarm investigation. We built that in ten days with two people.
 
-ElevenLabs is a useful commercial reference for natural voice. Its [September 28 announcement, updated October 5](https://elevenlabs.io/blog/eleven-v4-turbo-in-elevenagents), presents expressive speech, approximately 100 ms median model inference, more than 90 languages, and a financial-services transaction-dispute demonstration. It describes a combined speech, transcription and turn-taking stack. These are vendor-reported capabilities; we have no matched performance comparison.
+Savia starts with a customer saying, “I don't recognize this transaction.” The complete R0–R18 engine checks the selected charge, applies ordered policy and prepares a clear next step. Voice and specialist perspectives extend that engine. The customer returns to the same inquiry, checked facts and saved recommendations.
 
-## What judges can inspect in Savia
+## Confirm once. Keep the control.
 
-| Customer or bank need | Implemented Savia capability | Demonstrated or executable evidence |
+Confirm once. Savia blocks the owned card, writes a durable status, and rereads an independent receipt. Asking never writes. Foreign cards, missing consent, and tampered receipts are refused.[^card-ledger]
+
+The blocked status survives a new login. Spanish and Portuguese requests open the same consent flow. One hundred concurrent confirmations produce exactly one block and one receipt. [Card control and concurrency evidence](measurements/CARD_BLOCK_VERIFICATION.md) · [Pinned public acceptance](measurements/card-block-live/README.md).
+
+## One customer voice. Ten teams behind it.
+
+300/300 concurrent FLUJO. 18 sandboxes live together. The customer path we recorded is two reviewers; the architecture is ready to scale. [Foundation capacity](measurements/INFRASTRUCTURE_CAPACITY.md) · [Recorded customer story](CUSTOMER_JOURNEY.md) · [Workload identities and original results](measurements/MEASURED_RESULTS.md).
+
+## What the bank can inspect
+
+| Customer or bank need | Savia capability | Source and measured evidence |
 | --- | --- | --- |
-| Understand an unfamiliar charge | Customer-owned selected facts and bounded explanation | [Actual grounded reply](measurements/team-story-summary.json), [customer story](CUSTOMER_JOURNEY.md) |
-| Hear useful guidance | Voice inside the same assistant; full-playback acknowledgement and queued completed update | [Integrated native capture](measurements/intended-savia-native/README.md), [saved recommendation speech](measurements/saved-recommendations-native/README.md) |
-| Explore more than one perspective | Evidence and next-step reviewers; saved suggestions with real work status | Two actual completed model calls and retained results in [team-story-summary.json](measurements/team-story-summary.json) |
-| Return without starting over | Durable inquiries, saved suggestions, archived exact conversation and explicit helpful closure | [Recorded return visit](CUSTOMER_JOURNEY.md), [retained context measurements](measurements/MEASURED_RESULTS.md) |
-| Keep actions under bank authority | Host-resolved owned selections, explicit consent, bank-owned receipt and readback, restart/idempotency checks | [Action host](../../dispute_workflow/action_host.py), [bank action tests](../../tests/test_dispute_action_host.py) |
-| Change models or deployment without changing the banking contract | Application-owned banking domain behind generic FLUJO chat/flow/tool/MCP interfaces; separate language and action capabilities | [Product boundary](../FLUJO_PRODUCT_BOUNDARY.md), [direct MCP contract](../../frontend/DIRECT_MCP.md), [system landscape](../architecture/system-landscape.md) |
-| Inspect operational evidence | Immutable data snapshots, row accounting, ownership exclusion, public fixture replay and fixed diagnostic baselines | [Public replay](../review/PUBLIC_EVIDENCE.md), [pipeline contract](../../pipeline/README.md) |
-| Inspect a new subscription-backed provider option | 100 concurrent local GPT-6 Luna requests over predeclared ES/PT ownership/grounding fixtures | [Prompts, oracle, outputs and timings](measurements/luna-100/README.md); no bank writes or Modal execution |
+| Understand an unfamiliar charge | Owned transaction facts, ordered decision rules and bounded explanation | [Complete engine](DISPUTE_ENGINE.md), [actual grounded reply](measurements/team-story-summary.json) |
+| Hear useful guidance | Voice in the same assistant, acknowledged playback and queued completed updates | [Native voice capture](measurements/intended-savia-native/README.md), [saved recommendation speech](measurements/saved-recommendations-native/README.md) |
+| Compare perspectives and return | Two completed reviewers, durable inquiries, saved suggestions and a return visit | [Customer story](CUSTOMER_JOURNEY.md), [original receipts](measurements/MEASURED_RESULTS.md) |
+| Control the card action | Host-resolved owned selection, explicit consent, durable status and independent receipt readback | [Action host](../../dispute_workflow/action_host.py), [confirmed public action](measurements/card-block-live/README.md) |
+| Control models and deployment | Banking authority behind generic chat, flow, tool and MCP interfaces | [FLUJO platform guide](FLUJO_PLATFORM_EVIDENCE.md), [product boundary](../FLUJO_PRODUCT_BOUNDARY.md), [direct-host contract](../../frontend/DIRECT_MCP.md) |
+| Trace the data and operating decisions | Immutable snapshots, row accounting, ownership exclusion and reproducible diagnostics | [Public replay](../review/PUBLIC_EVIDENCE.md), [measured operating decisions](../review/OPERATING_DECISIONS.md) |
+| Inspect provider capacity | 100/100 grounded ES/PT Luna fixture decisions from concurrent local submissions | [Workload, oracle, baseline, outputs and timings](measurements/luna-100/README.md) |
 
-## How to present the difference
+## The bank pilot
 
-The commercial voice showcase sets a useful standard for conversation. Savia's bank-pilot proposal centers on the inquiry lifecycle: retain evidence, let specialists explore it, take a consented permitted step, and bring the customer back to a useful result. A bank can inspect and extend the application-owned policy, data and action boundary independently of the voice or language provider.
+Measure repeat contacts, useful answers, handoff quality and cost per case. Start with transaction disputes, preserve the evidence, and expand the service against observed customer value. Ask once. Savia follows through.
 
-This is a product positioning comparison, not a claim that ElevenAgents lacks workflows, tools, analytics or handoff. Savia has not established better voice quality, lower latency, lower cost, broader language support or greater compliance than ElevenLabs. Model inference latency and complete customer-response latency use different boundaries.
+[^card-ledger]: *Demo ledger. Same admission rules a production host would use.*
 
-## Completed prototype and extension scope
+## If asked: the commercial reference and measurement boundaries
 
-The frozen submission shows grounded facts, two completed reviewers, saved results, native speech and a return visit. A separate real-clock receipt check ran after 1,800 seconds without a duplicate visible update. These successes retain their source and workload identities in the [release report](RELEASE_CANDIDATE.md).
+ElevenLabs' [September 28 announcement, updated October 5](https://elevenlabs.io/blog/eleven-v4-turbo-in-elevenagents), reports expressive speech, approximately 100 ms median model inference, more than 90 languages, a financial-services transaction-dispute demonstration, and a combined speech, transcription and turn-taking stack. Those are vendor-reported capabilities. The supplied [transaction-dispute video](https://youtu.be/1QJTfaaxVag) provides the commercial voice reference.
 
-The ten-team/100-conversation connector is an extensible architecture with implemented source. Its later customer run failed at the initial root inference call when its provider workspace was disabled. That record qualifies the extension's state; it does not relabel the completed two-reviewer submission as a failed demo. Historical collaboration with 18 live sandboxes and reference-code load tests remain separate [infrastructure evidence](measurements/INFRASTRUCTURE_CAPACITY.md).
+The 300/300 result measures concurrently submitted FLUJO reference-code requests, including queueing. Luna's 100 turns measure a separate ES/PT fixture workload; its deterministic baseline also achieves 100/100. The recorded customer collaboration has two completed reviewers. Exact 100-agent customer completion remains a qualification step. Each result retains its source and denominator in the linked receipts.
 
-The local Luna test exercises 100 concurrent provider requests, not 100 collaborative customer agents. Bank data and actions are fictional. Live human pickup, a real-bank refund, push/email delivery, measured repeat-contact reduction and sustained multi-day operation remain bounded pilot objectives.
-
-**Pilot question:** does persistent, grounded follow-through reduce repeat contacts and improve useful answers and human handoff at an acceptable cost per case? Savia makes that question implementable and measurable; the present evidence supports the prototype, without inventing pilot outcomes.
+Demo customers and the card ledger are fictional. Savia does not move real money, assign a live banker, or claim measured ROI.

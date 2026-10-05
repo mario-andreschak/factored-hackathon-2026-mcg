@@ -3,68 +3,68 @@
   "slide_count": 6,
   "files": {
     "README.md": {
-      "bytes": 3591,
-      "sha256": "3c0ad3f31592689009ad0073ee9b6e74fa8ba74193120680e9e506d34b2fcf02"
+      "bytes": 5170,
+      "sha256": "f976c5093a13a55630362488e188e6e02d01e2c440a4fc3ca67ae96173a1e11c"
     },
     "savia-final-pitch-contact-sheet.png": {
-      "bytes": 546928,
-      "sha256": "5e87498b9b9ce1ccc9e451aa5339af94e1d050b528e55b38303f888f8f76fa7f"
+      "bytes": 546609,
+      "sha256": "206ccf52d6c50807593fd9fcd8354e7e96b10a27085b11851c2797924078fd6e"
     },
     "savia-final-pitch-sources.json": {
-      "bytes": 10714,
-      "sha256": "39837f44f2c607457e50ab9f6b1d0af4681fb57bc99fbe490efbbf9da5962e6d"
+      "bytes": 13885,
+      "sha256": "88ca2ccc33cc4874f9a1630c0475727f888ab0e0e3dc59823f9c94499ca6b436"
     },
     "savia-final-pitch-speaker-notes.json": {
-      "bytes": 7444,
-      "sha256": "3e557ae675026dee665c34f9f66208438c7af0006f1bea0783e9e36939a6933c"
+      "bytes": 8720,
+      "sha256": "f80293894acd4346ab9944b6ead6685bf97662d70b0ecf2975d3e6881e38aedb"
     },
     "savia-final-pitch-speaker-notes.md": {
-      "bytes": 8992,
-      "sha256": "e33a5d3a71066e9ac64f8a23bfce93bfdb5acbb779205df2ebd8cbf7e11081ed"
+      "bytes": 12277,
+      "sha256": "89156421b0b29ba7a745ea99b19820bb16fa52f70a6045cef070c2940b3c80d9"
     },
     "savia-final-pitch-validation.json": {
-      "bytes": 574,
-      "sha256": "ea1eb8e7f514404db78aed9f4d5d098160bf0d8b3b914911b5c7bb7a8b9936ad"
+      "bytes": 2360,
+      "sha256": "9025487d51f4701a310cfe9e3e95b8bcd76842de73db247734cbe78443e6bde3"
     },
     "savia-final-pitch.html": {
-      "bytes": 11552,
-      "sha256": "d43220444b03cd383d03a7f1a3a44993b7e5c907d3231aa879010e6f553bc98e"
+      "bytes": 15369,
+      "sha256": "31c418736c9b83805a087e70b53c1f3227bbffc9d7efe1ae1d86973c8f06a67f"
     },
     "savia-final-pitch.pdf": {
-      "bytes": 346979,
-      "sha256": "149092a838379e515242011bb88606c9dbb1a45dd4b7989a888b3c941fdb3f63"
+      "bytes": 348446,
+      "sha256": "656eaddffb8a513b3ec65ca7cd8bd48f5800d1d4934e47a2948685c7030efd84"
     },
     "savia-final-pitch.pptx": {
-      "bytes": 220245,
-      "sha256": "206eecd973d56e9d29d21adba80cf1e602ab6377ba7c41ab76574be301958e9d"
+      "bytes": 220902,
+      "sha256": "6793894acf7ff6aa3d6c0cb897eacc9cfb900aa2d09ea8ad5ecfd5a95fcfed3f"
     },
     "savia-integrated-closure-crop.png": {
       "bytes": 164210,
       "sha256": "ea95be89169b5c8a06c83278745984427a409d7726c507a4d90044c6c37e458e"
     },
     "slides/slide-01.png": {
-      "bytes": 59442,
-      "sha256": "c3d7934635500b205a6bee892a4aa9dabcea995ab57265a6af07b91796f7f905"
+      "bytes": 55830,
+      "sha256": "96a40905192c7ed8b2de0295350b2244b334d06a32aacddd6c1c34a2c62f981a"
     },
     "slides/slide-02.png": {
-      "bytes": 140483,
-      "sha256": "99b78142219d1f285d60178bd4b78c18f36e24ecca04213337bc482e3a05eef1"
+      "bytes": 144228,
+      "sha256": "ae52252d43774a47faa6e6a6409c17359dccd4199ae5d17490b5422811e6aeab"
     },
     "slides/slide-03.png": {
-      "bytes": 52011,
-      "sha256": "9be369bb21de3f4db0a3942717403c621cae36c2ad9961f47472e5240a32ce71"
+      "bytes": 51040,
+      "sha256": "6a6a62e803a4f293ff6562c5899f66d0309f31eafe25c4149ef61f9290ac123a"
     },
     "slides/slide-04.png": {
-      "bytes": 54561,
-      "sha256": "53d9fdbc2dc00f358d6add6f03c5b020861c892d2c6e3bcf47873cee904e8f36"
+      "bytes": 53815,
+      "sha256": "eabca0607882740c935463d780838d4679123c4afed2bbb5e58109acb3335058"
     },
     "slides/slide-05.png": {
-      "bytes": 58912,
-      "sha256": "9ed843e570f835c4065047167ad5b335db2c624f79c1062eb8d2336aebbeeeeb"
+      "bytes": 58570,
+      "sha256": "de7225b54632655e6b43251dbec33f24539e2010ad756475db1853782961621d"
     },
     "slides/slide-06.png": {
-      "bytes": 52299,
-      "sha256": "26afda833c5bf7aa28d53565f11eb99917045014323e753f5e585d4444310d26"
+      "bytes": 52377,
+      "sha256": "54014d1f240ae72d0d56d061886cc865ec10f4eb503c3501a683b193090c7644"
     }
   }
 }

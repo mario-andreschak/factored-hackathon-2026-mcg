@@ -3,66 +3,78 @@
     "slide": 1,
     "title": "Ask once.\nSavia follows through.",
     "kicker": "SAVIA / FACTORED AI & DATA HACKATHON 2026",
-    "speak": "I don't recognize this transaction. For a customer, that is the start of a problem, not just a chat. Meet Savia: one voice assistant that keeps your case moving while you get on with your day. Behind that familiar voice is a network designed for up to one hundred agents.",
-    "evidence": "Product vision: up to 100 team conversations. Working prototype: integrated voice, grounded explanation, durable inquiries and two completed reviewers. Transaction disputes are the first use case. Do not describe all 100 as proven simultaneous customer execution.",
+    "speak": "I don't recognize this transaction. That can start a problem that takes more than one conversation to solve. Meet Savia: one assistant that keeps your case and brings back a useful next step. The charge stays visible, so the answer stays connected to the problem. Ask once. Savia follows through while you get on with your day.",
+    "evidence": "Implemented core: deterministic R0–R18 dispute flow, owned facts, ordered policy, explicit consent, verified receipts, recovery and handoff. Recorded prototype: integrated voice, grounded explanation, durable inquiries and two completed model reviewers. Immediate fictional card protection has separate local and public API acceptance. Voice and larger collaborative fleets extend the trusted core; neither transfers its acceptance to a whole customer journey.",
     "sources": [
+      "engine",
+      "core_checks",
       "customer",
-      "connector"
+      "card_live"
     ]
   },
   {
     "slide": 2,
     "title": "Your problem keeps moving.\nYou get on with your day.",
     "kicker": "01 / THE CUSTOMER EXPERIENCE",
-    "speak": "Savia checks the selected transaction, explains what is known and takes permitted steps with your consent. If the answer needs investigation, the case keeps its context while specialists explore different approaches. Savia returns with a useful result or prepares the next human handoff. Our prototype already shows a grounded answer, two saved perspectives and a customer returning without starting over.",
-    "evidence": "Actual fictional Spanish UI is shown with an English summary. Demonstrated: selected grounded answer 9.338 s; separate browser team interaction 4.278 s; two suggestions survive new chat/reload; customer marks an informational inquiry helpful. Integrated voice closure has complete playback receipts. A separate simulated receipt check repeats after 30 real minutes. Real human assignment, bank resolution/refund, push/email delivery and multi-day completion remain unverified. The story rail describes the intended full lifecycle, not a recorded four-stage production run.",
+    "speak": "Select the unfamiliar charge. Savia explains the checked merchant, amount and status. Ask its specialists to compare evidence; their saved suggestions wait when you return. The recorded customer path includes a grounded answer, two completed reviewers, and saved recommendations after a new chat. Confirm once. Savia blocks the owned card, writes a durable status, and rereads an independent receipt. Asking never writes. Foreign cards, missing consent, and tampered receipts are refused.",
+    "evidence": "Actual fictional Spanish UI is shown with an English summary. Recorded: grounded answer, two completed model reviewers, saved suggestions surviving new chat/reload and helpful informational closure. Complete native voice playback has receipts; a separate simulated receipt check repeats after 30 real minutes. New protection evidence consists of two public authenticated API journeys over fictional cards, not a new GUI or voice recording. Preparation leaves status unchanged; explicit consent precedes verified block readback, and a fresh login recovers it. Real human assignment, real-bank block/refund, push/email delivery and multi-day completion remain unverified. The story rail joins separately qualified capabilities; it is not a recorded production lifecycle.",
     "sources": [
       "customer",
-      "release"
+      "release",
+      "card",
+      "card_live"
     ]
   },
   {
     "slide": 3,
     "title": "Voice is the beginning.\nFollow-through is the product.",
     "kicker": "02 / THE COMMERCIAL REFERENCE",
-    "speak": "ElevenLabs shows how compelling a natural transaction-dispute conversation can be. That is a commercial reference for voice quality. Savia makes the case itself the product: a persistent goal, multiple perspectives, reviewed findings and a deployment the bank can control. We are selling the service that keeps working after the conversation.",
-    "evidence": "Comparison reframes the supplied analysis as product positioning, not a winner table. ElevenLabs official September 28 article, updated October 5, reports expressive voice, about 100 ms median inference, 90+ languages, a financial-services dispute demo and a combined transcription/turn-taking/TTS stack. No head-to-head performance, stronger compliance or missing competitor features are asserted. Savia focus and proposed deployment options differ in scope from a commercial platform showcase.",
+    "speak": "A polished voice is not a case. ElevenLabs is a commercial voice platform. Savia is the bank-controlled service: owned facts, deterministic policy, consent, receipt, follow-up, swarm investigation. We built that in ten days with two people.",
+    "evidence": "ElevenLabs official September 28 article, updated October 5 and checked October 5, reports expressive voice, about 100 ms median model inference, 90+ languages, a financial-services dispute showcase and a combined transcription/turn-taking/TTS stack. These are vendor-reported capabilities; no matched performance benchmark is available. The comparison describes Savia’s product emphasis and bank-controlled policy/action boundary. The two-person, ten-day delivery statement is owner-supplied; historical implementation credits for Gloria Yanta Salc, Carlos Diaz and Mario Andreschak remain preserved.",
     "sources": [
       "eleven",
-      "connector"
+      "comparison",
+      "boundary"
     ]
   },
   {
     "slide": 4,
-    "title": "One conversation.\nUp to 100 agents behind it.",
-    "kicker": "03 / THE AI SWARM",
-    "speak": "One assistant stays with the customer. The swarm design spreads the investigation across ten teams: one lead and nine specialists per team, one hundred agent conversations in total. They exchange messages, share evidence, challenge findings and return a reviewed synthesis. FLUJO provides the orchestration foundation; Savia owns the case. Existing sandbox collaboration and capacity tests support this design. The exact hundred-agent customer run still needs qualification.",
-    "evidence": "Counting contract: 10 team Machines × (1 lead + 9 child specialists) = 100 team conversations; Savia root is separate. Configured child concurrency is nine; stock recovered flow used ten. Native subflow messaging/waiting; fleet delegation/message/wait; shared board and independent claim review. Real infrastructure evidence includes 18 simultaneous Fly leaf sandboxes, 17 completed leaf team runs, six matching output hashes; six of 24 leaf slots failed provisioning and operator steering was required. Larger recovered run enrolled 96 child Workers over time, not all simultaneously. Integrated customer attempt failed on first background root model call with disabled provider workspace before delegation. No 100-completion claim.",
+    "title": "One customer voice.\nTen teams behind it.",
+    "kicker": "03 / THE SWARM DESIGN",
+    "speak": "One customer voice. Ten teams behind it. 300/300 concurrent FLUJO. 18 sandboxes live together. The customer path we recorded is two reviewers; the architecture is ready to scale.",
+    "evidence": "Exact 100-agent customer completion has not yet been demonstrated; one later attempt ended on a disabled provider workspace before delegation. Diagram counting: ten team Machines × (one lead + nine child specialists) = 100 team conversations; the root coordinator is separate. The 300/300 foundation result is the repeat neutral reference-code workload with 300 concurrent client submissions queued through FLUJO, 1k context, Qwen3.8-27B FP8 and vLLM on a rented H100; it does not mean 300 simultaneous GPU generations or 300 customer investigations. Queue-inclusive p50/p95 were 273.40/441.60 seconds. First wording yielded 217/300 correct; direct inference yielded 399/400. Historical collaboration had 18 leaf sandboxes live together, 17 completed leaf team runs and six matching output hashes. Six of 24 leaf slots failed provisioning, and operator steering was required. The larger recovered run enrolled 96 child workers over time. These preserve the tested foundation and qualify the scale design; they are separate from the successful recorded two-reviewer customer path and the local Luna workload.",
     "sources": [
+      "connector",
       "capacity",
-      "connector"
+      "capacity_receipt",
+      "customer",
+      "recovery"
     ]
   },
   {
     "slide": 5,
-    "title": "The bank controls the stack.\nThe work leaves a trace.",
-    "kicker": "04 / DEPLOYMENT, DATA & PROOF",
-    "speak": "The system is modular: customer voice, durable case state, FLUJO orchestration and scoped banking tools. Data ownership and consent stay in the host and Banking MCP. Choose local open-weight inference or a hosted provider. FLUJO exposes run, model, tool and subflow statistics. The foundation returned three hundred correct reference codes from three hundred queued requests. The frozen release also records one hundred twenty-nine frontend and three hundred sixty-seven backend tests.",
-    "evidence": "Deployment design supports self-hosted services and model selection; FLUJO local Ollama path is source-documented, not a measured all-local Savia deployment. Capacity benchmark used Qwen3.8-27B FP8 with vLLM 0.30.0 on rented Modal H100: repeat neutral reference-code workload, 1k context, 300 client submissions, p50 273.40 s, p95 441.60 s including queueing. First wording returned 217/300 correct; direct inference returned 399/400 correct; both retained. Counts 129 frontend / 367 backend refer to frozen rc.1 checks, not a fresh whole-release CI claim (current CI has failures). Statistics are metadata-only and best-effort; not every payload is retained and not an audit completeness guarantee. Current public app calls OpenRouter directly; target connects the FLUJO worker fleet. Cases/chat persist on disk; active audio state does not survive restart. Interrupted/unknown work is held rather than blindly replayed. TLS ingress, signed consent-scoped boundaries and separated data/state are source-backed controls, not a compliance certification.",
+    "title": "Evidence you can inspect.\nChoices a bank can control.",
+    "kicker": "04 / QUALIFIED PROOF & DATA DECISIONS",
+    "speak": "Policy, not the model, authorizes the card action. Savia and Banking MCP own facts, nineteen ordered rules, consent and receipts. FLUJO remains the generic orchestration foundation. One thousand seventy-eight offline core checks exercise that boundary. One hundred local Luna fixture decisions matched their expected results. Two live Spanish and Portuguese API journeys verified card protection. The data audit taught us to ground new inquiries in owned transactions. The bank controls the stack and the next step.",
+    "evidence": "Fresh core qualification: 1,078 passing checks, zero errors/failures/skips and no provider calls. It executed 14 suites; 39 core/domain source files independently match the deployed source. This does not establish all-repository CI or current end-to-end customer acceptance. Luna: 100 completed actual local subscription requests, 50 ES/50 PT, 10 distinct request phrases with varied fictional facts, exact frozen oracle and bounded no-action checks. Independent deterministic baseline also 100/100; no quality improvement, 100 collaborative agents, deployed GUI, bank writes or simultaneous GPU-generation claim. Public API protection: two actual ES/PT authenticated journeys on application f3c57b26, consent before a fictional block, verified receipt readback/retry and status recovered on fresh login; no new GUI or voice acceptance. Data-to-product decision: published complaint-product links violate customer ownership, so new inquiries use owned reads. Keep ownership and no-write rules deterministic. Savia/Banking MCP own domain data/policy/state; FLUJO main keeps generic chat/flow/tool/MCP interfaces. Source-documented local-model/deployment options are not a measured all-local Savia rollout. Historical queued reference-code capacity, including 300/300 repeat workload, remains separate extension evidence with failure and timing disclosures.",
     "sources": [
+      "core_checks",
+      "luna",
+      "card_live",
+      "card_app",
+      "operating_decisions",
+      "boundary",
+      "landscape",
+      "models",
       "capacity",
-      "capacity_receipt",
-      "release",
-      "models_local",
-      "statistics_local",
-      "recovery_local"
+      "capacity_receipt"
     ]
   },
   {
     "slide": 6,
     "title": "Make “I’ll look into it”\na service customers can feel.",
     "kicker": "05 / THE BANK PILOT",
-    "speak": "For customers, the ambition is less chasing and less repeating. For the bank, it is clearer evidence and a better prepared handoff. Start with transaction disputes, then reuse the same modular service for other customer problems. We are seeking a bank partner for a bounded pilot: measure repeat contacts, helpful answers, handoff quality and cost per case. Ask once. Savia follows through.",
+    "speak": "For customers, the ambition is less chasing and less repeating. For the bank, it is clearer evidence and a better prepared handoff. Start with transaction disputes, then reuse the same modular service for other customer problems. We are seeking a bank partner for a bounded pilot: measure repeat contacts, helpful answers, handoff quality and cost per case. Measure the service on real customer needs, with a small rollout and a clear review gate. Ask once. Savia follows through.",
     "evidence": "Pilot invitation, not measured ROI. Live fictional demo link is a review entry point, not a freshly verified end-to-end customer acceptance. Entry code SAVIA-2026. Production bank actions and live human assignment are not claimed. Founder/team credits preserve Gloria Yanta Salc (prompt flow / decision design), Carlos Diaz (data pipeline / lookup), Mario Andreschak (integration / orchestration).",
     "sources": [
       "customer",
