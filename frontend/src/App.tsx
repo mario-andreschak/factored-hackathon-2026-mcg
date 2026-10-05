@@ -29,6 +29,8 @@ import {
   LoaderCircle,
   LockKeyhole,
   LogOut,
+  Mic,
+  MicOff,
   Menu,
   MessageCircle,
   Search,
@@ -54,6 +56,8 @@ import type {
   Transaction,
 } from "./types";
 import { InquiryPanel } from "./InquiryPanel";
+import Eyes from "./avatar/Eyes";
+import { useSaviaVoice } from "./avatar/useSaviaVoice";
 import {
   api,
   ApiError,
@@ -1417,6 +1421,26 @@ const assistantCopy = {
     ],
     you: "Tú",
     thinking: "Consultando tus datos…",
+    voiceStart: "Hablar con Savia",
+    voiceStop: "Terminar voz",
+    voiceConnecting: "Conectando el micrófono…",
+    voiceListening: "Te escucho. Habla con naturalidad.",
+    voiceThinking: "Un momento, estoy revisando…",
+    voiceSpeaking: "Habla encima para interrumpirme.",
+    voiceMessage: "Mensaje de voz",
+    voicePersona: {
+      moss: "Moss · voz tranquila",
+      orbit: "Orbit",
+      spark: "Spark",
+    },
+    voiceErrors: {
+      browser:
+        "La voz necesita un navegador con micrófono en una conexión segura. Puedes escribir.",
+      microphone: "Habilita el micrófono o usa el teclado.",
+      unrecognized: "No pude reconocer lo que dijiste. Intenta de nuevo.",
+      too_long: "Hablemos en frases de menos de 25 segundos.",
+      unavailable: "La voz no está disponible ahora. Puedes escribir.",
+    },
     newChat: "Empezar chat nuevo",
     viewPreviousChat: "Ver conversación anterior",
     returnToCurrentChat: "Volver al chat actual",
@@ -1465,6 +1489,26 @@ const assistantCopy = {
     ],
     you: "Você",
     thinking: "Consultando seus dados…",
+    voiceStart: "Falar com a Savia",
+    voiceStop: "Encerrar voz",
+    voiceConnecting: "Conectando o microfone…",
+    voiceListening: "Estou ouvindo. Fale com naturalidade.",
+    voiceThinking: "Um instante, estou verificando…",
+    voiceSpeaking: "Fale por cima para me interromper.",
+    voiceMessage: "Mensagem de voz",
+    voicePersona: {
+      moss: "Moss · voz tranquila",
+      orbit: "Orbit",
+      spark: "Spark",
+    },
+    voiceErrors: {
+      browser:
+        "A voz precisa de um navegador com microfone em uma conexão segura. Você pode escrever.",
+      microphone: "Habilite o microfone ou use o teclado.",
+      unrecognized: "Não consegui entender o que você disse. Tente novamente.",
+      too_long: "Vamos conversar em frases de menos de 25 segundos.",
+      unavailable: "A voz não está disponível agora. Você pode escrever.",
+    },
     newChat: "Começar uma nova conversa",
     viewPreviousChat: "Ver conversa anterior",
     returnToCurrentChat: "Voltar à conversa atual",
@@ -2374,7 +2418,69 @@ export function Assistant({
   const copy = actionCopy[actionLanguage];
   const ui = assistantCopy[actionLanguage];
   const uiLang = actionLanguage === "pt" ? "pt-BR" : "es";
+  const sendRef = useRef<(text: string, spoken?: boolean) => void>(() => {});
+  const persona = status.voice?.persona ?? "moss";
+  const voiceTurn = (
+    role: ChatMessage["role"],
+    voiceId: string,
+    text: string,
+    final: boolean,
+  ) =>
+    setMessages((current) => {
+      const index = current.findIndex(
+        (item) => item.voiceId === voiceId && item.role === role,
+      );
+      if (final && role === "assistant" && !text.trim())
+        return current.filter((_, i) => i !== index);
+      const value =
+        text ||
+        (index >= 0 ? current[index].text : "") ||
+        (final ? ui.voiceMessage : "");
+      if (final && role === "assistant" && !value)
+        return current.filter((_, i) => i !== index);
+      const entry: ChatMessage = {
+        role,
+        text: value,
+        voiceId,
+        pending: !final,
+      };
+      return index < 0
+        ? [...current, entry]
+        : current.map((item, i) => (i === index ? entry : item));
+    });
+  const voice = useSaviaVoice({
+    language: actionLanguage,
+    paused:
+      busy ||
+      actionBusy ||
+      viewingArchivedChat ||
+      !historyReady ||
+      !status.available,
+    conversation: Boolean(status.voice?.conversation),
+    onUtterance: (text) => sendRef.current(text, true),
+    onHeard: (id, text, final) => voiceTurn("user", id, text, final),
+    onCaption: (id, text, final) => voiceTurn("assistant", id, text, final),
+    onDelegate: (request) => sendRef.current(request, true),
+    onExpired,
+  });
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
+  const voiceOwnerEpoch = useRef(0);
+  const voiceScope = useRef({ language: actionLanguage, profileId });
+  const stopVoice = useCallback(() => {
+    voiceOwnerEpoch.current += 1;
+    voice.stop();
+  }, [voice.stop]);
+  const startVoice = useCallback(async () => {
+    voiceOwnerEpoch.current += 1;
+    await voice.start();
+  }, [voice.start]);
+  const voiceUpdateCursors = useRef(new Map<string, number>());
+  const spokenVoiceUpdates = useRef(new Map<string, number>());
   const archiveLimit = Math.max(0, Math.min(archiveCutoff, messages.length));
+  const archiveMessageCount = messages.filter(
+    (message) => !(message.voiceId && message.pending),
+  ).length;
   const visibleMessages = viewingArchivedChat
     ? messages.slice(0, archiveLimit)
     : messages.slice(archiveLimit);
@@ -2382,16 +2488,99 @@ export function Assistant({
   const showChatArchiveControls = Boolean(
     profileId &&
     historyReady &&
-    (archiveLimit > 0 || (!viewingArchivedChat && messages.length > 0)),
+    (archiveLimit > 0 || (!viewingArchivedChat && archiveMessageCount > 0)),
   );
+  const narrateVoiceUpdate = useCallback(
+    (caseId: string, eventId: number) => {
+      if (
+        !/^i_[a-f0-9]{32}$/.test(caseId) ||
+        !Number.isSafeInteger(eventId) ||
+        eventId <= 0
+      )
+        return;
+      const nativeOwner = voiceRef.current.getSessionOwner();
+      if (!voiceRef.current.active || nativeOwner === null) return;
+      const afterEventId = voiceUpdateCursors.current.get(caseId) ?? 0;
+      if (eventId <= afterEventId) return;
+      voiceUpdateCursors.current.set(caseId, eventId);
+      const ownerEpoch = voiceOwnerEpoch.current;
+      void api<
+        | {
+            reply: string;
+            event_id: number;
+            inquiry_state: string;
+            bank_authority: false;
+          }
+        | undefined
+      >(
+        `/api/assistant/voice-update?case_id=${encodeURIComponent(caseId)}&after_event_id=${afterEventId}&language=${actionLanguageRef.current}`,
+      )
+        .then((result) => {
+          if (
+            !result ||
+            result.bank_authority !== false ||
+            typeof result.reply !== "string" ||
+            !Number.isSafeInteger(result.event_id) ||
+            result.event_id <= afterEventId ||
+            ![
+              "team_completed",
+              "awaiting_customer",
+              "informational_resolved",
+            ].includes(result.inquiry_state) ||
+            result.event_id <= (spokenVoiceUpdates.current.get(caseId) ?? 0) ||
+            ownerEpoch !== voiceOwnerEpoch.current ||
+            voiceRef.current.getSessionOwner() !== nativeOwner ||
+            !voiceRef.current.active ||
+            !alive.current
+          )
+            return;
+          if (voiceRef.current.narrate(result.reply, nativeOwner))
+            spokenVoiceUpdates.current.set(caseId, result.event_id);
+        })
+        .catch((error) => {
+          if (
+            ownerEpoch !== voiceOwnerEpoch.current ||
+            voiceRef.current.getSessionOwner() !== nativeOwner ||
+            !voiceRef.current.active ||
+            !alive.current
+          )
+            return;
+          if (error instanceof ApiError && error.status === 401) onExpired();
+          // A missed voice update must not interrupt the customer’s chat.
+        });
+    },
+    [onExpired],
+  );
+  useEffect(() => {
+    if (!open) stopVoice();
+  }, [open, stopVoice]);
+  useEffect(() => {
+    if (viewingArchivedChat) stopVoice();
+  }, [viewingArchivedChat, stopVoice]);
+  useEffect(() => {
+    if (
+      voiceScope.current.language !== actionLanguage ||
+      voiceScope.current.profileId !== profileId
+    ) {
+      voiceScope.current = { language: actionLanguage, profileId };
+      voiceOwnerEpoch.current += 1;
+    }
+  }, [actionLanguage, profileId]);
   selectedReferenceRef.current = selected?.reference || null;
   useEffect(() => {
     setArchiveCutoff(savedChatArchiveCutoff(profileId));
     setViewingArchivedChat(false);
   }, [profileId]);
-  function startNewChat() {
-    if (!profileId || messages.length <= archiveLimit) return;
-    const cutoff = messages.length;
+  async function startNewChat() {
+    const retainedMessages = messages.filter(
+      (message) => !(message.voiceId && message.pending),
+    );
+    if (!profileId || retainedMessages.length <= archiveLimit) return;
+    stopVoice();
+    const archiveOwnerEpoch = voiceOwnerEpoch.current;
+    const archiveProfileId = profileId;
+    const cutoff = retainedMessages.length;
+    setMessages(retainedMessages);
     setArchiveCutoff(cutoff);
     setViewingArchivedChat(false);
     setInput("");
@@ -2401,12 +2590,33 @@ export function Assistant({
     setQueryScopes([]);
     onSelectTransaction(null);
     try {
-      window.localStorage.setItem(
-        chatArchiveStorageKey(profileId),
-        String(cutoff),
+      const history = await api<{ messages: ChatMessage[] }>(
+        "/api/chat/history",
       );
-    } catch {
-      // The current visit still starts a fresh visible conversation.
+      if (
+        !alive.current ||
+        archiveOwnerEpoch !== voiceOwnerEpoch.current ||
+        archiveProfileId !== profileId
+      )
+        return;
+      try {
+        // Persist the server transcript count, not temporary voice captions.
+        window.localStorage.setItem(
+          chatArchiveStorageKey(profileId),
+          String(Array.isArray(history.messages) ? history.messages.length : 0),
+        );
+      } catch {
+        // The current visit still starts a fresh visible conversation.
+      }
+    } catch (error) {
+      if (
+        !alive.current ||
+        archiveOwnerEpoch !== voiceOwnerEpoch.current ||
+        archiveProfileId !== profileId
+      )
+        return;
+      if (error instanceof ApiError && error.status === 401) onExpired();
+      else setError(assistantCopy[actionLanguageRef.current].historyError);
     }
   }
   const reloadFollowups = useCallback(
@@ -2550,6 +2760,7 @@ export function Assistant({
     alive.current = true;
     return () => {
       alive.current = false;
+      voiceOwnerEpoch.current += 1;
       controller.current?.abort();
     };
   }, []);
@@ -2653,7 +2864,7 @@ export function Assistant({
       clearTimeout(timer);
     };
   }, [status.available, historyAttempt, onExpired]);
-  async function send(text: string) {
+  async function send(text: string, spoken = false) {
     if (
       !text.trim() ||
       busy ||
@@ -2684,15 +2895,17 @@ export function Assistant({
       : chatSelection?.reference;
     setInput("");
     setError("");
-    setMessages((m) => [
-      ...m,
-      {
-        role: "user",
-        text,
-        ...(chatSelection ? { selection: chatSelection } : {}),
-      },
-    ]);
+    if (!spoken)
+      setMessages((m) => [
+        ...m,
+        {
+          role: "user",
+          text,
+          ...(chatSelection ? { selection: chatSelection } : {}),
+        },
+      ]);
     setBusy(true);
+    const nativeVoiceOwner = voiceRef.current.getSessionOwner();
     controller.current = new AbortController();
     try {
       const result = await api<{
@@ -2713,6 +2926,12 @@ export function Assistant({
       });
       if (!alive.current || controller.current.signal.aborted) return;
       setMessages((m) => [...m, { role: "assistant", text: result.reply }]);
+      if (
+        nativeVoiceOwner !== null &&
+        voiceRef.current.active &&
+        voiceRef.current.getSessionOwner() === nativeVoiceOwner
+      )
+        voiceRef.current.narrate(result.reply, nativeVoiceOwner);
       setQueryScopes(result.queries || []);
       activeQueryIdRef.current = compatibleQueryId(
         result.active_query_id || null,
@@ -2745,6 +2964,7 @@ export function Assistant({
       if (alive.current) setBusy(false);
     }
   }
+  sendRef.current = send;
   async function loadActionStatus(
     language: ActionLanguage = actionLanguageRef.current,
   ) {
@@ -2833,6 +3053,7 @@ export function Assistant({
       return;
     }
     setActionBusy(true);
+    const nativeVoiceOwner = voiceRef.current.getSessionOwner();
     setError("");
     try {
       const result = await api<ActionResult>(path, {
@@ -2869,6 +3090,15 @@ export function Assistant({
             requestedReference ??
             (continuesPendingHandle ? action?.target_reference : undefined),
         });
+        if (
+          nativeVoiceOwner !== null &&
+          voiceRef.current.active &&
+          voiceRef.current.getSessionOwner() === nativeVoiceOwner
+        )
+          voiceRef.current.narrate(
+            result.message || fallbackActionMessage(result, actionLanguage),
+            nativeVoiceOwner,
+          );
         if (actionIsTerminal(result)) setHandoffRequestId(crypto.randomUUID());
       }
     } catch (e) {
@@ -3078,9 +3308,22 @@ export function Assistant({
           </option>
         </select>
       </label>
-      <div className="assistant-status" lang={uiLang}>
-        <span className="assistant-orb">
-          <Sparkles size={18} />
+      <div className="assistant-status assistant-stage" lang={uiLang}>
+        <span className="assistant-eyes">
+          <Eyes
+            small
+            avatar={persona}
+            level={voice.level}
+            phase={
+              voice.active
+                ? voice.phase
+                : !status.available
+                  ? "waiting"
+                  : busy || actionBusy
+                    ? "thinking"
+                    : "idle"
+            }
+          />
         </span>
         <div>
           <strong>{ui.tagline}</strong>
@@ -3091,7 +3334,38 @@ export function Assistant({
                 : ui.connectedReadOnly
               : ui.unavailable}
           </span>
+          {(voice.active || voice.connecting) && (
+            <span className="voice-state" role="status">
+              {status.voice?.conversation && !voice.connecting && (
+                <b>{ui.voicePersona[persona]} · </b>
+              )}
+              {voice.connecting
+                ? ui.voiceConnecting
+                : voice.phase === "speaking"
+                  ? ui.voiceSpeaking
+                  : voice.phase === "thinking"
+                    ? ui.voiceThinking
+                    : ui.voiceListening}
+            </span>
+          )}
+          {voice.error && (
+            <span className="voice-state" role="alert">
+              {ui.voiceErrors[voice.error]}
+            </span>
+          )}
         </div>
+        {status.available && status.voice?.available && (
+          <button
+            type="button"
+            className="voice-toggle"
+            aria-pressed={voice.active}
+            disabled={voice.connecting || viewingArchivedChat}
+            onClick={() => (voice.active ? stopVoice() : void startVoice())}
+          >
+            {voice.active ? <MicOff size={16} /> : <Mic size={16} />}
+            {voice.active ? ui.voiceStop : ui.voiceStart}
+          </button>
+        )}
       </div>
       {selected && (
         <div className="chat-selection">
@@ -3430,7 +3704,10 @@ export function Assistant({
               <button
                 type="button"
                 className="button outline"
-                onClick={() => setViewingArchivedChat(false)}
+                onClick={() => {
+                  stopVoice();
+                  setViewingArchivedChat(false);
+                }}
               >
                 {ui.returnToCurrentChat}
               </button>
@@ -3441,12 +3718,15 @@ export function Assistant({
                 <button
                   type="button"
                   className="button outline"
-                  onClick={() => setViewingArchivedChat(true)}
+                  onClick={() => {
+                    stopVoice();
+                    setViewingArchivedChat(true);
+                  }}
                 >
                   {ui.viewPreviousChat}
                 </button>
               )}
-              {messages.length > archiveLimit && (
+              {archiveMessageCount > archiveLimit && (
                 <button
                   type="button"
                   className="button outline"
@@ -3496,12 +3776,17 @@ export function Assistant({
         ) : (
           visibleMessages.map((m, i) => (
             <div
-              key={i}
-              className={`chat-message ${m.role}`}
+              key={m.voiceId ? `${m.voiceId}-${m.role}` : i}
+              className={`chat-message ${m.role}${m.voiceId ? " spoken" : ""}`}
+              aria-busy={m.pending || undefined}
               data-savia-reply={m.role === "assistant" ? m.text : undefined}
             >
               <span lang={uiLang}>
-                {m.role === "assistant" ? "Savia" : ui.you}
+                {m.role !== "assistant"
+                  ? ui.you
+                  : m.voiceId
+                    ? ui.voicePersona[persona].split(" · ")[0]
+                    : "Savia"}
               </span>
               {m.selection && (
                 <div className="chat-message-selection">
@@ -3518,10 +3803,10 @@ export function Assistant({
                   </span>
                 </div>
               )}
-              {m.role === "assistant" ? (
+              {m.role === "assistant" && !m.voiceId ? (
                 <AssistantText text={m.text} />
               ) : (
-                <p>{m.text}</p>
+                <p>{m.text || "…"}</p>
               )}
             </div>
           ))
@@ -3637,6 +3922,7 @@ export function Assistant({
             ""
           }
           onExpired={onExpired}
+          onVoiceUpdate={narrateVoiceUpdate}
         />
       )}
       <form

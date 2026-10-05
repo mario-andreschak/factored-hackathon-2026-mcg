@@ -84,6 +84,7 @@ describe("InquiryPanel API boundaries", () => {
   it("sends the editable prompt, language and selected transaction reference", async () => {
     const originalParent = Object.getOwnPropertyDescriptor(window, "parent");
     const postMessage = vi.fn();
+    const onVoiceUpdate = vi.fn();
     Object.defineProperty(window, "parent", {
       configurable: true,
       value: { postMessage } as unknown as Window,
@@ -96,9 +97,17 @@ describe("InquiryPanel API boundaries", () => {
           : { items: [saved] },
       ),
     );
-    render(<InquiryPanel {...props} message="Seeded question" />);
+    render(
+      <InquiryPanel
+        {...props}
+        message="Seeded question"
+        onVoiceUpdate={onVoiceUpdate}
+      />,
+    );
     expect(await screen.findByText("En espera")).toBeTruthy();
     expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(onVoiceUpdate).toHaveBeenCalledTimes(1);
+    expect(onVoiceUpdate).toHaveBeenLastCalledWith(saved.id, 101);
     const input = (await screen.findByLabelText(
       "¿Qué necesitas aclarar?",
     )) as HTMLTextAreaElement;
@@ -126,12 +135,14 @@ describe("InquiryPanel API boundaries", () => {
       },
     ]);
     expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(onVoiceUpdate).toHaveBeenCalledTimes(1);
     if (originalParent) Object.defineProperty(window, "parent", originalParent);
   });
 
   it("polls active work at two seconds and dispatches a bounded transition update", async () => {
     const originalParent = Object.getOwnPropertyDescriptor(window, "parent");
     const postMessage = vi.fn();
+    const onVoiceUpdate = vi.fn();
     Object.defineProperty(window, "parent", {
       configurable: true,
       value: { postMessage } as unknown as Window,
@@ -158,7 +169,7 @@ describe("InquiryPanel API boundaries", () => {
     const captureUpdate = (event: Event) =>
       updates.push((event as CustomEvent).detail);
     window.addEventListener("savia:inquiries", captureUpdate);
-    render(<InquiryPanel {...props} />);
+    render(<InquiryPanel {...props} onVoiceUpdate={onVoiceUpdate} />);
     expect(await screen.findByText("En espera")).toBeTruthy();
     expect(
       await screen.findByText("En revisión", {}, { timeout: 3_500 }),
@@ -173,6 +184,10 @@ describe("InquiryPanel API boundaries", () => {
       { type: "savia:inquiry-update", case_id: voiceCase.id, event_id: 102 },
       window.location.origin,
     );
+    expect(onVoiceUpdate.mock.calls).toEqual([
+      [voiceCase.id, 101],
+      [voiceCase.id, 102],
+    ]);
     expect(screen.getByRole("status").textContent).toBe(
       "Un equipo está revisando tu consulta.",
     );
@@ -194,6 +209,7 @@ describe("InquiryPanel API boundaries", () => {
       timeout: 3_500,
     });
     expect(postMessage).toHaveBeenCalledTimes(2);
+    expect(onVoiceUpdate).toHaveBeenCalledTimes(2);
     window.removeEventListener("savia:inquiries", captureUpdate);
     if (originalParent) Object.defineProperty(window, "parent", originalParent);
   });

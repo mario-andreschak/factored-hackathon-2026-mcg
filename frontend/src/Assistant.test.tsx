@@ -9,7 +9,6 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { Assistant } from "./App";
 import type {
   ActionFacts,
   ActionResult,
@@ -17,6 +16,43 @@ import type {
   IntakeReceipt,
   Transaction,
 } from "./types";
+import { Assistant } from "./App";
+const voiceHarness = vi.hoisted(() => ({
+  active: false,
+  owner: null as symbol | null,
+  connecting: false,
+  phase: "idle" as const,
+  level: 0,
+  error: null as null,
+  start: vi.fn(async () => {}),
+  stop: vi.fn(),
+  narrate: vi.fn(() => true),
+  getSessionOwner: vi.fn(() =>
+    voiceHarness.active ? voiceHarness.owner : null,
+  ),
+  interrupt: vi.fn(),
+  options: null as null | {
+    onHeard?: (id: string, text: string, final: boolean) => void;
+    onCaption?: (id: string, text: string, final: boolean) => void;
+  },
+}));
+const inquiryHarness = vi.hoisted(() => ({
+  props: null as null | {
+    onVoiceUpdate?: (caseId: string, eventId: number) => void;
+  },
+}));
+vi.mock("./avatar/useSaviaVoice", () => ({
+  useSaviaVoice: (options: unknown) => {
+    voiceHarness.options = options as typeof voiceHarness.options;
+    return voiceHarness;
+  },
+}));
+vi.mock("./InquiryPanel", () => ({
+  InquiryPanel: (props: unknown) => {
+    inquiryHarness.props = props as typeof inquiryHarness.props;
+    return null;
+  },
+}));
 
 const charge: Transaction = {
   reference: "txn_aaaaaaaaaaaaaaaaaaaaaaaa",
@@ -95,6 +131,20 @@ const response = (body: unknown) =>
 
 beforeEach(() => {
   localStorage.clear();
+  voiceHarness.active = false;
+  voiceHarness.owner = null;
+  voiceHarness.connecting = false;
+  voiceHarness.phase = "idle";
+  voiceHarness.level = 0;
+  voiceHarness.error = null;
+  voiceHarness.start.mockClear();
+  voiceHarness.stop.mockClear();
+  voiceHarness.narrate.mockClear();
+  voiceHarness.narrate.mockReturnValue(true);
+  voiceHarness.getSessionOwner.mockClear();
+  voiceHarness.interrupt.mockClear();
+  voiceHarness.options = null;
+  inquiryHarness.props = null;
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
     configurable: true,
     value() {
@@ -2659,6 +2709,7 @@ test("saved follow-up remains reachable without the current receipt and follows 
 });
 
 test("new chat archives visible history per profile, survives reload and keeps follow-ups", async () => {
+  voiceHarness.active = true;
   const priorFollowup = {
     id: "followup-archived-test",
     target_reference: charge.reference,
@@ -2708,19 +2759,25 @@ test("new chat archives visible history per profile, survives reload and keeps f
   await screen.findByText("Revisemos la información disponible.");
   await screen.findByText("El seguimiento sigue guardado.");
   fireEvent.click(screen.getByRole("button", { name: "Empezar chat nuevo" }));
+  expect(voiceHarness.stop).toHaveBeenCalled();
   expect(screen.queryByText("No reconozco este cargo")).toBeNull();
   expect(screen.queryByText("Revisemos la información disponible.")).toBeNull();
   expect(onSelectTransaction).toHaveBeenCalledWith(null);
-  expect(screen.getByText("El seguimiento sigue guardado.")).toBeTruthy();
+  await screen.findByText("El seguimiento sigue guardado.");
   expect(
     screen.getByRole("button", { name: "Ver conversación anterior" }),
   ).toBeTruthy();
+  await waitFor(() =>
+    expect(
+      localStorage.getItem("savia-chat-archive:profile-archive-test"),
+    ).toBe("2"),
+  );
   first.unmount();
 
   render(<Assistant {...props} />);
   await screen.findByText("Vamos a entender tus movimientos.");
   expect(screen.queryByText("No reconozco este cargo")).toBeNull();
-  expect(screen.getByText("El seguimiento sigue guardado.")).toBeTruthy();
+  await screen.findByText("El seguimiento sigue guardado.");
   fireEvent.click(
     screen.getByRole("button", { name: "Ver conversación anterior" }),
   );
@@ -2728,6 +2785,207 @@ test("new chat archives visible history per profile, survives reload and keeps f
   expect(
     screen.getByRole("button", { name: "Volver al chat actual" }),
   ).toBeTruthy();
+});
+
+test("voice stage shows heard/caption turns and stops when the Assistant closes", async () => {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url === "/api/chat/history")
+      return response({ active: false, messages: [] });
+    if (url.startsWith("/api/followups?")) return response({ items: [] });
+    throw new Error(`Unexpected request: ${url}`);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  const props = {
+    open: true,
+    status: {
+      available: true,
+      sandbox_intake_available: false,
+      voice: { available: true, conversation: true, persona: "moss" as const },
+    },
+    selected: null,
+    transactions: [],
+    onSelectTransaction: vi.fn(),
+    hidden: false,
+    synthetic: true,
+    onClose: vi.fn(),
+    onExpired: vi.fn(),
+  };
+  const view = render(<Assistant {...props} />);
+  await screen.findByText("Vamos a entender tus movimientos.");
+  expect(view.container.querySelector(".assistant-eyes")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Hablar con Savia" }));
+  expect(voiceHarness.start).toHaveBeenCalledOnce();
+  voiceHarness.options?.onHeard?.(
+    "heard-turn",
+    "No reconozco este cargo",
+    true,
+  );
+  voiceHarness.options?.onCaption?.("voice-turn", "Revisémoslo juntos", false);
+  await screen.findByText("Revisémoslo juntos");
+  expect(screen.getByText("Moss")).toBeTruthy();
+  expect(
+    screen
+      .getByText("Revisémoslo juntos")
+      .closest(".chat-message")
+      ?.getAttribute("aria-busy"),
+  ).toBe("true");
+  voiceHarness.options?.onCaption?.("voice-turn", "", true);
+  await waitFor(() =>
+    expect(screen.queryByText("Revisémoslo juntos")).toBeNull(),
+  );
+
+  view.rerender(<Assistant {...props} open={false} />);
+  await waitFor(() => expect(voiceHarness.stop).toHaveBeenCalled());
+});
+
+test("spoken chat and authenticated completed team updates narrate their canonical replies", async () => {
+  voiceHarness.active = true;
+  voiceHarness.owner = Symbol("voice-session");
+  const exactChatReply =
+    "El movimiento figura aprobado en el registro disponible.";
+  const exactTeamReply = "El equipo confirmó que hay una respuesta disponible.";
+  const caseId = `i_${"c".repeat(32)}`;
+  const calls: string[] = [];
+  const pendingUpdates: ((response: Response) => void)[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      calls.push(`${init?.method || "GET"} ${url}`);
+      if (url === "/api/chat/history")
+        return response({ active: false, messages: [] });
+      if (url === "/api/chat/messages")
+        return response({ reply: exactChatReply });
+      if (url.startsWith("/api/followups?")) return response({ items: [] });
+      if (url.startsWith("/api/assistant/voice-update?")) {
+        expect(url).toContain(`case_id=${caseId}`);
+        expect(url).toContain(
+          `after_event_id=${pendingUpdates.length ? 101 : 0}`,
+        );
+        expect(url).toContain("language=es");
+        return new Promise<Response>((resolve) => pendingUpdates.push(resolve));
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  const view = render(
+    <Assistant
+      open
+      status={{
+        available: true,
+        sandbox_intake_available: false,
+        voice: { available: true, conversation: true, persona: "moss" },
+      }}
+      selected={null}
+      transactions={[]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+      profileId="voice-update-profile"
+    />,
+  );
+
+  act(() => inquiryHarness.props?.onVoiceUpdate?.(caseId, 101));
+  await waitFor(() => expect(pendingUpdates).toHaveLength(1));
+  fireEvent.click(screen.getByRole("button", { name: "Terminar voz" }));
+  voiceHarness.active = false;
+  voiceHarness.owner = null;
+  view.rerender(
+    <Assistant
+      open
+      status={{
+        available: true,
+        sandbox_intake_available: false,
+        voice: { available: true, conversation: true, persona: "moss" },
+      }}
+      selected={null}
+      transactions={[]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+      profileId="voice-update-profile"
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Hablar con Savia" }));
+  voiceHarness.active = true;
+  const restartedOwner = Symbol("restarted-voice-session");
+  voiceHarness.owner = restartedOwner;
+  view.rerender(
+    <Assistant
+      open
+      status={{
+        available: true,
+        sandbox_intake_available: false,
+        voice: { available: true, conversation: true, persona: "moss" },
+      }}
+      selected={null}
+      transactions={[]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+      profileId="voice-update-profile"
+    />,
+  );
+  act(() => inquiryHarness.props?.onVoiceUpdate?.(caseId, 102));
+  await waitFor(() => expect(pendingUpdates).toHaveLength(2));
+  await act(async () => {
+    pendingUpdates[0](
+      response({
+        reply: "Stale update from the prior voice session.",
+        event_id: 101,
+        inquiry_state: "team_completed",
+        bank_authority: false,
+      }),
+    );
+    await Promise.resolve();
+  });
+  await act(async () => {
+    pendingUpdates[1](
+      response({
+        reply: exactTeamReply,
+        event_id: 102,
+        inquiry_state: "team_completed",
+        bank_authority: false,
+      }),
+    );
+    await Promise.resolve();
+  });
+  await waitFor(() =>
+    expect(voiceHarness.narrate).toHaveBeenCalledWith(
+      exactTeamReply,
+      restartedOwner,
+    ),
+  );
+  expect(voiceHarness.narrate).not.toHaveBeenCalledWith(
+    "Stale update from the prior voice session.",
+  );
+  expect(voiceHarness.narrate).toHaveBeenCalledTimes(1);
+  fireEvent.change(
+    screen.getByRole("textbox", { name: "Mensaje para el asistente" }),
+    { target: { value: "¿Qué significa el estado?" } },
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Enviar mensaje" }));
+  const assistantReply = await screen.findByText(exactChatReply);
+  expect(
+    assistantReply.closest(".chat-message")?.getAttribute("data-savia-reply"),
+  ).toBe(exactChatReply);
+  await waitFor(() =>
+    expect(voiceHarness.narrate).toHaveBeenCalledWith(
+      exactChatReply,
+      restartedOwner,
+    ),
+  );
+  expect(voiceHarness.narrate).toHaveBeenCalledTimes(2);
+  expect(
+    calls.filter((call) => call.includes("/api/assistant/voice-update?")),
+  ).toHaveLength(2);
 });
 
 test("savia context events publish public selection and history without references", async () => {

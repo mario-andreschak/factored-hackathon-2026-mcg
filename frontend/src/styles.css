@@ -2142,6 +2142,54 @@ button svg {
   place-items: center;
   flex-shrink: 0;
 }
+.assistant-stage {
+  background: #14261f;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+.assistant-stage > .assistant-eyes {
+  display: block;
+  flex: 0 0 150px;
+  height: 62px;
+}
+.assistant-stage > .assistant-eyes > div {
+  margin: 2px -35px 0;
+}
+.assistant-stage > div {
+  flex: 1 1 180px;
+}
+.assistant-stage strong {
+  color: #eef4dc;
+}
+.assistant-stage div > span {
+  color: #b9cfa3;
+}
+.assistant-stage div > .voice-state {
+  color: #eef4dc;
+}
+.voice-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #55745f;
+  border-radius: 999px;
+  background: none;
+  color: #eef4dc;
+  font-size: 11px;
+  padding: 8px 13px;
+  cursor: pointer;
+}
+.voice-toggle[aria-pressed="true"] {
+  background: #eef4dc;
+  color: #14261f;
+  border-color: #eef4dc;
+}
+.voice-toggle:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 .chat-selection {
   display: flex;
   align-items: center;
@@ -2250,6 +2298,20 @@ button svg {
   border: 0;
   color: #e9f2dd;
   margin-left: auto;
+}
+.chat-message.spoken.assistant {
+  background: #f6f9ef;
+  border-style: dashed;
+}
+.chat-message[aria-busy="true"] p::after {
+  content: " ▍";
+  opacity: 0.55;
+  animation: voice-caret 1s steps(2) infinite;
+}
+@keyframes voice-caret {
+  to {
+    opacity: 0;
+  }
 }
 .chat-message > span {
   font-size: 11px;

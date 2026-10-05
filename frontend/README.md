@@ -31,15 +31,10 @@ configuration. See [workflow setup and qualification](../docs/DISPUTE_IMPLEMENTA
 for its matched frontend/bank mappings, independent ledger, and approved
 continuity settings. The direct-MCP example below configures the default service.
 
-Movements show at most the last three months. `GET /api/overview` and
-`GET /api/transactions` take `period=week|month|quarter` (7, 30 or 90 days,
-default `quarter`), counted back from the latest published event, so the window
-advances as daily data arrives and older rows are never read into the portal.
-Home's monthly activity always covers the three-month window. The browser loads
-every owned page of the selected window before exposing local search, filters or
-CSV export. Each API page is limited to 500 rows; offsets and snapshot checks
-prevent a transaction from silently disappearing. Selected chat references and
-the dispute workflow still resolve against the complete ownership-checked history.
+The browser loads every owned transaction page before exposing local search,
+filters or CSV export. Each API page is limited to 500 rows; offsets and snapshot
+checks prevent an older transaction from silently disappearing. Selected chat
+references resolve against the complete ownership-checked history.
 
 Movement dates and month views use the transaction event timestamp; CSV exports
 include both event and processing dates.
@@ -252,8 +247,28 @@ helpful. Saved inquiries survive renewed login; their scheduler has no bank
 authority. The standalone frontend image excludes this optional service and
 reports team creation unavailable. See the [customer journey](../docs/submission/CUSTOMER_JOURNEY.md).
 
-The assistant's **Nueva conversación** control archives the visible transcript
+The assistant's **Empezar chat nuevo** control archives the visible transcript
 for the current profile and clears the selected context. Previous conversation
 remains viewable; receipts, consent, inquiry cards and follow-ups stay preserved.
-The banking workbench keeps its guarded task dialogue. General conversational
-voice and keyboard turns belong to the Savia voice companion.
+The same assistant dialog contains the PR52 Savia eyes, **Hablar con Savia**
+microphone control and conversational voice. Voice delegates bank questions to
+the existing authenticated chat while foreground conversation continues. Exact
+chat/action replies and completed inquiry replies are registered by the host
+before narration; native captions enter spoken history only after full playback
+acknowledgment. Queued work and unchanged inquiry polls do not announce completion.
+
+The [integrated eyes and voice implementation](src/avatar/README.md) runs in this
+frontend and the same Python API described above. Configure the private banking
+configuration's `voice` object, or set `SAVIA_VOICE_CONFIG_FILE` to a private JSON
+voice configuration before starting that API. Provider credentials stay outside
+tracked source. The authenticated session cookie protects
+`/api/voice/transcribe`, `/api/voice/speak`, `/api/voice/turn` and
+`/api/voice/played`; the existing Vite `/api` proxy also carries voice requests.
+The joined RC uses its existing application port, 43900.
+
+Voice bank requests use `/api/chat/messages`. Completed inquiry narration uses
+the exact host-registered reply from `/api/assistant/voice-update`; playback
+acknowledgment supplies `turn_id`, `played_samples` and `complete: true` only
+after the audio has fully played. See the
+[release candidate report](../docs/submission/RELEASE_CANDIDATE.md) for the
+accepted source, deployed runtime and actual provider-capture evidence.

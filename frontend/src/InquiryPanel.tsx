@@ -129,12 +129,14 @@ export function InquiryPanel({
   message,
   onExpired,
   onContextUpdate,
+  onVoiceUpdate,
 }: {
   language: Language;
   transactionReference?: string | null;
   message?: string;
   onExpired: () => void;
   onContextUpdate?: () => void;
+  onVoiceUpdate?: (caseId: string, eventId: number) => void;
 }) {
   const t = copy[language];
   const [items, setItems] = useState<InquiryCase[]>([]);
@@ -145,6 +147,8 @@ export function InquiryPanel({
   const [notice, setNotice] = useState("");
   const previousStates = useRef<Map<string, string> | null>(null);
   const voiceEventCursors = useRef<Map<string, number>>(new Map());
+  const onVoiceUpdateRef = useRef(onVoiceUpdate);
+  onVoiceUpdateRef.current = onVoiceUpdate;
   const hasLoadedCases = useRef(false);
   const [formOpen, setFormOpen] = useState(Boolean(message));
   const pollDelay = items.some((item) =>
@@ -184,18 +188,18 @@ export function InquiryPanel({
           item.id === initialCaseId;
         const isNewCase =
           previousEventId === undefined && hasLoadedCases.current;
-        if (
-          window.parent !== window &&
-          (isInitialCase || isNewCase || isNewEvent)
-        ) {
-          window.parent.postMessage(
-            {
-              type: "savia:inquiry-update",
-              case_id: item.id,
-              event_id: lastEvent.id,
-            },
-            window.location.origin,
-          );
+        if (isInitialCase || isNewCase || isNewEvent) {
+          onVoiceUpdateRef.current?.(item.id, lastEvent.id);
+          if (window.parent !== window) {
+            window.parent.postMessage(
+              {
+                type: "savia:inquiry-update",
+                case_id: item.id,
+                event_id: lastEvent.id,
+              },
+              window.location.origin,
+            );
+          }
         }
         voiceEventCursors.current.set(item.id, lastEvent.id);
       }
