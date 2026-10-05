@@ -5,11 +5,11 @@ import { gunzipSync } from 'node:zlib';
 
 // The temporary authenticated leaf uses the existing default workspace. HTTP
 // inputs never select a filesystem root, ledger, policy, or credentials file.
-const DEFAULT_DB = '/data/native-flujo/workspaces/default-workspace/db';
+const DEFAULT_DB = '/data/flujo/workspaces/default-workspace/db';
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const MAX_BYTES = 64 * 1024 * 1024;
 const PRIVATE_FIELD = /authorization|cookie|password|secret|credential|assertion|signer|private.?key|api.?key|access.?token|refresh.?token|control.?token|bearer|snapshot.?key|executionAuthority|executionExtensionContext|bankingRunContext|privateLedger|configFile|policyFile/i;
-const PRIVATE_PATH = /\/(?:data\/(?:private|banking-state|native-authority)|run\/(?:banking(?:-runtime)?|frontend|secrets|dispute|native-login)|bootstrap\/worker\.snapshot)(?:[^\s"'<>]*)/g;
+const PRIVATE_PATH = /\/(?:data\/private|run\/(?:banking(?:-runtime)?|frontend|secrets)|bootstrap\/worker\.snapshot)(?:[^\s"'<>]*)/g;
 
 function redact(value, secrets, depth = 0) {
   if (depth > 60) return '[omitted]';

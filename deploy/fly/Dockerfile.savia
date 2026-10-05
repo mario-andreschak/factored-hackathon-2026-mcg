@@ -1,0 +1,6 @@
+# syntax=docker/dockerfile:1
+FROM registry.fly.io/flujo-factored-2026@sha256:f278f0329ffa68e5f11d71edccae0c119d66170af5aae63fd18f3cce05465ebb
+USER root
+COPY --chmod=0644 gateway.mjs /opt/savia/fly/gateway.mjs
+RUN node --check /opt/savia/fly/gateway.mjs \
+    && node -e 'const fs=require("node:fs"),crypto=require("node:crypto");fs.writeFileSync("/opt/savia/fly/savia-restoration-provenance.json",JSON.stringify({scope:"restore-savia-main-host",baseImage:"sha256:f278f0329ffa68e5f11d71edccae0c119d66170af5aae63fd18f3cce05465ebb",gatewaySha256:crypto.createHash("sha256").update(fs.readFileSync("/opt/savia/fly/gateway.mjs")).digest("hex")})+"\n");'

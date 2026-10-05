@@ -83,6 +83,25 @@ export const statusNames: Record<string, string> = {
   Suspended: "Suspendido",
   Inactive: "Inactivo",
 };
+export const ptStatusNames: Record<string, string> = {
+  Approved: "Aprovado",
+  Pending: "Pendente",
+  Declined: "Recusado",
+  Reversed: "Estornado",
+  Active: "Ativo",
+  Blocked: "Bloqueado",
+  Closed: "Encerrado",
+  Suspended: "Suspenso",
+  Inactive: "Inativo",
+};
+export const ptTypeNames: Record<string, string> = {
+  Purchase: "Compra",
+  Withdrawal: "Saque",
+  Transfer: "Transferência",
+  Payment: "Pagamento",
+  Deposit: "Depósito",
+  Adjustment: "Ajuste",
+};
 export const categoryNames: Record<string, string> = {
   Food: "Alimentación",
   Other: "Otros",
@@ -107,42 +126,63 @@ export const productShort = (type: string) =>
     "Crédito Hipotecario": "Crédito hipotecario",
     Inversión: "Inversión",
   })[type] || type;
-export function csv(transactions: Transaction[]) {
+export type CsvLanguage = "es" | "pt";
+
+export function csvText(transactions: Transaction[], language: CsvLanguage) {
   const escape = (value: unknown) =>
     '"' +
     String(value ?? "")
       .replace(/^[=+@\-]/, "'$&")
       .replaceAll('"', '""') +
     '"';
+  const headers =
+    language === "pt"
+      ? [
+          "Referência",
+          "Data do movimento",
+          "Data de processamento",
+          "Descrição",
+          "Tipo",
+          "Valor",
+          "Moeda",
+          "Status",
+          "Canal",
+        ]
+      : [
+          "Referencia",
+          "Fecha del movimiento",
+          "Fecha de procesamiento",
+          "Descripción",
+          "Tipo",
+          "Monto",
+          "Moneda",
+          "Estado",
+          "Canal",
+        ];
+  const types = language === "pt" ? ptTypeNames : typeNames;
+  const statuses = language === "pt" ? ptStatusNames : statusNames;
   const rows = [
-    [
-      "Referencia",
-      "Fecha del movimiento",
-      "Fecha de procesamiento",
-      "Descripción",
-      "Tipo",
-      "Monto",
-      "Moneda",
-      "Estado",
-      "Canal",
-    ],
+    headers,
     ...transactions.map((t) => [
       t.reference,
       t.occurred_at,
       t.process_date,
-      label(t),
-      t.type,
+      t.merchant || (Object.hasOwn(types, t.type) ? types[t.type] : t.type),
+      Object.hasOwn(types, t.type) ? types[t.type] : t.type,
       t.amount,
       t.currency,
-      t.status,
+      Object.hasOwn(statuses, t.status) ? statuses[t.status] : t.status,
       t.channel,
     ]),
   ];
+  return "\ufeff" + rows.map((r) => r.map(escape).join(",")).join("\r\n");
+}
+
+export function csv(transactions: Transaction[], language: CsvLanguage) {
   const url = URL.createObjectURL(
-    new Blob(
-      ["\ufeff" + rows.map((r) => r.map(escape).join(",")).join("\r\n")],
-      { type: "text/csv;charset=utf-8" },
-    ),
+    new Blob([csvText(transactions, language)], {
+      type: "text/csv;charset=utf-8",
+    }),
   );
   const anchor = document.createElement("a");
   anchor.href = url;

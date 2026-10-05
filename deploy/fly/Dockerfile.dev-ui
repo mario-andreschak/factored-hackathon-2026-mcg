@@ -1,0 +1,14 @@
+# syntax=docker/dockerfile:1
+# Optional shared development access over the qualified browser-login runtime.
+FROM registry.fly.io/flujo-factored-2026@sha256:7bd920095679e7a8d907f98afb4dd0262d1dfea98e04e7ce2138bc0e3afa4efa
+USER root
+COPY --chmod=0644 runtime.mjs dev-gateway.mjs dev-traces.mjs gateway.mjs /opt/savia/fly/
+RUN node --check /opt/savia/fly/runtime.mjs \
+    && node --check /opt/savia/fly/dev-gateway.mjs \
+    && node --check /opt/savia/fly/dev-traces.mjs \
+    && node --check /opt/savia/fly/gateway.mjs \
+    && node -e 'const fs=require("node:fs"),c=require("node:crypto"),sha=p=>c.createHash("sha256").update(fs.readFileSync(p)).digest("hex");fs.writeFileSync("/opt/savia/fly/dev-ui-provenance.json",JSON.stringify({version:1,scope:"optional-shared-development-ui",baseImage:"registry.fly.io/flujo-factored-2026@sha256:7bd920095679e7a8d907f98afb4dd0262d1dfea98e04e7ce2138bc0e3afa4efa",enabledBy:"FLUJO_DEV_UI_ENABLED=1",changedRuntimeFiles:["/opt/savia/fly/runtime.mjs","/opt/savia/fly/dev-gateway.mjs","/opt/savia/fly/dev-traces.mjs","/opt/savia/fly/gateway.mjs"],runtimeSha256:sha("/opt/savia/fly/runtime.mjs"),devGatewaySha256:sha("/opt/savia/fly/dev-gateway.mjs"),devTracesSha256:sha("/opt/savia/fly/dev-traces.mjs"),mainGatewaySha256:sha("/opt/savia/fly/gateway.mjs"),qualifiedBaseMainGatewaySha256:"a384a2728c1727908e0f32214c354debf7bf1c377621c8138a064c8ddb76395b",inheritedArtifactManifestSha256:sha("/opt/savia/fly/artifact-manifest.json"),inheritedCompilationReceiptSha256:sha("/opt/savia/fly/compilation.json")},null,2)+"\n",{mode:0o644});'
+LABEL io.savia.dev-ui.scope="shared-development-only" \
+      io.savia.dev-ui.enabled-by="FLUJO_DEV_UI_ENABLED=1" \
+      io.savia.dev-ui.changed="/opt/savia/fly/runtime.mjs,/opt/savia/fly/dev-gateway.mjs,/opt/savia/fly/dev-traces.mjs,/opt/savia/fly/gateway.mjs" \
+      io.savia.dev-ui.base="sha256:7bd920095679e7a8d907f98afb4dd0262d1dfea98e04e7ce2138bc0e3afa4efa"

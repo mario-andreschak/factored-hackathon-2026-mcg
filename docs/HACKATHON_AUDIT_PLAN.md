@@ -21,7 +21,7 @@ The problem statement asks for **one focused, end-to-end banking customer-servic
 
 The kickoff timeline shows **challenge launch September 25 and submissions close October 5, 2026**. Submission calls for a public GitHub repository named `factored-hackathon-2026-[team-name]`, a deployed tool link, 4–6 slides, and a short video pitch, sent to the organizer's submission address in the kickoff. [Kickoff, pp. 6, 18]
 
-**Evidence boundary:** on September 25 this directory contained only the four PDFs; on September 26 we sampled S3 through the configured MCP connection, then directly streamed **all objects in six decision-relevant table families** using read-only credentials. The bucket has 13 families; seven were inventoried but not row-profiled. We have **not** measured a model, built a live FLUJO flow, or deployed a service. Counts and quality rates below refer to the six fully scanned families.
+**Evidence boundary at September 26:** on September 25 this directory contained only the four PDFs; on September 26 we sampled S3 through the configured MCP connection, then directly streamed **all objects in six decision-relevant table families** using read-only credentials. The bucket has 13 families; seven were inventoried but not row-profiled. At that checkpoint we had **not** measured a model, built a live FLUJO flow, or deployed a service. Counts and quality rates below refer to the six fully scanned families. For later runtime and measurements, use the [release candidate report](submission/RELEASE_CANDIDATE.md).
 
 ## 2. Focus: transaction inquiry with safe dispute intake
 

@@ -7,6 +7,8 @@ adapter independently pins the approved graph and enforces customer ownership.
 from __future__ import annotations
 
 import asyncio
+from datetime import date
+from decimal import Decimal
 import hashlib
 import json
 from contextlib import contextmanager
@@ -25,6 +27,36 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from .chat import ChatError
+from .language import MinimizedFacts
+
+
+def selected_fallback(facts: MinimizedFacts, language: str, mode: str) -> str:
+    """Human display of already-owned portal facts, never an action decision."""
+    pt = language == "pt"
+    event = date.fromisoformat(facts.event_date)
+    months = (["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+              if pt else ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"])
+    when = f"{event.day} de {months[event.month - 1]} de {event.year}"
+    amount = format(Decimal(facts.amount), ",.2f").replace(",", "_").replace(".", ",").replace("_", ".")
+    merchant = (f"O estabelecimento registrado é «{facts.merchant}»." if pt else f"El comercio registrado es «{facts.merchant}».") if facts.merchant else (
+        "O registro não informa o estabelecimento." if pt else "El registro no informa el comercio.")
+    statuses = ({"approved": "O estado registrado é aprovado.", "pending": "O estado registrado é pendente.",
+                 "reversed": "O estado registrado é revertido; isso não confirma um reembolso.", "unknown": "O registro não informa o estado."}
+                if pt else {"approved": "El estado registrado es aprobado.", "pending": "El estado registrado es pendiente.",
+                 "reversed": "El estado registrado es reversado; eso no confirma un reembolso.", "unknown": "El registro no informa el estado."})
+    message = (f"Vamos conferir esta cobrança. O registro mostra {amount} {facts.currency}, de {when}. "
+               if pt else f"Vamos a revisar ese cargo. El registro muestra {amount} {facts.currency}, del {when}. ")
+    message += merchant + " " + statuses[facts.recorded_status]
+    if mode == "CONFIRM_ACTION":
+        message += (" Se ainda não reconhecer o estabelecimento, selecione «Revisar registro simulado» para conferir os dados e decidir se deseja confirmar. Responder no chat não registra a solicitação."
+                    if pt else " Si todavía no reconoces el comercio, selecciona «Revisar recepción simulada» para comprobar los datos y decidir si quieres confirmarla. Responder en el chat no registra la solicitud.")
+    elif mode == "TOOL_ERROR":
+        message += (" Não consegui concluir a conversa agora. Nenhuma solicitação foi confirmada por esta resposta. Você pode tentar novamente ou pedir atendimento pelo portal."
+                    if pt else " No pude completar la conversación ahora. Esta respuesta no confirma ninguna solicitud. Puedes intentarlo de nuevo o pedir atención desde el portal.")
+    else:
+        message += (" Isso ajuda a identificar o lançamento. Se não reconhecer o estabelecimento, conte o que não corresponde à sua compra."
+                    if pt else " Esto ayuda a identificar el movimiento. Si no reconoces el comercio, cuéntame qué no corresponde a tu compra.")
+    return message
 from .review import review_reference
 from .action import (handoff_questions, matches_selected_transaction, normalize_handoff_questions,
                      project_action_result)
@@ -905,7 +937,15 @@ class DisputeChatService:
         with self._connection() as db:
             session = db.execute("SELECT owner,expires,revoked,conversation_id FROM chat_sessions WHERE session_id=?",
                                  (session_id,)).fetchone()
-        if (not session or session["owner"] != owner or session["expires"] != session_exp
+        if not session:
+            # A valid bank login need not have admitted a chat yet. Retained
+            # action state without its original binding is still invalid.
+            with self._connection() as db:
+                saved_action = db.execute("SELECT 1 FROM action_status WHERE session_id=?", (session_id,)).fetchone()
+            if not saved_action:
+                return {"state": "none"}
+            raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
+        if (session["owner"] != owner or session["expires"] != session_exp
                 or session["revoked"]):
             raise ChatError("session_mismatch", 401, "La sesión del asistente no está disponible.")
         row, saved = self._current_action(session_id, owner, session_exp)
@@ -1134,10 +1174,12 @@ class DisputeChatService:
 
     async def send(self, customer_id: str, session_id: str, session_exp: int, message: str, *,
                    display_message: str | None = None, selection: dict[str, Any] | None = None,
-                   workflow=None, query_scope_id: str | None = None) -> dict[str, Any]:
+                   workflow=None, query_scope_id: str | None = None, language: str = "es",
+                   facts: MinimizedFacts | None = None) -> dict[str, Any]:
         subject, owner = self._identity(customer_id, session_id, session_exp)
         if (not isinstance(message, str) or not message.strip() or len(message.strip()) > 4096
-                or len(message.encode("utf-8")) > 12000):
+                or len(message.encode("utf-8")) > 12000 or language not in {"es", "pt"}
+                or facts is not None and type(facts) is not MinimizedFacts):
             raise ChatError("invalid_message", 400, "Escribe una consulta de hasta 4096 caracteres.")
         public_message = message.strip() if display_message is None else display_message
         if (not isinstance(public_message, str) or not public_message.strip()
@@ -1176,10 +1218,20 @@ class DisputeChatService:
                             "session_id": session_id, "conversation_id": returned_conversation,
                             "expires_at": session_exp}, public_message.strip(), turn_id=operation,
                             selection=public_selection,
+                            response_language=language,
                             **({"query_scope_id": query_scope_id} if query_scope_id is not None else {}))
                 except TimeoutError:
                     raise ChatError("chat_timeout", 504, "La consulta tardó más de lo esperado. No se ha reenviado automáticamente.") from None
                 reply = state["response"]["message"]
+                fallback_mode = state.get("workflow_state", {}).get("policy_decision", {}).get("response_mode")
+                selected_matches = (public_selection is not None and
+                    state.get("workflow_state", {}).get("transaction_id") == public_selection["reference"])
+                if (facts is not None and state.get("runtime", {}).get("safe_fallback_used")
+                        and (fallback_mode == "TOOL_ERROR" or selected_matches and fallback_mode in {"CONFIRM_ACTION", "INFORM"})):
+                    # The portal already resolved this owned selection. A
+                    # language outage need not hide its bounded display facts;
+                    # these facts never authorize intake or claim resolution.
+                    reply = selected_fallback(facts, language, fallback_mode)
                 cancellation = state.get("runtime", {}).get("host_cancellation_requested")
                 signals = cancellation if isinstance(cancellation, list) else [cancellation] if cancellation else []
                 signals.extend(state.get("runtime", {}).get("host_cancellation_queue", []))

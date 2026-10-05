@@ -7,6 +7,26 @@ swap_size_mb = 1024
 [env]
   FLUJO_FLY_MAIN_HOST = "flujo-factored-2026.fly.dev"
   FLUJO_FLY_USERNAME = "savia"
+  FLUJO_FLY_POLICY_SHA256 = "a30e69338666e2605cefa7385c7c5d55cf3464314c6bd336b8f2566d1ca646af"
+  FLUJO_DATA_DIR = "/data/flujo"
+  FLUJO_WORKER_MODE = "1"
+  FLUJO_WORKER_SNAPSHOT = "/bootstrap/worker.snapshot"
+  FLUJO_BANKING_CONFIG = "/run/banking-runtime/policy.json"
+  FLUJO_EXPOSURE_MODE = "localhost"
+  FLUJO_BROWSER_MODE = "trusted"
+  FLUJO_BROWSER_HEADED = "0"
+  FLUJO_BROWSER_CHANNEL = "chromium"
+  FLUJO_BROWSER_WINDOW_VISIBILITY = "normal"
+  GIT_TERMINAL_PROMPT = "0"
+  GIT_CONFIG_GLOBAL = "/app/github/gitconfig-signing"
+  GITHUB_REPOSITORY = "mario-andreschak/factored-hackathon-2026-mcg"
+  BANKING_DATA_DIR = "/banking-data"
+  BANKING_CONFIG_FILE = "/run/frontend/frontend.json"
+  BANKING_STATE_DIR = "/data/frontend-state"
+  BANKING_STATIC_DIR = "/opt/savia/dist"
+  BANKING_PUBLIC_ORIGIN = "https://flujo-factored-2026.fly.dev"
+  BANKING_COOKIE_SECURE = "1"
+
 [[mounts]]
   source = "flujo_data"
   destination = "/data"
@@ -35,4 +55,3 @@ swap_size_mb = 1024
   cpu_kind = "shared"
   cpus = 2
   memory = "4gb"
-

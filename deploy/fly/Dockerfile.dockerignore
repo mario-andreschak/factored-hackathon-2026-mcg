@@ -1,0 +1,6 @@
+**
+!deploy/
+!deploy/fly/
+!deploy/fly/entrypoint.sh
+!deploy/fly/runtime.mjs
+!deploy/fly/gateway.mjs

@@ -1,0 +1,9 @@
+**
+!Dockerfile.bank-enabled
+!qualify-bank-build.mjs
+!.overlay/
+!.overlay/compile/
+!.overlay/compile/source.tar
+!.overlay/compile/source-manifest.json
+!.overlay/compile/turn-provenance.patch
+!.overlay/compile/turn-provenance.tar

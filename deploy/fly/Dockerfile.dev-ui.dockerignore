@@ -1,0 +1,6 @@
+**
+!Dockerfile.dev-ui
+!runtime.mjs
+!dev-gateway.mjs
+!dev-traces.mjs
+!gateway.mjs

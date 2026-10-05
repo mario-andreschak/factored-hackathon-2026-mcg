@@ -116,6 +116,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 test.each([
@@ -310,9 +311,17 @@ test("assistant selection and transcript metadata follow ES to PT to ES without 
   expect(selected).toEqual(original);
   expect(selected.reference).toBe(original.reference);
   expect(onSelectTransaction).not.toHaveBeenCalled();
-  expect(fetchMock.mock.calls.map(([input]) => String(input))).toEqual([
-    "/api/chat/history",
-  ]);
+  const requestedUrls = fetchMock.mock.calls.map(([input]) => String(input));
+  expect(
+    requestedUrls.filter((url) => url === "/api/chat/history"),
+  ).toHaveLength(1);
+  expect(
+    requestedUrls.every(
+      (url) =>
+        url === "/api/chat/history" ||
+        url.startsWith("/api/followups?language="),
+    ),
+  ).toBe(true);
 });
 
 test.each([
@@ -818,7 +827,10 @@ test.each([
           body: init?.body as string | undefined,
         });
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status"))
           return response({
             state: "pending_confirmation",
@@ -852,17 +864,21 @@ test.each([
       name: new RegExp(consent),
     });
     expect(confirm.textContent).toContain(charge.merchant);
-    expect(confirm.textContent).toContain(
-      `${referenceLabel}: ${charge.reference}`,
-    );
+    expect(confirm.textContent).toContain(month);
+    expect(confirm.textContent).toContain("COP");
+    expect(confirm.textContent).toContain("42");
+    expect(confirm.textContent).not.toContain(charge.reference);
     const summary = document.getElementById(
       confirm.getAttribute("aria-describedby")!,
     );
     expect(summary).not.toBeNull();
-    expect(within(summary!).getByText(charge.reference)).toBeTruthy();
+    expect(summary!.textContent).not.toContain(charge.reference);
     expect(summary!.textContent).toContain(month);
     expect(summary!.textContent).toContain("COP");
     expect(summary!.textContent).toContain("42");
+    const technicalReference = screen.getByText(charge.reference);
+    expect(technicalReference.closest("details")?.open).toBe(false);
+    expect(within(confirm).queryByText(referenceLabel)).toBeNull();
 
     fireEvent.change(
       screen.getByRole("textbox", {
@@ -930,7 +946,10 @@ test("hidden amount requires a local review before explicit consent", async () =
       const url = String(input);
       calls.push(`${init?.method || "GET"} ${url}`);
       if (url === "/api/chat/history")
-        return response({ active: false, messages: [] });
+        return response({
+          active: false,
+          messages: [{ role: "user", text: "Consulta previa" }],
+        });
       if (url.startsWith("/api/action/status"))
         return response({
           state: "pending_confirmation",
@@ -998,7 +1017,10 @@ test("amount review and confirmation wait for status recovery", async () => {
       const url = String(input);
       calls.push(`${init?.method || "GET"} ${url}`);
       if (url === "/api/chat/history")
-        return response({ active: false, messages: [] });
+        return response({
+          active: false,
+          messages: [{ role: "user", text: "Consulta previa" }],
+        });
       if (url.startsWith("/api/action/status")) {
         statusRequests += 1;
         if (statusRequests === 1) return response(pending);
@@ -1087,7 +1109,10 @@ test.each([
       vi.fn(async (input: string) => {
         const url = String(input);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status"))
           return response({
             state: "pending_confirmation",
@@ -1145,7 +1170,10 @@ test.each([
       vi.fn(async (input: string, init?: RequestInit) => {
         const url = String(input);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status"))
           return response({
             state: "intake_verified",
@@ -1300,10 +1328,16 @@ test.each([
       effectiveLanguage(within(evidence).getByText(charge.merchant!)),
     ).toBe("");
     expect(within(evidence).getByText(receipt.id)).toBeTruthy();
-    expect(within(evidence).getByText(charge.reference)).toBeTruthy();
+    const receiptReference = within(evidence).getByText(charge.reference);
+    expect(receiptReference.closest("details")?.open).toBe(false);
     expect(within(evidence).getByText(received)).toBeTruthy();
-    expect(within(evidence).getByText("fixture-original")).toBeTruthy();
-    expect(within(evidence).getByText("fixture-current-view")).toBeTruthy();
+    expect(
+      within(evidence).getByText("fixture-original").closest("details")?.open,
+    ).toBe(false);
+    expect(
+      within(evidence).getByText("fixture-current-view").closest("details")
+        ?.open,
+    ).toBe(false);
     expect(evidence.textContent).toContain(
       language === "pt"
         ? "Não indica uma devolução"
@@ -1324,7 +1358,9 @@ test.each([
     ]);
     view.rerender(<Assistant {...props} selected={props.transactions[1]} />);
     expect(screen.getByRole("button", { name: reviewLabel })).toBeTruthy();
-    expect(within(evidence).getByText(charge.reference)).toBeTruthy();
+    expect(
+      within(evidence).getByText(charge.reference).closest("details")?.open,
+    ).toBe(false);
     view.rerender(<Assistant {...props} />);
     fireEvent.click(
       screen.getByRole("button", {
@@ -1387,7 +1423,10 @@ test.each([
         const url = String(input);
         calls.push(`${init?.method || "GET"} ${url}`);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status"))
           return response({
             state: nested ? "action_unverified" : "handoff_verified",
@@ -1414,16 +1453,24 @@ test.each([
       name: regionLabel as string,
     });
     expect(within(evidence).getByText(title as string)).toBeTruthy();
-    expect(within(evidence).getByText(handoff.id)).toBeTruthy();
-    expect(within(evidence).getByText(charge.reference)).toBeTruthy();
+    expect(
+      within(evidence).getByText(handoff.id).closest("details")?.open,
+    ).toBe(false);
+    expect(
+      within(evidence).getByText(charge.reference).closest("details")?.open,
+    ).toBe(false);
     expect(
       within(evidence).getByText(handoff.unanswered_questions[0]),
     ).toBeTruthy();
     expect(
-      within(evidence).getByText(
-        language === "pt" ? "Snapshot consultado em" : "Snapshot consultado el",
-      ),
-    ).toBeTruthy();
+      within(evidence)
+        .getByText(
+          language === "pt"
+            ? "Snapshot consultado em"
+            : "Snapshot consultado el",
+        )
+        .closest("details")?.open,
+    ).toBe(false);
     expect(evidence.textContent).toContain(
       language === "pt"
         ? "não atualiza os registros bancários"
@@ -1496,7 +1543,10 @@ test.each<[string, Record<string, unknown>]>([
     vi.fn(async (input: string) => {
       const url = String(input);
       if (url === "/api/chat/history")
-        return response({ active: false, messages: [] });
+        return response({
+          active: false,
+          messages: [{ role: "user", text: "Consulta previa" }],
+        });
       if (url.startsWith("/api/action/status"))
         return response({ ...result, target_reference: charge.reference });
       throw new Error(`Unexpected request: ${url}`);
@@ -1536,7 +1586,10 @@ test.each([
       vi.fn(async (input: string) => {
         const url = String(input);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status"))
           return response({
             state: "existing_case_verified",
@@ -1589,7 +1642,10 @@ test.each([
       vi.fn(async (input: string) => {
         const url = String(input);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status"))
           return response({
             state: "handoff_verified",
@@ -1658,7 +1714,10 @@ test.each([
       vi.fn(async (input: string, init?: RequestInit) => {
         const url = String(input);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status")) return response(saved);
         if (url === "/api/action/handoff") {
           const body = JSON.parse(init!.body as string);
@@ -1755,7 +1814,10 @@ test("question limits prevent malformed explicit handoff without submitting", as
       const url = String(input);
       calls.push(`${init?.method || "GET"} ${url}`);
       if (url === "/api/chat/history")
-        return response({ active: false, messages: [] });
+        return response({
+          active: false,
+          messages: [{ role: "user", text: "Consulta previa" }],
+        });
       if (url.startsWith("/api/action/status"))
         return response({
           state: "pending_confirmation",
@@ -1822,7 +1884,10 @@ test.each(["es", "pt"])(
       vi.fn(async (input: string, init?: RequestInit) => {
         const url = String(input);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status")) return response(saved);
         if (url === "/api/action/handoff") {
           writes.push(JSON.parse(init!.body as string));
@@ -1942,7 +2007,10 @@ test.each(["es", "pt"])(
       vi.fn(async (input: string, init?: RequestInit) => {
         const url = String(input);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status")) return response(saved);
         if (url === "/api/action/handoff") {
           const body = JSON.parse(init!.body as string);
@@ -2071,7 +2139,10 @@ test.each([
       vi.fn(async (input: string) => {
         const url = String(input);
         if (url === "/api/chat/history")
-          return response({ active: false, messages: [] });
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
         if (url.startsWith("/api/action/status"))
           return response({
             state: "prepare_unverified",
@@ -2114,7 +2185,10 @@ test.each([
     vi.fn(async (input: string) => {
       const url = String(input);
       if (url === "/api/chat/history")
-        return response({ active: false, messages: [] });
+        return response({
+          active: false,
+          messages: [{ role: "user", text: "Consulta previa" }],
+        });
       if (url.startsWith("/api/action/status"))
         return response({
           state: "handoff_unverified",
@@ -2306,4 +2380,415 @@ test("Portuguese recovery copy permits retry while server transcript remains unl
     screen.getByRole("dialog", { name: "Seu assistente Savia" }),
   ).toBeTruthy();
   expect(historyAttempts).toBe(2);
+});
+
+test("Portuguese selection before the first chat avoids unbound action status and logs no customer out", async () => {
+  const statusReads: string[] = [];
+  const sentMessages: Record<string, unknown>[] = [];
+  const onExpired = vi.fn();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/chat/history")
+        return response({ active: false, messages: [] });
+      if (url.startsWith("/api/action/status?language=")) {
+        statusReads.push(url);
+        if (url === "/api/action/status?language=pt")
+          return response({ state: "none" });
+        else
+          return {
+            ok: false,
+            status: 401,
+            headers: { get: () => null },
+            json: async () => ({ detail: "No admitted action row" }),
+          } as unknown as Response;
+      }
+      if (url === "/api/chat/messages") {
+        sentMessages.push(JSON.parse(init!.body as string));
+        return response({ reply: "Este lançamento aparece como aprovado." });
+      }
+      if (url.startsWith("/api/followups?")) return response({ items: [] });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: true }}
+      selected={charge}
+      transactions={[charge]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={onExpired}
+    />,
+  );
+
+  await screen.findByRole("textbox", { name: "Mensaje para el asistente" });
+  expect(statusReads).toEqual([]);
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Idioma de la interfaz" }),
+    { target: { value: "pt" } },
+  );
+  await screen.findByRole("textbox", { name: "Mensagem para o assistente" });
+  expect(statusReads).toEqual([]);
+  expect(onExpired).not.toHaveBeenCalled();
+  expect(
+    screen.queryByRole("button", { name: "Revisar registro simulado" }),
+  ).toBeNull();
+  fireEvent.change(
+    screen.getByRole("textbox", { name: "Mensagem para o assistente" }),
+    { target: { value: "O que significa este lançamento?" } },
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
+
+  await screen.findByText("Este lançamento aparece como aprovado.");
+  expect(
+    await screen.findByRole("button", { name: "Revisar registro simulado" }),
+  ).toBeTruthy();
+  expect(statusReads).toEqual(["/api/action/status?language=pt"]);
+  expect(onExpired).not.toHaveBeenCalled();
+  expect(sentMessages).toEqual([
+    {
+      message: "O que significa este lançamento?",
+      language: "pt",
+      transaction_reference: charge.reference,
+    },
+  ]);
+});
+
+test.each([
+  {
+    language: "es" as const,
+    optIn: "Quiero recibir seguimiento de esta recepción",
+    last: "Última consulta",
+    check: "Consultar ahora",
+    state: "Programado",
+  },
+  {
+    language: "pt" as const,
+    optIn: "Quero receber acompanhamento deste registro",
+    last: "Última consulta",
+    check: "Consultar agora",
+    state: "Agendado",
+  },
+])(
+  "$language customers can opt into and inspect simulated follow-up",
+  async (copy) => {
+    vi.stubEnv("TZ", "America/Bogota");
+    const saved: Record<string, unknown>[] = [];
+    let enrolled = false;
+    const followup = {
+      id: "fup-internal-id",
+      target_reference: charge.reference,
+      receipt_id: receipt.id,
+      simulated: true,
+      state: "scheduled",
+      created_at: "2026-09-21T15:02:00Z",
+      last_checked_at: 1790000000000,
+      next_check_at: 1790000900000,
+      message: "El seguimiento está programado.",
+      next_step: "Consulta el resultado más tarde.",
+      updates: [
+        {
+          checked_at: 1790000000000,
+          state: "scheduled",
+          message: "Se guardó el seguimiento simulado.",
+        },
+      ],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/api/chat/history")
+          return response({
+            active: false,
+            messages: [{ role: "user", text: "Consulta previa" }],
+          });
+        if (url.startsWith("/api/action/status"))
+          return response({
+            state: "intake_verified",
+            target_reference: charge.reference,
+            receipt,
+          });
+        if (url.startsWith("/api/followups?"))
+          return response({ items: enrolled ? [followup] : [] });
+        if (url === "/api/followups" && init?.method === "POST") {
+          saved.push(JSON.parse(init.body as string));
+          enrolled = true;
+          return response({ item: followup });
+        }
+        if (url === "/api/followups/check" && init?.method === "POST") {
+          saved.push(JSON.parse(init.body as string));
+          return response({ checked: 1 });
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+
+    render(
+      <Assistant
+        open
+        status={{ available: true, sandbox_intake_available: true }}
+        selected={charge}
+        transactions={[charge]}
+        onSelectTransaction={vi.fn()}
+        hidden={false}
+        synthetic
+        onClose={vi.fn()}
+        onExpired={vi.fn()}
+        initialLanguage={copy.language}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: copy.optIn }));
+    const state = await screen.findByText(copy.state);
+    const item = state.closest(".followup-item") as HTMLElement;
+    expect(
+      within(item).getByText("El seguimiento está programado."),
+    ).toBeTruthy();
+    expect(
+      within(item).getAllByText("El seguimiento está programado."),
+    ).toHaveLength(1);
+    expect(
+      within(item).getByText("Consulta el resultado más tarde."),
+    ).toBeTruthy();
+    expect(within(item).getByText(copy.last)).toBeTruthy();
+    expect(within(item).getByText("Próxima consulta")).toBeTruthy();
+    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe(
+      "America/Bogota",
+    );
+    const localCheckTime = new Intl.DateTimeFormat(
+      copy.language === "pt" ? "pt-BR" : "es-MX",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZoneName: "short",
+        hourCycle: "h23",
+      },
+    ).format(new Date(1790000000000));
+    expect(within(item).getByText(localCheckTime)).toBeTruthy();
+    expect(document.body.textContent).not.toContain("fup-internal-id");
+    expect(saved[0]).toEqual({ language: copy.language });
+
+    fireEvent.click(screen.getByRole("button", { name: copy.check }));
+    await waitFor(() => expect(saved).toHaveLength(2));
+    expect(saved[1]).toEqual({ language: copy.language });
+    expect(screen.queryByRole("button", { name: copy.optIn })).toBeNull();
+  },
+);
+
+test("saved follow-up remains reachable without the current receipt and follows conversation", async () => {
+  const priorFollowup = {
+    id: "followup-prior-id",
+    target_reference: "txn_bbbbbbbbbbbbbbbbbbbbbbbb",
+    receipt_id: "CMP-SBX-ijklmnop",
+    simulated: true as const,
+    state: "checked" as const,
+    created_at: "2026-09-21T15:02:00Z",
+    last_checked_at: 1790000000000,
+    next_check_at: null,
+    message: "La consulta anterior sigue guardada.",
+    next_step: "Revisa esta actualización cuando quieras.",
+    updates: [
+      {
+        checked_at: 1790000000000,
+        state: "checked",
+        message: "La consulta anterior sigue guardada.",
+      },
+    ],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/chat/history")
+        return response({
+          active: false,
+          messages: [{ role: "assistant", text: "¿En qué te ayudo ahora?" }],
+        });
+      if (url.startsWith("/api/action/status"))
+        return response({ state: "none" });
+      if (url.startsWith("/api/followups?"))
+        return response({ items: [priorFollowup] });
+      throw new Error(`Unexpected request: ${url}`);
+    }),
+  );
+  const view = render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: true }}
+      selected={null}
+      transactions={[]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+
+  await screen.findByText("¿En qué te ayudo ahora?");
+  const followup = await screen.findByText(
+    "La consulta anterior sigue guardada.",
+  );
+  const item = followup.closest(".followup-item") as HTMLElement;
+  expect(within(item).getByText("CMP-SBX-ijklmnop")).toBeTruthy();
+  expect(
+    within(item).getByText("Revisa esta actualización cuando quieras."),
+  ).toBeTruthy();
+  expect(
+    within(item).getAllByText("La consulta anterior sigue guardada."),
+  ).toHaveLength(1);
+  expect(
+    screen.queryByRole("button", {
+      name: "Quiero recibir seguimiento de esta recepción",
+    }),
+  ).toBeNull();
+  const chat = view.container.querySelector(".chat-messages")!;
+  const panel = view.container.querySelector(".followup-panel")!;
+  expect(
+    chat.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+test("new chat archives visible history per profile, survives reload and keeps follow-ups", async () => {
+  const priorFollowup = {
+    id: "followup-archived-test",
+    target_reference: charge.reference,
+    receipt_id: "CMP-SBX-archive1",
+    simulated: true as const,
+    state: "scheduled" as const,
+    created_at: "2026-09-21T15:02:00Z",
+    last_checked_at: null,
+    next_check_at: null,
+    message: "El seguimiento sigue guardado.",
+    next_step: "Te avisaremos cuando haya una actualización.",
+    updates: [],
+  };
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url === "/api/chat/history")
+      return response({
+        active: false,
+        messages: [
+          { role: "user", text: "No reconozco este cargo" },
+          { role: "assistant", text: "Revisemos la información disponible." },
+        ],
+      });
+    if (url.startsWith("/api/action/status"))
+      return response({ state: "none" });
+    if (url.startsWith("/api/followups?"))
+      return response({ items: [priorFollowup] });
+    if (url.startsWith("/api/assistant/cases?")) return response({ items: [] });
+    throw new Error(`Unexpected request: ${url}`);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  const onSelectTransaction = vi.fn();
+  const props = {
+    open: true,
+    status: { available: true, sandbox_intake_available: true },
+    selected: charge,
+    transactions: [charge],
+    onSelectTransaction,
+    hidden: false,
+    synthetic: true,
+    onClose: vi.fn(),
+    onExpired: vi.fn(),
+    profileId: "profile-archive-test",
+  };
+
+  const first = render(<Assistant {...props} />);
+  await screen.findByText("Revisemos la información disponible.");
+  await screen.findByText("El seguimiento sigue guardado.");
+  fireEvent.click(screen.getByRole("button", { name: "Empezar chat nuevo" }));
+  expect(screen.queryByText("No reconozco este cargo")).toBeNull();
+  expect(screen.queryByText("Revisemos la información disponible.")).toBeNull();
+  expect(onSelectTransaction).toHaveBeenCalledWith(null);
+  expect(screen.getByText("El seguimiento sigue guardado.")).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Ver conversación anterior" }),
+  ).toBeTruthy();
+  first.unmount();
+
+  render(<Assistant {...props} />);
+  await screen.findByText("Vamos a entender tus movimientos.");
+  expect(screen.queryByText("No reconozco este cargo")).toBeNull();
+  expect(screen.getByText("El seguimiento sigue guardado.")).toBeTruthy();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Ver conversación anterior" }),
+  );
+  expect(screen.getByText("No reconozco este cargo")).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Volver al chat actual" }),
+  ).toBeTruthy();
+});
+
+test("savia context events publish public selection and history without references", async () => {
+  const contexts: {
+    selection: Record<string, unknown> | null;
+    messages: Record<string, unknown>[];
+  }[] = [];
+  const listener = (event: Event) => {
+    contexts.push((event as CustomEvent).detail);
+  };
+  window.addEventListener("savia:context", listener);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === "/api/chat/history")
+        return response({
+          active: false,
+          messages: [
+            {
+              role: "user",
+              text: "No reconozco este cargo",
+              selection: {
+                reference: charge.reference,
+                occurred_at: charge.occurred_at,
+                type: charge.type,
+                amount: charge.amount,
+                currency: charge.currency,
+                status: charge.status,
+              },
+            },
+          ],
+        });
+      if (String(input).startsWith("/api/followups?"))
+        return response({ items: [] });
+      throw new Error(`Unexpected request: ${input}`);
+    }),
+  );
+  render(
+    <Assistant
+      open
+      status={{ available: true, sandbox_intake_available: false }}
+      selected={charge}
+      transactions={[charge]}
+      onSelectTransaction={vi.fn()}
+      hidden={false}
+      synthetic
+      onClose={vi.fn()}
+      onExpired={vi.fn()}
+    />,
+  );
+
+  await screen.findByText("No reconozco este cargo");
+  await waitFor(() => expect(contexts.at(-1)?.messages).toHaveLength(1));
+  const context = contexts.at(-1)!;
+  expect(context.selection).toMatchObject({
+    occurred_at: charge.occurred_at,
+    merchant: charge.merchant,
+  });
+  expect(context.selection).not.toHaveProperty("reference");
+  expect(context.selection).not.toHaveProperty("product_reference");
+  expect(context.messages[0]).not.toHaveProperty("query_id");
+  expect(context.messages[0].selection).not.toHaveProperty("reference");
+  window.removeEventListener("savia:context", listener);
 });

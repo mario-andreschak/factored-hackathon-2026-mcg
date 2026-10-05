@@ -1,7 +1,9 @@
 # Simulated unrecognized-charge intake v0
 
 > Historical worker-ingress design. Its FLUJO banking routes and in-worker
-> authority were removed by FLUJO #534 and must not be restored. Follow the
+> authority were removed from generic main by FLUJO #534 and must not be restored
+> there. The owner-authorized isolated hackathon branch preserves the later
+> combined integration; see the [deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md). Follow the
 > [direct host source contract](../frontend/DIRECT_MCP.md) and
 > [FLUJO product boundary](FLUJO_PRODUCT_BOUNDARY.md) for current direction.
 > The replacement remains held for integrated review; old evidence cannot

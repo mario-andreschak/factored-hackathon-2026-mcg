@@ -214,7 +214,7 @@ class Workflow:
         pending = w.get("pending", {})
         bound_confirmation = pending.get("type") == "awaiting_confirmation"
         w["search_criteria_present"] = bool(selection or w.get("transaction_id") or any(slots.get(k) is not None for k in ("amount", "date_from", "date_to", "transaction_id", "merchant")))
-        if slots.get("currency_raw") and not slots.get("currency") and not bound_confirmation:
+        if slots.get("currency_raw") and not slots.get("currency") and not bound_confirmation and not selection:
             w["search_criteria_present"] = False
             w["missing_fields"] = ["currency"]
             return
@@ -244,7 +244,18 @@ class Workflow:
                       "search_context": {"coverage_complete": True, "snapshot_id": pending.get("snapshot_id")}}
             state["tool_results"]["search_transactions"] = deepcopy(search)
         else:
-            search = await self._read(state, "search_transactions", {"slots": deepcopy(slots)})
+            search_slots = deepcopy(slots)
+            if selection:
+                # The host already resolved an owned visible charge. Model
+                # guesses about dates or amounts must not redirect that target.
+                try:
+                    selected_date = datetime.fromisoformat(selection["occurred_at"].replace("Z", "+00:00")).date().isoformat()
+                except (KeyError, TypeError, ValueError, AttributeError):
+                    self._invalidate_target(state, "invalid_selection")
+                    return
+                search_slots = {"transaction_id": selection["reference"],
+                                "date_from": selected_date, "date_to": selected_date}
+            search = await self._read(state, "search_transactions", {"slots": search_slots})
         if search.get("status") != "ok":
             return
         candidates = search.get("candidates", [])
@@ -280,6 +291,10 @@ class Workflow:
                     self._invalidate_target(state, "snapshot_changed")
                     return
                 w.update(transaction_identified=True, transaction_unique=True, transaction_id=chosen)
+                if selection:
+                    # Currency is a checked selected-record fact, even if the
+                    # conversational extraction left an ambiguous currency.
+                    slots.update(currency=row["currency"], currency_raw=None)
                 w["candidate_snapshot_hash"] = w.get("candidate_snapshot_hash") or search.get("snapshot_hash") or current_snapshot
                 target["snapshot_id"] = current_snapshot
                 if "status" not in row and "transaction_status" in row:
@@ -288,6 +303,33 @@ class Workflow:
                 state["tool_results"]["get_transaction"] = deepcopy(target)
                 if t["intent"] == "TRANSACTION_DISPUTE":
                     related = await self._read(state, "get_related_complaints", {"transaction_id": chosen})
+                    if related.get("status") == "ok" and related.get("duplicate_check") == "exact_open_case":
+                        cases = related.get("complaints", [])
+                        case = next((item for item in cases if isinstance(item, dict)
+                            and item.get("transaction_id") == chosen
+                            and item.get("linkage") == "exact_sandbox"
+                            and item.get("complaint_id")), None) if isinstance(cases, list) else None
+                        if case:
+                            reread = await self._read(state, "get_complaint", {
+                                "complaint_id": case["complaint_id"], "snapshot_id": current_snapshot})
+                            verified = reread.get("complaint")
+                            envelope = verified.get("receipt", {}) if isinstance(verified, dict) else {}
+                            receipt = envelope.get("receipt", {}) if isinstance(envelope, dict) else {}
+                            if (reread.get("status") != "ok" or not isinstance(verified, dict)
+                                    or verified.get("complaint_id") != case["complaint_id"]
+                                    or verified.get("transaction_id") != chosen
+                                    or verified.get("customer_id") not in (None, state["session"]["customer_id"])
+                                    or verified.get("linkage") != "exact_sandbox"
+                                    or verified.get("status") != case.get("status")
+                                    or not isinstance(envelope, dict) or envelope.get("state") != "verified" or not isinstance(receipt, dict)
+                                    or receipt.get("id") != case["complaint_id"]
+                                    or receipt.get("kind") != "simulated_intake" or receipt.get("simulated") is not True
+                                    or receipt.get("status") != "received"
+                                    or envelope != case.get("receipt")):
+                                state["runtime"]["node_errors"].append({"node": "get_complaint", "code": "existing_case_unverified"})
+                                return
+                            case["receipt"] = deepcopy(envelope)
+                            state["tool_results"]["get_related_complaints"] = deepcopy(related)
                     report = related.get("report_window", {})
                     if not isinstance(report, dict):
                         state["runtime"]["node_errors"].append({"node": "get_related_complaints", "code": "invalid_report_result"})
@@ -776,7 +818,7 @@ class Workflow:
             assisted = t["human_requested"] or t["intent"] == "HUMAN_REQUEST" or t["emotional_context"] == "Emergencia"
             stopped = t.get("clarification", {}).get("resolution_type") in {"DENIED", "UNCLEAR"} and w.get("pending", {}).get("type") != "none"
             if business and not assisted and not stopped and not t["slots"].get("foreign_customer_reference") and not state["runtime"]["node_errors"]:
-                if (t["slots"].get("currency_raw") and not t["slots"].get("currency")
+                if (not selection and t["slots"].get("currency_raw") and not t["slots"].get("currency")
                         and w.get("pending", {}).get("type") != "awaiting_confirmation"):
                     profile = await self._read(state, "get_customer_profile", {})
                     currencies = profile.get("currencies", [])
@@ -903,7 +945,31 @@ class Workflow:
             f"assistant: {sanitize(state['response']['message'])}", f"language: {state['turn']['effective_language']}"])[-9:]
         return state
 
-    async def _execute_batch(self, state, binding, history_items):
+    @staticmethod
+    def _selection_for_query(selection, intent, slots):
+        """Retain a host selection without attaching it to another query target."""
+        if not selection or intent not in {"TRANSACTION_DISPUTE", "TRANSACTION_INQUIRY"}:
+            return None
+        if (slots.get("transaction_id") not in (None, selection["reference"])
+                or slots.get("complaint_id") or any(slots.get(key) for key in
+                    ("merchant", "product_hint", "product_last4", "city", "country", "channel"))):
+            return None
+        try:
+            if slots.get("amount") is not None and Decimal(str(slots["amount"])) != Decimal(str(selection["amount"])):
+                return None
+            if slots.get("currency") and slots["currency"] != selection["currency"]:
+                return None
+            if slots.get("transaction_type") and slots["transaction_type"] != selection["type"]:
+                return None
+            event = datetime.fromisoformat(selection["occurred_at"].replace("Z", "+00:00")).date()
+            if (slots.get("date_from") and event < datetime.fromisoformat(slots["date_from"]).date()
+                    or slots.get("date_to") and event > datetime.fromisoformat(slots["date_to"]).date()):
+                return None
+        except (KeyError, TypeError, ValueError, InvalidOperation, AttributeError):
+            return None
+        return selection
+
+    async def _execute_batch(self, state, binding, history_items, selection=None):
         from .state import StateError, start_query_batch, activate_query_scope, checkpoint_query_scope
         intents = state["runtime"].pop("multi_intents")
         original = deepcopy(state)
@@ -926,7 +992,8 @@ class Workflow:
             frame["turn"]["sub_queries"] = [{"query_text": intents[index]["query_text"]}]
             # The original human remains authoritative for guard and replay identity.
             frame["turn"]["user_question"] = original["turn"]["user_question"]
-            frame = await self._process_scope(frame, binding, "", None,
+            scoped_selection = self._selection_for_query(selection, intents[index]["domain"], slots[index])
+            frame = await self._process_scope(frame, binding, "", scoped_selection,
                 prepared_intents=[intents[index]], preflight_slots=slots[index])
             frame = await self._complete(frame, binding, "", [], max_output_chars=max(1200, 11000 // len(intents)))
             frame["runtime"]["query_history"] = [f"user: {intents[index]['query_text']}",
@@ -975,7 +1042,7 @@ class Workflow:
         local_history = "\n".join(local_items)
         frame = await self._process_scope(frame, binding, local_history, selection, preflight_slots=current_slots)
         if frame["runtime"].get("multi_intents"):
-            return await self._execute_batch(frame, binding, history_items)
+            return await self._execute_batch(frame, binding, history_items, selection)
         frame = await self._complete(frame, binding, local_history, local_items, max_output_chars=max(1200, 11000 // len(scopes)))
         if (frame["turn"].get("clarification", {}).get("resolution_type") == "NEW_REQUEST"
                 or frame["turn"].get("intent") != scopes[query_id]["intent"] and not frame["runtime"].get("field_clarification_resumed")):
@@ -1091,16 +1158,21 @@ class Workflow:
         state["runtime"]["history"] = (history_items + [f"user: {t['user_question']}", f"assistant: {sanitize(response['message'])}", f"language: {t['effective_language']}"])[-9:]
         return state
 
-    async def run(self, binding, message, *, turn_id=None, selection=None, query_scope_id=None):
+    async def run(self, binding, message, *, turn_id=None, selection=None, query_scope_id=None,
+                  response_language=None):
         binding = TrustedBinding(**binding) if isinstance(binding, dict) else binding
         turn_id = turn_id or str(uuid.uuid4())
         if not isinstance(message, str) or not message.strip() or len(message) > 4096:
             raise ValueError("invalid message")
+        if response_language is not None and response_language not in {"es", "pt"}:
+            raise ValueError("invalid response language")
         now = self.clock()
         if hasattr(self.bank, "bind_context"):
             # This call is server-only. Its identity never comes from message or LLM JSON.
             self.bank.bind_context({key: getattr(binding, key) for key in ("owner", "customer_id", "session_id", "conversation_id", "expires_at")})
         replay_input = {"message": message, "selection": selection}
+        if response_language is not None:
+            replay_input["response_language"] = response_language
         if query_scope_id is not None:
             replay_input["query_scope_id"] = query_scope_id
         digest = hashlib.sha256(json.dumps(replay_input, sort_keys=True, ensure_ascii=False, allow_nan=False).encode()).hexdigest()
@@ -1131,6 +1203,11 @@ class Workflow:
         state = begin_turn(previous, binding, turn_id=turn_id, user_question=sanitize(message), now=now)
         state["runtime"]["input_sha256"] = digest
         t, w = state["turn"], state["workflow_state"]
+        # The authenticated host's explicit locale supplies a safe fallback
+        # even when the language classifier is unavailable. It grants no
+        # transaction selection, consent or bank authority.
+        if response_language is not None:
+            t.update(language=response_language, effective_language=response_language)
         t["human_requested"] = bool(_HUMAN.search(message))
         t["unauthorized_reference"] = bool(_FOREIGN.search(message))
         if state["session"]["authenticated"] and not state["session"]["expired"]:
@@ -1156,7 +1233,7 @@ class Workflow:
                 else:
                     state = await self._process_scope(state, binding, history, selection)
         if state["runtime"].get("multi_intents"):
-            state = await self._execute_batch(state, binding, history_items)
+            state = await self._execute_batch(state, binding, history_items, selection)
         elif not state["runtime"].get("batch_response_completed"):
             state = await self._complete(state, binding, history, history_items)
         # DENIED/NEW_REQUEST and deterministic expiry can create a cancellation

@@ -1,5 +1,10 @@
 # Isolated native transaction dispute workflow qualification
 
+> Historical native-image qualification, retained with its original pins.
+> The [final-day fictional launcher](../deploy/rc/README.md) uses generic model
+> completions and an in-process banking service; it does not qualify this native
+> image. Current acceptance belongs to the [release report](submission/RELEASE_CANDIDATE.md).
+
 This repository owns the adapter, workflow and qualification harness. FLUJO
 generic main and the shared local/Fly workers are unchanged. The isolated image
 builds immutable FLUJO revision `0ba62296520a505e6d71eddf5aa650691f3dc311`

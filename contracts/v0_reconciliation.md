@@ -2,7 +2,7 @@
 
 Estado: contrato de producto propuesto para revisión de Gloria y del equipo de implementación, vinculado a [issue #10](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/issues/10). Estos documentos no instalan el grafo R0–R18 ni activan el flujo. La versión sintética 1.1.0 identifica el contrato propuesto, no una política bancaria ni una política desplegada.
 
-Se conserva el objetivo de los prompts v0: aclarar un cargo propio no reconocido y llegar a un registro simulado confirmado, durable y releído, o a una solicitud local de revisión humana verificada. El cliente confirma la acción preparada mediante un control explícito del portal; un «sí/sim» de chat, una etiqueta CONFIRMED del clasificador o una selección no autorizan escritura. Los prompts canónicos para este contrato están en `resources/prompts/`. `demo/customer_v0/prompt.md` es un artefacto congelado de lectura, no otro prompt canónico instalado.
+Se conserva el objetivo de los prompts v0: aclarar un cargo propio no reconocido y llegar a un registro simulado confirmado, durable y releído, o a una solicitud local de revisión humana verificada. El cliente confirma la acción preparada mediante un control explícito del portal; un «sí/sim» de chat, una etiqueta CONFIRMED del clasificador o una selección no autorizan escritura. Los prompts canónicos para este contrato están en `resources/prompts/`. El antiguo `demo/customer_v0/prompt.md` fue retirado; la procedencia y el manifest del builder identifican el prompt real, sin otra copia canónica instalada.
 
 ## Estado del código fuente frente al contrato
 

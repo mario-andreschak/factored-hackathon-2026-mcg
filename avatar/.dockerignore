@@ -1,0 +1,22 @@
+node_modules
+dist
+.env
+.env.*
+*.env
+*.env.*
+test-results
+playwright-report
+docs
+experiments/*
+# Build-only, inert native audio protocol fixtures imported by the unit suite.
+!experiments/openrouter_native_audition.mjs
+!experiments/openrouter_s2s_audition.mjs
+!experiments/openrouter_s2s_sdk_terminal.mjs
+!experiments/openrouter_s2s_normalized_terminal.mjs
+!experiments/openrouter_s2s_pt_tail.mjs
+!experiments/openrouter_native_component_qa.mjs
+*.log
+.git
+.local
+.reference
+*.tsbuildinfo

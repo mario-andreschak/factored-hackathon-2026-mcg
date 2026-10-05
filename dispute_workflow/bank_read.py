@@ -724,6 +724,8 @@ class OwnedBankReads:
                     raise BankError("action_unverified")
                 receipt = projection["receipt"]
                 results.append({"complaint_id": case_id, "status": "Open", "source": "sandbox_cases",
+                    "receipt": {"state": "verified", "receipt": {key: receipt[key]
+                        for key in ("id", "kind", "simulated", "status")}},
                     "transaction_id": self._ref(transaction_id), "linkage": "exact_sandbox", "created_at": receipt["created_at"],
                     "snapshot_id": receipt["snapshot"], "source_verified": True,
                     "transaction": {key: value for key, value in receipt["transaction"].items()
@@ -879,6 +881,8 @@ class OwnedBankReads:
                 with self.service.store.connect() as db:
                     projection = self.service.actions._case_projection(db, self.principal.customer, row["transaction_id"], self.repository._visible(row, snapshot))
                 exact = ([{"complaint_id": projection["receipt"]["id"], "status": "Open", "source": "sandbox_cases",
+                           "receipt": {"state": "verified", "receipt": {key: projection["receipt"][key]
+                               for key in ("id", "kind", "simulated", "status")}},
                            "transaction_id": self._ref(row["transaction_id"]), "linkage": "exact_sandbox"}]
                          if projection["state"] == "verified" else [])
                 duplicate_check = ("exact_open_case" if exact else "incomplete" if projection["state"] == "action_unverified"

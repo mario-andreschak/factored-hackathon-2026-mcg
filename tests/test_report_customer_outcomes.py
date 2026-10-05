@@ -167,6 +167,12 @@ class OutcomeReportTests(unittest.TestCase):
         with self.assertRaises(InputError):
             aggregate(data)
 
+    def test_safe_inquiry_requires_automation_attempt(self):
+        data = fixture()
+        row = data["attempts"][2]
+        row["automation_attempted"] = False
+        with self.assertRaisesRegex(InputError, "safe inquiry requires automation attempt"):
+            aggregate(data)
 
     def test_handoff_label_rejects_safe_inquiry_claim(self):
         data = fixture()

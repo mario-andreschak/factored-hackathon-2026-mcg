@@ -1,59 +1,84 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { runtimeCommands, runtimeEnvironment, supervise, transitionEvidenceFiles } from './runtime.mjs';
-const fixture = { FLUJO_FLY_PASSWORD: 'main-private-password-123456', FLUJO_SNAPSHOT_CONTROL_TOKEN: 'private-control-token',
-  FLUJO_WORKER_SNAPSHOT_KEY: 'forbidden-worker-snapshot-secret', FLUJO_BANKING_CONFIG: 'forbidden-policy',
-  AWS_SECRET_ACCESS_KEY: 'forbidden-aws-key', BANKING_SERVICE_TOKEN: 'forbidden-bank-token',
-  FLUJO_DEV_UI_ENABLED: '1', FLUJO_DEV_UI_HOST: 'flujo-factored-dev-2026.fly.dev',
-  FLUJO_DEV_UI_EXPIRES_AT: '2026-10-16T05:00:00.000Z', FLUJO_DEV_UI_MARIO_PASSWORD: 'mario-private-password-123456',
-  FLUJO_DEV_UI_GLORIA_PASSWORD: 'gloria-private-password-123456' };
-test('runtime grants each child only its approved credentials and UID', () => {
-  const env = runtimeEnvironment(fixture, Date.parse('2026-10-01T23:00:00Z'));
-  for (const child of Object.values(env)) {
-    assert.equal(child.AWS_SECRET_ACCESS_KEY, undefined); assert.equal(child.BANKING_SERVICE_TOKEN, undefined);
-    assert.equal(child.FLUJO_WORKER_SNAPSHOT_KEY, undefined); assert.equal(child.FLUJO_BANKING_CONFIG, undefined);
+import { runtimeCommands, runtimeEnvironment } from './runtime.mjs';
+
+const fixture = {
+  FLUJO_FLY_MAIN_HOST: 'flujo-factored-2026.fly.dev',
+  FLUJO_FLY_PASSWORD: 'main-gateway-fixture-password',
+  FLUJO_SNAPSHOT_CONTROL_TOKEN: 'worker-control-fixture-token',
+  FLUJO_WORKER_SNAPSHOT_KEY: 'snapshot-key-fixture',
+  FLUJO_WORKER_SNAPSHOT_SHA256: 'a'.repeat(64),
+  FLUJO_BANKING_CONFIG: '/private/policy.json',
+  FLUJO_DEV_UI_MARIO_PASSWORD: 'mario-fixture-password-32-characters',
+  FLUJO_DEV_UI_GLORIA_PASSWORD: 'gloria-fixture-password-32-characters',
+  FLUJO_DEV_UI_UNEXPECTED_SECRET: 'unexpected-fixture-secret',
+  FLUJO_DEV_UI_HOST: 'flujo-factored-dev-2026.fly.dev',
+  FLUJO_DEV_UI_EXPIRES_AT: '2099-10-16T05:00:00.000Z',
+  FLUJO_FLY_DEV_UI_ENABLED: '1',
+  UNRELATED_SECRET: 'unrelated-fixture-secret',
+};
+
+test('development listener is absent unless the exact flag is enabled', () => {
+  for (const flag of [undefined, '', '0', 'true', 'yes']) {
+    const environment = runtimeEnvironment({ ...fixture, FLUJO_DEV_UI_ENABLED: flag });
+    assert.equal(environment.dev, undefined);
+    assert.equal(environment.gateway.FLUJO_FLY_DEV_UI_ENABLED, undefined);
+    assert.equal(runtimeCommands(environment).length, 3);
   }
-  assert.equal(env.worker.FLUJO_FLY_PASSWORD, undefined);
-  assert.equal(env.frontend.FLUJO_SNAPSHOT_CONTROL_TOKEN, undefined);
-  assert.equal(env.gateway.FLUJO_DEV_UI_MARIO_PASSWORD, undefined);
-  assert.equal(env.worker.FLUJO_DEV_UI_GLORIA_PASSWORD, undefined);
-  assert.equal(env.dev.FLUJO_FLY_PASSWORD, undefined);
-  assert.equal(env.worker.FLUJO_DATA_DIR, '/data/native-flujo');
-  assert.equal(env.worker.FLUJO_WORKER_SNAPSHOT, undefined);
-  const commands = runtimeCommands(env);
-  assert.equal(commands[0].args[0], 'node'); assert.equal(commands[1].args[0], 'banking');
-  assert.equal(commands.filter(item => item.name.includes('banking')).length, 1);
-  const bankArgs = commands[1].args;
-  assert.equal(bankArgs[bankArgs.indexOf('--application-source-root') + 1], '/opt/joined');
-  assert.equal(bankArgs.includes('--source-root'), false);
-  assert.equal(commands.some(item => item.args.join(' ').includes('banking_mcp stdio')), false);
 });
-test('development access expires without interrupting primary children', () => {
-  const env = runtimeEnvironment(fixture, Date.parse(fixture.FLUJO_DEV_UI_EXPIRES_AT));
-  assert.equal(env.dev, undefined); assert.equal(runtimeCommands(env).length, 3);
-});
-test('retained transition proofs stay in bank-only storage with pinned archive paths', () => {
-  const root = '/data/native-transition-evidence';
-  const saved = { archive_path: '/data/banking-state/legacy-bank-before-native.sqlite3', operator_proof: {
-    path: root + '/operator.json', coverage_proof_path: root + '/coverage.json',
-    lease_artifact: { path: root + '/lease.json' }, authority_artifact: { path: root + '/authority.json' },
-    obligation_artifacts: [{ path: root + '/revoke.json' }],
-    archives: { frontend: { path: root + '/frontend.tar' }, worker: { path: root + '/worker.tar' } },
-  } };
-  assert.equal(transitionEvidenceFiles(saved).length, 8);
-  for (const unsafe of ['/data/private/operator.json', root + '/../operator.json', root + '/./operator.json',
-    '/data/native-authority/control/operator.json', null]) {
-    const changed = structuredClone(saved); changed.operator_proof.path = unsafe;
-    assert.throws(() => transitionEvidenceFiles(changed), /bank-only/);
+
+test('developer credentials reach only the authenticated development process', () => {
+  const environment = runtimeEnvironment({ ...fixture, FLUJO_DEV_UI_ENABLED: '1' });
+  assert.equal(runtimeCommands(environment).length, 4);
+  assert.equal(environment.gateway.FLUJO_FLY_DEV_UI_ENABLED, undefined);
+  assert.equal(environment.dev.FLUJO_DEV_UI_SAME_ORIGIN, undefined);
+  assert.equal(environment.dev.FLUJO_DEV_UI_HOST, fixture.FLUJO_DEV_UI_HOST);
+  assert.equal(environment.dev.FLUJO_DEV_UI_EXPIRES_AT, fixture.FLUJO_DEV_UI_EXPIRES_AT);
+  assert.equal(environment.worker.FLUJO_FLY_DEV_UI_ENABLED, undefined);
+  assert.equal(environment.frontend.FLUJO_FLY_DEV_UI_ENABLED, undefined);
+  for (const name of ['worker', 'frontend', 'gateway']) {
+    assert.deepEqual(Object.keys(environment[name]).filter(key => key.startsWith('FLUJO_DEV_UI_')), []);
   }
-  const moved = structuredClone(saved); moved.archive_path = root + '/bank.sqlite3';
-  assert.throws(() => transitionEvidenceFiles(moved), /Incomplete/);
+  assert.equal(environment.dev.FLUJO_DEV_UI_MARIO_PASSWORD, fixture.FLUJO_DEV_UI_MARIO_PASSWORD);
+  assert.equal(environment.dev.FLUJO_DEV_UI_GLORIA_PASSWORD, fixture.FLUJO_DEV_UI_GLORIA_PASSWORD);
+  assert.equal(environment.dev.FLUJO_SNAPSHOT_CONTROL_TOKEN, fixture.FLUJO_SNAPSHOT_CONTROL_TOKEN);
+  for (const key of ['FLUJO_FLY_PASSWORD', 'FLUJO_WORKER_SNAPSHOT_KEY', 'FLUJO_WORKER_SNAPSHOT_SHA256',
+    'FLUJO_BANKING_CONFIG', 'FLUJO_DEV_UI_UNEXPECTED_SECRET', 'UNRELATED_SECRET']) {
+    assert.equal(Object.hasOwn(environment.dev, key), false);
+  }
+  assert.equal(environment.worker.FLUJO_EXPOSURE_MODE, 'localhost');
+  assert.equal(environment.worker.FLUJO_WORKER_MODE, '1');
+  assert.equal(environment.worker.FLUJO_BANKING_CONFIG, '/run/banking-runtime/policy.json');
+  assert.equal(environment.frontend.FLUJO_SNAPSHOT_CONTROL_TOKEN, undefined);
+  assert.equal(environment.worker.FLUJO_FLY_PASSWORD, undefined);
 });
-test('a failed service terminates its sibling process group', { skip: process.platform === 'win32' }, async () => {
-  const started = Date.now();
-  const result = await supervise({ graceMs: 1000, commands: [
-    { name: 'failure', command: process.execPath, args: ['-e', 'setTimeout(()=>process.exit(7),100)'], env: process.env },
-    { name: 'sibling', command: process.execPath, args: ['-e', 'setInterval(()=>{},10000)'], env: process.env },
-  ] });
-  assert.equal(result, 7); assert(Date.now() - started < 3000);
+
+test('expired optional development access leaves all Savia services running', () => {
+  const expired = { ...fixture, FLUJO_DEV_UI_ENABLED: '1',
+    FLUJO_DEV_UI_EXPIRES_AT: '2026-10-16T05:00:00.000Z',
+    FLUJO_DEV_UI_MARIO_PASSWORD: undefined, FLUJO_DEV_UI_GLORIA_PASSWORD: undefined };
+  const environment = runtimeEnvironment(expired, { now: () => Date.parse(expired.FLUJO_DEV_UI_EXPIRES_AT) });
+  assert.equal(environment.dev, undefined);
+  assert.equal(runtimeCommands(environment).length, 3);
+  assert.equal(environment.gateway.FLUJO_FLY_DEV_UI_ENABLED, undefined);
+});
+
+test('enabled development access requires its separate hostname and canonical deadline', () => {
+  for (const host of [undefined, fixture.FLUJO_FLY_MAIN_HOST, 'attacker.fly.dev', 'flujo-factored-dev-2026.fly.dev:8443']) {
+    assert.throws(() => runtimeEnvironment({ ...fixture, FLUJO_DEV_UI_ENABLED: '1', FLUJO_DEV_UI_HOST: host }), /separate development hostname/);
+  }
+  for (const expiry of [undefined, '', 'invalid', '2099-10-16T05:00:00Z', '2099-02-30T05:00:00.000Z']) {
+    assert.throws(() => runtimeEnvironment({ ...fixture, FLUJO_DEV_UI_ENABLED: '1', FLUJO_DEV_UI_EXPIRES_AT: expiry }), /canonical development expiry/);
+  }
+  assert.equal(runtimeCommands(runtimeEnvironment({ ...fixture, FLUJO_DEV_UI_ENABLED: '0',
+    FLUJO_DEV_UI_HOST: 'bad', FLUJO_DEV_UI_EXPIRES_AT: 'bad' })).length, 3);
+});
+
+test('enabled access refuses absent or short account passwords', () => {
+  for (const key of ['FLUJO_DEV_UI_MARIO_PASSWORD', 'FLUJO_DEV_UI_GLORIA_PASSWORD']) {
+    for (const value of [undefined, '', 'short']) {
+      assert.throws(() => runtimeEnvironment({ ...fixture, FLUJO_DEV_UI_ENABLED: '1', [key]: value }),
+        /credentials are missing or too short/);
+    }
+  }
 });

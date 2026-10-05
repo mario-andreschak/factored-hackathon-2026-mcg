@@ -1,0 +1,74 @@
+{
+  "kickoff": {
+    "heading": "First, a shared problem.",
+    "paragraphs": [
+      "The hackathon begins with a banking challenge, not with a ready-made application. The team has to turn a large collection of customer, interaction, complaint and transaction records into a useful inquiry workflow. Before an agent can answer a customer, the developers need to understand what those records can actually support.",
+      "The organizer's kickoff message is the opening signal. The first project chats then turn the brief into an audit: read the rules, inspect the dictionary and dataset, compare candidate approaches, and choose a workflow that can be demonstrated without promising powers the sandbox does not have. The messages shown beside this chapter are original records of those first decisions."
+    ],
+    "view": "activity"
+  },
+  "audit": {
+    "heading": "The data changes the plan.",
+    "paragraphs": [
+      "The initial audit finds usable transaction ownership, but unreliable historical complaint links. That distinction matters: an agent can help a customer examine their own transactions, while blindly joining the complaint tables would create a misleading view of the case. The workflow narrows toward unrecognized-charge inquiry and simulated dispute intake.",
+      "Data preparation and access control become part of the product design. The team explores direct S3 reads and a DuckDB pipeline, adds contracts and quality checks, and plans bounded MCP tools that return masked banking facts. Identity and object ownership belong in trusted service code. The developer conversations establish these constraints before frontend polish or a live demonstration can make them easy to overlook."
+    ],
+    "view": "activity"
+  },
+  "formation": {
+    "heading": "A project becomes a team workspace.",
+    "paragraphs": [
+      "The team creates a shared Slack channel, exchanges repository invitations, and brings the challenge references into one place. Meetings and messages establish the working rhythm: people can discuss an idea, point to a file or PR, and leave a timestamped decision that another developer can pick up later.",
+      "This channel soon becomes more than a conversation log. It is the human control surface for the project. The archive preserves both the technical decisions and the coordination around them, because a development process depends on how work is assigned, clarified and reviewed as much as on the code that ultimately lands."
+    ],
+    "view": "landscape"
+  },
+  "slack-bot": {
+    "heading": "Slack becomes an agent console.",
+    "paragraphs": [
+      "A short ping tests the first bridge: a team member addresses FLUJO in Slack, and the reply appears in both the channel and FLUJO's persisted conversation. This is the point where a chat message can become an agent run instead of ending as a note for a human developer.",
+      "Later requests use that bridge to inspect project state, research, request implementation and point to pull requests. The replay keeps the Slack message, FLUJO conversation and GitHub evidence distinct. Where the sources record a dispatch or shared PR, the visualization connects them; where a causal link is unavailable, it shows a reference rather than inventing a handoff."
+    ],
+    "view": "landscape"
+  },
+  "release": {
+    "heading": "The work leaves a single process.",
+    "paragraphs": [
+      "Deployment becomes its own workstream. Local Docker services, gateways, banking components and the customer interface have to work together, and the team begins preparing the Fly deployment. A successful build, a running container and a healthy remote Machine are different pieces of evidence; one does not automatically establish the others.",
+      "The infrastructure view makes those differences visible. It records the host or provider, region when available, image or release identifiers, lifecycle events and retained logs. Current inventory is labeled as an observation. Historical build output and Machine events establish earlier activity only when their own timestamps and provenance support it."
+    ],
+    "view": "infrastructure"
+  },
+  "governance": {
+    "heading": "Parallel work needs a reviewer.",
+    "paragraphs": [
+      "A dedicated Codex supervisor is assigned to oversee the project and review pull requests. This creates a second control path alongside Slack: project chats can coordinate separate workstreams, spawn subagents, inspect results and steer the FLUJO developers.",
+      "The agent view exposes the actual conversation hierarchy. Parent and child chats, assignments, steering messages and recorded completions are separate events. A chat's last message is not silently treated as a proven completion, and a saved instruction is not treated as evidence that its task succeeded. The point is to see who controlled which work, and what the sources actually recorded."
+    ],
+    "view": "agents"
+  },
+  "parallel": {
+    "heading": "Five lanes, one shared release.",
+    "paragraphs": [
+      "The team reports parallel sessions for frontend, backend, dataset, MCP and supervision/review. That division lets specialists move simultaneously, but their work still converges on the same interfaces, customer identity rules and GitHub pull requests.",
+      "The timeline now shows overlapping chat lifetimes rather than compressing the whole team into a single agent dot. Selecting a conversation reveals its ancestry and evidence. Steering and dispatch links explain recorded coordination, while the activity map shows when several developers or subagents were active at once. These views help distinguish real parallel work from a long sequence of messages in one conversation."
+    ],
+    "view": "agents"
+  },
+  "self-governed": {
+    "heading": "The release loop becomes a graph.",
+    "paragraphs": [
+      "Codex sets up the Hackathon Release Team in FLUJO. The recorded roles include a supervisor, builder, product auditor, independent reviewer and watchdog, with a recurring coordinator advancing the work from durable state. Control has moved beyond a human issuing one isolated request at a time.",
+      "The flow view displays the saved FLUJO graph, and the replay highlights a node only when recorded execution evidence identifies it. The conversation tree shows the runs spawned around that graph. Configuration explains the intended process; dispatches, node transitions, tool results and messages show the observed process. Keeping both visible makes the system's autonomy reviewable instead of merely describing it as autonomous."
+    ],
+    "view": "flows"
+  },
+  "ci": {
+    "heading": "Verification gets its own clock.",
+    "paragraphs": [
+      "The team chooses two recurring verification environments: an hourly local run using Windows and Docker, and a daily run on Modal. This complements pull-request review with repeatable execution outside the GitHub Actions billing path.",
+      "The archive distinguishes the user's decision, the saved automation, an execution attempt and a recorded result. The infrastructure view places the workers where they ran and links retained output back to its source. At the end of this captured period, development is still ongoing: the replay shows the latest observed system and its remaining evidence gaps, rather than presenting a planned deployment or a scheduled check as a completed release."
+    ],
+    "view": "infrastructure"
+  }
+}

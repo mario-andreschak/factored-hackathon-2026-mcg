@@ -423,6 +423,8 @@ def test_exact_sandbox_receipt_is_distinct_from_historical_linkage(bank):
     assert status["complaint"]["status"] == "Open"
     assert status["complaint"]["snapshot_id"] == receipt["snapshot"]
     assert status["complaint"]["transaction"]["amount"] == receipt["transaction"]["amount"]
+    assert status["complaint"]["receipt"] == related["complaints"][0]["receipt"] == {
+        "state": "verified", "receipt": {key: receipt[key] for key in ("id", "kind", "simulated", "status")}}
     assert "transaction_reference" not in repr(status)
 
 

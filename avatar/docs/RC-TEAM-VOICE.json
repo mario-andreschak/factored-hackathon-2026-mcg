@@ -1,0 +1,98 @@
+{
+  "schema": "savia-qualified-team-voice/v1",
+  "at": "2026-10-05T01:35:48.002Z",
+  "fictional": true,
+  "actual_team_workers": 2,
+  "actual_native_provider": "OpenRouter / openai/gpt-audio",
+  "informational_only": true,
+  "bank_authority": false,
+  "bank_resolution": false,
+  "input": "typed Spanish with file-backed silent microphone",
+  "physical_microphone_qualified": false,
+  "counts": {
+    "/api/avatar/native-turn": 1,
+    "/savia/api/assistant/cases": 1,
+    "/api/avatar/native-result": 3
+  },
+  "team_completed_observed_ms": 10559,
+  "case_submit_ms": 5658,
+  "submit_to_completed_ui_ms": 4901,
+  "completed_update_event_id": 15,
+  "completed_update_native_start_ms": 40741,
+  "completed_update_provider_header_ms": 41647,
+  "completed_update_full_played_ack_ms": 51292,
+  "completed_update_full_played_ack_http_status": 200,
+  "completed_update_delivered_once": true,
+  "completed_update_seconds": 9.4,
+  "completed_update_transcript": "El cargo es de «Nébula Market». Revisa tus recibos y piensa si estas sugerencias te orientan para el siguiente paso.",
+  "completed_update_usage": {
+    "promptTokens": 653,
+    "completionTokens": 231,
+    "totalTokens": 884,
+    "inputAudioTokens": 0,
+    "outputAudioTokens": 188,
+    "costUsd": 0.0140945
+  },
+  "completed_team": {
+    "state": "team_completed",
+    "completed_workers": 2,
+    "suggestions": [
+      "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas.",
+      "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+    ],
+    "next_check_at": 1791165890,
+    "events": [
+      {
+        "kind": "queued",
+        "at": 1791164087,
+        "role": null
+      },
+      {
+        "kind": "team_working",
+        "at": 1791164087,
+        "role": null
+      },
+      {
+        "kind": "worker_working",
+        "at": 1791164087,
+        "role": "evidence"
+      },
+      {
+        "kind": "worker_working",
+        "at": 1791164088,
+        "role": "next_steps"
+      },
+      {
+        "kind": "worker_completed",
+        "at": 1791164090,
+        "role": "next_steps"
+      },
+      {
+        "kind": "worker_completed",
+        "at": 1791164090,
+        "role": "evidence"
+      },
+      {
+        "kind": "team_completed",
+        "at": 1791164090,
+        "role": null
+      }
+    ]
+  },
+  "public_audio": "docs/submission/measurements/team-voice/useful-team-update.wav",
+  "public_visual_video": "docs/submission/measurements/team-voice/team-voice.webm",
+  "public_full_receipt": "docs/submission/measurements/team-voice/receipt.json",
+  "qualification": {
+    "accepted_audio_index": 4,
+    "accepted_audio": "docs/submission/measurements/team-voice/useful-team-update.wav",
+    "completed_team_notifications_heard": 1,
+    "rejected_progress_audio_indices": [
+      2,
+      3
+    ],
+    "rejection_reason": "Pending/working snapshots produced overstated completion claims. Do not use these clips as truthful progress.",
+    "final_source_change": "After this historical capture, automatic queued/team_working narration was suppressed; the unchanged completed update path remains qualified. Final guard build and focused browser test passed.",
+    "visual_video_contains_native_audio": false,
+    "screenshot_limit": "Final viewport shows an older closed inquiry lower in the panel. Current completed team is qualified by authenticated response and native played receipts, not that viewport."
+  }
+}

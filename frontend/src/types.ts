@@ -96,6 +96,24 @@ export type ChatMessage = {
   text: string;
   selection?: ChatSelection;
 };
+export type FollowupUpdate = {
+  checked_at: number;
+  state: string;
+  message: string;
+};
+export type Followup = {
+  id: string;
+  target_reference: string;
+  receipt_id: string;
+  simulated: true;
+  state: "scheduled" | "checked" | "unavailable" | "paused";
+  created_at: string;
+  last_checked_at: number | null;
+  next_check_at: number | null;
+  message: string;
+  next_step: string;
+  updates: FollowupUpdate[];
+};
 
 export type ActionFacts = {
   transaction_reference: string;
