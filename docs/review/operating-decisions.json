@@ -1,0 +1,264 @@
+{
+  "scope": "read-only analysis of three separate published workloads; no new provider/model execution",
+  "luna": {
+    "requests": 100,
+    "distinct_customer_request_phrases": 10,
+    "phrase_repeat_counts": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10
+    ],
+    "correct": 100,
+    "bounded_safe": 100,
+    "baseline_correct": 100,
+    "latency": {
+      "n": 100,
+      "minimum_seconds": 33.720097,
+      "p50_seconds": 37.400468,
+      "p95_seconds": 50.69311,
+      "maximum_seconds": 51.557295
+    },
+    "latency_slices": {
+      "language": {
+        "es": {
+          "n": 50,
+          "minimum_seconds": 33.751804,
+          "p50_seconds": 37.115556,
+          "p95_seconds": 50.800498,
+          "maximum_seconds": 51.557295
+        },
+        "pt": {
+          "n": 50,
+          "minimum_seconds": 33.720097,
+          "p50_seconds": 40.323302,
+          "p95_seconds": 50.594234,
+          "maximum_seconds": 50.919957
+        }
+      },
+      "scenario": {
+        "ambiguous_charge": {
+          "n": 20,
+          "minimum_seconds": 33.732511,
+          "p50_seconds": 43.551263,
+          "p95_seconds": 50.362567,
+          "maximum_seconds": 50.540857
+        },
+        "customer_handoff": {
+          "n": 20,
+          "minimum_seconds": 33.815241,
+          "p50_seconds": 39.48116,
+          "p95_seconds": 50.69311,
+          "maximum_seconds": 51.557295
+        },
+        "foreign_owner": {
+          "n": 20,
+          "minimum_seconds": 33.720097,
+          "p50_seconds": 36.691241,
+          "p95_seconds": 50.919957,
+          "maximum_seconds": 51.21211
+        },
+        "owned_charge": {
+          "n": 20,
+          "minimum_seconds": 34.251198,
+          "p50_seconds": 36.761842,
+          "p95_seconds": 50.670518,
+          "maximum_seconds": 50.800498
+        },
+        "requested_refund": {
+          "n": 20,
+          "minimum_seconds": 33.772242,
+          "p50_seconds": 38.896582,
+          "p95_seconds": 50.573245,
+          "maximum_seconds": 50.735163
+        }
+      }
+    },
+    "tokens": {
+      "inputTokens": 1326179,
+      "cachedInputTokens": 868608,
+      "outputTokens": 5217,
+      "reasoningOutputTokens": 0,
+      "totalTokens": 1331396
+    },
+    "uncached_input_tokens": 457571,
+    "cached_fraction_of_input_tokens": 0.65497,
+    "input_to_output_token_ratio": 254.203,
+    "dollar_cost": null,
+    "cost_reason": "subscription usage; no dollar billing receipt",
+    "model_identity_scope": "requested/returned app-server identity; server-side identity not independently observable",
+    "latency_boundary": "submission to completed app-server turn including network/admission/queueing"
+  },
+  "router": {
+    "systems": {
+      "keyword_baseline": {
+        "correct": 70,
+        "n": 120,
+        "human_missed": 13,
+        "human_n": 30,
+        "unnecessary_handoffs": 6,
+        "nonhuman_n": 90,
+        "paired_accuracy_difference_vs_keywords": 0.0,
+        "paired_bootstrap_ci95": [
+          0.0,
+          0.0
+        ],
+        "human_misroute_ci95_wilson": [
+          0.273775,
+          0.608027
+        ]
+      },
+      "tfidf_logistic": {
+        "correct": 94,
+        "n": 120,
+        "human_missed": 3,
+        "human_n": 30,
+        "unnecessary_handoffs": 9,
+        "nonhuman_n": 90,
+        "paired_accuracy_difference_vs_keywords": 0.2,
+        "paired_bootstrap_ci95": [
+          0.1,
+          0.3
+        ],
+        "human_misroute_ci95_wilson": [
+          0.0346,
+          0.256211
+        ]
+      },
+      "tfidf_logistic_abstention": {
+        "correct": 65,
+        "n": 120,
+        "human_missed": 1,
+        "human_n": 30,
+        "unnecessary_handoffs": 52,
+        "nonhuman_n": 90,
+        "paired_accuracy_difference_vs_keywords": -0.041667,
+        "paired_bootstrap_ci95": [
+          -0.158333,
+          0.075
+        ],
+        "human_misroute_ci95_wilson": [
+          0.005909,
+          0.166704
+        ]
+      }
+    },
+    "label_quality": "AI-proposed diagnostic labels; independent human adjudication pending",
+    "reproduction": "existing published decisions and paired intervals independently recalculated; not a new blind test"
+  },
+  "data": {
+    "evidence_grade": "published organizer-source aggregate manifest; raw private source not recomputed",
+    "complaint_affected_product_links": 44570,
+    "cross_customer_links": 44570,
+    "total_complaints": 67095,
+    "classifier_dataset": {
+      "rows": 171321,
+      "splits": {
+        "test": 2946,
+        "train": 109580,
+        "excluded": 41576,
+        "val": 17219
+      },
+      "time_holdout": "2026-03-17",
+      "distinct_normalized_texts": 42,
+      "test_rows_with_text_seen_in_train": 2946,
+      "test_text_leakage_rate": 1.0,
+      "transcripts_without_matching_interaction": 0
+    }
+  },
+  "customer": {
+    "original_three_cases": [
+      {
+        "case": "es-selected",
+        "language": "es",
+        "latency_ms": 9338,
+        "http_status": 200,
+        "exact_history": true,
+        "useful_agent_screened": true,
+        "human_adjudicated": false,
+        "model_calls": 6,
+        "prompt_tokens": 13993,
+        "completion_tokens": 439,
+        "reported_dollar_cost": null
+      },
+      {
+        "case": "pt-selected",
+        "language": "pt",
+        "latency_ms": 12970.1,
+        "http_status": 200,
+        "exact_history": true,
+        "useful_agent_screened": false,
+        "human_adjudicated": false,
+        "model_calls": 10,
+        "prompt_tokens": 33636,
+        "completion_tokens": 833,
+        "reported_dollar_cost": null
+      },
+      {
+        "case": "pt-ambiguous",
+        "language": "pt",
+        "latency_ms": 7104.8,
+        "http_status": 200,
+        "exact_history": true,
+        "useful_agent_screened": true,
+        "human_adjudicated": false,
+        "model_calls": 6,
+        "prompt_tokens": 13510,
+        "completion_tokens": 319,
+        "reported_dollar_cost": null
+      }
+    ],
+    "post_fix_separate_n1": {
+      "sample_size": 1,
+      "http_chat_success": 1,
+      "history_exact": 1,
+      "latency_ms": {
+        "minimum": 18807.5,
+        "median": 18807.5,
+        "maximum": 18807.5
+      },
+      "independent_human_adjudication": false,
+      "bank_resolution_observed": false,
+      "agent_screening": {
+        "reviewed": 1,
+        "useful": 1,
+        "language_correct": 1
+      }
+    },
+    "post_fix_limit": "deterministic trusted-host selected_fallback after guarded model rejection; separate revision",
+    "bank_resolution_observed": false
+  },
+  "provenance": {
+    "analyzed_utc": "2026-10-05T21:37:24.217306+00:00",
+    "input_sha256": {
+      "docs/submission/measurements/luna-100/run-100/requests.jsonl": "997dfcaea80399ed6878d40f28ac9a6ceb80fad471bb9c0b6029e9d327e48214",
+      "docs/submission/measurements/luna-100/run-100/workload.json": "b02598717666862bf137220add5c1e24845853caa6cb24e5986fd66a063c8bea",
+      "docs/submission/measurements/luna-100/run-100/summary.json": "38e9518ba4601b715739a4efd490441ea6a59a7085dd8bab2e2bcec995a32c62",
+      "docs/submission/measurements/luna-100/run-100/baseline.json": "417bfff9421316bca33f356510fb2916d5fe93379bb2f6a36c3349bf861b65bc",
+      "docs/submission/measurements/luna-100/run-100/audit.json": "f268f45aa084f0b1069859119de4cd3dff83a2c300fb4ddb25be1dcc0f4667f8",
+      "docs/review/router-replay.json": "2d58f1a76f8ed3d9375d91d556586410bc8374d24b8a22b7081d889569b67021",
+      "ml/data/router_test.csv": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+      "docs/pipeline/manifest.json": "65a2d261d2324d4fd5403d939296d1f673fd5d02ad74408510f381f41bdc0bbb",
+      "ml/README.md": "e016ae0c48dd783ac98c9e732792df787cc65e37efa34a078b52e652d6e543df",
+      "docs/submission/measurements/final-comparison-counted.json": "0195ddbe853fdc3130c624cf467625a2411264b8c004cd760193d30361f77e0d",
+      "docs/submission/measurements/post-fix-pt-selected-counted.json": "575fcb6fc1adc6341401ea7e6ee33633d78bb58b814257ba92e392239c4b8f34",
+      "scripts/analyze_operating_evidence.py": "969896e15bef1e1fb67e1c9be710ab403df6e3e3157cead8d96afb4bb27e70a7"
+    },
+    "source_unchanged": true,
+    "python": "3.13.1",
+    "numpy": "2.5.3",
+    "matplotlib": "3.11.1",
+    "provider_requests": 0,
+    "latency_percentile_method": "p50 median; p95 nearest rank, ceil(.95*n)",
+    "figure_sha256": {
+      "luna-latency.png": "a8618f749bd7588eb3895e8b8b774b18d2356c858062afedf66a8be2c8e68996",
+      "routing-tradeoff.png": "ac2832550536b9964669148478f49a5a3f4c319c74e6400108656503be40642a"
+    }
+  }
+}

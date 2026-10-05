@@ -1,0 +1,9 @@
+  Using tsconfig file: tsconfig.build.json
+Running one project: node
+
+Test Suites: 9 passed, 9 total
+Tests:       104 passed, 104 total
+Snapshots:   0 total
+Time:        6.287 s
+Ran all test suites within paths "__tests__/chat/directModelCompletion.test.ts", "__tests__/engine/quickChatSnapshot.test.ts", "__tests__/flow/compileFlow.test.ts", "__tests__/flow/conversationExecutionLock.test.ts", "__tests__/flow/executionAuthority.test.ts", "__tests__/flow/recoveryCheckpoint.test.ts", "__tests__/flow/toolApprovalRegistry.test.ts", "__tests__/flow/toolApprovalSingleGate.test.ts", "__tests__/security/localRequestGuard.test.ts".
+Test results written to: ..\jest-results.json

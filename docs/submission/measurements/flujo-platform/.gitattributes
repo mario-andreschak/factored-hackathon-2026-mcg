@@ -1,0 +1,8 @@
+# Evidence tooling and receipts have a consistent portable representation.
+*.cjs text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+# This last rule preserves all upstream Git blob bytes and overrides the rules above.
+source/** -text

@@ -1,0 +1,254 @@
+{
+  "checked_utc": "2026-10-05T21:23:16.4253020Z",
+  "source": "https://huggingface.co/api/models?author=factored&limit=100",
+  "count": 9,
+  "weights_downloaded": false,
+  "inference_requests": 0,
+  "models": [
+    {
+      "id": "factored/distilbert-fr-explorer-classification",
+      "revision": "19a759f4dde47e1bab747df78c331462e7fe4027",
+      "pipeline_tag": "fill-mask",
+      "card": {
+        "license": "apache-2.0",
+        "tags": [
+          "generated_from_trainer"
+        ],
+        "model-index": [
+          {
+            "name": "distilbert-fr-explorer-classification",
+            "results": []
+          }
+        ]
+      },
+      "config": {
+        "architectures": [
+          "DistilBertForMaskedLM"
+        ],
+        "model_type": "distilbert",
+        "tokenizer_config": {
+          "cls_token": "[CLS]",
+          "mask_token": "[MASK]",
+          "pad_token": "[PAD]",
+          "sep_token": "[SEP]",
+          "unk_token": "[UNK]"
+        }
+      },
+      "files": [
+        ".gitattributes",
+        ".gitignore",
+        "README.md",
+        "config.json",
+        "optimizer.pt",
+        "pytorch_model.bin",
+        "rng_state.pth",
+        "scaler.pt",
+        "scheduler.pt",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "trainer_state.json",
+        "training_args.bin",
+        "vocab.txt"
+      ],
+      "url": "https://huggingface.co/factored/distilbert-fr-explorer-classification/tree/19a759f4dde47e1bab747df78c331462e7fe4027"
+    },
+    {
+      "id": "factored/distilbert-fr-explorer-mlm",
+      "revision": "4f0e07e20f14ff38feffcb7227a26fb2dd4ee2f3",
+      "pipeline_tag": "fill-mask",
+      "card": {
+        "license": "apache-2.0",
+        "tags": [
+          "generated_from_trainer"
+        ],
+        "model-index": [
+          {
+            "name": "distilbert-fr-explorer-mlm",
+            "results": []
+          }
+        ]
+      },
+      "config": {
+        "architectures": [
+          "DistilBertForMaskedLM"
+        ],
+        "model_type": "distilbert",
+        "tokenizer_config": {
+          "cls_token": "[CLS]",
+          "mask_token": "[MASK]",
+          "pad_token": "[PAD]",
+          "sep_token": "[SEP]",
+          "unk_token": "[UNK]"
+        }
+      },
+      "files": [
+        ".gitattributes",
+        ".gitignore",
+        "README.md",
+        "config.json",
+        "optimizer.pt",
+        "pytorch_model.bin",
+        "rng_state.pth",
+        "scaler.pt",
+        "scheduler.pt",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "trainer_state.json",
+        "training_args.bin",
+        "vocab.txt"
+      ],
+      "url": "https://huggingface.co/factored/distilbert-fr-explorer-mlm/tree/4f0e07e20f14ff38feffcb7227a26fb2dd4ee2f3"
+    },
+    {
+      "id": "factored/fr-explorer-trials",
+      "revision": "0a27a0d8227ef77d2144ee93cb2e63d704dc1c72",
+      "pipeline_tag": null,
+      "card": null,
+      "config": {},
+      "files": [
+        ".gitattributes"
+      ],
+      "url": "https://huggingface.co/factored/fr-explorer-trials/tree/0a27a0d8227ef77d2144ee93cb2e63d704dc1c72"
+    },
+    {
+      "id": "factored/roberta-fr-explorer-mlm",
+      "revision": "8ffa32ce989906979d9a65c193c85f075e73251c",
+      "pipeline_tag": "fill-mask",
+      "card": null,
+      "config": {
+        "architectures": [
+          "RobertaForMaskedLM"
+        ],
+        "model_type": "roberta",
+        "tokenizer_config": {
+          "bos_token": "<s>",
+          "cls_token": "<s>",
+          "eos_token": "</s>",
+          "mask_token": "<mask>",
+          "pad_token": "<pad>",
+          "sep_token": "</s>",
+          "unk_token": "<unk>"
+        }
+      },
+      "files": [
+        ".gitattributes",
+        "config.json",
+        "merges.txt",
+        "optimizer.pt",
+        "pytorch_model.bin",
+        "rng_state.pth",
+        "scaler.pt",
+        "scheduler.pt",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "trainer_state.json",
+        "training_args.bin",
+        "vocab.json"
+      ],
+      "url": "https://huggingface.co/factored/roberta-fr-explorer-mlm/tree/8ffa32ce989906979d9a65c193c85f075e73251c"
+    },
+    {
+      "id": "factored/electra-fr-explorer-mlm",
+      "revision": "c048cb0efbb0050da685170beb1e130ad24a9f64",
+      "pipeline_tag": "fill-mask",
+      "card": null,
+      "config": {
+        "architectures": [
+          "ElectraForMaskedLM"
+        ],
+        "model_type": "electra",
+        "tokenizer_config": {
+          "cls_token": "[CLS]",
+          "mask_token": "[MASK]",
+          "pad_token": "[PAD]",
+          "sep_token": "[SEP]",
+          "unk_token": "[UNK]"
+        }
+      },
+      "files": [
+        ".gitattributes",
+        "config.json",
+        "optimizer.pt",
+        "pytorch_model.bin",
+        "rng_state.pth",
+        "scaler.pt",
+        "scheduler.pt",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "trainer_state.json",
+        "training_args.bin",
+        "vocab.txt"
+      ],
+      "url": "https://huggingface.co/factored/electra-fr-explorer-mlm/tree/c048cb0efbb0050da685170beb1e130ad24a9f64"
+    },
+    {
+      "id": "factored/electra-fr-explorer-classification",
+      "revision": "ac247dfe50b8215f310bc5703be4ffeb3322abf4",
+      "pipeline_tag": null,
+      "card": null,
+      "config": {},
+      "files": [
+        ".gitattributes"
+      ],
+      "url": "https://huggingface.co/factored/electra-fr-explorer-classification/tree/ac247dfe50b8215f310bc5703be4ffeb3322abf4"
+    },
+    {
+      "id": "factored/saleswiz_custom_distilbert_is_relevant",
+      "revision": "a74bd25601c2132e6f301f593b307a2638550929",
+      "pipeline_tag": null,
+      "card": null,
+      "config": {
+        "architectures": [
+          "CustomDistilBERTHead"
+        ],
+        "model_type": "CustomDistilBERTHead"
+      },
+      "files": [
+        ".gitattributes",
+        "config.json",
+        "pytorch_model.bin"
+      ],
+      "url": "https://huggingface.co/factored/saleswiz_custom_distilbert_is_relevant/tree/a74bd25601c2132e6f301f593b307a2638550929"
+    },
+    {
+      "id": "factored/saleswiz_custom_distilbert_is_positive",
+      "revision": "4024483aa06ba50bc667495f23cf00ea842be6e8",
+      "pipeline_tag": null,
+      "card": null,
+      "config": {
+        "architectures": [
+          "CustomDistilBERTHead"
+        ],
+        "model_type": "CustomDistilBERTHead"
+      },
+      "files": [
+        ".gitattributes",
+        "config.json",
+        "pytorch_model.bin"
+      ],
+      "url": "https://huggingface.co/factored/saleswiz_custom_distilbert_is_positive/tree/4024483aa06ba50bc667495f23cf00ea842be6e8"
+    },
+    {
+      "id": "factored/saleswiz_custom_distilbert_is_about_company",
+      "revision": "f4dad61f43abc9b7b59d7af39132b7bbd7ac22df",
+      "pipeline_tag": null,
+      "card": null,
+      "config": {
+        "architectures": [
+          "CustomDistilBERTHead"
+        ],
+        "model_type": "CustomDistilBERTHead"
+      },
+      "files": [
+        ".gitattributes",
+        "config.json",
+        "pytorch_model.bin"
+      ],
+      "url": "https://huggingface.co/factored/saleswiz_custom_distilbert_is_about_company/tree/f4dad61f43abc9b7b59d7af39132b7bbd7ac22df"
+    }
+  ]
+}

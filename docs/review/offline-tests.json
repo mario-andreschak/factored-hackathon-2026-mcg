@@ -1,0 +1,344 @@
+{
+  "exit_code": 0,
+  "command": "python -m pytest -q tests/test_pipeline.py tests/test_agent_analytics.py tests/test_router.py --deselect tests/test_router.py::test_train_and_evaluate_writes_reports",
+  "deselection_reason": "use the fixed published diagnostic procedure instead of invoking model-selection entry point",
+  "total": 67,
+  "passed": 67,
+  "cases": [
+    {
+      "name": "test_every_raw_row_is_accounted_for",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_quarantine_dedup_and_orphans",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_rerun_is_idempotent",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_late_batch_upserts_and_is_flagged",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_silver_and_gold_rerun_without_source",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_default_source_derived_stages_need_no_s3_credentials[stages0]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_default_source_derived_stages_need_no_s3_credentials[stages1]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_lookup_enforces_ownership_and_isolation",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_classifier_split_has_no_customer_or_future_leakage",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_demo_candidates_cover_each_scenario",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_cross_customer_references_and_spelling_drift",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_failure_exits_non_zero",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_bucket_hash_matches_between_python_and_sql",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_reports_contain_no_bucket_or_secrets",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_schema_evolution_and_quoted_text",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_source_objects_are_versioned",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_published_manifest_inventories_every_gold_file",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_source_change_during_headers_fails_before_publication",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_source_added_during_ingestion_fails_before_publication",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_gold_only_uses_published_lineage_not_latest_bronze_report",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_gold_only_migrates_legacy_inventory_without_claiming_read_validation",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_invalid_stage_or_table_selection_never_mutates_landing_or_current[selection0-require the silver stage]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_invalid_stage_or_table_selection_never_mutates_landing_or_current[selection1-publishing gold requires]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_invalid_stage_or_table_selection_never_mutates_landing_or_current[selection2-unknown tables]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_invalid_stage_or_table_selection_never_mutates_landing_or_current[selection3-select each table only once]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_invalid_stage_or_table_selection_never_mutates_landing_or_current[selection4-omit parent dependencies]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_gold_only_honors_selected_tables_and_pins_matching_quality_manifest",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_subset_bronze_inventory_cannot_label_stale_unselected_tables",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_silver_uses_landing_statistics_even_when_mutable_report_is_unrelated",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_existing_validated_bronze_without_local_statistics_is_recounted",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_quality_and_lineage_are_pinned_before_publication",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_missing_banking_output_is_never_published",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_same_root_writer_is_rejected_before_mutation_and_other_roots_work",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_failed_writer_releases_its_lock",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_stale_writer_lock_is_never_automatically_removed",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_writer_lock_is_held_until_final_report_finishes",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_publications_never_delete_a_pinned_reader_snapshot",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_stages_and_benchmarks_close_owned_connections",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_failed_stage_closes_owned_connection",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_s3_helpers_close_clients_and_bodies_on_failure[listing]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_s3_helpers_close_clients_and_bodies_on_failure[headers]",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_concurrent_bench_reports_every_level",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_verify_against_source",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_review_p1_shared_connection_never_leaks_results",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_review_p1_failed_build_keeps_last_good_snapshot",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_review_p1_reads_during_rebuild_see_a_complete_snapshot",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_review_p1_free_text_never_reaches_reports",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_review_p2_orphan_customer_is_never_served",
+      "class": "tests.test_pipeline",
+      "status": "passed"
+    },
+    {
+      "name": "test_discovers_sources_and_projects_each_turn",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_discovers_and_reads_legacy_workflow_store",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_current_turn_table_takes_precedence_over_legacy",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_trace_is_attributed_only_to_its_own_turn",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_conversation_outcomes",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_output_contains_no_content_or_raw_identity",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_sources_are_unchanged_and_output_must_be_separate",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_rebuild_is_idempotent_and_keeps_feedback",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_report_indicators",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_cli_build_report_and_feedback",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_outcome_of_last_turn[last0-awaiting_confirmation]",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_outcome_of_last_turn[last1-abandoned_pending]",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_outcome_of_last_turn[last2-tool_error]",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_outcome_of_last_turn[last3-out_of_scope]",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_outcome_of_last_turn[last4-abandoned_clarify]",
+      "class": "tests.test_agent_analytics",
+      "status": "passed"
+    },
+    {
+      "name": "test_datasets_are_clean_and_disjoint",
+      "class": "tests.test_router",
+      "status": "passed"
+    },
+    {
+      "name": "test_normalize_handles_whatsapp_spelling",
+      "class": "tests.test_router",
+      "status": "passed"
+    },
+    {
+      "name": "test_baseline_checks_security_before_disputes",
+      "class": "tests.test_router",
+      "status": "passed"
+    },
+    {
+      "name": "test_low_confidence_routes_to_human",
+      "class": "tests.test_router",
+      "status": "passed"
+    }
+  ]
+}

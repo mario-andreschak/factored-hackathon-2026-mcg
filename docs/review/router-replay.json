@@ -1,0 +1,1027 @@
+{
+  "scope": "offline intent component; not banking resolution, customer isolation or live provider capacity",
+  "label_quality": "independently AI-authored; human adjudication pending",
+  "workload": "balanced diagnostic 120 cases; 60 es/60 pt; 15 per label per language",
+  "holdout_sha256": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+  "train_sha256": "23f1022bbbbe51582cd50a88464cd85f885465729dfd7494e90a9be680190509",
+  "train_n": 307,
+  "test_n": 120,
+  "model": "TF-IDF char/word + logistic regression",
+  "scikit_learn_version": "1.9.1",
+  "numpy_version": "2.5.3",
+  "fixed_C": 8,
+  "fixed_tau": 0.65,
+  "seed": 7,
+  "parameter_source": "committed provisional report: training-only cross-validation, before this holdout",
+  "normalized_exact_overlap": 0,
+  "near_duplicate_overlap_above_0_8": 0,
+  "systems": {
+    "keyword_baseline": {
+      "n": 120,
+      "accuracy": 0.583,
+      "accuracy_ci95": [
+        0.492,
+        0.675
+      ],
+      "macro_f1": 0.569,
+      "per_class": {
+        "inquiry": {
+          "precision": 0.5,
+          "recall": 0.567,
+          "f1": 0.531,
+          "support": 30
+        },
+        "dispute": {
+          "precision": 1.0,
+          "recall": 0.3,
+          "f1": 0.462,
+          "support": 30
+        },
+        "human": {
+          "precision": 0.739,
+          "recall": 0.567,
+          "f1": 0.642,
+          "support": 30
+        },
+        "other": {
+          "precision": 0.5,
+          "recall": 0.9,
+          "f1": 0.643,
+          "support": 30
+        }
+      },
+      "confusion": {
+        "labels": [
+          "inquiry",
+          "dispute",
+          "human",
+          "other"
+        ],
+        "matrix": [
+          [
+            17,
+            0,
+            3,
+            10
+          ],
+          [
+            11,
+            9,
+            2,
+            8
+          ],
+          [
+            4,
+            0,
+            17,
+            9
+          ],
+          [
+            2,
+            0,
+            1,
+            27
+          ]
+        ]
+      },
+      "by_lang": {
+        "es": {
+          "n": 60,
+          "accuracy": 0.583
+        },
+        "pt": {
+          "n": 60,
+          "accuracy": 0.583
+        }
+      },
+      "human_missed": 13,
+      "human_total": 30,
+      "unnecessary_handoffs": 6,
+      "automated_share": 0.808,
+      "precision_on_nonhuman_routes": 0.546,
+      "human_misroute_rate_ci95_wilson": [
+        0.273775,
+        0.608027
+      ],
+      "human_misroute_denominator": "30 AI-labelled human-required diagnostic utterances"
+    },
+    "tfidf_logistic": {
+      "n": 120,
+      "accuracy": 0.783,
+      "accuracy_ci95": [
+        0.708,
+        0.85
+      ],
+      "macro_f1": 0.782,
+      "per_class": {
+        "inquiry": {
+          "precision": 0.778,
+          "recall": 0.7,
+          "f1": 0.737,
+          "support": 30
+        },
+        "dispute": {
+          "precision": 0.821,
+          "recall": 0.767,
+          "f1": 0.793,
+          "support": 30
+        },
+        "human": {
+          "precision": 0.75,
+          "recall": 0.9,
+          "f1": 0.818,
+          "support": 30
+        },
+        "other": {
+          "precision": 0.793,
+          "recall": 0.767,
+          "f1": 0.78,
+          "support": 30
+        }
+      },
+      "confusion": {
+        "labels": [
+          "inquiry",
+          "dispute",
+          "human",
+          "other"
+        ],
+        "matrix": [
+          [
+            21,
+            3,
+            2,
+            4
+          ],
+          [
+            3,
+            23,
+            2,
+            2
+          ],
+          [
+            1,
+            2,
+            27,
+            0
+          ],
+          [
+            2,
+            0,
+            5,
+            23
+          ]
+        ]
+      },
+      "by_lang": {
+        "es": {
+          "n": 60,
+          "accuracy": 0.817
+        },
+        "pt": {
+          "n": 60,
+          "accuracy": 0.75
+        }
+      },
+      "human_missed": 3,
+      "human_total": 30,
+      "unnecessary_handoffs": 9,
+      "automated_share": 0.7,
+      "precision_on_nonhuman_routes": 0.798,
+      "human_misroute_rate_ci95_wilson": [
+        0.0346,
+        0.256211
+      ],
+      "human_misroute_denominator": "30 AI-labelled human-required diagnostic utterances"
+    },
+    "tfidf_logistic_abstention": {
+      "n": 120,
+      "accuracy": 0.542,
+      "accuracy_ci95": [
+        0.45,
+        0.633
+      ],
+      "macro_f1": 0.548,
+      "per_class": {
+        "inquiry": {
+          "precision": 0.875,
+          "recall": 0.467,
+          "f1": 0.609,
+          "support": 30
+        },
+        "dispute": {
+          "precision": 0.917,
+          "recall": 0.367,
+          "f1": 0.524,
+          "support": 30
+        },
+        "human": {
+          "precision": 0.358,
+          "recall": 0.967,
+          "f1": 0.523,
+          "support": 30
+        },
+        "other": {
+          "precision": 1.0,
+          "recall": 0.367,
+          "f1": 0.537,
+          "support": 30
+        }
+      },
+      "confusion": {
+        "labels": [
+          "inquiry",
+          "dispute",
+          "human",
+          "other"
+        ],
+        "matrix": [
+          [
+            14,
+            0,
+            16,
+            0
+          ],
+          [
+            1,
+            11,
+            18,
+            0
+          ],
+          [
+            0,
+            1,
+            29,
+            0
+          ],
+          [
+            1,
+            0,
+            18,
+            11
+          ]
+        ]
+      },
+      "by_lang": {
+        "es": {
+          "n": 60,
+          "accuracy": 0.583
+        },
+        "pt": {
+          "n": 60,
+          "accuracy": 0.5
+        }
+      },
+      "human_missed": 1,
+      "human_total": 30,
+      "unnecessary_handoffs": 52,
+      "automated_share": 0.325,
+      "precision_on_nonhuman_routes": 0.923,
+      "human_misroute_rate_ci95_wilson": [
+        0.005909,
+        0.166704
+      ],
+      "human_misroute_denominator": "30 AI-labelled human-required diagnostic utterances"
+    }
+  },
+  "errors": [
+    {
+      "case": 4,
+      "text": "Parce, ¿en qué estado va la consignación que hice ayer?",
+      "lang": "es",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "inquiry",
+      "with_abstention": "inquiry"
+    },
+    {
+      "case": 5,
+      "text": "¿Cuándo cierra mi tarjeta este mes?",
+      "lang": "es",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "inquiry",
+      "with_abstention": "inquiry"
+    },
+    {
+      "case": 7,
+      "text": "¿Cuál es el límite que tengo para sacar plata del cajero?",
+      "lang": "es",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 8,
+      "text": "Oigan, ¿de dónde viene este cargo? Solo quiero ubicar el negocio.",
+      "lang": "es",
+      "expected": "inquiry",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 11,
+      "text": "Che, mandé plata hace un rato. ¿Podés decirme si sigue en proceso?",
+      "lang": "es",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 12,
+      "text": "¿Qué comisión me aplicaron en el último retiro? No estoy reclamando, quiero entender el detalle.",
+      "lang": "es",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 13,
+      "text": "¿Mi cuenta de nómina está activa todavía?",
+      "lang": "es",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 15,
+      "text": "¿A qué hora se registró mi compra de ayer?",
+      "lang": "es",
+      "expected": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 17,
+      "text": "Hola, ese consumo del restaurante no lo reconozco en mi resumen.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 18,
+      "text": "Me descontaron la plata de la transferencia, pero a quien se la mandé no le llegó.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "dispute"
+    },
+    {
+      "case": 19,
+      "text": "El cajero no me dio el efectivo y sí bajó mi saldo.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 21,
+      "text": "En el extracto sale una cuota más alta que la que acordé para mi crédito.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 22,
+      "text": "che esta compra esta repetida, yo pagué una sola vez",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 23,
+      "text": "Me cobraron una comisión que mi cuenta no debería tener.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "other",
+      "model": "dispute",
+      "with_abstention": "dispute"
+    },
+    {
+      "case": 24,
+      "text": "Buenas tardes. Cancelé el servicio, pero me volvieron a descontar la mensualidad este mes.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "other",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 25,
+      "text": "La compra era por menos; en mi tarjeta cargaron un importe equivocado.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "dispute"
+    },
+    {
+      "case": 26,
+      "text": "¿Me ayudan con un pago que sale doble en mi app aunque el comercio recibió uno solo?",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "dispute",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 27,
+      "text": "La devolución figura como hecha en el comercio, pero sigo sin tener esa plata en la cuenta.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 28,
+      "text": "No solicité hablar con nadie; mi reclamo es que descontaron un pago que ya había cancelado.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 29,
+      "text": "No me suena este cobro del estacionamiento y yo no estuve allí.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "dispute"
+    },
+    {
+      "case": 30,
+      "text": "Hice una consignación y el recibo marca una cantidad mayor que la abonada; falta parte de mi plata.",
+      "lang": "es",
+      "expected": "dispute",
+      "baseline": "other",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 35,
+      "text": "Hay alguien haciendo transferencias desde mi cuenta ahora mismo y no soy yo.",
+      "lang": "es",
+      "expected": "human",
+      "baseline": "inquiry",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 38,
+      "text": "No puedo entrar y me avisaron que cambiaron mi correo sin mi permiso.",
+      "lang": "es",
+      "expected": "human",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 40,
+      "text": "Si no atienden este cobro duplicado, voy a iniciar una demanda contra el banco.",
+      "lang": "es",
+      "expected": "human",
+      "baseline": "human",
+      "model": "dispute",
+      "with_abstention": "dispute"
+    },
+    {
+      "case": 41,
+      "text": "Mi pareja me está obligando a darle acceso a la cuenta y tengo miedo de que saque mi dinero.",
+      "lang": "es",
+      "expected": "human",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 43,
+      "text": "Oiga, están intentando usar mi tarjeta mientras la tengo conmigo. Me están llegando avisos de compras.",
+      "lang": "es",
+      "expected": "human",
+      "baseline": "inquiry",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 44,
+      "text": "El cajero no entregó la plata; mejor comunícame con un agente para levantar el reclamo.",
+      "lang": "es",
+      "expected": "human",
+      "baseline": "other",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 45,
+      "text": "Me acaban de quitar el celular con la aplicación bancaria abierta.",
+      "lang": "es",
+      "expected": "human",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 49,
+      "text": "Che, ¿qué significa inflación?",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 50,
+      "text": "Recomiéndame una película para esta noche.",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 51,
+      "text": "¿Dónde queda el cajero más cercano?",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 52,
+      "text": "Buenas, quiero información general sobre sus créditos de vivienda, todavía no tengo uno.",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 54,
+      "text": "¿Me puedes explicar qué es una transferencia internacional?",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "inquiry",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 56,
+      "text": "Quiero saber si tienen vacantes de trabajo en el banco.",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 57,
+      "text": "¿Hay estacionamiento en su sucursal del centro?",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 58,
+      "text": "Estoy comparando bancos, ¿cuáles son las ventajas de su cuenta para negocios?",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 59,
+      "text": "¿Aceptan mascotas dentro de la sucursal?",
+      "lang": "es",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 62,
+      "text": "Esse lançamento no meu extrato corresponde a qual loja?",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 63,
+      "text": "Meu Pix de hoje já foi concluído ou ainda está em processamento?",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 65,
+      "text": "Quanto tenho de limite livre no cartão agora?",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 66,
+      "text": "Não perdi meu cartão; só quero saber se ele continua ativo.",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "human",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 67,
+      "text": "Não houve fraude nem compra estranha. Preciso consultar os gastos que fiz no fim de semana.",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "human",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 68,
+      "text": "qual o valor da proxima parcela do meu emprestimo",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 70,
+      "text": "Minha fatura já consta como paga? Acabei de pagar pelo aplicativo.",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 72,
+      "text": "Boa tarde! Estou conferindo meu extrato e queria entender a descrição de uma tarifa que aparece nele.",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 73,
+      "text": "Qual foi o horário do meu último saque?",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 75,
+      "text": "Não quero falar com atendente, só consultar a data de fechamento do meu cartão.",
+      "lang": "pt",
+      "expected": "inquiry",
+      "baseline": "human",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 78,
+      "text": "Fiz um Pix, o saldo diminuiu e a pessoa não recebeu o dinheiro.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 79,
+      "text": "O caixa eletrônico debitou o saque, mas não soltou nenhuma nota.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "other",
+      "model": "dispute",
+      "with_abstention": "dispute"
+    },
+    {
+      "case": 80,
+      "text": "A loja confirmou o estorno e até agora ele não entrou no cartão.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "dispute",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 81,
+      "text": "A tarifa da minha conta veio errada, cobrou mais do que estava combinado.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 82,
+      "text": "minha compra ta duplicada na fatura",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "dispute",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 83,
+      "text": "Não acho que seja fraude: o mercado passou a mesma compra duas vezes e preciso corrigir a cobrança.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "human",
+      "model": "dispute",
+      "with_abstention": "dispute"
+    },
+    {
+      "case": 84,
+      "text": "Não preciso de atendente por enquanto. Quero contestar um débito que veio mesmo depois do cancelamento.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "human",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 85,
+      "text": "Boa noite, paguei a parcela inteira, mas estão cobrando de novo uma parte que já quitei.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "other",
+      "model": "dispute",
+      "with_abstention": "dispute"
+    },
+    {
+      "case": 86,
+      "text": "O valor lançado no cartão é maior que o valor do recibo da compra.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 87,
+      "text": "Meu reembolso está atrasado; disseram que já devolveram e o saldo continua igual.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "dispute",
+      "model": "inquiry",
+      "with_abstention": "inquiry"
+    },
+    {
+      "case": 88,
+      "text": "Cobraram anuidade neste mês, embora meu cartão tenha isenção.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 89,
+      "text": "Esse pagamento de estacionamento não é meu, eu nem fui lá.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "inquiry",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 90,
+      "text": "A transferência saiu da conta ontem e o destinatário confirmou que ainda não chegou nada.",
+      "lang": "pt",
+      "expected": "dispute",
+      "baseline": "dispute",
+      "model": "dispute",
+      "with_abstention": "human"
+    },
+    {
+      "case": 91,
+      "text": "Preciso que uma pessoa do banco me acompanhe na conferência das parcelas de uma compra que aparecem na minha fatura.",
+      "lang": "pt",
+      "expected": "human",
+      "baseline": "inquiry",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 92,
+      "text": "Oi, me passa para uma pessoa para consultar meu limite?",
+      "lang": "pt",
+      "expected": "human",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 95,
+      "text": "Tem alguém mexendo na minha conta e enviando Pix sem minha autorização neste momento.",
+      "lang": "pt",
+      "expected": "human",
+      "baseline": "inquiry",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 98,
+      "text": "Mudaram meu telefone cadastrado sem eu pedir e agora não consigo acessar o aplicativo.",
+      "lang": "pt",
+      "expected": "human",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 101,
+      "text": "Meu cuidador está me pressionando a entregar o controle da conta e tenho medo de ficar sem meu dinheiro.",
+      "lang": "pt",
+      "expected": "human",
+      "baseline": "other",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 104,
+      "text": "Boa tarde, o saque falhou e preciso que um agente acompanhe meu caso.",
+      "lang": "pt",
+      "expected": "human",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 105,
+      "text": "Levaram meu celular desbloqueado com o app do banco aberto, preciso proteger a conta já.",
+      "lang": "pt",
+      "expected": "human",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 108,
+      "text": "Vocês têm cartão sem anuidade para quem está na faculdade?",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 109,
+      "text": "Como funciona o Pix em geral? Nunca usei.",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "inquiry",
+      "model": "other",
+      "with_abstention": "other"
+    },
+    {
+      "case": 110,
+      "text": "Me indica uma receita fácil pro almoço.",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 111,
+      "text": "Onde fica um caixa eletrônico perto do centro?",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 112,
+      "text": "Boa tarde, estou pesquisando financiamento de imóvel e queria conhecer as opções de vocês.",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 114,
+      "text": "Qual é a diferença entre cartão de crédito e de débito?",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "inquiry",
+      "with_abstention": "inquiry"
+    },
+    {
+      "case": 115,
+      "text": "E aí, tudo bem por aí?",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "inquiry",
+      "with_abstention": "human"
+    },
+    {
+      "case": 116,
+      "text": "Como faço para me candidatar a uma vaga no banco?",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 118,
+      "text": "Estou pensando em abrir uma conta para minha empresa. Quais serviços vêm no pacote?",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "other",
+      "with_abstention": "human"
+    },
+    {
+      "case": 119,
+      "text": "Não fui vítima de golpe; estou preparando um trabalho escolar sobre o que é phishing.",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "human",
+      "model": "human",
+      "with_abstention": "human"
+    },
+    {
+      "case": 120,
+      "text": "Valeu pela ajuda, tenha um bom dia!",
+      "lang": "pt",
+      "expected": "other",
+      "baseline": "other",
+      "model": "human",
+      "with_abstention": "human"
+    }
+  ],
+  "paired_comparisons": {
+    "keyword_baseline": {
+      "accuracy_difference_vs_keywords": 0.0,
+      "paired_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "paired_gain_cases": 0,
+      "paired_loss_cases": 0,
+      "exact_mcnemar_p_two_sided": 1.0
+    },
+    "tfidf_logistic": {
+      "accuracy_difference_vs_keywords": 0.2,
+      "paired_bootstrap_ci95": [
+        0.1,
+        0.3
+      ],
+      "paired_gain_cases": 33,
+      "paired_loss_cases": 9,
+      "exact_mcnemar_p_two_sided": 0.000271539
+    },
+    "tfidf_logistic_abstention": {
+      "accuracy_difference_vs_keywords": -0.041667,
+      "paired_bootstrap_ci95": [
+        -0.158333,
+        0.075
+      ],
+      "paired_gain_cases": 23,
+      "paired_loss_cases": 28,
+      "exact_mcnemar_p_two_sided": 0.575849348
+    }
+  },
+  "uncertainty_method": "10,000 paired bootstrap row resamples, seed 7; Wilson score intervals for human misroutes",
+  "replay_disclosure": "Previously published diagnostic outcomes were already inspected. This is an unchanged-procedure reproduction and uncertainty analysis, not a new blind test. No training/labels/features/thresholds were changed. Intervals condition on these authored cases and proposed AI labels, not customer prevalence.",
+  "provider_requests": 0,
+  "runtime_integration": "offline intent component only; not a newly accepted deployed assistant"
+}

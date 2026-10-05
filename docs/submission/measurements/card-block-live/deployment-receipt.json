@@ -1,0 +1,95 @@
+{
+  "schema": "savia-successor-deployment/v1",
+  "observed_utc": "2026-10-05T22:01:18.207365+00:00",
+  "application_source": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+  "app": "savia-rc-2026",
+  "machine": "851d7dc4460048",
+  "image": "registry.fly.io/savia-rc-2026@sha256:c38f3af736defdf55c7de47b0e1597ad361b3f748c845176b920377fd12b307f",
+  "retained_base_image": "registry.fly.io/savia-rc-2026@sha256:35903f9a1ea70f8b3c589d5680ed50307efd34870ce004bdd1833b9029b6dc93",
+  "state": "started",
+  "preserved_config_fields": {
+    "guest": true,
+    "mounts": true,
+    "services": true,
+    "init": true,
+    "env": true,
+    "restart": true
+  },
+  "guest": {
+    "cpu_kind": "shared",
+    "cpus": 2,
+    "memory_mb": 4096
+  },
+  "mounts": [
+    {
+      "encrypted": true,
+      "path": "/data",
+      "size_gb": 1,
+      "volume": "vol_4qlemp91ly8qn98r",
+      "name": "rc_data"
+    }
+  ],
+  "services": [
+    {
+      "protocol": "tcp",
+      "internal_port": 8080,
+      "autostop": false,
+      "autostart": true,
+      "min_machines_running": 1,
+      "ports": [
+        {
+          "port": 80,
+          "handlers": [
+            "http"
+          ],
+          "force_https": true
+        },
+        {
+          "port": 443,
+          "handlers": [
+            "http",
+            "tls"
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "http",
+          "interval": "30s",
+          "timeout": "5s",
+          "grace_period": "45s",
+          "method": "GET",
+          "path": "/healthz"
+        }
+      ],
+      "force_instance_key": null
+    },
+    {
+      "protocol": "tcp",
+      "internal_port": 4300,
+      "ports": [
+        {
+          "port": 8443,
+          "handlers": [
+            "tls",
+            "http"
+          ]
+        }
+      ],
+      "force_instance_key": null
+    }
+  ],
+  "init": {
+    "exec": [
+      "/usr/bin/tini",
+      "--",
+      "node",
+      "/opt/runtime-ops/start.mjs"
+    ]
+  },
+  "api_acceptance": "api-receipt.json",
+  "runtime_verification": "runtime-verification.json",
+  "source_context_files": 177,
+  "fictional_simulated_only": true,
+  "frozen_releases_preserved": true
+}

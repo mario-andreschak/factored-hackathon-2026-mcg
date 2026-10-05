@@ -1,0 +1,117 @@
+{
+  "schema": "savia-independent-fresh-review/v1",
+  "reviewer": "fresh-review-5",
+  "frozen_commit": "1e0bb0924ea4d9ac21300c9e04f242d4fe475aee",
+  "scope": "README-first discovery using only this frozen repository. Offline source, tests and original public receipts. No web, other repositories, other fresh reviews or provider calls. Fictional banking allowed; source, historical runtime, current recordings, provider concurrency, infrastructure and larger extensions are separate.",
+  "savia": {
+    "total": 88,
+    "dimensions": {
+      "technical_judgment": {
+        "score": 19,
+        "maximum": 20,
+        "reason": "Complete ordered R0–R18 policy, original-turn guard precedence, owned reads, explicit host consent, exact independent receipt verification, idempotency/recovery/revocation. Current guards and action tests pass. Textual grounding remains bounded."
+      },
+      "ai_engineering": {
+        "score": 18,
+        "maximum": 20,
+        "reason": "Two actual bounded model reviewers, native speech/full-playback acknowledgments, saved context and helpful closure at explicit frozen pins establish a working integrated prototype. Larger fleet is unaccepted; structured choices do not prove deep open-ended investigation quality."
+      },
+      "data_engineering": {
+        "score": 19,
+        "maximum": 20,
+        "reason": "Six-table accounting, quarantine/lineage, customer sharding, owned serving, writer exclusion and atomic immutable snapshot publication. Ownership/transcript defects changed product design. Public fixture mechanism is reproducible; private-corpus counts remain published receipts."
+      },
+      "ml_evaluation": {
+        "score": 14,
+        "maximum": 20,
+        "reason": "Fixed bilingual 120-case diagnostic with independent AI authorship, leakage checks, keyword/TF-IDF/abstention comparison and paired uncertainty. Human adjudication remains pending. Luna has 100 real correct bounded outputs but ten utterance forms and ties its deterministic baseline; original usefulness sample is n=3."
+      },
+      "data_analytics": {
+        "score": 18,
+        "maximum": 20,
+        "reason": "Executable operating analysis separates denominators and derives decisions from latency/tokens, ownership defects, routing misses and handoff burden. Privacy-aware extraction distinguishes outcomes. Dollar cost, real customer impact and human-reviewed usefulness remain absent."
+      }
+    }
+  },
+  "flujo": {
+    "total": 88,
+    "dimensions": {
+      "architecture_extensibility": {
+        "score": 23,
+        "maximum": 25,
+        "reason": "Generic chat/flow/tool/MCP/execution and recovered templates remain separate from bank authority. Fleet consumer observes original identities rather than creating a second scheduler. This evaluates evidence here, not unseen FLUJO main source."
+      },
+      "execution_integration": {
+        "score": 21,
+        "maximum": 25,
+        "reason": "Historical 300/300 correct flow requests, actual tools and 18 simultaneous Fly sandboxes support working capacity. Queue-inclusive p95 441.60s, six failed provisioning slots and disabled-provider customer root constrain integrated reliability."
+      },
+      "safety_recovery": {
+        "score": 18,
+        "maximum": 20,
+        "reason": "Pinned snapshots, original native-run identity, independent result acceptance and durable mappings preserve recovery/uncertainty. Findings remain separate from bank action authority. Broad upstream sandbox security and larger-fleet recovery are not independently established here."
+      },
+      "reproducible_engineering": {
+        "score": 18,
+        "maximum": 20,
+        "reason": "Source/image/compiler hashes, immutable qualification receipts, frozen workloads, replay scripts and preserved failures are strong. Public source pins match current bytes. Some foundational raw histories are private; historical qualification does not attest this whole release."
+      },
+      "developer_usability": {
+        "score": 8,
+        "maximum": 10,
+        "reason": "README route, source map, reproduction matrix and contracts are useful. Many archival pins and setup paths add review burden; a complete current generic-foundation reproduction is outside this repository."
+      }
+    }
+  },
+  "first_five_findings_in_discovery_order": [
+    "README makes the persistent inquiry product and complete deterministic R0–R18 core discoverable, with clear fictional/demo scope.",
+    "README separates historical source qualification, frozen customer success, provider concurrency, infrastructure capacity and unaccepted larger fleet extension, materially improving credibility.",
+    "START_HERE provides all four submission destinations. Final-video slot is explicitly a placeholder, while the existing 140.611-second customer film is supplied.",
+    "Core guide and actual policy/action source show deterministic bank authority, owned evidence, explicit portal controls, independent receipt verification and recovery.",
+    "OPERATING_DECISIONS converts denominated evidence into decisions: deterministic baseline ties Luna, latency suggests background progress, and safer abstention adds 43 unnecessary handoffs."
+  ],
+  "verification": {
+    "focused_pytest": "658 passed in 85.37 seconds: response, policy, action host and pipeline test files.",
+    "portal_gateway": "1 Node test passed: unauthenticated manifest-only serving, host/method/path checks, API authentication and changed-byte rejection.",
+    "portal_manifest": "27 files, all present and SHA-256 matching.",
+    "local_links": "No missing local targets in README, START_HERE, EVIDENCE_MAP or OPERATING_DECISIONS.",
+    "public_replay_source_pins": "All source_sha256 entries match current bytes.",
+    "luna_raw_records": "Offline check of 100 rows: 100 completed/correct/safe and zero tool attempts; representative actual parsed output inspected.",
+    "external_access": "Not checked under offline-only restriction."
+  },
+  "successful_evidence": [
+    "Read representative policy, response, action host, pipeline writer/publication, fleet consumer and operating-analytics implementations plus regressions and original public receipts.",
+    "Current response fixes protect whole trusted merchants, reject appended inventions/status suffixes, keep hypothetical/report exceptions local to clauses, preserve decimal/sentence boundaries and prevent unrelated receipt IDs authorizing success; regressions pass.",
+    "Frozen team receipt records two completed actual model workers, explicitly bounded structured choices plus trusted facts/copy, with saved suggestions and useful closure.",
+    "Historical 300/300 flow reference results and real sandbox collaboration retain initial failures, queue latency and provisioning limits.",
+    "Atomic CURRENT publication and writer exclusion preserve last good immutable snapshots and old readers; analytics distinguishes transport, informational closure, intake and handoff."
+  ],
+  "material_defects_or_missing_links": [
+    "Independent human adjudication of AI-authored router labels remains pending; provenance requires it before final submission. Diagnostic quality is provisional.",
+    "Final-video slot remains marked placeholder, although an existing frozen film demonstrates a working prototype.",
+    "Live portal/media delivery and human keyboard/screen-reader behavior were not checked. Source has skip navigation, landmarks, captions, focus, responsive and reduced-motion handling; this is not a human accessibility audit.",
+    "Latest ten-Machine/100-conversation customer attempt failed at root inference due to disabled provider workspace; no accepted fleet result.",
+    "Real bank outcomes, live human pickup, push/email, dollar cost, repeat-contact reduction and multi-day reliability remain pilot work, not prerequisites for crediting the fictional core."
+  ],
+  "exact_blockers": {
+    "core_workflow": [],
+    "final_submission_quality": [
+      "Independent human adjudication required by holdout provenance remains unfinished.",
+      "Final-video slot remains a placeholder if a distinct final film is expected."
+    ],
+    "larger_fleet_acceptance": [
+      "Provider workspace disabled before root delegation; no successful integrated ten-team result."
+    ],
+    "independent_live_acceptance": [
+      "Live portal/media and assistive-technology checks were outside the allowed offline review."
+    ]
+  },
+  "comparison_quality": "ElevenLabs comparison is an appropriately dated commercial positioning reference, explicitly avoiding vendor feature-absence or quality/latency/cost/compliance superiority claims; no matched experiment exists. Luna fairly ties a predeclared deterministic oracle/baseline. Routing uses a fixed shared diagnostic and exposes label uncertainty and safety-versus-capacity tradeoffs.",
+  "useful_improvements": [
+    "Obtain and version independent bilingual human adjudication without tuning on the known diagnostic.",
+    "Resolve the final-video placeholder or designate the existing frozen film as the final artifact.",
+    "Add one concise current-release acceptance map and focused offline command to reduce archival review burden.",
+    "Measure independently reviewed helpfulness/handoff quality, full latency and monetary cost in a bounded pilot.",
+    "Qualify the larger fleet separately after provider restoration, recording original identities, actual completion counts, failure/recovery and resource budget."
+  ]
+}

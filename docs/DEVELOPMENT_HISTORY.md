@@ -1,4 +1,16 @@
-# Playable development history
+# Savia development history
+
+Start with the refreshed **[public development process](submission/DEVELOPMENT_PROCESS.md)**
+for the submission: contributor credit, dated milestones, working product evidence,
+tested platform capacity and the architecture decisions that make Savia extensible.
+The matching **[machine-readable evidence map](submission/development-process.json)**
+lets agents and the submission portal follow the same sources.
+
+This public story is rebuilt from repository history and sanitized aggregate
+receipts. Its measurements retain their original workloads and source revisions.
+It contains no private conversation bodies, credentials or organizer customer rows.
+
+## Local playable archive
 
 The static page in `web/dev-history/` brings together GitHub, Slack, Codex, FLUJO, project documentation and infrastructure evidence. It presents the development process as a sequential replay with a temporal system landscape, actual conversation trees, saved FLUJO execution graphs and machine inventory. Workstreams cover backend, MCP, dataset, frontend, deployment, review, steering, research and CI.
 
@@ -27,6 +39,15 @@ Each rebuild reads the current sources, merges stable event IDs, normalizes time
 The default snapshot starts on **Friday, September 25, 2026 at 00:00 Bogotá time** (`2026-09-25T05:00:00Z`). Earlier timestamped records are excluded across all sources, including offline builds and retained captures. Friday itself is included. Set `history_start` to an explicit timestamp with its UTC offset to change the start date. Session/machine creation dates can remain earlier when they explain activity inside the snapshot window; they are provenance rather than replayed earlier messages.
 
 The generated data and source caches are local artifacts, ignored by Git because they include private team conversations. The HTML, CSS, JavaScript and collectors are versionable. The preview server exposes only `web/dev-history/` on loopback.
+
+The local archive is for team use. Its contact and credential filtering does not
+make every captured conversation public. For the submission, publish the curated
+public story above. A future public static replay can reuse the viewer assets with
+an explicitly curated public payload and separate output/cache directories. The
+current collector has no public-only publication mode: `--only` reuses the other
+saved snapshots, and `--offline` retains their source bodies. Neither is a public
+export switch. Publishing the private `web/dev-history/data/` directory is outside
+this public development-history refresh.
 
 ## Source access
 

@@ -1,0 +1,579 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-05T22:10:45.212Z",
+  "finishedAt": "2026-10-05T22:10:52.995Z",
+  "durationMs": 7780,
+  "source": {
+    "repository": "https://github.com/mario-andreschak/FLUJO",
+    "commit": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+    "tree": "5d7116fad792138eb0a6e6adf5a27ff19dc1c0f0",
+    "method": "git archive of pinned objects; temporary directory; source subset hashes checked"
+  },
+  "runtime": {
+    "node": "v22.13.1",
+    "platform": "win32",
+    "architecture": "x64",
+    "dependencies": "Reused pre-existing local node_modules; no installation or lockfile recreation",
+    "installedPackages": [
+      {
+        "name": "@anthropic-ai/claude-agent-sdk",
+        "lockedVersion": "0.3.220",
+        "installedVersion": "0.3.220",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@anthropic-ai/sdk",
+        "lockedVersion": "0.115.0",
+        "installedVersion": "0.115.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@emotion/react",
+        "lockedVersion": "11.14.0",
+        "installedVersion": "11.14.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@emotion/styled",
+        "lockedVersion": "11.14.1",
+        "installedVersion": "11.14.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@eslint/eslintrc",
+        "lockedVersion": "3.3.6",
+        "installedVersion": "3.3.6",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@google/genai",
+        "lockedVersion": "2.15.0",
+        "installedVersion": "2.15.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@isomorphic-git/lightning-fs",
+        "lockedVersion": "4.7.0",
+        "installedVersion": "4.7.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@mario.andreschak/mcp-bash",
+        "lockedVersion": "3.46.2",
+        "installedVersion": "3.46.0",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "@mario.andreschak/mcp-browser",
+        "lockedVersion": "3.46.2",
+        "installedVersion": "3.46.0",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "@mario.andreschak/mcp-filesystem",
+        "lockedVersion": "3.46.2",
+        "installedVersion": "3.46.0",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "@mario.andreschak/mcp-flujo",
+        "lockedVersion": "3.46.2",
+        "installedVersion": "3.46.0",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "@modelcontextprotocol/client",
+        "lockedVersion": "2.0.0",
+        "installedVersion": "2.0.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@modelcontextprotocol/ext-apps",
+        "lockedVersion": "1.7.5",
+        "installedVersion": "1.7.5",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@modelcontextprotocol/sdk",
+        "lockedVersion": "1.30.0",
+        "installedVersion": "1.30.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@mui/icons-material",
+        "lockedVersion": "6.5.0",
+        "installedVersion": "6.5.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@mui/material",
+        "lockedVersion": "6.5.0",
+        "installedVersion": "6.5.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@openai/codex-sdk",
+        "lockedVersion": "0.153.3",
+        "installedVersion": "0.158.0",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "@playwright/test",
+        "lockedVersion": "1.63.0",
+        "installedVersion": "1.63.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@testing-library/dom",
+        "lockedVersion": "10.4.1",
+        "installedVersion": "10.4.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@testing-library/jest-dom",
+        "lockedVersion": "7.0.0",
+        "installedVersion": "7.0.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@testing-library/react",
+        "lockedVersion": "16.3.2",
+        "installedVersion": "16.3.2",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@types/crypto-js",
+        "lockedVersion": "4.2.2",
+        "installedVersion": "4.2.2",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@types/jest",
+        "lockedVersion": "30.0.0",
+        "installedVersion": "30.0.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@types/lodash",
+        "lockedVersion": "4.17.25",
+        "installedVersion": "4.17.25",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@types/node",
+        "lockedVersion": "22.20.1",
+        "installedVersion": "22.20.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@types/picomatch",
+        "lockedVersion": "4.0.3",
+        "installedVersion": null,
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "@types/react",
+        "lockedVersion": "19.2.18",
+        "installedVersion": "19.2.18",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@types/react-dom",
+        "lockedVersion": "19.2.4",
+        "installedVersion": "19.2.4",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@types/react-window",
+        "lockedVersion": "1.8.8",
+        "installedVersion": "1.8.8",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@typescript-eslint/parser",
+        "lockedVersion": "8.65.0",
+        "installedVersion": "8.65.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@uiw/react-md-editor",
+        "lockedVersion": "4.1.1",
+        "installedVersion": "4.1.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "@xyflow/react",
+        "lockedVersion": "12.11.2",
+        "installedVersion": "12.11.2",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "axios",
+        "lockedVersion": "1.20.0",
+        "installedVersion": "1.19.0",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "buffer",
+        "lockedVersion": "6.0.3",
+        "installedVersion": "6.0.3",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "chokidar",
+        "lockedVersion": "5.0.0",
+        "installedVersion": "5.0.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "croner",
+        "lockedVersion": "10.0.1",
+        "installedVersion": "10.0.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "crypto-js",
+        "lockedVersion": "4.2.0",
+        "installedVersion": "4.2.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "eslint",
+        "lockedVersion": "9.39.5",
+        "installedVersion": "9.39.5",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "eslint-config-next",
+        "lockedVersion": "16.3.8",
+        "installedVersion": "16.3.5",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "eslint-import-resolver-typescript",
+        "lockedVersion": "4.4.5",
+        "installedVersion": "4.4.5",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "eslint-plugin-import",
+        "lockedVersion": "2.32.0",
+        "installedVersion": "2.32.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "fast-glob",
+        "lockedVersion": "0.0.0-flujo.1",
+        "installedVersion": "3.3.1",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "identity-obj-proxy",
+        "lockedVersion": "3.0.0",
+        "installedVersion": "3.0.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "isomorphic-git",
+        "lockedVersion": "1.40.0",
+        "installedVersion": "1.40.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "jest",
+        "lockedVersion": "30.4.2",
+        "installedVersion": "30.4.2",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "jest-environment-jsdom",
+        "lockedVersion": "30.4.1",
+        "installedVersion": "30.4.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "jszip",
+        "lockedVersion": "3.10.1",
+        "installedVersion": "3.10.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "lodash",
+        "lockedVersion": "4.18.1",
+        "installedVersion": "4.18.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "mcp-remote",
+        "lockedVersion": "0.1.38",
+        "installedVersion": "0.1.38",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "mcp-stdio-oauth",
+        "lockedVersion": "0.1.0",
+        "installedVersion": "0.1.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "next",
+        "lockedVersion": "16.3.8",
+        "installedVersion": "16.3.5",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "node-fetch",
+        "lockedVersion": "3.3.2",
+        "installedVersion": "3.3.2",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "node-loader",
+        "lockedVersion": "2.1.0",
+        "installedVersion": "2.1.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "openai",
+        "lockedVersion": "7.3.0",
+        "installedVersion": "7.3.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "picomatch",
+        "lockedVersion": "4.0.5",
+        "installedVersion": "4.0.5",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "postcss",
+        "lockedVersion": "8.5.25",
+        "installedVersion": "8.5.25",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "postcss-flexbugs-fixes",
+        "lockedVersion": "5.0.2",
+        "installedVersion": "5.0.2",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "postcss-preset-env",
+        "lockedVersion": "11.3.2",
+        "installedVersion": "11.3.2",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "process",
+        "lockedVersion": "0.11.10",
+        "installedVersion": "0.11.10",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "react",
+        "lockedVersion": "19.2.8",
+        "installedVersion": "19.2.8",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "react-dom",
+        "lockedVersion": "19.2.8",
+        "installedVersion": "19.2.8",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "react-markdown",
+        "lockedVersion": "10.1.0",
+        "installedVersion": "10.1.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "react-window",
+        "lockedVersion": "1.8.11",
+        "installedVersion": "1.8.11",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "remark-gfm",
+        "lockedVersion": "4.0.1",
+        "installedVersion": "4.0.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "simple-git",
+        "lockedVersion": "3.36.0",
+        "installedVersion": "3.36.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "slate",
+        "lockedVersion": "0.126.0",
+        "installedVersion": "0.126.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "slate-dom",
+        "lockedVersion": "0.126.0",
+        "installedVersion": "0.126.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "slate-history",
+        "lockedVersion": "0.113.1",
+        "installedVersion": "0.113.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "slate-react",
+        "lockedVersion": "0.126.0",
+        "installedVersion": "0.126.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "smol-toml",
+        "lockedVersion": "1.8.0",
+        "installedVersion": "1.8.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "tinyglobby",
+        "lockedVersion": "0.2.17",
+        "installedVersion": "0.2.17",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "typescript",
+        "lockedVersion": "6.0.3",
+        "installedVersion": "6.0.3",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "undici",
+        "lockedVersion": "7.30.0",
+        "installedVersion": "7.29.0",
+        "matchesLockedVersion": false
+      },
+      {
+        "name": "uuid",
+        "lockedVersion": "14.0.1",
+        "installedVersion": "14.0.1",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "wait-on",
+        "lockedVersion": "9.1.0",
+        "installedVersion": "9.1.0",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "webpack",
+        "lockedVersion": "5.109.2",
+        "installedVersion": "5.109.2",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "yaml",
+        "lockedVersion": "1.10.3",
+        "installedVersion": "1.10.3",
+        "matchesLockedVersion": true
+      },
+      {
+        "name": "zod",
+        "lockedVersion": "4.4.3",
+        "installedVersion": "4.4.3",
+        "matchesLockedVersion": true
+      }
+    ],
+    "mismatchedLockedVersions": 11,
+    "lockfileSha256": "1b494d0cd3b060414a0588f805e5c1ccf35ed454e0f5b0c895ca4086e53e5eb4"
+  },
+  "command": "node --require <evidence>/offline-preload.cjs <isolated-checkout>/node_modules/jest/bin/jest.js --config <isolated-checkout>/jest.config.mjs --selectProjects node --runInBand --runTestsByPath <listed suites> --json --outputFile=<temporary-results>",
+  "suites": [
+    "__tests__/chat/directModelCompletion.test.ts",
+    "__tests__/engine/quickChatSnapshot.test.ts",
+    "__tests__/flow/compileFlow.test.ts",
+    "__tests__/flow/conversationExecutionLock.test.ts",
+    "__tests__/flow/executionAuthority.test.ts",
+    "__tests__/flow/recoveryCheckpoint.test.ts",
+    "__tests__/flow/toolApprovalRegistry.test.ts",
+    "__tests__/flow/toolApprovalSingleGate.test.ts",
+    "__tests__/security/localRequestGuard.test.ts"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "runnerError": null,
+  "networkGuard": {
+    "kind": "In-process JavaScript API guard; not an OS sandbox",
+    "blockedAttempts": 0,
+    "attemptedApis": []
+  },
+  "result": {
+    "success": true,
+    "suitesPassed": 9,
+    "suitesFailed": 0,
+    "testsPassed": 104,
+    "testsFailed": 0,
+    "testsPending": 0,
+    "assertions": [
+      {
+        "suite": "__tests__\\security\\localRequestGuard.test.ts",
+        "status": "passed",
+        "passed": 44,
+        "failed": 0
+      },
+      {
+        "suite": "__tests__\\flow\\compileFlow.test.ts",
+        "status": "passed",
+        "passed": 19,
+        "failed": 0
+      },
+      {
+        "suite": "__tests__\\chat\\directModelCompletion.test.ts",
+        "status": "passed",
+        "passed": 10,
+        "failed": 0
+      },
+      {
+        "suite": "__tests__\\engine\\quickChatSnapshot.test.ts",
+        "status": "passed",
+        "passed": 6,
+        "failed": 0
+      },
+      {
+        "suite": "__tests__\\flow\\toolApprovalSingleGate.test.ts",
+        "status": "passed",
+        "passed": 10,
+        "failed": 0
+      },
+      {
+        "suite": "__tests__\\flow\\recoveryCheckpoint.test.ts",
+        "status": "passed",
+        "passed": 6,
+        "failed": 0
+      },
+      {
+        "suite": "__tests__\\flow\\toolApprovalRegistry.test.ts",
+        "status": "passed",
+        "passed": 4,
+        "failed": 0
+      },
+      {
+        "suite": "__tests__\\flow\\conversationExecutionLock.test.ts",
+        "status": "passed",
+        "passed": 2,
+        "failed": 0
+      },
+      {
+        "suite": "__tests__\\flow\\executionAuthority.test.ts",
+        "status": "passed",
+        "passed": 3,
+        "failed": 0
+      }
+    ]
+  },
+  "limits": [
+    "Selected upstream unit tests with mocks; not the full suite or production build.",
+    "Not a clean dependency installation. Exact locked-version comparison is recorded above; transitive dependency integrity was not reinstalled or audited.",
+    "No deployed-runtime, live MCP transport, provider output, long-running endurance, or Savia customer-path acceptance is established."
+  ]
+}

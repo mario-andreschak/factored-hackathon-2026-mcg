@@ -1,0 +1,78 @@
+{
+  "schema": "savia-public-evidence-replay/v1",
+  "status": "passed",
+  "started_utc": "2026-10-05T21:25:58.438586+00:00",
+  "finished_utc": "2026-10-05T21:27:17.630091+00:00",
+  "elapsed_seconds": 79.166,
+  "git_head_at_start": "795a0c37233091e522f8709c31598addb330188a",
+  "source_state": "working-tree subset identified by source_sha256; Git HEAD is base context, not whole-release acceptance",
+  "source_sha256": {
+    "scripts/review_evidence.py": "9296c6458be396533fcb0573db19fe9107534c3b141dfe0f949533decc19057f",
+    "demo/evaluate_router.py": "b843879a7b5275cbae2b67ad45683b983b768c8d517c4f055a269fc661d71e9e",
+    "ml/router.py": "0caef13683fde550554b5739fc5504ddc6716298ef7be0350b4999659e409677",
+    "ml/data/router_train.csv": "23f1022bbbbe51582cd50a88464cd85f885465729dfd7494e90a9be680190509",
+    "ml/data/router_test.csv": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+    "pipeline/contracts.yaml": "98f0add581f437c79a119682a90723451722de025b6af867e892487d8693972a",
+    "pipeline/common.py": "5b36a52f78cbfe6c5f65f78252bebd344e5d4a73b77a32104eca8b9f28a53cea",
+    "pipeline/fixture.py": "822f4dda6bbe1392d273a21fbf2ce80d2cde82d5edb4d99725abc799ea072482",
+    "pipeline/bronze.py": "92fdbcebd827d0abf75af414883f0109e4a26e3f06f9eec25e4ae0331fdbf7b4",
+    "pipeline/silver.py": "6dc66682d3ece6170311f6c89ef26702fa244dc37fcb1b6b0820d6704db0c595",
+    "pipeline/gold.py": "0c4b7b53e7b1efdf4146b57e921659372526915bdddd0bfa64cae28142064961",
+    "pipeline/lookup.py": "efa986b587dff74d902d0f2eb39002fc6964ff5a34109cb9de0bf46d00831888",
+    "pipeline/report.py": "0d8a026835da5e8dc73ef62db8a00f384794c7696e8ef739c5ae0d0b7ebafb0a",
+    "pipeline/__main__.py": "07338b5bcb70d8d37b976de0b634252472a677d14ed2b453ffd1baa75feada41",
+    "pipeline/writer.py": "730cf37b50a6e3b7be272cbb821448fdc8011047df70726d04b08d5131d818d3",
+    "pipeline/verify.py": "b47f7ad20aca130f51ef6c67820f24356cd7bfd061f2ed6a039012d66d0c4d92",
+    "analytics/__main__.py": "307c38c06a2ba53df2c63700f7063e5f93084269ded18d1dcdcee0d14ae91066",
+    "analytics/extract.py": "2b6f3a213307d1a2c40fa7e109d1cabaacc6d84142b48b27eb72feffd9ce4f3c",
+    "analytics/report.py": "62590dc0c157d5bf53e672025f365415dea5e6cd47a866d375314604419f5736",
+    "dispute_workflow/state.py": "5866baf32afe3ce470674fa9f7d07d03acecea0d2c8ca16800664a3e41b56cad",
+    "requirements-review.txt": "e70aa868737f797c5dd96cb1a75a52b459373cbd8a592ee3f1338ce360f3fce0",
+    "tests/test_pipeline.py": "c8fe449c523ff5e8747fd6af438f21fda6426776a03db5cfcb1ddda97c3e8388",
+    "tests/test_agent_analytics.py": "93194f8e1a736c079dc5db7143fd8070e779677367f50052cf0258227abd499a",
+    "tests/test_router.py": "666e456c2c81a5e9faaa6597bf5e56ac3ce31341b849e41cd2b185a360d14afa"
+  },
+  "inspected_source_unchanged": true,
+  "python": "3.13.1",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "duckdb": "1.5.5",
+    "numpy": "2.5.3",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "joblib": "1.6.0",
+    "threadpoolctl": "3.7.0",
+    "cloudpickle": "3.1.2",
+    "narwhals": "2.26.0",
+    "pytest": "9.1.1",
+    "PyYAML": "6.0.2"
+  },
+  "tests": {
+    "exit_code": 0,
+    "total": 67,
+    "passed": 67
+  },
+  "pipeline_checks": {
+    "every_raw_row_reconciles": true,
+    "idempotent_logical_content_all_six_tables": true,
+    "wrong_product_owner_excluded": true,
+    "missing_customer_has_no_rows": true,
+    "late_correction_pending_to_reversed": true,
+    "late_new_transaction_visible": true,
+    "previous_published_snapshot_unchanged": true
+  },
+  "analytics_checks": {
+    "operational_sources_unchanged": true,
+    "raw_customer_text_and_identity_absent": true,
+    "workflow_denominator_excludes_transcript_only": true,
+    "synthetic_handoff_and_action_counted": true
+  },
+  "provider_requests": 0,
+  "label_quality": "independently AI-authored; human adjudication pending",
+  "limitations": [
+    "synthetic pipeline/analytics fixtures",
+    "AI-proposed routing labels; human adjudication pending",
+    "previously inspected frozen diagnostic, not new blind evidence",
+    "not live customer or deployment acceptance"
+  ]
+}

@@ -8,6 +8,8 @@ export type Profile = {
   description?: string;
 };
 export type Product = {
+  card_protection_status?: "blocked" | "unblocked" | "unverified";
+  card_protection_simulated?: boolean;
   reference: string;
   type: string;
   currency: string;

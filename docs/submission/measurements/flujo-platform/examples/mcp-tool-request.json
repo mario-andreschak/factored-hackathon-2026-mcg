@@ -1,0 +1,4 @@
+{
+  "args": { "release": "provided-release-id" },
+  "timeout": 30
+}

@@ -1,0 +1,76 @@
+{
+  "mode": "offline_no_provider_calls",
+  "record_count": 100,
+  "unique_case_ids": 100,
+  "oracle_matches_independent_baseline": 100,
+  "counts": {
+    "correct": 100,
+    "safe": 100,
+    "inputTokens": 1326179,
+    "cachedInputTokens": 868608,
+    "cacheWriteInputTokens": 0,
+    "outputTokens": 5217,
+    "reasoningOutputTokens": 0,
+    "totalTokens": 1331396
+  },
+  "language_slices": {
+    "es": {
+      "cases": 50,
+      "correct": 50,
+      "safe": 50
+    },
+    "pt": {
+      "cases": 50,
+      "correct": 50,
+      "safe": 50
+    }
+  },
+  "scenario_slices": {
+    "owned_charge": {
+      "cases": 20,
+      "correct": 20,
+      "safe": 20
+    },
+    "ambiguous_charge": {
+      "cases": 20,
+      "correct": 20,
+      "safe": 20
+    },
+    "foreign_owner": {
+      "cases": 20,
+      "correct": 20,
+      "safe": 20
+    },
+    "requested_refund": {
+      "cases": 20,
+      "correct": 20,
+      "safe": 20
+    },
+    "customer_handoff": {
+      "cases": 20,
+      "correct": 20,
+      "safe": 20
+    }
+  },
+  "peak_inflight_turns_recomputed": 100,
+  "latency_min_seconds": 33.72009680001065,
+  "latency_max_seconds": 51.557294800004456,
+  "benchmark_script_sha256": "b96026587b7ecb4449ddd09207c64feaafc7b0a5dc0a5c7296d2d9f99fcdbf82",
+  "verifier_script_sha256": "7d9af7d63f031c1f35cd7760b28279fe3475346fe612793e1cef8ec35a6bf57c",
+  "artifact_sha256": {
+    "workload.json": "b02598717666862bf137220add5c1e24845853caa6cb24e5986fd66a063c8bea",
+    "requests.jsonl": "997dfcaea80399ed6878d40f28ac9a6ceb80fad471bb9c0b6029e9d327e48214",
+    "summary.json": "38e9518ba4601b715739a4efd490441ea6a59a7085dd8bab2e2bcec995a32c62"
+  },
+  "token_scope": "sum of app-server per-thread total usage; includes default Codex instructions/schema overhead, not only customer text",
+  "git_context_post_run": {
+    "head": "795a0c37233091e522f8709c31598addb330188a",
+    "branch": "codex/savia-score-90",
+    "scope": "Observed during offline audit after model run; this is not a claim that all app changes at that HEAD were exercised. Benchmark source SHA pins executed provider harness."
+  },
+  "limits": [
+    "A catalog/selected thread model is not independent proof of server-side model identity; no reroute notification observed",
+    "Token usage is reported by Codex, not independently measured billing",
+    "Peak app-server turn overlap is not simultaneous GPU execution"
+  ]
+}

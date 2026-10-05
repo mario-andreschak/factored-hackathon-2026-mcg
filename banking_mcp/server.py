@@ -32,7 +32,8 @@ def create_server(service: Service) -> Server:
     async def list_tools():
         return [types.Tool(name=name, description=DESCRIPTIONS[name], inputSchema=model.model_json_schema(),
                            annotations=types.ToolAnnotations(readOnlyHint=name not in {
-                               "prepare_unrecognized_charge", "confirm_simulated_intake", "create_verified_handoff"}, destructiveHint=False,
+                               "prepare_unrecognized_charge", "confirm_simulated_intake", "create_verified_handoff",
+                               "prepare_card_block", "confirm_card_block"}, destructiveHint=False,
                                                              idempotentHint=True, openWorldHint=False))
                 for name, model in SCHEMAS.items()
                 if service.config.mode == "delegated" or name not in ACTION_SCHEMAS]

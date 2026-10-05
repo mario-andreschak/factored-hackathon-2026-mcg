@@ -1288,7 +1288,8 @@ def test_stdio_child_process_and_private_revocation(bank, tmp_path):
                 assert {t.name for t in (await client.list_tools()).tools} == {
                     "banking_status", "list_my_transactions", "get_my_transaction",
                     "prepare_unrecognized_charge", "confirm_simulated_intake", "read_intake_receipt",
-                    "create_verified_handoff", "read_verified_handoff"}
+                    "create_verified_handoff", "read_verified_handoff",
+                    "prepare_card_block", "confirm_card_block", "read_card_block"}
                 args = {"limit": 1}
                 result = await client.call_tool("list_my_transactions", args,
                     meta=assertion(bank, "list_my_transactions", args))

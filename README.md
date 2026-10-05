@@ -1,145 +1,118 @@
-# Savia — Factored AI & Data Hackathon 2026 — MCG
+# Savia — Ask once. Savia follows through.
 
-Savia is a friendly Spanish and Portuguese voice assistant that follows customer
-inquiries, asks a team for different perspectives, and keeps helpful answers and
-follow-up together. **Ask once. Explore options with Savia's team. Return for a
-clear next step.**
+**A complete dispute decision engine. A question that keeps its context. A useful next step when you return.**
 
-Savia combines integrated voice with durable inquiry tracking and a FLUJO swarm
-architecture: ten team Machines, each with one lead and nine specialists, using
-native messages, fleet delegation and a shared findings board. Work status and
-suggestions are saved so the customer can return without losing the thread.
-Bank consent and receipt verification remain separate.
+“I don't recognize this transaction.” For a customer, that starts a problem that can take more than one conversation to solve. Savia brings checked transaction facts, Spanish and Portuguese conversation, specialist perspectives and saved follow-up into one place.
 
-The infrastructure has completed a real **300-parallel-request FLUJO load test
-with 300/300 correct results**, a 400-request direct inference test, and
-collaboration runs with **18 Fly sandboxes live together**. The
-[infrastructure report and aggregate receipt](docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md)
-publish the workloads, latency, results and source provenance. The frozen customer
-film demonstrates two completed reviewers. A further paid fleet/load run for the
-submission video was skipped because of budget constraints; the earlier integrated
-attempt's disabled-provider failure remains documented separately. The recorded
-team size is not the infrastructure's capacity limit.
+**[Open the submission: pitch, film, demo and development story](https://savia-rc-2026.fly.dev/submission/)**
 
-For customers, the value is a clear explanation and useful status during the
-day. For the bank, the opportunity is fewer repeat contacts and a better-informed
-review when a person is needed: the request, verified facts and unresolved
-questions stay together. These are the product's intended benefits; the release
-report distinguishes demonstrated behavior from unmeasured business impact.
-Customer permissions, explicit consent and action policy are enforced by
-application services.
+**[Try Savia](https://savia-rc-2026.fly.dev)** · entry and fictional profile code: **`SAVIA-2026`**
 
-Public demos use fictional customers and a simulated dispute service. A verified
-intake receipt records intake; it does not establish a refund or resolution of
-the underlying dispute. Marking an informational answer helpful does not resolve
-a bank case. A saved handoff packet does not establish human pickup.
+**[Watch the 2:21 customer film](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4)** · **[Six-slide product pitch](docs/submission/media/decks/final/savia-final-pitch.pdf)** · **[Editable slides](docs/submission/media/decks/final/savia-final-pitch.pptx)**
 
-## Submission ready for human review
+![Savia's customer workbench and integrated assistant](docs/submission/media/decks/savia-hero-customer.png)
 
-**Ready for owner and Gloria's review, October 5, 2026**, under the owner's
-reduced scope: existing app, frozen media and truthful documentation. Further
-fleet runs, provisioning and funding approval are outside this release scope.
+## Your problem keeps moving. You get on with your day.
 
-Try [Savia](https://savia-rc-2026.fly.dev) with **SAVIA-2026** at the entry gate
-and fictional customer profile login. Customers, movements and intake are
-simulated; provider completions and voice calls are real.
+Select the unfamiliar charge and ask Savia what is known. The transaction stays visible while Savia explains the merchant, date, amount and status. Ask its team to compare the evidence and next steps. Return to the same inquiry, read the saved suggestions, and hear the recommendations.
 
-- [Play or download the submission video](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4)
-- [Editable submission deck](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission-deck.pptx) and [PDF](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission-deck.pdf)
-- [Editable pitch deck](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-pitch-deck.pptx) and [PDF](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-pitch-deck.pdf)
-- [Customer story](docs/submission/CUSTOMER_JOURNEY.md) and [release report](docs/submission/RELEASE_CANDIDATE.md)
+Our recorded prototype shows a grounded answer, **two actual completed model reviewers**, a customer marking the explanation helpful, and the saved answer and suggestions surviving a new chat and reload. These are real model calls over fictional bank data.
 
-These assets are published in frozen rc.2, reusing the rc.1 film and decks.
-The story shows a useful grounded answer, two completed agent reviews, helpful
-informational closure and a return to saved context. The rc.2 supplement records
-spoken saved advice. A later fleet attempt failed its root model call; that
-prototype limitation is disclosed and does not block this submission.
-The [measurement appendix](docs/submission/measurements/MEASURED_RESULTS.md)
-preserves each recording's scope and failures. The
-[submission guide](docs/SUBMISSION_GUIDE.md) maps organizer requirements.
+![The grounded answer and selected transaction](docs/submission/media/decks/savia-grounded-answer-crop.png)
 
-## Run locally
+## A clear decision at every step.
 
-Choose the setup that matches what you want to exercise:
+The core is a complete, deterministic **R0–R18 dispute flow**. It authenticates the customer, checks ownership, keeps the selected charge and conversation context, clarifies ambiguity, applies ordered policy, requests explicit consent, verifies action receipts and prepares a human handoff when the evidence requires one. Restart recovery, idempotency and session revocation preserve those boundaries across turns.
 
-| Setup | Instructions | Scope |
+Voice and specialist teams extend that engine. They help customers explain the problem and examine evidence; the trusted flow remains responsible for what can happen next. The historical frozen source qualification passed **1,725 tests and 428 subtests**, with its own source pins. [Decision rules and executable implementation](docs/DISPUTE_IMPLEMENTATION.md) · [Frozen qualification receipt](docs/qualification/dispute-naming-source-2026-10-01.json).
+
+## Voice is the beginning. Follow-through is the product.
+
+The customer should not need to repeat the whole problem each time. Savia saves the inquiry, work status, checked facts and recommendations. Its voice lives inside the customer assistant; completed updates wait for foreground speech to finish. Bank intake, informational answers and human handoff remain distinct states so the customer sees what actually happened.
+
+The frozen customer recording includes **two complete native voice replies and exact full-playback acknowledgments**. A later saved-recommendation capture speaks useful advice and retains the result after reload. A separate automatic receipt check ran after **30 real minutes** without duplicating the visible update.
+
+**“Block my card.”** The new protection flow lets a customer select their own fictional card, confirm the block and receive a verified saved receipt. The blocked status survives a new login. Spanish and Portuguese requests open the same consent flow; asking alone never blocks the card. [Working action, recovery and concurrency checks](docs/submission/measurements/CARD_BLOCK_VERIFICATION.md).
+
+[Savia and the ElevenLabs commercial reference](docs/submission/ELEVENLABS_COMPARISON.md) explains the product positioning and the implemented case lifecycle, with links to the recorded successes.
+
+![Saved team perspectives remain available to the customer](docs/submission/media/decks/savia-team-saved-result-crop.png)
+
+## One conversation. A team behind it.
+
+One assistant stays with the customer while specialists compare evidence, explore alternatives and return reviewed findings. The prototype demonstrates two reviewers. The larger architecture connects ten teams, each with one lead and nine specialists: **up to 100 team conversations**, with Savia's root separate.
+
+The foundation has completed collaboration exercises with **18 Fly sandboxes live together**, and a separate FLUJO workload returned **300/300 correct reference codes from 300 concurrent client submissions**. The successful two-reviewer customer story and infrastructure tests keep their own measured scope. The larger customer fleet is an extension with acceptance pending. [Capacity, collaboration and extension qualification](docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md).
+
+Inspect the foundation through the [generic FLUJO platform guide](docs/submission/FLUJO_PLATFORM_EVIDENCE.md): pinned public source for chat, flows, tools, MCP, model adapters and recovery, with 104 passing scoped offline tests. Its reusable interfaces remain separate from Savia's banking code.
+
+## The bank controls the stack. The work leaves a trace.
+
+Savia owns the customer experience and durable inquiry. The trusted host resolves customer-owned selections and explicit consent. Banking MCP owns data, policy and action receipts. FLUJO supplies general orchestration interfaces; language models receive only permitted context and cannot authorize bank actions themselves.
+
+The pipeline accounts for every source row, records lineage, quarantines invalid records and publishes an immutable snapshot only after a successful build. An ownership defect in historical complaint links changed our product decision: **new inquiries use owned transactions rather than unreliable complaint-to-product joins**. The same analysis found only 42 distinct transcript texts across 171,321 records, so we built a separate bilingual routing diagnostic instead of presenting template memorization as model quality.
+
+**New local verification:** GPT-6 Luna completed **100 concurrently submitted Spanish/Portuguese fixture requests**, with 100/100 exact grounded decisions and zero observed forbidden actions. This subscription-backed provider test covers owned facts, ambiguity, foreign-owner injection, false refund claims and requested handoff, using ten distinct request phrasings with varied fictional facts. Its predeclared deterministic baseline also scores 100/100. [Full workload, outputs and replay instructions](docs/submission/measurements/luna-100/README.md).
+
+## Make “I'll look into it” a service customers can feel.
+
+For customers, the ambition is less chasing and less repeating. For the bank, it is clearer evidence and a better prepared handoff. Transaction disputes are the first focused workflow. A bounded bank pilot would measure repeat contacts, helpful answers, handoff quality and cost per case.
+
+**The demonstrated product is a fictional banking prototype.** Simulated intake requires confirmation and a verified receipt; it does not establish a refund. Helpful informational closure does not resolve a bank dispute. Production bank execution, live human pickup, push/email delivery and week-long reliability remain pilot work.
+
+Built by **Gloria Yanta Salc** (prompt flow and decision design), **Carlos Diaz** (data pipeline and lookup), and **Mario Andreschak** (integration and orchestration).
+
+---
+
+## Review the working evidence
+
+The human pitch above explains the product. This table maps technical claims to inspectable source and measured artifacts. Results identify their workload and revision; historical successes and later failed experiments retain their separate scopes.
+
+**[Start the independent review](docs/submission/START_HERE.md)** · **[Evidence map](docs/submission/EVIDENCE_MAP.md)** · **[Development story and contributor decisions](docs/submission/DEVELOPMENT_PROCESS.md)**
+
+**Fresh public replay:** [67 passing existing offline checks and 11 pipeline/analytics invariants](docs/review/PUBLIC_EVIDENCE.md), plus a paired uncertainty analysis of the unchanged routing diagnostic. Run `python scripts/review_evidence.py --out docs/review` after installing `requirements-review.txt`. [Exact source hashes and results](docs/review/replay-receipt.json).
+
+**Live successor:** [confirmed card protection in Spanish and Portuguese, deployed source/image pins and public asset verification](docs/submission/measurements/card-block-live/README.md). [Independent fresh source review and its exact scope](docs/review/FRESH_AGENT_REVIEW.md).
+
+**Fresh dispute-core qualification:** [1,078 passing offline checks with zero skips or provider calls](docs/submission/measurements/core-engine-final/README.md), with 39 executed core source files independently matched to the deployed source. This is core qualification with pinned files, separate from whole-repository CI and live customer acceptance.
+
+| Evaluation dimension | What to inspect | Evidence |
 | --- | --- | --- |
-| Fictional portal preview | [Frontend setup](frontend/README.md#isolated-synthetic-invitation-preview) | Generates isolated fixtures and invitations, builds the UI, and serves a loopback API. No model, FLUJO, MCP or action is started. |
-| Fictional local customer workflow | [RC startup](deploy/rc/README.md) | Fresh fixtures, durable inquiries and simulated ledger; banking service in process. Select the generic FLUJO model or explicit direct OpenRouter profile. Native-flow and network bank-MCP deployment remain separate scopes. |
-| Savia voice interface | [Eyes and voice setup](frontend/README.md) | Integrated assistant conversation and background status; current acceptance is recorded in the release report. |
-| Data pipeline | [Pipeline setup](pipeline/README.md) | Repeatable ingestion, ownership checks, lineage and customer-sharded snapshots. Organizer data requires approved private access. |
+| Technical judgment | Owned reads; explicit consent; signed action admission; durable receipt and restart recovery; safe uncertainty | [Immediate card action and 100-confirmation proof](docs/submission/measurements/CARD_BLOCK_VERIFICATION.md), [action host](dispute_workflow/action_host.py), [bank actions](banking_mcp/actions.py), [direct-host contract](frontend/DIRECT_MCP.md) |
+| AI engineering | Integrated customer UI and voice; two actual reviewers; saved results and return visit; deployed source/image identities | [Customer story](docs/submission/CUSTOMER_JOURNEY.md), [release and runtime pins](docs/submission/RELEASE_CANDIDATE.md), [two-reviewer receipt](docs/submission/measurements/team-story-summary.json), [saved speech proof](docs/submission/measurements/saved-recommendations-native/README.md) |
+| Data engineering | Immutable publication; last good snapshot preserved on failure; lineage; customer isolation; late arrivals and corrections | [Pipeline reproduction](pipeline/README.md), [pipeline tests](tests/test_pipeline.py), [row accounting](docs/pipeline/quality_report.md), [source review](docs/DATA_REVIEW_2026-09-26.md) |
+| Machine learning | Fixed bilingual holdout; keyword/TF-IDF/abstention comparison; 100 concurrent Luna fixture decisions with a deterministic oracle; leakage disclosure | [120-case comparison](docs/demo/intent_router_evaluation.md), [100-case Luna workload and outputs](docs/submission/measurements/luna-100/README.md), [executable evaluator](demo/evaluate_router.py), [holdout provenance](docs/ml/router_holdout_provenance.md) |
+| Data analytics | Outcome/error/grounding/latency metrics; data findings that change product choices; customer and infrastructure denominators | [Measured operating decisions and charts](docs/review/OPERATING_DECISIONS.md), [reproduction script](scripts/analyze_operating_evidence.py), [operational aggregation](analytics/README.md), [customer measurements](docs/submission/measurements/MEASURED_RESULTS.md) |
 
-The fictional preview runbook includes Windows PowerShell and POSIX commands,
-dependency installation and invitation generation. Use the invitation from the
-generated private file at [localhost:43801](http://localhost:43801). Private
-access codes and provider credentials stay outside source. Keep private config,
-customer rows and state outside tracked files.
+**Quality evidence:** the routing diagnostic has 120 balanced cases (60 Spanish / 60 Portuguese), AI-authored labels, and independent human adjudication pending. The TF-IDF classifier's diagnostic accuracy is 78.3% versus the keyword baseline's 58.3%; this measures routing against those labels. The original customer comparison is n=3 across revisions, with 2/3 agent-screened useful replies. Neither result estimates production banking resolution or business ROI.
 
-The integrated fictional candidate opens at [127.0.0.1:43900](http://127.0.0.1:43900)
-after following the RC startup guide. The default profile uses an available
-generic FLUJO model; `--provider openrouter` explicitly selects the separate
-direct-provider profile. Its generated fixture and state are separate from the
-organizer-data portal and hosted Fly build; the release report identifies each runtime.
+**Successful recording versus fleet extension:** the frozen film shows completed two-reviewer work, useful saved results and voice. The newer fleet attempt failed before delegation because its provider workspace was disabled; the original failed root call is preserved. A recorder's optional cleanup timeout is separately documented from accepted product steps. See the [release scope](docs/submission/RELEASE_CANDIDATE.md) and [original receipts](docs/submission/measurements/MEASURED_RESULTS.md).
 
-## Why this workflow
+## Reproduce locally
 
-The September 26 full scan of six relevant table families found **12,297
-unrecognized-charge complaints out of 67,095 complaints**, and **4,425,008
-transactions** with valid customer/product ownership. Historical complaint links
-cannot identify a disputed transaction reliably: origin-interaction IDs were
-empty, and every populated affected-product link crossed customer ownership.
-The [data review](docs/DATA_REVIEW_2026-09-26.md) records the method and limits.
+| Path | Command or setup | Scope |
+| --- | --- | --- |
+| Public demo | [Savia](https://savia-rc-2026.fly.dev), code `SAVIA-2026` | Fictional profiles; real configured model and voice calls |
+| Isolated preview | [Frontend setup](frontend/README.md#isolated-synthetic-invitation-preview) | Generated fixtures; no model, MCP or bank action |
+| Local workflow | [RC startup](deploy/rc/README.md) | Durable inquiries and simulated ledger; explicit provider profile |
+| Pipeline | [Pipeline setup and fixture](pipeline/README.md) | Public synthetic fixture; private organizer access separate |
+| Router evaluation | [ML setup](ml/README.md) and [frozen evaluator](demo/evaluate_router.py) | Fixed diagnostic workload; no provider calls |
+| Public evidence replay | `python -m pip install -r requirements-review.txt`, then `python scripts/review_evidence.py --out docs/review` | Public six-table fixture, offline checks, fixed router and analytics replay |
 
-Savia therefore grounds new inquiries in owned transaction reads and keeps new
-simulated receipts separate from uncertain historical complaint evidence. The
-[ML notes](ml/README.md) explain the supplied transcripts' training limitations
-and distinguish diagnostic router results from human-reviewed evaluation.
-Current comparisons must cite their actual workload in the release report.
+We checked the [Factored Hugging Face catalog](docs/review/FACTORED_HF_ASSESSMENT.md) for a relevant baseline. Its published recruiting/sales tasks do not match this banking workflow. Model choice follows measured task fit.
 
-## Architecture and ownership
+## Architecture and development
 
-The pipeline prepares validated snapshots. The Savia host authenticates the
-customer, resolves owned selections, handles explicit consent and verifies
-receipts. The banking MCP owns banking data, policy and durable action state.
-The app owns informational inquiry events and follow-up independently of banking
-consent and receipts. FLUJO supplies generic interfaces and the scoped MCP flow;
-language execution uses the explicitly selected profile. Banking keys and action
-capabilities stay outside generic language inputs. See the
-[direct-host contract](frontend/DIRECT_MCP.md) and
-[workflow implementation](docs/DISPUTE_IMPLEMENTATION.md).
-
-**FLUJO main stays general purpose.** Domain integration belongs in this
-repository, the banking MCP, or the owner-authorized isolated
-`codex/hackathon-banking` branch. The [product boundary](docs/FLUJO_PRODUCT_BOUNDARY.md)
-and [deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md) govern integration.
-The [frozen runtime source](docs/submission/runtime-source-final.json) identifies
-the accepted integrated Savia build. The
-[technical system landscape](docs/architecture/system-landscape.md) documents
-Savia's case lifecycle, native voice and recovered FLUJO swarm design. The
-[viewer](docs/architecture/deployment-landscapes.html#system) includes its
-diagram and retains the dated September 30 Docker/Fly configuration.
-
-## Development and evidence
-
-Use the [documentation index](docs/README.md) for contracts, data findings,
-evaluation, contributor history and frozen qualification reports. The
-[local CI policy](docs/LOCAL_CI.md) describes the eleven-job Windows/Linux route;
-passing source checks qualify their exact source, not a deployed journey. The
-[development-history viewer](docs/DEVELOPMENT_HISTORY.md) is an optional local
-replay backed by private caches; it is not a public submission artifact.
-
-| Directory | Purpose |
+| Directory | Responsibility |
 | --- | --- |
-| `frontend/`, `frontend/src/avatar/` | Customer portal and integrated voice companion |
-| `savia_assistant/` | Durable inquiries, recovered FLUJO fleet connector, bootstrap reviewers and scoped MCP |
-| `banking_mcp/`, `dispute_workflow/` | Scoped banking tools and dispute workflow |
-| `pipeline/`, `ml/` | Data preparation and diagnostic intent-router evaluation |
+| `frontend/`, `frontend/src/avatar/` | Customer portal and integrated voice |
+| `savia_assistant/` | Durable inquiries, reviewer work and scoped fleet connector |
+| `banking_mcp/`, `dispute_workflow/` | Banking reads, consent, simulated actions and recovery |
+| `pipeline/`, `ml/`, `analytics/` | Data preparation, routing diagnostics and operational analysis |
 | `resources/`, `contracts/` | Prompts, synthetic policy and workflow contracts |
-| `deploy/`, `scripts/` | Runtime setup, checks and reproducible utilities |
-| `docs/submission/` | Final-day coordination, measurements and media |
+| `deploy/`, `scripts/` | Immutable builds, runtime setup and reproducible checks |
+| `docs/submission/` | Customer evidence, measurements, recording and decks |
 
-Carlos contributed the data pipeline and customer lookup; Gloria designed the
-prompt flow and R0–R18 decision motor. The customer assistant is Savia and the
-implementation is named **transaction dispute workflow**. Historical reports
-retain their original names and hashes. See [implementation credit and retained
-state](docs/DISPUTE_IMPLEMENTATION.md) and Git history for the broader contribution record.
+**FLUJO main stays general purpose.** Domain code lives here, in Banking MCP, or on the owner-authorized isolated hackathon branch. Read the [product boundary](docs/FLUJO_PRODUCT_BOUNDARY.md), [deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md) and [system landscape](docs/architecture/system-landscape.md).
+
+[Documentation index](docs/README.md) · [local CI policy](docs/LOCAL_CI.md) · [submission guide](docs/SUBMISSION_GUIDE.md) · [implementation credits](docs/DISPUTE_IMPLEMENTATION.md)

@@ -71,6 +71,147 @@ class Actions:
         # A source-backed host rereads the same owned facts on prepare/confirm.
         self.trusted_evidence_reader = None
 
+    def prepare_card_block(self, principal: Principal, product_id: str, snapshot: str, request_id: str) -> dict:
+        """Prepare a demo card block. Preparation never changes card status."""
+        facts = self.repository.owned_card(principal, product_id, snapshot)
+        key, handle = self._prepare_identity(principal, request_id)
+        key, handle = "card:" + key, "card_" + handle
+        with self.store.authority(principal, write=True) as db:
+            self.repository.assert_current_snapshot(snapshot)
+            previous = db.execute("SELECT binding,customer,product_id,snapshot,facts,expires FROM "
+                "sandbox_card_pending WHERE request_key=?", (key,)).fetchone()
+            expected = (principal.binding(), principal.customer, product_id, snapshot,
+                        json.dumps(facts, sort_keys=True))
+            if previous and previous[:5] != expected:
+                raise BankError("invalid_arguments")
+            if previous and previous[5] <= time.time():
+                raise BankError("reference_unavailable")
+            if not previous:
+                db.execute("INSERT INTO sandbox_card_pending VALUES (?,?,?,?,?,?,?,?)",
+                    (_digest(handle), key, *expected, int(time.time()) + PENDING_SECONDS))
+        return {"state": "pending_confirmation", "pending_handle": handle, "snapshot": snapshot,
+                "card": facts, "simulated": True, "real_bank_action": False}
+
+    def _card_pending(self, db, principal: Principal, handle: str):
+        if not isinstance(handle, str) or not re.fullmatch(r"card_[A-Za-z0-9_-]{43}", handle):
+            raise BankError("reference_unavailable")
+        row = db.execute("SELECT binding,customer,product_id,snapshot,facts,expires FROM "
+            "sandbox_card_pending WHERE id=?", (_digest(handle),)).fetchone()
+        if not row or row[1] != principal.customer or not secrets.compare_digest(row[0], principal.binding()):
+            raise BankError("reference_unavailable")
+        return row
+
+    def read_card_block(self, principal: Principal, pending_handle: str) -> dict:
+        """Read the actual persisted demo status; uncertainty never means blocked."""
+        with self.store.authority(principal) as db:
+            pending = self._card_pending(db, principal, pending_handle)
+            saved = db.execute("SELECT receipt_json,receipt_sha256 FROM sandbox_card_blocks WHERE customer=? AND product_id=?",
+                (principal.customer, pending[2])).fetchone()
+            if not saved:
+                return {"state": "pending_confirmation" if pending[5] > time.time() else "expired",
+                        "simulated": True, "real_bank_action": False}
+            try:
+                if not isinstance(saved[1], str) or not secrets.compare_digest(saved[1], _digest(saved[0])):
+                    raise ValueError("receipt integrity mismatch")
+                receipt = _object(saved[0])
+                reference = "card_" + hmac.new(self._prepare_secret,
+                    (principal.customer + ":" + pending[2]).encode(), hashlib.sha256).hexdigest()[:24]
+                if (set(receipt) != {"schema", "id", "status", "simulated", "real_bank_action", "card_reference",
+                                    "snapshot", "created_at", "card"}
+                        or receipt["schema"] != "savia-simulated-card-block/v1"
+                        or receipt["status"] != "blocked" or receipt["simulated"] is not True
+                        or receipt["real_bank_action"] is not False or receipt["card_reference"] != reference
+                        or not re.fullmatch(r"BLK-SBX-[A-Za-z0-9_-]{8}", receipt["id"])
+                        or receipt["snapshot"] != pending[3] or receipt["card"] != _object(pending[4])
+                        or not isinstance(receipt["created_at"], str) or not receipt["created_at"].endswith("Z")):
+                    raise ValueError()
+                created = datetime.fromisoformat(receipt["created_at"].replace("Z", "+00:00"))
+                if (created.utcoffset() != timezone.utc.utcoffset(created)
+                        or not 0 <= created.timestamp() <= time.time() + 5
+                        or _utc(created.timestamp()) != receipt["created_at"]
+                        or not pending[5] - PENDING_SECONDS <= created.timestamp() <= pending[5]):
+                    raise ValueError("invalid receipt timestamp")
+            except (ValueError, TypeError, KeyError):
+                raise BankError("action_unverified") from None
+        return {"state": "card_block_verified", "receipt": receipt,
+                "simulated": True, "real_bank_action": False}
+
+    def card_status(self, principal: Principal, product_id: str, snapshot: str) -> dict:
+        """Current owned card protection, including across renewed browser sessions."""
+        self.repository.owned_card(principal, product_id, snapshot)
+        with self.store.authority(principal) as db:
+            saved = db.execute("SELECT receipt_json,receipt_sha256 FROM sandbox_card_blocks WHERE customer=? AND product_id=?",
+                (principal.customer, product_id)).fetchone()
+            if not saved:
+                return {"state": "card_unblocked", "simulated": True, "real_bank_action": False}
+            try:
+                if not isinstance(saved[1], str) or not secrets.compare_digest(saved[1], _digest(saved[0])):
+                    raise ValueError("receipt integrity mismatch")
+                receipt = _object(saved[0])
+                original = db.execute("SELECT facts,expires FROM sandbox_card_pending WHERE customer=? AND product_id=? AND snapshot=?",
+                    (principal.customer, product_id, receipt["snapshot"])).fetchall()
+                reference = "card_" + hmac.new(self._prepare_secret,
+                    (principal.customer + ":" + product_id).encode(), hashlib.sha256).hexdigest()[:24]
+                if (set(receipt) != {"schema", "id", "status", "simulated", "real_bank_action", "card_reference",
+                                    "snapshot", "created_at", "card"}
+                        or receipt["schema"] != "savia-simulated-card-block/v1" or receipt["status"] != "blocked"
+                        or receipt["simulated"] is not True or receipt["real_bank_action"] is not False
+                        or receipt["card_reference"] != reference
+                        or not re.fullmatch(r"BLK-SBX-[A-Za-z0-9_-]{8}", receipt["id"])
+                        or not isinstance(receipt["created_at"], str) or not receipt["created_at"].endswith("Z")):
+                    raise ValueError("invalid receipt")
+                created = datetime.fromisoformat(receipt["created_at"].replace("Z", "+00:00"))
+                timestamp = created.timestamp()
+                if (created.utcoffset() != timezone.utc.utcoffset(created) or not 0 <= timestamp <= time.time() + 5
+                        or _utc(timestamp) != receipt["created_at"]
+                        or not any(receipt["card"] == _object(row[0]) and row[1] - PENDING_SECONDS <= timestamp <= row[1]
+                                   for row in original)):
+                    raise ValueError("receipt lineage mismatch")
+            except (ValueError, TypeError, KeyError, OverflowError):
+                raise BankError("action_unverified") from None
+        return {"state": "card_block_verified", "receipt": receipt, "current_snapshot": snapshot,
+                "simulated": True, "real_bank_action": False}
+
+    def confirm_card_block(self, principal: Principal, pending_handle: str, confirmed: bool) -> dict:
+        """Explicit consent, ownership recheck and one durable demo block per card."""
+        if confirmed is not True:
+            raise BankError("confirmation_required")
+        observed = self.read_card_block(principal, pending_handle)
+        if observed["state"] == "card_block_verified":
+            return observed
+        with self.store.authority(principal) as db:
+            pending = self._card_pending(db, principal, pending_handle)
+        facts = self.repository.owned_card(principal, pending[2], pending[3])
+        if facts != _object(pending[4]):
+            raise BankError("snapshot_changed")
+        with self.store.authority(principal, write=True) as db:
+            current = self._card_pending(db, principal, pending_handle)
+            if current != pending or pending[5] <= time.time():
+                raise BankError("reference_unavailable")
+            self.repository.assert_current_snapshot(pending[3])
+            receipt = {"schema": "savia-simulated-card-block/v1", "id": _receipt_id("BLK-SBX-"),
+                "status": "blocked", "simulated": True, "real_bank_action": False,
+                "card_reference": "card_" + hmac.new(self._prepare_secret,
+                    (principal.customer + ":" + pending[2]).encode(), hashlib.sha256).hexdigest()[:24],
+                "snapshot": pending[3], "created_at": _utc(time.time()), "card": facts}
+            encoded = json.dumps(receipt, sort_keys=True)
+            db.execute("INSERT OR IGNORE INTO sandbox_card_blocks VALUES (?,?,?,?)",
+                (principal.customer, pending[2], encoded, _digest(encoded)))
+        # Independently reread the committed row before claiming success.
+        return self.read_card_block(principal, pending_handle)
+
+    def cancel_card_block(self, principal: Principal, pending_handle: str) -> dict:
+        """Invalidate a prepared capability atomically; never undo a committed block."""
+        with self.store.authority(principal, write=True) as db:
+            pending = self._card_pending(db, principal, pending_handle)
+            committed = db.execute("SELECT 1 FROM sandbox_card_blocks WHERE customer=? AND product_id=?",
+                (principal.customer, pending[2])).fetchone()
+            if not committed:
+                db.execute("UPDATE sandbox_card_pending SET expires=0 WHERE id=?", (_digest(pending_handle),))
+        if committed:
+            return self.read_card_block(principal, pending_handle)
+        return {"state": "cancelled", "simulated": True, "real_bank_action": False}
+
     def _action_evidence(self, principal, snapshot, transaction_id):
         if self.trusted_evidence_reader is None:
             return self._evidence(snapshot, transaction_id)

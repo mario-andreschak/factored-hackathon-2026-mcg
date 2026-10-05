@@ -1,0 +1,5 @@
+{
+  "external_python_dns_and_connect_disabled": true,
+  "blocked_external_attempts": 0,
+  "test_scope": "generated local stores and fixture observations; no provider tests"
+}

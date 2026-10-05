@@ -12,6 +12,7 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import secrets
 import time
+import uuid
 
 import anyio
 import jwt
@@ -61,6 +62,66 @@ class BankingActionHost:
             raise ValueError("inquiry and action repositories must share a dataset")
         self.repository = repository
         self.bank.actions.trusted_evidence_reader = self._evidence
+
+    async def card_action(self, chat, customer, sid, expiry, target, *, operation,
+                          request_id=None, pending_handle=None, confirmed=False):
+        """Trusted portal control. Browser identity and raw IDs cannot select a card."""
+        if not chat._action_enabled:
+            raise ChatError("action_unavailable", 503, "La acción no está disponible.")
+        subject, owner = chat._identity(customer, sid, expiry)
+        def execute():
+            # Serialize against logout/revocation and pin immutable admission.
+            with chat._connection() as db:
+                db.execute("BEGIN IMMEDIATE")
+                row = chat._bind(db, sid, owner, expiry)
+                if (row["revoked"] or expiry <= time.time()
+                        or row["subject"] not in {None, subject}
+                        or row["customer_id"] not in {None, customer}
+                        or chat._approved_subject_customers.get(subject) != customer
+                        or self.bank.config.principal_customers.get(subject) != customer):
+                    raise BankError("authorization_denied")
+                conversation = row["conversation_id"] or str(uuid.uuid4())
+                db.execute("UPDATE chat_sessions SET subject=?,customer_id=?,conversation_id=? WHERE session_id=?",
+                    (subject, customer, conversation, sid))
+                principal = Principal(subject, customer, sid, conversation, expiry, self.ledger_generation)
+                from .bank_read import assert_bank_principal
+                assert_bank_principal(self.bank, principal)
+                if operation == "status":
+                    observed = self.bank.actions.card_status(principal, target["product_id"], target["snapshot"])
+                    if pending_handle:
+                        with self.bank.store.authority(principal) as bank_db:
+                            try:
+                                held = self.bank.actions._card_pending(bank_db, principal, pending_handle)
+                                observed["pending_handle_current"] = held[2] == target["product_id"]
+                            except BankError as exc:
+                                if exc.code != "reference_unavailable":
+                                    raise
+                                observed["pending_handle_current"] = False
+                    return observed
+                if operation == "prepare":
+                    existing = self.bank.actions.card_status(principal, target["product_id"], target["snapshot"])
+                    if existing["state"] == "card_block_verified":
+                        return existing
+                    return self.bank.actions.prepare_card_block(principal, target["product_id"], target["snapshot"], request_id)
+                with self.bank.store.authority(principal) as bank_db:
+                    pending = self.bank.actions._card_pending(bank_db, principal, pending_handle)
+                    if pending[2] != target["product_id"]:
+                        raise BankError("authorization_denied")
+                if operation == "confirm":
+                    return self.bank.actions.confirm_card_block(principal, pending_handle, confirmed)
+                if operation == "receipt":
+                    return self.bank.actions.read_card_block(principal, pending_handle)
+                if operation == "cancel":
+                    return self.bank.actions.cancel_card_block(principal, pending_handle)
+                raise BankError("invalid_arguments")
+        try:
+            result = await anyio.to_thread.run_sync(execute)
+        except BankError as exc:
+            if exc.code in {"action_unverified", "write_failed"}:
+                result = {"state": "card_block_unverified", "simulated": True, "real_bank_action": False}
+            else:
+                raise ChatError("card_block_rejected", 409, "No se pudo verificar el bloqueo. Revisa el estado de la tarjeta.") from None
+        return {**result, "product_reference": target["product_reference"]}
 
     def _evidence(self, principal, snapshot, target):
         if self.repository is None:

@@ -63,6 +63,12 @@ class ConfirmArgs(CustomerArgs):
     confirmed: bool
 
 
+class PrepareCardArgs(CustomerArgs):
+    product_id: str = Field(min_length=1, max_length=128)
+    snapshot: str = Field(pattern=r"^[A-Za-z0-9_-]{1,96}$")
+    request_id: str = Field(pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
+
+
 class ReceiptArgs(CustomerArgs):
     pending_handle: str = Field(min_length=32, max_length=64)
 
@@ -80,16 +86,23 @@ class ReadHandoffArgs(CustomerArgs):
 
 
 ACTION_SCHEMAS = {"prepare_unrecognized_charge": PrepareArgs,
+                  "prepare_card_block": PrepareCardArgs,
+                  "confirm_card_block": ConfirmArgs,
+                  "read_card_block": ReceiptArgs,
                   "confirm_simulated_intake": ConfirmArgs,
                   "read_intake_receipt": ReceiptArgs,
                   "create_verified_handoff": HandoffArgs,
                   "read_verified_handoff": ReadHandoffArgs}
 SCOPES = {"prepare_unrecognized_charge": "bank:prepare", "confirm_simulated_intake": "bank:write",
+          "prepare_card_block": "bank:prepare", "confirm_card_block": "bank:write", "read_card_block": "bank:receipt",
           "read_intake_receipt": "bank:receipt", "create_verified_handoff": "bank:handoff",
           "read_verified_handoff": "bank:handoff-read"}
 SCHEMAS = {"banking_status": EmptyArgs, "list_my_transactions": ListArgs,
            "get_my_transaction": GetArgs, **ACTION_SCHEMAS}
 DESCRIPTIONS = {
+    "prepare_card_block": "Host-only: resolve an exact owned active card and prepare a simulated immediate block. No status change before explicit customer confirmation.",
+    "confirm_card_block": "Host-only: consume explicit authenticated customer confirmation and atomically block the card in the demo ledger. No real bank connection. Idempotent persisted receipt readback.",
+    "read_card_block": "Host-only: recover an owned simulated card block receipt and actual persisted demo status after an uncertain response.",
     "banking_status": "Read-only service status. Contains no customer information.",
     "list_my_transactions": "List the authenticated customer's transactions by their event date. With both dates "
         "omitted, use up to 90 inclusive calendar days ending at the disclosed snapshot's latest event, bounded "
@@ -173,6 +186,12 @@ class Service:
                 principal, selected["id"], result["snapshot"])
         elif name == "prepare_unrecognized_charge":
             result = self.actions.prepare(principal, parsed.transaction_id, parsed.snapshot, parsed.request_id)
+        elif name == "prepare_card_block":
+            result = self.actions.prepare_card_block(principal, parsed.product_id, parsed.snapshot, parsed.request_id)
+        elif name == "confirm_card_block":
+            result = self.actions.confirm_card_block(principal, parsed.pending_handle, parsed.confirmed)
+        elif name == "read_card_block":
+            result = self.actions.read_card_block(principal, parsed.pending_handle)
         elif name == "confirm_simulated_intake":
             result = self.actions.confirm(principal, parsed.pending_handle, parsed.confirmed)
         elif name == "read_intake_receipt":

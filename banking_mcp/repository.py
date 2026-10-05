@@ -184,6 +184,26 @@ class Repository:
         if current != expected_build:
             raise BankError("snapshot_changed")
 
+    def owned_card(self, principal: Principal, product_id: str, build: str) -> dict:
+        """Resolve an exact owned card; callers cannot choose another customer."""
+        snapshot = self.snapshot()
+        if snapshot.id != build:
+            raise BankError("snapshot_changed")
+        owner = snapshot.products.get(product_id)
+        if principal.customer not in snapshot.customers or not owner or owner[0] != principal.customer:
+            raise BankError("authorization_denied")
+        if owner[1] not in {"Tarjeta Crédito", "Tarjeta Débito"}:
+            raise BankError("card_required")
+        with self._lock:
+            if self.con is None:
+                raise BankError("dataset_unavailable")
+            rows = self.con.execute("SELECT product_type,currency,product_status FROM read_parquet(?) "
+                "WHERE product_id=? AND customer_id=?", [str(snapshot.build / "silver/products.parquet"),
+                product_id, principal.customer]).fetchall()
+        if len(rows) != 1 or rows[0][2] != "Active":
+            raise BankError("card_unavailable")
+        return {"type": rows[0][0], "currency": rows[0][1], "source_status": rows[0][2]}
+
     def _rows(self, snapshot: Snapshot, principal: Principal, where: str, params: list,
               limit: int) -> list[dict]:
         if principal.customer not in snapshot.customers:

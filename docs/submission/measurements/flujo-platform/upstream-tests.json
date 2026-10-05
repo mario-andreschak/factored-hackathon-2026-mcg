@@ -1,0 +1,1907 @@
+{
+  "numFailedTestSuites": 0,
+  "numFailedTests": 0,
+  "numPassedTestSuites": 9,
+  "numPassedTests": 104,
+  "numPendingTestSuites": 0,
+  "numPendingTests": 0,
+  "numRuntimeErrorTestSuites": 0,
+  "numTodoTests": 0,
+  "numTotalTestSuites": 9,
+  "numTotalTests": 104,
+  "openHandles": [],
+  "snapshot": {
+    "added": 0,
+    "didUpdate": false,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0
+  },
+  "startTime": 1791238246625,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "isLocalRequest / assertLocalRequest unit"
+          ],
+          "duration": 3,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "isLocalRequest / assertLocalRequest unit accepts localhost-family Hosts with no Origin (native client)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238247744,
+          "status": "passed",
+          "title": "accepts localhost-family Hosts with no Origin (native client)"
+        },
+        {
+          "ancestorTitles": [
+            "isLocalRequest / assertLocalRequest unit"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "isLocalRequest / assertLocalRequest unit accepts a localhost Host with a matching localhost Origin",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247748,
+          "status": "passed",
+          "title": "accepts a localhost Host with a matching localhost Origin"
+        },
+        {
+          "ancestorTitles": [
+            "isLocalRequest / assertLocalRequest unit"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "isLocalRequest / assertLocalRequest unit rejects a non-localhost Host",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247749,
+          "status": "passed",
+          "title": "rejects a non-localhost Host"
+        },
+        {
+          "ancestorTitles": [
+            "isLocalRequest / assertLocalRequest unit"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "isLocalRequest / assertLocalRequest unit rejects the DNS-rebinding vector: localhost Host but a non-local Origin",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247749,
+          "status": "passed",
+          "title": "rejects the DNS-rebinding vector: localhost Host but a non-local Origin"
+        },
+        {
+          "ancestorTitles": [
+            "isLocalRequest / assertLocalRequest unit"
+          ],
+          "duration": 5,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "isLocalRequest / assertLocalRequest unit assertLocalRequest returns 403 for non-local, null for local",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238247750,
+          "status": "passed",
+          "title": "assertLocalRequest returns 403 for non-local, null for local"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/git origin guard"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/git origin guard blocks a cross-origin POST with 403 and never touches exec/spawn/fs/git",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 6,
+          "retryReasons": [],
+          "startAt": 1791238247756,
+          "status": "passed",
+          "title": "blocks a cross-origin POST with 403 and never touches exec/spawn/fs/git"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/git origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/git origin guard blocks a non-local Host with 403 and never touches the sinks",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238247758,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never touches the sinks"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/git origin guard"
+          ],
+          "duration": 18,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/git origin guard lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247759,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/git origin guard"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/git origin guard lets a native request with no Origin past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247777,
+          "status": "passed",
+          "title": "lets a native request with no Origin past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/update origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/update origin guard blocks a cross-origin POST with 403 and never touches exec/spawn/git",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238247780,
+          "status": "passed",
+          "title": "blocks a cross-origin POST with 403 and never touches exec/spawn/git"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/update origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/update origin guard blocks a non-local Host with 403 and never touches the sinks",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238247781,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never touches the sinks"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/update origin guard"
+          ],
+          "duration": 17,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/update origin guard lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247782,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/update origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/update origin guard lets a native request with no Origin past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247799,
+          "status": "passed",
+          "title": "lets a native request with no Origin past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/update origin guard"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/update origin guard blocks a cross-origin request with 403 and never touches git",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247801,
+          "status": "passed",
+          "title": "blocks a cross-origin request with 403 and never touches git"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/update origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/update origin guard blocks a non-local Host with 403",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247801,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/update origin guard"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/update origin guard lets a localhost request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247802,
+          "status": "passed",
+          "title": "lets a localhost request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/update origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/update origin guard lets a native request with no Origin past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247804,
+          "status": "passed",
+          "title": "lets a native request with no Origin past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/cwd origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/cwd origin guard blocks a cross-origin request with 403",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247805,
+          "status": "passed",
+          "title": "blocks a cross-origin request with 403"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/cwd origin guard"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/cwd origin guard allows a localhost request (200)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247806,
+          "status": "passed",
+          "title": "allows a localhost request (200)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/test-connection origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/test-connection origin guard blocks a cross-origin POST with 403 and never spawns (testConnection not called)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247806,
+          "status": "passed",
+          "title": "blocks a cross-origin POST with 403 and never spawns (testConnection not called)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/test-connection origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/test-connection origin guard blocks a non-local Host with 403 and never spawns",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247807,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never spawns"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/test-connection origin guard"
+          ],
+          "duration": 6,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/test-connection origin guard lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247808,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/test-connection origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/test-connection origin guard lets a native request with no Origin past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247815,
+          "status": "passed",
+          "title": "lets a native request with no Origin past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/test-connection/stream origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/test-connection/stream origin guard blocks a cross-origin POST with 403 and never spawns",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247816,
+          "status": "passed",
+          "title": "blocks a cross-origin POST with 403 and never spawns"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/test-connection/stream origin guard"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/test-connection/stream origin guard blocks a non-local Host with 403 and never spawns",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247817,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never spawns"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/test-connection/stream origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/test-connection/stream origin guard lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247818,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/test-connection/stream origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/test-connection/stream origin guard lets a native request with no Origin past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247820,
+          "status": "passed",
+          "title": "lets a native request with no Origin past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/servers origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/servers origin guard blocks a cross-origin POST with 403 and never persists (updateServerConfig not called)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247821,
+          "status": "passed",
+          "title": "blocks a cross-origin POST with 403 and never persists (updateServerConfig not called)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/servers origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/servers origin guard blocks a non-local Host with 403 and never persists",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247822,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never persists"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/servers origin guard"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/servers origin guard lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247823,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/mcp/servers origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/mcp/servers origin guard lets a native request with no Origin past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247825,
+          "status": "passed",
+          "title": "lets a native request with no Origin past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "PUT /api/mcp/servers/[name] origin guard"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PUT /api/mcp/servers/[name] origin guard blocks a cross-origin PUT with 403 and never persists",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247826,
+          "status": "passed",
+          "title": "blocks a cross-origin PUT with 403 and never persists"
+        },
+        {
+          "ancestorTitles": [
+            "PUT /api/mcp/servers/[name] origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PUT /api/mcp/servers/[name] origin guard blocks a non-local Host with 403 and never persists",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247826,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never persists"
+        },
+        {
+          "ancestorTitles": [
+            "PUT /api/mcp/servers/[name] origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PUT /api/mcp/servers/[name] origin guard lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247827,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "DELETE /api/mcp/servers/[name] origin guard"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "DELETE /api/mcp/servers/[name] origin guard blocks a cross-origin DELETE with 403 and never deletes",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247828,
+          "status": "passed",
+          "title": "blocks a cross-origin DELETE with 403 and never deletes"
+        },
+        {
+          "ancestorTitles": [
+            "DELETE /api/mcp/servers/[name] origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "DELETE /api/mcp/servers/[name] origin guard blocks a non-local Host with 403 and never deletes",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247828,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never deletes"
+        },
+        {
+          "ancestorTitles": [
+            "DELETE /api/mcp/servers/[name] origin guard"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "DELETE /api/mcp/servers/[name] origin guard lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247829,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/env origin guard (secret exfiltration)"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/env origin guard (secret exfiltration) blocks a cross-origin ?includeSecrets=true with 403 and never decrypts",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238247830,
+          "status": "passed",
+          "title": "blocks a cross-origin ?includeSecrets=true with 403 and never decrypts"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/env origin guard (secret exfiltration)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/env origin guard (secret exfiltration) blocks a non-local Host with 403 and never decrypts",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247830,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never decrypts"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/env origin guard (secret exfiltration)"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/env origin guard (secret exfiltration) lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247831,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/env origin guard (secret exfiltration)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "GET /api/env origin guard (secret exfiltration) lets a native request with no Origin past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247831,
+          "status": "passed",
+          "title": "lets a native request with no Origin past the guard (not 403)"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/env origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/env origin guard blocks a cross-origin POST with 403 and never persists",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238247832,
+          "status": "passed",
+          "title": "blocks a cross-origin POST with 403 and never persists"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/env origin guard"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/env origin guard blocks a non-local Host with 403 and never persists",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238247833,
+          "status": "passed",
+          "title": "blocks a non-local Host with 403 and never persists"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/env origin guard"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/env origin guard lets a localhost same-origin request past the guard (not 403)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238247833,
+          "status": "passed",
+          "title": "lets a localhost same-origin request past the guard (not 403)"
+        }
+      ],
+      "endTime": 1791238247839,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\security\\localRequestGuard.test.ts",
+      "startTime": 1791238246945,
+      "status": "passed",
+      "summary": ""
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "compileSpec service"
+          ],
+          "duration": 5,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service compiles + validates without saving by default",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1791238248045,
+          "status": "passed",
+          "title": "compiles + validates without saving by default"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service save: true persists when validation is clean",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238248051,
+          "status": "passed",
+          "title": "save: true persists when validation is clean"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service save: true does NOT persist when validation has errors",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1791238248052,
+          "status": "passed",
+          "title": "save: true does NOT persist when validation has errors"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service rejects a non-object spec with 400",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1791238248055,
+          "status": "passed",
+          "title": "rejects a non-object spec with 400"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service 422s with issues when the spec produces no usable flow",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238248056,
+          "status": "passed",
+          "title": "422s with issues when the spec produces no usable flow"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service each compile mints a fresh flow id — saving is always a create, never an overwrite",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238248057,
+          "status": "passed",
+          "title": "each compile mints a fresh flow id — saving is always a create, never an overwrite"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service defaults Simple-profile Subflow steps to separate messages and per-key sessions",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238248058,
+          "status": "passed",
+          "title": "defaults Simple-profile Subflow steps to separate messages and per-key sessions"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service",
+            "updateFlowId (replace an existing flow in place)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service updateFlowId (replace an existing flow in place) keeps the target id and lets the flow keep its own name (no dedup rename)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1791238248060,
+          "status": "passed",
+          "title": "keeps the target id and lets the flow keep its own name (no dedup rename)"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service",
+            "updateFlowId (replace an existing flow in place)"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service updateFlowId (replace an existing flow in place) still dedupes against OTHER flows' names",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238248061,
+          "status": "passed",
+          "title": "still dedupes against OTHER flows' names"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service",
+            "updateFlowId (replace an existing flow in place)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service updateFlowId (replace an existing flow in place) 404s for an unknown target id without compiling or saving",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238248061,
+          "status": "passed",
+          "title": "404s for an unknown target id without compiling or saving"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service",
+            "updateFlowId (replace an existing flow in place)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service updateFlowId (replace an existing flow in place) does NOT save (existing flow untouched) when validation has errors",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238248062,
+          "status": "passed",
+          "title": "does NOT save (existing flow untouched) when validation has errors"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec service",
+            "updateFlowId (replace an existing flow in place)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec service updateFlowId (replace an existing flow in place) applies separate results without retrofitting the opt-in session default",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238248063,
+          "status": "passed",
+          "title": "applies separate results without retrofitting the opt-in session default"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/flow/compile"
+          ],
+          "duration": 10,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/flow/compile 200 with { flow, validation, saved: false } for compile-only",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238248064,
+          "status": "passed",
+          "title": "200 with { flow, validation, saved: false } for compile-only"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/flow/compile"
+          ],
+          "duration": 3,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/flow/compile 201 when saved",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238248074,
+          "status": "passed",
+          "title": "201 when saved"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/flow/compile"
+          ],
+          "duration": 3,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/flow/compile 200 (not 201) when save was requested but errors block it",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238248078,
+          "status": "passed",
+          "title": "200 (not 201) when save was requested but errors block it"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/flow/compile"
+          ],
+          "duration": 5,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/flow/compile 400 on a missing spec",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238248081,
+          "status": "passed",
+          "title": "400 on a missing spec"
+        },
+        {
+          "ancestorTitles": [
+            "POST /api/flow/compile"
+          ],
+          "duration": 3,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "POST /api/flow/compile is gated by the encryption lock",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238248086,
+          "status": "passed",
+          "title": "is gated by the encryption lock"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec — nested bundle (#94)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec — nested bundle (#94) returns the whole bundle and saves descendants-first when clean",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 8,
+          "retryReasons": [],
+          "startAt": 1791238248089,
+          "status": "passed",
+          "title": "returns the whole bundle and saves descendants-first when clean"
+        },
+        {
+          "ancestorTitles": [
+            "compileSpec — nested bundle (#94)"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "compileSpec — nested bundle (#94) saves NOTHING when a nested child has validation errors",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1791238248091,
+          "status": "passed",
+          "title": "saves NOTHING when a nested child has validation errors"
+        }
+      ],
+      "endTime": 1791238248095,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\flow\\compileFlow.test.ts",
+      "startTime": 1791238247846,
+      "status": "passed",
+      "summary": ""
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "model- routing on /v1/chat/completions"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "model- routing on /v1/chat/completions routes a policy alias directly and returns its selected-model receipt",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238250936,
+          "status": "passed",
+          "title": "routes a policy alias directly and returns its selected-model receipt"
+        },
+        {
+          "ancestorTitles": [
+            "model- routing on /v1/chat/completions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "model- routing on /v1/chat/completions includes policy routing metadata in emulated SSE",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238250938,
+          "status": "passed",
+          "title": "includes policy routing metadata in emulated SSE"
+        },
+        {
+          "ancestorTitles": [
+            "model- routing on /v1/chat/completions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "model- routing on /v1/chat/completions routes a non-streaming model- request to ModelService and returns the completion",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238250939,
+          "status": "passed",
+          "title": "routes a non-streaming model- request to ModelService and returns the completion"
+        },
+        {
+          "ancestorTitles": [
+            "model- routing on /v1/chat/completions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "model- routing on /v1/chat/completions maps a resolution failure to the OpenAI error envelope with the given status",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238250940,
+          "status": "passed",
+          "title": "maps a resolution failure to the OpenAI error envelope with the given status"
+        },
+        {
+          "ancestorTitles": [
+            "model- routing on /v1/chat/completions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "model- routing on /v1/chat/completions emulates SSE streaming: role chunk → content chunk → finish chunk → [DONE]",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 10,
+          "retryReasons": [],
+          "startAt": 1791238250941,
+          "status": "passed",
+          "title": "emulates SSE streaming: role chunk → content chunk → finish chunk → [DONE]"
+        },
+        {
+          "ancestorTitles": [
+            "model- routing on /v1/chat/completions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "model- routing on /v1/chat/completions streams tool_calls as an indexed delta when the model answers with tools",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238250942,
+          "status": "passed",
+          "title": "streams tool_calls as an indexed delta when the model answers with tools"
+        },
+        {
+          "ancestorTitles": [
+            "flow- regression on /v1/chat/completions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "flow- regression on /v1/chat/completions uses unattended engine behavior only in worker mode",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238250943,
+          "status": "passed",
+          "title": "uses unattended engine behavior only in worker mode"
+        },
+        {
+          "ancestorTitles": [
+            "flow- regression on /v1/chat/completions"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "flow- regression on /v1/chat/completions still routes flow-Test into runFlow with identical arguments",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238250945,
+          "status": "passed",
+          "title": "still routes flow-Test into runFlow with identical arguments"
+        },
+        {
+          "ancestorTitles": [
+            "flow- regression on /v1/chat/completions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "flow- regression on /v1/chat/completions still routes Test into runFlow with identical arguments",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238250945,
+          "status": "passed",
+          "title": "still routes Test into runFlow with identical arguments"
+        },
+        {
+          "ancestorTitles": [
+            "flow- regression on /v1/chat/completions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "flow- regression on /v1/chat/completions appends only the new turn and does not echo the authoritative transcript",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238250946,
+          "status": "passed",
+          "title": "appends only the new turn and does not echo the authoritative transcript"
+        }
+      ],
+      "endTime": 1791238250949,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\chat\\directModelCompletion.test.ts",
+      "startTime": 1791238248099,
+      "status": "passed",
+      "summary": ""
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "PocketflowEngine — quick-chat snapshot resolution (issue #61)"
+          ],
+          "duration": 4,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PocketflowEngine — quick-chat snapshot resolution (issue #61) resolves the start node from the snapshot without touching the store",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238252591,
+          "status": "passed",
+          "title": "resolves the start node from the snapshot without touching the store"
+        },
+        {
+          "ancestorTitles": [
+            "PocketflowEngine — quick-chat snapshot resolution (issue #61)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PocketflowEngine — quick-chat snapshot resolution (issue #61) resolves a non-start node from the snapshot by id",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252595,
+          "status": "passed",
+          "title": "resolves a non-start node from the snapshot by id"
+        },
+        {
+          "ancestorTitles": [
+            "PocketflowEngine — quick-chat snapshot resolution (issue #61)"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PocketflowEngine — quick-chat snapshot resolution (issue #61) resolves a handoff edge from the snapshot",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238252596,
+          "status": "passed",
+          "title": "resolves a handoff edge from the snapshot"
+        },
+        {
+          "ancestorTitles": [
+            "PocketflowEngine — quick-chat snapshot resolution (issue #61)"
+          ],
+          "duration": 3,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PocketflowEngine — quick-chat snapshot resolution (issue #61) isolates concurrent same-id snapshot revisions in the compiled graph cache",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238252597,
+          "status": "passed",
+          "title": "isolates concurrent same-id snapshot revisions in the compiled graph cache"
+        },
+        {
+          "ancestorTitles": [
+            "PocketflowEngine — quick-chat snapshot resolution (issue #61)"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PocketflowEngine — quick-chat snapshot resolution (issue #61) isolates Persona App authority in both compiled-cache orderings",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1791238252600,
+          "status": "passed",
+          "title": "isolates Persona App authority in both compiled-cache orderings"
+        },
+        {
+          "ancestorTitles": [
+            "PocketflowEngine — quick-chat snapshot resolution (issue #61)"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "PocketflowEngine — quick-chat snapshot resolution (issue #61) still uses the store when the state carries no snapshot",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252603,
+          "status": "passed",
+          "title": "still uses the store when the state carries no snapshot"
+        }
+      ],
+      "endTime": 1791238252605,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\engine\\quickChatSnapshot.test.ts",
+      "startTime": 1791238250963,
+      "status": "passed",
+      "summary": ""
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: Rejection returns fixed \"tool denied\" string"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: Rejection returns fixed \"tool denied\" string rejects with the fixed denial message (no free-text feedback)",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252672,
+          "status": "passed",
+          "title": "rejects with the fixed denial message (no free-text feedback)"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: Rejection returns fixed \"tool denied\" string"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: Rejection returns fixed \"tool denied\" string approval executes the tool normally",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238252674,
+          "status": "passed",
+          "title": "approval executes the tool normally"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: Rejection returns fixed \"tool denied\" string"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: Rejection returns fixed \"tool denied\" string rejection does not call the tool handler",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252674,
+          "status": "passed",
+          "title": "rejection does not call the tool handler"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: No permission rules or saved decisions"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: No permission rules or saved decisions state does not contain savedPermissionRules field",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252675,
+          "status": "passed",
+          "title": "state does not contain savedPermissionRules field"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: No permission rules or saved decisions"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: No permission rules or saved decisions state does not contain flow-level permissionRules field",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252675,
+          "status": "passed",
+          "title": "state does not contain flow-level permissionRules field"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: No permission rules or saved decisions"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: No permission rules or saved decisions approval decision handler does not consult saved or flow-level rules",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252676,
+          "status": "passed",
+          "title": "approval decision handler does not consult saved or flow-level rules"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: Single gate behavior"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: Single gate behavior approves a single tool call",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238252676,
+          "status": "passed",
+          "title": "approves a single tool call"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: Single gate behavior"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: Single gate behavior rejects a single tool call",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238252677,
+          "status": "passed",
+          "title": "rejects a single tool call"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: Single gate behavior"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: Single gate behavior handles multiple pending calls with independent decisions",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 10,
+          "retryReasons": [],
+          "startAt": 1791238252677,
+          "status": "passed",
+          "title": "handles multiple pending calls with independent decisions"
+        },
+        {
+          "ancestorTitles": [
+            "Tool Approval Single Gate (#438)",
+            "Contract: Single gate behavior"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "Tool Approval Single Gate (#438) Contract: Single gate behavior returns tool_not_found for unknown call id",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252678,
+          "status": "passed",
+          "title": "returns tool_not_found for unknown call id"
+        }
+      ],
+      "endTime": 1791238252680,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\flow\\toolApprovalSingleGate.test.ts",
+      "startTime": 1791238252614,
+      "status": "passed",
+      "summary": ""
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "recovery failure classification"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "recovery failure classification classifies rate limits as retryable and honors retry-after",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238252730,
+          "status": "passed",
+          "title": "classifies rate limits as retryable and honors retry-after"
+        },
+        {
+          "ancestorTitles": [
+            "recovery failure classification"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "recovery failure classification keeps context limits and tool failures manual",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252732,
+          "status": "passed",
+          "title": "keeps context limits and tool failures manual"
+        },
+        {
+          "ancestorTitles": [
+            "recovery failure classification"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "recovery failure classification classifies transient connection closes as retryable transport failures",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252733,
+          "status": "passed",
+          "title": "classifies transient connection closes as retryable transport failures"
+        },
+        {
+          "ancestorTitles": [
+            "durable recovery contracts"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "durable recovery contracts preserves a logical run across pause/resume while refreshing ownership",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1791238252733,
+          "status": "passed",
+          "title": "preserves a logical run across pause/resume while refreshing ownership"
+        },
+        {
+          "ancestorTitles": [
+            "durable recovery contracts"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "durable recovery contracts uses MCP annotations to separate read-only/idempotent and unsafe effects",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252734,
+          "status": "passed",
+          "title": "uses MCP annotations to separate read-only/idempotent and unsafe effects"
+        },
+        {
+          "ancestorTitles": [
+            "durable recovery contracts"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "durable recovery contracts marks repaired dangling tool effects unknown without replacing legacy status",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 3,
+          "retryReasons": [],
+          "startAt": 1791238252735,
+          "status": "passed",
+          "title": "marks repaired dangling tool effects unknown without replacing legacy status"
+        }
+      ],
+      "endTime": 1791238252739,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\flow\\recoveryCheckpoint.test.ts",
+      "startTime": 1791238252685,
+      "status": "passed",
+      "summary": ""
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "toolApprovalRegistry"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "toolApprovalRegistry resolves a registered approval with the decision and clears it",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 4,
+          "retryReasons": [],
+          "startAt": 1791238252792,
+          "status": "passed",
+          "title": "resolves a registered approval with the decision and clears it"
+        },
+        {
+          "ancestorTitles": [
+            "toolApprovalRegistry"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "toolApprovalRegistry returns false when resolving an unknown approval",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252793,
+          "status": "passed",
+          "title": "returns false when resolving an unknown approval"
+        },
+        {
+          "ancestorTitles": [
+            "toolApprovalRegistry"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "toolApprovalRegistry tracks multiple pending calls and resolves them independently",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 5,
+          "retryReasons": [],
+          "startAt": 1791238252794,
+          "status": "passed",
+          "title": "tracks multiple pending calls and resolves them independently"
+        },
+        {
+          "ancestorTitles": [
+            "toolApprovalRegistry"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "toolApprovalRegistry clearPendingApprovals rejects every pending call for the conversation",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252794,
+          "status": "passed",
+          "title": "clearPendingApprovals rejects every pending call for the conversation"
+        }
+      ],
+      "endTime": 1791238252797,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\flow\\toolApprovalRegistry.test.ts",
+      "startTime": 1791238252745,
+      "status": "passed",
+      "summary": ""
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "conversation execution lock"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "conversation execution lock serializes mutations of one conversation",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252852,
+          "status": "passed",
+          "title": "serializes mutations of one conversation"
+        },
+        {
+          "ancestorTitles": [
+            "conversation execution lock"
+          ],
+          "duration": 2,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "conversation execution lock is re-entrant for the current async owner",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 1,
+          "retryReasons": [],
+          "startAt": 1791238252853,
+          "status": "passed",
+          "title": "is re-entrant for the current async owner"
+        }
+      ],
+      "endTime": 1791238252857,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\flow\\conversationExecutionLock.test.ts",
+      "startTime": 1791238252801,
+      "status": "passed",
+      "summary": ""
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "durable Flow mutation authority"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "durable Flow mutation authority preserves the legacy authority-free path for ordinary Flow runs",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252904,
+          "status": "passed",
+          "title": "preserves the legacy authority-free path for ordinary Flow runs"
+        },
+        {
+          "ancestorTitles": [
+            "durable Flow mutation authority"
+          ],
+          "duration": 0,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "durable Flow mutation authority fails Persona-attributed resource writes closed without a lock-capable authority",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252905,
+          "status": "passed",
+          "title": "fails Persona-attributed resource writes closed without a lock-capable authority"
+        },
+        {
+          "ancestorTitles": [
+            "durable Flow mutation authority"
+          ],
+          "duration": 1,
+          "failing": false,
+          "failureDetails": [],
+          "failureMessages": [],
+          "fullName": "durable Flow mutation authority does not accept assertion-only authority for Persona durable mutations",
+          "invocations": 1,
+          "location": null,
+          "numPassingAsserts": 2,
+          "retryReasons": [],
+          "startAt": 1791238252905,
+          "status": "passed",
+          "title": "does not accept assertion-only authority for Persona durable mutations"
+        }
+      ],
+      "endTime": 1791238252908,
+      "message": "",
+      "name": "C:\\Users\\Moe\\AppData\\Local\\Temp\\savia-flujo-evidence-49V0zK\\checkout\\__tests__\\flow\\executionAuthority.test.ts",
+      "startTime": 1791238252861,
+      "status": "passed",
+      "summary": ""
+    }
+  ],
+  "wasInterrupted": false
+}

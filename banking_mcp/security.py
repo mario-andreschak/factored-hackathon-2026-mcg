@@ -115,6 +115,13 @@ class StateStore:
                 CREATE INDEX IF NOT EXISTS sandbox_cases_recent ON sandbox_cases(customer, created_at);
                 CREATE TABLE IF NOT EXISTS sandbox_case_receipts(
                     case_id TEXT PRIMARY KEY, receipt_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS sandbox_card_pending(
+                    id TEXT PRIMARY KEY, request_key TEXT NOT NULL UNIQUE, binding TEXT NOT NULL,
+                    customer TEXT NOT NULL, product_id TEXT NOT NULL, snapshot TEXT NOT NULL,
+                    facts TEXT NOT NULL, expires INTEGER NOT NULL);
+                CREATE TABLE IF NOT EXISTS sandbox_card_blocks(
+                    customer TEXT NOT NULL, product_id TEXT NOT NULL, receipt_json TEXT NOT NULL, receipt_sha256 TEXT,
+                    PRIMARY KEY(customer,product_id));
                 CREATE TABLE IF NOT EXISTS sandbox_handoffs(
                     id TEXT PRIMARY KEY, binding TEXT NOT NULL, customer TEXT NOT NULL,
                     transaction_id TEXT, snapshot TEXT, reason TEXT NOT NULL,
@@ -146,6 +153,10 @@ class StateStore:
                 # manufacture saved questions or charge evidence for them.
                 db.execute("ALTER TABLE sandbox_handoffs ADD COLUMN packet_json TEXT")
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS action_pending_request_key ON action_pending(request_key)")
+            card_columns = {row[1] for row in db.execute("PRAGMA table_info(sandbox_card_blocks)")}
+            if "receipt_sha256" not in card_columns:
+                # A legacy receipt without saved integrity evidence stays unverified.
+                db.execute("ALTER TABLE sandbox_card_blocks ADD COLUMN receipt_sha256 TEXT")
             # Initialize only a new ledger. A missing identity in existing state
             # is uncertainty, never permission to silently adopt a new identity.
             if fresh:

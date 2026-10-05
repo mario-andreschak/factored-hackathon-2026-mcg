@@ -1172,6 +1172,28 @@ class DisputeChatService:
             raise ChatError("invalid_selection", 400, "El movimiento seleccionado no está disponible.")
         return {field: selection[field] for field in sorted(fields)}
 
+    def card_block_hint(self, customer_id: str, session_id: str, session_exp: int,
+                        message: str, language: str) -> dict:
+        """Persist guidance to the real host control; prose never confirms a write."""
+        subject, owner = self._identity(customer_id, session_id, session_exp)
+        if not self._action_enabled or self._bank_backend is None:
+            raise ChatError("action_unavailable", 503, "La acción no está disponible.")
+        reply = ("Puedo bloquear tu tarjeta ficticia ahora. En «Bloquear mi tarjeta ahora», selecciona tu tarjeta y confirma el bloqueo. Solo diré que está bloqueada cuando lea el recibo guardado. No se modifica ningún banco real."
+            if language == "es" else
+            "Posso bloquear seu cartão fictício agora. Em «Bloquear meu cartão agora», selecione seu cartão e confirme o bloqueio. Só direi que está bloqueado depois de ler o recibo salvo. Nenhum banco real será alterado.")
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = self._bind(db, session_id, owner, session_exp)
+            if row["revoked"] or row["active_until"] > time.time():
+                raise ChatError("chat_busy", 409, "La sesión no está disponible ahora.")
+            if row["subject"] not in {None, subject} or row["customer_id"] not in {None, customer_id}:
+                raise ChatError("session_mismatch", 401, "La sesión no está disponible.")
+            db.execute("UPDATE chat_sessions SET subject=?,customer_id=? WHERE session_id=?", (subject, customer_id, session_id))
+            operation = str(uuid.uuid4())
+            db.executemany("INSERT INTO chat_messages(session_id,operation,role,text) VALUES (?,?,?,?)",
+                [(session_id, operation, "user", message), (session_id, operation, "assistant", reply)])
+        return {"reply": reply, "action_hint": "card_block", "status": "waiting_for_input"}
+
     async def send(self, customer_id: str, session_id: str, session_exp: int, message: str, *,
                    display_message: str | None = None, selection: dict[str, Any] | None = None,
                    workflow=None, query_scope_id: str | None = None, language: str = "es",

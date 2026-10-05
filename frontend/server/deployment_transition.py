@@ -19,7 +19,9 @@ import tempfile
 import time
 from urllib.parse import quote
 
-SCHEMA = "dispute-retained-transition/v1"
+# v2 prepares the reviewed card-action schema before sealing its exact hash.
+# A v1 receipt cannot authorize an implicit live schema migration.
+SCHEMA = "dispute-retained-transition/v2"
 EVIDENCE_SCHEMA = "dispute-retained-operator-evidence/v1"
 LEGACY_COLUMNS = {
     "replays": ("jti", "expires"),
@@ -30,6 +32,7 @@ LEGACY_COLUMNS = {
 GUARDED_BANK_TABLES = {
     "sessions", "replays", "revoked", "capabilities", "action_pending",
     "sandbox_cases", "sandbox_case_receipts", "sandbox_handoffs",
+    "sandbox_card_pending", "sandbox_card_blocks",
     "dispute_host_actions", "dispute_host_cancelled", "dispute_handoff_packets",
     "gloria_host_actions", "gloria_host_cancelled", "gloria_handoff_packets",
 }
@@ -60,6 +63,13 @@ ADDITIVE_SQL = (
     facts TEXT NOT NULL, UNIQUE(customer, transaction_id, action))""",
     "CREATE INDEX sandbox_cases_recent ON sandbox_cases(customer, created_at)",
     "CREATE TABLE sandbox_case_receipts(case_id TEXT PRIMARY KEY, receipt_json TEXT NOT NULL)",
+    """CREATE TABLE sandbox_card_pending(
+    id TEXT PRIMARY KEY, request_key TEXT NOT NULL UNIQUE, binding TEXT NOT NULL,
+    customer TEXT NOT NULL, product_id TEXT NOT NULL, snapshot TEXT NOT NULL,
+    facts TEXT NOT NULL, expires INTEGER NOT NULL)""",
+    """CREATE TABLE sandbox_card_blocks(
+    customer TEXT NOT NULL, product_id TEXT NOT NULL, receipt_json TEXT NOT NULL, receipt_sha256 TEXT,
+    PRIMARY KEY(customer,product_id))""",
     """CREATE TABLE sandbox_handoffs(
     id TEXT PRIMARY KEY, binding TEXT NOT NULL, customer TEXT NOT NULL,
     transaction_id TEXT, snapshot TEXT, reason TEXT NOT NULL, created_at INTEGER NOT NULL,

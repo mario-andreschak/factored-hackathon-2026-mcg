@@ -1,0 +1,18 @@
+{
+  "schema": "savia-final-pitch-review/v1",
+  "date": "2026-10-05",
+  "slides": 6,
+  "pdf_pages": 6,
+  "native_preview_size": [
+    1600,
+    900
+  ],
+  "all_shapes_within_slide": true,
+  "notes_embedded_on_all_slides": true,
+  "swarm_markers": 100,
+  "leads": 10,
+  "specialists": 90,
+  "frozen_originals_unchanged": true,
+  "visual_review": "Native contact sheet inspected; individual slide 4 and slide 5 reviewed at full size.",
+  "release_scope": "New local successor. No video, deployment, model call, submission or historical release modification."
+}

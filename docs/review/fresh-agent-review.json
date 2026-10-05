@@ -1,0 +1,1049 @@
+{
+  "schema": "savia-independent-fresh-agent-review/v1",
+  "assessed_at_utc": "2026-10-05T22:07:31.314156+00:00",
+  "reviewer": "fresh_review independent repository subagent",
+  "method": {
+    "entry_point": "README.md only at initial review, then its evidence links and source/tests",
+    "initial_review_score_target_received": false,
+    "reassessment_basis": "Initial independent score was 92. Subsequent coordinator requests referred to that score; this reassessment checked the final guard and retained the score based on evidence, without a minimum target.",
+    "scoring": "Five equally weighted integer 0-5 dimensions; total = 4 * sum(scores)",
+    "anchors": {
+      "3": "Coherently implemented with evidence",
+      "4": "Strong checks and disclosed limits",
+      "5": "Unusually complete, reproducible and well-supported within claimed scope"
+    },
+    "provider_requests_by_reviewer": 0,
+    "source_edits_by_reviewer": 0,
+    "limitations": "Original source/offline test qualification of the identified subset, plus independent read-only public-byte verification and inspection of operator-run live card API acceptance; not whole-release graphical, voice or expanded-collaboration acceptance."
+  },
+  "repository": {
+    "path": "C:/Users/Moe/.codex/worktrees/savia-score-90/factored-hackathon-2026",
+    "git_head_at_pinned_run_start": "effd6ed35719ecd913021e6a805edc1c466ee76c",
+    "git_head_at_review_publication": "fee56eef903b99e235cf16de38c03a303f0be16f",
+    "working_tree_before_review_artifacts": [
+      "M resources/dispute_workflow.flow.json",
+      " M scripts/synthetic_integration/source-inputs.sha256.json"
+    ],
+    "source_state": "Exact source_sha256 below identify inspected/tested files. HEAD is context; root was separately updating graph freshness and deployment inputs.",
+    "git_head_at_live_reassessment": "a1b0ff82e2c7ce2b577b34de69271578ecdca5ab"
+  },
+  "total_score": 92,
+  "dimensions": [
+    {
+      "dimension": "technical_judgment",
+      "score": 5,
+      "rationale": "Layered bank authority binds owner, session generation, ledger continuity, exact canonical arguments and final revocation/expiry checks to durable, idempotent actions. Independent adversarial checks cover concurrent confirmations, cross-process risk limits, restart/recovery, signed-argument tampering and revoked sessions. Card receipt integrity, durable blocked-state display, cancellation and stale-session recovery defects identified during review were corrected and tested.",
+      "strongest_5_evidence": "Implemented authority and independent whole-receipt readback with race/restart/uncertainty regressions; uncertain outcomes never authorize a second write.",
+      "limits": "Finite display assertion checks do not prove arbitrary natural-language entailment. Simulated actions do not execute against a production bank.",
+      "missing_for_5": []
+    },
+    {
+      "dimension": "ai_engineering",
+      "score": 4,
+      "rationale": "Implemented UI, trusted backend, model/tool boundary, native voice, durable inquiries, actual two-reviewer results and saved recommendation speech have source/image/audio provenance. Historical recordings and the later failed fleet attempt are honestly separated.",
+      "strongest_5_evidence": "Unusually careful recorded source/image/served-JavaScript/audio/playback provenance, integrated recovery and persistent customer story.",
+      "limits": "Current card API acceptance and deployed source/public UI bytes are now qualified. Current expanded collaboration still lacks completed customer acceptance; independent speech/recommendation usefulness adjudication remains pending. Card GUI/voice acceptance was not newly exercised.",
+      "missing_for_5": [
+        "Completed and repeatable current-revision expanded collaboration/customer acceptance.",
+        "Independent assessment of spoken and generated recommendation usefulness."
+      ]
+    },
+    {
+      "dimension": "data_engineering",
+      "score": 5,
+      "rationale": "Whole-run single-writer locking, isolated immutable builds, contract-gated atomic CURRENT publication, pinned source inventories and manifests preserve the last good snapshot. Per-request DuckDB cursors and ownership joins protect concurrent readers. Source row reconciliation, quarantine, deduplication, late-arrival correction and logical idempotence are implemented and exercised.",
+      "strongest_5_evidence": "Failure/restart/reader isolation, mutation-during-ingestion and late-correction tests supplement lineage and complete row accounting; public six-table replay independently reproduces the mechanisms.",
+      "limits": "Historical organizer-source counts are published artifacts; this review did not recompute the private source. Manual stale writer-lock recovery requires an operator to verify all writers stopped.",
+      "missing_for_5": []
+    },
+    {
+      "dimension": "machine_learning",
+      "score": 4,
+      "rationale": "Frozen train-only model/threshold selection, a 120-case bilingual diagnostic, keyword/TF-IDF/abstention comparisons, paired uncertainty and safety-miss/handoff-burden analysis are reproducible. The actual 100-concurrent-request Luna run is audited against exact outputs and a deterministic baseline.",
+      "strongest_5_evidence": "Leakage discovery changed the evaluation design, and observed model errors, conservative routing burden and baseline ties are explicitly retained.",
+      "limits": "Routing labels are AI-authored and already inspected; independent human adjudication is pending. Luna uses ten repeated request phrasings and ties the deterministic baseline 100/100. This is task-path capacity evidence, not broad model quality generalization.",
+      "missing_for_5": [
+        "Independent label adjudication and a genuinely untouched broader-language holdout.",
+        "Evidence of model value over the deterministic baseline on the intended customer decision workload."
+      ]
+    },
+    {
+      "dimension": "data_analytics",
+      "score": 5,
+      "rationale": "Recomputed raw artifact aggregates connect explicit denominators and uncertainty to operating choices: ownership-safe transaction grounding, leakage-aware evaluation, background progress for observed latency, inspection of context/cache burden, and human-routing capacity. Metadata-only operational extraction avoids customer text/identity and separates handoff/action/closure from resolution.",
+      "strongest_5_evidence": "Executable data-to-decision analysis preserves workload/revision boundaries, compares benefit and safety burden, and reports token counts, tail latency and customer usefulness separately from transport success.",
+      "limits": "No production ROI, dollar cost, bank resolution or live human pickup is measured. Original customer usefulness is n=3, agent screened, across revisions; the separate post-fix n=1 is deterministic host fallback.",
+      "missing_for_5": []
+    }
+  ],
+  "blocking_findings_open": [],
+  "findings": [
+    {
+      "finding": "Plain ES/PT status and merchant assertions bypassed previous output guards.",
+      "status": "fixed and independently checked",
+      "source_commit": "effd6ed35719ecd913021e6a805edc1c466ee76c",
+      "verification": "22 original probes pass; response tests included in final 615-pass run. The guard compares finite supported field/assertion forms with trusted structured facts independently of Markdown. Bare quoted values do not create authority; explicit report/hypothetical context exempts only its own clause.",
+      "residual_limit": "Finite assertion grammar cannot prove arbitrary natural-language entailment or all translated paraphrases."
+    },
+    {
+      "finding": "Card receipt integrity, cancellation, durable block visibility, expired/stale-session handle recovery.",
+      "status": "fixed and independently checked",
+      "source_commit": "142f4479",
+      "verification": "Card bank/API suite included in final pinned run. Source inspection confirms digest + original intent/snapshot/timestamp binding; independent historical receipt read under current ownership; status overlay, server cancellation and authoritative stale-handle flag."
+    }
+  ],
+  "current_independent_verification": {
+    "started_utc": "2026-10-05T21:50:59.485720+00:00",
+    "finished_utc": "2026-10-05T21:53:54.087318+00:00",
+    "python": "3.13.1",
+    "environment": "C:/Users/Moe/.codex/tmp/savia-review-evidence-venv/Scripts/python.exe; prepared offline pinned review dependencies",
+    "command": "python -m pytest -q -p no:cacheprovider tests/test_dispute_response.py tests/test_card_block.py tests/test_card_block_api.py tests/test_dispute_action_host.py tests/test_pipeline.py tests/test_router.py tests/test_agent_analytics.py",
+    "passed": 615,
+    "failed": 0,
+    "pytest_elapsed_seconds": 96.12,
+    "source_subset_unchanged": true,
+    "guard_probes": {
+      "total": 22,
+      "passed": 22,
+      "results": [
+        {
+          "language": "es",
+          "message": "La transacción fue rechazada.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "pt",
+          "message": "Esta transação foi revertida.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El cargo está pendiente.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "pt",
+          "message": "A cobrança está pendente.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El comercio es Tienda Falsa.",
+          "expected": "merchant_unverified",
+          "errors": [
+            "merchant_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "pt",
+          "message": "O estabelecimento é Mercado Falso.",
+          "expected": "merchant_unverified",
+          "errors": [
+            "merchant_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "Estado: Declined.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "pt",
+          "message": "Status = Reversed.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El comercio es \"Tienda Falsa\".",
+          "expected": "merchant_unverified",
+          "errors": [
+            "merchant_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "pt",
+          "message": "O status é **Pending**.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El estado es Approved.",
+          "expected": "accept",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "language": "pt",
+          "message": "O estabelecimento é Comercio de prueba.",
+          "expected": "accept",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El comercio es groundedmerchant0.",
+          "expected": "merchant_unverified",
+          "errors": [
+            "merchant_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El cliente afirma que el comercio es Tienda Falsa. El comercio es Tienda Falsa.",
+          "expected": "merchant_unverified",
+          "errors": [
+            "merchant_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "Ejemplo: \"El estado es Declined\"; el estado es Declined.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "pt",
+          "message": "Se o status é Reversed, consulte os fatos. O status é Reversed.",
+          "expected": "status_unverified",
+          "errors": [
+            "status_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "Ejemplo: \"El estado es Declined\".",
+          "expected": "accept",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "language": "pt",
+          "message": "O cliente diz que o estabelecimento é Mercado Falso.",
+          "expected": "accept",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "Si el estado es Declined, consulta los hechos.",
+          "expected": "accept",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El comercio es Comercio de prueba Inventado.",
+          "expected": "merchant_unverified",
+          "errors": [
+            "merchant_unverified"
+          ],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El comercio es Pan y Café, S.A.",
+          "expected": "accept",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "language": "es",
+          "message": "El comercio es Pan y Café, S.A. Falso.",
+          "expected": "merchant_unverified",
+          "errors": [
+            "merchant_unverified"
+          ],
+          "passed": true
+        }
+      ]
+    },
+    "source_sha256": {
+      "README.md": "ffc963fda5ae872a9015b5b7e204f7632f6de3e997a342caa3a66d1d05e08638",
+      "dispute_workflow/response.py": "f535a329d15ba5eda200be9a83d51185bb4e7b3af653b3ba4aa50ad1fe74be6d",
+      "dispute_workflow/action_host.py": "6cc59f134f86993e6945c2ec36a81ed372c4bab3c8da8e26ee568d0ba48180cc",
+      "banking_mcp/actions.py": "0342857d8d3b1ef25f5cdff70652d8b8eb76455aaa587b1ac25be920e35dc6f3",
+      "banking_mcp/server.py": "a1ba376f5bc5cba7f745efd3871925741e52cf5778d77b86e6ef50664a24b2c0",
+      "pipeline/common.py": "5b36a52f78cbfe6c5f65f78252bebd344e5d4a73b77a32104eca8b9f28a53cea",
+      "pipeline/writer.py": "730cf37b50a6e3b7be272cbb821448fdc8011047df70726d04b08d5131d818d3",
+      "pipeline/__main__.py": "07338b5bcb70d8d37b976de0b634252472a677d14ed2b453ffd1baa75feada41",
+      "pipeline/lookup.py": "efa986b587dff74d902d0f2eb39002fc6964ff5a34109cb9de0bf46d00831888",
+      "pipeline/bronze.py": "92fdbcebd827d0abf75af414883f0109e4a26e3f06f9eec25e4ae0331fdbf7b4",
+      "pipeline/silver.py": "6dc66682d3ece6170311f6c89ef26702fa244dc37fcb1b6b0820d6704db0c595",
+      "pipeline/gold.py": "0c4b7b53e7b1efdf4146b57e921659372526915bdddd0bfa64cae28142064961",
+      "pipeline/verify.py": "b47f7ad20aca130f51ef6c67820f24356cd7bfd061f2ed6a039012d66d0c4d92",
+      "pipeline/report.py": "0d8a026835da5e8dc73ef62db8a00f384794c7696e8ef739c5ae0d0b7ebafb0a",
+      "pipeline/contracts.yaml": "98f0add581f437c79a119682a90723451722de025b6af867e892487d8693972a",
+      "ml/router.py": "0caef13683fde550554b5739fc5504ddc6716298ef7be0350b4999659e409677",
+      "demo/evaluate_router.py": "b843879a7b5275cbae2b67ad45683b983b768c8d517c4f055a269fc661d71e9e",
+      "ml/data/router_train.csv": "23f1022bbbbe51582cd50a88464cd85f885465729dfd7494e90a9be680190509",
+      "ml/data/router_test.csv": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+      "analytics/extract.py": "2b6f3a213307d1a2c40fa7e109d1cabaacc6d84142b48b27eb72feffd9ce4f3c",
+      "analytics/report.py": "62590dc0c157d5bf53e672025f365415dea5e6cd47a866d375314604419f5736",
+      "scripts/analyze_operating_evidence.py": "969896e15bef1e1fb67e1c9be710ab403df6e3e3157cead8d96afb4bb27e70a7",
+      "frontend/src/CardBlockControl.tsx": "39019214a2a178f5d369fa28509c499dbc037b671c1852498a31aed2690b04a7",
+      "frontend/src/CardBlockControl.test.tsx": "6398b2f567b78b7225cf296f385d46b348ea4f08497030722b88106210d5ef3e",
+      "tests/test_dispute_response.py": "b03879624ab91b2d2ec29ee4063c83f5138a1c9e913d7ad5d29aacf505e35967",
+      "tests/test_card_block.py": "2b14913036cd0315cc4e4156ed30e8be4ad8b42bb81ad07e3d37505ec473ceb2",
+      "tests/test_card_block_api.py": "2d1b16647a8d3705dcfa95a50c4ee5a0c7230cacc026f2de9ea8938d2d7d178c",
+      "tests/test_dispute_action_host.py": "0bc85d9ec069a708e468e6f3821ba37c51965a761afc9ef47b0220fe50c3a8ed",
+      "tests/test_pipeline.py": "c8fe449c523ff5e8747fd6af438f21fda6426776a03db5cfcb1ddda97c3e8388",
+      "tests/test_router.py": "666e456c2c81a5e9faaa6597bf5e56ac3ce31341b849e41cd2b185a360d14afa",
+      "tests/test_agent_analytics.py": "93194f8e1a736c079dc5db7143fd8070e779677367f50052cf0258227abd499a",
+      "tests/test_banking_mcp.py": "0414f036fd806bbd43ef0d02d84cd0a09675956aa2bb435b36eb512f6b78b9cd",
+      "frontend/tests/test_bank_rpc.py": "5455ed292a5865d452257059e78668a74203fae3298f0cda5ee0691a50f70fc4",
+      "frontend/tests/test_bank_controller.py": "f6eea446f539de5a1084d4c40def2e6915bf79244d500fc382f403349536cc54",
+      "frontend/tests/test_direct_host_state.py": "317ccc3dadebc83ddeb948fc0c8e1626f7c60fe290bc4f0507102a81a93cbd2c"
+    }
+  },
+  "earlier_independent_runs_in_same_review": {
+    "date": "2026-10-05",
+    "runs": [
+      {
+        "scope": "Bank authority adversarial subset",
+        "command": "python -m pytest -q -p no:cacheprovider tests/test_banking_mcp.py -k 'cross_process_distinct_confirmations or prepare_same_request_serializes or concurrent_confirmation or revoke_winning or arguments_bound or signed_missing_malformed or 500_interleaved_reads or handles_survive_server_restart'",
+        "passed": 21,
+        "deselected": 74,
+        "seconds": 32.68,
+        "source_pin": "Earlier run in this review session; exact before/after hashes were not captured for this execution."
+      },
+      {
+        "scope": "Direct-host/frontend Python contract tests",
+        "command": "python -m pytest -q -p no:cacheprovider --import-mode=importlib frontend/tests/test_bank_rpc.py frontend/tests/test_bank_controller.py frontend/tests/test_direct_host_state.py",
+        "passed": 97,
+        "subtests_passed": 134,
+        "seconds": 7.79,
+        "source_pin": "Earlier run in this review session; exact before/after hashes were not captured for this execution."
+      }
+    ],
+    "note": "Counts are separate executions and are not summed into the final 615-pass receipt. An initial system-Python router failure was missing joblib; the prepared review environment reproduced the router successfully."
+  },
+  "additional_independent_audits": [
+    "Reproduced frozen router metrics: keyword accuracy .583/macro-F1 .569, TF-IDF .783/.782, abstention .542/.548; human-required misses 13/3/1 and unnecessary human routes 6/9/52.",
+    "Checked all 100 Luna raw records against exact task oracle and deterministic baseline; 100 unique records, ten distinct request phrasings, no observed tools/reroutes, 100 overlapping app-server turn intervals; p50 37.400 seconds.",
+    "Recomputed operating evidence sections and matched checked-in JSON: language/scenario slices, token/cache totals, routing tradeoff and customer aggregates.",
+    "Verified both frozen native WAV hashes, 24-kHz sample counts and exact full-playback acknowledgments; matched served JS hash against frozen runtime manifest.",
+    "Inspected immutable snapshot publication, single-writer recovery, retained old reader snapshots, source mutation detection, per-request cursors and customer/product ownership joins."
+  ],
+  "evidence_scope": {
+    "dated_records": [
+      {
+        "path": "docs/qualification/dispute-naming-source-2026-10-01.json",
+        "date": "2026-10-01",
+        "scope": "Historical frozen qualification 1,725 tests / 428 subtests, not current full-tree count."
+      },
+      {
+        "path": "docs/submission/measurements/final-comparison-counted.json",
+        "recorded_at_utc": "2026-10-05T01:24:14.546682+00:00",
+        "scope": "Original n=3 across recorded revisions; useful 2/3 agent screened; no production resolution or human adjudication."
+      },
+      {
+        "path": "docs/submission/measurements/actual-half-hour-followup.json",
+        "observed_at": "2026-10-04T20:13:30-05:00",
+        "scope": "1800 elapsed real seconds, one visible saved update, unchanged status deduplicated; no bank resolution."
+      },
+      {
+        "path": "docs/submission/runtime-listen-freeze.json",
+        "observed_at_utc": "2026-10-05T06:14:03.243555+00:00",
+        "scope": "Read-only rc.2 saved recommendation freeze; source 7089ca7b, separately pinned image and served UI."
+      },
+      {
+        "path": "docs/submission/measurements/fleet-customer-attempt/receipt.json",
+        "started_at_utc": "2026-10-05T17:38:24.738Z",
+        "finished_at_utc": "2026-10-05T17:43:49.255Z",
+        "scope": "Later source a5e48f09 root failed first provider call before delegation, not completed 100-agent customer acceptance."
+      },
+      {
+        "path": "docs/submission/measurements/luna-100/run-100/summary.json",
+        "started_at_utc": "2026-10-05T21:23:26.918601+00:00",
+        "finished_at_utc": "2026-10-05T21:24:24.530641+00:00",
+        "scope": "100 actual subscription-backed provider turns over ten fixture phrasings; deterministic baseline ties 100/100."
+      },
+      {
+        "path": "docs/review/replay-receipt.json",
+        "started_utc": "2026-10-05T21:25:58.438586+00:00",
+        "finished_utc": "2026-10-05T21:27:17.630091+00:00",
+        "scope": "Public synthetic pipeline/analytics replay; historical private organizer counts not recomputed."
+      },
+      {
+        "path": "docs/submission/measurements/card-block-live/api-receipt.json",
+        "started_utc": "2026-10-05T21:57:56.691028+00:00",
+        "finished_utc": "2026-10-05T21:58:42.837392+00:00",
+        "scope": "Two actual ES/PT authenticated fictional card API acceptance cases, with consent/readback/deduplication/relogin/foreign-profile invariants; not GUI or voice acceptance."
+      }
+    ],
+    "frozen_native": {
+      "source": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+      "image": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+      "served_js_sha256": "f06ecbad1ea5089a227a04ea7468aeb8f4b1ef023ac04a98e6b71379771cc8bd",
+      "scope": "Historical integrated voice/customer recording; source/image/audio identities verified offline."
+    },
+    "current_card_live_acceptance": {
+      "status": "qualified live API acceptance; graphical browser and voice not newly qualified",
+      "initial_status": "unverified at initial review publication",
+      "initial_review_utc": "2026-10-05T21:53:54.087318+00:00",
+      "api_started_utc": "2026-10-05T21:57:56.691028+00:00",
+      "api_finished_utc": "2026-10-05T21:58:42.837392+00:00",
+      "source": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+      "image": "registry.fly.io/savia-rc-2026@sha256:c38f3af736defdf55c7de47b0e1597ad361b3f748c845176b920377fd12b307f",
+      "deployment_observed_utc": "2026-10-05T22:01:18.207365+00:00",
+      "deployment_identity_basis": "Inspected operator deployment and remote-runtime verification receipts. Independent public GET checks establish served bytes; public GET alone cannot establish container image identity.",
+      "api_acceptance_basis": "Independent inspection of the actual operator-run harness and sanitized receipt; reviewer did not repeat the bank actions.",
+      "cases": [
+        {
+          "language": "es",
+          "fixture_profile": "mexico",
+          "initial_state": "card_unblocked",
+          "prepare_changed_card": false,
+          "omitted_consent_denied": true,
+          "confirmed_state": "card_block_verified",
+          "receipt_status": "blocked",
+          "simulated": true,
+          "receipt_sha256": "bae20836b3eebd746367d514d88d1723de10656c9518f3b8cb60de3cacaf0924",
+          "receipt_readback_equal": true,
+          "repeat_confirmation_equal": true,
+          "overview_blocked": true,
+          "relogin_receipt_equal": true,
+          "foreign_profile_denied": true,
+          "localized_no_real_bank_caveat": true
+        },
+        {
+          "language": "pt",
+          "fixture_profile": "colombia",
+          "initial_state": "card_unblocked",
+          "prepare_changed_card": false,
+          "omitted_consent_denied": true,
+          "confirmed_state": "card_block_verified",
+          "receipt_status": "blocked",
+          "simulated": true,
+          "receipt_sha256": "da586e06ac22111c448df1243fb134079d14260c01bd7171067827f0adfbd564",
+          "receipt_readback_equal": true,
+          "repeat_confirmation_equal": true,
+          "overview_blocked": true,
+          "relogin_receipt_equal": true,
+          "foreign_profile_denied": true,
+          "localized_no_real_bank_caveat": true
+        }
+      ],
+      "http_steps": 43,
+      "invariants": "Preparation and omitted consent leave card unblocked; explicit consent produces persisted simulated block; exact receipt readback and repeat confirmation deduplicate; overview shows blocked; re-login preserves the same receipt; foreign profiles are denied.",
+      "source_overlap_with_final_615_pass_run": {
+        "files": 16,
+        "all_match": true,
+        "mismatches": []
+      },
+      "independent_readonly_verification": {
+        "schema": "savia-independent-live-readonly-verification/v1",
+        "started_utc": "2026-10-05T22:05:53.402258+00:00",
+        "finished_utc": "2026-10-05T22:06:09.471663+00:00",
+        "origin": "https://savia-rc-2026.fly.dev",
+        "git_head": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+        "gate_status": 200,
+        "cookie_persisted_to_disk": false,
+        "application_login_requests": 0,
+        "bank_requests": 0,
+        "provider_requests": 0,
+        "post_requests": "One public RC gateway entry to establish the temporary visitor cookie; all subsequent public verification requests were GET.",
+        "source_files_checked_against_git": 177,
+        "source_files_matched": 177,
+        "public_ui_files_checked": 22,
+        "portal_files_checked": 27,
+        "portal_manifest_extra_probe": "Expected 404: the server publishes only artifacts in the manifest, not the manifest itself.",
+        "public_files_matched": 49,
+        "public_results": [
+          {
+            "kind": "ui",
+            "path": "/assets/dm-sans-latin-400-normal-BwCSEQnW.woff",
+            "status": 200,
+            "expected_sha256": "38702875fe179437d200e7ba6f7fab4d497ffe48117ef332029b2081751186ad",
+            "actual_sha256": "38702875fe179437d200e7ba6f7fab4d497ffe48117ef332029b2081751186ad",
+            "match": true,
+            "bytes": 18356,
+            "seconds": 1.1445
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/dm-sans-latin-400-normal-CW0RaeGs.woff2",
+            "status": 200,
+            "expected_sha256": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006",
+            "actual_sha256": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006",
+            "match": true,
+            "bytes": 14200,
+            "seconds": 1.0673
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/dm-sans-latin-500-normal-B9HHJjqV.woff2",
+            "status": 200,
+            "expected_sha256": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d",
+            "actual_sha256": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d",
+            "match": true,
+            "bytes": 14304,
+            "seconds": 0.8736
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/dm-sans-latin-500-normal-Dr3UlScf.woff",
+            "status": 200,
+            "expected_sha256": "7deb957e430b780ee3272d801af4f9f2211b1330ec40a312a8f25309eacb4034",
+            "actual_sha256": "7deb957e430b780ee3272d801af4f9f2211b1330ec40a312a8f25309eacb4034",
+            "match": true,
+            "bytes": 18520,
+            "seconds": 1.1163
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/dm-sans-latin-600-normal-Aqo67rzb.woff2",
+            "status": 200,
+            "expected_sha256": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120",
+            "actual_sha256": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120",
+            "match": true,
+            "bytes": 14144,
+            "seconds": 0.9905
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/dm-sans-latin-600-normal-BmdmIIQ2.woff",
+            "status": 200,
+            "expected_sha256": "e7351257e49400eff05aca30a2007289194a900860d30c30770d8b8732897564",
+            "actual_sha256": "e7351257e49400eff05aca30a2007289194a900860d30c30770d8b8732897564",
+            "match": true,
+            "bytes": 18320,
+            "seconds": 0.7626
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/index-BOLqpsNs.js",
+            "status": 200,
+            "expected_sha256": "1db11326dd8ba70b1053f71f833eb2e6140e54426cb233a22e6f812a2b24fde0",
+            "actual_sha256": "1db11326dd8ba70b1053f71f833eb2e6140e54426cb233a22e6f812a2b24fde0",
+            "match": true,
+            "bytes": 375442,
+            "seconds": 3.1576
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/index-CuDtvZeC.css",
+            "status": 200,
+            "expected_sha256": "0b66d29c208e0cae9005e82dfb0835b904307d7d2fefb0a750af632d664e3898",
+            "actual_sha256": "0b66d29c208e0cae9005e82dfb0835b904307d7d2fefb0a750af632d664e3898",
+            "match": true,
+            "bytes": 62833,
+            "seconds": 1.3071
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/index-toLQ7nbl.js",
+            "status": 200,
+            "expected_sha256": "3fcdd46cb2a9930745a1584a97416f3ddcc87cc4c23fb78f7ee26741fd646ce4",
+            "actual_sha256": "3fcdd46cb2a9930745a1584a97416f3ddcc87cc4c23fb78f7ee26741fd646ce4",
+            "match": true,
+            "bytes": 370038,
+            "seconds": 3.5934
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-400-normal-8tf8FM3T.woff",
+            "status": 200,
+            "expected_sha256": "1bf66c29a29f1b71d507cb97fc138cd130b856ed05b55decd3a2944b413cb636",
+            "actual_sha256": "1bf66c29a29f1b71d507cb97fc138cd130b856ed05b55decd3a2944b413cb636",
+            "match": true,
+            "bytes": 18292,
+            "seconds": 0.9857
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-400-normal-PaqtzbVb.woff2",
+            "status": 200,
+            "expected_sha256": "849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3",
+            "actual_sha256": "849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3",
+            "match": true,
+            "bytes": 14108,
+            "seconds": 1
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-500-normal-BYYD-dBL.woff2",
+            "status": 200,
+            "expected_sha256": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc",
+            "actual_sha256": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc",
+            "match": true,
+            "bytes": 14044,
+            "seconds": 0.9328
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-500-normal-DMZssgOp.woff",
+            "status": 200,
+            "expected_sha256": "c805ac8fd73fb95ddba74e624500c7d7d9a8ec6434d723bb6a9b76173c9e41b4",
+            "actual_sha256": "c805ac8fd73fb95ddba74e624500c7d7d9a8ec6434d723bb6a9b76173c9e41b4",
+            "match": true,
+            "bytes": 18240,
+            "seconds": 0.92
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-600-normal-4f0koTD-.woff2",
+            "status": 200,
+            "expected_sha256": "f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593",
+            "actual_sha256": "f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593",
+            "match": true,
+            "bytes": 14172,
+            "seconds": 0.7488
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-600-normal-BqgrALkZ.woff",
+            "status": 200,
+            "expected_sha256": "8d1f509774bca963fa02faf674678ce9244474306361ca2798583fa600346df6",
+            "actual_sha256": "8d1f509774bca963fa02faf674678ce9244474306361ca2798583fa600346df6",
+            "match": true,
+            "bytes": 18384,
+            "seconds": 1.243
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-700-normal-BZp_XxE4.woff2",
+            "status": 200,
+            "expected_sha256": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71",
+            "actual_sha256": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71",
+            "match": true,
+            "bytes": 14212,
+            "seconds": 1.1013
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-700-normal-DGRFkw-m.woff",
+            "status": 200,
+            "expected_sha256": "e5d35fda4759b0d63ebcc6cca0627d98d9208254ce851c85df29e4d12aeafb61",
+            "actual_sha256": "e5d35fda4759b0d63ebcc6cca0627d98d9208254ce851c85df29e4d12aeafb61",
+            "match": true,
+            "bytes": 18412,
+            "seconds": 1.0222
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-800-normal-BfWYOv1c.woff2",
+            "status": 200,
+            "expected_sha256": "74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49",
+            "actual_sha256": "74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49",
+            "match": true,
+            "bytes": 13648,
+            "seconds": 0.9919
+          },
+          {
+            "kind": "ui",
+            "path": "/assets/manrope-latin-800-normal-uHUdIJgA.woff",
+            "status": 200,
+            "expected_sha256": "ce954acb78379d559111a15d29925f3390b69161b2b1365c38b0f19c76991bac",
+            "actual_sha256": "ce954acb78379d559111a15d29925f3390b69161b2b1365c38b0f19c76991bac",
+            "match": true,
+            "bytes": 17912,
+            "seconds": 0.9756
+          },
+          {
+            "kind": "ui",
+            "path": "/avatar-audio-capture.js",
+            "status": 200,
+            "expected_sha256": "00d53b3152f780b2b9f51d6d9738ef67196bf32b70e9a1220c9d47c194f2432c",
+            "actual_sha256": "00d53b3152f780b2b9f51d6d9738ef67196bf32b70e9a1220c9d47c194f2432c",
+            "match": true,
+            "bytes": 834,
+            "seconds": 0.7224
+          },
+          {
+            "kind": "ui",
+            "path": "/favicon.svg",
+            "status": 200,
+            "expected_sha256": "e2b11f931e5f2a82a3034160ae5dd0131e06c2f80d9ac8be6b753936142734c9",
+            "actual_sha256": "e2b11f931e5f2a82a3034160ae5dd0131e06c2f80d9ac8be6b753936142734c9",
+            "match": true,
+            "bytes": 271,
+            "seconds": 0.7786
+          },
+          {
+            "kind": "ui",
+            "path": "/",
+            "status": 200,
+            "expected_sha256": "c8c591263fcc5890ac6583b26857a28d560cd29fc2a256639f2ae31ca05501ef",
+            "actual_sha256": "c8c591263fcc5890ac6583b26857a28d560cd29fc2a256639f2ae31ca05501ef",
+            "match": true,
+            "bytes": 646,
+            "seconds": 0.8076
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/assets/mark.svg",
+            "status": 200,
+            "expected_sha256": "79464cd0ee801ee9d8d51d23dfa9029a25c46991875fd6574d088e328c6594bb",
+            "actual_sha256": "79464cd0ee801ee9d8d51d23dfa9029a25c46991875fd6574d088e328c6594bb",
+            "match": true,
+            "bytes": 205,
+            "seconds": 0.6191
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/assets/savia-customer.png",
+            "status": 200,
+            "expected_sha256": "b2c280fcf2daeed17a56fb6af5403d1f19ca8c9f8ce39a643145deaa2b718587",
+            "actual_sha256": "b2c280fcf2daeed17a56fb6af5403d1f19ca8c9f8ce39a643145deaa2b718587",
+            "match": true,
+            "bytes": 695055,
+            "seconds": 4.4876
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/development.html",
+            "status": 200,
+            "expected_sha256": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946",
+            "actual_sha256": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946",
+            "match": true,
+            "bytes": 9326,
+            "seconds": 0.8979
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/engine.html",
+            "status": 200,
+            "expected_sha256": "23945dfbb3050dfcf51667395d8aa3d423b9568bd275f57208712e1882a4eb03",
+            "actual_sha256": "23945dfbb3050dfcf51667395d8aa3d423b9568bd275f57208712e1882a4eb03",
+            "match": true,
+            "bytes": 11976,
+            "seconds": 0.92
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/evidence/development-process.json",
+            "status": 200,
+            "expected_sha256": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e",
+            "actual_sha256": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e",
+            "match": true,
+            "bytes": 33852,
+            "seconds": 0.9628
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/evidence/DEVELOPMENT_PROCESS.md",
+            "status": 200,
+            "expected_sha256": "6a243e5ae0f72045814e069d5ce4bcec024aa33dabc21643339594721a9a4797",
+            "actual_sha256": "6a243e5ae0f72045814e069d5ce4bcec024aa33dabc21643339594721a9a4797",
+            "match": true,
+            "bytes": 16517,
+            "seconds": 1.2191
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/evidence/DISPUTE_ENGINE.md",
+            "status": 200,
+            "expected_sha256": "69dcc22337260682c2dd756f2de7285c8c57f2dbe7a4d99658a179c5f712d1ab",
+            "actual_sha256": "69dcc22337260682c2dd756f2de7285c8c57f2dbe7a4d99658a179c5f712d1ab",
+            "match": true,
+            "bytes": 7835,
+            "seconds": 1.0236
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/evidence/ELEVENLABS_COMPARISON.md",
+            "status": 200,
+            "expected_sha256": "f601122bab85008f6f9d1c58682b47e1bb25b36c4300f68d87b36b920db82351",
+            "actual_sha256": "f601122bab85008f6f9d1c58682b47e1bb25b36c4300f68d87b36b920db82351",
+            "match": true,
+            "bytes": 5311,
+            "seconds": 1.0386
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/evidence/EVIDENCE_MAP.md",
+            "status": 200,
+            "expected_sha256": "2539fb8d23bb798cca96cbb0ab36af9430e0116f264dfa2c733bd76d318efe25",
+            "actual_sha256": "2539fb8d23bb798cca96cbb0ab36af9430e0116f264dfa2c733bd76d318efe25",
+            "match": true,
+            "bytes": 17589,
+            "seconds": 1.4467
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/evidence/START_HERE.md",
+            "status": 200,
+            "expected_sha256": "e4445c3901da65aed46a0eba77358dc1a0c85e473c977dc1042db282f7a67f98",
+            "actual_sha256": "e4445c3901da65aed46a0eba77358dc1a0c85e473c977dc1042db282f7a67f98",
+            "match": true,
+            "bytes": 8471,
+            "seconds": 1.2191
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/index.html",
+            "status": 200,
+            "expected_sha256": "4767802f542d38fce930d32d082e5714f5b715a197e00a9e813bbaeb1920a5e7",
+            "actual_sha256": "4767802f542d38fce930d32d082e5714f5b715a197e00a9e813bbaeb1920a5e7",
+            "match": true,
+            "bytes": 9971,
+            "seconds": 1.2063
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/llms.txt",
+            "status": 200,
+            "expected_sha256": "4b80c56d987bf42a7815e2e6768b919fc8b6be01338823e868d39eb06f7f4aa1",
+            "actual_sha256": "4b80c56d987bf42a7815e2e6768b919fc8b6be01338823e868d39eb06f7f4aa1",
+            "match": true,
+            "bytes": 2430,
+            "seconds": 0.9191
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/savia-final-pitch-manifest.json",
+            "status": 200,
+            "expected_sha256": "adf10a5371db8a3bfb15c071bdee4735da9e915be21e2abb9bdd9f735eb5543d",
+            "actual_sha256": "adf10a5371db8a3bfb15c071bdee4735da9e915be21e2abb9bdd9f735eb5543d",
+            "match": true,
+            "bytes": 2486,
+            "seconds": 0.9019
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/savia-final-pitch-sources.json",
+            "status": 200,
+            "expected_sha256": "39837f44f2c607457e50ab9f6b1d0af4681fb57bc99fbe490efbbf9da5962e6d",
+            "actual_sha256": "39837f44f2c607457e50ab9f6b1d0af4681fb57bc99fbe490efbbf9da5962e6d",
+            "match": true,
+            "bytes": 10714,
+            "seconds": 0.93
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/savia-final-pitch-speaker-notes.md",
+            "status": 200,
+            "expected_sha256": "e33a5d3a71066e9ac64f8a23bfce93bfdb5acbb779205df2ebd8cbf7e11081ed",
+            "actual_sha256": "e33a5d3a71066e9ac64f8a23bfce93bfdb5acbb779205df2ebd8cbf7e11081ed",
+            "match": true,
+            "bytes": 8992,
+            "seconds": 1.1541
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/savia-final-pitch.html",
+            "status": 200,
+            "expected_sha256": "d43220444b03cd383d03a7f1a3a44993b7e5c907d3231aa879010e6f553bc98e",
+            "actual_sha256": "d43220444b03cd383d03a7f1a3a44993b7e5c907d3231aa879010e6f553bc98e",
+            "match": true,
+            "bytes": 11552,
+            "seconds": 0.9981
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/savia-final-pitch.pdf",
+            "status": 200,
+            "expected_sha256": "149092a838379e515242011bb88606c9dbb1a45dd4b7989a888b3c941fdb3f63",
+            "actual_sha256": "149092a838379e515242011bb88606c9dbb1a45dd4b7989a888b3c941fdb3f63",
+            "match": true,
+            "bytes": 346979,
+            "seconds": 3.3418
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/savia-final-pitch.pptx",
+            "status": 200,
+            "expected_sha256": "206eecd973d56e9d29d21adba80cf1e602ab6377ba7c41ab76574be301958e9d",
+            "actual_sha256": "206eecd973d56e9d29d21adba80cf1e602ab6377ba7c41ab76574be301958e9d",
+            "match": true,
+            "bytes": 220245,
+            "seconds": 2.6218
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/slides/slide-01.png",
+            "status": 200,
+            "expected_sha256": "c3d7934635500b205a6bee892a4aa9dabcea995ab57265a6af07b91796f7f905",
+            "actual_sha256": "c3d7934635500b205a6bee892a4aa9dabcea995ab57265a6af07b91796f7f905",
+            "match": true,
+            "bytes": 59442,
+            "seconds": 1.2091
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/slides/slide-02.png",
+            "status": 200,
+            "expected_sha256": "99b78142219d1f285d60178bd4b78c18f36e24ecca04213337bc482e3a05eef1",
+            "actual_sha256": "99b78142219d1f285d60178bd4b78c18f36e24ecca04213337bc482e3a05eef1",
+            "match": true,
+            "bytes": 140483,
+            "seconds": 1.7702
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/slides/slide-03.png",
+            "status": 200,
+            "expected_sha256": "9be369bb21de3f4db0a3942717403c621cae36c2ad9961f47472e5240a32ce71",
+            "actual_sha256": "9be369bb21de3f4db0a3942717403c621cae36c2ad9961f47472e5240a32ce71",
+            "match": true,
+            "bytes": 52011,
+            "seconds": 1.4412
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/slides/slide-04.png",
+            "status": 200,
+            "expected_sha256": "53d9fdbc2dc00f358d6add6f03c5b020861c892d2c6e3bcf47873cee904e8f36",
+            "actual_sha256": "53d9fdbc2dc00f358d6add6f03c5b020861c892d2c6e3bcf47873cee904e8f36",
+            "match": true,
+            "bytes": 54561,
+            "seconds": 1.2764
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/slides/slide-05.png",
+            "status": 200,
+            "expected_sha256": "9ed843e570f835c4065047167ad5b335db2c624f79c1062eb8d2336aebbeeeeb",
+            "actual_sha256": "9ed843e570f835c4065047167ad5b335db2c624f79c1062eb8d2336aebbeeeeb",
+            "match": true,
+            "bytes": 58912,
+            "seconds": 1.0482
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/pitch/slides/slide-06.png",
+            "status": 200,
+            "expected_sha256": "26afda833c5bf7aa28d53565f11eb99917045014323e753f5e585d4444310d26",
+            "actual_sha256": "26afda833c5bf7aa28d53565f11eb99917045014323e753f5e585d4444310d26",
+            "match": true,
+            "bytes": 52299,
+            "seconds": 1.584
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/savia-submission.vtt",
+            "status": 200,
+            "expected_sha256": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6",
+            "actual_sha256": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6",
+            "match": true,
+            "bytes": 2268,
+            "seconds": 1.0533
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/styles.css",
+            "status": 200,
+            "expected_sha256": "d5e8be817afee552c2ad8c9104baa37f1e33c3ed100620333e34ab29b9f5bad0",
+            "actual_sha256": "d5e8be817afee552c2ad8c9104baa37f1e33c3ed100620333e34ab29b9f5bad0",
+            "match": true,
+            "bytes": 7946,
+            "seconds": 1.1529
+          },
+          {
+            "kind": "portal",
+            "path": "/submission/submission.json",
+            "status": 200,
+            "expected_sha256": "12ba42788f93ab6b99022e20abed664fc8a183ba33960722b2e8e344e53c173f",
+            "actual_sha256": "12ba42788f93ab6b99022e20abed664fc8a183ba33960722b2e8e344e53c173f",
+            "match": true,
+            "bytes": 1897,
+            "seconds": 1.1614
+          }
+        ],
+        "extra_expected_denial_results": [
+          {
+            "kind": "portal_manifest",
+            "path": "/submission/portal-manifest.json",
+            "status": 404,
+            "expected_sha256": "6ce4e96aaef9bbad674c2a949d613677a005a9f870856a9e7c15b3e4f8ee8cd6",
+            "actual_sha256": "00db428dce2d2cf038b01919fcddca22c3662d4242c5a9a84a283b68e4db9274",
+            "match": true,
+            "bytes": 25,
+            "seconds": 0.8645
+          }
+        ],
+        "source_hash_list_receipt": "docs/submission/measurements/card-block-live/runtime-verification.json",
+        "verification_script": "import json,pathlib,hashlib,subprocess,datetime,http.cookiejar,urllib.request,urllib.parse,urllib.error,concurrent.futures,time\nroot=pathlib.Path.cwd()\ndef utc(): return datetime.datetime.now(datetime.timezone.utc).isoformat()\ndef sha(x): return hashlib.sha256(x).hexdigest()\nruntime=json.loads((root/'docs/submission/measurements/card-block-live/runtime-verification.json').read_text(encoding='utf-8'))\napi=json.loads((root/'docs/submission/measurements/card-block-live/api-receipt.json').read_text(encoding='utf-8'))\nportal=json.loads((root/'web/submission/portal-manifest.json').read_text(encoding='utf-8'))\norigin=api['origin']\nassert origin=='https://savia-rc-2026.fly.dev'\nassert runtime['git_head']==api['operator_expected_source']=='f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f'\nstarted=utc()\nsource_results=[]\nfor path,expected in runtime['source_files'].items():\n    raw=subprocess.check_output(['git','show',runtime['git_head']+':'+path])\n    source_results.append({'path':path,'expected_sha256':expected,'git_blob_sha256':sha(raw),'match':sha(raw)==expected})\nassert len(source_results)==runtime['verified_files']==177\njar=http.cookiejar.CookieJar()\nopener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))\ngate_req=urllib.request.Request(origin+'/_rc/enter',data=urllib.parse.urlencode({'code':'SAVIA-2026'}).encode(),headers={'Content-Type':'application/x-www-form-urlencoded','Origin':origin,'User-Agent':'savia-independent-readonly-review/1.0'},method='POST')\nwith opener.open(gate_req,timeout=30) as response:\n    gate_status=response.status\n    response.read()\nassert gate_status==200 and any(c.name=='__Host-rc-visitor' for c in jar)\nchecks=[('ui','/' if path=='index.html' else '/'+path,expected) for path,expected in runtime['served_ui'].items()]\nchecks += [('portal','/submission/'+path,expected) for path,expected in portal['files'].items()]\nchecks += [('portal_manifest','/submission/portal-manifest.json',sha((root/'web/submission/portal-manifest.json').read_bytes()))]\nassert len(portal['files'])==27\ndef check(item):\n    kind,path,expected=item\n    assert '..' not in path and path.startswith('/') and not path.startswith('//')\n    tick=time.perf_counter()\n    request=urllib.request.Request(origin+path,headers={'User-Agent':'savia-independent-readonly-review/1.0','Accept-Encoding':'identity'},method='GET')\n    jar.add_cookie_header(request)\n    try:\n        response=urllib.request.urlopen(request,timeout=30)\n    except urllib.error.HTTPError as error:\n        response=error\n    with response:\n        raw=response.read()\n        actual=sha(raw)\n        return {'kind':kind,'path':path,'status':response.status,'expected_sha256':expected,'actual_sha256':actual,'match':response.status==404 if kind=='portal_manifest' else response.status==200 and actual==expected,'bytes':len(raw),'seconds':round(time.perf_counter()-tick,4)}\nwith concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:\n    public_results=list(pool.map(check,checks))\nresult={'schema':'savia-independent-live-readonly-verification/v1','started_utc':started,'finished_utc':utc(),'origin':origin,'git_head':runtime['git_head'],'gate_status':gate_status,'cookie_persisted_to_disk':False,'application_login_requests':0,'bank_requests':0,'provider_requests':0,'post_requests':'One public RC gateway entry to establish the temporary visitor cookie; all subsequent public verification requests were GET.','source_files_checked_against_git':len(source_results),'source_files_matched':sum(x['match'] for x in source_results),'source_results':source_results,'public_ui_files_checked':len(runtime['served_ui']),'portal_files_checked':len(portal['files']),'portal_manifest_extra_probe':'Expected 404: the server publishes only artifacts in the manifest, not the manifest itself.','public_files_matched':sum(x['match'] for x in public_results if x['kind']!='portal_manifest'),'public_results':[x for x in public_results if x['kind']!='portal_manifest'],'extra_expected_denial_results':[x for x in public_results if x['kind']=='portal_manifest']}\nprint(json.dumps(result))\nassert all(x['match'] for x in source_results+public_results)\n",
+        "verification_script_sha256": "5ca2b93359819fe83a9b604b7013965f64c75424fb59b06eaf72e32f9be2d3f3"
+      },
+      "receipt_sha256": {
+        "docs/submission/measurements/card-block-live/api-receipt.json": "99642d3c508e7bcd6b50bfab47929e40aa16d782b7dcc7776fa0b958bc6587de",
+        "docs/submission/measurements/card-block-live/runtime-verification.json": "ef408efc8c72dcb82bd49e6eb786406ede25093b9225471eca055c1d17cf1e2d",
+        "docs/submission/measurements/card-block-live/deployment-receipt.json": "599b928bf975d6b3c3d7f781174eacc33c5751005d4630316dc2debdf2f286ef"
+      },
+      "limits": [
+        "Two fictional profiles/API cases, not a broad reliability or latency benchmark.",
+        "No new graphical browser acceptance: observer browser was blocked; no app-success claim is inferred from that limitation.",
+        "No new voice/model/reviewer acceptance, real-bank operation or refund.",
+        "Original 615-pass receipt remains tied to its original test-source hashes; later permission-fixture CI edits are separate."
+      ],
+      "current_cited_document_sha256": {
+        "docs/submission/measurements/CARD_BLOCK_VERIFICATION.md": "23ff0255c3369db73afee4e6680303452d22b4a76fd618b8d3ccfc0bccd26d09",
+        "README.md": "ca5a9a07ee481dcc0a49291a4326b9f2a7737ad49e2c0af92ca548ac5f00506e"
+      },
+      "current_document_hashes_observed_utc": "2026-10-05T22:09:39.514880+00:00"
+    },
+    "provider_evidence": "Existing artifacts only; reviewer made zero model or voice calls.",
+    "human_quality_evidence": "Independent human routing-label and speech/recommendation adjudication remains pending.",
+    "evidence_sha256": {
+      "docs/review/replay-receipt.json": "e11965bb2bc5b71404e18200ffd7f14aac11e365ee55a6e2957fb267336ac6f1",
+      "docs/review/operating-decisions.json": "9ca565529bc74077c3436cd20a06505fe689943915c67a301bc068bf7475fd77",
+      "docs/review/OPERATING_DECISIONS.md": "fba38adc584b54837d7d9e9881e7683b3d95df6903a45cb44a4abe3c9ea95ce3",
+      "docs/submission/measurements/CARD_BLOCK_VERIFICATION.md": "795252f129377bf35bae79cde34841980e105c6842938d9e4b79d07cb3ad7f06",
+      "docs/submission/runtime-source-final.json": "72288c07d072055fc928045e5f327c64071f7ef3967e2ed81eb119fc75c3367c",
+      "docs/submission/runtime-deployed.json": "b35f9e7ad78b081fd2a78a6e3ce4e371ccdfff0a92938235143e6b2ec81225c7",
+      "docs/submission/runtime-listen-freeze.json": "b5fc88833c9327c793ede604903ddcb7e5e547b08d31e27292b13614d8ef6426",
+      "docs/submission/measurements/intended-savia-native/receipt.json": "6a15cdfe3dbc6d867aa72adba714532f5ee00895f6c2ebc324809983bbc0ee3d",
+      "docs/submission/measurements/saved-recommendations-native/README.md": "b9d672541c1138e95eb3c03834937b0827252eec4e7081fe5601919b1e39cd83",
+      "docs/submission/measurements/fleet-customer-attempt/receipt.json": "c67ff02ae13c79c7434b270ac18b5d2fe138c8ae27b5bf0ceabfcc2de3052922",
+      "docs/submission/measurements/actual-half-hour-followup.json": "7a70b84d88406df4d4e459be36e528f214bca1bca539db9156df4c28067e0165",
+      "docs/submission/measurements/final-comparison-counted.json": "0195ddbe853fdc3130c624cf467625a2411264b8c004cd760193d30361f77e0d",
+      "docs/submission/measurements/post-fix-pt-selected-counted.json": "575fcb6fc1adc6341401ea7e6ee33633d78bb58b814257ba92e392239c4b8f34",
+      "docs/submission/measurements/luna-100/README.md": "73d4db97441add46212051cdbd788f0cd3699ad5409dc363a6424eef614e9dd8",
+      "docs/submission/measurements/luna-100/run-100/requests.jsonl": "997dfcaea80399ed6878d40f28ac9a6ceb80fad471bb9c0b6029e9d327e48214",
+      "docs/pipeline/manifest.json": "65a2d261d2324d4fd5403d939296d1f673fd5d02ad74408510f381f41bdc0bbb",
+      "docs/ml/router_holdout_provenance.md": "f837c6178c826cc78730c6fdda81dfc5b571005863ee162acc247c636d3ba671",
+      "docs/submission/measurements/luna-100/run-100/summary.json": "38e9518ba4601b715739a4efd490441ea6a59a7085dd8bab2e2bcec995a32c62",
+      "docs/submission/measurements/luna-100/run-100/runtime-provenance.json": "4d9276eb4fa65800cbcc901e6afe01fbc539b51bb08079433d770f60c094a13a",
+      "docs/submission/measurements/card-block-live/api-receipt.json": "99642d3c508e7bcd6b50bfab47929e40aa16d782b7dcc7776fa0b958bc6587de",
+      "docs/submission/measurements/card-block-live/runtime-verification.json": "ef408efc8c72dcb82bd49e6eb786406ede25093b9225471eca055c1d17cf1e2d",
+      "docs/submission/measurements/card-block-live/deployment-receipt.json": "599b928bf975d6b3c3d7f781174eacc33c5751005d4630316dc2debdf2f286ef"
+    }
+  },
+  "score_change_policy": "Reassess material new evidence or defects honestly. No minimum target and no score change solely for deployment intent.",
+  "initial_assessed_at_utc": "2026-10-05T21:53:54.087318+00:00",
+  "reassessment_delta": {
+    "at_utc": "2026-10-05T22:07:31.314156+00:00",
+    "score_before": 92,
+    "score_after": 92,
+    "reason": "Current card API capability and source/image/public-byte provenance are now evidenced. The remaining current-revision collaboration/voice usefulness and ML independent-label/broader-holdout gaps remain unchanged. No score target was applied."
+  }
+}

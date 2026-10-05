@@ -64,7 +64,7 @@ jobs:
           cache-dependency-path: requirements-*.txt
       - run: python -m pip install -r requirements-mcp.txt -r requirements-ml.txt
       # The joined Dispute app has frontend dependencies and its own job below.
-      - run: python -m pytest -q tests scripts/banking_acceptance_load_test.py --ignore-glob=tests/test_dispute*.py
+      - run: python -m pytest -q tests scripts/banking_acceptance_load_test.py --ignore-glob=tests/test_dispute*.py --ignore=tests/test_card_block_api.py
       - run: python -m compileall -q banking_mcp pipeline demo scripts
   frontend-api:
     strategy:
@@ -108,7 +108,7 @@ jobs:
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
-      - run: node --test deploy/rc/public-gateway.test.mjs deploy/rc/public-gateway.browser.test.mjs
+      - run: node --test deploy/rc/public-gateway.test.mjs deploy/rc/public-gateway.browser.test.mjs deploy/rc/submission-portal.test.mjs
   dispute:
     strategy:
       fail-fast: false
@@ -126,5 +126,6 @@ jobs:
       - run: python -m pip install -r requirements-dispute.txt pytest pytest-subtests
       - run: python -m pip check
       - run: python scripts/test_dispute.py
+      - run: python -m pytest -q tests/test_card_block_api.py
       - run: python -m pytest -q --import-mode=importlib savia_assistant/tests
       - run: python -m compileall -q dispute_workflow savia_assistant scripts/run_dispute.py

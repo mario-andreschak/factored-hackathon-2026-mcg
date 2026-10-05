@@ -390,6 +390,89 @@ def test_known_bold_status_is_grounded():
     assert validate_response(response("Estado: **Approved**."), inputs()) == []
 
 
+@pytest.mark.parametrize("language,text", [
+    ("es", "El comercio es Tienda Inventada y el estado es Reversed."),
+    ("pt", "O estabelecimento é Loja Inventada e o status é Reversed."),
+    ("es", "Comercio: Tienda Inventada; estado: Reversed."),
+    ("pt", "Estabelecimento: Loja Inventada; status: Reversed."),
+    ("es", "El comercio es «Tienda Inventada». El estado es ‘Reversed’."),
+])
+def test_plain_merchant_and_status_assertions_require_host_facts(language, text):
+    errors = validate_response(response(text, language), inputs(language=language))
+    assert "merchant_unverified" in errors
+    assert "status_unverified" in errors
+
+
+@pytest.mark.parametrize("language,text", [
+    ("es", "El comercio es Comercio de prueba y el estado es Approved."),
+    ("pt", "O estabelecimento é Comercio de prueba e o status é Approved."),
+    ("es", "Comercio: **Comercio de prueba**; estado: Approved."),
+    ("pt", "A transação está Approved."),
+])
+def test_plain_grounded_display_assertions_pass(language, text):
+    assert validate_response(response(text, language), inputs(language=language)) == []
+
+
+@pytest.mark.parametrize("text,code", [
+    ("El comercio es Comercio de prueba Inventada.", "merchant_unverified"),
+    ("Estado: ApprovedExtra.", "status_unverified"),
+    ("La transacción está Reversed.", "status_unverified"),
+    ("El estado es Reversed; el comercio es Comercio de prueba.", "status_unverified"),
+    ("El comercio es Tienda Inventada; el estado es Approved.", "merchant_unverified"),
+])
+def test_display_fact_matching_does_not_accept_prefixes_or_adjacent_good_facts(text, code):
+    assert code in validate_response(response(text), inputs())
+
+
+@pytest.mark.parametrize("text", [
+    'La frase "el comercio es Tienda Inventada" es un ejemplo.',
+    'Ejemplo: «el estado es Reversed».',
+    'Si el comercio es Tienda Inventada, faltaría verificarlo.',
+    'Se o status é Reversed, seria necessário verificar.',
+    'El cliente dice que el comercio es Tienda Inventada.',
+])
+def test_explicit_quotation_hypothetical_or_customer_attribution_is_not_bank_fact(text):
+    errors = validate_response(response(text), inputs())
+    assert "merchant_unverified" not in errors
+    assert "status_unverified" not in errors
+
+
+@pytest.mark.parametrize("text,code", [
+    ('Ejemplo: «el comercio es Tienda Inventada». El comercio es Tienda Inventada.', "merchant_unverified"),
+    ('Si el estado es Reversed, faltaría verificarlo; el estado es Reversed.', "status_unverified"),
+    ('El cliente dice que el comercio es Tienda Inventada, pero el comercio es Tienda Inventada.', "merchant_unverified"),
+])
+def test_nonassertion_context_cannot_launder_later_bank_assertion(text, code):
+    assert code in validate_response(response(text), inputs())
+
+
+def test_customer_text_and_error_payload_cannot_ground_merchant_or_status():
+    data = inputs()
+    data["clean_query"] = data["historic_conversation"] = "El comercio es Tienda Inventada y el estado es Reversed."
+    data["structured_data"]["customer_stated_claims"] = {"merchant_name": "Tienda Inventada", "status": "Reversed"}
+    data["structured_data"]["error"] = {"merchant_name": "Tienda Inventada", "status": "Reversed"}
+    errors = validate_response(response(data["clean_query"]), data)
+    assert "merchant_unverified" in errors
+    assert "status_unverified" in errors
+
+
+@pytest.mark.parametrize("text", [
+    "La transacción fue rechazada.", "Esta transação foi revertida.",
+    "El cargo está pendiente.", "A cobrança está pendente.",
+    "O status foi Reversed.", "El estado es ‘Reversed’.",
+])
+def test_plain_status_inflections_and_past_tense_require_grounding(text):
+    assert "status_unverified" in validate_response(response(text), inputs())
+
+
+def test_known_merchant_punctuation_is_preserved_without_accepting_name_extension():
+    data = inputs()
+    data["structured_data"]["candidates"][0]["merchant_name"] = "Pan y Café, S.A."
+    assert validate_response(response("El comercio es Pan y Café, S.A.."), data) == []
+    assert "merchant_unverified" in validate_response(response("El comercio es Pan y Café, S.A. Inventada."), data)
+    assert "merchant_unverified" in validate_response(response("El comercio es groundedmerchant0."), data)
+
+
 @pytest.mark.parametrize("phrase", ["fue registrado", "Fue Registrado", "ＦＵＥ ＲＥＧＩＳＴＲＡＤＯ", "no fue registrado", "¿fue registrado?", "fue creado", "se ha registrado"])
 def test_configured_success_even_negation_or_question_requires_action_done(phrase):
     data = verified_action(inputs("INFORM"))

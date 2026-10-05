@@ -1,0 +1,80 @@
+{
+  "scope": "actual local pipeline on committed generated synthetic fixture; not organizer-data recomputation",
+  "checks": {
+    "every_raw_row_reconciles": true,
+    "idempotent_logical_content_all_six_tables": true,
+    "wrong_product_owner_excluded": true,
+    "missing_customer_has_no_rows": true,
+    "late_correction_pending_to_reversed": true,
+    "late_new_transaction_visible": true,
+    "previous_published_snapshot_unchanged": true
+  },
+  "logical_content_hashes_base": {
+    "customers": "a90b86db0fd035ed7bd5b8759ea4324c",
+    "products": "36a96e997ec22b78c3718dad173145fc",
+    "transactions": "b79e01c8691ca3829586f32902664800",
+    "call_center_interactions": "1888412bd746ca9de59ec78abfc51816",
+    "call_transcripts": "22449ae216e2fb16717b1c4cf2603480",
+    "complaints": "0b32a06f4c518a7a5a66acec8f240c23"
+  },
+  "logical_content_hashes_repeat": {
+    "customers": "a90b86db0fd035ed7bd5b8759ea4324c",
+    "products": "36a96e997ec22b78c3718dad173145fc",
+    "transactions": "b79e01c8691ca3829586f32902664800",
+    "call_center_interactions": "1888412bd746ca9de59ec78abfc51816",
+    "call_transcripts": "22449ae216e2fb16717b1c4cf2603480",
+    "complaints": "0b32a06f4c518a7a5a66acec8f240c23"
+  },
+  "base_tables": {
+    "customers": {
+      "raw_rows": 22,
+      "rows": 20,
+      "quarantined_rows": 0,
+      "duplicate_rows_removed": 2,
+      "reconciles": true
+    },
+    "products": {
+      "raw_rows": 21,
+      "rows": 21,
+      "quarantined_rows": 0,
+      "duplicate_rows_removed": 0,
+      "reconciles": true
+    },
+    "transactions": {
+      "raw_rows": 69,
+      "rows": 66,
+      "quarantined_rows": 2,
+      "duplicate_rows_removed": 1,
+      "reconciles": true
+    },
+    "call_center_interactions": {
+      "raw_rows": 60,
+      "rows": 60,
+      "quarantined_rows": 0,
+      "duplicate_rows_removed": 0,
+      "reconciles": true
+    },
+    "call_transcripts": {
+      "raw_rows": 60,
+      "rows": 60,
+      "quarantined_rows": 0,
+      "duplicate_rows_removed": 0,
+      "reconciles": true
+    },
+    "complaints": {
+      "raw_rows": 5,
+      "rows": 5,
+      "quarantined_rows": 0,
+      "duplicate_rows_removed": 0,
+      "reconciles": true
+    }
+  },
+  "transaction_late_batch": {
+    "base_raw": 69,
+    "late_raw": 72,
+    "status_before": "Pending",
+    "status_after": "Reversed"
+  },
+  "source_credentials_used": false,
+  "provider_requests": 0
+}
