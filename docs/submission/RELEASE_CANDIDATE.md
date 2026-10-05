@@ -20,7 +20,8 @@ The avatar and voice are inside Savia's assistant dialog, from
 ## Actual fleet/customer qualification
 
 The October 5 first attempt is partial; mandatory fleet customer acceptance
-failed. Its [receipt](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/0d23282d289f07f14d6a6bda82fb339ded6cee6a/docs/submission/measurements/fleet-customer-attempt/receipt.json)
+failed. Its [merged receipt](measurements/fleet-customer-attempt/receipt.json)
+from [PR 70](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/70)
 records application source `a5e48f09afe4241f6b08a2b94532b2bd3eb630f4`, image
 `sha256:35903f9a1ea70f8b3c589d5680ed50307efd34870ce004bdd1833b9029b6dc93`,
 native source `67d21ad3fe49059ab349d1315d02a9437daa1140` and controller source
@@ -39,6 +40,13 @@ speaking was observed. The nominal 1,321 ms request overlap is not an audible or
 concurrency result. Guidance audio, reload/context and the actual 1,800-second
 follow-up remain unqualified. Any funded successor is a separate attempt; this
 failure and the frozen rc.1/rc.2 evidence retain their original scope.
+
+The original root was retired through the existing operator DELETE at 18:04 UTC
+(13:04 Bogotá). Its case, goal, run, board and volume were preserved; the retained
+goal is still `ACTIVE` and the run is `FAILED`. Retirement is not goal completion.
+Funding controls 50/20 remain unsaved, awaiting the owner. A productive customer
+journey and its normal-clock 30-minute follow-up are outstanding; rc.3 is not
+ready.
 
 ## Frozen rc.2 Listen acceptance
 
