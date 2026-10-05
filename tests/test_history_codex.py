@@ -3,6 +3,7 @@
 from pathlib import Path
 from contextlib import closing
 import json
+import os
 import sqlite3
 import tempfile
 import unittest
@@ -137,6 +138,23 @@ class CodexHistoryTests(unittest.TestCase):
         self.assertTrue(_inside(r"\\?\C:\Users\Moe\Project\subfolder", Path("C:/Users/Moe/Project")))
         self.assertFalse(_inside("C:/Users/Moe/Project-extra", Path("C:/Users/Moe/Project")))
         self.assertLess(_time_key("2026-09-25T22:00:00.123Z"), _time_key("2026-09-25T22:00:00.123456789Z"))
+
+    def test_native_directory_alias_keeps_repository_scope(self):
+        directory = self.repo / "history project with spaces"
+        directory.mkdir()
+        if os.name == "nt":
+            import ctypes
+            short_name = ctypes.create_unicode_buffer(32768)
+            length = ctypes.windll.kernel32.GetShortPathNameW(str(directory), short_name, len(short_name))
+            self.assertGreater(length, 0)
+            self.assertLess(length, len(short_name))
+            alias = Path(short_name.value)
+        else:
+            alias = self.repo / "history-alias"
+            alias.symlink_to(directory, target_is_directory=True)
+        self.assertTrue(_inside(alias, directory.resolve()))
+        self.assertTrue(_inside(alias / "nested", directory.resolve()))
+        self.assertFalse(_inside(Path(str(alias) + "-other"), directory.resolve()))
 
 
 if __name__ == "__main__":

@@ -54,6 +54,15 @@ def _normal_path(value: Any) -> str:
         path = "//" + path[8:]
     elif path.startswith("//?/"):
         path = path[4:]
+    # Resolve native directory aliases (including Windows 8.3 names). The
+    # repository is resolved by collectors, but stored cwd values may use the
+    # runner's short-name TEMP path. Foreign-platform paths stay lexical.
+    windows_path = bool(re.match(r"^[A-Za-z]:/", path) or path.startswith("//"))
+    if (os.name == "nt" and windows_path) or (os.name != "nt" and path.startswith("/") and not windows_path):
+        try:
+            path = os.path.realpath(path)
+        except (OSError, ValueError):
+            return ""
     # Case-insensitive comparison is appropriate for Windows drive/UNC paths.
     path = os.path.normpath(path).replace("\\", "/").rstrip("/")
     return path.casefold() if re.match(r"^[A-Za-z]:/", path) or path.startswith("//") else path
