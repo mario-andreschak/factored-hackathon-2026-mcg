@@ -1,0 +1,18 @@
+{
+  "schema": "savia-core-engine-publication/v1",
+  "original_receipt_sha256": "bb34c7a5f776bd95d1da98129bb45470d84e0c438b9b22655d330c1fe1695154",
+  "curation": {
+    "junit": "Removed machine hostname and masked two generated sensitive-input parameter values (fictional Windows path and bearer-shaped test token); original retained privately. Test names, counts and statuses otherwise retained.",
+    "original_junit_sha256": "854e36fd1021f004e2f2a744e284d04a6bfd247f9e602292583d7d2463fdf2ea"
+  },
+  "files": {
+    "core-engine-run.py": "d61011441d0f5353bc8c7d85c04e2e41c0f0128cc086aba049ff4d4a0b7b74b6",
+    "junit.xml": "3715f07740d843ead57130dfde1a0524d326984295f065e86e0a0dc86ffb22ec",
+    "network-guard.json": "c6c8b04060be6359edca09a5b8afa01199aac159a0d800044da96cdffc4d129e",
+    "pytest-output.txt": "707faca877adb7a9db7ab01dbc7ee9e0530bd588fb0cda3a3b4def24effc5bef",
+    "README.md": "77bda809b74eebd6cc459e516773664fd5fc269e7794ab5f92c950c65bd6c2d6",
+    "receipt.json": "bb34c7a5f776bd95d1da98129bb45470d84e0c438b9b22655d330c1fe1695154",
+    "source-congruence.json": "1b35ef04356533f59083d4c5cfaa1ac179b3f7a641583b0fce59d0f0a78a53f3",
+    "source-manifest.json": "543d7862b776e079605287a0dfd488b42333ffac7033442a586548595f795763"
+  }
+}
