@@ -4,6 +4,9 @@ Savia now changes the persisted status of an owned fictional card after an
 explicit customer confirmation, and shows an independently reread `BLK-SBX-…`
 receipt. This is a working simulated bank action; it does not call a real bank.
 
+**Now deployed and accepted:** [two actual Spanish/Portuguese public API journeys,
+exact application/image pins and independently checked assets](card-block-live/README.md).
+
 ## Customer journey
 
 1. Log into a demo profile with an active card.
@@ -63,6 +66,6 @@ npm test
 npm run build
 ```
 
-These checks establish local source acceptance. Public deployment and browser
-acceptance require a separately recorded runtime revision and receipt; they are
-not implied by this report.
+The local checks and [new public API/runtime receipt](card-block-live/README.md)
+have separate scopes. A new graphical browser or voice recording is not implied
+by either report.

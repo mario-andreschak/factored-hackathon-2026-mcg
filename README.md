@@ -70,6 +70,10 @@ The human pitch above explains the product. This table maps technical claims to 
 
 **Fresh public replay:** [67 passing existing offline checks and 11 pipeline/analytics invariants](docs/review/PUBLIC_EVIDENCE.md), plus a paired uncertainty analysis of the unchanged routing diagnostic. Run `python scripts/review_evidence.py --out docs/review` after installing `requirements-review.txt`. [Exact source hashes and results](docs/review/replay-receipt.json).
 
+**Live successor:** [confirmed card protection in Spanish and Portuguese, deployed source/image pins and public asset verification](docs/submission/measurements/card-block-live/README.md). [Independent fresh source review and its exact scope](docs/review/FRESH_AGENT_REVIEW.md).
+
+**Fresh dispute-core qualification:** [1,078 passing offline checks with zero skips or provider calls](docs/submission/measurements/core-engine-final/README.md), with 39 executed core source files independently matched to the deployed source. This is core qualification with pinned files, separate from whole-repository CI and live customer acceptance.
+
 | Evaluation dimension | What to inspect | Evidence |
 | --- | --- | --- |
 | Technical judgment | Owned reads; explicit consent; signed action admission; durable receipt and restart recovery; safe uncertainty | [Immediate card action and 100-confirmation proof](docs/submission/measurements/CARD_BLOCK_VERIFICATION.md), [action host](dispute_workflow/action_host.py), [bank actions](banking_mcp/actions.py), [direct-host contract](frontend/DIRECT_MCP.md) |

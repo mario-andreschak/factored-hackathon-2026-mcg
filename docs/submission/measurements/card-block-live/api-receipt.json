@@ -1,0 +1,443 @@
+{
+  "schema": "savia-live-card-block-api/v1",
+  "origin": "https://savia-rc-2026.fly.dev",
+  "started_utc": "2026-10-05T21:57:56.691028+00:00",
+  "status": "passed",
+  "fictional_simulated_only": true,
+  "script_sha256": "4f50e3ed94e25670c2f1036d2cb43599506e42cf5da66a77ce797cdef40a2c5d",
+  "operator_expected_source": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+  "source_scope": "Operator-provided deployment source; this harness does not independently establish image/source identity",
+  "http_steps": [
+    {
+      "step": "public_health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "started_utc": "2026-10-05T21:57:56.735808+00:00",
+      "finished_utc": "2026-10-05T21:57:58.197235+00:00",
+      "latency_seconds": 1.461426
+    },
+    {
+      "step": "gateway_enter",
+      "method": "POST",
+      "path": "/_rc/enter",
+      "status": 200,
+      "started_utc": "2026-10-05T21:57:58.197278+00:00",
+      "finished_utc": "2026-10-05T21:57:59.417091+00:00",
+      "latency_seconds": 1.21982
+    },
+    {
+      "step": "application_unauthenticated_denial",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 401,
+      "started_utc": "2026-10-05T21:57:59.417152+00:00",
+      "finished_utc": "2026-10-05T21:58:00.051395+00:00",
+      "latency_seconds": 0.634253
+    },
+    {
+      "step": "case_1_es_login",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:00.051447+00:00",
+      "finished_utc": "2026-10-05T21:58:01.048581+00:00",
+      "latency_seconds": 0.997141
+    },
+    {
+      "step": "case_1_es_overview_before",
+      "method": "GET",
+      "path": "/api/overview",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:01.048603+00:00",
+      "finished_utc": "2026-10-05T21:58:02.058883+00:00",
+      "latency_seconds": 1.010289
+    },
+    {
+      "step": "case_1_es_select_unblocked_card",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:02.058935+00:00",
+      "finished_utc": "2026-10-05T21:58:03.082732+00:00",
+      "latency_seconds": 1.023803
+    },
+    {
+      "step": "case_1_es_chat_hint",
+      "method": "POST",
+      "path": "/api/chat/messages",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:03.082768+00:00",
+      "finished_utc": "2026-10-05T21:58:04.358590+00:00",
+      "latency_seconds": 1.27583
+    },
+    {
+      "step": "case_1_es_prepare",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:04.358655+00:00",
+      "finished_utc": "2026-10-05T21:58:05.478404+00:00",
+      "latency_seconds": 1.119754
+    },
+    {
+      "step": "case_1_es_prepare_readback_no_change",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:05.478439+00:00",
+      "finished_utc": "2026-10-05T21:58:06.433469+00:00",
+      "latency_seconds": 0.955037
+    },
+    {
+      "step": "case_1_es_omitted_consent_denied",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 422,
+      "started_utc": "2026-10-05T21:58:06.433504+00:00",
+      "finished_utc": "2026-10-05T21:58:07.681983+00:00",
+      "latency_seconds": 1.248487
+    },
+    {
+      "step": "case_1_es_denial_readback_no_change",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:07.682015+00:00",
+      "finished_utc": "2026-10-05T21:58:08.636350+00:00",
+      "latency_seconds": 0.954342
+    },
+    {
+      "step": "case_1_es_explicit_confirm",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:08.636385+00:00",
+      "finished_utc": "2026-10-05T21:58:09.748391+00:00",
+      "latency_seconds": 1.112014
+    },
+    {
+      "step": "case_1_es_receipt_readback",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:09.748432+00:00",
+      "finished_utc": "2026-10-05T21:58:10.945444+00:00",
+      "latency_seconds": 1.197019
+    },
+    {
+      "step": "case_1_es_repeat_confirmation_same_receipt",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:10.945487+00:00",
+      "finished_utc": "2026-10-05T21:58:12.014872+00:00",
+      "latency_seconds": 1.069395
+    },
+    {
+      "step": "case_1_es_overview_after",
+      "method": "GET",
+      "path": "/api/overview",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:12.014899+00:00",
+      "finished_utc": "2026-10-05T21:58:12.969016+00:00",
+      "latency_seconds": 0.954128
+    },
+    {
+      "step": "case_1_es_logout",
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 204,
+      "started_utc": "2026-10-05T21:58:12.969082+00:00",
+      "finished_utc": "2026-10-05T21:58:13.787795+00:00",
+      "latency_seconds": 0.818719
+    },
+    {
+      "step": "case_1_es_relogin",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:13.787839+00:00",
+      "finished_utc": "2026-10-05T21:58:14.915841+00:00",
+      "latency_seconds": 1.128009
+    },
+    {
+      "step": "case_1_es_relogin_durable_status",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:14.915876+00:00",
+      "finished_utc": "2026-10-05T21:58:16.182476+00:00",
+      "latency_seconds": 1.266609
+    },
+    {
+      "step": "case_1_es_logout_before_foreign",
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 204,
+      "started_utc": "2026-10-05T21:58:16.182516+00:00",
+      "finished_utc": "2026-10-05T21:58:17.248266+00:00",
+      "latency_seconds": 1.065757
+    },
+    {
+      "step": "case_1_es_foreign_login",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:17.248298+00:00",
+      "finished_utc": "2026-10-05T21:58:18.387026+00:00",
+      "latency_seconds": 1.138735
+    },
+    {
+      "step": "case_1_es_foreign_profile_status_denied",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 404,
+      "started_utc": "2026-10-05T21:58:18.387064+00:00",
+      "finished_utc": "2026-10-05T21:58:19.251870+00:00",
+      "latency_seconds": 0.864814
+    },
+    {
+      "step": "case_1_es_foreign_profile_confirmation_denied",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 404,
+      "started_utc": "2026-10-05T21:58:19.251905+00:00",
+      "finished_utc": "2026-10-05T21:58:20.193804+00:00",
+      "latency_seconds": 0.941906
+    },
+    {
+      "step": "case_1_es_foreign_logout",
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 204,
+      "started_utc": "2026-10-05T21:58:20.193836+00:00",
+      "finished_utc": "2026-10-05T21:58:21.385148+00:00",
+      "latency_seconds": 1.191322
+    },
+    {
+      "step": "case_2_pt_login",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:21.385229+00:00",
+      "finished_utc": "2026-10-05T21:58:22.437254+00:00",
+      "latency_seconds": 1.052032
+    },
+    {
+      "step": "case_2_pt_overview_before",
+      "method": "GET",
+      "path": "/api/overview",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:22.437276+00:00",
+      "finished_utc": "2026-10-05T21:58:23.344602+00:00",
+      "latency_seconds": 0.907335
+    },
+    {
+      "step": "case_2_pt_select_unblocked_card",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:23.344661+00:00",
+      "finished_utc": "2026-10-05T21:58:24.457029+00:00",
+      "latency_seconds": 1.112378
+    },
+    {
+      "step": "case_2_pt_chat_hint",
+      "method": "POST",
+      "path": "/api/chat/messages",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:24.457073+00:00",
+      "finished_utc": "2026-10-05T21:58:25.560590+00:00",
+      "latency_seconds": 1.103525
+    },
+    {
+      "step": "case_2_pt_prepare",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:25.560653+00:00",
+      "finished_utc": "2026-10-05T21:58:26.558831+00:00",
+      "latency_seconds": 0.998188
+    },
+    {
+      "step": "case_2_pt_prepare_readback_no_change",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:26.558872+00:00",
+      "finished_utc": "2026-10-05T21:58:27.589209+00:00",
+      "latency_seconds": 1.030345
+    },
+    {
+      "step": "case_2_pt_omitted_consent_denied",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 422,
+      "started_utc": "2026-10-05T21:58:27.589249+00:00",
+      "finished_utc": "2026-10-05T21:58:28.722863+00:00",
+      "latency_seconds": 1.133621
+    },
+    {
+      "step": "case_2_pt_denial_readback_no_change",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:28.722902+00:00",
+      "finished_utc": "2026-10-05T21:58:29.989249+00:00",
+      "latency_seconds": 1.266353
+    },
+    {
+      "step": "case_2_pt_explicit_confirm",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:29.989287+00:00",
+      "finished_utc": "2026-10-05T21:58:31.122063+00:00",
+      "latency_seconds": 1.132782
+    },
+    {
+      "step": "case_2_pt_receipt_readback",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:31.122105+00:00",
+      "finished_utc": "2026-10-05T21:58:32.174241+00:00",
+      "latency_seconds": 1.052145
+    },
+    {
+      "step": "case_2_pt_repeat_confirmation_same_receipt",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:32.174284+00:00",
+      "finished_utc": "2026-10-05T21:58:33.206408+00:00",
+      "latency_seconds": 1.032132
+    },
+    {
+      "step": "case_2_pt_overview_after",
+      "method": "GET",
+      "path": "/api/overview",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:33.206435+00:00",
+      "finished_utc": "2026-10-05T21:58:34.233708+00:00",
+      "latency_seconds": 1.027279
+    },
+    {
+      "step": "case_2_pt_logout",
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 204,
+      "started_utc": "2026-10-05T21:58:34.233755+00:00",
+      "finished_utc": "2026-10-05T21:58:34.978824+00:00",
+      "latency_seconds": 0.745076
+    },
+    {
+      "step": "case_2_pt_relogin",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:34.978858+00:00",
+      "finished_utc": "2026-10-05T21:58:35.924982+00:00",
+      "latency_seconds": 0.946132
+    },
+    {
+      "step": "case_2_pt_relogin_durable_status",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:35.925017+00:00",
+      "finished_utc": "2026-10-05T21:58:37.091275+00:00",
+      "latency_seconds": 1.166264
+    },
+    {
+      "step": "case_2_pt_logout_before_foreign",
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 204,
+      "started_utc": "2026-10-05T21:58:37.091309+00:00",
+      "finished_utc": "2026-10-05T21:58:38.059734+00:00",
+      "latency_seconds": 0.968436
+    },
+    {
+      "step": "case_2_pt_foreign_login",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "started_utc": "2026-10-05T21:58:38.059786+00:00",
+      "finished_utc": "2026-10-05T21:58:39.201973+00:00",
+      "latency_seconds": 1.142194
+    },
+    {
+      "step": "case_2_pt_foreign_profile_status_denied",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 404,
+      "started_utc": "2026-10-05T21:58:39.202011+00:00",
+      "finished_utc": "2026-10-05T21:58:40.411161+00:00",
+      "latency_seconds": 1.209156
+    },
+    {
+      "step": "case_2_pt_foreign_profile_confirmation_denied",
+      "method": "POST",
+      "path": "/api/cards/block",
+      "status": 404,
+      "started_utc": "2026-10-05T21:58:40.411198+00:00",
+      "finished_utc": "2026-10-05T21:58:41.672287+00:00",
+      "latency_seconds": 1.261096
+    },
+    {
+      "step": "case_2_pt_foreign_logout",
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 204,
+      "started_utc": "2026-10-05T21:58:41.672317+00:00",
+      "finished_utc": "2026-10-05T21:58:42.837329+00:00",
+      "latency_seconds": 1.165021
+    }
+  ],
+  "cases": [
+    {
+      "language": "es",
+      "fixture_profile": "mexico",
+      "initial_state": "card_unblocked",
+      "prepare_changed_card": false,
+      "omitted_consent_denied": true,
+      "confirmed_state": "card_block_verified",
+      "receipt_status": "blocked",
+      "simulated": true,
+      "receipt_sha256": "bae20836b3eebd746367d514d88d1723de10656c9518f3b8cb60de3cacaf0924",
+      "receipt_readback_equal": true,
+      "repeat_confirmation_equal": true,
+      "overview_blocked": true,
+      "relogin_receipt_equal": true,
+      "foreign_profile_denied": true,
+      "localized_no_real_bank_caveat": true
+    },
+    {
+      "language": "pt",
+      "fixture_profile": "colombia",
+      "initial_state": "card_unblocked",
+      "prepare_changed_card": false,
+      "omitted_consent_denied": true,
+      "confirmed_state": "card_block_verified",
+      "receipt_status": "blocked",
+      "simulated": true,
+      "receipt_sha256": "da586e06ac22111c448df1243fb134079d14260c01bd7171067827f0adfbd564",
+      "receipt_readback_equal": true,
+      "repeat_confirmation_equal": true,
+      "overview_blocked": true,
+      "relogin_receipt_equal": true,
+      "foreign_profile_denied": true,
+      "localized_no_real_bank_caveat": true
+    }
+  ],
+  "limits": [
+    "API/cookie/host acceptance, not a graphical browser recording",
+    "No real-bank action or refund",
+    "Portuguese interaction does not imply a Brazilian demo profile",
+    "No FLUJO/swarm or voice quality claim"
+  ],
+  "finished_utc": "2026-10-05T21:58:42.837392+00:00",
+  "completed_cases": 2
+}
