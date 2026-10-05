@@ -1,0 +1,366 @@
+{
+  "schema": "savia-actual-team-voice/v1",
+  "at": "2026-10-05T01:35:48.002Z",
+  "status": "complete",
+  "fictional": true,
+  "actual_native_provider": "OpenRouter / openai/gpt-audio",
+  "actual_team_provider": "direct OpenRouter / google/gemini-3.1-flash-lite",
+  "typed_input": true,
+  "file_backed_silent_microphone": true,
+  "physical_microphone_qualified": false,
+  "bank_authority": false,
+  "bank_resolution": false,
+  "counts": {
+    "/api/avatar/native-turn": 1,
+    "/savia/api/assistant/cases": 1,
+    "/api/avatar/native-result": 3
+  },
+  "completed_team": {
+    "state": "team_completed",
+    "completed_workers": 2,
+    "suggestions": [
+      "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas.",
+      "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+    ],
+    "next_check_at": 1791165890,
+    "events": [
+      {
+        "kind": "queued",
+        "at": 1791164087,
+        "role": null
+      },
+      {
+        "kind": "team_working",
+        "at": 1791164087,
+        "role": null
+      },
+      {
+        "kind": "worker_working",
+        "at": 1791164087,
+        "role": "evidence"
+      },
+      {
+        "kind": "worker_working",
+        "at": 1791164088,
+        "role": "next_steps"
+      },
+      {
+        "kind": "worker_completed",
+        "at": 1791164090,
+        "role": "next_steps"
+      },
+      {
+        "kind": "worker_completed",
+        "at": 1791164090,
+        "role": "evidence"
+      },
+      {
+        "kind": "team_completed",
+        "at": 1791164090,
+        "role": null
+      }
+    ]
+  },
+  "heard_team": {
+    "state": "team_completed",
+    "event_id": 15,
+    "at_ms": 51292
+  },
+  "events": [
+    {
+      "at_ms": 2487,
+      "type": "request",
+      "route": "/api/avatar/native-turn",
+      "ordinal": 1
+    },
+    {
+      "at_ms": 4174,
+      "type": "browser_voice_milestone",
+      "event": "voice-start"
+    },
+    {
+      "at_ms": 5474,
+      "type": "verified_host_update",
+      "state": "informational_resolved",
+      "event_id": 8,
+      "bank_authority": false
+    },
+    {
+      "at_ms": 5658,
+      "type": "request",
+      "route": "/savia/api/assistant/cases",
+      "ordinal": 1
+    },
+    {
+      "at_ms": 5662,
+      "type": "inquiry_submitted"
+    },
+    {
+      "at_ms": 6375,
+      "type": "verified_host_update",
+      "state": "queued",
+      "event_id": 9,
+      "bank_authority": false
+    },
+    {
+      "at_ms": 6376,
+      "type": "owned_receipt",
+      "state": "queued",
+      "event_id": 9,
+      "status": 200
+    },
+    {
+      "at_ms": 8514,
+      "type": "verified_host_update",
+      "state": "team_working",
+      "event_id": 12,
+      "bank_authority": false
+    },
+    {
+      "at_ms": 8518,
+      "type": "owned_receipt",
+      "state": "team_working",
+      "event_id": 12,
+      "status": 200
+    },
+    {
+      "at_ms": 10559,
+      "type": "actual_team_completed",
+      "completed_workers": 2
+    },
+    {
+      "at_ms": 10685,
+      "type": "verified_host_update",
+      "state": "team_completed",
+      "event_id": 15,
+      "bank_authority": false
+    },
+    {
+      "at_ms": 10685,
+      "type": "actual_team_completed",
+      "completed_workers": 2
+    },
+    {
+      "at_ms": 10691,
+      "type": "owned_receipt",
+      "state": "team_completed",
+      "event_id": 15,
+      "status": 200
+    },
+    {
+      "at_ms": 16480,
+      "type": "completed_playback_ack",
+      "status": 200,
+      "state": "foreground"
+    },
+    {
+      "at_ms": 16480,
+      "type": "browser_voice_milestone",
+      "event": "voice-complete"
+    },
+    {
+      "at_ms": 16485,
+      "type": "request",
+      "route": "/api/avatar/native-result",
+      "ordinal": 1
+    },
+    {
+      "at_ms": 16485,
+      "type": "team_voice_started",
+      "state": "queued",
+      "event_id": 9
+    },
+    {
+      "at_ms": 17170,
+      "type": "browser_voice_milestone",
+      "event": "voice-start"
+    },
+    {
+      "at_ms": 24966,
+      "type": "completed_playback_ack",
+      "status": 200,
+      "state": "queued"
+    },
+    {
+      "at_ms": 24966,
+      "type": "browser_voice_milestone",
+      "event": "voice-complete"
+    },
+    {
+      "at_ms": 24966,
+      "type": "request",
+      "route": "/api/avatar/native-result",
+      "ordinal": 2
+    },
+    {
+      "at_ms": 24966,
+      "type": "team_voice_started",
+      "state": "team_working",
+      "event_id": 12
+    },
+    {
+      "at_ms": 25599,
+      "type": "actual_team_completed",
+      "completed_workers": 2
+    },
+    {
+      "at_ms": 26360,
+      "type": "browser_voice_milestone",
+      "event": "voice-start"
+    },
+    {
+      "at_ms": 40603,
+      "type": "actual_team_completed",
+      "completed_workers": 2
+    },
+    {
+      "at_ms": 40739,
+      "type": "completed_playback_ack",
+      "status": 200,
+      "state": "team_working"
+    },
+    {
+      "at_ms": 40739,
+      "type": "browser_voice_milestone",
+      "event": "voice-complete"
+    },
+    {
+      "at_ms": 40741,
+      "type": "request",
+      "route": "/api/avatar/native-result",
+      "ordinal": 3
+    },
+    {
+      "at_ms": 40741,
+      "type": "team_voice_started",
+      "state": "team_completed",
+      "event_id": 15
+    },
+    {
+      "at_ms": 41647,
+      "type": "browser_voice_milestone",
+      "event": "voice-start"
+    },
+    {
+      "at_ms": 51292,
+      "type": "completed_playback_ack",
+      "status": 200,
+      "state": "team_completed"
+    },
+    {
+      "at_ms": 51292,
+      "type": "browser_voice_milestone",
+      "event": "voice-complete"
+    },
+    {
+      "at_ms": 51803,
+      "type": "capture_complete",
+      "one_inquiry_created": true,
+      "useful_team_update_heard": true
+    }
+  ],
+  "audio": {
+    "schema": "savia-actual-native-audio-capture/v1",
+    "actualProviderResponses": true,
+    "playedReceiptQualifiedByThisObserver": false,
+    "turns": [
+      {
+        "index": 1,
+        "route": "/api/avatar/native-turn",
+        "httpStatus": 200,
+        "completed": true,
+        "sampleRate": 24000,
+        "sampleRateQualification": "assumed",
+        "physicalMicrophoneQualified": false,
+        "audio": "native-01.wav",
+        "samples": 292800,
+        "seconds": 12.2,
+        "transcript": "Claro, aquí estoy contigo, con toda la calma del bosque. Respiremos lento y cuéntame qué sienten ahora Moss y Orbit.",
+        "usage": {
+          "promptTokens": 449,
+          "completionTokens": 289,
+          "totalTokens": 738,
+          "inputAudioTokens": 0,
+          "outputAudioTokens": 244,
+          "costUsd": 0.0171885
+        }
+      },
+      {
+        "index": 2,
+        "route": "/api/avatar/native-result",
+        "httpStatus": 200,
+        "completed": true,
+        "sampleRate": 24000,
+        "sampleRateQualification": "assumed",
+        "physicalMicrophoneQualified": false,
+        "audio": "native-02.wav",
+        "samples": 181200,
+        "seconds": 7.55,
+        "transcript": "El equipo revisó la situación y ya encontró lo clave. Podemos hablar ahora de lo que descubrieron para ayudarte mejor.",
+        "usage": {
+          "promptTokens": 560,
+          "completionTokens": 189,
+          "totalTokens": 749,
+          "inputAudioTokens": 0,
+          "outputAudioTokens": 151,
+          "costUsd": 0.011444
+        }
+      },
+      {
+        "index": 3,
+        "route": "/api/avatar/native-result",
+        "httpStatus": 200,
+        "completed": true,
+        "sampleRate": 24000,
+        "sampleRateQualification": "assumed",
+        "physicalMicrophoneQualified": false,
+        "audio": "native-03.wav",
+        "samples": 340800,
+        "seconds": 14.2,
+        "transcript": "Aquí lo importante es que dos agentes ya revisaron los datos, y ahora van a identificar el siguiente paso para ayudarte. Tranquilo, vamos a estar muy pendientes de ese resultado, y te acompaño en el camino.",
+        "usage": {
+          "promptTokens": 570,
+          "completionTokens": 348,
+          "totalTokens": 918,
+          "inputAudioTokens": 0,
+          "outputAudioTokens": 284,
+          "costUsd": 0.020241
+        }
+      },
+      {
+        "index": 4,
+        "route": "/api/avatar/native-result",
+        "httpStatus": 200,
+        "completed": true,
+        "sampleRate": 24000,
+        "sampleRateQualification": "assumed",
+        "physicalMicrophoneQualified": false,
+        "audio": "native-04.wav",
+        "samples": 225600,
+        "seconds": 9.4,
+        "transcript": "El cargo es de «Nébula Market». Revisa tus recibos y piensa si estas sugerencias te orientan para el siguiente paso.",
+        "usage": {
+          "promptTokens": 653,
+          "completionTokens": 231,
+          "totalTokens": 884,
+          "inputAudioTokens": 0,
+          "outputAudioTokens": 188,
+          "costUsd": 0.0140945
+        }
+      }
+    ]
+  },
+  "qualification": {
+    "accepted_audio_index": 4,
+    "accepted_audio": "docs/submission/measurements/team-voice/useful-team-update.wav",
+    "completed_team_notifications_heard": 1,
+    "rejected_progress_audio_indices": [
+      2,
+      3
+    ],
+    "rejection_reason": "Pending/working snapshots produced overstated completion claims. Do not use these clips as truthful progress.",
+    "final_source_change": "After this historical capture, automatic queued/team_working narration was suppressed; the unchanged completed update path remains qualified. Final guard build and focused browser test passed.",
+    "visual_video_contains_native_audio": false,
+    "screenshot_limit": "Final viewport shows an older closed inquiry lower in the panel. Current completed team is qualified by authenticated response and native played receipts, not that viewport."
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "updated_at": "2026-10-04T23:55:56.838814-05:00",
+  "state": "complete-integrated-media-frozen",
+  "completed": [
+    "Restored fun TV concept with Savia as friendly voice-assistant hero",
+    "Five moving native-dialogue scenes plus deliberate beach/sky photo cutaways",
+    "Built final 150.626s 1080p H264/AAC MP4 with burned English captions and complete decode passed",
+    "Integrated fresh actual Spanish model answer, two real helper results kept after customer helpful closure, Portuguese clarification, and native foreground advice",
+    "Two five-slide editable decks with PDF/HTML/notes and inspected previews",
+    "Preserved render failure identity; recovered two clips, stopped owned ephemeral app with zero containers, no duplicate GPU batch",
+    "Integrated historical standalone 9.4sec completed-helper spoken update illustrated by Savia waveform; excluded overstated queued/working speech",
+    "Removed duplicate burned overlay captions on three already-captioned pilot scenes",
+    "Final refreshed MP4 SHA256 bcc04b958379625ec308ea04a9535067b78bcc6efb6c1cd8d06ab85e3394a24c,150.626seconds, full decode passed",
+    "Finalbank-pilot CTA and native-helper evidence notes exported; independently verified both PPTX/PDF pairs5slides/pages",
+    "Replaced both historical assistant audio slots with accepted complete integrated-dialog WAVs and exact translated captions; other16segments unchanged",
+    "Replaced both deck slide4s/notes with accepted integrated informational closure and verified5slide/PDF5page exports",
+    "Final140.611s MP4 full decode and changedframe visual review passed; exactminimal33paths+one newHTMLPNG dependency and finalhashfreeze written"
+  ],
+  "next": [
+    "Cleanup audit and root/runtime publication from exact frozen paths"
+  ],
+  "blockers": [],
+  "artifacts": [
+    "docs/submission/media/video/savia-submission.mp4",
+    "docs/submission/media/video/savia-submission-receipt.json",
+    "docs/submission/media/video/savia-submission-contact-sheet.jpg",
+    "docs/submission/media/video/savia-submission.srt",
+    "docs/submission/media/video/savia-submission.vtt",
+    "docs/submission/media/video/tv-timeline.json",
+    "docs/submission/media/decks/savia-submission-deck.pptx",
+    "docs/submission/media/decks/savia-submission-deck.pdf",
+    "docs/submission/media/decks/savia-pitch-deck.pptx",
+    "docs/submission/media/decks/savia-pitch-deck.pdf",
+    "docs/submission/media/review.html"
+  ],
+  "changed_paths": [
+    "docs/submission/media-status.json",
+    "docs/submission/media/",
+    "scripts/submission_media/"
+  ],
+  "workers": [
+    {
+      "threadId": "01a1096b-4b47-7362-86c9-f895fcfd5d4b",
+      "scope": "decks"
+    },
+    {
+      "threadId": "01a1096c-46cd-73a1-841c-326443c80e8d",
+      "scope": "audio"
+    },
+    {
+      "threadId": "01a10978-6fe8-7692-8460-676cd9ffa100",
+      "scope": "launch motion"
+    }
+  ],
+  "final_mp4_sha256": "44e8dad7fdfdc6bd3b8b50b5aee83ea97f62c9e8412b20a1655a937cabd0fccb",
+  "final_duration_seconds": 140.611,
+  "freeze_receipt": "docs/submission/media/media-freeze-receipt.json"
+}

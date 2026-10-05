@@ -1,0 +1,46 @@
+{
+  "updated_at": "2026-10-05T04:54:01.141257+00:00",
+  "state": "delivered-final-native-product-accepted",
+  "completed": [
+    "App-owned durable inquiry/event scheduler and owner-scoped authenticated API",
+    "Actual scoped stdio MCP tick/status with two concurrent provider agents: 2783 ms, both completed",
+    "Five tests passed: concurrent workers, scope/restart, quiet follow-up, rejected sensitive/model inputs, explicit solution, auth/session renewal/trusted projection/voice cursor",
+    "Generic FLUJO real Static MCP flow + disabled 30min schedule exported",
+    "Authenticated bounded voice-update endpoint with unchanged204 and exact reviewed actual-event narration",
+    "Frozen canonical voice_update embedded per GET-cases item; stable meaningful-event cursor, exact reviewed narration shared with optional endpoint",
+    "Accepted evidence suggestion now includes host-owned selected merchant/date/amount/currency; five tests still pass",
+    "Runtime receipt proves generic FLUJO MCP connected, graph + disabled half-hour schedule installed, one completed manual execution/actual MCP call on empty separate fiction with no worker calls",
+    "Canonical browser video proves actual case create -> working -> two completed workers/seven events -> customer helpful acknowledgment/eighth event -> same case after new chat/reload; useful closed suggestions retained",
+    "Native PR52 voice-update registers exact completed meaningful host reply to current session via Conversation.remember_result; queued/working/unchanged/unauthenticated suppressed; six assistant tests pass",
+    "Coordinator accepted final deployed native capture at source 9d77a7599128b668b0e34f9c2937eb40b6bd3824 / image 484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5: 6.6s foreground and 3.95s exact helpful closure with two complete exact-sample playback ACKs; queued closure and restored history retained",
+    "Final read-only state preserves three inquiries, six workers and 24 events; third original two-worker inquiry informationally resolved; bank cases/receipts zero; no new team or bank operation in final continuation"
+  ],
+  "next": [],
+  "blockers": [],
+  "artifacts": [
+    "docs/submission/assistant/mcp-smoke.json",
+    "docs/submission/assistant/README.md",
+    "docs/submission/assistant/flujo-flow.json",
+    "docs/submission/assistant/flujo-automation.json",
+    "docs/submission/assistant/mcp-config.example.json",
+    "docs/submission/runtime-mcp.json",
+    "docs/submission/measurements/team-story-final/actual-browser.webm",
+    "docs/submission/measurements/team-story-final/capture.json",
+    "docs/submission/measurements/team-story-final/11-saved-useful-result.png",
+    "docs/submission/measurements/intended-savia-native/receipt.json",
+    "docs/submission/measurements/intended-savia-native/actual-browser.webm"
+  ],
+  "changed_source_paths": [
+    "savia_assistant/",
+    "scripts/submission_assistant/"
+  ],
+  "limitations": [
+    "Two workers select reviewed informational suggestions; no bank investigation/action authority",
+    "Generic FLUJO manual empty tick proven; its installed half-hour schedule remains disabled and separate from canonical app loop",
+    "Seven-day horizon is time-controlled testing, not seven days observed",
+    "Human-working is an unexercised operator acceptance hook; no live human acceptance claim",
+    "Final native continuation narrates actual helpful closure, not worker recommendations or a new background-team run; earlier overlap evidence remains separately scoped",
+    "Raw final recorder observer_completed=false at 180 seconds on optional diagnostics after required product steps and both exact playback ACKs passed; coordinator product acceptance is explicit",
+    "Final ASR recognition errors and lack of physical-microphone qualification remain disclosed; no recapture or model calls for observer fix"
+  ]
+}

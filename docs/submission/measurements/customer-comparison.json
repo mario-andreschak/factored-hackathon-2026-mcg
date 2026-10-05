@@ -1,0 +1,440 @@
+{
+  "schema": "savia-customer-comparison/v1",
+  "recorded_at": "2026-10-05T00:28:43.884504+00:00",
+  "runtime": {
+    "schema": "savia-fictional-rc-runtime/v1",
+    "url": "http://127.0.0.1:43900",
+    "fixture": "new generated current-date fiction",
+    "bank": "shipped MCP Service in process",
+    "language": {
+      "url": "http://localhost:43420",
+      "model": "model-GPT-6 Luna",
+      "route": "generic /v1/chat/completions"
+    },
+    "simulated_intake": true,
+    "real_bank_actions": false,
+    "native_flow_execution": false,
+    "source_snapshot": "active local source; freeze at integration checkpoint"
+  },
+  "generated_only": true,
+  "sample_size": 6,
+  "real_portions": [
+    "actual authenticated HTTP calls",
+    "actual configured customer runtime replies"
+  ],
+  "simulated_portions": [
+    "fictional generated banking data",
+    "sandbox intake if explicitly confirmed separately"
+  ],
+  "baseline_scope": "Local deterministic copy on same facts; no task execution, provider, handoff or follow-up. Not a prior production runtime.",
+  "limits": [
+    "AI-authored cases; not representative traffic",
+    "No independent human adjudication yet",
+    "Provider and tool counts require separately observed runtime evidence",
+    "HTTP 200 does not prove resolved dispute"
+  ],
+  "cases": [
+    {
+      "case": "es-selected",
+      "language": "es",
+      "message": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora.",
+      "expected_behavior": "grounded_explanation",
+      "display_facts": {
+        "event_date": "2026-10-03",
+        "amount": "2400.00",
+        "currency": "MXN",
+        "merchant": "Casa Naranjo",
+        "recorded_status": "pending"
+      },
+      "selection_sha256": "be6cb57028367ab5305c8d31b40d36452ad6b514b2e4a437e20201066906a6bc",
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "El registro muestra 2400.00 MXN con fecha 2026-10-03. El comercio registrado es «Casa Naranjo». El estado registrado es pendiente.",
+        "latency_ms": 0.01,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "No pude completar la operación ni confirmar su resultado. Inténtalo nuevamente o solicita atención humana. El servicio está disponible en español y portugués.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 31267.9,
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": null,
+        "tool_call_count": null
+      },
+      "http_calls": [
+        {
+          "path": "/api/auth/login",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 58.3
+        },
+        {
+          "path": "/api/transactions",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 119.2
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 31267.9
+        },
+        {
+          "path": "/api/chat/history",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 41.7
+        },
+        {
+          "path": "/api/auth/logout",
+          "method": "POST",
+          "http_status": 204,
+          "latency_ms": 107.2
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": null,
+      "grounding": null,
+      "language_correct": null
+    },
+    {
+      "case": "pt-selected",
+      "language": "pt",
+      "message": "Não reconheço esta compra. Explique os dados e o que posso fazer agora.",
+      "expected_behavior": "grounded_explanation",
+      "display_facts": {
+        "event_date": "2026-10-03",
+        "amount": "2400.00",
+        "currency": "MXN",
+        "merchant": "Casa Naranjo",
+        "recorded_status": "pending"
+      },
+      "selection_sha256": "be6cb57028367ab5305c8d31b40d36452ad6b514b2e4a437e20201066906a6bc",
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "O registro mostra 2400.00 MXN com data 2026-10-03. O estabelecimento registrado é «Casa Naranjo». O estado registrado é pendente.",
+        "latency_ms": 0.01,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "No pude completar la operación ni confirmar su resultado. Inténtalo nuevamente o solicita atención humana. El servicio está disponible en español y portugués.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 32244.1,
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": null,
+        "tool_call_count": null
+      },
+      "http_calls": [
+        {
+          "path": "/api/auth/login",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 577.3
+        },
+        {
+          "path": "/api/transactions",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 513.6
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 32244.1
+        },
+        {
+          "path": "/api/chat/history",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 54.3
+        },
+        {
+          "path": "/api/auth/logout",
+          "method": "POST",
+          "http_status": 204,
+          "latency_ms": 18.8
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": null,
+      "grounding": null,
+      "language_correct": null
+    },
+    {
+      "case": "es-ambiguous",
+      "language": "es",
+      "message": "Hay un cobro que no reconozco, pero no sé cuál es.",
+      "expected_behavior": "clarification",
+      "display_facts": null,
+      "selection_sha256": null,
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "¿Qué fecha y monto aparecen en el movimiento que quieres revisar?",
+        "latency_ms": 0.012,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "No pude completar la operación ni confirmar su resultado. Inténtalo nuevamente o solicita atención humana. El servicio está disponible en español y portugués.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 31089.0,
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": null,
+        "tool_call_count": null
+      },
+      "http_calls": [
+        {
+          "path": "/api/auth/login",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 70.3
+        },
+        {
+          "path": "/api/transactions",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 303.2
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 31089.0
+        },
+        {
+          "path": "/api/chat/history",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 28.9
+        },
+        {
+          "path": "/api/auth/logout",
+          "method": "POST",
+          "http_status": 204,
+          "latency_ms": 20.9
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": null,
+      "grounding": null,
+      "language_correct": null
+    },
+    {
+      "case": "pt-ambiguous",
+      "language": "pt",
+      "message": "Tem uma cobrança que não reconheço, mas não sei qual é.",
+      "expected_behavior": "clarification",
+      "display_facts": null,
+      "selection_sha256": null,
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "Qual data e valor aparecem no lançamento que você quer revisar?",
+        "latency_ms": 0.009,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "No pude completar la operación ni confirmar su resultado. Inténtalo nuevamente o solicita atención humana. El servicio está disponible en español y portugués.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 31350.7,
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": null,
+        "tool_call_count": null
+      },
+      "http_calls": [
+        {
+          "path": "/api/auth/login",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 150.5
+        },
+        {
+          "path": "/api/transactions",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 216.5
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 31350.7
+        },
+        {
+          "path": "/api/chat/history",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 50.3
+        },
+        {
+          "path": "/api/auth/logout",
+          "method": "POST",
+          "http_status": 204,
+          "latency_ms": 42.0
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": null,
+      "grounding": null,
+      "language_correct": null
+    },
+    {
+      "case": "es-human",
+      "language": "es",
+      "message": "Necesito ayuda de una persona para revisar un cobro.",
+      "expected_behavior": "honest_handoff",
+      "display_facts": null,
+      "selection_sha256": null,
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "Puedes solicitar atención humana desde la interfaz. El chat no confirma que una persona haya recibido la solicitud.",
+        "latency_ms": 0.006,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "No se pudo completar la consulta. Inténtalo de nuevo más tarde. Estoy disponible en español y portugués.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 24960.6,
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": null,
+        "tool_call_count": null
+      },
+      "http_calls": [
+        {
+          "path": "/api/auth/login",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 266.4
+        },
+        {
+          "path": "/api/transactions",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 275.5
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 24960.6
+        },
+        {
+          "path": "/api/chat/history",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 30.4
+        },
+        {
+          "path": "/api/auth/logout",
+          "method": "POST",
+          "http_status": 204,
+          "latency_ms": 18.1
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": null,
+      "grounding": null,
+      "language_correct": null
+    },
+    {
+      "case": "pt-human",
+      "language": "pt",
+      "message": "Preciso de ajuda de uma pessoa para verificar uma cobrança.",
+      "expected_behavior": "honest_handoff",
+      "display_facts": null,
+      "selection_sha256": null,
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "Você pode solicitar atendimento humano pela interface. O chat não confirma que uma pessoa tenha recebido a solicitação.",
+        "latency_ms": 0.009,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "No pude completar la operación ni confirmar su resultado. Inténtalo nuevamente o solicita atención humana. El servicio está disponible en español y portugués.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 31376.0,
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": null,
+        "tool_call_count": null
+      },
+      "http_calls": [
+        {
+          "path": "/api/auth/login",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 62.7
+        },
+        {
+          "path": "/api/transactions",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 110.2
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 31376.0
+        },
+        {
+          "path": "/api/chat/history",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 119.5
+        },
+        {
+          "path": "/api/auth/logout",
+          "method": "POST",
+          "http_status": 204,
+          "latency_ms": 67.2
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": null,
+      "grounding": null,
+      "language_correct": null
+    }
+  ]
+}

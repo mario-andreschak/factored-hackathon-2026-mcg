@@ -1,0 +1,55 @@
+{
+  "schema": "savia-fixed-source-bounded-attempt/v1",
+  "source_git_head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+  "image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+  "actual_served_js": [
+    {
+      "path": "/assets/index-DGVQHrRT.js",
+      "status": 200,
+      "sha256": "f06ecbad1ea5089a227a04ea7468aeb8f4b1ef023ac04a98e6b71379771cc8bd"
+    }
+  ],
+  "intended_product_ui_accepted": false,
+  "bank_reply": {
+    "reply": "El movimiento consultado corresponde a **Nébula Market**, con fecha **2026-10-02**, por un monto de **4280.75 MXN** y estado **Approved**.",
+    "atMs": 12917,
+    "visibleExactDOMAtMs": 13141
+  },
+  "bank_reply_actual_dom_and_still_verified": true,
+  "foreground_speaking_at_ms": 23920,
+  "framed_native_phase": "speaking",
+  "new_case_post_at_ms": 24328,
+  "new_case_created": true,
+  "new_case_recreated": false,
+  "observed_request_counts": {
+    "/api/chat/messages": 1,
+    "/api/voice/transcribe": 5,
+    "/api/voice/turn": 1,
+    "/api/assistant/cases": 1
+  },
+  "native_wavs_completed": 0,
+  "full_played_acks": 0,
+  "failure": "Could not validate observed application response.",
+  "failure_scope": "Observer omitted route/error detail; a canceled polling GET can be confused with required native failure. Product cause remains unknown; native body capture failure may follow observer-triggered browser close.",
+  "existing_server_observations": {
+    "bank_cases": 0,
+    "bank_receipts": 0,
+    "inquiries": 3,
+    "workers": 6,
+    "events": 23,
+    "target_case_state": "team_completed",
+    "completed_language_stages": 8,
+    "bankfacts_stages": 6,
+    "new_case_workers": 2,
+    "extra_delegated_chat": false,
+    "browser_partial_transcribe_200": 5,
+    "native_stream_started": 1,
+    "native_completion_not_qualified": true,
+    "native_runtime_log_warnings_observed": 0
+  },
+  "owned_contexts_closed": true,
+  "duration_ms": 26490,
+  "retry_performed": false,
+  "same_session_storage_saved_privately": true,
+  "status": "Failed partial attempt retained; zero-bank/zero-newcase same-session continuation prepared and held for a new explicit GO."
+}

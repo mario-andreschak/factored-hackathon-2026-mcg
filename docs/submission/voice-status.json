@@ -1,0 +1,162 @@
+{
+  "updated_at": "2026-10-05T04:53:44.652618+00:00",
+  "state": "frozen-integrated-savia-native-product-accepted",
+  "product_source": {
+    "branch": "feature/savia-avatar-voice",
+    "base_revision": "2730d76de8e6847df4502c427ad9ced412f4a731",
+    "entry": "Savia assistant dialog in frontend/src/App.tsx",
+    "accepted_release_revision": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "accepted_image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5"
+  },
+  "completed": [
+    "Integrated existing PR52 eyes/native conversation source into frontend; standalone legacy avatar source rejected for current product",
+    "Native and fallback narration require exact unused actual host reply in current authenticated bank session",
+    "Assistant voice enters server history only after exact once-only full playback acknowledgement; interrupted or invalid output excluded",
+    "Two continuous quiet seconds preserve thinking pauses; cap recovery uses same threshold",
+    "Foreground conversation stays available while bank task works; completed results queue and deduplicate, pending team snapshots remain UI only",
+    "Voice ownership rejects delayed narration after microphone restart or conversation reset; customer App also guards delayed receipt by owner epoch",
+    "43 scripted voice checks and73 combined voice/API checks passed;10 actual-hook/Eyes checks and frontend production build previously passed",
+    "Managed successor: native tools require explicit current ES/PT recognized bank request; delegated words are exact ASR/current text, never model rewritten intent; expected tool name/schema enforced",
+    "Root accepted actual intended Savia UI: foreground PCM6.6s and verified helpful closure PCM3.95s each have exact full-playback HTTP200 ACK; closure queued during foreground and played after its ACK; new chat restores exact bank reply and saved worker suggestions"
+  ],
+  "next": [
+    "Frozen; root owns publication and primary snapshot. No remaining voice implementation or live measurement work authorized."
+  ],
+  "blockers": [],
+  "qualification": {
+    "backend_voice_checks_passed": 43,
+    "frontend_voice_checks_passed": 10,
+    "production_build_passed": true,
+    "current_shared_bundle": "frontend/dist/assets/index-DGVQHrRT.js",
+    "current_shared_bundle_sha256": "f06ecbad1ea5089a227a04ea7468aeb8f4b1ef023ac04a98e6b71379771cc8bd",
+    "deployed_integrated_ui_acceptance": true,
+    "physical_microphone_qualified": false,
+    "voice_and_api_checks_passed": 73
+  },
+  "legacy_standalone_evidence": {
+    "accepted_for_current_product": false,
+    "reason": "Human corrected intended product to the PR52 avatar inside Savia. Earlier standalone recordings do not qualify this integrated UI."
+  },
+  "changed_paths": [
+    "frontend/src/avatar/Eyes.tsx",
+    "frontend/src/avatar/README.md",
+    "frontend/src/avatar/audio.ts",
+    "frontend/src/avatar/eyes.module.css",
+    "frontend/src/avatar/useSaviaVoice.ts",
+    "frontend/src/avatar/utteranceObserver.ts",
+    "frontend/src/avatar/voice.test.tsx",
+    "frontend/src/avatar/native-voice.test.tsx",
+    "frontend/server/conversation.py",
+    "frontend/server/voice.py",
+    "frontend/public/avatar-audio-capture.js",
+    "frontend/tests/test_voice.py",
+    "docs/submission/voice-status.json"
+  ],
+  "native_delegation_fix": {
+    "managed_checkout": "C:/Users/Moe/.codex/worktrees/savia-final-day-rc/factored-hackathon-2026",
+    "source_base_revision": "4a27f0e02ab8b1967af65725b85564cde1be8ac3",
+    "frozen_hashes": {
+      "frontend/server/conversation.py": "18259bea6e75838a6bd14d06ca2ae154b8832e622e4122c5829ded2589f09cce",
+      "frontend/tests/test_voice.py": "55fc814368ea9a9efb2a3ec9760bf76752a2d695df2c2947640369e358746b6f"
+    },
+    "focused_voice_checks": 43,
+    "combined_voice_api_checks": 73,
+    "provider_calls": 0,
+    "new_asr_calls_per_native_turn": 0,
+    "latency_tradeoff": "Existing final ASR awaited before native generation instead of concurrently; recognition unavailable or ambiguous keeps tools disabled",
+    "scope_limit": "Conservative ES/PT lexical request gate; phrasing outside admitted request forms asks for clarification",
+    "deployed_accepted": true
+  },
+  "prior_incomplete_runs": [
+    {
+      "receipt": "private/rc-intended-savia-20261004/receipt.json",
+      "image_digest": "sha256:bfc3228fad8afe6fb2197a9c3af19ef81350275fa54e21fef0811fa03cac7a04",
+      "source_revision": "4a27f0e02ab8b1967af65725b85564cde1be8ac3",
+      "intended_ui_accepted": false,
+      "native_requests": 1,
+      "partial_transcription_requests": 4,
+      "attempted_chat_requests": 2,
+      "new_informational_inquiries": 1,
+      "completed_native_streams_captured": 0,
+      "full_playback_acks_captured": 0,
+      "bank_action_cases": 0,
+      "bank_action_receipts": 0,
+      "cause": "Existing persisted chat history confirms native delegate -> onDelegate -> send added a balance-check request absent from reassurance fixture; delegate is emitted before stream complete and hardware ACK",
+      "causal_proof": "C:/Users/Moe/.codex/visualizations/2026/10/05/01a1096a-6bac-7940-9120-1c9563fcaf62/incomplete-native-existing-observations.json",
+      "production_changed_after_run": false,
+      "retry_authorized": false
+    },
+    {
+      "receipt": "private/rc-intended-savia-successor-20261004/receipt.json",
+      "public_summary": "docs/submission/measurements/intended-savia-successor-bounded-attempt/summary.json",
+      "source_revision": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+      "intended_ui_accepted": false,
+      "reason": "No completed native capture/ACK in this bounded attempt; generic response observer failure did not establish product cause",
+      "unasked_chat_requests": 0,
+      "native_requests": 1,
+      "partial_transcription_requests": 5,
+      "new_informational_inquiries": 1
+    }
+  ],
+  "live_run": {
+    "receipt": "docs/submission/measurements/intended-savia-native/receipt.json",
+    "product_accepted": true,
+    "release_coordinator_product_accepted": true,
+    "source_revision": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+    "native_audio": [
+      {
+        "role": "foreground conversational reassurance",
+        "artifact": "docs/submission/measurements/intended-savia-native/foreground-calm.wav",
+        "sha256": "289fbbe598cc59fd5f977c36901a9781773b6cc68c72e8a7204a832f3b9b0fa6",
+        "seconds": 6.6,
+        "samples": 158400,
+        "sample_rate_hz": 24000,
+        "exact_complete_ack_http_status": 200
+      },
+      {
+        "role": "verified informational helpful closure",
+        "artifact": "docs/submission/measurements/intended-savia-native/informational-closure.wav",
+        "sha256": "e2a64aaec4c59b1f28cc17426b7f5786ad46295d10e587c7d56d932c5f379a4c",
+        "seconds": 3.95,
+        "samples": 94800,
+        "sample_rate_hz": 24000,
+        "exact_complete_ack_http_status": 200
+      }
+    ],
+    "queue": {
+      "newWorkerTaskInThisRun": false,
+      "actualHelpfulStateChangeDuringForeground": true,
+      "completedTeamAvailableBeforeForegroundPlayed": true,
+      "teamNativeAfterForegroundPlayed": true
+    },
+    "context_restored": true,
+    "suggestions_retained": true,
+    "new_bank_chat": 0,
+    "new_inquiries": 0,
+    "new_workers": 0,
+    "bank_cases": 0,
+    "bank_receipts": 0,
+    "raw_recorder_completed": false,
+    "observer_cleanup": {
+      "failure": "Journey exceeded bounded 180 second duration.",
+      "elapsed_ms": 180092,
+      "root_cause": "Optional response.finished diagnostics awaited the canceled unused /api/voice/played response bodies. Both ACK HTTP200 headers and exact complete sample receipts already passed; timer closed owned browser at180seconds.",
+      "native_response_validation_errors": [],
+      "rerun_performed": false,
+      "owned_browser_contexts_closed": true
+    }
+  },
+  "limitations": [
+    "Second native reply is verified helpful informational closure, not narration of worker recommendations or bank dispute resolution; actual worker suggestions remain visible and saved.",
+    "This accepted continuation created no new team task. Earlier task creation during speaking remains separate incomplete evidence.",
+    "Actual final transcription contains recognition errors: Chankilo.  Whisper a Hondo.  Todo va a salir bien.; prerecorded fictional input does not qualify a physical microphone.",
+    "Raw recorder completed=false/exit1 because optional diagnostics awaited canceled unused playback-ACK response bodies until180s; actual two exact HTTP200 ACKs and required UI steps already passed.",
+    "Independent human audio review remains pending coordinator/media review; provider cost not reported."
+  ],
+  "artifacts": [
+    "docs/submission/measurements/intended-savia-native/receipt.json",
+    "docs/submission/measurements/intended-savia-native/foreground-calm.wav",
+    "docs/submission/measurements/intended-savia-native/informational-closure.wav"
+  ]
+}

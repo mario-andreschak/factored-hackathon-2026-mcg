@@ -1,0 +1,16 @@
+{
+  "id": "8eac3c25-a716-4cee-82e9-c61bac8e3d36",
+  "name": "Savia Inquiry Tick RC",
+  "description": "App-owned scoped informational inquiry tick via real MCP. No banking authority.",
+  "nodes": [
+    {"id":"start","type":"start","position":{"x":0,"y":0},"data":{"label":"Start","type":"start","properties":{}}},
+    {"id":"tick","type":"static","position":{"x":240,"y":0},"data":{"label":"Check inquiry","type":"static","properties":{"injectOnce":true,"entries":[{"kind":"toolCall","executionMode":"real","serverName":"Savia Inquiry RC","toolName":"savia_inquiry_tick","argumentsJson":"{}","result":""}]}}},
+    {"id":"inquiry-mcp","type":"mcp","position":{"x":240,"y":180},"data":{"label":"Savia Inquiry RC","type":"mcp","properties":{"boundServer":"Savia Inquiry RC","enabledTools":["savia_inquiry_tick","savia_inquiry_status"],"toolTimeout":45}}},
+    {"id":"finish","type":"finish","position":{"x":480,"y":0},"data":{"label":"Finish","type":"finish","properties":{}}}
+  ],
+  "edges": [
+    {"id":"start-tick","source":"start","target":"tick"},
+    {"id":"tick-finish","source":"tick","target":"finish"},
+    {"id":"mcp-tick","source":"inquiry-mcp","target":"tick","data":{"edgeType":"mcp"}}
+  ]
+}

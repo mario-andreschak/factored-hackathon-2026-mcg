@@ -1,0 +1,139 @@
+{
+  "schema": "savia-integrated-native-product-evidence/v1",
+  "source_git_head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+  "image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+  "actual_served_js": [
+    {
+      "path": "/assets/index-DGVQHrRT.js",
+      "status": 200,
+      "sha256": "f06ecbad1ea5089a227a04ea7468aeb8f4b1ef023ac04a98e6b71379771cc8bd"
+    }
+  ],
+  "intended_product_ui_checks_passed": true,
+  "actual_required_product_steps_completed": true,
+  "agent_semantic_review_passed": true,
+  "independent_human_audio_review": "pending coordinator/media review",
+  "semantic_review": "First caption is calm conversational reassurance. Second accurately reports the actual customer-marked helpful informational closure; it does not narrate recommendations or claim bank resolution/refund. Exact worker suggestions and bank reply remain visible/stored separately.",
+  "audio": [
+    {
+      "file": "foreground-calm.wav",
+      "sha256": "289fbbe598cc59fd5f977c36901a9781773b6cc68c72e8a7204a832f3b9b0fa6",
+      "role": "foreground conversational reassurance",
+      "provider_transcript": "Despacio, sí, bien tranquilo, aquí estoy.",
+      "samples": 158400,
+      "sample_rate_hz": 24000,
+      "seconds": 6.6,
+      "full_playback_receipt": {
+        "nativeIndex": 1,
+        "httpStatus": 200,
+        "playedSamples": 158400,
+        "complete": true,
+        "exactSamples": true,
+        "atMs": 21473
+      }
+    },
+    {
+      "file": "informational-closure.wav",
+      "sha256": "e2a64aaec4c59b1f28cc17426b7f5786ad46295d10e587c7d56d932c5f379a4c",
+      "role": "verified informational helpful closure",
+      "provider_transcript": "Cerró la consulta, ya te ayudó la explicación.",
+      "samples": 94800,
+      "sample_rate_hz": 24000,
+      "seconds": 3.95,
+      "full_playback_receipt": {
+        "nativeIndex": 2,
+        "httpStatus": 200,
+        "playedSamples": 94800,
+        "complete": true,
+        "exactSamples": true,
+        "atMs": 26659
+      }
+    }
+  ],
+  "raw_recorder_completed_flag": false,
+  "raw_recorder_exit_code": 1,
+  "observer_cleanup": {
+    "failure": "Journey exceeded bounded 180 second duration.",
+    "elapsed_ms": 180092,
+    "root_cause": "Optional response.finished diagnostics awaited the canceled unused /api/voice/played response bodies. Both ACK HTTP200 headers and exact complete sample receipts already passed; timer closed owned browser at180seconds.",
+    "native_response_validation_errors": [],
+    "rerun_performed": false,
+    "owned_browser_contexts_closed": true
+  },
+  "counts": {
+    "new_bank_chat": 0,
+    "new_inquiries": 0,
+    "new_workers": 0,
+    "native_turns": 2,
+    "full_played_acks": 2,
+    "existing_case_helpful_closure": 1,
+    "browser_partial_asr_200": 4,
+    "server_final_asr": "One awaited final transcription in the foreground turn; separate from browser partial ASR.",
+    "cost_usd": "not reported"
+  },
+  "state": {
+    "target_inquiry": "third existing informational inquiry",
+    "state": "informational_resolved",
+    "bank_authority": false,
+    "two_completed_workers_retained": true,
+    "two_prior_inquiries_retained_states": [
+      "awaiting_customer",
+      "awaiting_customer"
+    ],
+    "new_chat_and_exact_bank_reply_restored": true,
+    "suggestions_retained": true
+  },
+  "queue": {
+    "newWorkerTaskInThisRun": false,
+    "actualHelpfulStateChangeDuringForeground": true,
+    "completedTeamAvailableBeforeForegroundPlayed": true,
+    "teamNativeAfterForegroundPlayed": true
+  },
+  "actual_canonical_closure": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+  "foreg_actual_asr_text": "Chankilo.  Whisper a Hondo.  Todo va a salir bien.",
+  "asr_limit": "Actual final ASR contains recognition errors; no perfect transcription or physical microphone claim.",
+  "recorder_timing_ms": {
+    "foreground_speaking": 14888,
+    "helpful_state_post": 14949,
+    "canonical_closure_available": 15836,
+    "foreground_full_ack": 21473,
+    "closure_native_request": 21503,
+    "closure_full_ack": 26659
+  },
+  "video_cues_seconds_approximate": {
+    "foreground_native": {
+      "start": 14,
+      "end": 21
+    },
+    "closure_native": {
+      "start": 22,
+      "end": 27
+    },
+    "closed_team_suggestions": {
+      "start": 27,
+      "end": 30
+    },
+    "new_chat_archive": {
+      "start": 30,
+      "end": 33
+    }
+  },
+  "video_timing_note": "These cues are approximate raw WebM positions; recorder monotonic timings are exact above. Final idle diagnostics period is not part of the product story.",
+  "scope": "Same authentic session/case3 continuation; no new background team work. Earlier actual two-worker creation while native began speaking is separate partial-run evidence, not full simultaneous speech qualification.",
+  "prior_partial_worker_overlap": "../intended-savia-successor-bounded-attempt/summary.json",
+  "physical_microphone_qualified": false,
+  "raw_cookie_and_native_ndjson": "kept private; excluded from public export",
+  "product_acceptance": true,
+  "release_coordinator_product_accepted": true,
+  "observer_completed": false,
+  "post_run_recorder_fix": "Optional response.finished diagnostics removed from required awaited tasks; syntax checked only, no new capture/model calls.",
+  "read_only_ledger_after_continuation": {
+    "bank_cases": 0,
+    "bank_receipts": 0,
+    "inquiries": 3,
+    "workers": 6,
+    "events": 24,
+    "target_case_state": "informational_resolved",
+    "scope": "Runtime final read-only freeze; no additional provider calls"
+  }
+}

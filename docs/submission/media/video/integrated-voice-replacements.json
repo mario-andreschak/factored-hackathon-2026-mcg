@@ -1,0 +1,93 @@
+{
+  "surface": "integrated-savia-dialog",
+  "semantic_review": "accepted",
+  "sections": {
+    "meet-savia": {
+      "narration": "docs/submission/measurements/intended-savia-native/foreground-calm.wav",
+      "duration": 7.6,
+      "captions": [
+        {
+          "start": 0,
+          "end": 6.6,
+          "text": "Slowly, yes. Nice and calm. I'm here."
+        }
+      ]
+    },
+    "savia-speaks": {
+      "narration": "docs/submission/measurements/intended-savia-native/informational-closure.wav",
+      "duration": 4.95,
+      "captions": [
+        {
+          "start": 0,
+          "end": 3.95,
+          "text": "The inquiry was closed; the explanation helped you."
+        }
+      ]
+    }
+  },
+  "scope": "Illustrative fictional TV cast plus edited actual fictional Savia prototype inserts. Five generated moving dialogue scenes; beach/sky use photo cutaways and stock-voice editorial dialogue after bounded native rendering failed. Both assistant audio inserts are complete actual provider WAVs captured through the intended integrated Savia dialog on source 9d77a7599128b668b0e34f9c2937eb40b6bd3824, with exact once-only full-playback acknowledgements: calm foreground reassurance and verified customer-marked-helpful informational closure. Closure queued during foreground playback; existing team suggestions and exact bank history stayed saved after new chat. No new workers, inquiry or bank chat ran in this continuation. Earlier actual worker creation during partial foreground is separate incomplete-run evidence. Raw recorder exited at 180 seconds on optional transport cleanup after required product checks completed; that failure is preserved separately. Text/helper/Portuguese inserts are separate actual fictional runs. Simulated banking receipts; no real refund, bank decision, human acceptance or production savings. One actual 30-minute repeat check; day/week framing uses controlled-time tests. File-backed microphone and imperfect ASR, no physical microphone qualification.",
+  "evidence": {
+    "receipt": "docs/submission/measurements/intended-savia-native/receipt.json",
+    "source_git_head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+    "actual_served_js": [
+      {
+        "path": "/assets/index-DGVQHrRT.js",
+        "status": 200,
+        "sha256": "f06ecbad1ea5089a227a04ea7468aeb8f4b1ef023ac04a98e6b71379771cc8bd"
+      }
+    ],
+    "audio": [
+      {
+        "file": "foreground-calm.wav",
+        "sha256": "289fbbe598cc59fd5f977c36901a9781773b6cc68c72e8a7204a832f3b9b0fa6",
+        "role": "foreground conversational reassurance",
+        "provider_transcript": "Despacio, sí, bien tranquilo, aquí estoy.",
+        "samples": 158400,
+        "sample_rate_hz": 24000,
+        "seconds": 6.6,
+        "full_playback_receipt": {
+          "nativeIndex": 1,
+          "httpStatus": 200,
+          "playedSamples": 158400,
+          "complete": true,
+          "exactSamples": true,
+          "atMs": 21473
+        }
+      },
+      {
+        "file": "informational-closure.wav",
+        "sha256": "e2a64aaec4c59b1f28cc17426b7f5786ad46295d10e587c7d56d932c5f379a4c",
+        "role": "verified informational helpful closure",
+        "provider_transcript": "Cerró la consulta, ya te ayudó la explicación.",
+        "samples": 94800,
+        "sample_rate_hz": 24000,
+        "seconds": 3.95,
+        "full_playback_receipt": {
+          "nativeIndex": 2,
+          "httpStatus": 200,
+          "playedSamples": 94800,
+          "complete": true,
+          "exactSamples": true,
+          "atMs": 26659
+        }
+      }
+    ],
+    "semantic_review": "First caption is calm conversational reassurance. Second accurately reports the actual customer-marked helpful informational closure; it does not narrate recommendations or claim bank resolution/refund. Exact worker suggestions and bank reply remain visible/stored separately.",
+    "queue": {
+      "newWorkerTaskInThisRun": false,
+      "actualHelpfulStateChangeDuringForeground": true,
+      "completedTeamAvailableBeforeForegroundPlayed": true,
+      "teamNativeAfterForegroundPlayed": true
+    },
+    "observer_cleanup": {
+      "failure": "Journey exceeded bounded 180 second duration.",
+      "elapsed_ms": 180092,
+      "root_cause": "Optional response.finished diagnostics awaited the canceled unused /api/voice/played response bodies. Both ACK HTTP200 headers and exact complete sample receipts already passed; timer closed owned browser at180seconds.",
+      "native_response_validation_errors": [],
+      "rerun_performed": false,
+      "owned_browser_contexts_closed": true
+    },
+    "independent_human_audio_review": "pending coordinator/media review"
+  }
+}

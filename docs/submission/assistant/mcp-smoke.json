@@ -1,0 +1,91 @@
+{
+  "schema": "savia-inquiry-mcp-smoke/v1",
+  "observed_at": "2026-10-05T01:08:23Z",
+  "fictional": true,
+  "provider": "openrouter",
+  "native_flujo_execution": false,
+  "mcp_transport": "actual stdio SDK client/server",
+  "tools": [
+    "savia_inquiry_status",
+    "savia_inquiry_tick"
+  ],
+  "latency_ms": 2783,
+  "worker_count": 2,
+  "completed_workers": 2,
+  "bank_authority": false,
+  "item": {
+    "id": "i_2a9ae25a538e4c979b925c676ac8f859",
+    "message": "No reconozco este cargo. ¿Cómo puedo revisar los datos y qué hago después?",
+    "state": "team_completed",
+    "created_at": 1791162500,
+    "updated_at": 1791162503,
+    "next_check_at": 1791164303,
+    "next_step": "Seguiré pendiente de tu consulta informativa. Una nueva consulta bancaria requiere autorización vigente.",
+    "status_message": "Ya tengo las dos perspectivas. Revisa las sugerencias y dime si responden tu consulta.",
+    "workers": [
+      {
+        "role": "evidence",
+        "state": "completed",
+        "suggestion": "Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas."
+      },
+      {
+        "role": "next_steps",
+        "state": "completed",
+        "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+      }
+    ],
+    "events": [
+      {
+        "id": 1,
+        "kind": "queued",
+        "at": 1791162500,
+        "role": null,
+        "message": "Tu consulta está guardada. Voy a pedir dos perspectivas para ayudarte."
+      },
+      {
+        "id": 2,
+        "kind": "team_working",
+        "at": 1791162501,
+        "role": null,
+        "message": "Dos agentes de Savia están revisando los datos visibles y los próximos pasos. Puedes seguir conversando."
+      },
+      {
+        "id": 3,
+        "kind": "worker_working",
+        "at": 1791162501,
+        "role": "evidence",
+        "message": "Un agente está trabajando en esta consulta informativa."
+      },
+      {
+        "id": 4,
+        "kind": "worker_working",
+        "at": 1791162501,
+        "role": "next_steps",
+        "message": "Un agente está trabajando en esta consulta informativa."
+      },
+      {
+        "id": 5,
+        "kind": "worker_completed",
+        "at": 1791162503,
+        "role": "next_steps",
+        "message": "Un agente terminó su revisión informativa."
+      },
+      {
+        "id": 6,
+        "kind": "worker_completed",
+        "at": 1791162503,
+        "role": "evidence",
+        "message": "Un agente terminó su revisión informativa."
+      },
+      {
+        "id": 7,
+        "kind": "team_completed",
+        "at": 1791162503,
+        "role": null,
+        "message": "Ya tengo las dos perspectivas. Revisa las sugerencias y dime si responden tu consulta."
+      }
+    ],
+    "informational_only": true,
+    "bank_authority": false
+  }
+}

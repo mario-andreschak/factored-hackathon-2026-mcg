@@ -1,0 +1,670 @@
+{
+  "schema": "savia-customer-comparison/v1",
+  "recorded_at": "2026-10-05T01:24:14.546682+00:00",
+  "runtime": {
+    "schema": "savia-fictional-rc-runtime/v1",
+    "url": "http://127.0.0.1:43900",
+    "fixture": "new generated current-date fiction",
+    "bank": "shipped MCP Service in process",
+    "language": {
+      "url": "https://openrouter.ai/api",
+      "model": "google/gemini-3.1-flash-lite",
+      "provider": "openrouter",
+      "route": "explicit direct OpenRouter completion"
+    },
+    "simulated_intake": true,
+    "real_bank_actions": false,
+    "native_flow_execution": false,
+    "source_snapshot": "startup Git revision plus exact application and served UI hashes",
+    "git_head": "6a05215e20dd839d292b50daaa4da1dec14895ff",
+    "application_sources": {
+      "banking_mcp/__init__.py": "58aec63d481988945236d968d44584a2c3cfd46da96b144975d14bdc05c43cfb",
+      "banking_mcp/__main__.py": "34fa7946bc924e98d4c3f0e4b06ab5f2f864fbbab2f38b1a13d53861b51a6825",
+      "banking_mcp/actions.py": "9439f3b00769c07bd249de73264544c692c3c5ad35f4eca5395b90eda18c02fc",
+      "banking_mcp/config.py": "70cdff491ef6e07d68ba2725602432b32d601c4c9a22e1ca3cf0421b6ead8ceb",
+      "banking_mcp/private_host.py": "e80051b6510e3782cc0d438a609ea4bfb19d91c1caa056ac5a7dd168ea46a096",
+      "banking_mcp/repository.py": "a1882aef706b094f47fdadb50dc44bf2a1f61aa7369f02bc36ea878249577d14",
+      "banking_mcp/security.py": "eba078084ce9cb1e7808486d95c3e02f791ae3caaf2860937126b7cc495a91f8",
+      "banking_mcp/server.py": "d2853a38ab302acbf08798001dc91037fb72beb361ba486ee6847affd55434fb",
+      "banking_mcp/service.py": "3c69ff7277e5bce17437d0d43fb8307bb53a3694b065f992201f4fa830c1a576",
+      "config/policy_rules.yaml": "197dc67a00450282f78f34768c8c4c6803aad69094272abdb80c34da71b06b34",
+      "contracts/policy_engine.md": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31",
+      "contracts/state_schema.md": "89e1c1aad37f3868cd886ee9efd0e8beeb92f9dff0adfd259319b88f2b0b58eb",
+      "contracts/tools.md": "95c4896078eff5acb024badaacd3bfcdcb1acdaddf2b6d2ba2c9c43c7c60b085",
+      "dispute_workflow/__init__.py": "2efde0019ceba19436ed5a44605986085889524718aafcb5073fd37fe3262977",
+      "dispute_workflow/action_host.py": "79e5f09ee9f51ca5c70878a68f050fffcde0af29c01e1a364ac330568b31e6fb",
+      "dispute_workflow/bank_read.py": "886f1fb3a9f0a88982233322f6d72747ece63f8a76ea42ec8363d9fb411cd6ea",
+      "dispute_workflow/handoff.py": "ed0aba8f5b03ede5050011ae23a8c0a295720586bef96c1a345c33ef8fa532c6",
+      "dispute_workflow/host.py": "e365f755f964bc5a82246b416616a43f70ed1a785e23dbd76764ff16efe4a386",
+      "dispute_workflow/model.py": "2263017f07055fee04795a9412dc02d9f461ca0d22bc1cb1d1e8fb74638f343a",
+      "dispute_workflow/policy.py": "4ad15d5e7acdb7f0c9319f33913f96b327fa8a7b5aa0e183a275434a4d82f7a2",
+      "dispute_workflow/prompts.py": "8ad298f6455f49a05b5a027066aabeb5aa61332a42c39bf11cbeb2001885d056",
+      "dispute_workflow/response.py": "de898ebd54a33376f91d2c6834d8e6217b04684c1c5202d78af56962e2954dd9",
+      "dispute_workflow/retrieval.py": "32773a7806280db3eff8407dfa41ee4a142e34a0eb3367e4e78915399e9773fd",
+      "dispute_workflow/runtime.py": "373dcb52bf2d8f3e5df29995124af3c0d982046f5b031509fdde534da14ccd85",
+      "dispute_workflow/state.py": "5866baf32afe3ce470674fa9f7d07d03acecea0d2c8ca16800664a3e41b56cad",
+      "dispute_workflow/tool.py": "0e9537c89e85742d69ada7bde65f1c4a55ec4f6ee3ef9b2fc7ebd3c6d7c99a13",
+      "frontend/requirements.txt": "4c1899ff026ac3f105e762ff1bc857560deec66ade84ec1a1aebc68f6f485b82",
+      "frontend/server/__init__.py": "919a040a827e9189ba1677a070b94e6fe19239b701b8d86c0d8f13e3f679c1f4",
+      "frontend/server/action.py": "57b03efa13a5016ee23b56ea073e941999253989abf00f3b5591fd8cea10a95d",
+      "frontend/server/app.py": "4aab08e5541daaf93f9852fdaf4225da5b6288d376e473a72348d1f15e2eee1e",
+      "frontend/server/bank_controller.py": "511459c61447b11a0adb572639aaaa977b1ffb782fe3db419f853c7b1a447d51",
+      "frontend/server/bank_protocol.py": "e863218bb01691c7f3d7cba1e6d7f05e3456972b03a207b597a9c88b2cca2165",
+      "frontend/server/bank_rpc.py": "d67942b8349991c2ea718089830bdc3ab68973aebcc08f71d38ef04d3f58baba",
+      "frontend/server/chat.py": "cd4352ad81fbd6b44b39f84185e83e174f8dd0fdca2db005bc31386a0318551e",
+      "frontend/server/config.py": "4f213b88bd0d7c530114e527d57799de83138b992dd00aae0109dfcf4df6e75b",
+      "frontend/server/deployment_transition.py": "de97138ddff1e4b1c2e91f818358a335dbb520d69b146a3adb6f8197bb38fced",
+      "frontend/server/dispute_chat.py": "0ce67d7ea4a0d2f95930f61dff3894e97ae612c19245ea51277bb50d1b3a68fe",
+      "frontend/server/followups.py": "318925b4d12e53fddfd7388c5ec3a2a1960be13e5760bd639b80fda391d9dc61",
+      "frontend/server/language.py": "8a7cc058a69e437a68fddefe1618b8956304700b7a1f225663260d8d5cc2264a",
+      "frontend/server/repository.py": "7f52e691340ef5882a050c967e0149be9a27b7f7c46ae95aeb82b9bf2ad58110",
+      "frontend/server/review.py": "e44ea22a9a8f61aa9aa78fd3e80fbfdabebdfede14b2d2b053f8f7a1a703948d",
+      "frontend/server/state.py": "b1bb9e7bbea790f4e60effb30903e81ee32e19a370b4c1fa9ad37cbd7dbe0937",
+      "pipeline/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pipeline/__main__.py": "07338b5bcb70d8d37b976de0b634252472a677d14ed2b453ffd1baa75feada41",
+      "pipeline/bronze.py": "92fdbcebd827d0abf75af414883f0109e4a26e3f06f9eec25e4ae0331fdbf7b4",
+      "pipeline/common.py": "5b36a52f78cbfe6c5f65f78252bebd344e5d4a73b77a32104eca8b9f28a53cea",
+      "pipeline/contracts.yaml": "5cfb5a26387956c20953482ec4e6116cd312ffe230c5e07b3b59b817174e2604",
+      "pipeline/fixture.py": "822f4dda6bbe1392d273a21fbf2ce80d2cde82d5edb4d99725abc799ea072482",
+      "pipeline/gold.py": "0c4b7b53e7b1efdf4146b57e921659372526915bdddd0bfa64cae28142064961",
+      "pipeline/lookup.py": "efa986b587dff74d902d0f2eb39002fc6964ff5a34109cb9de0bf46d00831888",
+      "pipeline/prepare_invite_preview.py": "ba01cbcdd0289d45f58b87c8b66677aa6db2741b1d639210e87805e2eb861769",
+      "pipeline/prepare_release_preview.py": "aa38ac4ee5ab5b0ffbf3489ba9400bc915e1c14b6230f82d0edabac8641cb4f1",
+      "pipeline/prototype_fixture.py": "2c5d61311acdbec3b0fced9fa17214e5b56ec1ce74ef9d9ab9fd879aa7c5d0eb",
+      "pipeline/report.py": "0d8a026835da5e8dc73ef62db8a00f384794c7696e8ef739c5ae0d0b7ebafb0a",
+      "pipeline/silver.py": "6dc66682d3ece6170311f6c89ef26702fa244dc37fcb1b6b0820d6704db0c595",
+      "pipeline/verify.py": "b47f7ad20aca130f51ef6c67820f24356cd7bfd061f2ed6a039012d66d0c4d92",
+      "pipeline/writer.py": "730cf37b50a6e3b7be272cbb821448fdc8011047df70726d04b08d5131d818d3",
+      "requirements-dispute.txt": "8e0220820a2f16cceb17496d03511b09da897b9433071eaa937346fec46b3659",
+      "requirements-pipeline.txt": "53e938aaf09f111a691413530abf3d193a82975c30e3d64733db30dbf398dda0",
+      "resources/policies/complaint_handling_policy.md": "4e37e1a2e9abe24fe9acf5c9f2c97eba8d5dbd4a9ed7af03a54cabd7d74940ff",
+      "resources/policies/customer_verification_policy.md": "6363b5b1fc1cc36541fbc78c51afd0924dcd6c3453470bea8fae728f399dd81c",
+      "resources/policies/fraud_escalation_policy.md": "49905ec77891665fc1fb52a53c2aefcaadd63f85fc77a7f5d3f944b2d49011ba",
+      "resources/policies/human_handoff_policy.md": "ffd6ebbd8ec61a5fbcb2753f6b676fb6cd4ead4c84d5c0d57d08431e5a42b673",
+      "resources/policies/transaction_dispute_policy.md": "740e7ccc8dcfef5251047e3702699831f0d45988b8f5b7455fb082b0d0cd8085",
+      "resources/prompts/attack_detection_prompt.yml": "ebf66676b2f2d783422a5fa7f08f4218523dc46f1a98bc92e4d7413254fb9b46",
+      "resources/prompts/clarification_resolution_prompt.yml": "459b8b3e142e93dff9ba90517fca9544a86405e4b2d5c43d48089fb33eef1d66",
+      "resources/prompts/context_detection_prompt.yml": "c5343a9987af82af44d8b1fdbc1a451996d63472fa8c8ea0597e7d6824a4adbe",
+      "resources/prompts/fallback_templates.yaml": "dd6cf378c5ae026c986813b0e74b7391cf7e0e672977a400278aeb61cb10452d",
+      "resources/prompts/generator_prompt_v3.yml": "6b76115bbd49b2554fdca3e3c88b6565245cae79b7771c687ed34c5dbed4829a",
+      "resources/prompts/handoff_summary_prompt.yml": "78faf7b6127b061e0184139b9d5e497fec50045e089599ceb45112065aca9596",
+      "resources/prompts/intent_detection_prompt.yml": "f2a1dacc022bcc3f26ac664534d2d5110a26bbd9d4c2253be562726077f03bfb",
+      "resources/prompts/rewrite_decompose_prompt.yml": "6a7a55f87a2be53d1b23556b486369d719937d5f9186c449c1a3d99f7957ff06",
+      "resources/prompts/slot_extraction_prompt.yml": "92fa8a6ac29e85841b4ea49f76e0c3fb02c29cd47d723c9c685a1d3956348012",
+      "scripts/native_dispute_qualification.mjs": "cfffd5af40685e94be6d5ae739a309026feead3ac2fc25cf8b7f9d0de622e0b4",
+      "scripts/native_dispute_qualification.py": "694a3956d1589a69fa613c340bd1f4452d000d8ce4ffbd1cb5111952f9e9e889",
+      "scripts/native_dispute_qualification.ts": "f5f55132d281b312022ac3b3b2c781a59c1dde252c0956cc3ac534a1ef39ac17",
+      "scripts/qualify_dispute_app.py": "525ee009d5d257ef30f09dc546b94cbd381edabbce5bd033924e41a0f39d8f64",
+      "scripts/run_dispute.py": "9f5eaf028cd57528b0263c1dbe4949646d0463854c49427f30cdf32e0b21eeae",
+      "savia_assistant/__init__.py": "3a63566442c56a9008c149c14094e34294396391f1799450150963c616027f97",
+      "savia_assistant/api.py": "49a59ef5ae39f98a8ac045e0a07d4ea4b700454ef5d3de5d1c7b37cb0b5d0263",
+      "savia_assistant/mcp.py": "8d92a48b1c82d67986f7249edb7efaab3275af980064a7ed67b2ac6336dbdeea",
+      "savia_assistant/service.py": "1e744b9e3d9a271b5561b5a704200c6ec908a600cbeb839f8ecdbfb4475fec17",
+      "savia_assistant/tests/test_api.py": "0f78b59c71c9a908f66f1a340c6c799f3b1478206c1a769be00f7cfa7583445b",
+      "savia_assistant/tests/test_service.py": "3b31048aabd3826e112a57c4b0481c88a6d36e2f2bcdbafa1d5b60559ab8cd81"
+    },
+    "served_ui": {
+      "assets/dm-sans-latin-400-normal-BwCSEQnW.woff": "38702875fe179437d200e7ba6f7fab4d497ffe48117ef332029b2081751186ad",
+      "assets/dm-sans-latin-400-normal-CW0RaeGs.woff2": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006",
+      "assets/dm-sans-latin-500-normal-B9HHJjqV.woff2": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d",
+      "assets/dm-sans-latin-500-normal-Dr3UlScf.woff": "7deb957e430b780ee3272d801af4f9f2211b1330ec40a312a8f25309eacb4034",
+      "assets/dm-sans-latin-600-normal-Aqo67rzb.woff2": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120",
+      "assets/dm-sans-latin-600-normal-BmdmIIQ2.woff": "e7351257e49400eff05aca30a2007289194a900860d30c30770d8b8732897564",
+      "assets/index-ChtpqfLH.css": "89b043b17278f686b568d91352e86b81770653ffd404bdc221e5dd7d7cb376a0",
+      "assets/index-CVFk0Ott.js": "4becaa739d9f7190310cb57a8a5d14c05ab7f67fe5af689c359ca6d243e090d6",
+      "assets/manrope-latin-400-normal-8tf8FM3T.woff": "1bf66c29a29f1b71d507cb97fc138cd130b856ed05b55decd3a2944b413cb636",
+      "assets/manrope-latin-400-normal-PaqtzbVb.woff2": "849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3",
+      "assets/manrope-latin-500-normal-BYYD-dBL.woff2": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc",
+      "assets/manrope-latin-500-normal-DMZssgOp.woff": "c805ac8fd73fb95ddba74e624500c7d7d9a8ec6434d723bb6a9b76173c9e41b4",
+      "assets/manrope-latin-600-normal-4f0koTD-.woff2": "f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593",
+      "assets/manrope-latin-600-normal-BqgrALkZ.woff": "8d1f509774bca963fa02faf674678ce9244474306361ca2798583fa600346df6",
+      "assets/manrope-latin-700-normal-BZp_XxE4.woff2": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71",
+      "assets/manrope-latin-700-normal-DGRFkw-m.woff": "e5d35fda4759b0d63ebcc6cca0627d98d9208254ce851c85df29e4d12aeafb61",
+      "assets/manrope-latin-800-normal-BfWYOv1c.woff2": "74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49",
+      "assets/manrope-latin-800-normal-uHUdIJgA.woff": "ce954acb78379d559111a15d29925f3390b69161b2b1365c38b0f19c76991bac",
+      "favicon.svg": "773b331c669175ac2e1b249d4f9bae10b7a1db10d2a84d83a3d30762d7901089",
+      "index.html": "bbb9c8903bdc95d2813621da4edeccc6f0d1a7d8d068be7f110c50ec817d3f4f"
+    },
+    "launcher_sha256": "320c7df693d0a201a06fbe09073720eb1acf2e0777f9ceadc9001f214cfd64ee"
+  },
+  "generated_only": true,
+  "sample_size": 3,
+  "real_portions": [
+    "actual authenticated HTTP calls",
+    "actual configured customer runtime replies"
+  ],
+  "simulated_portions": [
+    "fictional generated banking data",
+    "sandbox intake if explicitly confirmed separately"
+  ],
+  "baseline_scope": "Local deterministic copy on same facts; no task execution, provider, handoff or follow-up. Not a prior production runtime.",
+  "limits": [
+    "AI-authored cases; not representative traffic",
+    "No independent human adjudication yet",
+    "Provider and tool counts require separately observed runtime evidence",
+    "HTTP 200 does not prove resolved dispute",
+    "n=3 fixed AI-authored examples; two languages and two behavior types, no population estimate or causal improvement claim.",
+    "One ES case reuses its actual browser request; PT cases use urllib timing through body read. Timing boundaries differ slightly.",
+    "Useful outcome is agent screening; independent human review remains pending. The original PT selected-fact failure is retained.",
+    "Call counts use exclusive serialized chat time windows; transport completion does not establish semantic output acceptance. Bank operation wrappers may include nested read-back operations, not network MCP transports."
+  ],
+  "cases": [
+    {
+      "case": "es-selected",
+      "language": "es",
+      "message": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora.",
+      "expected_behavior": "grounded_explanation",
+      "display_facts": {
+        "event_date": "2026-10-02",
+        "amount": "4280.75",
+        "currency": "MXN",
+        "merchant": "Nébula Market",
+        "recorded_status": "approved"
+      },
+      "selection_sha256": "68fd780447f5092efd09a2a6f02ad78de7a54c87f0b68477b40fc315514e7204",
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "El registro muestra 4280.75 MXN con fecha 2026-10-02. El comercio registrado es «Nébula Market». El estado registrado es aprobado.",
+        "latency_ms": 0.007,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "La transacción identificada es una compra en **Nébula Market** por **4280.75 MXN**, realizada el **2026-10-02** con tu tarjeta terminada en **4381**. Ya existe el reclamo **CMP-SBX--HCaKBpE**, con estado **received**, relacionado con este movimiento en el entorno de prueba. No se crea otro reclamo. El proceso actual se encuentra en revisión, sin plazos ni resultados garantizados.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 9338,
+        "latency_kind": "browser request to response-header event",
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": 6,
+        "tool_call_count": 5,
+        "completed_model_transport_count": 6,
+        "observed_operations": [
+          {
+            "kind": "model",
+            "stage": "detect_attack",
+            "status": "ok",
+            "latency_ms": 2168,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 1004,
+            "completion_tokens": 14,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "rewrite_decompose",
+            "status": "ok",
+            "latency_ms": 3031,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 939,
+            "completion_tokens": 54,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "detect_context",
+            "status": "ok",
+            "latency_ms": 2799,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 511,
+            "completion_tokens": 12,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "detect_intent",
+            "status": "ok",
+            "latency_ms": 1216,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 998,
+            "completion_tokens": 37,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "extract_slots",
+            "status": "ok",
+            "latency_ms": 1647,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 3032,
+            "completion_tokens": 115,
+            "cost_usd": null
+          },
+          {
+            "kind": "bank_read",
+            "operation": "search_transactions",
+            "status": "ok",
+            "latency_ms": 129
+          },
+          {
+            "kind": "bank_read",
+            "operation": "get_transaction",
+            "status": "ok",
+            "latency_ms": 213
+          },
+          {
+            "kind": "bank_read",
+            "operation": "get_related_complaints",
+            "status": "ok",
+            "latency_ms": 160
+          },
+          {
+            "kind": "bank_read",
+            "operation": "get_complaint",
+            "status": "ok",
+            "latency_ms": 55
+          },
+          {
+            "kind": "bank_read",
+            "operation": "host_action_status",
+            "status": "ok",
+            "latency_ms": 26
+          },
+          {
+            "kind": "model",
+            "stage": "generate",
+            "status": "ok",
+            "latency_ms": 2011,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 7509,
+            "completion_tokens": 207,
+            "cost_usd": null
+          }
+        ]
+      },
+      "http_calls": [
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "started_at": "2026-10-05T01:21:30.508000+00:00",
+          "completed_at": "2026-10-05T01:21:39.846000+00:00"
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": true,
+      "grounding": "selected facts correct",
+      "language_correct": true,
+      "artifact": "docs/submission/measurements/team-story-final/capture.json",
+      "agent_screening": {
+        "useful": true,
+        "language_correct": true,
+        "note": "Correct merchant, date, amount/currency and existing simulated folio; no duplicate case. Chat gives limited next-step detail; team result supplies receipt comparison and folio advice."
+      }
+    },
+    {
+      "case": "pt-selected",
+      "language": "pt",
+      "message": "Não reconheço esta compra. Explique os dados e o que posso fazer agora.",
+      "expected_behavior": "grounded_explanation",
+      "display_facts": {
+        "event_date": "2026-10-02",
+        "amount": "4280.75",
+        "currency": "MXN",
+        "merchant": "Nébula Market",
+        "recorded_status": "approved"
+      },
+      "selection_sha256": "68fd780447f5092efd09a2a6f02ad78de7a54c87f0b68477b40fc315514e7204",
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "O registro mostra 4280.75 MXN com data 2026-10-02. O estabelecimento registrado é «Nébula Market». O estado registrado é aprovado.",
+        "latency_ms": 0.012,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "Consulta 1:\nPara que eu possa localizar a transação que você não reconhece, por favor, informe o valor e a data aproximada da compra.\n\nConsulta 2:\nPreciso esclarecer a solicitação. Informe: valor, data.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 12970.1,
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": 10,
+        "tool_call_count": 2,
+        "completed_model_transport_count": 10,
+        "observed_operations": [
+          {
+            "kind": "model",
+            "stage": "detect_context",
+            "status": "ok",
+            "latency_ms": 1739,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 510,
+            "completion_tokens": 12,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "rewrite_decompose",
+            "status": "ok",
+            "latency_ms": 2536,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 938,
+            "completion_tokens": 58,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "detect_attack",
+            "status": "ok",
+            "latency_ms": 2375,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 1003,
+            "completion_tokens": 14,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "detect_intent",
+            "status": "ok",
+            "latency_ms": 1921,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 998,
+            "completion_tokens": 50,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "extract_slots",
+            "status": "ok",
+            "latency_ms": 2144,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 3020,
+            "completion_tokens": 115,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "extract_slots",
+            "status": "ok",
+            "latency_ms": 1599,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 3031,
+            "completion_tokens": 115,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "extract_slots",
+            "status": "ok",
+            "latency_ms": 2013,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 3025,
+            "completion_tokens": 114,
+            "cost_usd": null
+          },
+          {
+            "kind": "bank_read",
+            "operation": "host_action_status",
+            "status": "ok",
+            "latency_ms": 35
+          },
+          {
+            "kind": "model",
+            "stage": "generate",
+            "status": "ok",
+            "latency_ms": 1866,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 7020,
+            "completion_tokens": 76,
+            "cost_usd": null
+          },
+          {
+            "kind": "bank_read",
+            "operation": "host_action_status",
+            "status": "ok",
+            "latency_ms": 31
+          },
+          {
+            "kind": "model",
+            "stage": "generate",
+            "status": "ok",
+            "latency_ms": 1582,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 7025,
+            "completion_tokens": 120,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "generate",
+            "status": "ok",
+            "latency_ms": 2112,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 7066,
+            "completion_tokens": 159,
+            "cost_usd": null
+          }
+        ]
+      },
+      "http_calls": [
+        {
+          "path": "/api/auth/login",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 84.5,
+          "started_at": "2026-10-05T01:23:53.714285+00:00",
+          "completed_at": "2026-10-05T01:23:53.798846+00:00"
+        },
+        {
+          "path": "/api/transactions",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 159.4,
+          "started_at": "2026-10-05T01:23:53.798895+00:00",
+          "completed_at": "2026-10-05T01:23:53.958364+00:00"
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 12970.1,
+          "started_at": "2026-10-05T01:23:53.958632+00:00",
+          "completed_at": "2026-10-05T01:24:06.928785+00:00"
+        },
+        {
+          "path": "/api/chat/history",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 34.3,
+          "started_at": "2026-10-05T01:24:06.928840+00:00",
+          "completed_at": "2026-10-05T01:24:06.963163+00:00"
+        },
+        {
+          "path": "/api/auth/logout",
+          "method": "POST",
+          "http_status": 204,
+          "latency_ms": 21.7,
+          "started_at": "2026-10-05T01:24:06.963282+00:00",
+          "completed_at": "2026-10-05T01:24:06.984964+00:00"
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": false,
+      "grounding": "not established",
+      "language_correct": true,
+      "agent_screening": {
+        "useful": false,
+        "language_correct": true,
+        "note": "Selected date/amount were supplied, but two rewritten subqueries needlessly ask for them again; no useful selected-fact explanation."
+      }
+    },
+    {
+      "case": "pt-ambiguous",
+      "language": "pt",
+      "message": "Tem uma cobrança que não reconheço, mas não sei qual é.",
+      "expected_behavior": "clarification",
+      "display_facts": null,
+      "selection_sha256": null,
+      "baseline": {
+        "kind": "repository deterministic display copy + frozen selection/human rule",
+        "reply": "Qual data e valor aparecem no lançamento que você quer revisar?",
+        "latency_ms": 0.01,
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "actual": {
+        "response": {
+          "reply": "Para localizar a cobrança que você não reconhece, por favor, informe a data e o valor da transação. Com esses dados, poderei verificar os detalhes em sua conta.",
+          "mode": "dispute",
+          "status": "completed"
+        },
+        "http_status": 200,
+        "latency_ms": 7104.8,
+        "history_status": 200,
+        "history_message_count": 2,
+        "exact_reply_in_history": true,
+        "model_call_count": 6,
+        "tool_call_count": 1,
+        "completed_model_transport_count": 6,
+        "observed_operations": [
+          {
+            "kind": "model",
+            "stage": "detect_context",
+            "status": "ok",
+            "latency_ms": 1162,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 508,
+            "completion_tokens": 12,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "detect_attack",
+            "status": "ok",
+            "latency_ms": 1605,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 1001,
+            "completion_tokens": 14,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "rewrite_decompose",
+            "status": "ok",
+            "latency_ms": 2154,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 936,
+            "completion_tokens": 56,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "detect_intent",
+            "status": "ok",
+            "latency_ms": 1692,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 999,
+            "completion_tokens": 38,
+            "cost_usd": null
+          },
+          {
+            "kind": "model",
+            "stage": "extract_slots",
+            "status": "ok",
+            "latency_ms": 1498,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 3033,
+            "completion_tokens": 114,
+            "cost_usd": null
+          },
+          {
+            "kind": "bank_read",
+            "operation": "host_action_status",
+            "status": "ok",
+            "latency_ms": 30
+          },
+          {
+            "kind": "model",
+            "stage": "generate",
+            "status": "ok",
+            "latency_ms": 1545,
+            "model": "google/gemini-3.1-flash-lite",
+            "prompt_tokens": 7033,
+            "completion_tokens": 85,
+            "cost_usd": null
+          }
+        ]
+      },
+      "http_calls": [
+        {
+          "path": "/api/auth/login",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 104.9,
+          "started_at": "2026-10-05T01:24:07.079910+00:00",
+          "completed_at": "2026-10-05T01:24:07.184801+00:00"
+        },
+        {
+          "path": "/api/transactions",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 197.8,
+          "started_at": "2026-10-05T01:24:07.184838+00:00",
+          "completed_at": "2026-10-05T01:24:07.382799+00:00"
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "http_status": 200,
+          "latency_ms": 7104.8,
+          "started_at": "2026-10-05T01:24:07.382883+00:00",
+          "completed_at": "2026-10-05T01:24:14.487726+00:00"
+        },
+        {
+          "path": "/api/chat/history",
+          "method": "GET",
+          "http_status": 200,
+          "latency_ms": 40.3,
+          "started_at": "2026-10-05T01:24:14.487791+00:00",
+          "completed_at": "2026-10-05T01:24:14.528144+00:00"
+        },
+        {
+          "path": "/api/auth/logout",
+          "method": "POST",
+          "http_status": 204,
+          "latency_ms": 18.4,
+          "started_at": "2026-10-05T01:24:14.528208+00:00",
+          "completed_at": "2026-10-05T01:24:14.546637+00:00"
+        }
+      ],
+      "human_adjudication": "pending",
+      "useful_outcome": true,
+      "grounding": "no bank facts asserted",
+      "language_correct": true,
+      "agent_screening": {
+        "useful": true,
+        "language_correct": true,
+        "note": "Correct Portuguese clarification asks for the missing date and amount; no completion or handoff is asserted."
+      }
+    }
+  ],
+  "browser_recorded_es_case": true,
+  "source_note": "Backend startup receipt is preserved. UI received final builds during recording; see team-story-summary provenance notes.",
+  "summary": {
+    "sample_size": 3,
+    "http_chat_success": 3,
+    "history_exact": 3,
+    "latency_ms": {
+      "minimum": 7104.8,
+      "median": 9338,
+      "maximum": 12970.1
+    },
+    "independent_human_adjudication": false,
+    "bank_resolution_observed": false,
+    "agent_screening": {
+      "reviewed": 3,
+      "useful": 2,
+      "language_correct": 3
+    }
+  }
+}

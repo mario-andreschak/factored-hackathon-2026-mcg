@@ -1,0 +1,279 @@
+{
+  "schema": "savia-current-team-story/v1",
+  "capture": "docs/submission/measurements/team-story-final/capture.json",
+  "actual_browser": true,
+  "mocked_requests": 0,
+  "fictional_bank": true,
+  "actual_provider": {
+    "url": "https://openrouter.ai/api",
+    "model": "google/gemini-3.1-flash-lite",
+    "provider": "openrouter",
+    "route": "explicit direct OpenRouter completion"
+  },
+  "bank_authority": false,
+  "actual_model_workers": 2,
+  "completed_workers": 2,
+  "worker_output_scope": "Two real bounded structured model choices; trusted server facts and reviewed copy form the suggestions.",
+  "case_id": "i_3f279d9cbe2149c4a7db0748447b6754",
+  "submit_to_first_completed_ui_response_ms": 4278,
+  "queued_to_completed_event_seconds": 4,
+  "completed_case": {
+    "id": "i_3f279d9cbe2149c4a7db0748447b6754",
+    "message": "Ayúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.",
+    "state": "team_completed",
+    "created_at": 1791163346,
+    "updated_at": 1791163350,
+    "next_check_at": 1791165150,
+    "next_step": "Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.",
+    "status_message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+    "workers": [
+      {
+        "role": "evidence",
+        "state": "completed",
+        "suggestion": "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo."
+      },
+      {
+        "role": "next_steps",
+        "state": "completed",
+        "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+      }
+    ],
+    "events": [
+      {
+        "id": 1,
+        "kind": "queued",
+        "at": 1791163346,
+        "role": null,
+        "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+      },
+      {
+        "id": 2,
+        "kind": "team_working",
+        "at": 1791163348,
+        "role": null,
+        "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+      },
+      {
+        "id": 3,
+        "kind": "worker_working",
+        "at": 1791163348,
+        "role": "evidence",
+        "message": "Un agente está revisando esta consulta."
+      },
+      {
+        "id": 4,
+        "kind": "worker_working",
+        "at": 1791163348,
+        "role": "next_steps",
+        "message": "Un agente está revisando esta consulta."
+      },
+      {
+        "id": 5,
+        "kind": "worker_completed",
+        "at": 1791163350,
+        "role": "evidence",
+        "message": "Un agente terminó su revisión."
+      },
+      {
+        "id": 6,
+        "kind": "worker_completed",
+        "at": 1791163350,
+        "role": "next_steps",
+        "message": "Un agente terminó su revisión."
+      },
+      {
+        "id": 7,
+        "kind": "team_completed",
+        "at": 1791163350,
+        "role": null,
+        "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+      }
+    ],
+    "informational_only": true,
+    "bank_authority": false,
+    "voice_update": {
+      "version": "7",
+      "reply": "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo. Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto. Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+      "mode": "assistant",
+      "status": "completed"
+    }
+  },
+  "customer_closed_case": {
+    "id": "i_3f279d9cbe2149c4a7db0748447b6754",
+    "message": "Ayúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.",
+    "state": "informational_resolved",
+    "created_at": 1791163346,
+    "updated_at": 1791163383,
+    "next_check_at": null,
+    "next_step": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+    "status_message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+    "workers": [
+      {
+        "role": "evidence",
+        "state": "completed",
+        "suggestion": "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo."
+      },
+      {
+        "role": "next_steps",
+        "state": "completed",
+        "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+      }
+    ],
+    "events": [
+      {
+        "id": 1,
+        "kind": "queued",
+        "at": 1791163346,
+        "role": null,
+        "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+      },
+      {
+        "id": 2,
+        "kind": "team_working",
+        "at": 1791163348,
+        "role": null,
+        "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+      },
+      {
+        "id": 3,
+        "kind": "worker_working",
+        "at": 1791163348,
+        "role": "evidence",
+        "message": "Un agente está revisando esta consulta."
+      },
+      {
+        "id": 4,
+        "kind": "worker_working",
+        "at": 1791163348,
+        "role": "next_steps",
+        "message": "Un agente está revisando esta consulta."
+      },
+      {
+        "id": 5,
+        "kind": "worker_completed",
+        "at": 1791163350,
+        "role": "evidence",
+        "message": "Un agente terminó su revisión."
+      },
+      {
+        "id": 6,
+        "kind": "worker_completed",
+        "at": 1791163350,
+        "role": "next_steps",
+        "message": "Un agente terminó su revisión."
+      },
+      {
+        "id": 7,
+        "kind": "team_completed",
+        "at": 1791163350,
+        "role": null,
+        "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+      },
+      {
+        "id": 8,
+        "kind": "informational_resolved",
+        "at": 1791163383,
+        "role": null,
+        "message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó."
+      }
+    ],
+    "informational_only": true,
+    "bank_authority": false,
+    "voice_update": {
+      "version": "8",
+      "reply": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+      "mode": "assistant",
+      "status": "completed"
+    }
+  },
+  "customer_closed_at_ms": 94958,
+  "archive_preserved_case": true,
+  "reload_preserved_case": true,
+  "history_exact": true,
+  "new_bank_confirm_requests": 0,
+  "bank_resolution_observed": false,
+  "markers": [
+    {
+      "name": "01-overview",
+      "at_ms": 1153
+    },
+    {
+      "name": "02-selected-facts",
+      "at_ms": 1361
+    },
+    {
+      "name": "03-ready",
+      "at_ms": 1651
+    },
+    {
+      "name": "04-grounded-answer",
+      "at_ms": 11466
+    },
+    {
+      "name": "05-team-started",
+      "at_ms": 58074
+    },
+    {
+      "name": "06-team-result",
+      "at_ms": 62893
+    },
+    {
+      "name": "07-customer-helpful",
+      "at_ms": 95247
+    },
+    {
+      "name": "08-new-chat-saved-inquiry",
+      "at_ms": 101470
+    },
+    {
+      "name": "09-previous-context",
+      "at_ms": 108684
+    },
+    {
+      "name": "10-reload-saved-inquiry",
+      "at_ms": 118034
+    },
+    {
+      "name": "11-saved-useful-result",
+      "at_ms": 212351
+    },
+    {
+      "name": "12-returned-grounded-context",
+      "at_ms": 230656
+    }
+  ],
+  "ui_provenance": {
+    "initial_loaded_asset": "Not independently captured by recorder; startup served_ui metadata predates final source-owner build notices.",
+    "source_owner_final_build_before_reload": "index-DDMU2raD.js; 9b081a47966ea56f37ec7cb98ab937f8160220f910411398f9057b3f353cc852",
+    "source_owner_saved_answer_reload_build": "index-iXDcoSnQ.js; 5ce55fd2c41c28ae3ec170ccff0572830a58b5b107990eaba063081345c0c85e",
+    "note": "Historical capture.runtime fields are unchanged. UI retention was fixed between snapshots 10 and 11; same persisted case, no paid repetition."
+  },
+  "limits": [
+    "Customer helpful acknowledgment closes an informational inquiry only.",
+    "No human worker, bank resolution, refund, or week-long reliability is demonstrated.",
+    "This model profile is direct OpenRouter, not native FLUJO execution.",
+    "Browser event times need visual frame verification when editing WebM."
+  ],
+  "observed_worker_calls": [
+    {
+      "stage": "inquiry_evidence",
+      "model": "google/gemini-3.1-flash-lite",
+      "status": "ok",
+      "latency_ms": 1994,
+      "prompt_tokens": 186,
+      "completion_tokens": 9,
+      "cost_usd": null
+    },
+    {
+      "stage": "inquiry_next_steps",
+      "model": "google/gemini-3.1-flash-lite",
+      "status": "ok",
+      "latency_ms": 1988,
+      "prompt_tokens": 186,
+      "completion_tokens": 7,
+      "cost_usd": null
+    }
+  ],
+  "observed_worker_attempts": 2,
+  "observed_worker_transport_completions": 2
+}

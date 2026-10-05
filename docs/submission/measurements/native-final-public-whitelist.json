@@ -1,0 +1,130 @@
+{
+  "schema": "savia-final-measurement-public-delta/v1",
+  "source_git_head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+  "image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+  "product_acceptance": true,
+  "observer_completed": false,
+  "private_material_excluded": true,
+  "files": [
+    {
+      "path": "scripts/submission/record_savia_native.mjs",
+      "bytes": 26583,
+      "sha256": "b15cf99271ab00bc8a44abf63b45315a198b821d79d264dceafcb3b43cb64738"
+    },
+    {
+      "path": "scripts/submission/capture_savia_audio.mjs",
+      "bytes": 6369,
+      "sha256": "118d1a124e2d4a256ebc94728633d4c0ecad2a0f67e20e83a83fe63ce299a4f6"
+    },
+    {
+      "path": "scripts/submission/record_customer.mjs",
+      "bytes": 9034,
+      "sha256": "2e27a9c0fefb8d53ff27cdbc3ecefb8a13dca03ba82859261a4a74a638de0210"
+    },
+    {
+      "path": "docs/submission/measurement-status.json",
+      "bytes": 9721,
+      "sha256": "efc0a5a03ac7f94f6ee5d723f0e3e4fcf6d6b213239ef12000a1d09bed21d253"
+    },
+    {
+      "path": "docs/submission/measurements/MEASURED_RESULTS.md",
+      "bytes": 8844,
+      "sha256": "b1bb2d9898401d6592a39b9fc41e79936301fd7db263172c50269d4f79f536f8"
+    },
+    {
+      "path": "docs/submission/measurements/INTENDED_SAVIA_CAPTURE.md",
+      "bytes": 6254,
+      "sha256": "f579eb4cd807563236251d7f4cf4540b4d504fcb8d2b9900108354dab8977e2b"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-bounded-attempt/01-integrated-savia.png",
+      "bytes": 213709,
+      "sha256": "a5cdfb791d8798c5a190d85f696387b363163a708c9242136cfd3643422fb03a"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-bounded-attempt/partial-native-caption-not-played.png",
+      "bytes": 492666,
+      "sha256": "a41e5395e0c93415650cf3423ddb2f03a515eb62269626e0cef6e415d4ccbe7e"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-bounded-attempt/summary.json",
+      "bytes": 4668,
+      "sha256": "8960bef5967554f2c65e0029c2395b93874bc07409a9c1162a4d4d5bdeebc294"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-successor-bounded-attempt/02-bank-facts-voice-off.png",
+      "bytes": 215724,
+      "sha256": "302db228a37a18ebdf629eb39a934bfb4a54ad3bbc9c3f383a2dc81a445c8caf"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-successor-bounded-attempt/03-native-eyes-mic-detail.png",
+      "bytes": 23828,
+      "sha256": "e19bee5c81f952ba354b3bd461590d433291dbd7c36fbd83cc493398b8996151"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-successor-bounded-attempt/03-native-foreground-speaking.png",
+      "bytes": 208347,
+      "sha256": "2e4a1ba302b68b13d0d7b1ec32b2ea9273741b404c0d4c9ec7044c8b275d9ab8"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-successor-bounded-attempt/summary.json",
+      "bytes": 2198,
+      "sha256": "d7a32b4b3c910bec4a5e6b49eaf0bf3aafb325b60bfde282d90b8d22b4a63e12"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/actual-browser.webm",
+      "bytes": 10310724,
+      "sha256": "89c47dbf7001c0c04512eb51d15a8d33adc5464c269c87402e442900816a7bf6"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/completed-inquiry.png",
+      "bytes": 250278,
+      "sha256": "4e7cadfdc7df31a107501d3c2e5cebd56e91b5788ecb88192dc8705518bd4ddf"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/foreground-calm.wav",
+      "bytes": 316844,
+      "sha256": "289fbbe598cc59fd5f977c36901a9781773b6cc68c72e8a7204a832f3b9b0fa6"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/informational-closure.wav",
+      "bytes": 189644,
+      "sha256": "e2a64aaec4c59b1f28cc17426b7f5786ad46295d10e587c7d56d932c5f379a4c"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/native-eyes-mic.png",
+      "bytes": 24048,
+      "sha256": "486ae340565b095b3723524af8effb456ed3e01e941bfbcbdc366fe62b42303f"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/native-speaking.png",
+      "bytes": 208876,
+      "sha256": "ad28960ece7415f996127ee08079102a3165d7e486ac9cfc082c5f6de8eccd6c"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/new-chat.png",
+      "bytes": 203099,
+      "sha256": "9a210968ec6987bf125df612c6cc744fd2b057c80cdfdd054b1f53833a6cad58"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/README.md",
+      "bytes": 2077,
+      "sha256": "0444c164a404876293db7d82a8c2dfe934e9fc17c54be5af723c225731cfc733"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/receipt.json",
+      "bytes": 5720,
+      "sha256": "6a15cdfe3dbc6d867aa72adba714532f5ee00895f6c2ebc324809983bbc0ee3d"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/restored-bank-facts.png",
+      "bytes": 212789,
+      "sha256": "990a25670b22c9e04af4bc440992b19fc561ebf5718758a6409a7c28e02ab6b1"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/restored-context.png",
+      "bytes": 205737,
+      "sha256": "9fa73dd2fe12eb810101ad5a0273f743ddfc5c9fa2b02d86bfc2c6763d944d78"
+    }
+  ]
+}

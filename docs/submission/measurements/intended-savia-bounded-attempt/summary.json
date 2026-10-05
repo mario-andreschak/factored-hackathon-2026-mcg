@@ -1,0 +1,84 @@
+{
+  "schema": "savia-intended-ui-bounded-attempt/v1",
+  "recorded_at": "2026-10-05T03:59:09.939Z",
+  "source_git_head": "4a27f0e02ab8b1967af65725b85564cde1be8ac3",
+  "image_digest": "sha256:bfc3228fad8afe6fb2197a9c3af19ef81350275fa54e21fef0811fa03cac7a04",
+  "actual_served_js": [
+    {
+      "path": "/assets/index-DGVQHrRT.js",
+      "status": 200,
+      "sha256": "f06ecbad1ea5089a227a04ea7468aeb8f4b1ef023ac04a98e6b71379771cc8bd"
+    }
+  ],
+  "intended_product_ui_accepted": false,
+  "actual_integrated_ui_controls_observed": true,
+  "bank_reply": "El movimiento consultado corresponde a **Nébula Market**, con fecha **2026-10-02**, por un monto de **4280.75 MXN** y estado **Approved**.",
+  "bank_reply_http_status": 200,
+  "bank_reply_independently_visible_in_still": false,
+  "foreground_input": {
+    "sha256": "3956bc585e5bac204010593ea5ae37182ac47828d034ffcb36f8e8daca481d6c",
+    "utterance": "Tranquilo, respira hondo. Todo va a salir bien.",
+    "kind": "existing fictional synthetic WAV through actual browser microphone control",
+    "physicalMicrophoneQualified": false
+  },
+  "observed_browser_requests": {
+    "/api/chat/messages": 2,
+    "/api/voice/transcribe": 4,
+    "/api/voice/turn": 1,
+    "/api/assistant/cases": 1
+  },
+  "first_native_http_status": 200,
+  "first_native_ui_speaking_at_ms": 23340,
+  "new_informational_inquiry_created": true,
+  "inquiry_create_http_status": 202,
+  "inquiry_create_at_ms": 23840,
+  "new_inquiry_last_observed_state": "queued",
+  "preserved_inquiry_count": 1,
+  "preserved_inquiry_states": [
+    "awaiting_customer"
+  ],
+  "native_wavs_completed": 0,
+  "full_playback_receipts": 0,
+  "helpful_closure_attempted": false,
+  "new_chat_archive_attempted": false,
+  "failure": "Unexpected application POST or exceeded bounded write budget.",
+  "failure_detail": "Existing server history confirms native voice invented the bank request \"revisar el saldo de la cuenta para ver si todo va a salir bien, estoy un poco preocupado\" from the prerecorded reassurance. The host safely returned that it has no balance/account access. The second chat exceeded the authorized budget, so the observer closed before the native stream/full playback receipt completed.",
+  "duration_ms": 24955,
+  "owned_browser_contexts_closed": true,
+  "retries_performed": 0,
+  "public_state_after_creation": {
+    "informational_inquiries": 2,
+    "workers": 4,
+    "events": 15,
+    "bank_action_endpoints_attempted": 0,
+    "bank_ledger_reverification": {
+      "sandbox_cases": 0,
+      "sandbox_receipts": 0
+    },
+    "verification_scope": "Runtime read-only inspection after stopped run"
+  },
+  "provider_call_scope": "One native stream plus four browser partial transcription requests were observed; the foreground final internal transcription and bank/team transport calls are counted separately. Total provider completions cannot be derived from browser requests alone.",
+  "screenshots": {
+    "01-integrated-savia.png": "Actual corrected assistant dialog; Eyes header partly outside viewport after focus scrolling.",
+    "private/02-bank-facts-voice-off.png": "Filename describes API stage; the still was taken while UI showed consulting, so it does not independently prove visible bank reply.",
+    "private/03-native-foreground-speaking.png": "DOM Eyes speaking phase observed, but the still shows the scrolled inquiry composer, not full native visual state.",
+    "partial-native-caption-not-played.png": "Frame extracted offline from unchanged actual raw WebM; new inquiry queued and partial Moss caption; no full playback claim."
+  },
+  "private_receipt": "private/rc-intended-savia-20261004/receipt.json",
+  "raw_webm_private": "page@b436a5914703c814aaba1ab3ced72683.webm",
+  "confirmed_unexpected_delegated_request": "revisar el saldo de la cuenta para ver si todo va a salir bien, estoy un poco preocupado",
+  "provider_observations": {
+    "completed_language_stages": 13,
+    "bankfacts_language_stages": 6,
+    "unexpected_delegate_language_stages": 5,
+    "new_team_workers": 2,
+    "browser_partial_transcribe_200": 4,
+    "native_browser_streams_started": 1,
+    "foreground_internal_final_asr_completion": "not independently observed",
+    "bank_read_operations_observed": 3,
+    "cost_usd": "not reported",
+    "scope": "Existing observations from the authorized run; no new provider calls."
+  },
+  "partial_native_caption_visible_offline": "Aquí estoy, con calma. Vamos a ver eso juntos.",
+  "partial_caption_qualification": "Visible in final raw-video frame; incomplete and unacknowledged, not full native audio acceptance."
+}

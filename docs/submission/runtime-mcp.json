@@ -1,0 +1,40 @@
+{
+  "schema": "savia-generic-mcp-qualification/v1",
+  "observed_at": "2026-10-05T01:21:54.112099+00:00",
+  "scope": "generic FLUJO connection and static-tool planned execution, separate empty fictional informational state",
+  "generic_url": "http://localhost:43420",
+  "server": "Savia Inquiry RC",
+  "server_status": "connected",
+  "call_tool_requests_observed": 1,
+  "flow_id": "8eac3c25-a716-4cee-82e9-c61bac8e3d36",
+  "planned_execution_id": "757ab50c-c2b2-47f7-8dd2-465731e7dab7",
+  "run": {
+    "runId": "67073ca7-2939-427b-b797-d42c11f65bad",
+    "status": "completed",
+    "firedAt": "2026-10-05T01:17:57.395Z",
+    "finishedAt": "2026-10-05T01:17:57.418Z",
+    "outputText": "Processing complete."
+  },
+  "schedule": {
+    "enabled": false,
+    "cron": "*/30 * * * *",
+    "timezone": "America/Bogota",
+    "catch_up": false,
+    "overlap_strategy": "skip"
+  },
+  "source_hashes": {
+    "savia_assistant/__init__.py": "3a63566442c56a9008c149c14094e34294396391f1799450150963c616027f97",
+    "savia_assistant/service.py": "42286849dda876791f75ff05e626ff910ed9afcdf030154da11c791f4fb5bb76",
+    "savia_assistant/mcp.py": "8d92a48b1c82d67986f7249edb7efaab3275af980064a7ed67b2ac6336dbdeea",
+    "frontend/server/__init__.py": "919a040a827e9189ba1677a070b94e6fe19239b701b8d86c0d8f13e3f679c1f4",
+    "frontend/server/language.py": "8a7cc058a69e437a68fddefe1618b8956304700b7a1f225663260d8d5cc2264a",
+    "dispute_workflow/__init__.py": "2efde0019ceba19436ed5a44605986085889524718aafcb5073fd37fe3262977",
+    "dispute_workflow/model.py": "2263017f07055fee04795a9412dc02d9f461ca0d22bc1cb1d1e8fb74638f343a",
+    "deploy/rc/run_inquiry_mcp.py": "a05ab50469d98158bfa284ddd6e1c7d8fbdce4ff109bb0bb791b4d2df189018e"
+  },
+  "bank_authority": false,
+  "bank_operations": 0,
+  "paid_model_calls": 0,
+  "canonical_browser_state_connected": false,
+  "provider_note": "No worker completion was requested by this empty-state tick. Separate two-worker and browser calls use explicitly identified direct OpenRouter."
+}

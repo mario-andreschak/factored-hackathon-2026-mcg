@@ -1,0 +1,54 @@
+{
+  "schema": "savia-final-day-coordination/v1",
+  "rootThreadId": "01a10966-fe1d-7b52-aab5-e6f160426231",
+  "timezone": "America/Bogota",
+  "leadModel": "gpt-6.1-sol",
+  "leadThinking": "high",
+  "workerModel": "gpt-6-luna",
+  "maxWorkersPerLead": 3,
+  "leads": [
+    {
+      "role": "runtime",
+      "title": "RC \u2014 Runtime integration and FLUJO wrap-up",
+      "threadId": "01a1096a-6bac-7940-9120-1c9563fcaf62",
+      "hostId": "local"
+    },
+    {
+      "role": "customer",
+      "title": "RC \u2014 Customer story and helpful follow-up",
+      "threadId": "01a1096a-721d-7420-93de-e4e1d590c01b",
+      "hostId": "local"
+    },
+    {
+      "role": "voice",
+      "title": "RC \u2014 Natural voice and background tasks",
+      "threadId": "01a1096a-7b49-7011-b4de-d068b8ce65f3",
+      "hostId": "local"
+    },
+    {
+      "role": "measurement",
+      "title": "RC \u2014 Measurements and recorded user journey",
+      "threadId": "01a1096a-8569-72f0-8e78-6ab17522a754",
+      "hostId": "local"
+    },
+    {
+      "role": "cleanup",
+      "title": "RC \u2014 Repository and document cleanup",
+      "threadId": "01a1096a-8e6a-7f52-b8fb-e22cf8d18925",
+      "hostId": "local"
+    },
+    {
+      "role": "media",
+      "title": "RC \u2014 Submission video, slides and pitch",
+      "threadId": "01a1096a-9ab9-7a63-a915-476da372d38a",
+      "hostId": "local"
+    },
+    {
+      "role": "assistant",
+      "title": "RC \u2014 Savia inquiry automation and MCP",
+      "threadId": "01a10993-512d-7642-9eff-bb19dbc95227",
+      "hostId": "local"
+    }
+  ],
+  "critical_path": "Savia conversational voice assistant: inquiry tracking, agent help, actual status updates, follow-up and clear/new conversations"
+}

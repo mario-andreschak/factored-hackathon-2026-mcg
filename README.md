@@ -31,6 +31,12 @@ source/runtime, measured customer journey, recording, decks and remaining gates.
 The [submission guide](docs/SUBMISSION_GUIDE.md) maps organizer requirements to
 that report. Earlier source tests and recordings retain their original scope.
 
+Try the [public fictional demo](https://savia-rc-2026.fly.dev) with
+**`SAVIA-2026`** at the entry gate and customer profile login. Customers,
+movements and intake are simulated; provider completions and voice calls are
+real. The [public RC runbook](deploy/rc/PUBLIC.md) describes the isolated
+deployment and pinned source.
+
 Media artifacts are in [submission media](docs/submission/media/), with
 the [editable submission deck](docs/submission/media/decks/savia-submission-deck.pptx)
 and [pitch deck](docs/submission/media/decks/savia-pitch-deck.pptx). The release
@@ -57,13 +63,13 @@ Choose the setup that matches what you want to exercise:
 | --- | --- | --- |
 | Fictional portal preview | [Frontend setup](frontend/README.md#isolated-synthetic-invitation-preview) | Generates isolated fixtures and invitations, builds the UI, and serves a loopback API. No model, FLUJO, MCP or action is started. |
 | Fictional local customer workflow | [RC startup](deploy/rc/README.md) | Fresh fixtures, durable inquiries and simulated ledger; banking service in process. Select the generic FLUJO model or explicit direct OpenRouter profile. Native-flow and network bank-MCP deployment remain separate scopes. |
-| Savia voice interface | [Avatar setup](avatar/README.md) | Foreground voice and keyboard conversation with background status; provider, interruption and joined acceptance have their own evidence. |
+| Savia voice interface | [Eyes and voice setup](frontend/README.md) | Integrated assistant conversation and background status; current acceptance is recorded in the release report. |
 | Data pipeline | [Pipeline setup](pipeline/README.md) | Repeatable ingestion, ownership checks, lineage and customer-sharded snapshots. Organizer data requires approved private access. |
 
 The fictional preview runbook includes Windows PowerShell and POSIX commands,
 dependency installation and invitation generation. Use the invitation from the
-generated private file at [localhost:43801](http://localhost:43801). No working
-access code or provider credential is included in source. Keep private config,
+generated private file at [localhost:43801](http://localhost:43801). Private
+access codes and provider credentials stay outside source. Keep private config,
 customer rows and state outside tracked files.
 
 The integrated fictional candidate opens at [127.0.0.1:43900](http://127.0.0.1:43900)
@@ -103,8 +109,10 @@ capabilities stay outside generic language inputs. See the
 repository, the banking MCP, or the owner-authorized isolated
 `codex/hackathon-banking` branch. The [product boundary](docs/FLUJO_PRODUCT_BOUNDARY.md)
 and [deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md) govern integration.
-The [Docker/Fly diagrams](docs/architecture/landscape-notes.md) describe the
-September 30 configuration; they are historical diagrams, not current acceptance.
+The [frozen runtime source](docs/submission/runtime-source-final.json) identifies
+the accepted integrated Savia build. The
+[landscape viewer](docs/architecture/deployment-landscapes.html) retains the
+historical September 30 Docker/Fly configuration.
 
 ## Development and evidence
 
