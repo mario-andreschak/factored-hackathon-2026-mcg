@@ -1,0 +1,72 @@
+{
+  "schema": "independent-repository-final-review/v1",
+  "reviewer": "final-review-1",
+  "date": "2026-10-05",
+  "source": {
+    "root": "C:/Users/Moe/.codex/worktrees/savia-submission-portal/factored-hackathon-2026",
+    "head": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+    "tree": "dd6aeebee60080daf12fb47e60538c163df4dddd",
+    "core_manifest_sha256": "1f13100c75f311ebf38e90314f467c73f692b06ae536df18a62f45924c5eebf2",
+    "source_unchanged": true,
+    "tracked_status_clean": true
+  },
+  "scope": "Declared complete fictional R0-R18 deterministic dispute prototype; voice/two-reviewer customer success is dated supporting evidence; larger fleet and production certification are distinct scopes.",
+  "constraints": {"earlier_assessments_read": false, "other_repositories_read": false, "web_requests": 0, "provider_requests": 0, "bank_requests": 0, "installs": 0, "product_edits": 0, "frozen_audits_rewritten": false},
+  "savia": {
+    "total": 90,
+    "maximum": 100,
+    "dimensions": [
+      {"name": "technical judgment", "score": 19, "maximum": 20, "justification": "Complete pure ordered policy coupled to real owned-read, query isolation, consent/snapshot binding, receipt/recovery and revocation source; fresh 1078-check core pass. Remaining gap is current joined every-branch customer acceptance, not real-bank certification."},
+      {"name": "AI engineering", "score": 18, "maximum": 20, "justification": "Actual parallel stage barrier, validated prompts/repair/fallback, durable bounded reviewer work and integrated exact speech acknowledgments. Dated two-worker success is demonstrated; expanded fleet, wider bilingual sample and human audio assessment are unqualified."},
+      {"name": "data engineering", "score": 19, "maximum": 20, "justification": "Row-accounted contracted bronze/silver/gold, quarantine/lineage/dedup, customer ownership and immutable atomic publication. Seven fresh fixture invariants pass. Historical private aggregate not recomputed; S3 inventory is not VersionId-pinned and cleanup remains operational."},
+      {"name": "ML/evaluation", "score": 16, "maximum": 20, "justification": "Leakage diagnosis, training-only parameter selection, fixed independent AI-authored bilingual holdout, multiple baselines, errors and abstention tradeoff. Luna audit independently reproduces 100 correct outputs and deterministic tie. Human labels, broader linguistic diversity and end-to-end held-out benefit remain absent."},
+      {"name": "data analytics", "score": 18, "maximum": 20, "justification": "Read-only metadata/HMAC pipeline and honest outcome/node metrics with decision-changing evidence and paired uncertainty. Analytics/inquiry tests pass. Full host outcome joins, durable model cost/token capture and pilot business outcomes remain missing."}
+    ]
+  },
+  "generic_flujo_foundation": {
+    "total": 86,
+    "maximum": 100,
+    "upstream_pin": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+    "dimensions": [
+      {"name": "architecture/extensibility", "score": 23, "maximum": 25, "justification": "Reusable FlowSpec/chat/runner/MCP/model adapter contracts and trusted extension hooks; generic default stays free of banking integration. Independent example is illustrative rather than run."},
+      {"name": "execution/integration", "score": 22, "maximum": 25, "justification": "Typed inline/saved execution, invocation contexts/events/cancellation, tool audience/argument/progress handling and historical load/collaboration evidence. Live transports/providers and expanded customer fleet are not freshly qualified."},
+      {"name": "safety/recovery", "score": 17, "maximum": 20, "justification": "Pinned snapshots/logs, authority fences, approvals, bounded retry and unknown-effect manual recovery. Locks are process-local, replay trusts tool annotations, ordinary approval defaults are permissive; crash/cross-process/endurance coverage remains limited."},
+      {"name": "reproducible engineering", "score": 16, "maximum": 20, "justification": "39 exact copied upstream files and five fresh retry checks plus transparent historical104 selected tests. Eleven direct cache/lock mismatches, unresolved imports in subset and no clean install/full build/full suite limit qualification."},
+      {"name": "developer usability", "score": 8, "maximum": 10, "justification": "Clear interface guide, pins, examples, commands and non-banking use case; broader replay needs another full checkout and hosted copied-Markdown supporting links are broken by relocation."}
+    ]
+  },
+  "first_five_findings_in_discovery_order": [
+    "Explicit general-purpose FLUJO product boundary; banking authority belongs to the application/MCP or isolated authorized branch.",
+    "Complete deterministic R0-R18 core is independent of voice/fleet and subsequently passes fresh source replay.",
+    "Two actual bounded model reviewers, useful saved suggestions and retained context are supported by original receipts.",
+    "Infrastructure capacity and unaccepted expanded fleet are separately scoped; disabled provider blocks root before delegation.",
+    "Ownership defects and template leakage change product grounding and evaluation design."
+  ],
+  "executed_checks": [
+    {"command": "python docs/submission/measurements/core-engine-final/core-engine-run.py --repo . --expected-head b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc --out .tmp/final-review-1/core", "passed": 1078, "failed": 0, "errors": 0, "skipped": 0, "seconds": 105.373, "external_attempts": 0, "artifact": ".tmp/final-review-1/core/receipt.json"},
+    {"command": "python scripts/verify_luna_benchmark.py docs/submission/measurements/luna-100/run-100 --out .tmp/final-review-1/luna", "records": 100, "correct": 100, "safe": 100, "baseline_matches": 100, "peak_overlap": 100, "artifact": ".tmp/final-review-1/luna/audit.json"},
+    {"command": "node verify-source.cjs --git-ref=HEAD", "cwd": "docs/submission/measurements/flujo-platform", "files": 39, "bytes": 619009, "passed": true},
+    {"command": "node --experimental-strip-types --require ./offline-preload.cjs ./offline-smoke.mjs", "cwd": "docs/submission/measurements/flujo-platform", "passed": 5, "frozen_receipt_written": false},
+    {"command": "node --test deploy/rc/submission-portal.test.mjs", "passed": 1, "failed": 0, "skipped": 0, "network_scope": "loopback only"},
+    {"command": "Python built-in portal manifest SHA-256 check and demo.evaluate_router.frozen_cases()", "portal_files_matched": 27, "portal_files_total": 27, "frozen_router_cases": 120, "learned_classifier_rerun": false},
+    {"command": "python -B -c invocation of scripts.review_evidence.pipeline_replay with scratch/output .tmp/final-review-1/pipeline", "invariants_passed": 7, "invariants_total": 7, "actual_fixture_builds": 3, "artifact": ".tmp/final-review-1/pipeline/pipeline-replay.json"},
+    {"command": "python -B -m pytest -q -p no:cacheprovider --import-mode=importlib tests/test_agent_analytics.py savia_assistant/tests --basetemp .tmp/final-review-1/assistant-analytics-temp --junitxml=.tmp/final-review-1/assistant-analytics-junit.xml", "passed": 65, "failed": 0, "errors": 0, "skipped": 0, "seconds_reported": 16.56, "artifact": ".tmp/final-review-1/assistant-analytics-output.txt"}
+  ],
+  "incomplete_checks": ["Broader selected data/card/multi-query/inquiry pytest session interrupted before final JUnit; no pass credited."],
+  "not_rerun": ["learned classifier: scikit-learn unavailable and installs forbidden", "frontend UI/build: node_modules unavailable and installs forbidden", "104 upstream suites: full other-repository checkout required and other repositories forbidden", "live public HTTP journeys, provider and voice calls"],
+  "defects": [
+    {"priority": "P2", "kind": "supporting documentation links", "path": "scripts/build_submission_portal.py", "description": "Copied hosted Markdown is not rewritten for portal layout:178 missing targets among192 relative links across five documents. Main HTML/GitHub route remains usable.", "proof": ".tmp/final-review-1/link-check.json", "improvement": "Rewrite exported links to canonical source URLs or establish an explicit repository link base."},
+    {"priority": "evaluation gap", "path": "docs/ml/router_holdout_provenance.md", "description": "Document requires human adjudication before final submission, but labels remain AI-authored and adjudication pending. Headline claims correctly label diagnostic limits.", "improvement": "Complete separately versioned adjudication or reconcile the final-submission gate with diagnostic-only scope."}
+  ],
+  "blockers": {
+    "declared_fictional_core_submission": [],
+    "expanded_fleet_acceptance": ["Original customer run first root inference returnedHTTP404 because provider workspace was disabled; zero delegated accepted fleet results."],
+    "human_qualified_ML_quality_claim": ["Independent human adjudication pending."],
+    "production_or_pilot_claims": ["Real bank policy/execution", "Human pickup", "Push/email delivery", "Physical microphone and human voice assessment", "Business impact", "Multi-day operation"]
+  },
+  "comparison_quality": "Fair dated product positioning versus vendor claims, without superiority or missing-feature allegations. Router, n3 customer, n1 host fallback, Luna and infrastructure scopes remain separate. Luna baseline tie and no causal/ROI claim are explicit; vendor source was not externally fetched.",
+  "video_placeholder": {"requested_scope_satisfied": true, "existing_film_seconds": 140.611, "external_release_availability_freshly_checked": false, "missing_feature_deduction": false},
+  "useful_improvements": ["Repair exported supporting links", "Resolve human-adjudication gate", "Add untouched human-adjudicated bilingual quality workload", "Persist cost/tokens and host-result joins for analytics", "Clean locked-dependency/full-build generic qualification when broader acceptance is needed", "Keep expanded fleet separately scoped and budgeted"],
+  "unsupported_material_claims_found_in_current_headline_route": [],
+  "report": ".tmp/final-review-1.md"
+}

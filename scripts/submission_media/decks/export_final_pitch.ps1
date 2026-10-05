@@ -1,9 +1,8 @@
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 $out = Join-Path $repo 'docs\submission\media\decks\final'
+$powerPointWasRunning = [bool](Get-Process -Name POWERPNT -ErrorAction SilentlyContinue)
 $app = New-Object -ComObject PowerPoint.Application
-$app.Visible = $true
-$app.WindowState = 2
 $presentation = $null
 try {
     $presentation = $app.Presentations.Open((Join-Path $out 'savia-final-pitch.pptx'), $false, $false, $false)
@@ -14,12 +13,14 @@ try {
     for ($i = 1; $i -le 6; $i++) {
         $presentation.Slides.Item($i).Export((Join-Path $slides ('slide-{0:D2}.png' -f $i)), 'PNG', 1600, 900)
     }
-    $presentation.Close()
-    $presentation = $null
 }
 finally {
-    if ($null -ne $presentation) { $presentation.Close() }
-    $app.Quit()
+    if ($null -ne $presentation) {
+        $presentation.Close()
+        [void][System.Runtime.Interopservices.Marshal]::ReleaseComObject($presentation)
+    }
+    # Open without a window and preserve an existing user's PowerPoint session.
+    if (-not $powerPointWasRunning) { $app.Quit() }
     [void][System.Runtime.Interopservices.Marshal]::ReleaseComObject($app)
 }
 Write-Output 'Exported six PDF pages and six PNG slides.'

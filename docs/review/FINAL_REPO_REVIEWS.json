@@ -1,0 +1,125 @@
+{
+  "schema": "savia-complete-submission-review-aggregate/v1",
+  "scope": "Five independent repository-only assessments of the complete fictional Savia/FLUJO hackathon submission. Desired score was not supplied; prior assessments were not read. Raw finalized scores and reports are preserved byte for byte.",
+  "source_commit": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+  "source_tree": "dd6aeebee60080daf12fb47e60538c163df4dddd",
+  "equivalent_main_merge": "7de0bbd670c25e4ad83476c6d7b70c45cc58a137",
+  "savia_rubric": {
+    "technical_judgment": 20,
+    "ai_engineering": 20,
+    "data_engineering": 20,
+    "ml_evaluation": 20,
+    "data_analytics": 20
+  },
+  "generic_flujo_rubric": {
+    "architecture_extensibility": 25,
+    "execution_integration": 25,
+    "safety_recovery": 20,
+    "reproducible_engineering": 20,
+    "developer_usability": 10
+  },
+  "rubric_qualification": "Review instruments, not an official organizer numeric rating. The generic platform assessment is supplemental.",
+  "target": {
+    "subject": "complete Savia/FLUJO hackathon submission",
+    "minimum": 90,
+    "required_reviews": 3,
+    "total_reviews": 5,
+    "basis": "Explicit human clarification on 2026-10-05"
+  },
+  "reviews": [
+    {
+      "reviewer": "final-review-1",
+      "source_commit": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+      "savia": 90,
+      "generic_flujo": 86,
+      "reports": [
+        {
+          "path": "final-repo-reviews/final-review-1.json",
+          "sha256": "7dfa9420388662b813752f03f967821cc189b4268a005c27efad7615ef81bda6",
+          "publication_transform": "none"
+        },
+        {
+          "path": "final-repo-reviews/final-review-1.md",
+          "sha256": "f74f802f8418162e488c6dddf3fc7e7598689a29d21f5b81e870114a97902173",
+          "publication_transform": "none"
+        }
+      ]
+    },
+    {
+      "reviewer": "final-review-2",
+      "source_commit": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+      "savia": 88,
+      "generic_flujo": 83,
+      "reports": [
+        {
+          "path": "final-repo-reviews/final-review-2.json",
+          "sha256": "2747e941b8906c18c564f1035c8e8373019dc8137bcb4a4c2a5f80c49126eec7",
+          "publication_transform": "none"
+        },
+        {
+          "path": "final-repo-reviews/final-review-2.md",
+          "sha256": "7b94949b63e3c26eccef6f3eb5d442f09f051ffa2c7e85aba9088473fcbd0ef7",
+          "publication_transform": "none"
+        }
+      ]
+    },
+    {
+      "reviewer": "final-review-3",
+      "source_commit": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+      "savia": 88,
+      "generic_flujo": 83,
+      "reports": [
+        {
+          "path": "final-repo-reviews/final-review-3.json",
+          "sha256": "6e7a519b6d213d5ebca0ed68b953bbc73c93458055c0ff337f3423d74b6920e5",
+          "publication_transform": "none"
+        },
+        {
+          "path": "final-repo-reviews/final-review-3.md",
+          "sha256": "a15e5ea80fef0d705284314bdd6043858abd3b9d38afe8383a94c7892ae6c069",
+          "publication_transform": "none"
+        }
+      ]
+    },
+    {
+      "reviewer": "final-review-4",
+      "source_commit": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+      "savia": 86,
+      "generic_flujo": 82,
+      "reports": [
+        {
+          "path": "final-repo-reviews/final-review-4.json",
+          "sha256": "ae479fa7cc919ce23c43d57e2f108ad0912686861dbe3c640868c373aa6e021b",
+          "publication_transform": "none"
+        },
+        {
+          "path": "final-repo-reviews/final-review-4.md",
+          "sha256": "52c930e5fbb295f754de9b80fe4300d7d3b58edbf1ad13beb93b85ae6ea71bbf",
+          "publication_transform": "none"
+        }
+      ]
+    },
+    {
+      "reviewer": "final-review-5",
+      "source_commit": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+      "savia": 90,
+      "generic_flujo": 88,
+      "reports": [
+        {
+          "path": "final-repo-reviews/final-review-5.json",
+          "sha256": "38404a6e91d81ca7124eb4dc36202f714f20a837c5278e73e84e109ed40f153a",
+          "publication_transform": "none"
+        },
+        {
+          "path": "final-repo-reviews/final-review-5.md",
+          "sha256": "e84bdbdc417e29912b1d53699df4fc365ca46615ded7415c8cf475f349096b2b",
+          "publication_transform": "none"
+        }
+      ]
+    }
+  ],
+  "savia_at_least_90": 2,
+  "target_met": false,
+  "earlier_cohort": "FRESH_REPO_REVIEWS.json",
+  "follow_up": "Concrete findings are tracked as later changes. Later assessments must be separate, without overwriting, rounding or selecting away these results."
+}

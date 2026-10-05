@@ -28,3 +28,6 @@ scripts/submission/** -text whitespace=cr-at-eol
 scripts/submission_media/** -text whitespace=cr-at-eol
 # Portal copies preserve the release bytes verified by portal-manifest.json.
 web/submission/** -text whitespace=cr-at-eol
+
+# Preserve raw independent reviewer report bytes and their published hashes.
+docs/review/final-repo-reviews/** -text whitespace=cr-at-eol

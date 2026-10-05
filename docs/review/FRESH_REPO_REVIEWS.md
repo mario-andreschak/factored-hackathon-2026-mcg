@@ -1,5 +1,7 @@
 # Independent submission review results
 
+> Scope clarification, 2026-10-05: the user specified the **complete Savia/FLUJO hackathon submission** as the 90+ target. The original interpretation below is retained as review history; all original scores remain unchanged. See [the later complete-submission cohort](FINAL_REPO_REVIEWS.md).
+
 Five fresh agents reviewed the repository independently, beginning at README. They were not told a desired score. These are preserved finalized results, not official judging or a full generic FLUJO source audit.
 
 | Reviewer | Savia /100 | FLUJO evidence /100 | Source | Original report |

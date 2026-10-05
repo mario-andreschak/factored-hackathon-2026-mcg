@@ -27,8 +27,8 @@ generation may use models; **policy and action authority are deterministic**.
 
 ## The R0–R18 decision inventory
 
-The [normative policy contract](../../contracts/policy_engine.md) contains detailed
-precedence and guard semantics. The [implemented engine](../../dispute_workflow/policy.py)
+The [normative policy contract](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/contracts/policy_engine.md) contains detailed
+precedence and guard semantics. The [implemented engine](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/policy.py)
 performs no bank I/O: its transitions are instructions for the trusted runtime,
 not capabilities that grant permission.
 
@@ -63,23 +63,23 @@ real bank dispute.
 
 | Responsibility | Source and executable evidence |
 | --- | --- |
-| Ordered policy and query isolation | [policy.py](../../dispute_workflow/policy.py), [policy tests](../../tests/test_dispute_policy.py), [query-policy tests](../../tests/test_dispute_query_policy.py) |
-| End-to-end runtime | [runtime.py](../../dispute_workflow/runtime.py), [independent acceptance](../../tests/test_dispute_acceptance.py), [multi-query checks](../../tests/test_dispute_multi_query.py) |
-| Owned reads and selection | [bank_read.py](../../dispute_workflow/bank_read.py), [bank-read tests](../../tests/test_dispute_bank_read.py), [source-read checks](../../tests/test_dispute_source_reads.py) |
-| Consent, action and replay | [action_host.py](../../dispute_workflow/action_host.py), [action-host tests](../../tests/test_dispute_action_host.py), [prior-receipt tests](../../tests/test_dispute_prior_receipts.py) |
-| Response grounding and safe fallback | [response.py](../../dispute_workflow/response.py), [response tests](../../tests/test_dispute_response.py) |
-| Durable state and handoff | [state.py](../../dispute_workflow/state.py), [handoff.py](../../dispute_workflow/handoff.py), [state tests](../../tests/test_dispute_state.py), [handoff tests](../../tests/test_dispute_handoff.py) |
+| Ordered policy and query isolation | [policy.py](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/policy.py), [policy tests](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_policy.py), [query-policy tests](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_query_policy.py) |
+| End-to-end runtime | [runtime.py](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/runtime.py), [independent acceptance](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_acceptance.py), [multi-query checks](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_multi_query.py) |
+| Owned reads and selection | [bank_read.py](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/bank_read.py), [bank-read tests](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_bank_read.py), [source-read checks](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_source_reads.py) |
+| Consent, action and replay | [action_host.py](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/action_host.py), [action-host tests](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_action_host.py), [prior-receipt tests](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_prior_receipts.py) |
+| Response grounding and safe fallback | [response.py](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/response.py), [response tests](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_response.py) |
+| Durable state and handoff | [state.py](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/state.py), [handoff.py](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/handoff.py), [state tests](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_state.py), [handoff tests](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/tests/test_dispute_handoff.py) |
 
 The combined workflow/host/frontend source qualification at `ea8f6217` records
 **1,725 passing tests and 428 passing subtests**, with exact protected source
 hashes. This is historical combined-source qualification, not a claim that every
 test belongs solely to the policy module or that later images inherited the
-result. [Original receipt](../qualification/dispute-naming-source-2026-10-01.json).
+result. [Original receipt](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/qualification/dispute-naming-source-2026-10-01.json).
 
-The [implementation report](../DISPUTE_IMPLEMENTATION.md) also preserves installed
+The [implementation report](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/DISPUTE_IMPLEMENTATION.md) also preserves installed
 native execution, provider and joined HTTP evidence at their own revisions.
-The [current release report](RELEASE_CANDIDATE.md) identifies deployed customer
-recordings. The [evidence map](EVIDENCE_MAP.md) connects current public replay and
+The [current release report](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/RELEASE_CANDIDATE.md) identifies deployed customer
+recordings. The [evidence map](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/EVIDENCE_MAP.md) connects current public replay and
 additional checks to their source identities.
 
 ## Reproduce the core without a provider
@@ -94,7 +94,7 @@ python -m pytest -q tests/test_dispute_policy.py tests/test_dispute_query_policy
 ```
 
 For the broader joined source suite, use `python scripts/test_dispute.py` in the
-documented [isolated dependency setup](../LOCAL_CI.md). Historical qualification
+documented [isolated dependency setup](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/LOCAL_CI.md). Historical qualification
 and a new local replay each retain their own revision and execution boundary.
 
 ## Why the architecture expands
@@ -104,4 +104,8 @@ reviewer team or deployment can sit above the same consent and receipt boundary.
 FLUJO retains its general-purpose chat, flow, tool, MCP and execution interfaces;
 banking source stays in this repository, Banking MCP, or the separately authorized
 hackathon branch. This preserves a long-lived platform while delivering a complete,
-focused application. [Product boundary](../FLUJO_PRODUCT_BOUNDARY.md).
+focused application. [Product boundary](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/FLUJO_PRODUCT_BOUNDARY.md).
+
+---
+
+[Public source document](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/DISPUTE_ENGINE.md)

@@ -1,0 +1,183 @@
+{
+  "schema": "independent-repository-review/v1",
+  "reviewer": "final-review-4",
+  "repository": "C:/Users/Moe/.codex/worktrees/savia-submission-portal/factored-hackathon-2026",
+  "frozen_head": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+  "scope": "Repository-only fictional prototype; deterministic R0-R18 core, voice/fleet extensions; requested video placeholder accepted",
+  "independence": {
+    "earlier_assessments_read": false,
+    "other_repositories_inspected": false,
+    "web_requests": false,
+    "provider_bank_requests": 0,
+    "installs": 0,
+    "product_or_dependency_edits": false
+  },
+  "scores": {
+    "savia": {
+      "technical_judgment": {
+        "score": 18,
+        "max": 20
+      },
+      "ai_engineering": {
+        "score": 17,
+        "max": 20
+      },
+      "data_engineering": {
+        "score": 19,
+        "max": 20
+      },
+      "ml_evaluation": {
+        "score": 14,
+        "max": 20
+      },
+      "analytics": {
+        "score": 18,
+        "max": 20
+      },
+      "total": 86,
+      "max": 100
+    },
+    "generic_flujo": {
+      "architecture_extensibility": {
+        "score": 23,
+        "max": 25
+      },
+      "execution_integration": {
+        "score": 20,
+        "max": 25
+      },
+      "safety_recovery": {
+        "score": 16,
+        "max": 20
+      },
+      "reproducible_engineering": {
+        "score": 16,
+        "max": 20
+      },
+      "usability": {
+        "score": 7,
+        "max": 10
+      },
+      "total": 82,
+      "max": 100
+    }
+  },
+  "upstream_flujo": {
+    "commit": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+    "tree": "5d7116fad792138eb0a6e6adf5a27ff19dc1c0f0",
+    "verified_files": 39,
+    "verified_bytes": 619009,
+    "independently_executed_smoke_checks": 5,
+    "historical_scoped_tests": 104,
+    "historical_tests_rerun": false,
+    "subset_not_complete_distribution": true
+  },
+  "first_five_findings_discovery_order": [
+    "Complete deterministic lifecycle is core and source implements trust boundaries.",
+    "Fictional intake, informational closure, real bank resolution, customer recording, capacity and source qualification are scoped separately.",
+    "Two real recorded reviewers and retained recommendations exist; source bounds reviewers to structured enum choices.",
+    "Cross-owner historical complaint links and transcript templates informed owned transaction serving and fresh routing diagnostics.",
+    "Frozen 120-case AI-authored router labels still await required independent human adjudication."
+  ],
+  "checks": {
+    "python": {
+      "passed": 161,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 37.27,
+      "harness_seconds": 37.444,
+      "external_attempts": 0
+    },
+    "portal_tests": {
+      "passed": 1
+    },
+    "local_links": {
+      "checked": 312,
+      "missing": 0
+    },
+    "portal_hashes": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "luna_audit": {
+      "records": 100,
+      "correct": 100,
+      "bounded_safe": 100,
+      "deterministic_baseline_correct": 100,
+      "distinct_request_phrases": 10,
+      "fresh_provider_calls": 0
+    },
+    "operating_analysis_recomputed": true
+  },
+  "defects": [
+    {
+      "priority": 2,
+      "title": "Native voice retelling lacks semantic enforcement against trusted banking result",
+      "files": [
+        "frontend/server/conversation.py:74",
+        "frontend/server/conversation.py:226",
+        "frontend/server/conversation.py:373",
+        "frontend/server/conversation.py:387",
+        "frontend/server/conversation.py:408"
+      ],
+      "reproduction": ".tmp/final-review-4/voice-probe.json",
+      "observed": "Contradictory MockTransport caption forwarded, completed and accepted/persisted by played()",
+      "real_provider_hallucination_observed": false,
+      "core_bank_authority_bypassed": false,
+      "recommended": "Canonical financial narration or buffered semantic validation before playback"
+    },
+    {
+      "priority": 2,
+      "title": "Required independent routing-label adjudication pending",
+      "file": "docs/ml/router_holdout_provenance.md:74",
+      "recommended": "Versioned independent human adjudication and untouched next evaluation set"
+    }
+  ],
+  "missing_acceptance_links": [
+    "Representative independently human-reviewed ES/PT answer and audio quality",
+    "Full frozen-HEAD whole-repository qualification",
+    "Clean lockfile-matched full generic platform build",
+    "Live generic MCP/provider interoperability matrix",
+    "Generic cross-process/crash recovery",
+    "Operational analytics joined to later host outcomes and cost observations",
+    "Completed 100-agent customer fleet integration (optional extension)"
+  ],
+  "historical_core_manifest": {
+    "files": 184,
+    "equal": 179,
+    "mismatches": [
+      "frontend/server/deployment_transition.py",
+      "resources/dispute_workflow.flow.json",
+      "tests/test_card_block_api.py",
+      "tests/test_dispute_deployment_transition.py",
+      "tests/test_history_codex.py"
+    ],
+    "domain_source_and_executed_core_tests_equal": true,
+    "does_not_establish_all_current_head_pass": true
+  },
+  "comparison_quality": {
+    "elevenlabs": "Fair scoped positioning, vendor-attributed claims, no matched benchmark or superiority established",
+    "luna": "Provider-grounding/concurrency receipt; deterministic baseline equally correct, no incremental LLM benefit proved",
+    "customer": "n=3 across revisions, 2/3 agent-screened useful, human adjudication pending"
+  },
+  "blockers": {
+    "fictional_core_prototype": [],
+    "validated_router_ground_truth": [
+      "Independent human adjudication required by provenance is pending"
+    ],
+    "universal_spoken_fact_guarantee": [
+      "Native transcript/audio lacks semantic gate"
+    ],
+    "expanded_fleet": [
+      "Disabled provider workspace on original attempt; no accepted full customer integration"
+    ]
+  },
+  "environment_limits": [
+    "Scikit-learn unavailable globally; no install or learned-router retraining attempted",
+    "No full FLUJO distribution/dependency checkout used",
+    "No remote service or vendor links checked"
+  ],
+  "artifact_markdown": ".tmp/final-review-4.md",
+  "scratch_results": ".tmp/final-review-4/"
+}

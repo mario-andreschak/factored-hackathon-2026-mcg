@@ -1,0 +1,237 @@
+{
+  "schema": "savia-exact-presentation-ci/v1",
+  "observed_at": "2026-10-05T23:42:04.455010+00:00",
+  "presentation_source": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+  "tested_merge": "98d5c92289bba86cdd6021840c96bc1950194d97",
+  "identical_tree": "c4a29886dba197629e6be6ff8ca3ac8c44d41066",
+  "pr_run": 37388535286,
+  "all_eleven_pr_checks_passed": true,
+  "jobs": [
+    {
+      "id": 112027800539,
+      "name": "frontend",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800539",
+      "started_at": "2026-10-05T23:26:57Z",
+      "completed_at": "2026-10-05T23:27:54Z"
+    },
+    {
+      "id": 112027800682,
+      "name": "Savia Lite (ubuntu-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800682",
+      "started_at": "2026-10-05T23:26:58Z",
+      "completed_at": "2026-10-05T23:27:09Z"
+    },
+    {
+      "id": 112027800754,
+      "name": "frontend-api (windows-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800754",
+      "started_at": "2026-10-05T23:26:56Z",
+      "completed_at": "2026-10-05T23:28:55Z"
+    },
+    {
+      "id": 112027800755,
+      "name": "frontend-api (ubuntu-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800755",
+      "started_at": "2026-10-05T23:26:56Z",
+      "completed_at": "2026-10-05T23:27:43Z"
+    },
+    {
+      "id": 112027800760,
+      "name": "Customer language flow source (ubuntu-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800760",
+      "started_at": "2026-10-05T23:26:56Z",
+      "completed_at": "2026-10-05T23:27:15Z"
+    },
+    {
+      "id": 112027800761,
+      "name": "dispute (windows-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800761",
+      "started_at": "2026-10-05T23:27:10Z",
+      "completed_at": "2026-10-05T23:34:47Z"
+    },
+    {
+      "id": 112027800788,
+      "name": "dispute (ubuntu-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800788",
+      "started_at": "2026-10-05T23:26:56Z",
+      "completed_at": "2026-10-05T23:28:44Z"
+    },
+    {
+      "id": 112027800793,
+      "name": "Savia Lite (windows-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800793",
+      "started_at": "2026-10-05T23:26:57Z",
+      "completed_at": "2026-10-05T23:27:18Z"
+    },
+    {
+      "id": 112027800805,
+      "name": "test (windows-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800805",
+      "started_at": "2026-10-05T23:26:56Z",
+      "completed_at": "2026-10-05T23:35:21Z"
+    },
+    {
+      "id": 112027800821,
+      "name": "Customer language flow source (windows-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800821",
+      "started_at": "2026-10-05T23:26:57Z",
+      "completed_at": "2026-10-05T23:27:49Z"
+    },
+    {
+      "id": 112027800862,
+      "name": "test (ubuntu-latest)",
+      "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388535286/job/112027800862",
+      "started_at": "2026-10-05T23:26:56Z",
+      "completed_at": "2026-10-05T23:29:30Z"
+    }
+  ],
+  "separate_push_run": {
+    "id": 37388521551,
+    "jobs": [
+      {
+        "id": 112027750867,
+        "name": "dispute (ubuntu-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027750867",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:28:12Z"
+      },
+      {
+        "id": 112027751056,
+        "name": "Savia Lite (windows-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751056",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:27:08Z"
+      },
+      {
+        "id": 112027751074,
+        "name": "frontend-api (windows-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751074",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:29:31Z"
+      },
+      {
+        "id": 112027751083,
+        "name": "test (windows-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751083",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:32:55Z"
+      },
+      {
+        "id": 112027751090,
+        "name": "frontend",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751090",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:27:46Z"
+      },
+      {
+        "id": 112027751095,
+        "name": "Savia Lite (ubuntu-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751095",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:26:55Z"
+      },
+      {
+        "id": 112027751104,
+        "name": "test (ubuntu-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751104",
+        "started_at": "2026-10-05T23:26:45Z",
+        "completed_at": "2026-10-05T23:29:18Z"
+      },
+      {
+        "id": 112027751119,
+        "name": "dispute (windows-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "failure",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751119",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:32:05Z"
+      },
+      {
+        "id": 112027751160,
+        "name": "Customer language flow source (ubuntu-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751160",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:27:17Z"
+      },
+      {
+        "id": 112027751271,
+        "name": "Customer language flow source (windows-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027751271",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:27:35Z"
+      },
+      {
+        "id": 112027754515,
+        "name": "frontend-api (ubuntu-latest)",
+        "head_sha": "476c88e0a8099fac203ffe7648a169d9204e83a5",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/actions/runs/37388521551/job/112027754515",
+        "started_at": "2026-10-05T23:26:46Z",
+        "completed_at": "2026-10-05T23:27:28Z"
+      }
+    ],
+    "failure": "Windows admission-registry retry timing assertion: elapsed 8.7383744 seconds exceeded <7 seconds; expected PermissionError was raised. Cause not established. Successful same-tree PR run retained separately."
+  }
+}

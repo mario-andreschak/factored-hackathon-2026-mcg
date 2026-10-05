@@ -1,0 +1,340 @@
+{
+  "schema": "independent-repository-assessment/v1",
+  "review_id": "final-review-5",
+  "repository_root": "C:/Users/Moe/.codex/worktrees/savia-submission-portal/factored-hackathon-2026",
+  "reviewed_head": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+  "observed_branch": "codex/savia-submission-final-review",
+  "review_date": "2026-10-05",
+  "independence": {
+    "began_with_readme": true,
+    "agents_and_product_boundary_read": true,
+    "prior_ratings_or_assessment_reports_read": false,
+    "other_repositories_chats_reviewers_inspected": false,
+    "web_or_provider_or_bank_requests": 0,
+    "installs": 0,
+    "product_source_changes": false,
+    "scratch_prefix": ".tmp/final-review-5",
+    "tracked_git_status_before_and_after": "clean"
+  },
+  "scope": "Declared fictional deterministic R0-R18 prototype, voice and swarm extensions, requested final-video placeholder with existing film pointer; generic FLUJO foundation evidenced in this repository separately scored.",
+  "scores": {
+    "savia": {
+      "total": 90,
+      "dimensions": [
+        {
+          "dimension": "technical_judgment",
+          "score": 19,
+          "max": 20,
+          "justification": "Complete ordered core with owned reads, host consent, exact receipts, uncertain-action recovery/revocation and query isolation; latent duplicated-policy drift hazard."
+        },
+        {
+          "dimension": "ai_engineering",
+          "score": 18,
+          "max": 20,
+          "justification": "Real ES/PT model/voice customer evidence, bounded language contracts, two durable completed workers and correlation-verifying fleet source; recorded reviewers choose enums and broad held-out usefulness remains limited."
+        },
+        {
+          "dimension": "data_engineering",
+          "score": 19,
+          "max": 20,
+          "justification": "Meaningfully tested contract/quarantine/reconciliation/ownership/sharding/writer/atomic-snapshot design with large dated manifest; S3 inventory and crash durability remain bounded."
+        },
+        {
+          "dimension": "ml_evaluation",
+          "score": 16,
+          "max": 20,
+          "justification": "Training-only CV, separate frozen authored holdout, baselines, abstention and paired uncertainty; labels await human adjudication and Luna ten-phrase workload ties deterministic baseline."
+        },
+        {
+          "dimension": "analytics",
+          "score": 18,
+          "max": 20,
+          "justification": "Metadata-only operational analysis with grain/denominators, uncertainty and decisions derived from real evidence; incomplete host receipt/cost joining and tiny agent-screened usefulness denominator."
+        }
+      ]
+    },
+    "generic_flujo_foundation": {
+      "total": 88,
+      "dimensions": [
+        {
+          "dimension": "architecture_extensibility",
+          "score": 24,
+          "max": 25,
+          "justification": "Pinned generic DSL/chat/model/MCP/typed execution/opaque extension source with non-banking examples; review subset."
+        },
+        {
+          "dimension": "execution_integration",
+          "score": 22,
+          "max": 25,
+          "justification": "Broad saved/inline/resumable/ephemeral interfaces, events/cancellation/approval and dated capacity evidence; no fresh full transport/provider integration here."
+        },
+        {
+          "dimension": "safety_recovery",
+          "score": 17,
+          "max": 20,
+          "justification": "Snapshots, authority, reentrant locks and conservative unknown-effect checkpoints; process-local locking, tool-hint trust and opt-in approval."
+        },
+        {
+          "dimension": "reproducible_engineering",
+          "score": 17,
+          "max": 20,
+          "justification": "Verified 39 exact copies, explicit 104-test dated receipt and five new smoke checks; no complete clean locked build/full suite, disclosed cache package drift."
+        },
+        {
+          "dimension": "usability",
+          "score": 8,
+          "max": 10,
+          "justification": "Readable guide and useful public-interface examples/offline checks; examples unexecuted and generic UI usability not evidenced."
+        }
+      ]
+    }
+  },
+  "first_five_findings_discovery_order": [
+    {
+      "order": 1,
+      "source": "README.md",
+      "finding": "Simulated intake, helpful informational closure and real-bank resolution are distinguished; deterministic lifecycle claim is scoped to fictional core."
+    },
+    {
+      "order": 2,
+      "source": "README.md",
+      "finding": "Two-reviewer customer success is separated from pending larger fleet and separate capacity denominators."
+    },
+    {
+      "order": 3,
+      "source": "README.md",
+      "finding": "Complaint ownership defects and transcript templates materially change grounding and evaluation design."
+    },
+    {
+      "order": 4,
+      "source": "README.md",
+      "finding": "AI-authored router-label uncertainty and deterministic-baseline tie are exposed with the first evaluation claims."
+    },
+    {
+      "order": 5,
+      "source": "docs/submission/FLUJO_PLATFORM_EVIDENCE.md",
+      "finding": "Exact generic source/test packet identifies 39-file subset and explicitly limits full build/transport/deployment claims."
+    }
+  ],
+  "checks": [
+    {
+      "command": "python .tmp/final-review-5/offline_checks.py",
+      "exit_code": 0,
+      "passed": 321,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 88,
+      "external_python_network_attempts": 0,
+      "suites": [
+        "test_dispute_policy.py",
+        "test_dispute_query_policy.py",
+        "test_dispute_acceptance.py",
+        "test_dispute_action_host.py",
+        "test_card_block.py",
+        "test_pipeline.py",
+        "test_agent_analytics.py"
+      ]
+    },
+    {
+      "command": "python .tmp/final-review-5/offline_checks.py --voice",
+      "exit_code": 0,
+      "passed": 47,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_seconds": 2.36,
+      "external_python_network_attempts": 0,
+      "suites": [
+        "frontend/tests/test_voice.py",
+        "savia_assistant/tests/test_service.py"
+      ]
+    },
+    {
+      "command": "node docs/submission/measurements/flujo-platform/verify-source.cjs",
+      "exit_code": 0,
+      "verified_files": 39,
+      "verified_bytes": 619009,
+      "upstream_pin": "0be972ac7b748703d09e407ef96beba45ab17b2a"
+    },
+    {
+      "command": "node --experimental-strip-types --require ./docs/submission/measurements/flujo-platform/offline-preload.cjs ./docs/submission/measurements/flujo-platform/offline-smoke.mjs",
+      "exit_code": 0,
+      "passed": 5,
+      "runtime": "Node v22.13.1",
+      "warnings": "Experimental strip-types and module-type warnings only; no receipt writes."
+    },
+    {
+      "command": "python -B scripts/verify_luna_benchmark.py docs/submission/measurements/luna-100/run-100 --out .tmp/final-review-5/luna-verifier",
+      "exit_code": 0,
+      "completed": 100,
+      "exact_correct": 100,
+      "bounded_safe": 100,
+      "independent_baseline_oracle_agreement": 100,
+      "peak_overlapping_turns": 100,
+      "scope": "Reconstruction from existing actual outputs, no provider calls."
+    },
+    {
+      "command": "python -B .tmp/final-review-5/verify_artifacts.py",
+      "exit_code": 0,
+      "markdown_local_targets": 285,
+      "portal_local_targets": 37,
+      "missing_local_targets": 0,
+      "pipeline_tables_reconciled": 6,
+      "router_hashes_match": true,
+      "domain_source_files_unchanged": 25,
+      "historical_manifest_changed_files": [
+        "frontend/server/deployment_transition.py",
+        "resources/dispute_workflow.flow.json",
+        "tests/test_card_block_api.py",
+        "tests/test_dispute_deployment_transition.py",
+        "tests/test_history_codex.py"
+      ]
+    },
+    {
+      "command": "Read-only AST/hash comparison of core-engine harness TESTS list",
+      "exit_code": 0,
+      "core_test_files_unchanged": 14,
+      "domain_plus_executed_core_test_files_unchanged": 39
+    },
+    {
+      "command": "Read-only scripts.analyze_operating_evidence.analyze()",
+      "exit_code": 0,
+      "router_correct": {
+        "keywords": 70,
+        "raw": 94,
+        "abstention": 65,
+        "n": 120
+      },
+      "paired_raw_accuracy_improvement": 0.2,
+      "paired_ci95": [
+        0.1,
+        0.3
+      ],
+      "human_misses": {
+        "keywords": 13,
+        "raw": 3,
+        "abstention": 1,
+        "n": 30
+      },
+      "unnecessary_human_routes": {
+        "keywords": 6,
+        "raw": 9,
+        "abstention": 52,
+        "n": 90
+      },
+      "luna_p50_seconds": 37.400468,
+      "luna_p95_seconds": 50.69311
+    }
+  ],
+  "new_existing_test_passes": 368,
+  "retained_receipts": {
+    "core_engine": {
+      "passed": 1078,
+      "newly_rerun": false,
+      "core_byte_congruence_verified": true
+    },
+    "generic_upstream": {
+      "passed": 104,
+      "suites": 9,
+      "newly_rerun": false,
+      "scope": "Mocked selected offline suites with disclosed direct package drift."
+    },
+    "public_card_block": {
+      "journeys": 2,
+      "newly_queried": false,
+      "source": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+      "image": "registry.fly.io/savia-rc-2026@sha256:c38f3af736defdf55c7de47b0e1597ad361b3f748c845176b920377fd12b307f"
+    }
+  },
+  "defects_and_gaps": [
+    {
+      "type": "latent_policy_drift",
+      "priority": 2,
+      "locations": [
+        "config/policy_rules.yaml",
+        "dispute_workflow/policy.py:31",
+        "dispute_workflow/bank_read.py:930",
+        "banking_mcp/actions.py:440",
+        "banking_mcp/actions.py:498"
+      ],
+      "finding": "Motor configuration can change while independent host/bank guards hardcode current thresholds. They agree today; no unsafe current action observed.",
+      "improvement": "Keep independent enforcement but derive rules from one pinned application-owned policy version and qualify transitions."
+    },
+    {
+      "type": "evaluation_acceptance_gap",
+      "priority": 2,
+      "locations": [
+        "docs/ml/router_holdout_provenance.md",
+        "docs/demo/intent_router_evaluation.md"
+      ],
+      "finding": "Independent human adjudication required by provenance before final submission remains pending.",
+      "improvement": "Complete independent adjudication with frozen disagreement record or keep provisional diagnostic status prominently."
+    },
+    {
+      "type": "analytics_gap",
+      "priority": 2,
+      "locations": [
+        "analytics/README.md"
+      ],
+      "finding": "Workflow-only outcomes omit later host action completion; model usage and cost remain in-memory.",
+      "improvement": "Join exact host receipt events and durably persist measured usage/latency."
+    },
+    {
+      "type": "claim_clarity",
+      "priority": 3,
+      "locations": [
+        "docs/architecture/system-landscape.md"
+      ],
+      "finding": "Present-tense opening describes 100 specialists/push/email though later sections clearly label them target/pending.",
+      "improvement": "Label the first paragraph target architecture as clearly as portal copy."
+    },
+    {
+      "type": "generic_qualification_gap",
+      "priority": 3,
+      "locations": [
+        "docs/submission/FLUJO_PLATFORM_EVIDENCE.md"
+      ],
+      "finding": "No complete clean locked generic build/full suite/real transports/cross-process recovery qualification is included.",
+      "improvement": "Qualify those scopes before promoting the packet to full platform acceptance."
+    }
+  ],
+  "comparison_quality": {
+    "elevenlabs": "Fair dated product-positioning reference; vendor numbers not independently verified in repository-only review, no unsupported matched superiority claim.",
+    "router": "Useful paired frozen diagnostic (+20pp, CI10-30); human label uncertainty limits validity and abstention adds43 human routes to reduce misses by2.",
+    "luna": "Auditable exact fixture/provider workload; ten phrasings across100 repeated facts, baseline ties, tool-disabled boundaries and app-server overlap not general intelligence or100 collaborating agents.",
+    "customer": "n3 agent-screened original usefulness and separate n1 fallback/post-fix capture are diagnostic, not causal uplift or production outcomes."
+  },
+  "unsupported_if_promoted": [
+    "100 simultaneous GPU generations or cooperating customer agents from Luna",
+    "Production multilingual quality from ten fixture phrasings",
+    "Real bank resolution from fictional receipts",
+    "ElevenLabs voice/latency/cost/compliance superiority",
+    "Successful100-conversation customer fleet from failed root attempt",
+    "Current whole-head CI/runtime acceptance from historical receipts"
+  ],
+  "blockers": {
+    "declared_fictional_prototype_handover": "No newly discovered blocker; requested placeholder is acceptable.",
+    "human_ground_truth_claim": "Pending independent human router adjudication must be completed to satisfy own provenance final-submission requirement or claim verified labels.",
+    "expanded_fleet_acceptance": "Disabled provider workspace failed initial root inference before delegation; repair/qualify full original correlated fleet before claiming completion.",
+    "production_or_optional_roadmap": "Real bank execution, live human pickup, push/email and sustained reliability require separate pilot acceptance; not current prototype blockers."
+  },
+  "limitations": [
+    "No live browsing/customer/provider/bank replays.",
+    "No learned-classifier retraining/model rerun: default Python lacks scikit-learn; no install performed.",
+    "Recalculated saved-output intervals are not a new blind holdout.",
+    "In-process network guards are not OS sandboxes.",
+    "Generic foundation assessed only from copied subset/retained receipts in this repository."
+  ],
+  "artifacts": [
+    ".tmp/final-review-5.md",
+    ".tmp/final-review-5.json",
+    ".tmp/final-review-5/checks.json",
+    ".tmp/final-review-5/junit.xml",
+    ".tmp/final-review-5/voice/checks.json",
+    ".tmp/final-review-5/voice/junit.xml",
+    ".tmp/final-review-5/artifact-verification.json",
+    ".tmp/final-review-5/operating-recalculation.json",
+    ".tmp/final-review-5/luna-verifier/"
+  ]
+}

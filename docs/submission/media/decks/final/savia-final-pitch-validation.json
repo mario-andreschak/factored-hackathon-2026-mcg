@@ -1,18 +1,44 @@
 {
-  "schema": "savia-final-pitch-review/v1",
+  "schema": "savia-final-pitch-review/v2",
   "date": "2026-10-05",
+  "source_pin": "7de0bbd670c25e4ad83476c6d7b70c45cc58a137",
+  "live_application_pin": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
   "slides": 6,
   "pdf_pages": 6,
   "native_preview_size": [
     1600,
     900
   ],
+  "export_renderer": "Native Windows PowerPoint",
+  "preview_files": 6,
   "all_shapes_within_slide": true,
   "notes_embedded_on_all_slides": true,
+  "say_if_asked_on_all_slides": true,
+  "narration_words": 346,
+  "user_copy_checks": {
+    "exact_card_action_wording": true,
+    "exact_elevenlabs_narration": true,
+    "exact_swarm_narration": true,
+    "card_action_ledger_footnote": "Demo ledger. Same admission rules a production host would use.",
+    "luna_baseline_in_if_asked_notes": true
+  },
   "swarm_markers": 100,
   "leads": 10,
   "specialists": 90,
+  "swarm_count_is_design": true,
+  "pinned_repository_sources_checked": 16,
+  "public_source_paths_resolve": true,
   "frozen_originals_unchanged": true,
-  "visual_review": "Native contact sheet inspected; individual slide 4 and slide 5 reviewed at full size.",
-  "release_scope": "New local successor. No video, deployment, model call, submission or historical release modification."
+  "frozen_comparison_ref": "b4d83b53",
+  "frozen_artifacts_sha256": {
+    "docs/submission/media/decks/savia-pitch-deck.pptx": "430f4509f23a62e6e0cfa8c3617969b8b45573f6100b2b629f7aee4ab322fac7",
+    "docs/submission/media/decks/savia-pitch-deck.pdf": "713ebf382b9c2d7dfd5915d8c8395df15206d9c9e94de16071c8970b08e6642a",
+    "docs/submission/media/decks/savia-submission-deck.pptx": "1edec58b3e51f45ccf16b9733ddc8fd5c69b1eb028e75011a26a1deb04ab2f4c",
+    "docs/submission/media/decks/savia-submission-deck.pdf": "dca195a5184b15f9a82e34964719bbec75c65556599b3bfc378258e4b3dc1b6c",
+    "docs/submission/media/video/savia-submission.mp4": "44e8dad7fdfdc6bd3b8b50b5aee83ea97f62c9e8412b20a1655a937cabd0fccb",
+    "docs/submission/media/media-freeze-receipt.json": "4ce071dbefd3a506f7f14ec8e9dec9a0633c8e62f48497773cf487fbe99e1821"
+  },
+  "visual_review": "Root reviewed the native contact sheet for all six slides and slides 2 and 5 at full size. The latest slide 5 render was inspected after the final copy changes; layouts and card-action text are clean and readable.",
+  "review_basis": "Independent root artifact audit and native-export visual inspection.",
+  "release_scope": "Final product-pitch successor. Deck generation changed no frozen RC deck, customer film, historical release, provider execution or bank action."
 }
