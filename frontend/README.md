@@ -17,10 +17,15 @@ configuration. See [workflow setup and qualification](../docs/DISPUTE_IMPLEMENTA
 for its matched frontend/bank mappings, independent ledger, and approved
 continuity settings. The direct-MCP example below configures the default service.
 
-The browser loads every owned transaction page before exposing local search,
-filters or CSV export. Each API page is limited to 500 rows; offsets and snapshot
-checks prevent an older transaction from silently disappearing. Selected chat
-references resolve against the complete ownership-checked history.
+Movements show at most the last three months. `GET /api/overview` and
+`GET /api/transactions` take `period=week|month|quarter` (7, 30 or 90 days,
+default `quarter`), counted back from the latest published event, so the window
+advances as daily data arrives and older rows are never read into the portal.
+Home's monthly activity always covers the three-month window. The browser loads
+every owned page of the selected window before exposing local search, filters or
+CSV export. Each API page is limited to 500 rows; offsets and snapshot checks
+prevent a transaction from silently disappearing. Selected chat references and
+the dispute workflow still resolve against the complete ownership-checked history.
 
 Movement dates and month views use the transaction event timestamp; CSV exports
 include both event and processing dates.
