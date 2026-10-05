@@ -82,6 +82,25 @@ test('initial intake rejects a still-active twelve-second utterance without trea
   assert.throws(() => new UtteranceCollector(16000, 26), RangeError);
 });
 
+test('capped speech drains across a thinking pause and resumes only after the configured continuous quiet', () => {
+  for (const quietAtCap of [0, 6]) {
+    const collector = new UtteranceCollector(16000, 3, 2);
+    let capped: Utterance | undefined;
+    for (let i = 0; i < 30 - quietAtCap; i++) capped = collector.push(block(.2), true) ?? capped;
+    for (let i = 0; i < quietAtCap; i++) capped = collector.push(block(0), false) ?? capped;
+    assert.ok(capped?.capped);
+    // A pause shorter than two seconds must not release the capped turn.
+    for (let i = quietAtCap; i < 10; i++) assert.equal(collector.push(block(0), false), undefined);
+    for (let i = 0; i < 6; i++) assert.equal(collector.push(block(.4), true), undefined);
+    for (let i = 0; i < 20; i++) assert.equal(collector.push(block(0), false), undefined);
+    collector.push(block(.6), true); collector.push(block(.6), true);
+    let next: Utterance | undefined;
+    for (let i = 0; i < 20; i++) next = collector.push(block(0), false) ?? next;
+    assert.ok(next); assert.equal(next.capped, false);
+    assert.ok(next.chunks.every(chunk => chunk[0] === 0 || chunk[0] > .59));
+  }
+});
+
 test('observer keeps one request and only the latest queued utterance, and refuses capped speech', async () => {
   const pending: ((text: string) => void)[] = [], values: number[] = [], results: string[] = [];
   const observer = new UtteranceObserver(u => { values.push(u.chunks[0][0]); return new Promise(resolve => pending.push(resolve)); }, t => results.push(t));

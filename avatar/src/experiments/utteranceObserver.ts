@@ -28,7 +28,7 @@ export class UtteranceCollector {
     if (!(samples instanceof Float32Array) || !samples.length || samples.length > this.sampleRate) return;
     const duration = samples.length / this.sampleRate;
     this.quiet = voiced ? 0 : this.quiet + duration;
-    if (this.draining) { if (this.quiet >= .5) this.reset(); return; }
+    if (this.draining) { if (this.quiet >= this.silenceSeconds) this.reset(); return; }
     if (!this.active) {
       this.onset = voiced ? this.onset + duration : 0;
       this.pre.push(samples.slice()); this.preSamples += samples.length;
@@ -50,7 +50,7 @@ export class UtteranceCollector {
     if (!capped && this.quiet < this.silenceSeconds) return;
     const result = { chunks: this.chunks, sampleRate: this.sampleRate, capped };
     this.chunks = []; this.samples = 0; this.active = false; this.onset = 0;
-    this.draining = capped && this.quiet < .5;
+    this.draining = capped && this.quiet < this.silenceSeconds;
     if (!this.draining) this.reset();
     return result;
   }
