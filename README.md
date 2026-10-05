@@ -42,7 +42,9 @@ The frozen customer recording includes **two complete native voice replies and e
 
 One assistant stays with the customer while specialists compare evidence, explore alternatives and return reviewed findings. The prototype demonstrates two reviewers. The larger architecture connects ten teams, each with one lead and nine specialists: **up to 100 team conversations**, with Savia's root separate.
 
-The foundation has completed collaboration exercises with **18 Fly sandboxes live together**, and a separate FLUJO workload returned **300/300 correct reference codes from 300 concurrent client submissions**. The larger customer fleet is a distinct integration: its latest root request failed before delegation when the provider workspace was disabled. The successful two-reviewer story and infrastructure tests keep their own measured scope. [Capacity and collaboration evidence](docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md).
+The foundation has completed collaboration exercises with **18 Fly sandboxes live together**, and a separate FLUJO workload returned **300/300 correct reference codes from 300 concurrent client submissions**. The successful two-reviewer customer story and infrastructure tests keep their own measured scope. The larger customer fleet is an extension with acceptance pending. [Capacity, collaboration and extension qualification](docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md).
+
+Inspect the foundation through the [generic FLUJO platform guide](docs/submission/FLUJO_PLATFORM_EVIDENCE.md): pinned public source for chat, flows, tools, MCP, model adapters and recovery, with 104 passing scoped offline tests. Its reusable interfaces remain separate from Savia's banking code.
 
 ## The bank controls the stack. The work leaves a trace.
 
@@ -84,7 +86,7 @@ The human pitch above explains the product. This table maps technical claims to 
 
 **Quality evidence:** the routing diagnostic has 120 balanced cases (60 Spanish / 60 Portuguese), AI-authored labels, and independent human adjudication pending. The TF-IDF classifier's diagnostic accuracy is 78.3% versus the keyword baseline's 58.3%; this measures routing against those labels. The original customer comparison is n=3 across revisions, with 2/3 agent-screened useful replies. Neither result estimates production banking resolution or business ROI.
 
-**Successful recording versus fleet extension:** the frozen film shows completed two-reviewer work, useful saved results and voice. The newer fleet attempt preserves its failed initial root call. A recorder's optional cleanup timeout is separately documented from accepted product steps. See the [release scope](docs/submission/RELEASE_CANDIDATE.md) and [original receipts](docs/submission/measurements/MEASURED_RESULTS.md).
+**Successful recording versus fleet extension:** the frozen film shows completed two-reviewer work, useful saved results and voice. The newer fleet attempt failed before delegation because its provider workspace was disabled; the original failed root call is preserved. A recorder's optional cleanup timeout is separately documented from accepted product steps. See the [release scope](docs/submission/RELEASE_CANDIDATE.md) and [original receipts](docs/submission/measurements/MEASURED_RESULTS.md).
 
 ## Reproduce locally
 
