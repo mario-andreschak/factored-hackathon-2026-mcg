@@ -221,7 +221,9 @@ export function useNativeRouterVoice(options: Options) {
       await context.audioWorklet.addModule('/audio-capture.js'); if (!current(s)) return;
       const capture = new AudioWorkletNode(context, 'voice-capture'); s.capture = capture;
       s.silent = context.createGain(); s.silent.gain.value = 0; s.input = context.createMediaStreamSource(stream);
-      s.input.connect(capture).connect(s.silent).connect(context.destination); s.collector = new UtteranceCollector(context.sampleRate, 25);
+      // Thinking pauses belong to the current utterance. Speech resuming before
+      // two seconds of quiet resets the deadline without dispatching partial work.
+      s.input.connect(capture).connect(s.silent).connect(context.destination); s.collector = new UtteranceCollector(context.sampleRate, 25, 2);
       capture.port.onmessage = event => {
         if (!current(s) || s.muted) return;
         const pcm = event.data as Float32Array;

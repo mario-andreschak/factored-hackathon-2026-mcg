@@ -37,6 +37,37 @@ test('observer reset erases speech captured before mute, privacy pause or identi
   for (let i = 0; i < 6; i++) assert.equal(collector.push(block(0), false), undefined);
 });
 
+test('a thinking pause keeps both speech segments in one utterance and restarts the final silence window', () => {
+  const collector = new UtteranceCollector(16000, 25, 2);
+  for (let i = 0; i < 6; i++) assert.equal(collector.push(block(.2), true), undefined);
+  for (let i = 0; i < 12; i++) assert.equal(collector.push(block(0), false), undefined);
+  for (let i = 0; i < 5; i++) assert.equal(collector.push(block(.4), true), undefined);
+  // Earlier silence cannot contribute to the deadline after speech resumes.
+  for (let i = 0; i < 19; i++) assert.equal(collector.push(block(0), false), undefined);
+  const result = collector.push(block(0), false);
+  assert.ok(result); assert.equal(result.capped, false);
+  assert.equal(result.chunks.filter(chunk => chunk[0] > .19 && chunk[0] < .21).length, 6);
+  assert.equal(result.chunks.filter(chunk => chunk[0] > .39 && chunk[0] < .41).length, 5);
+  assert.equal(result.chunks.filter(chunk => chunk[0] === 0).length, 32);
+  for (let i = 0; i < 25; i++) assert.equal(collector.push(block(0), false), undefined);
+  // Once submitted, the next deliberate utterance is independent.
+  collector.push(block(.6), true); collector.push(block(.6), true);
+  let next: Utterance | undefined;
+  for (let i = 0; i < 20; i++) next = collector.push(block(0), false) ?? next;
+  assert.ok(next); assert.ok(next.chunks.every(chunk => chunk[0] === 0 || chunk[0] > .59));
+});
+
+test('patient endpointing still clears partial speech on reset and rejects capped speech', () => {
+  const collector = new UtteranceCollector(16000, 25, 2);
+  collector.push(block(), true); collector.push(block(), true); collector.reset();
+  for (let i = 0; i < 25; i++) assert.equal(collector.push(block(0), false), undefined);
+  let result: Utterance | undefined;
+  for (let i = 0; i < 260; i++) result = collector.push(block(), true) ?? result;
+  assert.ok(result?.capped);
+  assert.equal(result.chunks.reduce((sum, chunk) => sum + chunk.length, 0), 400000);
+  for (const invalid of [NaN, Infinity, 0, .1, 6]) assert.throws(() => new UtteranceCollector(16000, 25, invalid), RangeError);
+});
+
 test('initial intake rejects a still-active twelve-second utterance without treating a truncated problem as complete', () => {
   const collector = new UtteranceCollector(16000, 12);
   let result: Utterance | undefined;

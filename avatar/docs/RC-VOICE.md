@@ -50,6 +50,12 @@ physical microphone, room echo and human voice-quality acceptance remain
 separate checks. Voice history is bounded and in memory; Savia owns durable
 customer history and follow-ups.
 
+Native voice waits for two continuous seconds of silence before submitting
+speech. A brief thinking pause stays in the same captured message; speaking
+again before the deadline resets the silence window and appends to that audio.
+Response interruption still starts promptly on new speech, and capped recordings,
+mute and account changes keep their existing boundaries.
+
 Production TypeScript/Vite build and the full unit suite passed (298 checks,
 one optional upstream skip). Two subsequent compatibility checks passed in
 the targeted 51-check suite, with one optional upstream skip. Eight existing
@@ -110,3 +116,23 @@ WebM and timing evidence are saved under
 `docs/submission/measurements/voice-overlap/` for media reuse. Typed input and a
 file-backed silent microphone were used; prerecorded speech input is qualified
 separately above.
+
+The minimal inquiry-team bridge is now included. Its mounted Savia frame emits
+only an actual case pointer and event cursor. The avatar verifies frame origin
+and source, fetches `/api/assistant/voice-update` through its fixed authenticated
+proxy, and binds the canonical reply to the existing strict single-use receipt.
+The update queues behind foreground speech and is revoked on account or voice
+ownership changes. Repeated event/copy updates are suppressed. Historical closed
+inquiries and queued/working snapshots stay visible without automatic speech;
+the useful completed result can be announced once.
+
+One actual new informational case on the selected fictional Nébula movement
+completed two real workers. Its useful 9.4 s native update was heard once with
+a server-accepted full played receipt. It created no banking chat, bank action,
+refund or human work. The [qualified receipt](RC-TEAM-VOICE.json) links the
+accepted WAV and visual-only video. Earlier pending-state audio overstated
+progress and is rejected for media; that concrete failure motivated the final
+pending-state suppression guard. The completed path is unchanged, and the final
+guard's focused browser test and production build passed without another paid
+probe. Full unit verification passed 304 checks with one optional skip; three
+focused continuity/update browser cases passed.

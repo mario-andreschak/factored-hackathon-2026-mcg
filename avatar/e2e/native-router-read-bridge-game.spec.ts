@@ -87,7 +87,7 @@ test('typed read visibly operates the real Workbench and queues its owned result
   await expect(frame.locator('.chat-message.assistant')).toHaveText(reply);
   await page.evaluate(() => { window.__nativeTransport.duration = .25; window.__nativeTransport.autoComplete = true; window.__nativeTransport.emit(.07, .6); });
   expect(await nativeRequests(page, 'native-result')).toHaveLength(0); // The new utterance owns input.
-  await page.evaluate(() => window.__nativeTransport.emit(0, .7));
+  await page.evaluate(() => window.__nativeTransport.emit(0, 2.1));
   await expect.poll(async () => (await nativeRequests(page, 'native-result')).length).toBe(1);
   expect((await nativeRequests(page, 'native-result'))[0].body).toEqual({ taskId, avatar: 'orbit', locale: 'es' });
   await expect.poll(async () => (await nativeRequests(page, 'native-played')).some(item => item.body.turnId === 'fixture-native-3' && item.body.complete === true)).toBe(true);

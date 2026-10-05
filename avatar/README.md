@@ -28,6 +28,9 @@ backend narration remain release gates. See the
 The OpenRouter candidate uses `openai/gpt-audio` for native audio input and
 streamed native output, with no separate STT/chat/TTS chain. This is a completed
 audio request followed by an SSE response, rather than a persistent Live socket.
+Native capture waits for two continuous seconds of silence so brief thinking
+pauses stay in the same message. Resumed speech resets that window; talk-over
+still interrupts the companion promptly.
 Production HTTP QA produced first decoded PCM after 1.764 seconds for Spanish
 and 1.297 seconds for Portuguese; these are request timings, not first audible
 microphone-to-answer latency. Continuous

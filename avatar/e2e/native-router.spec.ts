@@ -11,8 +11,41 @@ async function send(page: Page, text: string) { await page.getByLabel('Native fi
 const requests = (page: Page, suffix: string) => page.evaluate(suffix => window.__nativeTransport.requests.filter(value => value.path.endsWith(suffix)), suffix);
 const transcripts = (page: Page) => page.evaluate(() => window.__nativeHarness.transcripts);
 
+test('a one-second thinking pause and resumed speech stay in one message without premature generation', async ({ page }) => {
+  await mockedNative(page); await connect(page);
+  await page.evaluate(() => { window.__nativeTransport.holdObservers = true; });
+  await emit(page, .04, .6);
+  await emit(page, 0, 1.1);
+  expect(await requests(page, 'native-turn')).toHaveLength(0);
+  expect(await requests(page, 'native-observe')).toHaveLength(0);
+  await expect(page.getByTestId('phase')).toHaveText('listening');
+
+  await emit(page, .08, .5);
+  await emit(page, 0, 1.2);
+  expect(await requests(page, 'native-turn')).toHaveLength(0);
+  expect(await page.evaluate(() => window.__nativeHarness.utterances)).toBe(1);
+  await expect(page.getByTestId('phase')).toHaveText('listening');
+  await emit(page, 0, .9);
+  await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(1);
+  await expect.poll(async () => (await requests(page, 'native-observe')).length).toBe(1);
+  const input = (await requests(page, 'native-turn'))[0].body;
+  const wav = Buffer.from(String(input.audio), 'base64');
+  const samples = Array.from({ length: (wav.length - 44) / 2 }, (_, i) => wav.readInt16LE(44 + i * 2));
+  expect(samples.filter(value => value >= 1308 && value <= 1312).length).toBeGreaterThan(10000);
+  expect(samples.filter(value => value >= 2618 && value <= 2624).length).toBeGreaterThan(9000);
+  expect(samples.filter(value => value === 0).length).toBeGreaterThan(3 * 24000);
+  expect((await requests(page, 'native-observe'))[0].body.audio).toBe(input.audio);
+  await page.evaluate(() => window.__nativeTransport.observers[0].resolve('Primera parte de mi idea, y ahora continúo la misma frase.'));
+  await expect.poll(async () => (await transcripts(page)).filter(item => item.role === 'user' && item.done).length).toBe(1);
+  await expect.poll(async () => (await requests(page, 'native-played')).filter(item => item.body.complete === true).length).toBe(1);
+  expect(await page.evaluate(() => window.__nativeHarness.tasks)).toEqual([]);
+  await emit(page, 0, 1);
+  expect(await requests(page, 'native-turn')).toHaveLength(1);
+  await page.getByRole('button', { name: 'End native voice' }).click();
+});
+
 test('real WAV enters native transport directly; only hardware-drained completion becomes a heard reply', async ({ page }) => {
-  await mockedNative(page); await connect(page); await emit(page, .04, .6); await emit(page, 0, .6);
+  await mockedNative(page); await connect(page); await emit(page, .04, .6); await emit(page, 0, 2.1);
   await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(1);
   const input = (await requests(page, 'native-turn'))[0].body;
   expect(input).toMatchObject({ format: 'wav', avatar: 'moss', locale: 'es' }); expect(input.message).toBeUndefined();
@@ -30,13 +63,13 @@ test('real WAV enters native transport directly; only hardware-drained completio
 test('VAD barge-in immediately stops response while preserving new captured audio and independent old observation', async ({ page }) => {
   await mockedNative(page); await connect(page);
   await page.evaluate(() => { window.__nativeTransport.duration = 3; window.__nativeTransport.holdObservers = true; });
-  await emit(page, .04, .5); await emit(page, 0, .6);
+  await emit(page, .04, .5); await emit(page, 0, 2.1);
   await expect(page.getByTestId('phase')).toHaveText('speaking');
   await expect.poll(async () => (await requests(page, 'native-observe')).length).toBe(1);
   await emit(page, .07, .5);
   expect(await page.evaluate(() => window.__nativeTransport.sourcesStopped)).toBeGreaterThan(0);
   expect((await requests(page, 'native-observe'))[0].aborted).toBe(false);
-  await emit(page, 0, .6);
+  await emit(page, 0, 2.1);
   await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(2);
   const wav = Buffer.from(String((await requests(page, 'native-turn'))[1].body.audio), 'base64');
   const pcm = new Int16Array(wav.buffer, wav.byteOffset + 44, (wav.length - 44) / 2);
@@ -65,8 +98,8 @@ test('late cancelled native fetch cannot schedule audio or caption into its repl
 
 test('mute and locale change invalidate capture/observation; deliberate reconnect starts fresh Portuguese history', async ({ page }) => {
   await mockedNative(page); await connect(page); await page.evaluate(() => { window.__nativeTransport.holdObservers = true; });
-  await emit(page, .04, .5); await emit(page, 0, .6); await expect.poll(async () => (await requests(page, 'native-observe')).length).toBe(1);
-  await page.getByRole('button', { name: 'Mute native voice' }).click(); await emit(page, .1, 1); await emit(page, 0, .6);
+  await emit(page, .04, .5); await emit(page, 0, 2.1); await expect.poll(async () => (await requests(page, 'native-observe')).length).toBe(1);
+  await page.getByRole('button', { name: 'Mute native voice' }).click(); await emit(page, .1, 1); await emit(page, 0, 2.1);
   expect((await requests(page, 'native-turn')).length).toBe(1); expect((await requests(page, 'native-observe'))[0].aborted).toBe(true);
   await page.getByRole('button', { name: 'Portuguese native voice' }).click(); await expect(page.getByTestId('connected')).toHaveText('false');
   await page.evaluate(() => { window.__nativeTransport.observers[0].resolve('Respuesta privada anterior'); });
@@ -82,7 +115,7 @@ test('owned result waits through user speech and response; same-tick persona app
   await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(1); expect((await requests(page, 'native-turn'))[0].body.avatar).toBe('spark');
   await expect(page.getByTestId('phase')).toHaveText('listening');
   await emit(page, .04, .5); await page.getByRole('button', { name: 'Queue native result' }).click();
-  expect(await requests(page, 'native-result')).toHaveLength(0); await emit(page, 0, .6);
+  expect(await requests(page, 'native-result')).toHaveLength(0); await emit(page, 0, 2.1);
   await expect.poll(async () => (await requests(page, 'native-result')).length).toBe(1);
   const ordered = await page.evaluate(() => window.__nativeTransport.requests.filter(item => /native-(?:turn|played|result)$/.test(item.path)).map(item => item.path));
   expect(ordered.indexOf('/api/avatar/native-result')).toBeGreaterThan(ordered.lastIndexOf('/api/avatar/native-turn'));
@@ -105,7 +138,7 @@ test('fully played receipt pending HTTP completion cannot commit an old caption 
 test('25-second capped speech cannot restart until quiet, and the next fresh utterance still submits', async ({ page }) => {
   await mockedNative(page); await connect(page); await emit(page, .04, 26); await expect(page.getByTestId('error')).not.toHaveText('');
   await emit(page, .04, .6); expect(await requests(page, 'native-turn')).toHaveLength(0);
-  await emit(page, 0, .6); await emit(page, .04, .5); await emit(page, 0, .6);
+  await emit(page, 0, 2.1); await emit(page, .04, .5); await emit(page, 0, 2.1);
   await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(1);
   await page.getByRole('button', { name: 'End native voice' }).click();
 });
