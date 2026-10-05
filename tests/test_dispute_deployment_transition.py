@@ -326,7 +326,7 @@ def test_original_session_binding_change_blocks_restart(tmp_path):
 
 
 @pytest.mark.parametrize("guarded", ["action_pending", "sandbox_cases",
-    "sandbox_case_receipts", "sandbox_handoffs"])
+    "sandbox_case_receipts", "sandbox_handoffs", "sandbox_card_pending", "sandbox_card_blocks"])
 def test_unreceipted_populated_new_table_is_read_only_pre_service(tmp_path, monkeypatch, guarded):
     from types import SimpleNamespace
     from scripts import run_dispute
@@ -422,11 +422,19 @@ def test_real_action_host_schema_and_authorized_new_write_survive_verify(tmp_pat
     transition.plan(output=plan_file, **kwargs)
     adopted = transition.apply(plan_file=plan_file,
         bank_config_file=kwargs["bank_config_file"], operator_evidence=proof, receipt=receipt)
+    assert adopted["schema"] == "dispute-retained-transition/v2"
+    before_host = transition._ledger(bank, legacy=False)["schema_sha256"]
+    with sqlite3.connect(bank) as db:
+        assert [row[1] for row in db.execute("PRAGMA table_info(sandbox_card_pending)")] == [
+            "id", "request_key", "binding", "customer", "product_id", "snapshot", "facts", "expires"]
+        assert [row[1] for row in db.execute("PRAGMA table_info(sandbox_card_blocks)")] == [
+            "customer", "product_id", "receipt_json", "receipt_sha256"]
     config = SimpleNamespace(mode="delegated", ledger_continuity_approved=True, state_db=bank)
     store = StateStore(bank, ledger_continuity_approved=True)
     service = SimpleNamespace(config=config, store=store)
     workflow_store = SimpleNamespace(path=tmp_path / "new-workflow.sqlite3")
     host = BankingActionHost(service, workflow_store)
+    assert transition._ledger(bank, legacy=False)["schema_sha256"] == before_host
     assert host.ledger_generation == adopted["generation"]
     principal = Principal("new-subject", "new-customer", "new-session", "new-conversation",
                           int(time.time()) + 600, adopted["generation"])
@@ -436,8 +444,32 @@ def test_real_action_host_schema_and_authorized_new_write_survive_verify(tmp_pat
     with sqlite3.connect(bank) as db:
         db.execute("INSERT INTO dispute_host_cancelled VALUES (?,?,?,?)",
                    ("new-binding", "new-pending", "new-query", int(time.time())))
+        db.execute("INSERT INTO sandbox_card_pending VALUES (?,?,?,?,?,?,?,?)",
+                   ("new-card-intent", "new-card-request", "new-binding", "new-customer",
+                    "new-product", "new-snapshot", "{}", int(time.time()) + 600))
+        db.execute("INSERT INTO sandbox_card_blocks VALUES (?,?,?,?)",
+                   ("new-customer", "new-product", "{}", "a" * 64))
     assert transition.verify(receipt=receipt, bank_config_file=kwargs["bank_config_file"],
         source_root=root, native_state_dir=kwargs["native_state_dir"])["generation"] == adopted["generation"]
+    with sqlite3.connect(bank) as db:
+        db.execute("ALTER TABLE sandbox_card_blocks ADD COLUMN unreviewed TEXT")
+    with pytest.raises(ValueError, match="schema or coverage changed"):
+        transition.verify(receipt=receipt, bank_config_file=kwargs["bank_config_file"],
+                          source_root=root, native_state_dir=kwargs["native_state_dir"])
+
+
+def test_old_transition_receipt_cannot_authorize_card_schema_migration(tmp_path):
+    kwargs, _, proof, root = fixture(tmp_path)
+    plan_file, receipt = tmp_path / "plan.json", tmp_path / "receipt.json"
+    transition.plan(output=plan_file, **kwargs)
+    transition.apply(plan_file=plan_file, bank_config_file=kwargs["bank_config_file"],
+                     operator_evidence=proof, receipt=receipt)
+    saved = json.loads(receipt.read_text())
+    saved["schema"] = "dispute-retained-transition/v1"
+    receipt.write_text(json.dumps(saved))
+    with pytest.raises(ValueError, match="transition receipt"):
+        transition.verify(receipt=receipt, bank_config_file=kwargs["bank_config_file"],
+                          source_root=root, native_state_dir=kwargs["native_state_dir"])
 
 
 def test_missing_or_changed_original_authority_receipt_fails_closed(tmp_path):
