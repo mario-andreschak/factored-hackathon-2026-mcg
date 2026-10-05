@@ -1,0 +1,15 @@
+# Factored Hugging Face models: applicability assessment
+
+Reviewed October 5, 2026 against the [official Factored organization](https://huggingface.co/factored) and its [public model catalog](https://huggingface.co/api/models?author=factored&limit=100). The catalog snapshot and immutable repository revisions are recorded in `factored-hf-catalog.json`. No model weights were downloaded or inference run.
+
+The catalog returned nine repositories: six `fr-explorer` repositories and three `saleswiz_custom_distilbert` repositories. None supplies a documented Spanish/Portuguese banking-intent head for Savia's `inquiry`, `dispute`, `human`, `other` labels. Repository names alone do not establish a model's fitness for a new task.
+
+| Candidate | Public evidence inspected | Decision for this release |
+| --- | --- | --- |
+| [factored/distilbert-fr-explorer-classification](https://huggingface.co/factored/distilbert-fr-explorer-classification/tree/19a759f4dde47e1bab747df78c331462e7fe4027) | Generated model card lists an English `distilbert-base-uncased` base and leaves intended use, data and limitations unspecified. Published config architecture is `DistilBertForMaskedLM`, with a `fill-mask` task, despite the repository name. | It is not an inspectable four-label bilingual banking classifier. Do not reinterpret masked-token predictions as Savia intent decisions. |
+| [factored/electra-fr-explorer-classification](https://huggingface.co/factored/electra-fr-explorer-classification/tree/ac247dfe50b8215f310bc5703be4ffeb3322abf4) | The inspected revision contains `.gitattributes` only: no model card, config or weights. | No executable baseline available at that public revision. |
+| [factored/saleswiz_custom_distilbert_is_relevant](https://huggingface.co/factored/saleswiz_custom_distilbert_is_relevant/tree/a74bd25601c2132e6f301f593b307a2638550929) | Config declares `CustomDistilBERTHead`; files contain config and legacy weights, without a model card or the custom class implementation. The other two SalesWiz names address positivity and company relevance. | A different head with undocumented label/task mapping is not a banking-routing baseline. Loading legacy serialized weights is unnecessary for this assessment. |
+
+The smallest meaningful comparison remains the committed security-first keyword baseline against the fixed TF-IDF word/character logistic classifier and its fixed abstention policy. [The new replay](PUBLIC_EVIDENCE.md) reproduces all three on the unchanged, already inspected diagnostic set, publishes paired uncertainty and reports the human-route trade-off. It adds evidence about reproducibility rather than attributing task quality to a model brand.
+
+Independent human adjudication remains pending. A future encoder/LLM comparison needs a predeclared training-only procedure and a separate untouched, independently adjudicated ES/PT workload. This release does not tune or select a new model using the existing diagnostic's known errors, claim human labels, or substitute an unrelated Factored checkpoint for meaningful evaluation.

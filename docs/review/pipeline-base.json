@@ -1,0 +1,568 @@
+{
+  "pipeline_version": "0.2.0",
+  "contracts_sha256_12": "98f0add581f4",
+  "transformation_sha256": "2211c83f9e3a682dbb176601f14758331010b37b2968c1f1503a7b0906da0778",
+  "runtime": {
+    "python": "3.13.1",
+    "duckdb": "1.5.5"
+  },
+  "run_id": "20261005T212712Z-45b96a",
+  "finished_at": "2026-10-05T21:27:12+00:00",
+  "seconds": 0.8,
+  "source": "$SCRATCH/pipeline-source",
+  "stages": "bronze,silver,gold",
+  "published": true,
+  "source_fingerprint": "8e98eb1687b55f93",
+  "source_validation": "unchanged_inventory_after_ingestion",
+  "tables_requested": [
+    "customers",
+    "products",
+    "transactions",
+    "call_center_interactions",
+    "call_transcripts",
+    "complaints"
+  ],
+  "silver_build_id": "20261005T212712Z-45b96a",
+  "silver_contracts_sha256_12": "98f0add581f4",
+  "tables": {
+    "customers": {
+      "bronze": {
+        "source_objects": 1,
+        "source_bytes": 7542,
+        "source_fingerprint": "060ae9861fb330c1",
+        "source_objects_with_rows": 1,
+        "rows": 22,
+        "schema_variants": 1,
+        "columns": [
+          "customer_id",
+          "document_number",
+          "document_type",
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "gender",
+          "email",
+          "mobile_phone",
+          "landline_phone",
+          "address",
+          "city",
+          "state",
+          "country",
+          "postal_code",
+          "detected_accent",
+          "segment",
+          "credit_score",
+          "estimated_monthly_income",
+          "occupation",
+          "marital_status",
+          "education_level",
+          "registration_date",
+          "registration_branch_id",
+          "customer_status",
+          "last_updated",
+          "accepts_marketing"
+        ],
+        "seconds": 0.0
+      },
+      "silver": {
+        "raw_rows": 22,
+        "quarantined_rows": 0,
+        "reject_rate": 0.0,
+        "reject_reasons": {},
+        "duplicate_rows_removed": 2,
+        "pks_with_multiple_versions": 2,
+        "pks_with_conflicting_content": 1,
+        "rows": 20,
+        "reconciles": true,
+        "late_arrivals": 0,
+        "partition_date_mismatch": 0,
+        "orphans": {},
+        "null_rates": {
+          "detected_accent": 0.0,
+          "registration_branch_id": 0.0,
+          "accepts_marketing": 0.0
+        },
+        "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
+        "contract_columns_absent_in_source": [],
+        "source_columns_not_in_contract": [],
+        "seconds": 0.1
+      }
+    },
+    "products": {
+      "bronze": {
+        "source_objects": 1,
+        "source_bytes": 4173,
+        "source_fingerprint": "301f36c9a36f4595",
+        "source_objects_with_rows": 1,
+        "rows": 21,
+        "schema_variants": 1,
+        "columns": [
+          "product_id",
+          "customer_id",
+          "product_type",
+          "product_number",
+          "currency",
+          "current_balance",
+          "credit_limit",
+          "interest_rate",
+          "opening_date",
+          "expiration_date",
+          "opening_branch_id",
+          "product_status",
+          "opening_channel",
+          "has_linked_app",
+          "days_past_due",
+          "last_transaction_date",
+          "last_updated"
+        ],
+        "seconds": 0.0
+      },
+      "silver": {
+        "raw_rows": 21,
+        "quarantined_rows": 0,
+        "reject_rate": 0.0,
+        "reject_reasons": {},
+        "duplicate_rows_removed": 0,
+        "pks_with_multiple_versions": 0,
+        "pks_with_conflicting_content": 0,
+        "rows": 21,
+        "reconciles": true,
+        "late_arrivals": 0,
+        "partition_date_mismatch": 0,
+        "orphans": {
+          "customer_id": {
+            "parent": "customers",
+            "non_null": 21,
+            "missing_in_parent": 1
+          }
+        },
+        "null_rates": {
+          "credit_limit": 0.0,
+          "interest_rate": 0.0,
+          "expiration_date": 0.0,
+          "opening_branch_id": 0.0,
+          "opening_channel": 0.0,
+          "has_linked_app": 0.0,
+          "days_past_due": 0.0,
+          "last_transaction_date": 0.0
+        },
+        "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
+        "contract_columns_absent_in_source": [],
+        "source_columns_not_in_contract": [],
+        "seconds": 0.1
+      }
+    },
+    "transactions": {
+      "bronze": {
+        "source_objects": 2,
+        "source_bytes": 17483,
+        "source_fingerprint": "eba334150996d4d2",
+        "source_objects_with_rows": 2,
+        "rows": 69,
+        "schema_variants": 1,
+        "columns": [
+          "transaction_id",
+          "transaction_date",
+          "process_date",
+          "product_id",
+          "customer_id",
+          "transaction_type",
+          "transaction_category",
+          "amount",
+          "currency",
+          "amount_usd",
+          "channel",
+          "branch_id",
+          "merchant_name",
+          "merchant_category",
+          "transaction_country",
+          "transaction_city",
+          "transaction_status",
+          "response_code",
+          "is_fraud",
+          "fraud_score",
+          "latitude",
+          "longitude"
+        ],
+        "seconds": 0.0
+      },
+      "silver": {
+        "raw_rows": 69,
+        "quarantined_rows": 2,
+        "reject_rate": 0.02899,
+        "reject_reasons": {
+          "null:customer_id": 1,
+          "cast_failed:amount": 1
+        },
+        "duplicate_rows_removed": 1,
+        "pks_with_multiple_versions": 1,
+        "pks_with_conflicting_content": 0,
+        "rows": 66,
+        "reconciles": true,
+        "late_arrivals": 1,
+        "partition_date_mismatch": 1,
+        "orphans": {
+          "product_id": {
+            "parent": "products",
+            "non_null": 66,
+            "missing_in_parent": 0,
+            "owned_by_other_customer": 1
+          },
+          "customer_id": {
+            "parent": "customers",
+            "non_null": 66,
+            "missing_in_parent": 0
+          }
+        },
+        "null_rates": {
+          "transaction_category": 0.0,
+          "amount_usd": 0.0,
+          "branch_id": 0.0,
+          "merchant_name": 0.0,
+          "merchant_category": 0.0,
+          "transaction_city": 0.0,
+          "response_code": 0.0,
+          "fraud_score": 0.0
+        },
+        "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {
+          "transaction_country": [
+            {
+              "México": 56,
+              "Mexico": 10
+            }
+          ]
+        },
+        "inconsistent_spellings_counts": {
+          "transaction_country": {
+            "collision_groups": 1,
+            "rows_in_minority_spellings": 10,
+            "values_published": true
+          }
+        },
+        "contract_columns_absent_in_source": [],
+        "source_columns_not_in_contract": [],
+        "seconds": 0.1
+      }
+    },
+    "call_center_interactions": {
+      "bronze": {
+        "source_objects": 5,
+        "source_bytes": 16643,
+        "source_fingerprint": "93f1f9c49935508b",
+        "source_objects_with_rows": 5,
+        "rows": 60,
+        "schema_variants": 1,
+        "columns": [
+          "interaction_id",
+          "interaction_date",
+          "process_date",
+          "customer_id",
+          "agent_id",
+          "interaction_type",
+          "channel",
+          "contact_reason",
+          "reason_category",
+          "duration_seconds",
+          "wait_time_seconds",
+          "was_resolved",
+          "requires_followup",
+          "detected_sentiment",
+          "sentiment_score",
+          "customer_detected_accent",
+          "agent_used_accent",
+          "was_escalated",
+          "mentioned_products",
+          "has_transcript",
+          "has_recording"
+        ],
+        "seconds": 0.0
+      },
+      "silver": {
+        "raw_rows": 60,
+        "quarantined_rows": 0,
+        "reject_rate": 0.0,
+        "reject_reasons": {},
+        "duplicate_rows_removed": 0,
+        "pks_with_multiple_versions": 0,
+        "pks_with_conflicting_content": 0,
+        "rows": 60,
+        "reconciles": true,
+        "late_arrivals": 0,
+        "partition_date_mismatch": 0,
+        "orphans": {
+          "customer_id": {
+            "parent": "customers",
+            "non_null": 60,
+            "missing_in_parent": 0
+          }
+        },
+        "null_rates": {
+          "agent_id": 0.0,
+          "duration_seconds": 0.0,
+          "wait_time_seconds": 0.0,
+          "was_resolved": 0.0,
+          "detected_sentiment": 0.0,
+          "sentiment_score": 0.0,
+          "customer_detected_accent": 0.0,
+          "agent_used_accent": 0.0,
+          "mentioned_products": 0.0
+        },
+        "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
+        "contract_columns_absent_in_source": [],
+        "source_columns_not_in_contract": [],
+        "seconds": 0.1
+      }
+    },
+    "call_transcripts": {
+      "bronze": {
+        "source_objects": 5,
+        "source_bytes": 16940,
+        "source_fingerprint": "78d713d41cbfd805",
+        "source_objects_with_rows": 5,
+        "rows": 60,
+        "schema_variants": 1,
+        "columns": [
+          "transcript_id",
+          "interaction_id",
+          "process_date",
+          "customer_id",
+          "agent_id",
+          "full_text",
+          "customer_text",
+          "agent_text",
+          "detected_language",
+          "detected_accent",
+          "accent_confidence",
+          "detected_keywords",
+          "mentioned_entities",
+          "detected_intents",
+          "main_topics",
+          "transcription_model",
+          "audio_quality",
+          "duration_seconds"
+        ],
+        "seconds": 0.0
+      },
+      "silver": {
+        "raw_rows": 60,
+        "quarantined_rows": 0,
+        "reject_rate": 0.0,
+        "reject_reasons": {},
+        "duplicate_rows_removed": 0,
+        "pks_with_multiple_versions": 0,
+        "pks_with_conflicting_content": 0,
+        "rows": 60,
+        "reconciles": true,
+        "late_arrivals": 0,
+        "partition_date_mismatch": 0,
+        "orphans": {
+          "interaction_id": {
+            "parent": "call_center_interactions",
+            "non_null": 60,
+            "missing_in_parent": 0
+          },
+          "customer_id": {
+            "parent": "customers",
+            "non_null": 60,
+            "missing_in_parent": 0
+          }
+        },
+        "null_rates": {
+          "agent_id": 0.0,
+          "customer_text": 0.0,
+          "detected_accent": 0.0,
+          "accent_confidence": 0.0,
+          "detected_keywords": 0.0,
+          "detected_intents": 0.0,
+          "main_topics": 0.0,
+          "transcription_model": 0.0,
+          "audio_quality": 0.0,
+          "duration_seconds": 0.0
+        },
+        "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
+        "contract_columns_absent_in_source": [],
+        "source_columns_not_in_contract": [],
+        "seconds": 0.1
+      }
+    },
+    "complaints": {
+      "bronze": {
+        "source_objects": 1,
+        "source_bytes": 2057,
+        "source_fingerprint": "cdb388c853545c0e",
+        "source_objects_with_rows": 1,
+        "rows": 5,
+        "schema_variants": 1,
+        "columns": [
+          "complaint_id",
+          "creation_date",
+          "process_date",
+          "customer_id",
+          "case_type",
+          "category",
+          "subcategory",
+          "reception_channel",
+          "affected_product_id",
+          "related_branch_id",
+          "origin_interaction_id",
+          "description",
+          "claimed_amount",
+          "currency",
+          "priority",
+          "status",
+          "assigned_agent_id",
+          "assignment_date",
+          "first_response_date",
+          "resolution_date",
+          "closing_date",
+          "sla_breached",
+          "resolution_days",
+          "resolution",
+          "compensation_granted",
+          "resolution_satisfaction",
+          "is_repeat_complainer"
+        ],
+        "seconds": 0.0
+      },
+      "silver": {
+        "raw_rows": 5,
+        "quarantined_rows": 0,
+        "reject_rate": 0.0,
+        "reject_reasons": {},
+        "duplicate_rows_removed": 0,
+        "pks_with_multiple_versions": 0,
+        "pks_with_conflicting_content": 0,
+        "rows": 5,
+        "reconciles": true,
+        "late_arrivals": 0,
+        "partition_date_mismatch": 0,
+        "orphans": {
+          "customer_id": {
+            "parent": "customers",
+            "non_null": 5,
+            "missing_in_parent": 0
+          },
+          "affected_product_id": {
+            "parent": "products",
+            "non_null": 1,
+            "missing_in_parent": 0,
+            "owned_by_other_customer": 1
+          },
+          "origin_interaction_id": {
+            "parent": "call_center_interactions",
+            "non_null": 0,
+            "missing_in_parent": 0
+          }
+        },
+        "null_rates": {
+          "subcategory": 0.0,
+          "affected_product_id": 0.8,
+          "related_branch_id": 0.0,
+          "origin_interaction_id": 1.0,
+          "claimed_amount": 0.0,
+          "currency": 0.0,
+          "assigned_agent_id": 0.0,
+          "assignment_date": 0.0,
+          "first_response_date": 0.0,
+          "resolution_date": 0.0,
+          "closing_date": 0.0,
+          "resolution_days": 0.0,
+          "resolution": 0.0,
+          "compensation_granted": 0.0,
+          "resolution_satisfaction": 0.0,
+          "is_repeat_complainer": 0.0
+        },
+        "enum_out_of_vocabulary": {},
+        "inconsistent_spellings": {},
+        "inconsistent_spellings_counts": {},
+        "contract_columns_absent_in_source": [],
+        "source_columns_not_in_contract": [],
+        "seconds": 0.1
+      }
+    }
+  },
+  "gold": {
+    "transactions_by_customer": {
+      "rows": 66,
+      "ownership_valid_rows": 65,
+      "buckets": 128,
+      "seconds": 0.0,
+      "transaction_event_dates": {
+        "basis": "transaction_date",
+        "calendar": "source_timestamp_calendar_date",
+        "first": "2026-06-01",
+        "last": "2026-06-02",
+        "ownership_valid_rows": 65,
+        "missing_event_dates": 0
+      }
+    },
+    "contact_demand": {
+      "rows": 45,
+      "top_contact_reasons": [
+        {
+          "reason": "Consulta de saldo",
+          "contacts": 20,
+          "share": 0.3333
+        },
+        {
+          "reason": "Cargo no reconocido",
+          "contacts": 20,
+          "share": 0.3333
+        },
+        {
+          "reason": "Bloqueo de tarjeta",
+          "contacts": 20,
+          "share": 0.3333
+        }
+      ]
+    },
+    "classifier_dataset": {
+      "rows": 60,
+      "splits": {
+        "test": 6,
+        "excluded": 15,
+        "train": 30,
+        "val": 9
+      },
+      "time_holdout": "2026-03-17",
+      "distinct_normalized_texts": 16,
+      "test_rows_with_text_seen_in_train": 0,
+      "test_text_leakage_rate": 0.0,
+      "transcripts_without_matching_interaction": 0
+    },
+    "demo_seed_candidates": {
+      "customers_eligible": {
+        "normal": 17,
+        "reversed": 1,
+        "pending": 1,
+        "declined": 0,
+        "fraud_flagged": 1,
+        "near_duplicate": 1
+      },
+      "customers_picked": {
+        "normal": 17,
+        "reversed": 1,
+        "pending": 1,
+        "declined": 0,
+        "fraud_flagged": 1,
+        "near_duplicate": 1
+      }
+    },
+    "lookup_bench": {
+      "samples": 20,
+      "p50_ms": 5.9,
+      "p95_ms": 6.3,
+      "max_ms": 6.3
+    }
+  },
+  "contract_failures": []
+}

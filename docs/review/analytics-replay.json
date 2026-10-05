@@ -1,0 +1,108 @@
+{
+  "scope": "metadata-only analytics on committed synthetic operational fixture; not measured customer ROI",
+  "projection_counts": {
+    "turns": 4,
+    "conversations": 3,
+    "node_calls": 6,
+    "skipped_states": 0
+  },
+  "checks": {
+    "operational_sources_unchanged": true,
+    "raw_customer_text_and_identity_absent": true,
+    "workflow_denominator_excludes_transcript_only": true,
+    "synthetic_handoff_and_action_counted": true
+  },
+  "metrics": {
+    "volume": {
+      "conversations": 3,
+      "workflow_conversations": 2,
+      "workflow_turns": 3,
+      "transcript_only_turns": 1
+    },
+    "outcomes": {
+      "transcript_only": 1,
+      "handoff": 1,
+      "action_verified": 1
+    },
+    "containment_rate": 0.5,
+    "handoff_reasons": {
+      "high_risk": 1
+    },
+    "turns_per_conversation": {
+      "p50": 1,
+      "p95": 2
+    },
+    "turns_to_identify_transaction": {
+      "conversations": 1,
+      "p50": 2,
+      "p95": 2
+    },
+    "turn_rates": {
+      "clarify": 0.3333,
+      "safe_fallback": 0.3333,
+      "grounding_violation": 0.0,
+      "attack_detected": 0.0,
+      "node_error": 0.6667,
+      "human_requested": 0.0
+    },
+    "response_modes": {
+      "HANDOFF": 1,
+      "CLARIFY": 1,
+      "ACTION_DONE": 1
+    },
+    "intents": {
+      "TRANSACTION_DISPUTE": 3
+    },
+    "emotional_context_outcomes": {
+      "Frustración|handoff": 1,
+      "Neutro|action_verified": 1
+    },
+    "error_codes": {
+      "slot_extraction:schema_invalid": 1,
+      "search_transactions:tool_unavailable": 1
+    },
+    "nodes": {
+      "detect_context": {
+        "kind": "model_stage",
+        "calls": 1,
+        "error_rate": 0.0,
+        "retry_rate": null,
+        "p50_ms": 900,
+        "p95_ms": 900
+      },
+      "generator": {
+        "kind": "model_stage",
+        "calls": 1,
+        "error_rate": 0.0,
+        "retry_rate": null,
+        "p50_ms": 2100,
+        "p95_ms": 2100
+      },
+      "search_transactions": {
+        "kind": "tool",
+        "calls": 2,
+        "error_rate": 0.5,
+        "retry_rate": 1.0,
+        "p50_ms": 40,
+        "p95_ms": 20000
+      },
+      "slot_extraction": {
+        "kind": "model_stage",
+        "calls": 1,
+        "error_rate": 1.0,
+        "retry_rate": null,
+        "p50_ms": 1500,
+        "p95_ms": 1500
+      }
+    },
+    "feedback": {
+      "total": 1,
+      "positive": 1,
+      "negative": 0,
+      "labels": {}
+    }
+  },
+  "feedback_provenance": "one synthetic positive fixture rating; no human/customer adjudication claim",
+  "provider_cost": "not applicable: zero provider requests in this offline replay",
+  "provider_requests": 0
+}
