@@ -1,0 +1,101 @@
+{
+  "schema": "savia-independent-repository-assessment/v1",
+  "reviewer": "final-review-2",
+  "review_date": "2026-10-05",
+  "source": {
+    "head": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+    "tree": "dd6aeebee60080daf12fb47e60538c163df4dddd",
+    "root": "C:/Users/Moe/.codex/worktrees/savia-submission-portal/factored-hackathon-2026",
+    "initial_and_final_tracked_status": "clean",
+    "generic_flujo_commit": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+    "generic_flujo_tree": "5d7116fad792138eb0a6e6adf5a27ff19dc1c0f0",
+    "recorded_live_successor_application": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+    "checked_application_directories_unchanged_from_live_successor": ["dispute_workflow", "banking_mcp", "frontend", "savia_assistant", "pipeline", "ml", "analytics"]
+  },
+  "method": {
+    "starting_point": "README.md, then AGENTS.md/product boundary, review route and linked implementation/evidence",
+    "repository_only": true,
+    "other_repositories_chats_reviewers_or_web_inspected": false,
+    "earlier_assessment_reports_or_scores_read": false,
+    "provider_or_bank_requests": 0,
+    "installs": 0,
+    "product_or_document_edits": 0,
+    "scope": "Declared fictional hackathon prototype, with deterministic R0-R18 core and separately measured voice/reviewer extensions; production and optional fleet completion are separate scopes."
+  },
+  "scores": {
+    "savia": {
+      "total": 88,
+      "maximum": 100,
+      "dimensions": [
+        {"name": "Technical judgment", "score": 19, "maximum": 20, "justification": "The pure ordered R0-R18 motor emits reads/waits rather than write capability. Trusted bindings, owned selection, query isolation, explicit consent, signed admission, fresh risk/ownership checks, attempted markers, independent receipt readback, revocation and conservative recovery form a coherent implemented lifecycle. Contract-derived acceptance uses the real runtime/store. My 1,078-check replay passed unchanged source. Residual risk is broader semantic/provider-path qualification, not an absent deterministic core.", "evidence": ["dispute_workflow/policy.py", "dispute_workflow/runtime.py", "dispute_workflow/action_host.py", "dispute_workflow/state.py", "banking_mcp/actions.py", "tests/test_dispute_acceptance.py", ".tmp/final-review-2/core/receipt.json"]},
+        {"name": "AI engineering", "score": 18, "maximum": 20, "justification": "Executable interpretation stages, bounded schemas, grounding guards, repair/fallback, provider/native interfaces, integrated speech with exact playback acknowledgments and durable inquiries are substantial. The recorded two reviewers are actual parallel provider calls, each selecting an enum recommendation; trusted facts/copy supply their displayed prose. Saved speech and return visits are evidenced. This is a useful bounded team, not demonstrated open-ended investigation. Native speech can omit a canonical caveat, independent human audio review is pending, and fleet customer acceptance failed before delegation.", "evidence": ["dispute_workflow/prompts.py", "dispute_workflow/response.py", "savia_assistant/service.py", "savia_assistant/fleet.py", "frontend/server/conversation.py", "frontend/src/avatar/useSaviaVoice.ts", "docs/submission/measurements/team-story-summary.json", "docs/submission/measurements/saved-recommendations-native/receipt.json"]},
+        {"name": "Data engineering", "score": 19, "maximum": 20, "justification": "Six-table bronze/silver/gold work includes contracts, quarantine, deterministic deduplication, lineage, ownership validation, isolated immutable builds, a writer lock and atomic CURRENT publication after complete gold/manifest production. Public fixtures demonstrate reconciliation, rerun identity, owner exclusion, late correction/new rows and retention of prior snapshots. Full historical 5,899,720-row statistics remain private-source aggregates, not recomputed data. Bronze inventory assumes static objects rather than VersionId-pinned ingestion, and crash durability beyond atomic replacement is not established.", "evidence": ["pipeline/__main__.py", "pipeline/bronze.py", "pipeline/silver.py", "pipeline/gold.py", "pipeline/common.py", "pipeline/writer.py", "pipeline/lookup.py", "docs/pipeline/manifest.json", ".tmp/final-review-2/replay/pipeline-replay.json"]},
+        {"name": "ML/evaluation", "score": 15, "maximum": 20, "justification": "The team detects template leakage/unlearnable weak labels rather than reporting misleading organizer-data ML success. The fixed 120-case ES/PT diagnostic compares keywords, TF-IDF/logistic and abstention, with preselected parameters, hashes, uncertainty and safety/escalation metrics. However all labels are AI-authored, human adjudication remains pending and no production generalization follows. My independent Luna audit confirms 100 exact/safe completions and its independent deterministic baseline tie; ten repeated phrase types make it a load/grounding diagnostic, not 100 diverse interpretations or an LLM quality advantage.", "evidence": ["ml/README.md", "ml/router.py", "demo/evaluate_router.py", "docs/ml/router_holdout_provenance.md", "docs/demo/intent_router_evaluation.md", "docs/review/OPERATING_DECISIONS.md", "scripts/verify_luna_benchmark.py", ".tmp/final-review-2/luna-audit/audit.json"]},
+        {"name": "Data analytics", "score": 17, "maximum": 20, "justification": "Metadata-only read-only extraction, HMAC identities, workflow/transcript denominators, stage latency, retry/error/grounding flags and feedback are implemented and public fixtures pass privacy/source-integrity checks. Operating analysis connects actual ownership/leakage discoveries and router escalation burdens to product decisions, separates queueing from voice latency, and reports token/cache overhead without inventing dollar savings. Customer usefulness is still n=3 across revisions plus a separate n=1 post-fix observation; cost, repeat-contact effects and live human outcomes are unmeasured. Containment means absence of handoff, not verified dispute resolution.", "evidence": ["analytics/extract.py", "analytics/report.py", "analytics/README.md", "scripts/analyze_operating_evidence.py", "docs/review/OPERATING_DECISIONS.md", ".tmp/final-review-2/replay/analytics-replay.json"]}
+      ]
+    },
+    "generic_flujo": {
+      "total": 83,
+      "maximum": 100,
+      "dimensions": [
+        {"name": "Architecture/extensibility", "score": 23, "maximum": 25, "justification": "The byte-verified pinned subset exposes genuinely generic OpenAI-style chat/direct/flow dispatch, FlowSpec compile/validate/save, typed runFlow input/result, model adapters, MCP transports and a trusted execution-extension contract. Domain authority remains in Savia/MCP. A release-note digest is a concrete non-banking example. The examples are illustrative and important implementation imports remain outside the review subset."},
+        {"name": "Execution/integration", "score": 21, "maximum": 25, "justification": "Source implements durable/ephemeral runs, continuation, immutable snapshots, explicit invocation sources, approval policy, events, cancellation ancestry and MCP visibility/progress/timeout handling. A dated aggregate reports a real FLUJO 300-request workload and separate sandbox/tool exercises. These are substantive evidence at their own revisions, but raw infrastructure histories remain private and are not current-public-pin transport/model interoperability receipts."},
+        {"name": "Safety/recovery", "score": 16, "maximum": 20, "justification": "Inspectable checkpoints track effects and refuse automatic replay for unknown effects; Persona durable mutations require current lock-capable authority; conversation locking is reentrant and serialized within a process. Generic approvals are explicitly configurable rather than bank consent. Recovery depends on truthful tool annotations, ordinary runs default to no approval, and this packet does not establish cross-process conversation ownership or crash/endurance behavior."},
+        {"name": "Reproducible engineering", "score": 15, "maximum": 20, "justification": "All 39 copied source files and 619,009 bytes independently match declared SHA-256/Git blobs. My five dependency-free retry/cancellation checks pass. The repository supplies per-test receipts/logs for 104 upstream tests across nine suites and discloses mocks and eleven installed-package mismatches. It is not a full buildable distribution, and I did not reproduce that broader suite, clean locked install, production build or full platform tests within the allowed repository-only scope."},
+        {"name": "Developer usability", "score": 8, "maximum": 10, "justification": "The new platform guide maps each interface to local exact source and immutable public URLs, provides ordinary integration payloads and explains authority, approvals and reproduction limits clearly. Source review is easy here. A developer still needs the complete pinned FLUJO checkout/catalogs and matching dependencies to run examples or build; the copy is intentionally incomplete."}
+      ]
+    }
+  },
+  "first_five_findings_in_discovery_order": [
+    {"order": 1, "finding": "README makes the deterministic core the primary product and separates fictional actions, recorded customer success, capacity and optional fleet scope.", "type": "claim/scoping strength", "source": "README.md"},
+    {"order": 2, "finding": "The review route reports consequential ownership/template defects rather than assuming FK existence or row-level holdout proves quality; later implementation/fixtures support its response to them.", "type": "data/product strength", "source": "docs/submission/START_HERE.md"},
+    {"order": 3, "finding": "Generic FLUJO now has an inspectable pinned 39-file source packet and 104 scoped upstream tests, with explicit incompleteness, mocks and dependency drift.", "type": "foundation evidence with limits", "source": "docs/submission/FLUJO_PLATFORM_EVIDENCE.md"},
+    {"order": 4, "finding": "Policy source contains actual ordered R0-R18 decisions; host confirmation is a wait/status-read boundary, and attempted actions remain recoverable without another write.", "type": "implementation strength", "source": "dispute_workflow/policy.py"},
+    {"order": 5, "finding": "The customer success receipt evidences two genuine bounded model reviewers, useful saved facts/advice and helpful closure, while preserving direct-provider scope and changed UI capture provenance.", "type": "customer evidence with limits", "source": "docs/submission/measurements/team-story-summary.json"}
+  ],
+  "actual_checks": [
+    {"command": "python docs/submission/measurements/core-engine-final/core-engine-run.py --repo . --expected-head b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc --out .tmp/final-review-2/core", "result": "exit 0; 1078 passed; 0 failures/errors/skips; 110.748 s; unchanged source; zero guarded external attempts", "artifact": ".tmp/final-review-2/core/receipt.json"},
+    {"command": "python scripts/review_evidence.py --out .tmp/final-review-2/replay", "result": "67/67 selected tests passed with test subprocess exit 0; seven pipeline and four analytics invariants independently recorded true. Overall replay interrupted before router-replay/final receipt, so no completed overall script pass is claimed.", "environment": "Existing Python dependencies; no install; plugin autoload/bytecode/cache disabled; temp paths under reviewer scratch", "artifacts": [".tmp/final-review-2/replay/offline-tests.json", ".tmp/final-review-2/replay/pipeline-replay.json", ".tmp/final-review-2/replay/analytics-replay.json"]},
+    {"command": "node docs/submission/measurements/flujo-platform/verify-source.cjs --git-ref=HEAD", "result": "exit 0; 39 files/619009 bytes match recorded upstream SHA-256 and Git blob identity"},
+    {"command": "node --experimental-strip-types --require ./docs/submission/measurements/flujo-platform/offline-preload.cjs ./docs/submission/measurements/flujo-platform/offline-smoke.mjs", "result": "exit 0; five checks pass for strict retry-time parsing, retry bounds, usable rate-limit timing and cancellation; Node experimental/type/module warnings only"},
+    {"command": "python scripts/verify_luna_benchmark.py docs/submission/measurements/luna-100/run-100 --out .tmp/final-review-2/luna-audit", "result": "exit 0; 100 unique cases; 100 exact/safe outputs; baseline matches 100 oracles; peak 100 overlapping turns reconstructed; zero new provider calls"},
+    {"command": "python .tmp/final-review-2/audit-local-evidence.py", "result": "exit 0; 263 selected local Markdown targets exist; three native WAVs have documented 24 kHz mono durations 6.6/3.95/8.2 seconds; saved advice WAV hash matches receipt; no remote status, perceptual audio or video playback claim", "artifact": ".tmp/final-review-2/local-evidence-audit.json"},
+    {"command": "python .tmp/final-review-2/run-app-checks.py > .tmp/final-review-2/app-output.txt 2>&1", "result": "Attempted existing card/assistant/fleet/voice/language suites using the source harness network guard, but resumed-session output is unusable: 247/247 output bytes and 180/180 guard bytes are null; JUnit is nearly entirely null and cannot parse. No pass/failure count or product defect inferred, no rerun."}
+  ],
+  "successful_dated_evidence": [
+    "Two completed direct OpenRouter Gemini reviewers, recorded useful saved recommendations and customer helpful closure; durable history/new chat/reload. Worker outputs are bounded enum choices rather than unconstrained investigation prose.",
+    "Two full native speech/ACK receipts at frozen capture source, and separate saved recommendation supplement at 7089ca7b with 196800 exact samples/HTTP200 and retained state.",
+    "Two ES/PT public API card-block journeys at f3c57b26, image sha256:c38f3af736defdf55c7de47b0e1597ad361b3f748c845176b920377fd12b307f: preparation/no-write, missing-consent 422, verified consent, identical readback/replay, fresh login and foreign-owner refusal; 177 exported-source/runtime asset verification recorded.",
+    "Historical full pipeline accounts for 5899720 rows across six table families; private source is not independently available here. Public fixtures reproduce the mechanisms.",
+    "Historical FLUJO neutral-reference repeat reports 300/300 correctness after an earlier 217/300 result, with 273.40/441.60 second p50/p95 including queueing; 18 simultaneous live sandbox leaves are a separate collaboration workload. Raw histories are private."
+  ],
+  "defects_and_missing_links": [
+    {"finding": "No demonstrated deterministic-core showstopper in inspected source or successful checks; this is not an exhaustive security certification.", "severity": "assessment conclusion"},
+    {"finding": "Native saved advice omits conditional folio guidance and the explicit bank-not-resolved caveat present in canonical/display text; the receipt explicitly discloses this. Preserve critical qualifiers in speech if relying on audio alone.", "severity": "useful product improvement", "source": "docs/submission/measurements/saved-recommendations-native/receipt.json"},
+    {"finding": "Router holdout labels are still proposed AI labels; provenance explicitly requires independent human adjudication before final submission. Reported scores do not establish human-verified quality.", "severity": "evaluation acceptance gap", "source": "docs/ml/router_holdout_provenance.md"},
+    {"finding": "Operational token/cost observations are not persisted in analytics today; cost-per-case and business impact cannot be computed from this store.", "severity": "analytics improvement", "source": "analytics/README.md"},
+    {"finding": "No broken local target found among 263 selected links. Remote film/demo/vendor links were not fetched. Final-video placeholder is explicit and requested; existing frozen film is linked and is not a defect.", "severity": "link review conclusion"},
+    {"finding": "FLUJO capacity raw histories and full platform build are not independently replayable from this subset; do not transfer historical measured results to the current upstream pin.", "severity": "foundation evidence limitation"}
+  ],
+  "comparison_quality": {
+    "elevenlabs": "Good dated requirement/positioning comparison, with direct vendor link and explicit vendor-reported latency/language claims; no matched superiority, cost/compliance or missing-feature claim. Vendor contents were not independently fetched under repository-only review.",
+    "router": "Meaningful same-workload comparison and paired uncertainty; safety misses and escalation burden both reported. Label adjudication and untouched future validation limit use.",
+    "provider": "Luna baseline tie and repeated phrasing openly disclosed; useful exact grounding/load proof, not ML superiority or collaborative capacity.",
+    "customer": "n=3 across revisions and separate post-fix n=1 are transparently scoped; they are not controlled before/after or a business outcome study."
+  },
+  "exact_blockers": {
+    "declared_fictional_core_submission": "No verified technical showstopper found. Existing film and explicit final-video placeholder satisfy the stated scope; optional fleet and production goals do not redefine it.",
+    "human_verified_model_quality_claim": "Independent human adjudication of the frozen router labels and recorded answer/audio usefulness remains pending.",
+    "expanded_customer_fleet_claim": "October 5 native root inference failed with HTTP404/disabled provider workspace before delegation; no accepted ten-Machine/100-conversation customer investigation exists.",
+    "production_bank_or_business_claim": "Real bank execution/refund, live human pickup, push/email, cost per case, repeat-contact effect and multi-day reliability have no acceptance evidence and are explicitly pilot scope.",
+    "complete_generic_platform_reproduction": "A complete pinned distribution and locked dependencies are required; this packet deliberately contains only 39 files and scoped mocked-suite receipts."
+  },
+  "prioritized_improvements": [
+    "Complete independent bilingual human adjudication while preserving frozen labels/receipts; use a new untouched set for subsequent tuning.",
+    "Guarantee critical action/outcome qualifiers in native speech, or use exact trusted TTS for protected result messages; add independent human listening/accessibility review.",
+    "Persist stage token/cache/cost observations with source/provider/time identity and join trusted host receipts into final case outcomes; keep no-handoff separate from completed resolution.",
+    "Publish one concise current-source lifecycle acceptance matrix linking each R0-R18 boundary to source checks and dated native/API/customer proof, without replacing historical pins.",
+    "For a reusable FLUJO release, run a clean pinned dependency build and generic transport/recovery examples; separately measure cross-process conversation ownership and crash recovery.",
+    "Qualify the expanded fleet only when that optional extension becomes a requested deliverable; retain failed root correlation and independent-result checks."
+  ]
+}
