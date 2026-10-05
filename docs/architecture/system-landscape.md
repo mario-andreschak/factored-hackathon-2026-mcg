@@ -1,5 +1,15 @@
 # Savia — technical product architecture
 
+Current capacity evidence is in the
+[infrastructure report](../submission/measurements/INFRASTRUCTURE_CAPACITY.md):
+300/300 correct requests through local production FLUJO at client parallelism 300,
+real Fly sandbox collaboration, and the later deployed Savia fleet connector.
+The original rc.1 inventory in section 7 is historical; use the
+[release report](../submission/RELEASE_CANDIDATE.md) for current deployment pins.
+A further paid fleet/load run for the submission video was skipped because of
+budget constraints. Exact 100-agent customer completion remains distinct from
+successful infrastructure tests.
+
 Design updated 5 October 2026. Savia is the customer's assistant throughout the life of a problem. It resolves a request immediately when possible; otherwise it commissions a team of 100 specialist AI agents, reviews their findings and returns one coherent answer. An unresolved goal becomes a human ticket. Status reaches the customer through Savia, browser push or email.
 
 This is the owner-directed product architecture. The target uses the recovered Claude swarm implementation: ten Fly FLUJO Machines, each with ten intercommunicating conversations. Savia's customer application coordinates that fleet. Development and reviewer Machines are outside the product. Section 7 maps the design to current evidence.

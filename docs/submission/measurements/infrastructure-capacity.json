@@ -1,0 +1,375 @@
+{
+  "schema": "savia-infrastructure-capacity/v1",
+  "review_date_bogota": "2026-10-05",
+  "original_test_date": "2026-10-04",
+  "source_repository": "flujo-app/o-private-inference",
+  "source_revision": "496e5930fa23836f5e805ef226afe840f728b888",
+  "setup": {
+    "flujo": "local production build; flow-as-model chat completions",
+    "model": "Qwen3.8-27B-FP8",
+    "engine": "vLLM 0.30.0",
+    "inference_gpu": "one Modal H100",
+    "configured_context_tokens": 600000
+  },
+  "method": "Stage request/HTTP-success/correctness counts reconciled with original local JSONL. Timing/resource metrics retained from original summaries; no fresh provider call.",
+  "parallel_scope": "client-submitted requests; includes FLUJO queueing, not simultaneous GPU generations",
+  "hash_scope": "SHA-256 of original local artifact bytes; source-checkout line endings may differ from Git blobs",
+  "total_requests": 1289,
+  "total_http_200": 1289,
+  "runs": [
+    {
+      "run": "20261004-131635",
+      "requests": 891,
+      "stages": [
+        {
+          "stage": "direct-warm",
+          "target": "direct",
+          "requests": 8,
+          "parallel": 8,
+          "context_tokens": 500,
+          "ok": 8,
+          "correct": 8,
+          "wall_seconds": 1.2,
+          "latency_p50": 1.19,
+          "latency_p95": 1.2,
+          "latency_max": 1.2,
+          "ttft_p50": 0.94,
+          "ttft_p95": 1.03,
+          "original_jsonl_counts": {
+            "requests": 8,
+            "http_200": 8,
+            "correct": 8
+          }
+        },
+        {
+          "stage": "direct-1k-x400",
+          "target": "direct",
+          "requests": 400,
+          "parallel": 400,
+          "context_tokens": 1000,
+          "ok": 400,
+          "correct": 399,
+          "wall_seconds": 27.1,
+          "latency_p50": 20.75,
+          "latency_p95": 26.42,
+          "latency_max": 26.5,
+          "ttft_p50": 14.1,
+          "ttft_p95": 25.18,
+          "original_jsonl_counts": {
+            "requests": 400,
+            "http_200": 400,
+            "correct": 399
+          }
+        },
+        {
+          "stage": "direct-8k-x64",
+          "target": "direct",
+          "requests": 64,
+          "parallel": 64,
+          "context_tokens": 8000,
+          "ok": 64,
+          "correct": 64,
+          "wall_seconds": 31.5,
+          "latency_p50": 23.43,
+          "latency_p95": 31.23,
+          "latency_max": 31.38,
+          "ttft_p50": 16.82,
+          "ttft_p95": 30.27,
+          "original_jsonl_counts": {
+            "requests": 64,
+            "http_200": 64,
+            "correct": 64
+          }
+        },
+        {
+          "stage": "direct-32k-x16",
+          "target": "direct",
+          "requests": 16,
+          "parallel": 16,
+          "context_tokens": 32000,
+          "ok": 16,
+          "correct": 16,
+          "wall_seconds": 34.3,
+          "latency_p50": 27.21,
+          "latency_p95": 34.23,
+          "latency_max": 34.23,
+          "ttft_p50": 21.0,
+          "ttft_p95": 34.07,
+          "original_jsonl_counts": {
+            "requests": 16,
+            "http_200": 16,
+            "correct": 16
+          }
+        },
+        {
+          "stage": "direct-128k-x4",
+          "target": "direct",
+          "requests": 4,
+          "parallel": 4,
+          "context_tokens": 128000,
+          "ok": 4,
+          "correct": 4,
+          "wall_seconds": 50.1,
+          "latency_p50": 49.6,
+          "latency_p95": 50.11,
+          "latency_max": 50.11,
+          "ttft_p50": 38.73,
+          "ttft_p95": 49.87,
+          "original_jsonl_counts": {
+            "requests": 4,
+            "http_200": 4,
+            "correct": 4
+          }
+        },
+        {
+          "stage": "direct-500k-x1",
+          "target": "direct",
+          "requests": 1,
+          "parallel": 1,
+          "context_tokens": 500000,
+          "ok": 1,
+          "correct": 1,
+          "wall_seconds": 113.2,
+          "latency_p50": 113.21,
+          "latency_p95": 113.21,
+          "latency_max": 113.21,
+          "ttft_p50": 112.97,
+          "ttft_p95": 112.97,
+          "original_jsonl_counts": {
+            "requests": 1,
+            "http_200": 1,
+            "correct": 1
+          }
+        },
+        {
+          "stage": "flujo-plain-1k-x300",
+          "target": "flujo",
+          "requests": 300,
+          "parallel": 300,
+          "context_tokens": 1000,
+          "ok": 300,
+          "correct": 217,
+          "wall_seconds": 448.8,
+          "latency_p50": 262.14,
+          "latency_p95": 432.56,
+          "latency_max": 448.68,
+          "ttft_p50": 262.87,
+          "ttft_p95": 429.53,
+          "flujo": {
+            "rss_start_mb": 233.359375,
+            "rss_peak_mb": 319.4765625,
+            "cpu_peak_percent": 262.4
+          },
+          "original_jsonl_counts": {
+            "requests": 300,
+            "http_200": 300,
+            "correct": 217
+          }
+        },
+        {
+          "stage": "flujo-plain-8k-x32",
+          "target": "flujo",
+          "requests": 32,
+          "parallel": 32,
+          "context_tokens": 8000,
+          "ok": 32,
+          "correct": 32,
+          "wall_seconds": 57.0,
+          "latency_p50": 33.86,
+          "latency_p95": 55.51,
+          "latency_max": 56.97,
+          "ttft_p50": 33.52,
+          "ttft_p95": 55.21,
+          "flujo": {
+            "rss_start_mb": 287.1953125,
+            "rss_peak_mb": 297.51953125,
+            "cpu_peak_percent": 239.0
+          },
+          "original_jsonl_counts": {
+            "requests": 32,
+            "http_200": 32,
+            "correct": 32
+          }
+        },
+        {
+          "stage": "flujo-plain-128k-x2",
+          "target": "flujo",
+          "requests": 2,
+          "parallel": 2,
+          "context_tokens": 128000,
+          "ok": 2,
+          "correct": 2,
+          "wall_seconds": 30.4,
+          "latency_p50": 30.34,
+          "latency_p95": 30.34,
+          "latency_max": 30.34,
+          "ttft_p50": 29.41,
+          "ttft_p95": 29.41,
+          "flujo": {
+            "rss_start_mb": 297.45703125,
+            "rss_peak_mb": 311.19921875,
+            "cpu_peak_percent": 138.9
+          },
+          "original_jsonl_counts": {
+            "requests": 2,
+            "http_200": 2,
+            "correct": 2
+          }
+        },
+        {
+          "stage": "flujo-tools-1k-x64",
+          "target": "flujo",
+          "requests": 64,
+          "parallel": 64,
+          "context_tokens": 1000,
+          "ok": 64,
+          "correct": 64,
+          "wall_seconds": 147.2,
+          "latency_p50": 115.71,
+          "latency_p95": 144.08,
+          "latency_max": 147.11,
+          "ttft_p50": 115.37,
+          "ttft_p95": 143.73,
+          "flujo": {
+            "rss_start_mb": 305.46484375,
+            "rss_peak_mb": 337.12890625,
+            "cpu_peak_percent": 262.4
+          },
+          "original_jsonl_counts": {
+            "requests": 64,
+            "http_200": 64,
+            "correct": 64
+          }
+        }
+      ],
+      "local_original_artifact_sha256": {
+        "summary.json": "22083055cbc2e37913713cac7c57051a6bd47ee0054113479282f9d894f9d58d",
+        "requests.jsonl": "3d504aeefbad964b1c10a0669219cf735c2af24c045860a4cb49668b66f96b98"
+      }
+    },
+    {
+      "run": "20261004-133240",
+      "requests": 398,
+      "stages": [
+        {
+          "stage": "flujo-plain-1k-x300",
+          "target": "flujo",
+          "requests": 300,
+          "parallel": 300,
+          "context_tokens": 1000,
+          "ok": 300,
+          "correct": 300,
+          "wall_seconds": 461.9,
+          "latency_p50": 273.4,
+          "latency_p95": 441.6,
+          "latency_max": 461.29,
+          "ttft_p50": 272.66,
+          "ttft_p95": 440.7,
+          "flujo": {
+            "rss_start_mb": 337.12890625,
+            "rss_peak_mb": 411.7421875,
+            "cpu_peak_percent": 267.0
+          },
+          "original_jsonl_counts": {
+            "requests": 300,
+            "http_200": 300,
+            "correct": 300
+          }
+        },
+        {
+          "stage": "flujo-plain-8k-x32",
+          "target": "flujo",
+          "requests": 32,
+          "parallel": 32,
+          "context_tokens": 8000,
+          "ok": 32,
+          "correct": 32,
+          "wall_seconds": 59.6,
+          "latency_p50": 35.28,
+          "latency_p95": 58.02,
+          "latency_max": 59.53,
+          "ttft_p50": 34.54,
+          "ttft_p95": 57.31,
+          "flujo": {
+            "rss_start_mb": 316.484375,
+            "rss_peak_mb": 326.38671875,
+            "cpu_peak_percent": 232.7
+          },
+          "original_jsonl_counts": {
+            "requests": 32,
+            "http_200": 32,
+            "correct": 32
+          }
+        },
+        {
+          "stage": "flujo-plain-128k-x2",
+          "target": "flujo",
+          "requests": 2,
+          "parallel": 2,
+          "context_tokens": 128000,
+          "ok": 2,
+          "correct": 2,
+          "wall_seconds": 29.7,
+          "latency_p50": 29.66,
+          "latency_p95": 29.66,
+          "latency_max": 29.66,
+          "ttft_p50": 28.86,
+          "ttft_p95": 28.86,
+          "flujo": {
+            "rss_start_mb": 326.38671875,
+            "rss_peak_mb": 350.46875,
+            "cpu_peak_percent": 164.0
+          },
+          "original_jsonl_counts": {
+            "requests": 2,
+            "http_200": 2,
+            "correct": 2
+          }
+        },
+        {
+          "stage": "flujo-tools-1k-x64",
+          "target": "flujo",
+          "requests": 64,
+          "parallel": 64,
+          "context_tokens": 1000,
+          "ok": 64,
+          "correct": 64,
+          "wall_seconds": 148.2,
+          "latency_p50": 115.27,
+          "latency_p95": 144.7,
+          "latency_max": 148.11,
+          "ttft_p50": 114.5,
+          "ttft_p95": 144.35,
+          "flujo": {
+            "rss_start_mb": 346.0390625,
+            "rss_peak_mb": 358.3984375,
+            "cpu_peak_percent": 263.8
+          },
+          "original_jsonl_counts": {
+            "requests": 64,
+            "http_200": 64,
+            "correct": 64
+          }
+        }
+      ],
+      "local_original_artifact_sha256": {
+        "summary.json": "5f79fd472c795e9ec102a812db40f50d711d41781220ff63543ac09a52dfef87",
+        "requests.jsonl": "20819b4e2fe8b82bc879635e6dca12ca44a17b550290d92f5f7823a165682bfe"
+      }
+    }
+  ],
+  "source_file_sha256": {
+    "loadtest/run.py": "d1c151977a9e6c639001b36908636a25f88739e69cdfa6cfffe47442ee7294c0",
+    "loadtest/flujo_setup.py": "09af54720e414cc9305418fe0f6fe3ab8492e37132d150271d2fae93387312e3",
+    "loadtest/plan.json": "e09bbe61f29d495d3e7fda2138d29e80835a4d2afd928b2c3c44a7f25ea13d42"
+  },
+  "original_prose_summary_sha256": "44305ff579308228436da5ca094efd6748e6ccb280dce807630432e78e119eb1",
+  "scope": {
+    "actual_inference": true,
+    "synthetic_reference_retrieval_workload": true,
+    "fly_flujo_workers_tested_by_this_load_test": false,
+    "savia_100_agent_customer_completion_tested_by_this_load_test": false,
+    "new_load_or_provider_run_performed_for_this_report": false
+  },
+  "privacy": "No provider endpoints, credentials, reference-code replies or native conversation histories are copied."
+}

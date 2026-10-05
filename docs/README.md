@@ -9,6 +9,7 @@ This index keeps older evidence discoverable without treating it as today's resu
 
 | Document | Use |
 | --- | --- |
+| [Tested infrastructure and development process](submission/measurements/INFRASTRUCTURE_CAPACITY.md) | 300-request FLUJO proof, sandbox collaboration, public aggregate receipt and video budget scope |
 | [Technical system landscape](architecture/system-landscape.md) and [viewer](architecture/deployment-landscapes.html#system) | Savia lifecycle, ten-by-ten FLUJO swarm template, voice, data, human ticket and status delivery; current implementation mapped separately |
 | [Frontend runbook](../frontend/README.md) | Fictional invitation preview and private portal setup |
 | [Fictional RC startup](../deploy/rc/README.md) | Fresh local customer workflow; banking service in process and generic FLUJO language |

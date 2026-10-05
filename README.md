@@ -5,11 +5,21 @@ inquiries, asks a team for different perspectives, and keeps helpful answers and
 follow-up together. **Ask once. Explore options with Savia's team. Return for a
 clear next step.**
 
-The earlier recorded prototype shows two Savia AI agents considering an inquiry from
-different perspectives: evidence to compare and useful next steps. Their actual
-work status and suggestions are saved so the customer can return without losing
-the thread. Voice and keyboard conversation sit alongside the guarded banking
-workbench; bank consent and receipt verification remain separate.
+Savia combines integrated voice with durable inquiry tracking and a FLUJO swarm
+architecture: ten team Machines, each with one lead and nine specialists, using
+native messages, fleet delegation and a shared findings board. Work status and
+suggestions are saved so the customer can return without losing the thread.
+Bank consent and receipt verification remain separate.
+
+The infrastructure has completed a real **300-parallel-request FLUJO load test
+with 300/300 correct results**, a 400-request direct inference test, and
+collaboration runs with **18 Fly sandboxes live together**. The
+[infrastructure report and aggregate receipt](docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md)
+publish the workloads, latency, results and source provenance. The frozen customer
+film demonstrates two completed reviewers. A further paid fleet/load run for the
+submission video was skipped because of budget constraints; the earlier integrated
+attempt's disabled-provider failure remains documented separately. The recorded
+team size is not the infrastructure's capacity limit.
 
 For customers, the value is a clear explanation and useful status during the
 day. For the bank, the opportunity is fewer repeat contacts and a better-informed
@@ -121,7 +131,7 @@ replay backed by private caches; it is not a public submission artifact.
 | Directory | Purpose |
 | --- | --- |
 | `frontend/`, `frontend/src/avatar/` | Customer portal and integrated voice companion |
-| `savia_assistant/` | Durable informational inquiries, two-agent exploration and scoped MCP |
+| `savia_assistant/` | Durable inquiries, recovered FLUJO fleet connector, bootstrap reviewers and scoped MCP |
 | `banking_mcp/`, `dispute_workflow/` | Scoped banking tools and dispute workflow |
 | `pipeline/`, `ml/` | Data preparation and diagnostic intent-router evaluation |
 | `resources/`, `contracts/` | Prompts, synthetic policy and workflow contracts |

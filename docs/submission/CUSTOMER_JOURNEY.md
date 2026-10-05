@@ -14,6 +14,14 @@ and [pitch deck](https://github.com/mario-andreschak/factored-hackathon-2026-mcg
 ([PDF](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-pitch-deck.pdf)).
 These are the existing frozen rc.2 deliverables, reusing the rc.1 film and decks.
 
+The film's two reviewers are one recorded customer example. The underlying FLUJO
+infrastructure separately passed a **300-parallel-request test with 300/300 correct
+results** and real collaboration runs with 18 Fly sandboxes live together.
+Savia's architecture uses ten teams of ten conversations. See the
+[infrastructure evidence](measurements/INFRASTRUCTURE_CAPACITY.md) for capacity,
+collaboration and the deployed connector. A further paid fleet/load run for the
+submission video was skipped because of budget constraints.
+
 ## From a question to a useful answer
 
 1. A fictional customer opens a purchase and chooses **Revisar este cargo**.
@@ -53,7 +61,7 @@ team result. The UI preserves that failure honestly. This limitation does not
 block the owner's reduced submission scope. Earlier successful recordings are
 separate evidence, rather than a claim that new fleet execution succeeded.
 
-Physical microphone quality, large-fleet execution, human pickup, push/email
+Physical microphone quality, exact 100-agent customer completion, human pickup, push/email
 delivery and real bank resolution are unqualified. The saved recommendation speech
 condenses the advice; it does not read both suggestions verbatim. Independent
 human audio review remains pending as part of reviewing the submission.

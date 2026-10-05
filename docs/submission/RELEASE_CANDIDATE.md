@@ -9,6 +9,24 @@ Savia is a friendly Spanish and Portuguese voice assistant that follows customer
 inquiries, asks a team for different perspectives, and keeps useful answers and
 follow-up together when the customer returns.
 
+## Tested infrastructure behind the customer story
+
+The foundation is already load-tested: **300 parallel requests through FLUJO,
+300/300 correct results**, plus 400 direct inference requests (400 HTTP successes,
+399 correct), real filesystem tools and collaboration runs with 18 Fly sandboxes
+live together. See the [infrastructure report](measurements/INFRASTRUCTURE_CAPACITY.md)
+and [public aggregate receipt](measurements/infrastructure-capacity.json).
+
+Savia uses the recovered ten-Machine architecture, one lead plus nine specialists
+per team and root supervision separate. Its customer connector is implemented
+and deployed. The two reviewers in the frozen film describe that recording,
+not the tested infrastructure's capacity ceiling.
+
+A further paid fleet/load run for the submission video was skipped because of
+budget constraints. Existing successful tests retain their measured scope. The
+earlier October 5 integrated attempt's disabled-provider failure is preserved
+below; it was started, whereas the further run was skipped.
+
 ## Open the submission
 
 Try [Savia](https://savia-rc-2026.fly.dev) with **SAVIA-2026** at the entry gate
@@ -52,9 +70,10 @@ recordings keep their original scope.
 
 Follow-up and saved context are part of the product. Earlier recorded checks
 support their stated behavior; no new extended follow-up run is required for this
-handoff. Large-fleet execution, real human pickup and customer push/email delivery
-remain unqualified. No refund or real bank resolution is claimed. Simulated
-intake requires explicit consent and a separately verified receipt; informational
+handoff. Exact ten-Machine/100-conversation customer completion, real human pickup
+and customer push/email delivery remain unqualified. Existing infrastructure load
+and sandbox tests are documented above. No refund or real bank resolution is
+claimed. Simulated intake requires explicit consent and a separately verified receipt; informational
 closure means that the customer found an answer helpful.
 
 ## Source and evidence provenance
