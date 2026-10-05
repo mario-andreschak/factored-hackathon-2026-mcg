@@ -1,8 +1,9 @@
 # Savia release candidate
 
 Status: rc.1 submission artifacts are frozen; the deployed Listen successor is qualified.
-The recovered swarm connector is in development. Public visibility is verified;
-physical legacy-folder cleanup and full ten-by-ten swarm qualification remain
+The recovered swarm connector's [source and integration pins](assistant/FLEET_CONNECTOR.md)
+are merged; runtime qualification remains pending. Public visibility is verified.
+Physical legacy-folder cleanup and full ten-by-ten swarm qualification remain
 pending. Updated 2026-10-05.
 
 Release target: [v0.1.0-rc.1](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.1).
