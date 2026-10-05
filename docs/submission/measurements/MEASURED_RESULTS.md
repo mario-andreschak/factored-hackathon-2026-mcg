@@ -1,5 +1,29 @@
 # Measured release evidence
 
+## October 5: new deployed fleet attempt is incomplete
+
+The single authorized customer capture returned correct bank facts and complete foreground speech, but **failed the new fleet customer acceptance**. Its original root run failed on the first model call with HTTP404 because the Modal workspace was disabled. The case ends in `needs_attention`, with no reviewed suggestions or next-check time. There are zero delegated team leads, zero local staff and zero completed root-review children. Ten ready/configured machines do not establish 100 native executions. The original goal remains active and its root worker ready; the failed run is not a terminal goal or a cleanup receipt. No case was resubmitted.
+
+[Actual receipt](fleet-customer-attempt/receipt.json), [foreground audio](fleet-customer-attempt/foreground.wav) and [integrated voice screenshot](fleet-customer-attempt/foreground.png) preserve this partial result. Deployed app source is `a5e48f09`, image `35903f9a…6dc93`; native source is `67d21ad3`, controller `290dd6a7`. Full pins and served UI hashes are in the receipt. Recorder merge `624941ff` and newer generic source merge `0be972ac` are separate from these deployed pins. The actual failed native conversation contains its execution snapshot; that proves snapshot presence, not reviewed completion.
+
+| Customer outcome | Frozen Listen capture | New fleet capture, n=1 |
+| --- | --- | --- |
+| Useful information | Saved bank facts; spoken merchant/receipt advice, with folio/caveat omissions documented | Fresh HTTP200 reply correctly states Nébula Market, 2026-10-02, 4280.75 MXN and Approved; no reviewed team guidance |
+| Native speech and full ACK | 8.2 seconds; one exact full ACK, matching its one-turn scope | 8.85 seconds of reassurance; one full HTTP200 ACK for 212,400 samples at 24 kHz; planned second guidance turn absent |
+| Native request → speaking / full ACK | 0.988 / 9.577 seconds, saved-result mode | 4.149 / 12.952 seconds, microphone mode; different input/output boundary |
+| Foreground and background | No fresh foreground conversation or team work | Root attempt lasts 5.981 seconds and fails before audible speech. Request interval overlaps nominally by 1.321 seconds; running work during audible speech unqualified |
+| Context after reload | Exact bank reply and completed suggestions retained; no duplicate speech | Reload not reached; three original inquiries remain visible in final normal poll |
+| Follow-up | Pre-existing awaiting-customer state retained; no new follow-up during recording | No completion or due time; scheduled/executed 30-minute follow-up unqualified, observer not run |
+| Full 10×10 execution | Outside scope | 0 of 100 qualified; one failed root excluded from target, no native tool calls or board entries |
+
+The bank-facts question and four displayed facts match the older saved reply. The inquiry questions differ, and saved-result speech differs from microphone reassurance. These are descriptive outcomes, **not a causal speedup comparison**. Historical n=3 language results and post-fix n=1 remain at their original scope. Total provider completions/cost are not independently counted by browser request counts.
+
+Actual caption: “Despacio, con calma, aquí estoy. Todo va a ir bien, poquito a poco.” The existing fictional microphone fixture was reused; recognized text contains “Chankilo” and “Whisper a Hondo”. Four browser partial-ASR requests are observed. Physical microphone input is unqualified. No bank action, resolution or history reset was requested.
+
+Raw recorder `completed:false` / exit 1 follows the required-result wait expiring. Total time including browser/video finalization was 324.517 seconds against a requested 300-second observation budget. Original UUID/case/goal/run/native joins, the logical request digest and the distinct facts/binding digest were checked offline in UTF-8. Cookies, original IDs, registry/SQL/debug exports, NDJSON and stacks remain private. Independent customer review agrees with the failure scope; no extra provider/control request was made. Cross-process timings use UTC wall clocks without independent calibration. Frozen films, decks, tags and historical assets remain unchanged.
+
+## Earlier frozen evidence
+
 The release coordinator accepted the actual required product steps in the
 fixed-source same-session continuation at `9d77a75`, image `484fe8ed…`: two
 complete native WAVs, two exact once-only full-playback HTTP 200 receipts, queued
