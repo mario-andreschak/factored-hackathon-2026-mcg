@@ -1,0 +1,81 @@
+{
+  "schema": "savia-submission-review-aggregate/v1",
+  "scope": "Five independently forked repository-only reviews; no target score supplied; original finalized scores preserved. Reviews1-3 at7d5efb1,4-5 at1e0bb092. Not official judging or a whole generic FLUJO source audit.",
+  "savia_rubric": {
+    "technical_judgment": 20,
+    "ai_engineering": 20,
+    "data_engineering": 20,
+    "ml_evaluation": 20,
+    "data_analytics": 20
+  },
+  "flujo_rubric": {
+    "architecture_extensibility": 25,
+    "execution_integration": 25,
+    "safety_recovery": 20,
+    "reproducible_engineering": 20,
+    "developer_usability": 10
+  },
+  "target": {
+    "subject": "FLUJO",
+    "minimum": 90,
+    "required_reviews": 3,
+    "total_reviews": 5
+  },
+  "reviews": [
+    {
+      "reviewer": "fresh-review-1",
+      "source_commit": "7d5efb1def1e6f985a47200e85a4a17592f84e88",
+      "savia": 87,
+      "flujo": 84,
+      "report": "fresh-repo-reviews/fresh-review-1.json",
+      "report_sha256": "64941119929a96988eae4e794ff4da7149270781fd654b3f4a92cce1c285cb69",
+      "original_report_sha256": "64941119929a96988eae4e794ff4da7149270781fd654b3f4a92cce1c285cb69",
+      "publication_transform": "none"
+    },
+    {
+      "reviewer": "fresh-review-2",
+      "source_commit": "7d5efb1def1e6f985a47200e85a4a17592f84e88",
+      "savia": 84,
+      "flujo": 82,
+      "report": "fresh-repo-reviews/fresh-review-2.json",
+      "report_sha256": "22aaaee72da22377e34d95133bd6d9ad09a36576d6decdab9ccf53da46ba5d0c",
+      "original_report_sha256": "22aaaee72da22377e34d95133bd6d9ad09a36576d6decdab9ccf53da46ba5d0c",
+      "publication_transform": "none"
+    },
+    {
+      "reviewer": "fresh-review-3",
+      "source_commit": "7d5efb1def1e6f985a47200e85a4a17592f84e88",
+      "savia": 87,
+      "flujo": 85,
+      "report": "fresh-repo-reviews/fresh-review-3.json",
+      "report_sha256": "07149a47a297ebb3f67f0c2e8801cfa9ddcc76302b42e4b88b0688a1bdbc255b",
+      "original_report_sha256": "07149a47a297ebb3f67f0c2e8801cfa9ddcc76302b42e4b88b0688a1bdbc255b",
+      "publication_transform": "none"
+    },
+    {
+      "reviewer": "fresh-review-4",
+      "source_commit": "1e0bb0924ea4d9ac21300c9e04f242d4fe475aee",
+      "savia": 87,
+      "flujo": 82,
+      "report": "fresh-repo-reviews/fresh-review-4.json",
+      "report_sha256": "a14280c47700a65af450f5fddd10c77cef1a38ede8387f72592adcbe97c7ea56",
+      "original_report_sha256": "5e04cce3378ec04a7afb61977961311679da339380efce54a39cdad55836397a",
+      "publication_transform": "Git CRLF-to-LF normalization only"
+    },
+    {
+      "reviewer": "fresh-review-5",
+      "source_commit": "1e0bb0924ea4d9ac21300c9e04f242d4fe475aee",
+      "savia": 88,
+      "flujo": 88,
+      "report": "fresh-repo-reviews/fresh-review-5.json",
+      "report_sha256": "36151dd00ce951865285877beac8344cf2e3a49a577648dbfa19dcaaa0d29dc2",
+      "original_report_sha256": "36151dd00ce951865285877beac8344cf2e3a49a577648dbfa19dcaaa0d29dc2",
+      "publication_transform": "none"
+    }
+  ],
+  "flujo_at_least_90": 0,
+  "savia_at_least_90": 0,
+  "target_met": false,
+  "qualification": "All five discovered substantive successes. None found a blocker to submission of the deterministic fictional prototype in tested scope. Finite response-grounding limits and unfinished larger fleet/human evaluation remain separately qualified.",
+  "publication_note": "Original finalized reviewer scores and content preserved. The manifest distinguishes original raw-file hashes from committed public hashes; one report has Git CRLF-to-LF normalization only. Review rubrics are not official organizer numeric ratings. Later improvements and assessments are separate."
+}

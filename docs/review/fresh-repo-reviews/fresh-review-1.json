@@ -1,0 +1,205 @@
+{
+  "schema": "independent-fresh-submission-review/v1",
+  "reviewer": "fresh-review-1",
+  "requested_commit": "7d5efb1def1e6f985a47200e85a4a17592f84e88",
+  "scope": {
+    "repository_only": true,
+    "started_at": "README.md",
+    "other_repositories_or_reviewers_used": false,
+    "web_or_live_demo_used": false,
+    "provider_calls_made": 0,
+    "core": "The existing R0–R18 transaction-dispute engine; voice/avatar and fleet are separately scored extensions.",
+    "grading_assumption": "Hackathon prototype with fictional banking. Real bank execution is not required or penalized.",
+    "source_note": "Shared HEAD advanced to 420cf9a while reviewing. Landing-link checks used requested-commit Git blobs. Forty of 41 inspected/executed source inputs match the requested commit byte-for-byte; router_train.csv differs only in line endings and parses identically. Later documentation and added deck builders are excluded.",
+    "limitations": "Offline selected checks and retained public receipts; no fresh deployment/provider acceptance, private organizer-data recomputation, human audio adjudication, complete CI run, or productwide reliability inference."
+  },
+  "savia_score": {
+    "total": 87,
+    "maximum": 100,
+    "dimensions": [
+      {
+        "name": "technical judgment",
+        "score": 19,
+        "maximum": 20,
+        "reason": "Excellent separation of language interpretation from bank authority, ordered rule precedence, owned rereads, explicit host consent and terminal uncertain-write recovery. Representative core/action tests pass. Remaining joined current-runtime and semantic guarantees are explicitly limited."
+      },
+      {
+        "name": "AI engineering",
+        "score": 18,
+        "maximum": 20,
+        "reason": "Real parallel interpretation stages, scoped multi-query continuation, closed stage schemas, bounded correction/fallback, actual ES/PT provider evidence, durable inquiry and integrated voice. The two reviewers choose bounded suggestion enums; open-ended investigation benefit and physical microphone quality are not established."
+      },
+      {
+        "name": "data engineering",
+        "score": 19,
+        "maximum": 20,
+        "reason": "Strong six-table contracts, complete row accounting, quarantine, structural deduplication, source lineage, owner-valid serving, writer lock and atomic immutable publication. Public replay verifies late correction, isolation and preservation of the prior snapshot. Private full-data aggregates cannot be independently recomputed here."
+      },
+      {
+        "name": "ML/evaluation",
+        "score": 14,
+        "maximum": 20,
+        "reason": "Fixed bilingual diagnostic, leakage checks, train-only parameter selection, safety/abstention tradeoffs and paired uncertainty are reproducible. Luna has complete public workload/output records and ties an independent deterministic oracle. Human labels are pending, the diagnostic has already been inspected, and fixture success does not demonstrate broader learned superiority."
+      },
+      {
+        "name": "data analytics",
+        "score": 17,
+        "maximum": 20,
+        "reason": "Full-table findings concretely change the product and evaluation design. Metadata-only operational projections, error/latency metrics, honest sample denominators and privacy invariants are useful. Host action completion is not joined to workflow outcomes; containment is explicitly a non-handoff proxy, and cost/benefit/customer-quality evidence remains sparse."
+      }
+    ]
+  },
+  "flujo_foundation_score": {
+    "total": 84,
+    "maximum": 100,
+    "scope": "FLUJO engineering foundation as evidenced in this repository, not an audit of its separate core source or all deployments. Application banking safeguards are not attributed to FLUJO alone.",
+    "dimensions": [
+      {
+        "name": "architecture/extensibility",
+        "score": 22,
+        "maximum": 25,
+        "reason": "Existing chat/flow/MCP/execution-extension interfaces support an application-owned 21-stage orchestrator and isolated native adapter without putting banking on generic main. Immutable graph/model/template binding and original-run correlation are concrete. Core interface implementation is outside the allowed repository."
+      },
+      {
+        "name": "execution/integration",
+        "score": 20,
+        "maximum": 25,
+        "reason": "Historical installed native stages, real provider/tool observations and public 300/300 neutral-reference load receipt support substantial working integration. Sandbox collaboration evidence retains its separate 18-live-worker scope. Some raw infrastructure evidence is private, high-load queue latency is large, and the latest customer fleet has no completed delegation."
+      },
+      {
+        "name": "safety/recovery",
+        "score": 17,
+        "maximum": 20,
+        "reason": "Inspected isolated adapter persists consumed admissions, binds owner/session/run/graph and checks revocation around awaits. Historical native receipts distinguish synthetic capability probes from actual-provider boundary tests. Durable original-run holds prevent silent replay. This establishes bounded adapter behavior, not generic productwide isolation or recovery reliability."
+      },
+      {
+        "name": "reproducible engineering",
+        "score": 17,
+        "maximum": 20,
+        "reason": "Source/image/served-byte pins, failure-preserving receipts, immutable compiler references and executable public checks are unusually good. Reviewer independently replayed selected checks. Exact current-head complete CI and infrastructure raw histories are not publicly reproducible from this repository alone."
+      },
+      {
+        "name": "developer usability",
+        "score": 8,
+        "maximum": 10,
+        "reason": "Documented local synthetic preview, explicit provider profiles, setup commands and clear domain boundary help developers. Numerous historical pins, multiple runtime modes and private runbooks make the initial path harder than necessary."
+      }
+    ]
+  },
+  "first_five_findings_in_discovery_order": [
+    {
+      "order": 1,
+      "finding": "README gives a persuasive customer entry, film, pitch and dimension-to-evidence map, but the R0–R18 core engine is less prominent than voice and team extensions.",
+      "evidence": ["README.md", "contracts/policy_engine.md", "docs/DISPUTE_IMPLEMENTATION.md"]
+    },
+    {
+      "order": 2,
+      "finding": "The recorded two-reviewer story is supported by saved completed workers, eight actual state events and retained suggestions. Source reveals bounded model enum choices with trusted rendered facts, so the accomplishment is real but modest in agent autonomy.",
+      "evidence": ["docs/submission/measurements/team-story-summary.json", "docs/submission/measurements/team-story-final/capture.json", "savia_assistant/service.py:311"]
+    },
+    {
+      "order": 3,
+      "finding": "Completed voice playback has specific sample-level evidence. Recorder cleanup failure is distinct from completed product steps; saved-recommendation speech is useful but condensed and omits a canonical caveat.",
+      "evidence": ["docs/submission/measurements/intended-savia-native/receipt.json", "docs/submission/measurements/saved-recommendations-native/receipt.json", ".tmp/fresh-review-1-integrity.json"]
+    },
+    {
+      "order": 4,
+      "finding": "Capacity and collaboration are carefully separated from customer acceptance. The new fleet root fails at its first inference call, while historical 300-request infrastructure success and 18 live sandboxes retain their own scope.",
+      "evidence": ["docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md", "docs/submission/measurements/infrastructure-capacity.json", "docs/submission/measurements/fleet-customer-attempt/receipt.json:130"]
+    },
+    {
+      "order": 5,
+      "finding": "Data analysis changes the implementation: foreign-owned complaint links are excluded, and only 42 distinct transcript texts prevent misleading language evaluation. The pipeline and new diagnostic follow these decisions.",
+      "evidence": ["docs/DATA_REVIEW_2026-09-26.md", "pipeline/gold.py", "demo/evaluate_router.py"]
+    }
+  ],
+  "independent_offline_verification": {
+    "public_replay": {"tests_passed": 67, "tests_total": 67, "pipeline_invariants": 7, "analytics_invariants": 4, "artifact": ".tmp/fresh-review-1-replay/replay-receipt.json"},
+    "focused_inquiry_action_fleet_tests": {"passed": 58, "artifact": ".tmp/fresh-review-1-focused-tests.xml"},
+    "core_policy_response_multi_query_acceptance_tests": {"passed": 703, "artifact": ".tmp/fresh-review-1-core-tests.xml"},
+    "total_selected_tests": 828,
+    "luna_verifier": {"unique_records": 100, "exact_correct": 100, "bounded_safe": 100, "independent_baseline_correct": 100, "peak_turn_overlap": 100, "artifact": ".tmp/fresh-review-1-luna-audit.json"},
+    "local_landing_links": {"checked": 110, "missing_at_requested_commit": 0},
+    "native_wavs": {"checked": 3, "matching_hash_frame_count_rate": 3},
+    "environment": "Python 3.13.1; pinned requirements-review.txt installed into .tmp/fresh-review-1-deps after initial missing scikit-learn. Successful replay has no provider calls.",
+    "complete_ci_or_live_acceptance_claimed": false
+  },
+  "success_evidence_found": [
+    "Core R0–R18 decisions and scoped state continuity are executable; chat sí/sim never authorizes the write, and guards precede confirmation.",
+    "Banking Actions commits an attempted marker before uncertain intake, rechecks risk under the writer lock and independently reads the durable receipt; restart/cancellation/logout interleaving checks pass.",
+    "Historical real-model receipt at 6bee817 records ES/PT CONFIRM_ACTION and human/emergency HANDOFF with actual responses; selected HTTP joined qualification is 4/4 at its historical source, with native_execution_verified explicitly false in that packet.",
+    "Separate installed native receipt records 14 synthetic capability probes, 14 actual-provider boundary cases, four revocation probes and five no-provider fence probes. This is historical isolated-worker evidence.",
+    "Recorded selected facts, two completed reviewers, helpful informational closure, archived exact reply and reload persistence are supported by capture/state artifacts and visible saved-result image.",
+    "Two complete integrated WAVs plus saved-recommendation WAV match their receipt SHA-256, sample counts and 24 kHz headers; full-playback ACKs are recorded. Audio quality itself was not human-adjudicated in this review.",
+    "One real-clock receipt follow-up occurred after 1,800 seconds and retained one visible update; not multi-day reliability.",
+    "Public fixture replay validates row reconciliation, late Pending-to-Reversed correction, customer isolation and prior immutable snapshot preservation.",
+    "Luna output records independently verify 100/100 oracle and bounded-safe results with 100 overlapping client turns; no simultaneous GPU or collaborative fleet inference is made."
+  ],
+  "material_defects_and_missing_links": [
+    {
+      "scope": "presentation",
+      "finding": "The core rule engine and its successful intake/handoff qualification take substantial discovery work behind the extension-focused landing story.",
+      "impact": "Judges may mistake the modest two-enum-worker demo for the complete submission."
+    },
+    {
+      "scope": "voice extension",
+      "finding": "Saved speech omits conditional folio guidance and the explicit bank-not-resolved caveat in the canonical text.",
+      "evidence": "saved-recommendations-native/receipt.json agent_caption_review.all_canonical_suggestions_spoken=false and limitation; provider_caption omits both.",
+      "impact": "Useful condensed speech is demonstrated, but faithful full recommendation narration is not."
+    },
+    {
+      "scope": "analytics measurement link",
+      "finding": "Workflow analytics cannot observe later host confirmation/handoff completion. containment_rate is a no-handoff proxy, explicitly labelled sin handoff by the renderer.",
+      "evidence": "analytics/README.md limits; analytics/report.py:59. Synthetic check yields containment_rate=1.0 with one action_unverified and one abandoned_pending workflow outcome.",
+      "impact": "Arithmetic is correct for that proxy; it must not be interpreted as verified resolution or customer success."
+    },
+    {
+      "scope": "evaluation",
+      "finding": "Independent human adjudication remains pending for the frozen router and audio/customer semantic review. The already-inspected router workload cannot become a fresh blind set.",
+      "impact": "No human-grounded general customer-quality estimate or learned-component superiority beyond the diagnostic."
+    },
+    {
+      "scope": "provenance/access",
+      "finding": "No missing local landing link among 110 checked. External demo/movie/release/vendor links were deliberately not accessed; raw infrastructure histories and full private data remain unavailable.",
+      "impact": "Their availability and underlying infrastructure outputs cannot be independently re-audited here."
+    }
+  ],
+  "exact_blocker_evidence": [
+    {
+      "scope": "unfinished fleet extension only",
+      "file": "docs/submission/measurements/fleet-customer-attempt/receipt.json",
+      "fields": {"complete_customer_journey_accepted": false, "inquiry.state": "needs_attention", "fleet_execution.actual_delegated_team_leads": 0, "fleet_execution.native_completed_population_for_target100": 0, "fleet_execution.first_model_failure": "HTTP404: Modal workspace disabled"},
+      "blocked_claim": "Completed 10×10 customer investigation, reviewed suggestions and its downstream follow-up.",
+      "core_submission_blocker": false
+    },
+    {
+      "scope": "human-grounded ML quality claim",
+      "file": "docs/ml/router_holdout_provenance.md",
+      "evidence": "Human review: Not human-reviewed or adjudicated yet; independent human adjudication is required before final submission.",
+      "blocked_claim": "Treating the 120 AI-proposed labels as independently adjudicated customer ground truth.",
+      "core_submission_blocker": false
+    },
+    {
+      "scope": "current native-runtime acceptance",
+      "file": "docs/DISPUTE_IMPLEMENTATION.md",
+      "evidence": "Renamed source graph remains installed=false, actionsEnabled=false; historical installed/provider receipts retain their original pins and do not qualify renamed/later images.",
+      "blocked_claim": "Relabelling historical native success as whole-current-head native deployment acceptance.",
+      "core_submission_blocker": false
+    }
+  ],
+  "comparison_quality": {
+    "router": "Good reproducible component comparison: keyword 70/120, raw TF-IDF 94/120, abstention 65/120; human misses 13/30, 3/30, 1/30 and unnecessary handoffs 6, 9, 52. Paired gain for raw classifier is +20 points, 95% interval +10 to +30 points. Synthetic proposed labels and prior inspection constrain the conclusion.",
+    "luna": "Strong workload/output integrity and mechanically derived oracle, but 100/100 equals the independent baseline. Establishes bounded provider compliance and request overlap, not added customer value or 100 collaborative agents.",
+    "customer": "Useful descriptive n=3 original comparison, 2/3 agent-screened useful answers; post-fix Portuguese n=1 uses trusted selected_fallback and belongs to a different revision. No causal latency, quality or ROI conclusion.",
+    "elevenlabs": "Reasonable product-positioning reference with explicit vendor-reported and unmatched boundaries. No matched voice/latency/cost superiority evidence; external vendor claims were not checked here."
+  },
+  "useful_improvements": [
+    "Foreground the existing engine with one compact R0–R18 rule-to-source/test/receipt path; keep customer media as the accessible entry.",
+    "Add separately versioned human-adjudicated ES/PT labels and an untouched future evaluation set. Compare complete useful task outcomes and failure costs against a same-facts deterministic baseline.",
+    "Join host action and inquiry outcomes into metadata analytics; report verified informational help, verified intake, uncertainty, abandonment and actual human acceptance separately from non-handoff share.",
+    "Preserve mandatory caveats in spoken summaries and measure caption/audio fidelity, especially in Portuguese and noisy physical microphone conditions.",
+    "For future fleet work, check provider readiness before accepting investigation, retain original-run identity, and qualify the exact joined source/image. This is extension work, not a prerequisite for the recorded sandbox core.",
+    "Offer a shorter reproducible offline judge command and a clear map of local, direct-provider and native execution profiles."
+  ],
+  "verdict": "Strong, well-engineered hackathon prototype whose deterministic dispute core is more substantial than its front-page agent demo. Completed customer recordings, provider concurrency, infrastructure load and unfinished extensions remain distinct. No inspected evidence justifies productwide production reliability or measured business ROI."
+}

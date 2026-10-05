@@ -1,0 +1,212 @@
+{
+  "reviewer": "fresh-review-4",
+  "commit": "1e0bb0924ea4d9ac21300c9e04f242d4fe475aee",
+  "method": "Independent repository-only review beginning at README.md; no other repositories, web, conversations, other fresh reviews, installs, provider calls, or product/doc edits. Existing dependencies supported focused checks. Historical qualification, recorded customer success, provider concurrency, infrastructure and larger extensions were scored separately.",
+  "savia": {
+    "total": 87,
+    "maximum": 100,
+    "dimensions": [
+      {
+        "name": "technical judgment",
+        "score": 18,
+        "maximum": 20,
+        "justification": "Complete ordered R0-R18 motor, owned reads, missing-evidence escalation, explicit host consent, verified receipt/idempotency/revocation and recovery are implemented and exercised. Fictional policy is appropriate to the prototype. A reproduced merchant-paraphrase grounding gap prevents full credit."
+      },
+      {
+        "name": "AI engineering",
+        "score": 17,
+        "maximum": 20,
+        "justification": "Integrated bilingual voice, exact playback acknowledgments, durable inquiry and two actual model reviewers have pinned successful receipts. Reviewer outputs are bounded enum choices rendered with trusted facts, a sound safety design but less open-ended collaboration than the larger ambition. The ten-by-ten customer fleet is not accepted; its initial provider root failed separately."
+      },
+      {
+        "name": "data engineering",
+        "score": 19,
+        "maximum": 20,
+        "justification": "Substantial six-family pipeline with row accounting, quarantine, lineage, customer-sharded serving, ownership exclusion, immutable publication and guarded writer recovery. Representative pipeline failure/rebuild/isolation checks passed. Full private dataset receipts cannot be independently reconstructed from public source alone."
+      },
+      {
+        "name": "ML/evaluation",
+        "score": 15,
+        "maximum": 20,
+        "justification": "Honest leakage diagnosis, frozen ES/PT diagnostic with keyword/TF-IDF/abstention comparisons and paired uncertainty, and published 100-case provider records plus an independent deterministic oracle. AI-authored labels still await independent human adjudication; provider task uses ten repeated phrasings and baseline matches 100/100, so no demonstrated LLM decision benefit or real-world quality estimate."
+      },
+      {
+        "name": "data analytics",
+        "score": 18,
+        "maximum": 20,
+        "justification": "Operating-decisions analysis connects source defects, latency/cache overhead, safety misses and handoff burden to concrete product choices. Calculations replayed without providers and distinguish workload denominators. Business impact, reliable cost and human-rated customer usefulness remain unmeasured; n=3 customer evidence is openly limited."
+      }
+    ]
+  },
+  "flujo": {
+    "total": 82,
+    "maximum": 100,
+    "dimensions": [
+      {
+        "name": "architecture/extensibility",
+        "score": 23,
+        "maximum": 25,
+        "justification": "Clear reusable chat/flow/tool/MCP/execution boundary, application-owned domain authority, pinned generic graph and consumer-only fleet adapter. Independent of a banking implementation. Review is limited to the foundation evidence and consumer integration committed here rather than full FLUJO source."
+      },
+      {
+        "name": "execution/integration",
+        "score": 20,
+        "maximum": 25,
+        "justification": "Native generic MCP smoke and real 300/300 reference workload, tools, 18 live sandboxes and completed collaboration give concrete execution evidence beyond slides. Infrastructure scope is distinct from current two-reviewer direct-provider Savia, and the larger current customer fleet failed before delegation."
+      },
+      {
+        "name": "safety/recovery",
+        "score": 17,
+        "maximum": 20,
+        "justification": "Immutable original-run bindings, read-only observation, source/snapshot checking, independently verified findings and held uncertainty are substantial consumer-side safeguards. Consent/action recovery is robust at application boundary. These do not prove arbitrary language grounding or multi-day fleet reliability."
+      },
+      {
+        "name": "reproducible engineering",
+        "score": 15,
+        "maximum": 20,
+        "justification": "Exact sources/images/artifact hashes and retained successes/failures enable careful audit; local core and baseline replay work. Some originals/run histories and native infrastructure are private or depend on external pinned checkouts/provider setup, limiting independent end-to-end foundation reproduction from this repo."
+      },
+      {
+        "name": "developer usability",
+        "score": 7,
+        "maximum": 10,
+        "justification": "README, submission portal, engine guide and evidence map offer clear entry paths; contracts and scope boundaries are explicit. Many historical revision/configuration documents and isolated native setup still impose substantial integration overhead."
+      }
+    ]
+  },
+  "first_five_findings_discovery_order": [
+    {
+      "order": 1,
+      "finding": "README offers an immediate submission route, demo code, film, pitch, and a concrete unfamiliar-charge story; locally linked portal assets exist."
+    },
+    {
+      "order": 2,
+      "finding": "The core is presented as complete R0-R18 deterministic dispute handling, with voice/reviewers as extensions. Policy and acceptance source corroborate the stated ordering and host-only action authority."
+    },
+    {
+      "order": 3,
+      "finding": "The successful customer example is explicitly two actual reviewers, while 100 conversations and 300-client infrastructure retain different scopes; the later disabled-workspace failure is preserved."
+    },
+    {
+      "order": 4,
+      "finding": "Pipeline ownership and transcript-template findings change product design rather than serve as decorative metrics; owned transactions replace unsafe historical complaint-product links."
+    },
+    {
+      "order": 5,
+      "finding": "The 100-request Luna fixture test publishes original prompts/outputs and acknowledges a deterministic baseline also achieves 100/100; it is provider concurrency evidence, not collaborative 100-agent product acceptance."
+    }
+  ],
+  "checks": [
+    {
+      "command": "python -m pytest -q tests/test_dispute_response.py tests/test_dispute_policy.py tests/test_dispute_acceptance.py",
+      "result": "699 passed in 9.49 s"
+    },
+    {
+      "command": "python -m pytest -q tests/test_pipeline.py -k 'failed_build_keeps_last_good_snapshot or reads_during_rebuild_see_a_complete_snapshot or orphan_customer_is_never_served'",
+      "result": "3 passed, 45 deselected in 6.89 s"
+    },
+    {
+      "command": "python scripts/verify_luna_benchmark.py docs/submission/measurements/luna-100/run-100",
+      "result": "Read-only replay: 100 unique records, 100 exact-correct, 100 bounded-safe, 100 oracle/baseline matches, peak 100 overlapping app-server turns; historical audit remains unchanged."
+    },
+    {
+      "command": "runpy scripts/analyze_operating_evidence.py; analyze()",
+      "result": "Calculation assertions passed; 100 requests/10 phrasings, p50 37.400468 s/p95 50.693110 s, baseline equality, paired router calculations and token totals recomputed. A later optional capture read failed because default Windows encoding was cp1252; it does not invalidate analyze()."
+    },
+    {
+      "command": "HTML parser local href/src existence and CSS/source inspection",
+      "result": "No missing local index.html targets. Skip link, landmarks, alt text, captions track, visible focus, responsive CSS and reduced-motion support present. Public HTTP/browser accessibility was not independently tested."
+    }
+  ],
+  "successful_evidence": [
+    {
+      "scope": "current frozen source",
+      "paths": [
+        "dispute_workflow/policy.py",
+        "dispute_workflow/response.py",
+        "dispute_workflow/action_host.py",
+        "tests/test_dispute_acceptance.py",
+        "pipeline/writer.py",
+        "pipeline/common.py",
+        "tests/test_pipeline.py",
+        "savia_assistant/service.py",
+        "savia_assistant/fleet.py"
+      ],
+      "assessment": "Core authority, recovery, publication and bounded reviewer mechanisms are substantial executable implementation."
+    },
+    {
+      "scope": "historical runtime/source qualification",
+      "path": "docs/qualification/dispute-naming-source-2026-10-01.json",
+      "assessment": "1,725 tests and 428 subtests are a pinned historical combined-source result, not a fresh current whole-release pass."
+    },
+    {
+      "scope": "recorded customer success",
+      "paths": [
+        "docs/submission/measurements/team-story-summary.json",
+        "docs/submission/measurements/team-story-final/capture.json",
+        "docs/submission/measurements/saved-recommendations-native/receipt.json"
+      ],
+      "assessment": "Two actual OpenRouter model workers completed; useful rendered suggestions, explicit helpful closure, saved return context and measured speech acknowledgments exist. Rendering is trusted structured copy."
+    },
+    {
+      "scope": "provider concurrency",
+      "paths": [
+        "docs/submission/measurements/luna-100/run-100/requests.jsonl",
+        "scripts/verify_luna_benchmark.py"
+      ],
+      "assessment": "100 actual completed fixture records replay successfully; this direct-provider experiment is separate from FLUJO and Savia UI."
+    },
+    {
+      "scope": "infrastructure",
+      "paths": [
+        "docs/submission/measurements/infrastructure-capacity.json",
+        "docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md"
+      ],
+      "assessment": "Retained 300/300 FLUJO reference success and 18 simultaneously live sandboxes support foundation capacity in those workloads, with queueing and failed/timed approaches disclosed."
+    }
+  ],
+  "material_defects_missing_links": [
+    {
+      "severity": "material bounded-grounding defect",
+      "path": "dispute_workflow/response.py:501",
+      "detail": "validate_response accepts El cargo proviene de Comercio Inventado. and La compra se realizo en Comercio Inventado. using test inputs whose only trusted merchant is Comercio de prueba. Direct El comercio es Comercio Inventado. correctly yields merchant_unverified. Empty validation errors mean the free-form response repair path would not detect these invented merchant claims. This is a factual output gap, not an action-authorization bypass."
+    },
+    {
+      "severity": "larger-extension acceptance blocker",
+      "path": "docs/submission/measurements/fleet-customer-attempt/receipt.json",
+      "detail": "complete_customer_journey_accepted is false; provider HTTP 404 disabled workspace stops the initial root before delegation. It blocks the ten-team customer collaboration claim, not the completed deterministic core or earlier two-reviewer story."
+    },
+    {
+      "severity": "evaluation limitation",
+      "path": "docs/ml/router_holdout_provenance.md",
+      "detail": "Independent human adjudication remains pending and the known diagnostic cannot establish production performance. The simple Luna workload does not show an LLM improves deterministic decisions."
+    },
+    {
+      "severity": "submission presentation limitation",
+      "path": "web/submission/index.html:19",
+      "detail": "Final cut is marked pending although the valid frozen 140.611-second film is available. Local portal paths are intact; deployed HTTP availability and browser keyboard behavior were outside this repository-only review."
+    },
+    {
+      "severity": "reproduction limit",
+      "path": "docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md",
+      "detail": "Some original upstream infrastructure run histories remain private and FLUJO source is external to the permitted review. Foundation reproducibility is consequently weaker than local application/pipeline reproduction."
+    }
+  ],
+  "comparison_quality": {
+    "rating": "Careful product positioning; not a matched efficacy comparison",
+    "path": "docs/submission/ELEVENLABS_COMPARISON.md",
+    "detail": "The document separates vendor-reported voice latency from full customer latency, refuses unsupported superiority claims, and compares persistent inquiry/authority/inspectability requirements. Since browsing was prohibited, the vendor statements were not independently verified. A future comparison needs matched scenarios, human speech ratings, full latency, cost and completion criteria."
+  },
+  "useful_improvements": [
+    "Render merchant/status/factual statements through typed trusted slots, or expand clause parsing with adversarial ES/PT paraphrases. Add the two reproduced invented-merchant examples as regression checks.",
+    "Have independent bilingual humans adjudicate fresh unseen customer utterances and useful replies; predeclare safety misses, escalation burden and coverage before any tuning.",
+    "Restore the fleet provider workspace and run one bounded pinned customer acceptance with original goal/run correlation, reviewed result and reload/recovery; keep it separate from load/concurrency tests.",
+    "Provide a compact one-command synthetic end-to-end demo and downloadable sanitized raw infrastructure trace subset to reduce foundation setup and provenance burden.",
+    "Finalize the video slot and run browser keyboard/screen-reader/mobile checks on the actual deployed portal; retain the existing scope labels and caption support."
+  ],
+  "exact_blockers": {
+    "submission_core": "No blocker found to submitting the complete fictional deterministic prototype and recorded two-reviewer story. Current text validation cannot support a claim that all arbitrary merchant assertions are grounded.",
+    "larger_fleet": "Disabled provider workspace causes initial-root HTTP 404 before delegation; no accepted ten-team customer result.",
+    "production_or_superiority": "Independent human labels/usefulness, live-bank actions, live human pickup, week-long reliability, business ROI and matched competitor outcomes are not established and should not be claimed."
+  }
+}
