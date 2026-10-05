@@ -15,6 +15,8 @@ def test_application_preserves_fixture_ledger_chat_voice_and_bootstrap(tmp_path,
     monkeypatch.setattr(socket.socket, "connect_ex", denied)
     private = tmp_path / "fictional-rc"
     run.prepare(private)
+    # public_start.py uses umask(0o077); retain that private state boundary here.
+    (private / "instance").mkdir(mode=0o700)
     settings_seen = []
     sentinel = object()
     monkeypatch.setattr(frontend.server.app, "create_app",
