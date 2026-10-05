@@ -1,6 +1,40 @@
 {
-  "updated_at": "2026-10-05T04:53:44.652618+00:00",
-  "state": "frozen-integrated-savia-native-product-accepted",
+  "updated_at": "2026-10-05T17:44:30+00:00",
+  "state": "new-fleet-customer-acceptance-partial-provider-failure",
+  "latest_fleet_acceptance": {
+    "acceptance_passed": false,
+    "source_revision": "a5e48f09afe4241f6b08a2b94532b2bd3eb630f4",
+    "image_digest": "sha256:35903f9a1ea70f8b3c589d5680ed50307efd34870ce004bdd1833b9029b6dc93",
+    "public_receipt": "docs/submission/measurements/fleet-customer-attempt/receipt.json",
+    "private_receipt_sha256": "00967e4a4f4de4f21ecb13afa835e543b55797d4de0e561c50c018df0bf837b8",
+    "intake_requests": 1,
+    "accepted_informational_cases": 1,
+    "bank_facts_requests": 1,
+    "partial_asr_requests": 4,
+    "native_replies": 1,
+    "exact_full_playback_acks": 1,
+    "foreground_samples": 212400,
+    "foreground_sample_rate_hz": 24000,
+    "foreground_seconds": 8.85,
+    "foreground_wav_sha256": "22cdc692f874a7eec0c6bec6aaa8f385eb19f227d289df2cf97a84155ed9f81b",
+    "exact_full_playback_ack_http_status": 200,
+    "physical_microphone_qualified": false,
+    "actual_case_state": "needs_attention",
+    "review_status": "unverified",
+    "worker_results": 0,
+    "reviewed_guidance_qualified": false,
+    "working_overlap_qualified": false,
+    "full_fleet_count_verified": false,
+    "reload_context_qualified": false,
+    "scheduled_followup": false,
+    "normal_clock_followup_observed": false,
+    "cause": "Runtime original registry trace confirms background native run failed with Modal HTTP404 after the original workspace was disabled again.",
+    "recorder_exit_code": 1,
+    "recorder_failure": "Bounded observation wait expired.",
+    "owned_contexts_closed": true,
+    "retries_or_resubmissions": 0,
+    "prior_acceptance_scope": "The historical accepted image and receipts below remain separate; they do not qualify this new fleet customer run."
+  },
   "product_source": {
     "branch": "feature/savia-avatar-voice",
     "base_revision": "2730d76de8e6847df4502c427ad9ced412f4a731",
@@ -20,9 +54,12 @@
     "Root accepted actual intended Savia UI: foreground PCM6.6s and verified helpful closure PCM3.95s each have exact full-playback HTTP200 ACK; closure queued during foreground and played after its ACK; new chat restores exact bank reply and saved worker suggestions"
   ],
   "next": [
-    "Frozen; root owns publication and primary snapshot. No remaining voice implementation or live measurement work authorized."
+    "Preserve the failed case and original evidence. Provider execution is held pending funding approval and verified saved account limits; the authorized fresh additional case has not run.",
+    "Hold the follow-up recorder: this case has no verified completion event or scheduled due time."
   ],
-  "blockers": [],
+  "blockers": [
+    "Original background model workspace returned HTTP404 and the actual root run failed; the accepted case remains needs_attention with no verified team result."
+  ],
   "qualification": {
     "backend_voice_checks_passed": 43,
     "frontend_voice_checks_passed": 10,
