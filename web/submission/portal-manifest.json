@@ -1,0 +1,30 @@
+{
+  "schema": "savia-public-portal/v1",
+  "files": {
+    "assets/mark.svg": "79464cd0ee801ee9d8d51d23dfa9029a25c46991875fd6574d088e328c6594bb",
+    "assets/savia-customer.png": "b2c280fcf2daeed17a56fb6af5403d1f19ca8c9f8ce39a643145deaa2b718587",
+    "development.html": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946",
+    "evidence/development-process.json": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e",
+    "evidence/DEVELOPMENT_PROCESS.md": "ff6199b3ea9fd793b66311d6cbd7110ce6936555bdef57d6b70762bf2cb72dc6",
+    "evidence/ELEVENLABS_COMPARISON.md": "f601122bab85008f6f9d1c58682b47e1bb25b36c4300f68d87b36b920db82351",
+    "evidence/EVIDENCE_MAP.md": "4906ac0e45653ba34e43765be3f6113460f87ee58e9ffc884717519d48fdf9cf",
+    "evidence/START_HERE.md": "cd97d41998f56139580d51ba3ec7b4e7cfb488284646a371ce53106f30306cad",
+    "index.html": "221ac61a721004936c0e6a023e7590a9c56d395794cf8505cabb302e2f1ca978",
+    "llms.txt": "427aba1569cb5666581aa2dea69211c74d87ee6f14754de6d9982297c50c55b7",
+    "pitch/savia-final-pitch-manifest.json": "adf10a5371db8a3bfb15c071bdee4735da9e915be21e2abb9bdd9f735eb5543d",
+    "pitch/savia-final-pitch-sources.json": "39837f44f2c607457e50ab9f6b1d0af4681fb57bc99fbe490efbbf9da5962e6d",
+    "pitch/savia-final-pitch-speaker-notes.md": "e33a5d3a71066e9ac64f8a23bfce93bfdb5acbb779205df2ebd8cbf7e11081ed",
+    "pitch/savia-final-pitch.html": "d43220444b03cd383d03a7f1a3a44993b7e5c907d3231aa879010e6f553bc98e",
+    "pitch/savia-final-pitch.pdf": "149092a838379e515242011bb88606c9dbb1a45dd4b7989a888b3c941fdb3f63",
+    "pitch/savia-final-pitch.pptx": "206eecd973d56e9d29d21adba80cf1e602ab6377ba7c41ab76574be301958e9d",
+    "pitch/slides/slide-01.png": "c3d7934635500b205a6bee892a4aa9dabcea995ab57265a6af07b91796f7f905",
+    "pitch/slides/slide-02.png": "99b78142219d1f285d60178bd4b78c18f36e24ecca04213337bc482e3a05eef1",
+    "pitch/slides/slide-03.png": "9be369bb21de3f4db0a3942717403c621cae36c2ad9961f47472e5240a32ce71",
+    "pitch/slides/slide-04.png": "53d9fdbc2dc00f358d6add6f03c5b020861c892d2c6e3bcf47873cee904e8f36",
+    "pitch/slides/slide-05.png": "9ed843e570f835c4065047167ad5b335db2c624f79c1062eb8d2336aebbeeeeb",
+    "pitch/slides/slide-06.png": "26afda833c5bf7aa28d53565f11eb99917045014323e753f5e585d4444310d26",
+    "savia-submission.vtt": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6",
+    "styles.css": "97ac8424b48df1d7ff9a5dbd2c99e29dbb4279a5cf82d8ea961c9322fc421789",
+    "submission.json": "5ad7357bdf6e00464a2e09a0ad9c222569ebd9f17d2cc0d733fd391bdd157a72"
+  }
+}

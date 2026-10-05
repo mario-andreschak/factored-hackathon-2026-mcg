@@ -7,7 +7,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 PREFIXES = ("banking_mcp/", "dispute_workflow/", "savia_assistant/", "pipeline/", "resources/", "config/",
-            "frontend/server/", "frontend/src/", "frontend/public/", "deploy/rc/", "contracts/")
+            "frontend/server/", "frontend/src/", "frontend/public/", "deploy/rc/", "contracts/", "web/submission/")
 FILES = {"requirements-dispute.txt", "requirements-pipeline.txt", "requirements-s3.txt", "frontend/requirements.txt",
          "scripts/qualify_dispute_app.py", "scripts/run_dispute.py", "scripts/native_dispute_qualification.py",
          "scripts/native_dispute_qualification.ts", "scripts/native_dispute_qualification.mjs"}
