@@ -28,6 +28,9 @@ def export(destination, revision):
             continue
         metadata, raw = entry.split(b"\t", 1)
         name = raw.decode()
+        # Public browser-test TLS material is not a production build input.
+        if name.startswith("deploy/rc/fixtures/"):
+            continue
         if not (name in FILES or name.startswith(PREFIXES)):
             continue
         path = Path(name)
