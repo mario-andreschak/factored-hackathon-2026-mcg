@@ -1,0 +1,184 @@
+{
+  "schema": "savia-product-pitch-deployment/v1",
+  "observed_at": "2026-10-05T23:40:39.940692+00:00",
+  "portal_git_head": "4a7341209e56fd66468774316a0cc5883172e426",
+  "portal_git_tree": "7cb21664bf44600f4d6ae511d9886ae5d561517e",
+  "application_source": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+  "image": "registry.fly.io/savia-rc-2026@sha256:75fda1618ec9c48a77c46e00573a51c4f0a86e780a5349e4e5cba38ad72f2517",
+  "retained_runtime_image": "registry.fly.io/savia-rc-2026@sha256:c38f3af736defdf55c7de47b0e1597ad361b3f748c845176b920377fd12b307f",
+  "machine_id": "851d7dc4460048",
+  "health": "passing",
+  "retained_runtime_configuration": {
+    "guest": true,
+    "mounts": true,
+    "services": true,
+    "init": true,
+    "env": true,
+    "restart": true
+  },
+  "served_assets": {
+    "assets/mark.svg": {
+      "url": "https://savia-rc-2026.fly.dev/submission/assets/mark.svg",
+      "http_status": 200,
+      "bytes": 205,
+      "sha256": "79464cd0ee801ee9d8d51d23dfa9029a25c46991875fd6574d088e328c6594bb"
+    },
+    "assets/savia-customer.png": {
+      "url": "https://savia-rc-2026.fly.dev/submission/assets/savia-customer.png",
+      "http_status": 200,
+      "bytes": 695055,
+      "sha256": "b2c280fcf2daeed17a56fb6af5403d1f19ca8c9f8ce39a643145deaa2b718587"
+    },
+    "development.html": {
+      "url": "https://savia-rc-2026.fly.dev/submission/development.html",
+      "http_status": 200,
+      "bytes": 9326,
+      "sha256": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946"
+    },
+    "engine.html": {
+      "url": "https://savia-rc-2026.fly.dev/submission/engine.html",
+      "http_status": 200,
+      "bytes": 11976,
+      "sha256": "23945dfbb3050dfcf51667395d8aa3d423b9568bd275f57208712e1882a4eb03"
+    },
+    "evidence/development-process.json": {
+      "url": "https://savia-rc-2026.fly.dev/submission/evidence/development-process.json",
+      "http_status": 200,
+      "bytes": 33852,
+      "sha256": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e"
+    },
+    "evidence/DEVELOPMENT_PROCESS.md": {
+      "url": "https://savia-rc-2026.fly.dev/submission/evidence/DEVELOPMENT_PROCESS.md",
+      "http_status": 200,
+      "bytes": 19432,
+      "sha256": "a8cf9bb103988e233eb1feb7b0f031ec4ed09a6b2daccd99cff63a39cccfeb6f"
+    },
+    "evidence/DISPUTE_ENGINE.md": {
+      "url": "https://savia-rc-2026.fly.dev/submission/evidence/DISPUTE_ENGINE.md",
+      "http_status": 200,
+      "bytes": 9819,
+      "sha256": "1e857bf728ab746bd791b83a71c37c1ef413969b1452587bad346d89f7e3c498"
+    },
+    "evidence/ELEVENLABS_COMPARISON.md": {
+      "url": "https://savia-rc-2026.fly.dev/submission/evidence/ELEVENLABS_COMPARISON.md",
+      "http_status": 200,
+      "bytes": 6524,
+      "sha256": "67d692d7ac25894684b7be3c8cbd84e83dbe10e6d097e869bc8b26b70e22a548"
+    },
+    "evidence/EVIDENCE_MAP.md": {
+      "url": "https://savia-rc-2026.fly.dev/submission/evidence/EVIDENCE_MAP.md",
+      "http_status": 200,
+      "bytes": 24615,
+      "sha256": "656096ae0f8525c391e6f1eaca6c90c5f01ee4e53258dcb76e4f8d292709f5f6"
+    },
+    "evidence/START_HERE.md": {
+      "url": "https://savia-rc-2026.fly.dev/submission/evidence/START_HERE.md",
+      "http_status": 200,
+      "bytes": 10577,
+      "sha256": "82313785f0a9ca3892d2ef8a5dfb3bf2abd80df54f42e9e5b9b588b6b23d123c"
+    },
+    "index.html": {
+      "url": "https://savia-rc-2026.fly.dev/submission/index.html",
+      "http_status": 200,
+      "bytes": 11299,
+      "sha256": "4f894d96b4e0d011d90fcc9ef85262956aca282c7a5ab4b1bd08b8cc33417990"
+    },
+    "llms.txt": {
+      "url": "https://savia-rc-2026.fly.dev/submission/llms.txt",
+      "http_status": 200,
+      "bytes": 2430,
+      "sha256": "4b80c56d987bf42a7815e2e6768b919fc8b6be01338823e868d39eb06f7f4aa1"
+    },
+    "pitch/savia-final-pitch-manifest.json": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch-manifest.json",
+      "http_status": 200,
+      "bytes": 2488,
+      "sha256": "fccf39be86793d6b4aa4510001ff3422cafddac5ea02c20ad05b6503e6290268"
+    },
+    "pitch/savia-final-pitch-sources.json": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch-sources.json",
+      "http_status": 200,
+      "bytes": 13885,
+      "sha256": "88ca2ccc33cc4874f9a1630c0475727f888ab0e0e3dc59823f9c94499ca6b436"
+    },
+    "pitch/savia-final-pitch-speaker-notes.md": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch-speaker-notes.md",
+      "http_status": 200,
+      "bytes": 12277,
+      "sha256": "89156421b0b29ba7a745ea99b19820bb16fa52f70a6045cef070c2940b3c80d9"
+    },
+    "pitch/savia-final-pitch.html": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.html",
+      "http_status": 200,
+      "bytes": 15369,
+      "sha256": "31c418736c9b83805a087e70b53c1f3227bbffc9d7efe1ae1d86973c8f06a67f"
+    },
+    "pitch/savia-final-pitch.pdf": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.pdf",
+      "http_status": 200,
+      "bytes": 348446,
+      "sha256": "656eaddffb8a513b3ec65ca7cd8bd48f5800d1d4934e47a2948685c7030efd84"
+    },
+    "pitch/savia-final-pitch.pptx": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.pptx",
+      "http_status": 200,
+      "bytes": 220902,
+      "sha256": "6793894acf7ff6aa3d6c0cb897eacc9cfb900aa2d09ea8ad5ecfd5a95fcfed3f"
+    },
+    "pitch/slides/slide-01.png": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/slides/slide-01.png",
+      "http_status": 200,
+      "bytes": 55830,
+      "sha256": "96a40905192c7ed8b2de0295350b2244b334d06a32aacddd6c1c34a2c62f981a"
+    },
+    "pitch/slides/slide-02.png": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/slides/slide-02.png",
+      "http_status": 200,
+      "bytes": 144228,
+      "sha256": "ae52252d43774a47faa6e6a6409c17359dccd4199ae5d17490b5422811e6aeab"
+    },
+    "pitch/slides/slide-03.png": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/slides/slide-03.png",
+      "http_status": 200,
+      "bytes": 51040,
+      "sha256": "6a6a62e803a4f293ff6562c5899f66d0309f31eafe25c4149ef61f9290ac123a"
+    },
+    "pitch/slides/slide-04.png": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/slides/slide-04.png",
+      "http_status": 200,
+      "bytes": 53815,
+      "sha256": "eabca0607882740c935463d780838d4679123c4afed2bbb5e58109acb3335058"
+    },
+    "pitch/slides/slide-05.png": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/slides/slide-05.png",
+      "http_status": 200,
+      "bytes": 58570,
+      "sha256": "de7225b54632655e6b43251dbec33f24539e2010ad756475db1853782961621d"
+    },
+    "pitch/slides/slide-06.png": {
+      "url": "https://savia-rc-2026.fly.dev/submission/pitch/slides/slide-06.png",
+      "http_status": 200,
+      "bytes": 52377,
+      "sha256": "54014d1f240ae72d0d56d061886cc865ec10f4eb503c3501a683b193090c7644"
+    },
+    "savia-submission.vtt": {
+      "url": "https://savia-rc-2026.fly.dev/submission/savia-submission.vtt",
+      "http_status": 200,
+      "bytes": 2268,
+      "sha256": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6"
+    },
+    "styles.css": {
+      "url": "https://savia-rc-2026.fly.dev/submission/styles.css",
+      "http_status": 200,
+      "bytes": 7946,
+      "sha256": "d5e8be817afee552c2ad8c9104baa37f1e33c3ed100620333e34ab29b9f5bad0"
+    },
+    "submission.json": {
+      "url": "https://savia-rc-2026.fly.dev/submission/submission.json",
+      "http_status": 200,
+      "bytes": 1897,
+      "sha256": "12ba42788f93ab6b99022e20abed664fc8a183ba33960722b2e8e344e53c173f"
+    }
+  },
+  "verification_scope": "Read-only source hashes, machine health/config equality, and 27 HTTP asset downloads; no customer bank/model/voice calls."
+}

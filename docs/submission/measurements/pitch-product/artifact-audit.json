@@ -1,0 +1,22 @@
+{
+  "schema": "savia-product-pitch-artifact-audit/v1",
+  "slides": 6,
+  "pdf_pages": 6,
+  "all_shapes_within_slide": true,
+  "say_if_asked_on_all_slides": true,
+  "swarm_markers": 100,
+  "narration_words": 346,
+  "exact_requested_narration": true,
+  "one_readme_limits_section": true,
+  "frozen_originals_unchanged": true,
+  "frozen_artifacts": {
+    "docs/submission/media/decks/savia-pitch-deck.pptx": "430f4509f23a62e6e0cfa8c3617969b8b45573f6100b2b629f7aee4ab322fac7",
+    "docs/submission/media/decks/savia-pitch-deck.pdf": "713ebf382b9c2d7dfd5915d8c8395df15206d9c9e94de16071c8970b08e6642a",
+    "docs/submission/media/decks/savia-submission-deck.pptx": "1edec58b3e51f45ccf16b9733ddc8fd5c69b1eb028e75011a26a1deb04ab2f4c",
+    "docs/submission/media/decks/savia-submission-deck.pdf": "dca195a5184b15f9a82e34964719bbec75c65556599b3bfc378258e4b3dc1b6c",
+    "docs/submission/media/video/savia-submission.mp4": "44e8dad7fdfdc6bd3b8b50b5aee83ea97f62c9e8412b20a1655a937cabd0fccb",
+    "docs/submission/media/media-freeze-receipt.json": "4ce071dbefd3a506f7f14ec8e9dec9a0633c8e62f48497773cf487fbe99e1821"
+  },
+  "pinned_repository_sources_checked": 16,
+  "public_source_paths_resolve": true
+}
