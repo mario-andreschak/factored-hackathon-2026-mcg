@@ -1,5 +1,11 @@
 # Documentation index
 
+Open the [Savia submission portal](https://savia-rc-2026.fly.dev/submission/) for
+the pitch, repository, video slot and public development timeline. The
+[focused review route](submission/START_HERE.md) leads through successful customer
+evidence, expandable architecture and reproducible checks; the
+[evidence map](submission/EVIDENCE_MAP.md) gives exact results and source links.
+
 Use the [root README](../README.md) for Savia's purpose and setup choices. The
 [release candidate report](submission/RELEASE_CANDIDATE.md) owns current source/runtime
 identity, delivered artifacts, measured acceptance and open limitations.
@@ -53,7 +59,7 @@ Follow the product boundary and release report for new implementation or deploym
 - [Package preflight](BANKING_PACKAGE_PREFLIGHT.md) and [issue #21 package](BANKING_PACKAGE_ISSUE21_V2.md)
 - [Review/supervision mandate](HACKATHON_SUPERVISION.md)
 - [September 30 deployment diagrams](architecture/landscape-notes.md)
-- [Development-history viewer](DEVELOPMENT_HISTORY.md), whose generated conversation caches stay private
+- [Public development process](submission/DEVELOPMENT_PROCESS.md) and [structured milestones](submission/development-process.json); the [detailed local history viewer](DEVELOPMENT_HISTORY.md) retains private conversation caches
 
 Organizer documents are in [reference/](reference/). The data dictionary has its
 credential page redacted. Private data, service credentials and original restricted
