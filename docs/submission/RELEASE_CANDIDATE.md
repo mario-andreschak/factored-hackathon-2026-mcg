@@ -44,7 +44,7 @@ failure and the frozen rc.1/rc.2 evidence retain their original scope.
 The original root was retired through the existing operator DELETE at 18:04 UTC
 (13:04 Bogotá). Its case, goal, run, board and volume were preserved; the retained
 goal is still `ACTIVE` and the run is `FAILED`. Retirement is not goal completion.
-Funding controls 50/20 remain unsaved, awaiting the owner. A productive customer
+Provider funding remains pending owner approval. A productive customer
 journey and its normal-clock 30-minute follow-up are outstanding; rc.3 is not
 ready.
 
