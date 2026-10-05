@@ -26,11 +26,17 @@ Public runtime acceptance retains a separate deployment receipt.
 | [Release source-byte verification](runtime-listen-freeze.json) | **142/142 packaged source files verified**, actual served UI verified, three retained inquiries and six completed workers in that dated rc.2 deployment. | [Public gateway](../../deploy/rc/public-gateway.mjs), [startup](../../deploy/rc/public_start.py), [release report](RELEASE_CANDIDATE_RC2.md) |
 | [Demand and ownership review](../DATA_REVIEW_2026-09-26.md) | **12,297/67,095 complaints** concern an unrecognized charge. All **44,570/44,570 populated complaint-product links** cross customer ownership; historical complaint links therefore cannot identify the customer's disputed charge. This directly informs fresh owned-transaction grounding. | [Banking repository](../../banking_mcp/repository.py), [selected reads](../../dispute_workflow/bank_read.py), [direct-host contract](../../frontend/DIRECT_MCP.md) |
 
-The native recommendation is useful condensed speech; complete suggestions
+The dated native recommendation is useful condensed speech; complete suggestions
 remain visible. Its receipt preserves the omitted folio/caveat wording and human
 audio-review status. Informational helpful closure is a customer acknowledgment,
 and a simulated intake receipt records intake; neither is a bank refund or
 dispute resolution.
+
+The [current source qualification](measurements/verified-outcomes/README.md)
+adds canonical host-script narration for registered results and read-only
+verified host outcome snapshots. Its 183 tests and 195 subtests exercise the
+presentation and measurement boundaries. The original native recordings retain
+their dated meaning; deployment acceptance is separately pinned.
 
 ## AI engineering and expandable FLUJO orchestration
 
@@ -88,7 +94,7 @@ decision; the [script](../../scripts/analyze_operating_evidence.py) makes no pro
 | Evidence | Engineering contribution | Implementation / verification |
 | --- | --- | --- |
 | [New public evidence replay](../review/PUBLIC_EVIDENCE.md), [hashed receipt](../review/replay-receipt.json) | **67/67 offline checks**, **7/7 pipeline invariants** and **4/4 analytics invariants** pass. Fixture execution verifies reconciliation, idempotent logical hashes, late corrections, ownership exclusion, retained previous snapshots, read-only analytics and privacy. Adds paired uncertainty to the unchanged 120-case router diagnostic. | [Replay script](../../scripts/review_evidence.py), [review dependencies](../../requirements-review.txt), public fixture/output JSON. Zero provider calls; inspected source subset is hashed, with explicit working-tree/base identity. |
-| [Offline agent analytics](../../analytics/README.md) | Read-only extraction into a metadata-only SQLite store: turn outcomes, rule IDs, model/tool stages, latency, clarification, handoff and feedback. HMAC pseudonyms permit analysis without copying messages, merchants, amounts or bank identifiers. | [Extraction](../../analytics/extract.py), [reports](../../analytics/report.py), [privacy/read-only tests](../../tests/test_agent_analytics.py), [customer-outcome tests](../../tests/test_report_customer_outcomes.py) |
+| [Offline agent analytics](../../analytics/README.md) | Read-only metadata: workflow intent, rule IDs, stages, latency and feedback, plus separately verified current host intake/handoff snapshots and lifecycle coverage. Exact admission joins and HMAC identities keep host evidence distinct from planned outcomes without copying private facts. Counts describe current slots; turn/query attribution and lifetime resolution remain unknown. | [Extraction](../../analytics/extract.py), [host observations](../../analytics/host.py), [reports](../../analytics/report.py), [privacy/read-only tests](../../tests/test_agent_analytics.py), [joined-host tests](../../tests/test_host_outcome_analytics.py), [source qualification](measurements/verified-outcomes/README.md) |
 | [Source qualification](../qualification/dispute-naming-source-2026-10-01.json) | Frozen combined source at `ea8f621…`: **1,725 passing tests + 428 passing subtests**, including 24 retained-state naming compatibility cases; 85 protected source and 28 preparation hashes checked. This is historical source qualification for its named snapshot. | [Implementation account](../DISPUTE_IMPLEMENTATION.md), [state migrations](../../dispute_workflow/state.py), naming/recovery tests |
 | [Windows/Linux workflow](../../.github/workflows/tests.yml), [local CI policy](../LOCAL_CI.md) | Eleven independently scoped jobs: five Windows and six Linux. Separate service dependencies, immutable source pins, resource-bounded local execution, UI build, compiler/provenance checks and platform receipts. The workflow defines coverage; actual passes must come from the same-head receipts. | [Development process](DEVELOPMENT_PROCESS.md), [PR template](../../.github/pull_request_template.md) |
 | Publication provenance | Actual application and browser bytes, image digests, audio sample counts, playback acknowledgments and request counts are preserved with recorded evidence. Prior observations retain their revisions rather than inheriting later fixes. | [rc.2 freeze](runtime-listen-freeze.json), [voice supplement](measurements/saved-recommendations-native/receipt.json), [release materials](RELEASE_CANDIDATE.md) |

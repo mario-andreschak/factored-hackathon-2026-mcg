@@ -1,0 +1,21 @@
+{
+  "schema": "savia-fresh-submission-assessment-archive/v1",
+  "assessment_path": "C:/Users/Moe/.codex/tmp/savia-post-pitch-review-2c90d9c6.md",
+  "assessment_sha256": "d48bc8c2c364f5a6338fad4cc19b4581dce4503b32519fafe7c8476814424b26",
+  "encoding": "UTF-8",
+  "source_git_head": "2c90d9c6da8895f8781a20b71e78ebf475bbef22",
+  "application_source_git_head": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+  "portal_source_git_head": "4a7341209e56fd66468774316a0cc5883172e426",
+  "score": 89,
+  "maximum_score": 100,
+  "dimensions": {
+    "technical_judgment": 19,
+    "ai_engineering": 17,
+    "data_engineering": 19,
+    "ml_evaluation": 16,
+    "data_analytics": 18
+  },
+  "dimension_maximum": 20,
+  "scope": "Completed blind review of the declared fictional Savia hackathon prototype at clean source 2c90d9c6, beginning with README and the complete six-slide product pitch, then implementation and original receipts across the R0-R18 dispute core, voice and team extensions, data pipeline, ML/evaluation, analytics and owned fictional card protection. Independently matched 39 qualified core/domain/test files, replayed the offline Luna audit, and verified all 27 public portal assets returned HTTP 200 and matched frozen receipt and local bytes. No prior assessments or score receipts were read; no new provider/bank calls or repository changes were made.",
+  "archival_scope": "Writing-only archival follow-up. Assessment text preserved exactly as completed; no rescoring, revision, newer-source inspection or provider calls."
+}
