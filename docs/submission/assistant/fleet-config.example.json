@@ -5,7 +5,7 @@
     "controller_origin": "https://owner-fleet.example.invalid",
     "controller_token_env": "SAVIA_FLEET_OPERATOR_TOKEN",
     "registry_path": "/private/owner-provided-read-only/registry.json",
-    "source_revision": "f9d372a66dd2cb09f4bcfed34967404cf12d9007",
+    "source_revision": "290dd6a7c19fa92c267bddd04f625f6cfbe39459",
     "template_digest": "0000000000000000000000000000000000000000000000000000000000000000",
     "model_id": "replace-with-installed-owner-model-id",
     "supervisor": {
