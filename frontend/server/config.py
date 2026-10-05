@@ -28,6 +28,7 @@ class Settings:
     profiles: dict = field(default_factory=dict, repr=False)
     chat: dict = field(default_factory=dict, repr=False)
     voice: dict = field(default_factory=dict, repr=False)
+    inquiries: dict = field(default_factory=dict, repr=False)
 
     def __post_init__(self):
         if not isinstance(self.auth_mode, str) or self.auth_mode not in {"demo", "invite"}:
@@ -114,4 +115,5 @@ class Settings:
             profiles=config.get("profiles", {}),
             chat=config.get("chat", {}),
             voice=config.get("voice", {}),
+            inquiries=config.get("inquiries", {}),
         )

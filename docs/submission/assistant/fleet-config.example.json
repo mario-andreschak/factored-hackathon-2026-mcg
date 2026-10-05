@@ -1,0 +1,19 @@
+{
+  "inquiries": {
+    "mode": "recovered-fleet/v1",
+    "owner_approved": false,
+    "controller_origin": "https://owner-fleet.example.invalid",
+    "controller_token_env": "SAVIA_FLEET_OPERATOR_TOKEN",
+    "registry_path": "/private/owner-provided-read-only/registry.json",
+    "source_revision": "f9d372a66dd2cb09f4bcfed34967404cf12d9007",
+    "template_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "model_id": "replace-with-installed-owner-model-id",
+    "supervisor": {
+      "origin": "https://owner-native-read-proxy.example.invalid",
+      "workspace": "replace-with-owned-workspace",
+      "token_env": "SAVIA_FLEET_NATIVE_TOKEN"
+    },
+    "team_machines": 10,
+    "task_instructions": "Replace with owner-reviewed Savia branch, evidence, independent-review and fresh conclusion-check tasks. Emit the exact host packet/board/native records documented in FLEET_CONNECTOR.md; no bank actions or customer sends."
+  }
+}

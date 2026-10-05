@@ -167,6 +167,9 @@ export function InquiryPanel({
   const [listeningEvent, setListeningEvent] = useState<string | null>(null);
   const [requestedEvents, setRequestedEvents] = useState(new Set<string>());
   const listenPending = useRef(false);
+  const pendingSubmission = useRef<{ payload: string; id: string } | null>(
+    null,
+  );
   const previousStates = useRef<Map<string, string> | null>(null);
   const voiceEventCursors = useRef<Map<string, number>>(new Map());
   const onVoiceUpdateRef = useRef(onVoiceUpdate);
@@ -300,20 +303,28 @@ export function InquiryPanel({
     setSending(true);
     setError("");
     setNotice("");
+    const payload = JSON.stringify({
+      message: text,
+      language,
+      ...(transactionReference
+        ? { transaction_reference: transactionReference }
+        : {}),
+    });
+    if (pendingSubmission.current?.payload !== payload) {
+      pendingSubmission.current = { payload, id: crypto.randomUUID() };
+    }
     try {
       const created = await api<CaseList & { id: string }>(
         "/api/assistant/cases",
         {
           method: "POST",
           body: JSON.stringify({
-            message: text,
-            language,
-            ...(transactionReference
-              ? { transaction_reference: transactionReference }
-              : {}),
+            ...JSON.parse(payload),
+            request_id: pendingSubmission.current.id,
           }),
         },
       );
+      pendingSubmission.current = null;
       const createdCase = created.items?.find((item) => item.id === created.id);
       if (createdCase) notifyVoiceHost([createdCase], true);
       setDraft("");

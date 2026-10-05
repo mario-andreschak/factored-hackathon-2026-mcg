@@ -125,6 +125,7 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
     try:
         from savia_assistant import InquiryService
         from savia_assistant.api import install_routes
+        from savia_assistant.fleet import configured_fleet
     except ModuleNotFoundError as exc:
         if exc.name != "savia_assistant":
             raise
@@ -198,7 +199,8 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         app.state.conversation = Conversation(voice_config, app.state.voice_service, transport=voice_transport)
         from .followups import Followups
         app.state.followups = Followups(settings.state_dir, chat_service)
-        app.state.inquiries = (InquiryService(settings.state_dir, model=getattr(dispute_factory, "model", None))
+        app.state.inquiries = (InquiryService(settings.state_dir, model=getattr(dispute_factory, "model", None),
+                                             fleet=configured_fleet(settings.inquiries))
                                if InquiryService else None)
         stop_retries = asyncio.Event()
         app.state.followup_task = asyncio.create_task(app.state.followups.loop(stop_retries))
