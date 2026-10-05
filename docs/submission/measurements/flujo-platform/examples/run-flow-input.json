@@ -1,0 +1,8 @@
+{
+  "modelName": "flow-release_note_digest",
+  "prompt": "Summarize the supplied release notes with references.",
+  "source": "api",
+  "mode": "ephemeral",
+  "requireApproval": true,
+  "onApprovalRequired": "fail"
+}

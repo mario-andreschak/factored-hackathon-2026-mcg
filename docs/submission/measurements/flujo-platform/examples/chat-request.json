@@ -1,0 +1,6 @@
+{
+  "model": "flow-release_note_digest",
+  "messages": [{ "role": "user", "content": "Summarize the release notes supplied for this review." }],
+  "stream": false,
+  "metadata": { "flujo": "true", "requireApproval": "true" }
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-05T22:08:20.685Z",
+  "commit": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+  "runtime": {
+    "node": "v22.13.1",
+    "platform": "win32",
+    "architecture": "x64"
+  },
+  "source": {
+    "path": "src/backend/execution/flow/retryAfter.ts",
+    "sha256": "f22a03399afdc5b71813337791a9890efb193f6946000c040a1c7a70856bb30e"
+  },
+  "command": "node --experimental-strip-types --require ./offline-preload.cjs ./offline-smoke.mjs",
+  "kind": "Narrow local checks against one copied unmodified upstream module",
+  "checks": [
+    {
+      "name": "delta seconds and HTTP-date use explicit clock",
+      "passed": true
+    },
+    {
+      "name": "invalid, negative, nonfinite and expired waits are rejected",
+      "passed": true
+    },
+    {
+      "name": "automatic retry delay is bounded to fifteen minutes",
+      "passed": true
+    },
+    {
+      "name": "rate limit needs usable retry timing",
+      "passed": true
+    },
+    {
+      "name": "aborted or zero-delay wait ends without a provider call",
+      "passed": true
+    }
+  ]
+}
