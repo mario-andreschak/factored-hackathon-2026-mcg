@@ -1,6 +1,6 @@
 # Savia — Ask once. Savia follows through.
 
-**One voice assistant. A question that keeps its context. A useful next step when you return.**
+**A complete dispute decision engine. A question that keeps its context. A useful next step when you return.**
 
 “I don't recognize this transaction.” For a customer, that starts a problem that can take more than one conversation to solve. Savia brings checked transaction facts, Spanish and Portuguese conversation, specialist perspectives and saved follow-up into one place.
 
@@ -19,6 +19,12 @@ Select the unfamiliar charge and ask Savia what is known. The transaction stays 
 Our recorded prototype shows a grounded answer, **two actual completed model reviewers**, a customer marking the explanation helpful, and the saved answer and suggestions surviving a new chat and reload. These are real model calls over fictional bank data.
 
 ![The grounded answer and selected transaction](docs/submission/media/decks/savia-grounded-answer-crop.png)
+
+## A clear decision at every step.
+
+The core is a complete, deterministic **R0–R18 dispute flow**. It authenticates the customer, checks ownership, keeps the selected charge and conversation context, clarifies ambiguity, applies ordered policy, requests explicit consent, verifies action receipts and prepares a human handoff when the evidence requires one. Restart recovery, idempotency and session revocation preserve those boundaries across turns.
+
+Voice and specialist teams extend that engine. They help customers explain the problem and examine evidence; the trusted flow remains responsible for what can happen next. The historical frozen source qualification passed **1,725 tests and 428 subtests**, with its own source pins. [Decision rules and executable implementation](docs/DISPUTE_IMPLEMENTATION.md) · [Frozen qualification receipt](docs/qualification/dispute-naming-source-2026-10-01.json).
 
 ## Voice is the beginning. Follow-through is the product.
 
