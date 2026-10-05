@@ -4,15 +4,15 @@ import { createRequire } from 'node:module';
 import test from 'node:test';
 import { createGateway, readConfig } from './public-gateway.mjs';
 
-const require = createRequire(new URL('../../avatar/package.json', import.meta.url));
+const require = createRequire(new URL('../../frontend/package.json', import.meta.url));
 const { chromium } = require('@playwright/test');
 
-test('a real browser form preserves same-origin Origin and follows its secure visitor cookie into the app', async () => {
+test('a real browser form preserves same-origin Origin and follows its secure visitor cookie into Savia', async () => {
   const origin = 'https://savia-fictional.example';
-  const avatar = http.createServer((_req, res) => res.end('<!doctype html><h1>Authenticated avatar</h1>'));
-  await new Promise(resolve => avatar.listen(0, '127.0.0.1', resolve));
+  const app = http.createServer((_req, res) => res.end('<!doctype html><h1>Authenticated Savia</h1>'));
+  await new Promise(resolve => app.listen(0, '127.0.0.1', resolve));
   const gateway = createGateway(readConfig({ RC_PUBLIC_ORIGIN: origin, RC_DEMO_CODE: 'SAVIA-2026',
-    RC_COOKIE_SECRET: 'c'.repeat(48), AVATAR_ACCESS_GATE_TOKEN: 'g'.repeat(48) }), { avatarPort: avatar.address().port });
+    RC_COOKIE_SECRET: 'c'.repeat(48) }), { appPort: app.address().port });
   await new Promise(resolve => gateway.listen(0, '127.0.0.1', resolve));
   let browser;
   try {
@@ -40,7 +40,7 @@ test('a real browser form preserves same-origin Origin and follows its secure vi
     await page.goto(origin);
     await page.getByLabel('Demo code').fill('SAVIA-2026');
     await page.getByRole('button', { name: 'Enter demo' }).click();
-    await page.getByRole('heading', { name: 'Authenticated avatar' }).waitFor();
+    await page.getByRole('heading', { name: 'Authenticated Savia' }).waitFor();
     assert.deepEqual(submissions, [origin]);
     const cookies = await page.context().cookies();
     const visitor = cookies.find(cookie => cookie.name === '__Host-rc-visitor');
@@ -48,6 +48,6 @@ test('a real browser form preserves same-origin Origin and follows its secure vi
   } finally {
     await browser?.close();
     await new Promise(resolve => gateway.close(resolve));
-    await new Promise(resolve => avatar.close(resolve));
+    await new Promise(resolve => app.close(resolve));
   }
 });

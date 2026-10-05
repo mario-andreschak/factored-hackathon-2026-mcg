@@ -25,19 +25,14 @@ def main():
         subprocess.run([sys.executable, str(ROOT / "deploy/rc/run.py"), "--private-dir", str(PRIVATE), "--prepare"], check=True)
     policy = PRIVATE / "gateway-policy.json"
     if not policy.exists():
-        policy.write_text(json.dumps({"gate": secrets.token_urlsafe(48), "cookie": secrets.token_urlsafe(48)}))
+        policy.write_text(json.dumps({"cookie": secrets.token_urlsafe(48)}))
         policy.chmod(0o600)
     values = json.loads(policy.read_text())
-    env.update(AVATAR_ACCESS_GATE_TOKEN=values["gate"], RC_COOKIE_SECRET=values["cookie"],
-               AVATAR_HOST="127.0.0.1", AVATAR_PORT="43941", AVATAR_PUBLIC_ORIGIN=origin,
-               SAVIA_UPSTREAM="http://127.0.0.1:43900", SAVIA_PUBLIC_ORIGIN=origin,
-               AVATAR_VOICE_PROVIDER="openrouter-native", AVATAR_NATIVE_READ_BRIDGE="readonly",
-               AVATAR_BACKGROUND_ASR="openrouter",
-               NODE_ENV="production", RC_DEMO_CODE=env.get("RC_DEMO_CODE", "SAVIA-2026"))
+    env.update(RC_COOKIE_SECRET=values["cookie"], NODE_ENV="production",
+               RC_DEMO_CODE=env.get("RC_DEMO_CODE", "SAVIA-2026"))
     commands = [
         [sys.executable, str(ROOT / "deploy/rc/run.py"), "--private-dir", str(PRIVATE),
          "--provider", "openrouter", "--public-origin", origin],
-        ["node", str(ROOT / "avatar/server/index.mjs")],
         ["node", str(ROOT / "deploy/rc/public-gateway.mjs")],
     ]
     children = []
