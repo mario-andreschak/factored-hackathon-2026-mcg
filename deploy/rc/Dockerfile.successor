@@ -1,0 +1,19 @@
+# Keep the deployed native worker/controller and persistent-volume startup.
+# Only committed Savia application source and its built browser assets change.
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS ui
+WORKDIR /src
+COPY frontend/package*.json frontend/
+RUN cd frontend && npm ci --no-audit --no-fund
+COPY frontend frontend
+RUN cd frontend && npm run build
+
+FROM registry.fly.io/savia-rc-2026@sha256:35903f9a1ea70f8b3c589d5680ed50307efd34870ce004bdd1833b9029b6dc93
+USER root
+COPY . /srv/savia/
+COPY --from=ui /src/frontend/dist/ /srv/savia/frontend/dist/
+RUN python -c "import hashlib,json,pathlib; r=pathlib.Path('/srv/savia'); m=json.loads((r/'source-manifest.json').read_text()); assert all(hashlib.sha256((r/p).read_bytes()).hexdigest()==h for p,h in m['files'].items())"
+ARG APPLICATION_REVISION
+LABEL io.savia.source-revision="${APPLICATION_REVISION}" \
+      io.savia.successor.scope="owned-card-block-preserve-native-runtime"
+# The base image's entrypoint supervises the retained native runtime, controller
+# and /srv/savia/deploy/rc/public_start.py. Runtime state stays on /data.
