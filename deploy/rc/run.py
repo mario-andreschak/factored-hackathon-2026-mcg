@@ -12,6 +12,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import subprocess
 import threading
 import time
 
@@ -139,8 +140,11 @@ def application(root: Path, *, port: int, base_url: str, model_id: str,
                "language": {"url": language.base_url, "model": model_id, "provider": provider,
                             "route": "generic completion" if provider == "flujo" else "explicit direct OpenRouter completion"},
                "simulated_intake": True, "real_bank_actions": False, "native_flow_execution": False,
-               "source_snapshot": "active local source; freeze at integration checkpoint",
+               "source_snapshot": "startup Git revision plus exact application and served UI hashes",
+               "git_head": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
                "application_sources": application_source_hashes(ROOT),
+               "served_ui": {file.relative_to(settings.static_dir).as_posix(): hashlib.sha256(file.read_bytes()).hexdigest()
+                             for file in sorted(settings.static_dir.rglob("*")) if file.is_file()},
                "launcher_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
     (root / "runtime.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
     print(json.dumps({"url": receipt["url"], "language": receipt["language"],
@@ -169,7 +173,8 @@ def main():
     if args.provider == "openrouter":
         import os
         values = {}
-        for line in args.provider_env.read_text(encoding="utf-8-sig").splitlines():
+        provider_lines = args.provider_env.read_text(encoding="utf-8-sig").splitlines() if args.provider_env.is_file() else []
+        for line in provider_lines:
             if line.strip() and not line.lstrip().startswith("#") and "=" in line:
                 name, value = line.split("=", 1)
                 values[name.strip()] = value.strip().strip('"').strip("'")

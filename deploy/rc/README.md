@@ -11,7 +11,7 @@ From the repository root, install the declared Python runtime dependencies and
 build the portal:
 
 ```powershell
-python -m pip install -r requirements-dispute.txt -r frontend/requirements.txt rfc8785==0.1.4
+python -m pip install -r requirements-dispute.txt
 npm ci --prefix frontend --no-audit --no-fund
 npm run build --prefix frontend
 ```
@@ -35,9 +35,9 @@ The launcher checks that the configured model is listed by FLUJO before starting
 The default is `model-GPT-6 Luna` at <http://localhost:43420>; use `--flujo-url`
 and `--model` for another existing, authorized generic model. Language failures
 remain workflow failures or handoffs, never fictional successful model replies.
-Each language stage has an explicit90-second budget matching the transport;
-the full customer task has the host's450-second deadline. Initial measurements
-of the default15-second stage budget are retained as failed attempts.
+Each language stage has a 90-second budget matching the transport;
+the full customer task has the host's 450-second deadline. Initial measurements
+of the default 15-second stage budget are retained as failed attempts.
 
 `/healthz` reports the dataset and host state. Private `runtime.json` records the
 runtime boundary. `observations.jsonl` contains only observed model-stage status,
@@ -58,7 +58,7 @@ and makes bounded plain language completions without tools. Select it explicitly
 python deploy/rc/run.py --private-dir private/rc-runtime-20261004 --provider openrouter
 ```
 
-Its configured default is `google/gemini-3.1-flash-lite` with30 seconds per
+Its configured default is `google/gemini-3.1-flash-lite` with 30 seconds per
 stage. The receipt identifies direct OpenRouter execution; FLUJO remains the
 separate generic infrastructure. The provider receives fictional bounded language
 inputs, never signing keys or bank action capabilities. Do not switch profiles
