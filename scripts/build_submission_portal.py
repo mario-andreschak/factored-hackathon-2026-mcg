@@ -7,6 +7,7 @@ import posixpath
 import re
 import shutil
 from pathlib import Path
+from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "web/submission"
@@ -14,6 +15,30 @@ REPO = "https://github.com/mario-andreschak/factored-hackathon-2026-mcg"
 URL = "https://savia-rc-2026.fly.dev/submission/"
 DOCS = ("START_HERE.md", "DISPUTE_ENGINE.md", "EVIDENCE_MAP.md", "DEVELOPMENT_PROCESS.md", "development-process.json", "ELEVENLABS_COMPARISON.md")
 PITCH_FILES = ("savia-final-pitch.html", "savia-final-pitch.pdf", "savia-final-pitch.pptx", "savia-final-pitch-speaker-notes.md", "savia-final-pitch-sources.json", "savia-final-pitch-manifest.json")
+
+
+def public_reading_copy(source):
+    """Keep supporting Markdown links usable after moving it into the portal."""
+    relative_source = source.relative_to(ROOT).as_posix()
+
+    def link(match):
+        label, target = match.groups()
+        parts = urlsplit(target)
+        if parts.scheme or parts.netloc:
+            return match[0]
+        path = posixpath.normpath(posixpath.join(
+            posixpath.dirname(relative_source), unquote(parts.path))) if parts.path else relative_source
+        if path == ".." or path.startswith("../") or path.startswith("/"):
+            raise ValueError("Supporting document link escapes the repository: " + target)
+        base = REPO + "/blob/main/"
+        if label.startswith("!"):
+            base = REPO.replace("https://github.com/", "https://raw.githubusercontent.com/") + "/main/"
+        url = base + quote(path, safe="/")
+        url = urlunsplit((*urlsplit(url)[:3], parts.query, parts.fragment))
+        return label + "(" + url + ")"
+
+    text = re.sub(r"(!?\[[^\]]+\])\(([^)]+)\)", link, source.read_text(encoding="utf-8"))
+    return text.rstrip() + "\n\n---\n\n[Public source document](" + REPO + "/blob/main/" + quote(relative_source, safe="/") + ")\n"
 
 
 def render_public_markdown(text):
@@ -62,7 +87,10 @@ def build():
     for name in DOCS:
         source = ROOT / "docs/submission" / name
         if source.exists():
-            shutil.copyfile(source, SITE / "evidence" / name)
+            if source.suffix == ".md":
+                (SITE / "evidence" / name).write_text(public_reading_copy(source), encoding="utf-8", newline="\n")
+            else:
+                shutil.copyfile(source, SITE / "evidence" / name)
     engine = render_public_markdown((ROOT / "docs/submission/DISPUTE_ENGINE.md").read_text(encoding="utf-8"))
     (SITE / "engine.html").write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Savia — the deterministic dispute engine</title><meta name="description" content="The complete R0–R18 transaction dispute workflow: ordered policy, owned evidence, consent, verified simulated receipts and durable recovery."><link rel="icon" href="assets/mark.svg"><link rel="stylesheet" href="styles.css"></head><body><a class="skip" href="#engine-document">Skip to the engine guide</a><header class="mast"><a class="brand" href="./"><img src="assets/mark.svg" width="38" height="38" alt="">savia<span>THE CORE ENGINE</span></a><nav><a href="./">Submission portal</a><a class="button small" href="'+REPO+'">Source</a></nav></header><main><article class="engine-document" id="engine-document">'+engine+'</article></main><footer><span>savia / MCG</span><a href="./">Back to the submission</a></footer></body></html>', encoding="utf-8")
     history_path = ROOT / "docs/submission/development-process.json"
