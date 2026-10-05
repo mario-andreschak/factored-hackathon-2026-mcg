@@ -36,7 +36,7 @@ _CLAIM_BOUNDARY = re.compile(r"[!?;\n]|(?<!\d)\.|\.(?!\d)")
 _DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?\b|\b\d{1,2}/\d{1,2}/\d{4}\b")
 _NUMBER = re.compile(r"(?<![\w])[-+]?\d+(?:[.,]\d+|[ \u00a0\u202f]\d{3}(?!\d))*(?:[eE][-+]?\d+)?")
 _CURRENCIES = set("COP USD EUR BRL MXN ARS CLP PEN UYU PYG BOB VES GBP CAD AUD CHF JPY CNY INR KRW SEK NOK DKK NZD ZAR HKD SGD AED SAR TRY RUB CRC DOP GTQ HNL NIO PAB BZD CUP".split())
-_STATUS_WORDS = {"approved", "declined", "denied", "reversed", "pending", "settled", "failed", "open", "closed", "escalated", "cancelled", "canceled", "received", "in process", "resolved", "aprobado", "rechazado", "abierto", "cerrado", "recibido", "aprovado", "recusado", "rejeitado", "aberto", "fechado", "recebido"}
+_STATUS_WORDS = {"approved", "declined", "denied", "reversed", "pending", "settled", "failed", "open", "closed", "escalated", "cancelled", "canceled", "received", "in process", "resolved", "aprobado", "aprobada", "rechazado", "rechazada", "revertido", "revertida", "pendiente", "abierto", "abierta", "cerrado", "cerrada", "recibido", "recibida", "aprovado", "aprovada", "recusado", "recusada", "rejeitado", "rejeitada", "pendente", "aberto", "aberta", "fechado", "fechada", "recebido", "recebida"}
 _PRIVATE = re.compile(r"\b(?:customer_id|session_id|conversation_id|risk_signals|fraud_score|amount_usd|unrecognized_count_24h|idempotency_key|pending_handle|selection_handle|request_id|authorization_expires_at|trusted_confirmation|service_token|stack\s*trace|traceback|umbral(?:es)?|limiar(?:es)?)\b", re.I)
 _TOOLS = re.compile(r"\b(?:get_my_transaction|list_my_transactions|search_transactions|get_transaction|get_related_complaints|create_complaint|confirm_simulated_intake|prepare_unrecognized_charge|read_intake_receipt|create_verified_handoff|read_verified_handoff|execute_action|verify_action)\b", re.I)
 _PROCESSING = re.compile(r"\b(?:fue procesad[ao]|foi processad[ao]|ya procese|ja processei)\b")
@@ -433,10 +433,13 @@ def _existing(inputs: Mapping) -> tuple[bool, Mapping]:
 
 
 def _facts(inputs: Mapping) -> dict[str, set]:
-    facts = {key: set() for key in ("ids", "dates", "amounts", "amount_currency", "currencies", "refs", "numbers", "statuses", "last4")}
+    facts = {key: set() for key in ("ids", "dates", "amounts", "amount_currency", "currencies", "refs", "numbers", "statuses", "last4", "merchants")}
 
     def collect(value: object):
         if isinstance(value, Mapping):
+            for merchant_key in ("merchant", "merchant_name"):
+                if isinstance(value.get(merchant_key), str) and value[merchant_key].strip():
+                    facts["merchants"].add(_guidance_text(value[merchant_key]))
             for amount_key in ("amount", "claimed_amount"):
                 if value.get(amount_key) is not None and isinstance(value.get("currency"), str):
                     try:
@@ -493,6 +496,61 @@ def _facts(inputs: Mapping) -> dict[str, set]:
             if projection_key == "existing_case":
                 facts["statuses"].add(projection["status"])
     return facts
+
+
+def _display_assertion_errors(message: str, facts: Mapping) -> list[str]:
+    """Ground finite ES/PT field assertions independently of Markdown styling.
+
+    Quoting a field value still asserts it. Only an explicitly attributed,
+    metalinguistic or conditional clause is treated as a non-bank assertion;
+    a later independent clause is checked separately. This is a bounded
+    textual guard, not a proof of arbitrary natural-language entailment.
+    """
+    text = unicodedata.normalize("NFKC", message)
+    text = "".join(char for char in unicodedata.normalize("NFD", text)
+                   if unicodedata.category(char) not in {"Mn", "Cf"})
+    text = re.sub(r"[*_`]", "", text).casefold()
+    # Exact trusted names can contain sentence punctuation or conjunctions.
+    # Protect only whole known names; an appended invented suffix remains.
+    merchant_tokens = set()
+    for index, merchant in enumerate(sorted(facts["merchants"], key=len, reverse=True)):
+        token = f"groundedmerchant{index}"
+        while token in text:
+            token += "x"
+        text = re.sub(r"(?<!\w)" + re.escape(merchant) + r"(?!\w)", token, text)
+        merchant_tokens.add(token)
+    # Split contrasts and independent fact-bearing conjunctions, not words
+    # inside a merchant's name. Keep each exception local to its own clause.
+    clauses = re.split(r"[.!?;\n]|\b(?:pero|sin embargo|mas|porem|contudo)\b|\s+(?:y|e)\s+(?=(?:el|la|o|a)\s+(?:estado|status|comercio|estabelecimento|transaccion|transacao)\b)", text)
+    copula = r"(?:es|esta|e|fue|foi|figura\s+como|aparece\s+como|consta\s+como)"
+    patterns = (
+        ("status_unverified", "statuses", re.compile(r"\b(?:estado|status)(?:\s+(?:verificado|registrado|actual|atual|da\s+transacao|de\s+la\s+transaccion))?\s*(?::|=|" + copula + r"\b)\s*(.+)$")),
+        ("merchant_unverified", "merchants", re.compile(r"\b(?:comercio|estabelecimento)(?:\s+(?:verificado|registrado|da\s+transacao|de\s+la\s+transaccion))?\s*(?::|=|" + copula + r"\b)\s*(.+)$")),
+        ("status_unverified", "statuses", re.compile(r"\b(?:transaccion|transacao|cargo|cobranca|compra|pago|pagamento)\s+" + copula + r"\s+(" + "|".join(re.escape(word) for word in sorted(_STATUS_WORDS, key=len, reverse=True)) + r")\b(.*)$")),
+    )
+    errors = []
+    for clause in clauses:
+        clause = clause.strip()
+        for code, key, pattern in patterns:
+            match = pattern.search(clause)
+            if not match:
+                continue
+            prefix = clause[:match.start()]
+            # Require an explicit hypothetical/report/quotation context before
+            # the assertion; quotes surrounding only its value are no escape.
+            if re.search(r"\b(?:si|se)\s+(?:(?:el|la|o|a)\s+)?$", prefix):
+                continue
+            if re.search(r"\b(?:ejemplo|exemplo|frase|cita|citacao)\s*[:=]?\s*[\"“«']\s*(?:(?:el|la|o|a)\s+)?$", prefix):
+                continue
+            if re.search(r"\b(?:cliente|usuario|usuaria|persona)\s+(?:dice|afirma|indica|diz|afirma|relata)\s*(?:que\s+)?[\"“«']?\s*(?:(?:el|la|o|a)\s+)?$", prefix):
+                continue
+            value = match[1].strip(" \t:,\"'‘’“”«»")
+            if key == "statuses":
+                value = re.split(r"\s+(?:y|e|pero|mas)\s+|,", value, maxsplit=1)[0].strip(" \t\"'‘’“”«»")
+            allowed = merchant_tokens if key == "merchants" else {_guidance_text(item) for item in facts[key]}
+            if value not in allowed:
+                errors.append(code)
+    return errors
 
 
 def _output_privacy_errors(message: str, facts: Mapping) -> list[str]:
@@ -594,6 +652,7 @@ def validate_response(candidate: Mapping, generator_input: Mapping) -> list[str]
             errors.append(key + "_unverified")
 
     facts = _facts(generator_input)
+    errors.extend(_display_assertion_errors(message, facts))
     ignored_spans = []
     for token, start, end in _tokens(message):
         if _ID_HINT.search(token):
