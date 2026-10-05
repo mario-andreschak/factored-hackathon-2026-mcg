@@ -14,7 +14,7 @@ The engineering story has substance at every layer:
 | Achievement | Why it matters | Inspect the evidence |
 | --- | --- | --- |
 | **5.9 million rows** prepared through bronze, silver and gold | A repeatable data product with contracts, lineage, quarantine and atomic publication | [Pipeline and measured run](../../pipeline/README.md), [manifest](../pipeline/manifest.json) |
-| **500/500** historical customer requests with real Sol model calls | Independent customer-oracle, MCP-result and persisted-state checks under bounded admission | [Banking acceptance and exact scope](../BANKING_MCP_IMPLEMENTATION.md#current-model-capacity) |
+| **500/500** historical provider-backed requests over fictional customer fixtures, using Sol | Independent customer-oracle, MCP-result and persisted-state checks under bounded admission | [Banking acceptance and exact scope](../BANKING_MCP_IMPLEMENTATION.md#current-model-capacity) |
 | **300/300** correct parallel FLUJO requests in the neutral-reference repeat | A measured orchestration and inference foundation behind the customer example | [Capacity report](measurements/INFRASTRUCTURE_CAPACITY.md), [aggregate receipt](measurements/infrastructure-capacity.json) |
 | **18 Fly leaf sandboxes live together** in a recovered collaboration run | Actual teams, tools, shared findings and result checking | [Sandbox collaboration evidence](measurements/INFRASTRUCTURE_CAPACITY.md#real-sandbox-and-collaboration-runs) |
 | **100/100 correct and bounded-safe Luna responses** | A frozen bilingual fixture oracle, independent audit and 100 overlapping subscription app-server turns | [Luna benchmark](measurements/luna-100/README.md), [independent audit](measurements/luna-100/run-100/audit.json) |
@@ -74,7 +74,7 @@ with human adjudication pending.
 
 Gloria supplied the prompt flow and decision motor. In parallel, the banking MCP
 implemented customer-bound reads, revocation and persisted handoff. Historical
-FLUJO/Sol acceptance reached 500/500 real customer requests, with independent oracle
+FLUJO/Sol acceptance reached 500/500 real provider-backed requests over fictional customer fixtures, with independent oracle
 and ownership audits. The report retains the earlier attempts and the exact revision
 of the successful run.
 

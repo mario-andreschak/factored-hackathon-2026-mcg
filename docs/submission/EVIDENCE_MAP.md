@@ -8,6 +8,12 @@ live banking action or private organizer dataset.
 
 ## Technical judgment and useful customer behavior
 
+The successor's [immediate card protection](measurements/CARD_BLOCK_VERIFICATION.md)
+uses owned selection, explicit confirmation and a durable verified receipt.
+Its local checks include 100 concurrent confirmations producing one simulated
+block, cancellation, expiration, receipt tampering and new-session recovery.
+Public runtime acceptance retains a separate deployment receipt.
+
 | Evidence | Exact result and scope | Implementation / verification |
 | --- | --- | --- |
 | [Recorded two-reviewer inquiry](measurements/team-story-summary.json) | **2/2 actual model workers completed**; 4.278 s from create-request start to the first completed UI poll; seven work events, then an eighth explicit helpful-closure event. Saved date/amount and receipt advice survives new chat/reload. This is an actual direct-provider customer example over fictional bank data. | [Inquiry service](../../savia_assistant/service.py), [inquiry API](../../savia_assistant/api.py), [assistant tests](../../savia_assistant/tests/) |
@@ -68,6 +74,11 @@ a component result. It does not estimate production traffic or authorize a bank
 action. This is a measured comparison with an explicit safety/coverage tradeoff.
 
 ## Analytics and strong development
+
+[Measured operating decisions](../review/OPERATING_DECISIONS.md) independently
+reconstruct Luna latency, cache/token overhead and routing safety versus extra
+handoffs. The charts and hashed inputs connect each denominator to a product
+decision; the [script](../../scripts/analyze_operating_evidence.py) makes no provider calls.
 
 | Evidence | Engineering contribution | Implementation / verification |
 | --- | --- | --- |
