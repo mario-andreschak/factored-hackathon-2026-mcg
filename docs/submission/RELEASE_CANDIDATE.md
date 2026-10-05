@@ -1,8 +1,10 @@
 # Savia release candidate
 
 Status: rc.1 submission artifacts are frozen; the deployed Listen successor is qualified.
-The recovered swarm connector is in development. Public visibility and physical
-legacy-folder cleanup remain pending. Updated 2026-10-05.
+The recovered swarm connector's [source and integration pins](assistant/FLEET_CONNECTOR.md)
+are merged; runtime qualification remains pending. Public visibility is verified.
+Physical legacy-folder cleanup and full ten-by-ten swarm qualification remain
+pending. Updated 2026-10-05.
 
 Release target: [v0.1.0-rc.1](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.1).
 
@@ -110,7 +112,13 @@ FLUJO main remains general purpose. Its legacy release-team worktrees are clean
 at signed `c20ef41db311293ee4f8e2d9f83762f662f3382f`; see
 [WORKTREE_CHECK.md](WORKTREE_CHECK.md).
 
-## Remaining publication and local cleanup
+## Public release and remaining local cleanup
+
+The repository is public. The supplemental
+[rc.2 release](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.2)
+is non-draft with 20 assets. Public visibility was verified on October 5 via
+`gh`, anonymous GitHub repository/release APIs and the visible Public repository
+badge. This closes the public visibility gate.
 
 The final source and artifact audit passed and publication is authorized.
 The tagged release contains the film, editable decks, PDFs and measured
