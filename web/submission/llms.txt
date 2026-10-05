@@ -1,10 +1,11 @@
 # Savia submission
 
-Ask once. Savia follows through. A durable Spanish/Portuguese customer inquiry with owned facts, explicit action consent, real completed reviewer work and integrated voice.
+Ask once. Savia follows through. The foundation is the complete deterministic R0–R18 transaction dispute engine: owned facts, ordered policy, scoped clarification, explicit action consent, verified simulated receipts, durable recovery and handoff. Spanish/Portuguese voice and completed reviewer work extend that core.
 
 ## Read in order
 
 - [START_HERE.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/START_HERE.md)
+- [DISPUTE_ENGINE.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/DISPUTE_ENGINE.md)
 - [EVIDENCE_MAP.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/EVIDENCE_MAP.md)
 - [DEVELOPMENT_PROCESS.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/DEVELOPMENT_PROCESS.md)
 - [ELEVENLABS_COMPARISON.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/ELEVENLABS_COMPARISON.md)
