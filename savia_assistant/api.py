@@ -46,15 +46,20 @@ def install_routes(app, authenticate):
         Avatar observes this exact server response and uses its existing
         receipt/single-consumption machinery. The browser supplies no prose.
         """
-        _, owner, service = scoped(request)
+        current, owner, service = scoped(request)
         item = next((i for i in service.list(owner, language)["items"] if i["id"] == case_id), None)
         if item is None:
             raise HTTPException(404, "Consulta no disponible / Consulta indisponível")
         event = item["events"][-1] if item["events"] else None
         if event is None or event["id"] <= after_event_id:
             return Response(status_code=204)
-        return {**item["voice_update"], "event_id":event["id"],
-                "inquiry_state":item["state"], "bank_authority":False}
+        payload = {**item["voice_update"], "event_id":event["id"],
+                   "inquiry_state":item["state"], "bank_authority":False}
+        conversation = getattr(request.app.state, "conversation", None)
+        if conversation is not None and item["state"] in {
+                "team_completed", "awaiting_customer", "informational_resolved"}:
+            conversation.remember_result(current.id, payload["reply"])
+        return payload
 
     @app.post("/api/assistant/cases", status_code=202)
     def create_case(body: Intake, request: Request):
