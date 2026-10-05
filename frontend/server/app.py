@@ -96,6 +96,16 @@ class ConfirmActionBody(BaseModel):
     query_scope_id: str | None = Field(default=None, pattern=r"^q_[a-f0-9]{32}$")
 
 
+class CardBlockBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    product_reference: str = Field(pattern=r"^prod_[a-f0-9]{24}$")
+    operation: Literal["prepare", "confirm", "receipt", "status", "cancel"]
+    request_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
+    pending_handle: str | None = Field(default=None, pattern=r"^card_[A-Za-z0-9_-]{43}$")
+    confirmed: bool = False
+    language: Literal["es", "pt"] = "es"
+
+
 class HandoffActionBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     reason: Literal["out_of_policy", "emergency", "customer_request", "clarification_exhausted",
@@ -402,8 +412,27 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
     period_query = Query(MAX_HISTORY_PERIOD, pattern="^(?:" + "|".join(HISTORY_PERIODS) + ")$")
 
     @app.get("/api/overview")
-    def overview(request: Request, limit: int = Query(500, ge=1, le=500), period: str = period_query):
-        return request.app.state.repository.overview(session(request).profile_id, limit, period=period)
+    async def overview(request: Request, limit: int = Query(500, ge=1, le=500), period: str = period_query):
+        current = session(request)
+        data = request.app.state.repository.overview(current.profile_id, limit, period=period)
+        chat = request.app.state.chat_service
+        backend = getattr(chat, "_bank_backend", None)
+        if backend is not None and hasattr(backend, "card_action") and getattr(chat, "_action_enabled", False):
+            from .chat import ChatError
+            customer = request.app.state.repository.profile_customer(current.profile_id)
+            for product in data["products"]:
+                if product["type"] not in {"Tarjeta Crédito", "Tarjeta Débito"} or product["status"] != "Active":
+                    continue
+                target = request.app.state.repository.card_target(current.profile_id, product["reference"])
+                if target:
+                    try:
+                        observed = await backend.card_action(chat, customer, current.id, current.expires_at, target, operation="status")
+                        product["card_protection_status"] = ("blocked" if observed["state"] == "card_block_verified" else
+                            "unblocked" if observed["state"] == "card_unblocked" else "unverified")
+                    except ChatError:
+                        product["card_protection_status"] = "unverified"
+                    product["card_protection_simulated"] = True
+        return data
 
     @app.get("/api/transactions")
     def transactions(request: Request, product: str | None = Query(None, max_length=64),
@@ -414,6 +443,51 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         data = request.app.state.repository.overview(session(request).profile_id, limit, product=product,
                                                     status=status, q=q, offset=offset, month=month, period=period)
         return {"transactions": data["transactions"], "metadata": data["metadata"]}
+
+    @app.post("/api/cards/block")
+    async def card_block(body: CardBlockBody, request: Request):
+        current = session(request)
+        unavailable = ("O bloqueio de demonstração não está disponível." if body.language == "pt"
+                       else "El bloqueo de demostración no está disponible.")
+        backend = getattr(request.app.state.chat_service, "_bank_backend", None)
+        if backend is None or not hasattr(backend, "card_action"):
+            raise HTTPException(503, unavailable)
+        target = request.app.state.repository.card_target(current.profile_id, body.product_reference)
+        if not target:
+            raise HTTPException(404, unavailable)
+        if (body.operation == "prepare" and (not body.request_id or body.pending_handle or body.confirmed)
+                or body.operation in {"confirm", "receipt", "cancel"} and (not body.pending_handle or body.request_id)
+                or body.operation == "status" and (body.request_id or body.confirmed)
+                or body.operation == "confirm" and body.confirmed is not True):
+            raise HTTPException(422, unavailable)
+        from .chat import ChatError
+        try:
+            result = await backend.card_action(request.app.state.chat_service,
+                request.app.state.repository.profile_customer(current.profile_id), current.id, current.expires_at,
+                target, operation=body.operation, request_id=body.request_id,
+                pending_handle=body.pending_handle, confirmed=body.confirmed)
+            verified = result.get("state") == "card_block_verified"
+            result["message"] = (("Cartão bloqueado na demonstração. Recibo salvo e estado relido. Nenhum banco real foi alterado."
+                if verified else "Confirme o cartão selecionado para bloqueá-lo na demonstração. Nenhum banco real será alterado.")
+                if body.language == "pt" else
+                ("Tarjeta bloqueada en la demostración. Recibo guardado y estado releído. Ningún banco real fue modificado."
+                if verified else "Confirma la tarjeta seleccionada para bloquearla en la demostración. Ningún banco real será modificado."))
+            if result.get("state") == "card_block_unverified":
+                result["message"] = ("Não foi possível verificar o bloqueio. Consulte o estado antes de tentar novamente."
+                    if body.language == "pt" else "No se pudo verificar el bloqueo. Consulta el estado antes de intentarlo de nuevo.")
+            if result.get("state") == "card_unblocked":
+                result["message"] = ("Seu cartão fictício ainda não tem um bloqueio confirmado." if body.language == "pt"
+                    else "Tu tarjeta ficticia todavía no tiene un bloqueo confirmado.")
+            if result.get("state") == "expired":
+                result["message"] = ("A confirmação expirou sem um bloqueio registrado. Prepare uma nova confirmação."
+                    if body.language == "pt" else "La confirmación expiró sin un bloqueo registrado. Prepara una nueva confirmación.")
+            if result.get("state") == "cancelled":
+                result["message"] = ("Preparação cancelada. Nenhum bloqueio foi registrado." if body.language == "pt"
+                    else "Preparación cancelada. No se registró ningún bloqueo.")
+            request.app.state.conversation.remember_result(current.id, result["message"])
+            return result
+        except ChatError as exc:
+            raise HTTPException(exc.status_code, unavailable) from None
 
     @app.get("/api/chat/status")
     def chat_status(request: Request, background: BackgroundTasks):
@@ -509,6 +583,16 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         minimized = None
         if not message:
             raise HTTPException(422, "Escribe un mensaje para el asistente.")
+        if (hasattr(service, "card_block_hint") and getattr(service, "_bank_backend", None) is not None
+                and re.search(r"bloque|bloqui|congel|freeze|block", message, re.I)
+                and re.search(r"tarjeta|cart[aã]o|card", message, re.I)):
+            from .chat import ChatError
+            try:
+                result = service.card_block_hint(customer, current.id, current.expires_at, message, body.language)
+                request.app.state.conversation.remember_result(current.id, result["reply"])
+                return result
+            except ChatError as exc:
+                raise HTTPException(exc.status_code, exc.message) from None
         if body.transaction_reference:
             if len(message) > 3600:
                 raise HTTPException(422, "Acorta el mensaje a 3600 caracteres cuando selecciones un movimiento.")

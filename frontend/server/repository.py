@@ -413,6 +413,22 @@ class Repository:
                                                   "Los números de cuenta se eliminaron en silver; se usa una referencia opaca.")},
         }
 
+    def card_target(self, profile_id: str, reference: str) -> dict | None:
+        """Resolve an opaque UI selection exclusively inside its owner's card set."""
+        if not isinstance(reference, str) or not re.fullmatch(r"prod_[a-f0-9]{24}", reference):
+            return None
+        snapshot = self.snapshot()
+        self.profile(profile_id, snapshot)
+        customer = self.state.customer(profile_id)
+        with self.connection() as con:
+            rows = con.execute("SELECT product_id,product_type,product_status FROM read_parquet(?) "
+                "WHERE customer_id=? AND product_type IN ('Tarjeta Crédito','Tarjeta Débito')",
+                [str(snapshot.build / "silver/products.parquet"), customer]).fetchall()
+        matched = [row for row in rows if hmac.compare_digest(self.reference("prod", customer, row[0]), reference)]
+        if len(matched) != 1 or matched[0][2] != "Active":
+            return None
+        return {"product_id": matched[0][0], "snapshot": snapshot.build.name, "product_reference": reference}
+
     def _owned_transaction(self, profile_id: str, reference: str, *, action_context: bool = False) -> tuple[dict, str] | None:
         """Resolve a browser reference only inside this owner-scoped server."""
         if not isinstance(reference, str) or not re.fullmatch(r"txn_[a-f0-9]{24}", reference):

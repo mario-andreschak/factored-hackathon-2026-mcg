@@ -56,6 +56,7 @@ import type {
   Transaction,
 } from "./types";
 import { InquiryPanel } from "./InquiryPanel";
+import { CardBlockControl } from "./CardBlockControl";
 import Eyes from "./avatar/Eyes";
 import { useSaviaVoice } from "./avatar/useSaviaVoice";
 import {
@@ -580,6 +581,13 @@ function ProductCard({
       <span className="product-name">
         {portalProduct(product.type, language)}
       </span>
+      {product.card_protection_status === "blocked" && (
+        <strong>
+          {language === "pt"
+            ? "Cartão bloqueado · demo"
+            : "Tarjeta bloqueada · demo"}
+        </strong>
+      )}
       <span className="product-ref">
         Ref. {product.reference.slice(-6).toUpperCase()} <span>·</span>{" "}
         {product.currency}
@@ -634,6 +642,13 @@ function BankingCard({
       </span>
       <div className="bank-card-details">
         <span>{portalProduct(product.type, language)}</span>
+        {product.card_protection_status === "blocked" && (
+          <span>
+            {language === "pt"
+              ? "Cartão bloqueado · demo"
+              : "Tarjeta bloqueada · demo"}
+          </span>
+        )}
         <strong>
           {portalMoney(product.balance, product.currency, hidden, language)}
         </strong>
@@ -1122,6 +1137,7 @@ function ProductDetail({
             : "Ver movimientos de este producto"}
           <ArrowRight size={18} />
         </button>
+        <CardBlockControl products={[product]} language={language} />
       </div>
     </Modal>
   );
@@ -2351,6 +2367,7 @@ export function Assistant({
   status,
   selected,
   transactions,
+  products = [],
   onSelectTransaction,
   hidden,
   synthetic,
@@ -2364,6 +2381,7 @@ export function Assistant({
   status: ChatStatus;
   selected: Transaction | null;
   transactions: Transaction[];
+  products?: Product[];
   onSelectTransaction: (transaction: Transaction | null) => void;
   hidden: boolean;
   synthetic: boolean;
@@ -2374,6 +2392,7 @@ export function Assistant({
   onLanguageChange?: (language: ActionLanguage) => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]),
+    [cardBlockRequested, setCardBlockRequested] = useState(false),
     [queryScopes, setQueryScopes] = useState<
       {
         query_id: string;
@@ -2945,6 +2964,7 @@ export function Assistant({
     try {
       const result = await api<{
         reply: string;
+        action_hint?: string;
         queries?: typeof queryScopes;
         active_query_id?: string | null;
       }>("/api/chat/messages", {
@@ -2960,6 +2980,7 @@ export function Assistant({
         }),
       });
       if (!alive.current || controller.current.signal.aborted) return;
+      if (result.action_hint === "card_block") setCardBlockRequested(true);
       setMessages((m) => [...m, { role: "assistant", text: result.reply }]);
       if (
         nativeVoiceOwner !== null &&
@@ -3421,6 +3442,23 @@ export function Assistant({
           </span>
           <CheckCheck size={18} />
         </div>
+      )}
+      {status.sandbox_intake_available && (
+        <CardBlockControl
+          products={products}
+          language={actionLanguage}
+          profileId={profileId || ""}
+          requested={cardBlockRequested}
+          onResult={(message) => {
+            setMessages((current) => [
+              ...current,
+              { role: "assistant", text: message },
+            ]);
+            const owner = voiceRef.current.getSessionOwner();
+            if (owner !== null && voiceRef.current.active)
+              voiceRef.current.narrate(message, owner);
+          }}
+        />
       )}
       {status.sandbox_intake_available &&
         historyReady &&
@@ -5406,6 +5444,7 @@ export default function App() {
         status={chatStatus}
         selected={chatSelection}
         transactions={transactions}
+        products={products}
         onSelectTransaction={setChatSelection}
         hidden={hidden}
         synthetic={synthetic}
@@ -5491,8 +5530,8 @@ export default function App() {
             </div>
             <p className="about-intro">
               {pt
-                ? "Esta demonstração não movimenta dinheiro, bloqueia cartões nem executa ações em um banco. Os saldos vêm do snapshot e podem ter datas diferentes das dos movimentos."
-                : "Esta demo no mueve dinero, bloquea tarjetas ni ejecuta acciones en un banco. Los saldos son valores suministrados en el snapshot y pueden tener fechas distintas a las transacciones."}
+                ? "Esta demonstração permite bloquear um cartão fictício com recibo persistido. Não movimenta dinheiro nem executa ações em um banco real. Os saldos vêm do snapshot."
+                : "Esta demo permite bloquear una tarjeta ficticia con recibo persistido. No mueve dinero ni ejecuta acciones en un banco real. Los saldos vienen del snapshot."}
             </p>
             {synthetic && !chatStatus.available && (
               <p className="about-intro">

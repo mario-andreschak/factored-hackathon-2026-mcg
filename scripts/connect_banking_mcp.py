@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 
 READ_TOOLS = {"banking_status", "list_my_transactions", "get_my_transaction"}
 ACTION_TOOLS = {"prepare_unrecognized_charge", "confirm_simulated_intake",
+                "prepare_card_block", "confirm_card_block", "read_card_block",
                 "read_intake_receipt", "create_verified_handoff", "read_verified_handoff"}
 
 
