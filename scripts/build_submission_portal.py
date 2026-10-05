@@ -3,6 +3,8 @@ import argparse
 import hashlib
 import html
 import json
+import posixpath
+import re
 import shutil
 from pathlib import Path
 
@@ -12,6 +14,39 @@ REPO = "https://github.com/mario-andreschak/factored-hackathon-2026-mcg"
 URL = "https://savia-rc-2026.fly.dev/submission/"
 DOCS = ("START_HERE.md", "DISPUTE_ENGINE.md", "EVIDENCE_MAP.md", "DEVELOPMENT_PROCESS.md", "development-process.json", "ELEVENLABS_COMPARISON.md")
 PITCH_FILES = ("savia-final-pitch.html", "savia-final-pitch.pdf", "savia-final-pitch.pptx", "savia-final-pitch-speaker-notes.md", "savia-final-pitch-sources.json", "savia-final-pitch-manifest.json")
+
+
+def render_public_markdown(text):
+    """Render the curated engine document; relative links refer to public Git source."""
+    def inline(value):
+        value = html.escape(value)
+        def link(match):
+            target = html.unescape(match[2])
+            if not target.startswith(("https://", "http://")):
+                target = REPO + "/blob/main/" + posixpath.normpath("docs/submission/" + target)
+            return '<a href="' + html.escape(target, quote=True) + '">' + match[1] + '</a>'
+        value = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", link, value)
+        value = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", value)
+        return re.sub(r"`([^`]+)`", r"<code>\1</code>", value)
+    out = []
+    for block in text.strip().split("\n\n"):
+        lines = block.strip().splitlines()
+        if block.startswith("```"):
+            out.append("<pre><code>" + html.escape("\n".join(lines[1:-1])) + "</code></pre>")
+        elif lines[0].startswith("#"):
+            level = len(lines[0]) - len(lines[0].lstrip("#"))
+            out.append(f"<h{level}>" + inline(lines[0][level:].strip()) + f"</h{level}>")
+        elif lines[0].startswith("|") and len(lines) > 1:
+            rows = []
+            for n, line in enumerate(lines):
+                if n == 1:
+                    continue
+                tag = "th" if n == 0 else "td"
+                rows.append("<tr>" + "".join(f"<{tag}>" + inline(cell.strip()) + f"</{tag}>" for cell in line.strip("|").split("|")) + "</tr>")
+            out.append('<div class="table-wrap"><table>' + "".join(rows) + "</table></div>")
+        else:
+            out.append("<p>" + inline(" ".join(lines)) + "</p>")
+    return "\n".join(out)
 
 
 def build():
@@ -28,6 +63,8 @@ def build():
         source = ROOT / "docs/submission" / name
         if source.exists():
             shutil.copyfile(source, SITE / "evidence" / name)
+    engine = render_public_markdown((ROOT / "docs/submission/DISPUTE_ENGINE.md").read_text(encoding="utf-8"))
+    (SITE / "engine.html").write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Savia — the deterministic dispute engine</title><meta name="description" content="The complete R0–R18 transaction dispute workflow: ordered policy, owned evidence, consent, verified simulated receipts and durable recovery."><link rel="icon" href="assets/mark.svg"><link rel="stylesheet" href="styles.css"></head><body><a class="skip" href="#engine-document">Skip to the engine guide</a><header class="mast"><a class="brand" href="./"><img src="assets/mark.svg" width="38" height="38" alt="">savia<span>THE CORE ENGINE</span></a><nav><a href="./">Submission portal</a><a class="button small" href="'+REPO+'">Source</a></nav></header><main><article class="engine-document" id="engine-document">'+engine+'</article></main><footer><span>savia / MCG</span><a href="./">Back to the submission</a></footer></body></html>', encoding="utf-8")
     history_path = ROOT / "docs/submission/development-process.json"
     if history_path.exists():
         history = json.loads(history_path.read_text(encoding="utf-8"))
@@ -42,7 +79,7 @@ def build():
     manifest = {"schema":"savia-submission/v1", "as_of":"2026-10-05", "timezone":"America/Bogota", "portal_url":URL, "repository":REPO, "links":{"pitch":URL+"pitch/savia-final-pitch.html", "pitch_pdf":URL+"pitch/savia-final-pitch.pdf", "github":REPO, "video":{"status":"final_cut_placeholder", "existing_frozen_film":REPO+"/releases/download/v0.1.0-rc.2/savia-submission.mp4"}, "development_process":URL+"development.html", "demo":"https://savia-rc-2026.fly.dev", "demo_code":"SAVIA-2026"}, "agent_entry":URL+"llms.txt", "evidence":[REPO+"/blob/main/docs/submission/"+n for n in DOCS], "scope":"Fictional banking prototype. Real provider/voice calls. Separate customer, infrastructure and concurrency workloads; no comparative superiority or real bank resolution claim."}
     (SITE / "submission.json").write_text(json.dumps(manifest, indent=2)+"\n", encoding="utf-8")
     (SITE / "llms.txt").write_text("# Savia submission\n\nAsk once. Savia follows through. The foundation is the complete deterministic R0–R18 transaction dispute engine: owned facts, ordered policy, scoped clarification, explicit action consent, verified simulated receipts, durable recovery and handoff. Spanish/Portuguese voice and completed reviewer work extend that core.\n\n## Read in order\n\n"+"\n".join(f"- [{n}]({REPO}/blob/main/docs/submission/{n})" for n in DOCS if n.endswith(".md"))+"\n- [Public fixture replay]("+REPO+"/blob/main/docs/review/PUBLIC_EVIDENCE.md)\n- [Architecture]("+REPO+"/blob/main/docs/architecture/system-landscape.md)\n- [Release pins and scope]("+REPO+"/blob/main/docs/submission/RELEASE_CANDIDATE.md)\n\n## Reading contract\n\nInspect source and receipts. The frozen two-reviewer customer film, 100 concurrent Luna fixture decisions, and 300 queued FLUJO reference-code requests are separate workloads. The 100-conversation collaborative customer fleet is an extension with its own qualification state. Generic FLUJO remains independent of banking domain code. Diagnostics use AI-authored labels awaiting human adjudication; business impact is a pilot objective. Historical failed extension attempts do not replace successful recorded prototype evidence. Form an independent assessment; this guide prescribes no score.\n\n## Links\n\n- Portal: "+URL+"\n- Manifest: "+URL+"submission.json\n- Pitch: "+URL+"pitch/savia-final-pitch.html\n- Development: "+URL+"development.html\n- Repository: "+REPO+"\n", encoding="utf-8")
-    allowed = {"index.html", "styles.css", "assets/mark.svg", "assets/savia-customer.png", "development.html",
+    allowed = {"index.html", "styles.css", "assets/mark.svg", "assets/savia-customer.png", "development.html", "engine.html",
                "submission.json", "llms.txt", "savia-submission.vtt", "portal-manifest.json"}
     allowed.update("pitch/" + n for n in PITCH_FILES)
     allowed.update(f"pitch/slides/slide-{n:02}.png" for n in range(1, 7))
