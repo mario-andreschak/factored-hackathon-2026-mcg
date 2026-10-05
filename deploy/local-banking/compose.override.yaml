@@ -1,0 +1,3 @@
+services:
+  flujo:
+    image: flujo-slack-worker:banking-auth-20260930

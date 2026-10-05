@@ -1,0 +1,10 @@
+# syntax=docker/dockerfile:1
+# Release only the public login gateway over the qualified deployed runtime.
+FROM registry.fly.io/flujo-factored-2026@sha256:9a05802f5656073d81c9c70e650e2a2855e35dda058ae42a5eb61965ef2dc291
+USER root
+COPY --chmod=0644 gateway.mjs /opt/savia/fly/gateway.mjs
+RUN node --check /opt/savia/fly/gateway.mjs \
+    && node -e 'const fs=require("node:fs"),c=require("node:crypto"),sha=p=>c.createHash("sha256").update(fs.readFileSync(p)).digest("hex");fs.writeFileSync("/opt/savia/fly/gateway-provenance.json",JSON.stringify({version:1,baseImage:"registry.fly.io/flujo-factored-2026@sha256:9a05802f5656073d81c9c70e650e2a2855e35dda058ae42a5eb61965ef2dc291",changedRuntimeFiles:["/opt/savia/fly/gateway.mjs"],gatewaySha256:sha("/opt/savia/fly/gateway.mjs"),inheritedArtifactManifestSha256:sha("/opt/savia/fly/artifact-manifest.json"),inheritedCompilationReceiptSha256:sha("/opt/savia/fly/compilation.json")},null,2)+"\n",{mode:0o644});'
+LABEL io.savia.gateway.scope="public-login-gateway-only" \
+      io.savia.gateway.changed="/opt/savia/fly/gateway.mjs" \
+      io.savia.gateway.base="sha256:9a05802f5656073d81c9c70e650e2a2855e35dda058ae42a5eb61965ef2dc291"

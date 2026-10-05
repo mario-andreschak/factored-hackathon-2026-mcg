@@ -1,0 +1,7 @@
+**
+!.overlay/
+!.overlay/**
+!runtime.mjs
+!entrypoint.sh
+!gateway.mjs
+!Dockerfile.remote

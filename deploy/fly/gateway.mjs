@@ -238,10 +238,9 @@ export function createGateway(config, options = {}) {
     const results = await Promise.all([
       probeJson(mainPort, '/healthz', { host: config.mainHost },
         value => value?.status === 'ok' && value.dataset_ready === true),
-      probeJson(workerPort, '/api/model', { host: '127.0.0.1:4200' },
-        value => Array.isArray(value) && value.some(model => model.id === 'dispute-native-model'
-          && model.name === 'gpt-6-sol' && model.provider === 'codex' && model.adapter === 'codex-cli'
-          && model.reasoningEffort === 'low' && model.maxTurns === 4)),
+      probeJson(workerPort, '/api/worker/status', { host: '127.0.0.1:4200',
+        authorization: `Bearer ${config.workerToken}` },
+      value => value?.mode === 'worker' && value.state === 'ready'),
     ]);
     return results.every(Boolean);
   };

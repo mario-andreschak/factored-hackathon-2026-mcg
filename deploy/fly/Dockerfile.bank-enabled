@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1
+# Preserve the deployed qualified runtime, frontend, MCPs and all dependencies.
+FROM registry.fly.io/flujo-factored-2026@sha256:fd81d2931c1031b25387b28473e7578165a3c9276d33af467198f41484bfc89d AS worker-runtime
+
+FROM worker-runtime AS bank-compiler
+USER root
+WORKDIR /app
+ADD .overlay/compile/source.tar /app/
+ADD .overlay/compile/turn-provenance.tar /app/
+COPY .overlay/compile/source-manifest.json /tmp/source-manifest.json
+COPY .overlay/compile/turn-provenance.patch /tmp/turn-provenance.patch
+COPY qualify-bank-build.mjs /tmp/qualify-bank-build.mjs
+ENV NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=6144
+# The immutable builder's lock and config match the runtime byte-for-byte.
+# Compiler dependencies remain in this disposable stage.
+RUN node -e 'const fs=require("fs"),c=require("crypto"),m=JSON.parse(fs.readFileSync("/tmp/source-manifest.json"));for(const f of m.originalTurnProvenanceSourceFiles)if(c.createHash("sha256").update(fs.readFileSync("/app/"+f.path)).digest("hex")!==f.sha256)throw Error("Original hotfix source mismatch");' \
+    && npm ci --include=dev --ignore-scripts --no-audit --no-fund
+# Runtime MCP dist files remain the original qualified artifacts.
+COPY --from=worker-runtime /app/mcp-servers /app/mcp-servers
+RUN rm -rf /app/.next \
+    && FLUJO_EXECUTION_ADAPTER_MODULE=/app/src/integrations/hackathon-banking/configuredAdapter.ts \
+       node --require ./scripts/exclude-workspaces-from-next-glob.cjs node_modules/next/dist/bin/next build --webpack \
+    && rm -rf /app/.next/cache \
+    && node /tmp/qualify-bank-build.mjs
+
+FROM worker-runtime
+USER root
+RUN rm -rf /app/.next
+COPY --from=bank-compiler /app/.next /app/.next
+RUN cp /opt/savia/fly/artifact-manifest.json /opt/savia/fly/artifact-manifest.original.json
+COPY --from=bank-compiler /build-receipt/artifact-manifest.json /opt/savia/fly/artifact-manifest.json
+COPY --from=bank-compiler /build-receipt/compilation.json /opt/savia/fly/compilation.json
+LABEL io.savia.worker.compilation="trusted-banking-adapter-20260930" \
+      io.savia.worker.compilation.source="immutable-builder-965b248d-plus-original-turn-provenance" \
+      io.savia.worker.compilation.adapter="src/integrations/hackathon-banking/configuredAdapter.ts" \
+      io.savia.worker.compilation.changed="/app/.next"

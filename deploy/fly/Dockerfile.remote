@@ -1,0 +1,61 @@
+# syntax=docker/dockerfile:1
+# Reuse the exact public ancestor; overlay immutable assets from the existing
+# qualified worker and frontend without compiling either application again.
+FROM ghcr.io/mario-andreschak/flujo@sha256:3c1f028c41e6eaff3852aedc52d49a51f733ea7f274ff187a705fa9d0cd950d8
+USER root
+WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssh-client gosu tini python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install --prefix /opt/codex --cache /tmp/worker-codex-install-cache --omit=dev --no-audit --no-fund @openai/codex@0.157.1 \
+    && npm install --prefix /opt/codex-restricted --cache /tmp/worker-codex-install-cache --omit=dev --no-audit --no-fund @openai/codex@0.157.1 \
+    && rm -rf /tmp/worker-codex-install-cache /app/node_modules/@openai/codex \
+    && ln -s /opt/codex/node_modules/@openai/codex /app/node_modules/@openai/codex \
+    && echo '3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970  /opt/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex' | sha256sum -c - \
+    && echo '3e2584f3f3829a43a0495011a1cecb2facbe64a2403e2b682351fd9c2983f970  /opt/codex-restricted/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex' | sha256sum -c -
+RUN curl -fsSL https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_amd64.tar.gz -o /tmp/gh.tar.gz \
+    && echo '9bca2d1c16825f109907a23307628a2f0698fbf99662b73a5cf0b020293072b8  /tmp/gh.tar.gz' | sha256sum -c - \
+    && mkdir -p /opt/github-cli \
+    && tar -xzf /tmp/gh.tar.gz --strip-components=1 -C /opt/github-cli \
+    && rm /tmp/gh.tar.gz
+
+# Removing replaced trees prevents files retired by the newer app from surviving.
+RUN rm -rf /app/.next /app/scripts /app/mcp-servers /app/github /app/public /app/node_modules/jose /app/node_modules/canonicalize
+ADD .overlay/app/next.tar /app/
+ADD .overlay/app/scripts.tar /app/
+ADD .overlay/app/mcp-servers.tar /app/
+ADD .overlay/app/github.tar /app/
+ADD .overlay/app/public.tar /app/
+ADD .overlay/app/jose.tar /app/node_modules/
+ADD .overlay/app/canonicalize.tar /app/node_modules/
+COPY .overlay/app/package.json .overlay/app/package-lock.json .overlay/app/next.config.mjs /app/
+RUN ln -sf /app/github/gh.mjs /usr/local/bin/gh
+ADD .overlay/banking/banking_mcp.tar /opt/banking-mcp/
+ADD .overlay/banking/pipeline.tar /opt/banking-mcp/
+ADD .overlay/banking/scripts.tar /opt/banking-mcp/
+COPY .overlay/banking/requirements-mcp.txt .overlay/banking/requirements-pipeline.txt .overlay/banking/requirements-s3.txt .overlay/banking/requirements.lock /opt/banking-mcp/
+RUN python3 -m venv /opt/banking-mcp/.venv \
+    && /opt/banking-mcp/.venv/bin/pip install --no-cache-dir -r /opt/banking-mcp/requirements.lock
+
+COPY .overlay/savia/requirements.txt /opt/savia/requirements.txt
+RUN python3 -m venv /opt/savia/.venv \
+    && /opt/savia/.venv/bin/pip install --no-cache-dir -r /opt/savia/requirements.txt
+ADD .overlay/savia/server.tar /opt/savia/
+ADD .overlay/savia/dist.tar /opt/savia/
+COPY runtime.mjs entrypoint.sh gateway.mjs /opt/savia/fly/
+COPY .overlay/manifest.json /opt/savia/fly/artifact-manifest.json
+RUN sed -i 's/\r$//' /opt/savia/fly/entrypoint.sh \
+    && chmod 0755 /opt/savia/fly/entrypoint.sh \
+    && chown -R node:node /home/node/.npm
+ENV FLUJO_BUILD_REVISION=153a039185b1d303fb0853f1d4935980388a1903 \
+    PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ARG WORKER_SOURCE_IMAGE_SHA256=sha256:a071761b46eed021471508f8de8b7d5726752125a3d19e66c4b286d59bde6d86
+LABEL org.opencontainers.image.revision="153a039185b1d303fb0853f1d4935980388a1903" \
+      io.flujo.hotfix="slack-turn-provenance-20260930" \
+      io.savia.worker.source.image="${WORKER_SOURCE_IMAGE_SHA256}"
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=16m --retries=5 \
+    CMD ["node", "-e", "fetch('http://127.0.0.1:8080/_fly/health',{headers:{host:process.env.FLUJO_FLY_MAIN_HOST||'flujo-factored-2026.fly.dev'},signal:AbortSignal.timeout(4000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+ENTRYPOINT ["tini", "--", "/opt/savia/fly/entrypoint.sh"]
+CMD ["node", "/opt/savia/fly/runtime.mjs"]
