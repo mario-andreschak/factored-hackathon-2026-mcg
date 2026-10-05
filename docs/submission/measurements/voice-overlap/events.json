@@ -1,0 +1,520 @@
+{
+  "schema": "savia-release-voice-recording/v1",
+  "status": "complete",
+  "generated_only_runtime": true,
+  "input": {
+    "kind": "file-backed-silent-microphone",
+    "sample_rate_hz": 48000,
+    "bits_per_sample": 16,
+    "physical_microphone_qualified": false
+  },
+  "counts": {
+    "/api/avatar/native-turn": 2,
+    "/savia/api/chat/messages": 1,
+    "/api/avatar/native-result": 1
+  },
+  "overlap": {
+    "foreground_native_audio_started_during_savia_read": true,
+    "foreground_playback_completed_during_savia_read": false
+  },
+  "events": [
+    {
+      "at_ms": 422,
+      "type": "avatar_config_ready",
+      "http_status": 200,
+      "provider": "openrouter-native"
+    },
+    {
+      "at_ms": 521,
+      "type": "fictional_login",
+      "http_status": 200
+    },
+    {
+      "at_ms": 575,
+      "type": "fictional_session_verified",
+      "http_status": 200
+    },
+    {
+      "at_ms": 911,
+      "type": "http_response",
+      "path": "/api/avatar/config",
+      "http_status": 200
+    },
+    {
+      "at_ms": 1304,
+      "type": "http_response",
+      "path": "/api/avatar/native-reset",
+      "http_status": 200
+    },
+    {
+      "at_ms": 2155,
+      "type": "native_voice_ready",
+      "physical_microphone_qualified": false
+    },
+    {
+      "at_ms": 2328,
+      "type": "native_turn_started",
+      "ordinal": 1
+    },
+    {
+      "at_ms": 2531,
+      "type": "http_response",
+      "path": "/savia/api/auth/me",
+      "http_status": 200
+    },
+    {
+      "at_ms": 2532,
+      "type": "browser_voice_milestone",
+      "event": "task-start",
+      "during_read": false
+    },
+    {
+      "at_ms": 2532,
+      "type": "http_response",
+      "path": "/api/avatar/config",
+      "http_status": 200
+    },
+    {
+      "at_ms": 2861,
+      "type": "http_response",
+      "path": "/savia/api/auth/me",
+      "http_status": 200
+    },
+    {
+      "at_ms": 2865,
+      "type": "http_response",
+      "path": "/savia/api/auth/me",
+      "http_status": 200
+    },
+    {
+      "at_ms": 3157,
+      "type": "http_response",
+      "path": "/savia/api/overview",
+      "http_status": 200
+    },
+    {
+      "at_ms": 3259,
+      "type": "http_response",
+      "path": "/savia/api/chat/status",
+      "http_status": 200
+    },
+    {
+      "at_ms": 3324,
+      "type": "http_response",
+      "path": "/savia/api/chat/history",
+      "http_status": 200
+    },
+    {
+      "at_ms": 3355,
+      "type": "http_response",
+      "path": "/api/avatar/native-turn",
+      "http_status": 200
+    },
+    {
+      "at_ms": 3355,
+      "type": "native_turn_response",
+      "http_status": 200
+    },
+    {
+      "at_ms": 3357,
+      "type": "browser_voice_milestone",
+      "event": "voice-start",
+      "during_read": false
+    },
+    {
+      "at_ms": 3754,
+      "type": "http_response",
+      "path": "/savia/api/followups",
+      "http_status": 200
+    },
+    {
+      "at_ms": 4913,
+      "type": "savia_read_started",
+      "ordinal": 1
+    },
+    {
+      "at_ms": 4913,
+      "type": "read_request_seen"
+    },
+    {
+      "at_ms": 4987,
+      "type": "browser_voice_milestone",
+      "event": "voice-interrupted",
+      "during_read": true
+    },
+    {
+      "at_ms": 5001,
+      "type": "http_response",
+      "path": "/api/avatar/native-played",
+      "http_status": 200
+    },
+    {
+      "at_ms": 5145,
+      "type": "native_turn_started",
+      "ordinal": 2
+    },
+    {
+      "at_ms": 5145,
+      "type": "foreground_prompt_submitted",
+      "savia_read_was_pending_after_submit": true
+    },
+    {
+      "at_ms": 7401,
+      "type": "http_response",
+      "path": "/api/avatar/native-turn",
+      "http_status": 200
+    },
+    {
+      "at_ms": 7401,
+      "type": "native_turn_response",
+      "http_status": 200
+    },
+    {
+      "at_ms": 7401,
+      "type": "browser_voice_milestone",
+      "event": "voice-start",
+      "during_read": true
+    },
+    {
+      "at_ms": 7519,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 7622,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 7636,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 7683,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 7731,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 7851,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 7861,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 7902,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8012,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8045,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8084,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8169,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8192,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8197,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8313,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8417,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8420,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8422,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8451,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8494,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8532,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8597,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8614,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8730,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8763,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8783,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 8868,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 9120,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 9361,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 9629,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 9863,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 10116,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 10372,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 10626,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 10862,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 11121,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 11376,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 11610,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 11863,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 12126,
+      "type": "browser_voice_milestone",
+      "event": "voice-audio",
+      "during_read": true
+    },
+    {
+      "at_ms": 12312,
+      "type": "http_response",
+      "path": "/savia/api/chat/messages",
+      "http_status": 200
+    },
+    {
+      "at_ms": 12312,
+      "type": "savia_read_finished",
+      "http_status": 200,
+      "latency_ms": 7399
+    },
+    {
+      "at_ms": 12336,
+      "type": "http_response",
+      "path": "/savia/api/action/status",
+      "http_status": 200
+    },
+    {
+      "at_ms": 12402,
+      "type": "browser_voice_milestone",
+      "event": "task-complete",
+      "during_read": false
+    },
+    {
+      "at_ms": 12404,
+      "type": "http_response",
+      "path": "/api/avatar/native-result-receipt",
+      "http_status": 200
+    },
+    {
+      "at_ms": 17619,
+      "type": "http_response",
+      "path": "/api/avatar/native-played",
+      "http_status": 200
+    },
+    {
+      "at_ms": 17619,
+      "type": "native_output_played",
+      "duringRead": false,
+      "http_status": 200
+    },
+    {
+      "at_ms": 17619,
+      "type": "browser_voice_milestone",
+      "event": "voice-complete",
+      "during_read": false
+    },
+    {
+      "at_ms": 17621,
+      "type": "native_result_started",
+      "ordinal": 1
+    },
+    {
+      "at_ms": 18576,
+      "type": "http_response",
+      "path": "/api/avatar/native-result",
+      "http_status": 200
+    },
+    {
+      "at_ms": 18576,
+      "type": "native_result_response",
+      "http_status": 200
+    },
+    {
+      "at_ms": 18576,
+      "type": "browser_voice_milestone",
+      "event": "voice-start",
+      "during_read": false
+    },
+    {
+      "at_ms": 18735,
+      "type": "http_response",
+      "path": "/savia/api/followups",
+      "http_status": 200
+    },
+    {
+      "at_ms": 24188,
+      "type": "http_response",
+      "path": "/api/avatar/native-played",
+      "http_status": 200
+    },
+    {
+      "at_ms": 24189,
+      "type": "native_result_played_once",
+      "duringRead": false,
+      "http_status": 200,
+      "after_result_start_ms": 6567
+    },
+    {
+      "at_ms": 24191,
+      "type": "browser_voice_milestone",
+      "event": "voice-complete",
+      "during_read": false
+    },
+    {
+      "at_ms": 24202,
+      "type": "capture_complete",
+      "one_savia_read": true,
+      "one_native_result": true
+    }
+  ]
+}

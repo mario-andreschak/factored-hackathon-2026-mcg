@@ -1,0 +1,21 @@
+{
+  "name": "Savia Inquiry RC",
+  "transport": "stdio",
+  "disabled": false,
+  "command": "<existing authorized Python interpreter>",
+  "args": ["-m", "savia_assistant.mcp"],
+  "rootPath": "<isolated application package directory>",
+  "env": {
+    "PYTHONPATH": "<isolated application package directory>",
+    "SAVIA_INQUIRY_STATE_DIR": "<isolated durable inquiry state directory>",
+    "SAVIA_INQUIRY_OWNER": "<trusted 64-hex owner binding; never customer supplied>",
+    "SAVIA_INQUIRY_PROVIDER": "openrouter",
+    "SAVIA_INQUIRY_MODEL_ID": "google/gemini-3.1-flash-lite",
+    "SAVIA_INQUIRY_MODEL_TOKEN": {"value":"<private provider credential supplied at runtime>","metadata":{"isSecret":true}}
+  },
+  "_installCommand": "",
+  "_buildCommand": "",
+  "source": {"type":"local"},
+  "exposeAsMcpServer": false,
+  "enableMcpApps": false
+}

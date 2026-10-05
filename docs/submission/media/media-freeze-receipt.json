@@ -1,0 +1,349 @@
+{
+  "schema": "savia-media-freeze/v1",
+  "frozen_at": "2026-10-04T23:55:56.838814-05:00",
+  "state": "complete-media-owner-freeze",
+  "root_product_steps_accepted": true,
+  "application_source_git_head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+  "publication_requires_cleanup_and_root": true,
+  "minimal_public_media_paths": [
+    "docs/submission/media/README.md",
+    "docs/submission/media/review.html",
+    "docs/submission/media/video/savia-submission.mp4",
+    "docs/submission/media/video/savia-submission.srt",
+    "docs/submission/media/video/savia-submission.vtt",
+    "docs/submission/media/video/savia-submission-receipt.json",
+    "docs/submission/media/video/savia-submission-contact-sheet.jpg",
+    "docs/submission/media/video/tv-timeline.json",
+    "docs/submission/media/decks/savia-hero-customer.png",
+    "docs/submission/media/decks/savia-grounded-answer-crop.png",
+    "docs/submission/media/decks/savia-team-saved-result-crop.png",
+    "docs/submission/media/decks/savia-submission-deck.pptx",
+    "docs/submission/media/decks/savia-submission-deck.pdf",
+    "docs/submission/media/decks/savia-submission-deck.html",
+    "docs/submission/media/decks/savia-submission-deck-speaker-notes.md",
+    "docs/submission/media/decks/savia-submission-deck-speaker-notes.json",
+    "docs/submission/media/decks/savia-submission-deck-contact-sheet.png",
+    "docs/submission/media/decks/savia-submission-deck-slides/slide-01.png",
+    "docs/submission/media/decks/savia-submission-deck-slides/slide-02.png",
+    "docs/submission/media/decks/savia-submission-deck-slides/slide-03.png",
+    "docs/submission/media/decks/savia-submission-deck-slides/slide-04.png",
+    "docs/submission/media/decks/savia-submission-deck-slides/slide-05.png",
+    "docs/submission/media/decks/savia-pitch-deck.pptx",
+    "docs/submission/media/decks/savia-pitch-deck.pdf",
+    "docs/submission/media/decks/savia-pitch-deck.html",
+    "docs/submission/media/decks/savia-pitch-deck-speaker-notes.md",
+    "docs/submission/media/decks/savia-pitch-deck-speaker-notes.json",
+    "docs/submission/media/decks/savia-pitch-deck-contact-sheet.png",
+    "docs/submission/media/decks/savia-pitch-deck-slides/slide-01.png",
+    "docs/submission/media/decks/savia-pitch-deck-slides/slide-02.png",
+    "docs/submission/media/decks/savia-pitch-deck-slides/slide-03.png",
+    "docs/submission/media/decks/savia-pitch-deck-slides/slide-04.png",
+    "docs/submission/media/decks/savia-pitch-deck-slides/slide-05.png"
+  ],
+  "additional_html_dependency_paths": [
+    "docs/submission/media/decks/savia-integrated-closure-crop.png"
+  ],
+  "hashes": [
+    {
+      "path": "docs/submission/media/README.md",
+      "bytes": 5721,
+      "sha256": "593bb9c31ad012098ebffb8cb17f427206331fdba02219340a22c8ab6e959b14"
+    },
+    {
+      "path": "docs/submission/media/review.html",
+      "bytes": 2906,
+      "sha256": "c9becef96c0b5a1557d729e6f6d2cd048e34112848fe67a240bb326e6c3ec713"
+    },
+    {
+      "path": "docs/submission/media/video/savia-submission.mp4",
+      "bytes": 19894979,
+      "sha256": "44e8dad7fdfdc6bd3b8b50b5aee83ea97f62c9e8412b20a1655a937cabd0fccb"
+    },
+    {
+      "path": "docs/submission/media/video/savia-submission.srt",
+      "bytes": 2377,
+      "sha256": "0bf8973e6169673dab0fd3e6a16dee199c1defc271d5860650abe5c48797fd85"
+    },
+    {
+      "path": "docs/submission/media/video/savia-submission.vtt",
+      "bytes": 2268,
+      "sha256": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6"
+    },
+    {
+      "path": "docs/submission/media/video/savia-submission-receipt.json",
+      "bytes": 9056,
+      "sha256": "674c566f5600ef94d3cdd4a8070753276875b89a047b262bec78328271289bff"
+    },
+    {
+      "path": "docs/submission/media/video/savia-submission-contact-sheet.jpg",
+      "bytes": 130279,
+      "sha256": "2b6249e2f55eefc1583351b97371d0fe7b43bd49fd259fe653ab42b04b00753f"
+    },
+    {
+      "path": "docs/submission/media/video/tv-timeline.json",
+      "bytes": 13806,
+      "sha256": "7d77cbf3424463f7f21ea5675952e3f72b02665995fdd545567f341347d8e143"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-hero-customer.png",
+      "bytes": 695055,
+      "sha256": "b2c280fcf2daeed17a56fb6af5403d1f19ca8c9f8ce39a643145deaa2b718587"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-grounded-answer-crop.png",
+      "bytes": 89650,
+      "sha256": "2f13196d3a3e341a0219b72d80db728b3ed702df3d55d1af3a874631cedce66f"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-team-saved-result-crop.png",
+      "bytes": 97532,
+      "sha256": "9ba817b23b681ffeeadd7f348e515239f99f1a82d57cb69e24aa56547a608fa7"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck.pptx",
+      "bytes": 1109634,
+      "sha256": "1edec58b3e51f45ccf16b9733ddc8fd5c69b1eb028e75011a26a1deb04ab2f4c"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck.pdf",
+      "bytes": 468298,
+      "sha256": "dca195a5184b15f9a82e34964719bbec75c65556599b3bfc378258e4b3dc1b6c"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck.html",
+      "bytes": 7423,
+      "sha256": "9b8257846bcef5cfc016a625033132a641e6463f5646af1cb814faff57e11955"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck-speaker-notes.md",
+      "bytes": 5051,
+      "sha256": "de84a8f1e0a70e836022b4e1a9e64b54da1a2e9273eed07c1303647f522d495d"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck-speaker-notes.json",
+      "bytes": 4639,
+      "sha256": "d33ec497f0ae028ca69caeee679df4643361ac49a00fc11b95566052db181550"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck-contact-sheet.png",
+      "bytes": 488075,
+      "sha256": "0fe0b21d9b36ddbd480d0a764e6617388dab110b0129a272170b946b3cc53bb0"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck-slides/slide-01.png",
+      "bytes": 731280,
+      "sha256": "65f9c25653c2703be4e61ac800c1df623b38e806ab79b228be09b40e6f4b59ef"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck-slides/slide-02.png",
+      "bytes": 140310,
+      "sha256": "12d32f3d64929abd9943962cb9185c3f3c9b9def40e1575d026b0ee5f8a304c9"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck-slides/slide-03.png",
+      "bytes": 141306,
+      "sha256": "356da08ad510ef6f11333576f0b0ebea47918b6e893e89d08c9ae90f18ade76e"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck-slides/slide-04.png",
+      "bytes": 162776,
+      "sha256": "192db9296d051d182e84337981f1a8df6ae0f939d699fde4e59120eb8b694b16"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck-slides/slide-05.png",
+      "bytes": 41599,
+      "sha256": "8f39e0c2ee4ced0905d40d73087dd10b4ceca621400ba364b8c05c516e1b9b16"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck.pptx",
+      "bytes": 1109174,
+      "sha256": "430f4509f23a62e6e0cfa8c3617969b8b45573f6100b2b629f7aee4ab322fac7"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck.pdf",
+      "bytes": 467566,
+      "sha256": "713ebf382b9c2d7dfd5915d8c8395df15206d9c9e94de16071c8970b08e6642a"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck.html",
+      "bytes": 7270,
+      "sha256": "b0bf0a318dc06da638afcb9f57ffc8849c8373ddc82fa14b80f794b4deb938a0"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck-speaker-notes.md",
+      "bytes": 4056,
+      "sha256": "e5c6146f8f7183ce2dae483fc09c3043fc21a9bbca30929b07cd8fc04a56e4bb"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck-speaker-notes.json",
+      "bytes": 3645,
+      "sha256": "c3a0a533f525b3423d4869e7e8b69ba494103ac1e89a2e6fc289e23752a3525a"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck-contact-sheet.png",
+      "bytes": 489364,
+      "sha256": "3698294472ad441988cf2222a7513a1c47f8fceddde8c9ddc19eb7341084364d"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck-slides/slide-01.png",
+      "bytes": 732991,
+      "sha256": "6052d857553198f582afb963f1ae2db58939098241fdecd3f0b78d61ddea5395"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck-slides/slide-02.png",
+      "bytes": 139616,
+      "sha256": "24d6739f8beb081f6cc4dc74d773b0f81951c658abd0126e93898d0890fb84e6"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck-slides/slide-03.png",
+      "bytes": 139761,
+      "sha256": "5506b21e30e11abb2e8e3f7b9a414442c4aa4eb4b81344c5eb2d05a24695afde"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck-slides/slide-04.png",
+      "bytes": 162544,
+      "sha256": "7da4547065ca89428dd556e06cf14c0e330687338f04c7f39f420412190115ce"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck-slides/slide-05.png",
+      "bytes": 42125,
+      "sha256": "c414a6227f5ebf54cd80e54df99a1dd38614bb6e7320efd2a7a0c4b260c7501e"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-integrated-closure-crop.png",
+      "bytes": 164210,
+      "sha256": "ea95be89169b5c8a06c83278745984427a409d7726c507a4d90044c6c37e458e"
+    },
+    {
+      "path": "docs/submission/media/video/integrated-voice-replacements.json",
+      "bytes": 4851,
+      "sha256": "7d3a65368deab5196d2f94498ed3ee75dcd6c9dbe0c3c2a6eb28e8c621f07969"
+    },
+    {
+      "path": "docs/submission/media/publication-candidate.json",
+      "bytes": 3361,
+      "sha256": "0e56471a103ffa2502ac5e2372aaf6498faec7f428dc1843456962143b1cdfee"
+    }
+  ],
+  "downloadable_release_assets": [
+    {
+      "path": "docs/submission/media/video/savia-submission.mp4",
+      "bytes": 19894979,
+      "sha256": "44e8dad7fdfdc6bd3b8b50b5aee83ea97f62c9e8412b20a1655a937cabd0fccb"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck.pptx",
+      "bytes": 1109634,
+      "sha256": "1edec58b3e51f45ccf16b9733ddc8fd5c69b1eb028e75011a26a1deb04ab2f4c"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-submission-deck.pdf",
+      "bytes": 468298,
+      "sha256": "dca195a5184b15f9a82e34964719bbec75c65556599b3bfc378258e4b3dc1b6c"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck.pptx",
+      "bytes": 1109174,
+      "sha256": "430f4509f23a62e6e0cfa8c3617969b8b45573f6100b2b629f7aee4ab322fac7"
+    },
+    {
+      "path": "docs/submission/media/decks/savia-pitch-deck.pdf",
+      "bytes": 467566,
+      "sha256": "713ebf382b9c2d7dfd5915d8c8395df15206d9c9e94de16071c8970b08e6642a"
+    }
+  ],
+  "evidence_dependencies": [
+    {
+      "path": "docs/submission/measurements/intended-savia-native/foreground-calm.wav",
+      "bytes": 316844,
+      "sha256": "289fbbe598cc59fd5f977c36901a9781773b6cc68c72e8a7204a832f3b9b0fa6"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/informational-closure.wav",
+      "bytes": 189644,
+      "sha256": "e2a64aaec4c59b1f28cc17426b7f5786ad46295d10e587c7d56d932c5f379a4c"
+    },
+    {
+      "path": "docs/submission/measurements/intended-savia-native/receipt.json",
+      "bytes": 5720,
+      "sha256": "6a15cdfe3dbc6d867aa72adba714532f5ee00895f6c2ebc324809983bbc0ee3d"
+    }
+  ],
+  "rebuild_dependencies": [
+    {
+      "path": "scripts/submission_media/tv/prepare_edit.py",
+      "bytes": 11614,
+      "sha256": "b730755c3431586c68115413b7a6bdc249e4c94fec9e9f7c0ff07d57ab3afff8"
+    },
+    {
+      "path": "scripts/submission_media/tv/render_spoken_update.py",
+      "bytes": 933,
+      "sha256": "2d5b6baeaadf647a6d273f0bed1bafe30d2e569a48b28231ad4b2962cd7febf9"
+    },
+    {
+      "path": "scripts/submission_media/motion/build_assistant_visuals.py",
+      "bytes": 12897,
+      "sha256": "0556a53c2e1468b01ccfc1dabf6602b155d60cb5360d4f09eda5acee61f94fc6"
+    },
+    {
+      "path": "scripts/submission_media/build_video.py",
+      "bytes": 14484,
+      "sha256": "4f282ce65d3fde45538436fd7318d4ab91691057c8427dd18c78f674c3bf0595"
+    },
+    {
+      "path": "scripts/submission_media/decks/build_decks.py",
+      "bytes": 35677,
+      "sha256": "3cef5ef5ff2ae9a71436295ccb1c7e7a8b9f4df9f4f4a92bcc2ccc8ec2cc8e83"
+    },
+    {
+      "path": "scripts/submission_media/decks/export_decks.ps1",
+      "bytes": 1355,
+      "sha256": "81bccd4c1c7b52f87120bdd939b9dd72ea8f040924373e504ab0fef2a01f2256"
+    },
+    {
+      "path": "docs/submission/media/motion/assistant-intro.mp4",
+      "bytes": 156251,
+      "sha256": "1a5823727575561de507b428286eb1d156a46d58b58df9dcbe81b2687e28bb95"
+    },
+    {
+      "path": "docs/submission/media/motion/assistant-spoken-update.mp4",
+      "bytes": 83239,
+      "sha256": "9424ee87ca115dfe0a966b849ba42a8299daaf724ab23a1b67e5893f6481b60a"
+    }
+  ],
+  "verification": {
+    "mp4_duration_seconds": 140.611,
+    "full_decode": "passed",
+    "all_other_16_segment_hashes": "unchanged",
+    "changed_voice_frames_visual_review": "passed",
+    "native_audio_seconds": [
+      6.6,
+      3.95
+    ],
+    "native_picture_seconds": [
+      7.6,
+      4.95
+    ],
+    "no_speech_truncation": true,
+    "exact_english_translation_captions": true,
+    "decks": [
+      {
+        "deck": "savia-submission-deck",
+        "pptx_slides": 5,
+        "pdf_pages": 5,
+        "embedded_notes": true,
+        "slide4_visual_review": "passed"
+      },
+      {
+        "deck": "savia-pitch-deck",
+        "pptx_slides": 5,
+        "pdf_pages": 5,
+        "embedded_notes": true,
+        "slide4_visual_review": "passed"
+      }
+    ],
+    "html_dependencies": "all present"
+  },
+  "change_scope": "Only two video voice-proof sections and their captions/graphic text; both deck slide4 evidence/notes and matching exports. Creative cinema and other actual inserts preserved. Second native insert confirms informational helpful closure, not recommendations or a bank decision.",
+  "recorder_caveat": "Required product steps and both exact full-playback acknowledgements completed; optional transport diagnostic hung afterward and raw recorder exited1 at180seconds. No rerun hides that failure. No physical microphone/perfect ASR/new worker concurrency claim."
+}

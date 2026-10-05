@@ -1,0 +1,14 @@
+{
+  "id": "757ab50c-c2b2-47f7-8dd2-465731e7dab7",
+  "name": "Savia inquiry follow-up RC",
+  "enabled": false,
+  "flowId": "8eac3c25-a716-4cee-82e9-c61bac8e3d36",
+  "prompt": "Run the scoped inquiry tick once. Notify only through new app-owned case events; do not claim bank outcomes or human acceptance.",
+  "saveConversations": false,
+  "approvalPolicy": "auto",
+  "overlapStrategy": "skip",
+  "startRestriction": "unrestricted",
+  "superExclusive": false,
+  "emergency": false,
+  "trigger": {"type":"schedule","cron":"*/30 * * * *","timezone":"America/Bogota","catchUp":false}
+}

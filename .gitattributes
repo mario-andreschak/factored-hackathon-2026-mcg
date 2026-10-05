@@ -22,3 +22,7 @@ scripts/package_issue21_preflight/*.cjs text eol=lf
 scripts/synthetic_integration/** text eol=lf
 # Preserve the DATASET contribution's exact original byte hashes.
 scripts/synthetic_integration/dataset_source/** -text whitespace=cr-at-eol
+# Preserve the exact public release artifact and evidence manifest byte hashes.
+docs/submission/** -text whitespace=cr-at-eol
+scripts/submission/** -text whitespace=cr-at-eol
+scripts/submission_media/** -text whitespace=cr-at-eol

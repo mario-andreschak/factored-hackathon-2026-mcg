@@ -1,0 +1,2951 @@
+{
+  "schema": "savia-actual-browser-capture/v1",
+  "started_at": "2026-10-05T01:47:53.561Z",
+  "recorded_at": "2026-10-05T01:48:50.704Z",
+  "timezone": "America/Bogota",
+  "runtime": {
+    "schema": "savia-fictional-rc-runtime/v1",
+    "url": "http://127.0.0.1:43900",
+    "fixture": "new generated current-date fiction",
+    "bank": "shipped MCP Service in process",
+    "language": {
+      "url": "https://openrouter.ai/api",
+      "model": "google/gemini-3.1-flash-lite",
+      "provider": "openrouter",
+      "route": "explicit direct OpenRouter completion"
+    },
+    "simulated_intake": true,
+    "real_bank_actions": false,
+    "native_flow_execution": false,
+    "source_snapshot": "startup Git revision plus exact application and served UI hashes",
+    "git_head": "b6d46c106aaab64c3ad52c9bd4526d5dde594091",
+    "application_sources": {
+      "banking_mcp/__init__.py": "58aec63d481988945236d968d44584a2c3cfd46da96b144975d14bdc05c43cfb",
+      "banking_mcp/__main__.py": "34fa7946bc924e98d4c3f0e4b06ab5f2f864fbbab2f38b1a13d53861b51a6825",
+      "banking_mcp/actions.py": "9439f3b00769c07bd249de73264544c692c3c5ad35f4eca5395b90eda18c02fc",
+      "banking_mcp/config.py": "70cdff491ef6e07d68ba2725602432b32d601c4c9a22e1ca3cf0421b6ead8ceb",
+      "banking_mcp/private_host.py": "e80051b6510e3782cc0d438a609ea4bfb19d91c1caa056ac5a7dd168ea46a096",
+      "banking_mcp/repository.py": "a1882aef706b094f47fdadb50dc44bf2a1f61aa7369f02bc36ea878249577d14",
+      "banking_mcp/security.py": "eba078084ce9cb1e7808486d95c3e02f791ae3caaf2860937126b7cc495a91f8",
+      "banking_mcp/server.py": "d2853a38ab302acbf08798001dc91037fb72beb361ba486ee6847affd55434fb",
+      "banking_mcp/service.py": "3c69ff7277e5bce17437d0d43fb8307bb53a3694b065f992201f4fa830c1a576",
+      "config/policy_rules.yaml": "197dc67a00450282f78f34768c8c4c6803aad69094272abdb80c34da71b06b34",
+      "contracts/policy_engine.md": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31",
+      "contracts/state_schema.md": "89e1c1aad37f3868cd886ee9efd0e8beeb92f9dff0adfd259319b88f2b0b58eb",
+      "contracts/tools.md": "95c4896078eff5acb024badaacd3bfcdcb1acdaddf2b6d2ba2c9c43c7c60b085",
+      "dispute_workflow/__init__.py": "2efde0019ceba19436ed5a44605986085889524718aafcb5073fd37fe3262977",
+      "dispute_workflow/action_host.py": "79e5f09ee9f51ca5c70878a68f050fffcde0af29c01e1a364ac330568b31e6fb",
+      "dispute_workflow/bank_read.py": "886f1fb3a9f0a88982233322f6d72747ece63f8a76ea42ec8363d9fb411cd6ea",
+      "dispute_workflow/handoff.py": "ed0aba8f5b03ede5050011ae23a8c0a295720586bef96c1a345c33ef8fa532c6",
+      "dispute_workflow/host.py": "e365f755f964bc5a82246b416616a43f70ed1a785e23dbd76764ff16efe4a386",
+      "dispute_workflow/model.py": "2263017f07055fee04795a9412dc02d9f461ca0d22bc1cb1d1e8fb74638f343a",
+      "dispute_workflow/policy.py": "4ad15d5e7acdb7f0c9319f33913f96b327fa8a7b5aa0e183a275434a4d82f7a2",
+      "dispute_workflow/prompts.py": "8ad298f6455f49a05b5a027066aabeb5aa61332a42c39bf11cbeb2001885d056",
+      "dispute_workflow/response.py": "de898ebd54a33376f91d2c6834d8e6217b04684c1c5202d78af56962e2954dd9",
+      "dispute_workflow/retrieval.py": "32773a7806280db3eff8407dfa41ee4a142e34a0eb3367e4e78915399e9773fd",
+      "dispute_workflow/runtime.py": "3ca28bc15aea8ea07f545380885ca04fe44a5c8090438e2dd1fb67bbd5793f2a",
+      "dispute_workflow/state.py": "5866baf32afe3ce470674fa9f7d07d03acecea0d2c8ca16800664a3e41b56cad",
+      "dispute_workflow/tool.py": "0e9537c89e85742d69ada7bde65f1c4a55ec4f6ee3ef9b2fc7ebd3c6d7c99a13",
+      "frontend/requirements.txt": "4c1899ff026ac3f105e762ff1bc857560deec66ade84ec1a1aebc68f6f485b82",
+      "frontend/server/__init__.py": "919a040a827e9189ba1677a070b94e6fe19239b701b8d86c0d8f13e3f679c1f4",
+      "frontend/server/action.py": "57b03efa13a5016ee23b56ea073e941999253989abf00f3b5591fd8cea10a95d",
+      "frontend/server/app.py": "b029849329284186e7b2c22253ef7ceb842ac941e4462bc6ea34715b5c489a5b",
+      "frontend/server/bank_controller.py": "511459c61447b11a0adb572639aaaa977b1ffb782fe3db419f853c7b1a447d51",
+      "frontend/server/bank_protocol.py": "e863218bb01691c7f3d7cba1e6d7f05e3456972b03a207b597a9c88b2cca2165",
+      "frontend/server/bank_rpc.py": "d67942b8349991c2ea718089830bdc3ab68973aebcc08f71d38ef04d3f58baba",
+      "frontend/server/chat.py": "cd4352ad81fbd6b44b39f84185e83e174f8dd0fdca2db005bc31386a0318551e",
+      "frontend/server/config.py": "4f213b88bd0d7c530114e527d57799de83138b992dd00aae0109dfcf4df6e75b",
+      "frontend/server/deployment_transition.py": "de97138ddff1e4b1c2e91f818358a335dbb520d69b146a3adb6f8197bb38fced",
+      "frontend/server/dispute_chat.py": "0ce67d7ea4a0d2f95930f61dff3894e97ae612c19245ea51277bb50d1b3a68fe",
+      "frontend/server/followups.py": "318925b4d12e53fddfd7388c5ec3a2a1960be13e5760bd639b80fda391d9dc61",
+      "frontend/server/language.py": "8a7cc058a69e437a68fddefe1618b8956304700b7a1f225663260d8d5cc2264a",
+      "frontend/server/repository.py": "e8cc5bc16284fe9a4ce39c3d9dfe500fc69351efe5050b1a3a8b67a9a7d8488d",
+      "frontend/server/review.py": "e44ea22a9a8f61aa9aa78fd3e80fbfdabebdfede14b2d2b053f8f7a1a703948d",
+      "frontend/server/state.py": "b1bb9e7bbea790f4e60effb30903e81ee32e19a370b4c1fa9ad37cbd7dbe0937",
+      "pipeline/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pipeline/__main__.py": "07338b5bcb70d8d37b976de0b634252472a677d14ed2b453ffd1baa75feada41",
+      "pipeline/bronze.py": "92fdbcebd827d0abf75af414883f0109e4a26e3f06f9eec25e4ae0331fdbf7b4",
+      "pipeline/common.py": "5b36a52f78cbfe6c5f65f78252bebd344e5d4a73b77a32104eca8b9f28a53cea",
+      "pipeline/contracts.yaml": "98f0add581f437c79a119682a90723451722de025b6af867e892487d8693972a",
+      "pipeline/fixture.py": "822f4dda6bbe1392d273a21fbf2ce80d2cde82d5edb4d99725abc799ea072482",
+      "pipeline/gold.py": "0c4b7b53e7b1efdf4146b57e921659372526915bdddd0bfa64cae28142064961",
+      "pipeline/lookup.py": "efa986b587dff74d902d0f2eb39002fc6964ff5a34109cb9de0bf46d00831888",
+      "pipeline/prepare_invite_preview.py": "ba01cbcdd0289d45f58b87c8b66677aa6db2741b1d639210e87805e2eb861769",
+      "pipeline/prepare_release_preview.py": "aa38ac4ee5ab5b0ffbf3489ba9400bc915e1c14b6230f82d0edabac8641cb4f1",
+      "pipeline/prototype_fixture.py": "2c5d61311acdbec3b0fced9fa17214e5b56ec1ce74ef9d9ab9fd879aa7c5d0eb",
+      "pipeline/report.py": "0d8a026835da5e8dc73ef62db8a00f384794c7696e8ef739c5ae0d0b7ebafb0a",
+      "pipeline/silver.py": "6dc66682d3ece6170311f6c89ef26702fa244dc37fcb1b6b0820d6704db0c595",
+      "pipeline/verify.py": "b47f7ad20aca130f51ef6c67820f24356cd7bfd061f2ed6a039012d66d0c4d92",
+      "pipeline/writer.py": "730cf37b50a6e3b7be272cbb821448fdc8011047df70726d04b08d5131d818d3",
+      "requirements-dispute.txt": "8e0220820a2f16cceb17496d03511b09da897b9433071eaa937346fec46b3659",
+      "requirements-pipeline.txt": "53e938aaf09f111a691413530abf3d193a82975c30e3d64733db30dbf398dda0",
+      "resources/policies/complaint_handling_policy.md": "4e37e1a2e9abe24fe9acf5c9f2c97eba8d5dbd4a9ed7af03a54cabd7d74940ff",
+      "resources/policies/customer_verification_policy.md": "6363b5b1fc1cc36541fbc78c51afd0924dcd6c3453470bea8fae728f399dd81c",
+      "resources/policies/fraud_escalation_policy.md": "49905ec77891665fc1fb52a53c2aefcaadd63f85fc77a7f5d3f944b2d49011ba",
+      "resources/policies/human_handoff_policy.md": "ffd6ebbd8ec61a5fbcb2753f6b676fb6cd4ead4c84d5c0d57d08431e5a42b673",
+      "resources/policies/transaction_dispute_policy.md": "740e7ccc8dcfef5251047e3702699831f0d45988b8f5b7455fb082b0d0cd8085",
+      "resources/prompts/attack_detection_prompt.yml": "ebf66676b2f2d783422a5fa7f08f4218523dc46f1a98bc92e4d7413254fb9b46",
+      "resources/prompts/clarification_resolution_prompt.yml": "459b8b3e142e93dff9ba90517fca9544a86405e4b2d5c43d48089fb33eef1d66",
+      "resources/prompts/context_detection_prompt.yml": "c5343a9987af82af44d8b1fdbc1a451996d63472fa8c8ea0597e7d6824a4adbe",
+      "resources/prompts/fallback_templates.yaml": "dd6cf378c5ae026c986813b0e74b7391cf7e0e672977a400278aeb61cb10452d",
+      "resources/prompts/generator_prompt_v3.yml": "6b76115bbd49b2554fdca3e3c88b6565245cae79b7771c687ed34c5dbed4829a",
+      "resources/prompts/handoff_summary_prompt.yml": "78faf7b6127b061e0184139b9d5e497fec50045e089599ceb45112065aca9596",
+      "resources/prompts/intent_detection_prompt.yml": "f2a1dacc022bcc3f26ac664534d2d5110a26bbd9d4c2253be562726077f03bfb",
+      "resources/prompts/rewrite_decompose_prompt.yml": "6a7a55f87a2be53d1b23556b486369d719937d5f9186c449c1a3d99f7957ff06",
+      "resources/prompts/slot_extraction_prompt.yml": "92fa8a6ac29e85841b4ea49f76e0c3fb02c29cd47d723c9c685a1d3956348012",
+      "scripts/native_dispute_qualification.mjs": "cfffd5af40685e94be6d5ae739a309026feead3ac2fc25cf8b7f9d0de622e0b4",
+      "scripts/native_dispute_qualification.py": "694a3956d1589a69fa613c340bd1f4452d000d8ce4ffbd1cb5111952f9e9e889",
+      "scripts/native_dispute_qualification.ts": "f5f55132d281b312022ac3b3b2c781a59c1dde252c0956cc3ac534a1ef39ac17",
+      "scripts/qualify_dispute_app.py": "525ee009d5d257ef30f09dc546b94cbd381edabbce5bd033924e41a0f39d8f64",
+      "scripts/run_dispute.py": "9f5eaf028cd57528b0263c1dbe4949646d0463854c49427f30cdf32e0b21eeae",
+      "savia_assistant/__init__.py": "3a63566442c56a9008c149c14094e34294396391f1799450150963c616027f97",
+      "savia_assistant/api.py": "49a59ef5ae39f98a8ac045e0a07d4ea4b700454ef5d3de5d1c7b37cb0b5d0263",
+      "savia_assistant/mcp.py": "8d92a48b1c82d67986f7249edb7efaab3275af980064a7ed67b2ac6336dbdeea",
+      "savia_assistant/service.py": "1e744b9e3d9a271b5561b5a704200c6ec908a600cbeb839f8ecdbfb4475fec17",
+      "savia_assistant/tests/test_api.py": "0f78b59c71c9a908f66f1a340c6c799f3b1478206c1a769be00f7cfa7583445b",
+      "savia_assistant/tests/test_service.py": "3b31048aabd3826e112a57c4b0481c88a6d36e2f2bcdbafa1d5b60559ab8cd81"
+    },
+    "served_ui": {
+      "assets/dm-sans-latin-400-normal-BwCSEQnW.woff": "38702875fe179437d200e7ba6f7fab4d497ffe48117ef332029b2081751186ad",
+      "assets/dm-sans-latin-400-normal-CW0RaeGs.woff2": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006",
+      "assets/dm-sans-latin-500-normal-B9HHJjqV.woff2": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d",
+      "assets/dm-sans-latin-500-normal-Dr3UlScf.woff": "7deb957e430b780ee3272d801af4f9f2211b1330ec40a312a8f25309eacb4034",
+      "assets/dm-sans-latin-600-normal-Aqo67rzb.woff2": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120",
+      "assets/dm-sans-latin-600-normal-BmdmIIQ2.woff": "e7351257e49400eff05aca30a2007289194a900860d30c30770d8b8732897564",
+      "assets/index-CS4iNHIX.js": "4cf179a8790092207cc26948c5f00ad2ba99293ea7a5f3c687477c214bbc6a08",
+      "assets/index-DHSvLk0-.css": "f07ad2dd781904363b10f8294506b2acb3442d399b6e10e442e88087f0e5fbb2",
+      "assets/manrope-latin-400-normal-8tf8FM3T.woff": "1bf66c29a29f1b71d507cb97fc138cd130b856ed05b55decd3a2944b413cb636",
+      "assets/manrope-latin-400-normal-PaqtzbVb.woff2": "849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3",
+      "assets/manrope-latin-500-normal-BYYD-dBL.woff2": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc",
+      "assets/manrope-latin-500-normal-DMZssgOp.woff": "c805ac8fd73fb95ddba74e624500c7d7d9a8ec6434d723bb6a9b76173c9e41b4",
+      "assets/manrope-latin-600-normal-4f0koTD-.woff2": "f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593",
+      "assets/manrope-latin-600-normal-BqgrALkZ.woff": "8d1f509774bca963fa02faf674678ce9244474306361ca2798583fa600346df6",
+      "assets/manrope-latin-700-normal-BZp_XxE4.woff2": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71",
+      "assets/manrope-latin-700-normal-DGRFkw-m.woff": "e5d35fda4759b0d63ebcc6cca0627d98d9208254ce851c85df29e4d12aeafb61",
+      "assets/manrope-latin-800-normal-BfWYOv1c.woff2": "74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49",
+      "assets/manrope-latin-800-normal-uHUdIJgA.woff": "ce954acb78379d559111a15d29925f3390b69161b2b1365c38b0f19c76991bac",
+      "favicon.svg": "773b331c669175ac2e1b249d4f9bae10b7a1db10d2a84d83a3d30762d7901089",
+      "index.html": "226d63d6d9fac17a25297bba6aa9867083722b20758cdf0a29765b7d06f8d90e"
+    },
+    "launcher_sha256": "320c7df693d0a201a06fbe09073720eb1acf2e0777f9ceadc9001f214cfd64ee"
+  },
+  "authentication": {
+    "private_state_loaded": true,
+    "fresh_login": false,
+    "existing_session_http_status": 200
+  },
+  "served_js_assets": [
+    {
+      "path": "/assets/index-CS4iNHIX.js",
+      "status": 200,
+      "sha256": "4cf179a8790092207cc26948c5f00ad2ba99293ea7a5f3c687477c214bbc6a08"
+    },
+    {
+      "path": "/assets/index-CS4iNHIX.js",
+      "status": 200,
+      "sha256": "4cf179a8790092207cc26948c5f00ad2ba99293ea7a5f3c687477c214bbc6a08"
+    }
+  ],
+  "generated_only": true,
+  "actual_browser": true,
+  "mocked_requests": 0,
+  "events": [
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/auth/me",
+      "at_ms": 247
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200,
+      "at_ms": 308
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/overview",
+      "at_ms": 309
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/overview",
+      "status": 200,
+      "at_ms": 440
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/chat/status",
+      "at_ms": 440
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/chat/status",
+      "status": 200,
+      "at_ms": 464
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/chat/history",
+      "at_ms": 521
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/chat/history",
+      "status": 200,
+      "at_ms": 565,
+      "public_response": {
+        "messages": [
+          {
+            "role": "user",
+            "text": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora.",
+            "selection": {
+              "amount": 4280.75,
+              "currency": "MXN",
+              "occurred_at": "2026-10-02T02:14:00",
+              "reference": "txn_3c58c0b66b4802b22b323ca5",
+              "status": "Approved",
+              "type": "Purchase"
+            }
+          },
+          {
+            "role": "assistant",
+            "text": "La transacción identificada es una compra en **Nébula Market** por **4280.75 MXN**, realizada el **2026-10-02** con tu tarjeta terminada en **4381**. Ya existe el reclamo **CMP-SBX--HCaKBpE**, con estado **received**, relacionado con este movimiento en el entorno de prueba. No se crea otro reclamo. El proceso actual se encuentra en revisión, sin plazos ni resultados garantizados."
+          }
+        ],
+        "active": false
+      }
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/action/status",
+      "at_ms": 565
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/action/status",
+      "status": 200,
+      "at_ms": 582,
+      "public_response": {
+        "state": "none"
+      }
+    },
+    {
+      "index": 0,
+      "at_ms": 1085,
+      "step": "01-final-overview"
+    },
+    {
+      "index": 1,
+      "at_ms": 1190,
+      "step": "Asistente"
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "at_ms": 1249
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/followups",
+      "at_ms": 1249
+    },
+    {
+      "index": 2,
+      "at_ms": 1253,
+      "step": "wait_enabled"
+    },
+    {
+      "index": 3,
+      "at_ms": 1269,
+      "step": "scroll_text"
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 1306,
+      "public_response": {
+        "items": []
+      }
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "status": 200,
+      "at_ms": 1306,
+      "public_response": {
+        "items": [
+          {
+            "id": "i_1016efd827bf47e0bd152a94d15b0b9f",
+            "message": "Ayúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.",
+            "state": "team_completed",
+            "created_at": 1791164087,
+            "updated_at": 1791164090,
+            "next_check_at": 1791165890,
+            "next_step": "Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.",
+            "status_message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 9,
+                "kind": "queued",
+                "at": 1791164087,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 10,
+                "kind": "team_working",
+                "at": 1791164087,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 11,
+                "kind": "worker_working",
+                "at": 1791164087,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 12,
+                "kind": "worker_working",
+                "at": 1791164088,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 13,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 14,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 15,
+                "kind": "team_completed",
+                "at": 1791164090,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "15",
+              "reply": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas. Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto. Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          },
+          {
+            "id": "i_3f279d9cbe2149c4a7db0748447b6754",
+            "message": "Ayúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.",
+            "state": "informational_resolved",
+            "created_at": 1791163346,
+            "updated_at": 1791163383,
+            "next_check_at": null,
+            "next_step": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "status_message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 1,
+                "kind": "queued",
+                "at": 1791163346,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 2,
+                "kind": "team_working",
+                "at": 1791163348,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 3,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 4,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 5,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 6,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 7,
+                "kind": "team_completed",
+                "at": 1791163350,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              },
+              {
+                "id": 8,
+                "kind": "informational_resolved",
+                "at": 1791163383,
+                "role": null,
+                "message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó."
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "8",
+              "reply": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "at_ms": 1803,
+      "step": "02-final-saved-result"
+    },
+    {
+      "index": 5,
+      "at_ms": 1922,
+      "step": "pause"
+    },
+    {
+      "index": 6,
+      "at_ms": 6992,
+      "step": "reload"
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/auth/me",
+      "at_ms": 7095
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200,
+      "at_ms": 7133
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/overview",
+      "at_ms": 7133
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/overview",
+      "status": 200,
+      "at_ms": 7278
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/chat/status",
+      "at_ms": 7278
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/chat/status",
+      "status": 200,
+      "at_ms": 7297
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/chat/history",
+      "at_ms": 7305
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/chat/history",
+      "status": 200,
+      "at_ms": 7330,
+      "public_response": {
+        "messages": [
+          {
+            "role": "user",
+            "text": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora.",
+            "selection": {
+              "amount": 4280.75,
+              "currency": "MXN",
+              "occurred_at": "2026-10-02T02:14:00",
+              "reference": "txn_3c58c0b66b4802b22b323ca5",
+              "status": "Approved",
+              "type": "Purchase"
+            }
+          },
+          {
+            "role": "assistant",
+            "text": "La transacción identificada es una compra en **Nébula Market** por **4280.75 MXN**, realizada el **2026-10-02** con tu tarjeta terminada en **4381**. Ya existe el reclamo **CMP-SBX--HCaKBpE**, con estado **received**, relacionado con este movimiento en el entorno de prueba. No se crea otro reclamo. El proceso actual se encuentra en revisión, sin plazos ni resultados garantizados."
+          }
+        ],
+        "active": false
+      }
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/action/status",
+      "at_ms": 7331
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/action/status",
+      "status": 200,
+      "at_ms": 7350,
+      "public_response": {
+        "state": "none"
+      }
+    },
+    {
+      "index": 7,
+      "at_ms": 7851,
+      "step": "Asistente"
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "at_ms": 7902
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/followups",
+      "at_ms": 7902
+    },
+    {
+      "index": 8,
+      "at_ms": 7907,
+      "step": "wait_enabled"
+    },
+    {
+      "index": 9,
+      "at_ms": 7934,
+      "step": "03-final-reload"
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 7941,
+      "public_response": {
+        "items": []
+      }
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "status": 200,
+      "at_ms": 7942,
+      "public_response": {
+        "items": [
+          {
+            "id": "i_1016efd827bf47e0bd152a94d15b0b9f",
+            "message": "Ayúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.",
+            "state": "team_completed",
+            "created_at": 1791164087,
+            "updated_at": 1791164090,
+            "next_check_at": 1791165890,
+            "next_step": "Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.",
+            "status_message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 9,
+                "kind": "queued",
+                "at": 1791164087,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 10,
+                "kind": "team_working",
+                "at": 1791164087,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 11,
+                "kind": "worker_working",
+                "at": 1791164087,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 12,
+                "kind": "worker_working",
+                "at": 1791164088,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 13,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 14,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 15,
+                "kind": "team_completed",
+                "at": 1791164090,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "15",
+              "reply": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas. Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto. Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          },
+          {
+            "id": "i_3f279d9cbe2149c4a7db0748447b6754",
+            "message": "Ayúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.",
+            "state": "informational_resolved",
+            "created_at": 1791163346,
+            "updated_at": 1791163383,
+            "next_check_at": null,
+            "next_step": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "status_message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 1,
+                "kind": "queued",
+                "at": 1791163346,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 2,
+                "kind": "team_working",
+                "at": 1791163348,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 3,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 4,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 5,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 6,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 7,
+                "kind": "team_completed",
+                "at": 1791163350,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              },
+              {
+                "id": 8,
+                "kind": "informational_resolved",
+                "at": 1791163383,
+                "role": null,
+                "message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó."
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "8",
+              "reply": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "at_ms": 22931
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/followups",
+      "at_ms": 22931
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 22966,
+      "public_response": {
+        "items": []
+      }
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "status": 200,
+      "at_ms": 22966,
+      "public_response": {
+        "items": [
+          {
+            "id": "i_1016efd827bf47e0bd152a94d15b0b9f",
+            "message": "Ayúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.",
+            "state": "team_completed",
+            "created_at": 1791164087,
+            "updated_at": 1791164090,
+            "next_check_at": 1791165890,
+            "next_step": "Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.",
+            "status_message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 9,
+                "kind": "queued",
+                "at": 1791164087,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 10,
+                "kind": "team_working",
+                "at": 1791164087,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 11,
+                "kind": "worker_working",
+                "at": 1791164087,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 12,
+                "kind": "worker_working",
+                "at": 1791164088,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 13,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 14,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 15,
+                "kind": "team_completed",
+                "at": 1791164090,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "15",
+              "reply": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas. Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto. Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          },
+          {
+            "id": "i_3f279d9cbe2149c4a7db0748447b6754",
+            "message": "Ayúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.",
+            "state": "informational_resolved",
+            "created_at": 1791163346,
+            "updated_at": 1791163383,
+            "next_check_at": null,
+            "next_step": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "status_message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 1,
+                "kind": "queued",
+                "at": 1791163346,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 2,
+                "kind": "team_working",
+                "at": 1791163348,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 3,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 4,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 5,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 6,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 7,
+                "kind": "team_completed",
+                "at": 1791163350,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              },
+              {
+                "id": 8,
+                "kind": "informational_resolved",
+                "at": 1791163383,
+                "role": null,
+                "message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó."
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "8",
+              "reply": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "at_ms": 37898
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/followups",
+      "at_ms": 37903
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 37929,
+      "public_response": {
+        "items": []
+      }
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "status": 200,
+      "at_ms": 37930,
+      "public_response": {
+        "items": [
+          {
+            "id": "i_1016efd827bf47e0bd152a94d15b0b9f",
+            "message": "Ayúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.",
+            "state": "team_completed",
+            "created_at": 1791164087,
+            "updated_at": 1791164090,
+            "next_check_at": 1791165890,
+            "next_step": "Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.",
+            "status_message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 9,
+                "kind": "queued",
+                "at": 1791164087,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 10,
+                "kind": "team_working",
+                "at": 1791164087,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 11,
+                "kind": "worker_working",
+                "at": 1791164087,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 12,
+                "kind": "worker_working",
+                "at": 1791164088,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 13,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 14,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 15,
+                "kind": "team_completed",
+                "at": 1791164090,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "15",
+              "reply": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas. Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto. Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          },
+          {
+            "id": "i_3f279d9cbe2149c4a7db0748447b6754",
+            "message": "Ayúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.",
+            "state": "informational_resolved",
+            "created_at": 1791163346,
+            "updated_at": 1791163383,
+            "next_check_at": null,
+            "next_step": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "status_message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 1,
+                "kind": "queued",
+                "at": 1791163346,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 2,
+                "kind": "team_working",
+                "at": 1791163348,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 3,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 4,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 5,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 6,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 7,
+                "kind": "team_completed",
+                "at": 1791163350,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              },
+              {
+                "id": 8,
+                "kind": "informational_resolved",
+                "at": 1791163383,
+                "role": null,
+                "message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó."
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "8",
+              "reply": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "index": 10,
+      "at_ms": 48403,
+      "step": "Ver conversación anterior"
+    },
+    {
+      "index": 11,
+      "at_ms": 48467,
+      "step": "scroll_text"
+    },
+    {
+      "index": 12,
+      "at_ms": 48553,
+      "step": "04-final-exact-history"
+    },
+    {
+      "index": 13,
+      "at_ms": 48699,
+      "step": "Consultar estado de la solicitud"
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/action/status",
+      "at_ms": 48766
+    },
+    {
+      "index": 14,
+      "at_ms": 48766,
+      "step": "pause"
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/action/status",
+      "status": 200,
+      "at_ms": 48793,
+      "public_response": {
+        "state": "none"
+      }
+    },
+    {
+      "index": 15,
+      "at_ms": 49768,
+      "step": "05-final-existing-receipt"
+    },
+    {
+      "index": 16,
+      "at_ms": 49911,
+      "step": "pause"
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "at_ms": 52897
+    },
+    {
+      "kind": "http-request",
+      "method": "GET",
+      "path": "/api/followups",
+      "at_ms": 52903
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 52943,
+      "public_response": {
+        "items": []
+      }
+    },
+    {
+      "kind": "http",
+      "method": "GET",
+      "path": "/api/assistant/cases",
+      "status": 200,
+      "at_ms": 52944,
+      "public_response": {
+        "items": [
+          {
+            "id": "i_1016efd827bf47e0bd152a94d15b0b9f",
+            "message": "Ayúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.",
+            "state": "team_completed",
+            "created_at": 1791164087,
+            "updated_at": 1791164090,
+            "next_check_at": 1791165890,
+            "next_step": "Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.",
+            "status_message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 9,
+                "kind": "queued",
+                "at": 1791164087,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 10,
+                "kind": "team_working",
+                "at": 1791164087,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 11,
+                "kind": "worker_working",
+                "at": 1791164087,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 12,
+                "kind": "worker_working",
+                "at": 1791164088,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 13,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 14,
+                "kind": "worker_completed",
+                "at": 1791164090,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 15,
+                "kind": "team_completed",
+                "at": 1791164090,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "15",
+              "reply": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas. Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto. Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          },
+          {
+            "id": "i_3f279d9cbe2149c4a7db0748447b6754",
+            "message": "Ayúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.",
+            "state": "informational_resolved",
+            "created_at": 1791163346,
+            "updated_at": 1791163383,
+            "next_check_at": null,
+            "next_step": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "status_message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+            "workers": [
+              {
+                "role": "evidence",
+                "state": "completed",
+                "suggestion": "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo."
+              },
+              {
+                "role": "next_steps",
+                "state": "completed",
+                "suggestion": "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+              }
+            ],
+            "events": [
+              {
+                "id": 1,
+                "kind": "queued",
+                "at": 1791163346,
+                "role": null,
+                "message": "Lo tengo. Voy a revisar esto con mi equipo y te cuento qué encontramos."
+              },
+              {
+                "id": 2,
+                "kind": "team_working",
+                "at": 1791163348,
+                "role": null,
+                "message": "Estoy revisando esto con dos agentes: uno compara los datos y otro busca el próximo paso. Puedes seguir conversando conmigo."
+              },
+              {
+                "id": 3,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "evidence",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 4,
+                "kind": "worker_working",
+                "at": 1791163348,
+                "role": "next_steps",
+                "message": "Un agente está revisando esta consulta."
+              },
+              {
+                "id": 5,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "evidence",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 6,
+                "kind": "worker_completed",
+                "at": 1791163350,
+                "role": "next_steps",
+                "message": "Un agente terminó su revisión."
+              },
+              {
+                "id": 7,
+                "kind": "team_completed",
+                "at": 1791163350,
+                "role": null,
+                "message": "Ya tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?"
+              },
+              {
+                "id": 8,
+                "kind": "informational_resolved",
+                "at": 1791163383,
+                "role": null,
+                "message": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó."
+              }
+            ],
+            "informational_only": true,
+            "bank_authority": false,
+            "voice_update": {
+              "version": "8",
+              "reply": "Gracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.",
+              "mode": "assistant",
+              "status": "completed"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "name": "01-final-overview",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n17 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$9,817.44\n11 movimientos\nCompra en línea\n44%\nSupermercado\n28%\nEfectivo\n18%\nSuscripción\n6%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        }
+      ],
+      "loaded_js_assets": [
+        "/assets/index-CS4iNHIX.js"
+      ],
+      "at_ms": 1188
+    },
+    {
+      "name": "02-final-saved-result",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n17 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$9,817.44\n11 movimientos\nCompra en línea\n44%\nSupermercado\n28%\nEfectivo\n18%\nSuscripción\n6%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nSavia conectada · Recepción simulada disponible tras confirmación\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nConsultar estado de la solicitud\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\nVer conversación anterior\nVamos a entender tus movimientos.\n\nConsulta tus movimientos y aclara una operación usando los datos de tu perfil.\n\nMuéstrame mis movimientos recientes\n¿Cómo puedo consultar un cargo que no reconozco?\nAyuda con tu consulta\n\nPuedes enviar una consulta informativa sobre un movimiento.\n\nAyúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.\n\nRespuesta disponible\n\nYa tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?\n\nSiguiente paso: Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.\n\nActualizaciones (7)\nEl comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas.\nSi ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.\nEsta respuesta resolvió mi consulta\n\nAyúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.\n\nConsulta informativa completada\n\nGracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.\n\nActualizaciones (8)\nEl registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo.\nSi ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.\nPedir ayuda a un equipo\n¿Qué necesitas aclarar?\nEnviar consulta\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Ver conversación anterior",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Muéstrame mis movimientos recientes",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "¿Cómo puedo consultar un cargo que no reconozco?",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Esta respuesta resolvió mi consulta",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora.",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Enviar consulta",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "loaded_js_assets": [
+        "/assets/index-CS4iNHIX.js"
+      ],
+      "at_ms": 1921
+    },
+    {
+      "name": "03-final-reload",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n17 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$9,817.44\n11 movimientos\nCompra en línea\n44%\nSupermercado\n28%\nEfectivo\n18%\nSuscripción\n6%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nSavia conectada · Recepción simulada disponible tras confirmación\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nConsultar estado de la solicitud\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\nVer conversación anterior\nVamos a entender tus movimientos.\n\nConsulta tus movimientos y aclara una operación usando los datos de tu perfil.\n\nMuéstrame mis movimientos recientes\n¿Cómo puedo consultar un cargo que no reconozco?\nAyuda con tu consulta\n\nPuedes enviar una consulta informativa sobre un movimiento.\n\nAyúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.\n\nRespuesta disponible\n\nYa tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?\n\nSiguiente paso: Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.\n\nActualizaciones (7)\nEl comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas.\nSi ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.\nEsta respuesta resolvió mi consulta\n\nAyúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.\n\nConsulta informativa completada\n\nGracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.\n\nActualizaciones (8)\nEl registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo.\nSi ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.\nPedir ayuda a un equipo\n¿Qué necesitas aclarar?\nEnviar consulta\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Ver conversación anterior",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Muéstrame mis movimientos recientes",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "¿Cómo puedo consultar un cargo que no reconozco?",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Esta respuesta resolvió mi consulta",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora.",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Enviar consulta",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "loaded_js_assets": [
+        "/assets/index-CS4iNHIX.js"
+      ],
+      "at_ms": 8053
+    },
+    {
+      "name": "04-final-exact-history",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n17 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$9,817.44\n11 movimientos\nCompra en línea\n44%\nSupermercado\n28%\nEfectivo\n18%\nSuscripción\n6%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nSavia conectada · Recepción simulada disponible tras confirmación\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nConsultar estado de la solicitud\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\n\nEsta es tu conversación anterior. Vuelve al chat actual para escribir un mensaje nuevo.\n\nVolver al chat actual\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco esta compra. Explícame los datos y qué puedo hacer ahora.\n\nSavia\n\nLa transacción identificada es una compra en Nébula Market por 4280.75 MXN, realizada el 2026-10-02 con tu tarjeta terminada en 4381. Ya existe el reclamo CMP-SBX--HCaKBpE, con estado received, relacionado con este movimiento en el entorno de prueba. No se crea otro reclamo. El proceso actual se encuentra en revisión, sin plazos ni resultados garantizados.\n\nAyuda con tu consulta\n\nPuedes enviar una consulta informativa sobre un movimiento.\n\nAyúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.\n\nRespuesta disponible\n\nYa tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?\n\nSiguiente paso: Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.\n\nActualizaciones (7)\nEl comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas.\nSi ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.\nEsta respuesta resolvió mi consulta\n\nAyúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.\n\nConsulta informativa completada\n\nGracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.\n\nActualizaciones (8)\nEl registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo.\nSi ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.\nPedir ayuda a un equipo\n¿Qué necesitas aclarar?\nEnviar consulta\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Volver al chat actual",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Esta respuesta resolvió mi consulta",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora.",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Enviar consulta",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "loaded_js_assets": [
+        "/assets/index-CS4iNHIX.js"
+      ],
+      "at_ms": 48697
+    },
+    {
+      "name": "05-final-existing-receipt",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n17 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$9,817.44\n11 movimientos\nCompra en línea\n44%\nSupermercado\n28%\nEfectivo\n18%\nSuscripción\n6%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nSavia conectada · Recepción simulada disponible tras confirmación\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nConsultar estado de la solicitud\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\n\nEsta es tu conversación anterior. Vuelve al chat actual para escribir un mensaje nuevo.\n\nVolver al chat actual\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco esta compra. Explícame los datos y qué puedo hacer ahora.\n\nSavia\n\nLa transacción identificada es una compra en Nébula Market por 4280.75 MXN, realizada el 2026-10-02 con tu tarjeta terminada en 4381. Ya existe el reclamo CMP-SBX--HCaKBpE, con estado received, relacionado con este movimiento en el entorno de prueba. No se crea otro reclamo. El proceso actual se encuentra en revisión, sin plazos ni resultados garantizados.\n\nAyuda con tu consulta\n\nPuedes enviar una consulta informativa sobre un movimiento.\n\nAyúdame a comparar este comercio con mis recibos y a preparar el próximo paso mientras espero.\n\nRespuesta disponible\n\nYa tengo las dos perspectivas. ¿Estas sugerencias te ayudan a decidir qué hacer después?\n\nSiguiente paso: Seguiré pendiente. Puedes contarme si reconoces el comercio o si necesitas otra explicación.\n\nActualizaciones (7)\nEl comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas.\nSi ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.\nEsta respuesta resolvió mi consulta\n\nAyúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio.\n\nConsulta informativa completada\n\nGracias por confirmarlo. Cerré esta consulta porque la explicación te ayudó.\n\nActualizaciones (8)\nEl registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo.\nSi ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.\nPedir ayuda a un equipo\n¿Qué necesitas aclarar?\nEnviar consulta\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Volver al chat actual",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Esta respuesta resolvió mi consulta",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora.",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Enviar consulta",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "loaded_js_assets": [
+        "/assets/index-CS4iNHIX.js"
+      ],
+      "at_ms": 49910
+    }
+  ]
+}

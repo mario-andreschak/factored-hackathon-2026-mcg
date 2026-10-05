@@ -1,0 +1,163 @@
+{
+  "schema": "savia-final-day-runtime-status/v1",
+  "state": "current-native-product-accepted-runtime-frozen-media-and-publication-pending",
+  "public_url": "https://savia-rc-2026.fly.dev",
+  "fictional_demo_code": "SAVIA-2026",
+  "application_git_head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+  "source_merge": "d4af8362563c96f94287689149320e844886f8e7",
+  "intended_ui": "savia-integrated-eyes",
+  "current_release_accepted": true,
+  "image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+  "machine": {
+    "id": "851d7dc4460048",
+    "state": "started",
+    "image": "registry.fly.io/savia-rc-2026@sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+    "mounts": [
+      {
+        "encrypted": true,
+        "path": "/data",
+        "size_gb": 1,
+        "volume": "vol_4qlemp91ly8qn98r",
+        "name": "rc_data"
+      }
+    ]
+  },
+  "source_files": 142,
+  "source_verified": true,
+  "bank_baseline": {
+    "sandbox_cases": 0,
+    "sandbox_case_receipts": 0
+  },
+  "inquiry_baseline": {
+    "inquiries": 2,
+    "workers": 4,
+    "events": 15,
+    "sqlite_sequence": 1
+  },
+  "gate": "signed secure visitor cookie; exact browser entry verified in prior intended capture; same-session continuation uses preserved authorized session",
+  "providers": {
+    "bank_chat": "explicit direct OpenRouter completion",
+    "voice": "OpenRouter native openai/gpt-audio",
+    "flujo_built_or_executed": false
+  },
+  "local_reference": {
+    "startup_git_head": "b6d46c106aaab64c3ad52c9bd4526d5dde594091",
+    "url": "http://127.0.0.1:43900",
+    "fixture_and_ledger_preserved": true
+  },
+  "old_fly_auth_repair": {
+    "same_image_and_volume": true,
+    "ledger_counts": {
+      "sandbox_cases": 2,
+      "sandbox_case_receipts": 2
+    },
+    "effective_new_login": 200,
+    "effective_logout": 204,
+    "effective_historical_login": 401,
+    "historical_cookie_issued": false
+  },
+  "source_prs": [
+    53,
+    54,
+    55,
+    56,
+    57
+  ],
+  "pending": [
+    "final media replacement and audit closure",
+    "artifact PR and ordinary matching-head merge",
+    "public tagged release and assets",
+    "root-owned local preservation and ordinary clean tracking checkout"
+  ],
+  "predecessor_capture": {
+    "source_revision": "4a27f0e02ab8b1967af65725b85564cde1be8ac3",
+    "completed": false,
+    "qualified_native_wavs": 0,
+    "full_played_acks": 0,
+    "completed_language_stages": {
+      "initial_bankfacts": 6,
+      "unrequested_native_delegation": 5,
+      "inquiry_workers": 2
+    },
+    "retained_privately": true
+  },
+  "successor_capture": {
+    "source_revision": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "completed": false,
+    "stop_reason": "passive response-body validation/read failure; exact cause not preserved",
+    "qualified_native_wavs": 0,
+    "full_played_acks": 0,
+    "bank_chat_posts": 1,
+    "extra_native_delegation_observed": false,
+    "browser_partial_transcribes": 5,
+    "browser_native_turns": 1,
+    "completed_language_stages": {
+      "bankfacts": 6,
+      "inquiry_workers": 2
+    },
+    "case3_state": "team_completed",
+    "workers_completed": 2,
+    "native_runtime_exception_logged": false,
+    "retained_privately": true
+  },
+  "current_retained_counts": {
+    "bank_cases": 0,
+    "bank_receipts": 0,
+    "inquiries": 3,
+    "workers": 6,
+    "events": 24
+  },
+  "continuation": {
+    "source_revision": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "new_bank_chat_requests": 0,
+    "new_inquiries": 0,
+    "new_worker_tasks": false,
+    "actual_native_wavs": 2,
+    "full_played_acks": [
+      {
+        "nativeIndex": 1,
+        "httpStatus": 200,
+        "playedSamples": 158400,
+        "complete": true,
+        "exactSamples": true,
+        "atMs": 21473
+      },
+      {
+        "nativeIndex": 2,
+        "httpStatus": 200,
+        "playedSamples": 94800,
+        "complete": true,
+        "exactSamples": true,
+        "atMs": 26659
+      }
+    ],
+    "native_outputs": [
+      {
+        "index": 1,
+        "seconds": 6.6,
+        "samples": 158400,
+        "sample_rate": 24000,
+        "transcript": "Despacio, sí, bien tranquilo, aquí estoy."
+      },
+      {
+        "index": 2,
+        "seconds": 3.95,
+        "samples": 94800,
+        "sample_rate": 24000,
+        "transcript": "Cerró la consulta, ya te ayudó la explicación."
+      }
+    ],
+    "second_output_scope": "verified informational helpful closure; does not narrate worker recommendations",
+    "helpful_informational_closure": true,
+    "context_restored": true,
+    "product_steps_verified": true,
+    "recorder_completed": false,
+    "recorder_failure": "Journey exceeded bounded 180 second duration.",
+    "recorder_failure_scope": "optional transport diagnostic wait after product steps; earlier response-body failure cause remains unknown",
+    "physical_microphone_qualified": false,
+    "new_worker_overlap_qualified_in_this_run": false,
+    "earlier_worker_overlap_scope": "case 3 created during successor partial foreground speech; actual workers completed before continuation; separate timestamps retained",
+    "root_product_acceptance": true
+  },
+  "final_read_only_verification": "docs/submission/runtime-final-freeze.json"
+}

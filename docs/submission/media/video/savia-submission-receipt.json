@@ -1,0 +1,224 @@
+{
+  "artifact": "docs\\submission\\media\\video\\savia-submission.mp4",
+  "duration": 140.611,
+  "full_decode": "passed",
+  "sha256": "44e8dad7fdfdc6bd3b8b50b5aee83ea97f62c9e8412b20a1655a937cabd0fccb",
+  "timeline": "docs\\submission\\media\\video\\tv-timeline.json",
+  "sections": [
+    {
+      "id": "breakfast",
+      "start": 0,
+      "duration": 5.5,
+      "source": "docs/video/pilot/savia-three-scene-pilot.mp4",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "b2d31f2e1734e2360edfca2446550ac951bd20172534c645d0e8a8fc690dc14d"
+    },
+    {
+      "id": "meet-savia",
+      "start": 5.5,
+      "duration": 7.6,
+      "source": "docs/submission/media/motion/assistant-intro.mp4",
+      "source_intervals": null,
+      "narration": "docs/submission/measurements/intended-savia-native/foreground-calm.wav",
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "f002e85806bd88852dd20a69b87c6c705cbffd5a3e1a6e7e160fd5e2f2ba0ce4"
+    },
+    {
+      "id": "shop",
+      "start": 13.1,
+      "duration": 3.5,
+      "source": "docs/video/pilot/savia-three-scene-pilot.mp4",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "d4e41da0ed8f1019715a78234fc7eee30f49a7e92d46191b2ebdf8ac1da02646"
+    },
+    {
+      "id": "facts",
+      "start": 16.6,
+      "duration": 12,
+      "source": "docs/submission/measurements/team-story-final/actual-browser.webm",
+      "source_intervals": [
+        {
+          "start": 11.6,
+          "end": 23.6
+        }
+      ],
+      "narration": null,
+      "native_audio_source": null,
+      "label": "Actual fictional demo \u00b7 edited conversation",
+      "sha256": "8259e4f2144f649ff7a199648e1a1582c0ba5660e54a869955333f09f19e80cc"
+    },
+    {
+      "id": "bowling",
+      "start": 28.6,
+      "duration": 7,
+      "source": "docs/submission/media/tv/clips/bowling.mp4",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "17308cb44ceca367eefa0594b91017f5bffbfa8b2933b1ce02bb9dcc52ccc668"
+    },
+    {
+      "id": "team",
+      "start": 35.6,
+      "duration": 11.4,
+      "source": "docs/submission/media/motion/assistant-team.mp4",
+      "source_intervals": null,
+      "narration": "docs/submission/media/audio/team-bridge.wav",
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "13103d87a7e82ba834e0464f5670d080e2360340b0f4f3b9bd56c0839320c6ce"
+    },
+    {
+      "id": "actual-team",
+      "start": 47.0,
+      "duration": 15,
+      "source": "docs/submission/measurements/team-story-final/actual-browser.webm",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": "Actual demo \u00b7 two helpers \u00b7 customer found the explanation useful",
+      "sha256": "5cf29cb680863e1c3f28c1374b6fd8a75911a0e2a39945628bd49a502df30664"
+    },
+    {
+      "id": "kayak",
+      "start": 62.0,
+      "duration": 4.407,
+      "source": "docs/video/pilot/savia-three-scene-pilot.mp4",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "12a810106a51940a75ab80a412cf6ac7669076dd62d401cf920ce9d79816c890"
+    },
+    {
+      "id": "savia-speaks",
+      "start": 66.407,
+      "duration": 4.95,
+      "source": "docs/submission/media/motion/assistant-spoken-update.mp4",
+      "source_intervals": null,
+      "narration": "docs/submission/measurements/intended-savia-native/informational-closure.wav",
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "414bb34937da2d2d3d340e1937bdc599ae796d146e0b539b5858f381a7fe175c"
+    },
+    {
+      "id": "boardgames",
+      "start": 71.357,
+      "duration": 6,
+      "source": "docs/submission/media/tv/clips/boardgames.mp4",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "58055f00ea71708710ba34c9879c8cc249625d1ab19cbaf82d0624841090c64f"
+    },
+    {
+      "id": "followup",
+      "start": 77.357,
+      "duration": 12,
+      "source": "docs/submission/measurements/story-es-v2/actual-browser.webm",
+      "source_intervals": [
+        {
+          "start": 392,
+          "end": 394
+        },
+        {
+          "image": "docs/submission/measurements/story-es-v2/10-rechecked-next-step.png",
+          "duration": 10,
+          "source_event_ms": 459062,
+          "reason": "Legibility hold of actual follow-up"
+        }
+      ],
+      "narration": "docs/submission/media/audio/followup-bridge.wav",
+      "native_audio_source": null,
+      "label": "Actual demo \u00b7 simulated receipt kept after reload",
+      "sha256": "b40bd22256be4c9d309ebffc06107c051c3e4f1ece2883dcc487bd796ea0e0e4"
+    },
+    {
+      "id": "beach",
+      "start": 89.357,
+      "duration": 6,
+      "source": "private/submission_media/tv/beach-cutaway.mp4",
+      "source_intervals": null,
+      "narration": "docs/submission/media/audio/beach-pickup.wav",
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "0d602c20dac983c4df6cbd4ff76e852c58a002c357dc6fc48b0f10926bdd583b"
+    },
+    {
+      "id": "continuity",
+      "start": 95.357,
+      "duration": 9,
+      "source": "docs/submission/media/motion/assistant-continuity.mp4",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "64032a0ff0064ae24d860eee1fa4e6e8d6cb3d47a5a1a48cc5d09a8bea42ba1a"
+    },
+    {
+      "id": "portuguese",
+      "start": 104.357,
+      "duration": 7,
+      "source": "docs/submission/measurements/portuguese-final/actual-browser.webm",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": "Actual Portuguese clarification \u00b7 fictional customer",
+      "sha256": "0ff35c86968eb9226f51d4f37d7e084a21dbda1e94f9209144ea92a3bbf4e1cb"
+    },
+    {
+      "id": "skydiving",
+      "start": 111.357,
+      "duration": 6.3,
+      "source": "private/submission_media/tv/skydiving-cutaway.mp4",
+      "source_intervals": null,
+      "narration": "docs/submission/media/audio/skydiving-pickup.wav",
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "d076bbe437c8ec6a7128b96a0e4af81404ee28032d138655b18e1b71dedb3d85"
+    },
+    {
+      "id": "how",
+      "start": 117.657,
+      "duration": 8.2,
+      "source": "docs/submission/media/motion/architecture.mp4",
+      "source_intervals": null,
+      "narration": "docs/submission/media/audio/how-bridge.wav",
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "781d4e3ce5e4c31e5e655e03c2920254619cc5d56c159b5e82ffa1a4fccb3698"
+    },
+    {
+      "id": "coffee",
+      "start": 125.857,
+      "duration": 7,
+      "source": "private/submission_media/tv/coffee.mp4",
+      "source_intervals": null,
+      "narration": "docs/submission/media/audio/closing-bridge.wav",
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "7a4b189eb9059fda531e62ddf6f5d43f7e995e2f694d4752457c3d468fd035d2"
+    },
+    {
+      "id": "end",
+      "start": 132.857,
+      "duration": 7.593,
+      "source": "docs/submission/media/motion/assistant-end.mp4",
+      "source_intervals": null,
+      "narration": null,
+      "native_audio_source": null,
+      "label": null,
+      "sha256": "70cd90f04b2afa2f7a062aaebcafc2ef22f980fbc1e96f47390f31448076ffed"
+    }
+  ],
+  "scope": "Illustrative fictional TV cast plus edited actual fictional Savia prototype inserts. Five generated moving dialogue scenes; beach/sky use photo cutaways and stock-voice editorial dialogue after bounded native rendering failed. Both assistant audio inserts are complete actual provider WAVs captured through the intended integrated Savia dialog on source 9d77a7599128b668b0e34f9c2937eb40b6bd3824, with exact once-only full-playback acknowledgements: calm foreground reassurance and verified customer-marked-helpful informational closure. Closure queued during foreground playback; existing team suggestions and exact bank history stayed saved after new chat. No new workers, inquiry or bank chat ran in this continuation. Earlier actual worker creation during partial foreground is separate incomplete-run evidence. Raw recorder exited at 180 seconds on optional transport cleanup after required product checks completed; that failure is preserved separately. Text/helper/Portuguese inserts are separate actual fictional runs. Simulated banking receipts; no real refund, bank decision, human acceptance or production savings. One actual 30-minute repeat check; day/week framing uses controlled-time tests. File-backed microphone and imperfect ASR, no physical microphone qualification."
+}

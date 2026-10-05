@@ -1,0 +1,463 @@
+{
+  "schema": "savia-publication-audit/v1",
+  "updated_at": "2026-10-05T05:02:20.934751+00:00",
+  "audited_source": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+  "publish_ready": true,
+  "state": "passed-final-grounded-source-product-and-frozen-public-artifacts",
+  "history_scope": {
+    "reachable_blobs": 2235,
+    "bytes_scanned": 82976829,
+    "working_public_artifact_documents": 144,
+    "pdf_text_extracted": true,
+    "commit_messages_scanned": true,
+    "raw_private_path_findings": 0,
+    "real_provider_or_aws_signature_findings": 0,
+    "fixture_constants_classified": 104,
+    "source_scope": "Previously scanned reachable history through b6d46c1; successor delta recorded separately below."
+  },
+  "finding": {
+    "classification": "historical_access_code_revoked_in_effective_and_cached_bindings",
+    "historical_path": "frontend/config.example.json",
+    "current_private_config_path": "/data/native-authority/portal-config.json",
+    "fictional_rc_code_matches": false,
+    "values_emitted": false,
+    "remedy": "Runtime rotates only actual active Fly portal demo-code binding and reloads or seals service, preserving other config, signers, ledger and data; verify stored binding nonmatch as well as API rejection.",
+    "remedy_completed": "Effective and cached stored bindings coherently rotated and all historical nonmatch; runtime direct innerAPI positive/negative auth controls pass, private data/signers/ledger unchanged. Local organizer denial independently verified."
+  },
+  "media_review": {
+    "scope": "Final integrated-voice film/decks and owner-frozen exact public artifact set",
+    "frozen_media_hashes_verified": 36,
+    "playback_media_paths": 34,
+    "evidence_dependencies_verified": 3,
+    "rebuild_dependencies_verified": 8,
+    "text_documents_scanned": 50,
+    "credential_candidates": 0,
+    "current_document_local_links_verified": 99,
+    "html_dependencies_verified": true,
+    "final_video_sha256": "44e8dad7fdfdc6bd3b8b50b5aee83ea97f62c9e8412b20a1655a937cabd0fccb",
+    "final_video_duration_seconds": 140.611,
+    "resolution": "1920x1080",
+    "full_decode": "independently passed",
+    "decks_each": {
+      "pptx_slides": 5,
+      "pdf_pages": 5,
+      "embedded_notes": 5
+    },
+    "visual_review": "Updated video contact sheet and both slide4 images reviewed; fictional cast/customer, exact reassurance/closure captions, no credential overlay",
+    "review_limits": "No exhaustive OCR/frame scan or independent human audio review",
+    "native_scope": "Actual6.6sec foreground reassurance and3.95sec verified informational helpful closure; second WAV does not narrate worker recommendations or bank resolution",
+    "recorder_completed": false,
+    "recorder_diagnostic_timeout_seconds": 180,
+    "freeze_receipt": {
+      "path": "docs/submission/media/media-freeze-receipt.json",
+      "sha256": "4ce071dbefd3a506f7f14ec8e9dec9a0633c8e62f48497773cf487fbe99e1821"
+    },
+    "unchanged_other_16_segment_hashes": "media-owner reported unchanged; final film hash/full decode verified"
+  },
+  "worktrees": {
+    "isolated_rc_clean": true,
+    "banking_v0_clean": true,
+    "feature_voice_clean": true,
+    "shared_root_dirty_count": 389,
+    "shared_root_classifications": {
+      "differs_from_RC_preserve_review": 18,
+      "matches_accepted_RC_normalized_bytes": 119,
+      "not_in_RC": 252
+    },
+    "cleaning_plan": "Root preserves unrelated primary work and protected state before ordinary alignment; legacy root-avatar removal remains separately authorized and execution-policy blocked. No reset, stash, forced overwrite or deletion bypass.",
+    "review_scope": "Earlier dated inventory; current primary alignment remains root/runtime-owned after writer freeze."
+  },
+  "limitations": [
+    "Pattern-based scan does not prove absence of arbitrarily encoded secrets.",
+    "Binary images/video inspected via final contact sheets, not exhaustive OCR/frame scan.",
+    "Final public deploy source/screenshots and tag verified separately by runtime."
+  ],
+  "private_audit_artifact_directory": "C:\\Users\\Moe\\.codex\\visualizations\\2026\\10\\05\\01a1096a-8e6a-7f52-b8fb-e22cf8d18925\\publication-audit",
+  "fly_trace": {
+    "app": "flujo-factored-2026",
+    "classification": "final_effective_and_cached_bindings_all_nonmatch_and_coherent",
+    "comparison_succeeded": true,
+    "historical_code_matches": false,
+    "proof_path": "C:/Users/Moe/.codex/visualizations/2026/10/05/01a1096a-6bac-7940-9120-1c9563fcaf62/fly-auth-comparison.json",
+    "owner": "runtime",
+    "review": "cleanup read sanitized boolean receipt",
+    "additional_retained_binding": "/data/private/frontend/frontend.json",
+    "active_matching_binding": "/data/native-authority/portal-config.json"
+  },
+  "denial_verification": {
+    "local": {
+      "schema": "historical-access-code-denial/v1",
+      "observed_at": "2026-10-05T02:11:03.022098+00:00",
+      "url": "http://localhost:43800",
+      "historical_path": "frontend/config.example.json",
+      "blob": "70e445b7781afe3d673ab02ab5245e4d818bad10",
+      "values_emitted": false,
+      "http_status": 401,
+      "cookie_issued": false,
+      "old_code_denied": true,
+      "classification": "historical_code_denied"
+    },
+    "old_fly": {
+      "schema": "historical-access-code-denial/v1",
+      "observed_at": "2026-10-05T02:11:03.583008+00:00",
+      "url": "https://flujo-factored-2026.fly.dev",
+      "historical_path": "frontend/config.example.json",
+      "blob": "70e445b7781afe3d673ab02ab5245e4d818bad10",
+      "values_emitted": false,
+      "http_status": 401,
+      "cookie_issued": false,
+      "old_code_denied": true,
+      "classification": "historical_code_denied"
+    }
+  },
+  "remaining_source_gate": "Reviewed9d77/484fe8 source/product/runtime and frozen final artifact scope passed. No additional credential probes/history replay required.",
+  "fly_denial_interpretation": "Independent public401 was an outer private gateway rejection, not inner-code validation. Publication clearance relies on reviewed effective/cached stored nonmatch/coherence plus runtime direct innerAPI positive200/newcookie and negative401/nohistoricalcookie, same preserved machine/image/volume and ledger2/2.",
+  "final_auth_gate": {
+    "historical_all_known_codes_match": false,
+    "cached_fixture_matches_rotated_portal": true,
+    "second_same_machine_restart_proof": "runtime healthy1/1, same683ddde5f044d8/image/volume",
+    "post_restart_bank_counts": {
+      "sandbox_cases": 2,
+      "sandbox_case_receipts": 2
+    },
+    "independent_denial_after_final_restart": {
+      "schema": "historical-access-code-denial/v1",
+      "observed_at": "2026-10-05T02:25:13.003801+00:00",
+      "url": "https://flujo-factored-2026.fly.dev",
+      "historical_path": "frontend/config.example.json",
+      "blob": "70e445b7781afe3d673ab02ab5245e4d818bad10",
+      "values_emitted": false,
+      "http_status": 401,
+      "cookie_issued": false,
+      "old_code_denied": true,
+      "classification": "historical_code_denied"
+    },
+    "independent_public_probe_scope": "outer private gateway; not credential revocation proof by itself"
+  },
+  "effective_inner_auth_verification": {
+    "proof_path": "C:\\Users\\Moe\\.codex\\visualizations\\2026\\10\\05\\01a1096a-6bac-7940-9120-1c9563fcaf62\\fly-effective-auth-proof.json",
+    "owner": "runtime",
+    "review": "cleanup reviewed sanitized positive and negative control receipt",
+    "new_code_login_status": 200,
+    "new_code_cookie_issued": true,
+    "historical_code_status": 401,
+    "historical_cookie_issued": false,
+    "bank_queries": 0,
+    "bank_counts": {
+      "sandbox_cases": 2,
+      "sandbox_case_receipts": 2
+    },
+    "audit_session_logout_status": 204,
+    "audit_session_logout_cleanup": "completed proper JSON logout, no bank queries, retained ledger counts2/2"
+  },
+  "public_entry_gate_scope": "Current intended Savia root/UI accepted by root through earlier browser entry and same-session native continuation; exact source/UI/read-only freeze verified. Optional recorder diagnostic exit remains failed and physical microphone is unqualified.",
+  "prior_audited_source": "b6d46c106aaab64c3ad52c9bd4526d5dde594091",
+  "corrected_native_source_delta": {
+    "base": "b6d46c106aaab64c3ad52c9bd4526d5dde594091",
+    "head": "4a27f0e02ab8b1967af65725b85564cde1be8ac3",
+    "merge": "f1c439eebcd9e6b23e3ddd84ee37ef6d1d9e9a6c",
+    "pr": 56,
+    "new_reachable_blobs_scanned": 58,
+    "bytes_scanned": 892679,
+    "commit_messages_scanned": true,
+    "credential_candidates": 0,
+    "sensitive_path_findings": 0,
+    "scan_errors": 0,
+    "image_digest": "sha256:bfc3228fad8afe6fb2197a9c3af19ef81350275fa54e21fef0811fa03cac7a04",
+    "runtime_owner_receipts_reviewed": true,
+    "source_hashes_independently_matched_to_git": 142,
+    "deployed_application_hashes_matched_to_manifest": 86,
+    "served_js": {
+      "path": "assets/index-DGVQHrRT.js",
+      "sha256": "f06ecbad1ea5089a227a04ea7468aeb8f4b1ef023ac04a98e6b71379771cc8bd"
+    },
+    "legacy_tracked_paths_remaining": 0,
+    "legacy_deleted_paths_from_base": 210,
+    "runtime_receipt_legacy_app_avatar_absent": true,
+    "primary_physical_legacy_directory": "Ignored/generated remnants remain after exact recursive deletion was rejected by automatic approval review; no deletion bypass or legacy source archive.",
+    "intended_product_acceptance": false,
+    "review_scope": "Source delta and reviewed runtime identity receipts; current provider journey and final media are pending."
+  },
+  "artifact_whitelist": {
+    "media": {
+      "path": "docs/submission/media/publication-candidate.json",
+      "sha256": "0e56471a103ffa2502ac5e2372aaf6498faec7f428dc1843456962143b1cdfee",
+      "playback_paths": 34,
+      "provenance_paths": [
+        "docs/submission/media/video/integrated-voice-replacements.json",
+        "docs/submission/media/publication-candidate.json",
+        "docs/submission/media/media-freeze-receipt.json"
+      ],
+      "frozen_hashes_path": "docs/submission/media/media-freeze-receipt.json",
+      "rebuild_dependencies": 8
+    },
+    "measurements": {
+      "path": "docs/submission/measurements/native-final-public-whitelist.json",
+      "sha256": "ed43ec768e085563b1b06e87fff812dbbdf629f127bc04e924731fde82062c08",
+      "files": 24,
+      "include_manifest_itself": true
+    },
+    "cleanup_paths": [
+      "docs/README.md",
+      "docs/submission/publication-audit.json",
+      "docs/submission/cleanup-status.json"
+    ],
+    "runtime_paths": [
+      "docs/submission/runtime-status.json",
+      "docs/submission/runtime-source-final.json",
+      "docs/submission/runtime-final-freeze.json"
+    ],
+    "publication_approved": true,
+    "scope": "Exact reviewed source/artifact publication delta; root/runtime execute ordinary artifact merge, public repository and tagged release separately",
+    "exclude": [
+      "Untracked preintegration system-landscape chain and assets",
+      "Stale primary docs/ONLINE_BANKING_FRONTEND.md overlay",
+      "Legacy root avatar source and generated remnants",
+      "Private cookies/raw native NDJSON/provider configuration/state/unlisted private capture material"
+    ]
+  },
+  "publication_hold_reasons": [],
+  "integrated_capture_gate": {
+    "source": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "state": "root-product-steps-accepted-recorder-diagnostic-incomplete",
+    "root_product_acceptance": true,
+    "review_scope": "Reviewed sanitized final runtime/continuation receipts, exact audio file hashes/PCM samples, six screenshots and fully decoded WebM; root product checks accepted. Final media freeze remains separate.",
+    "actual_native_wavs": 2,
+    "full_played_acks": [
+      {
+        "nativeIndex": 1,
+        "httpStatus": 200,
+        "playedSamples": 158400,
+        "complete": true,
+        "exactSamples": true,
+        "atMs": 21473
+      },
+      {
+        "nativeIndex": 2,
+        "httpStatus": 200,
+        "playedSamples": 94800,
+        "complete": true,
+        "exactSamples": true,
+        "atMs": 26659
+      }
+    ],
+    "native_outputs": [
+      {
+        "index": 1,
+        "seconds": 6.6,
+        "samples": 158400,
+        "sample_rate": 24000,
+        "transcript": "Despacio, s\u00c3\u00ad, bien tranquilo, aqu\u00c3\u00ad estoy."
+      },
+      {
+        "index": 2,
+        "seconds": 3.95,
+        "samples": 94800,
+        "sample_rate": 24000,
+        "transcript": "Cerr\u00c3\u00b3 la consulta, ya te ayud\u00c3\u00b3 la explicaci\u00c3\u00b3n."
+      }
+    ],
+    "second_output_scope": "verified informational helpful closure; does not narrate worker recommendations",
+    "helpful_informational_closure": true,
+    "context_restored": true,
+    "new_bank_chat_requests": 0,
+    "new_inquiries": 0,
+    "new_worker_tasks": false,
+    "physical_microphone_qualified": false,
+    "new_worker_overlap_qualified_in_this_run": false,
+    "earlier_worker_overlap_scope": "case 3 created during successor partial foreground speech; actual workers completed before continuation; separate timestamps retained",
+    "recorder_completed": false,
+    "recorder_failure": "Journey exceeded bounded 180 second duration.",
+    "recorder_failure_scope": "optional transport diagnostic wait after product steps; earlier response-body failure cause remains unknown",
+    "final_media_freeze_receipt_available": true
+  },
+  "grounded_native_source_delta": {
+    "base": "4a27f0e02ab8b1967af65725b85564cde1be8ac3",
+    "head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "merge": "d4af8362563c96f94287689149320e844886f8e7",
+    "pr": 57,
+    "changed_files": {
+      "frontend/server/conversation.py": "18259bea6e75838a6bd14d06ca2ae154b8832e622e4122c5829ded2589f09cce",
+      "frontend/tests/test_voice.py": "55fc814368ea9a9efb2a3ec9760bf76752a2d695df2c2947640369e358746b6f"
+    },
+    "new_reachable_blobs_scanned": 2,
+    "bytes_scanned": 46784,
+    "commit_messages_scanned": true,
+    "credential_candidates": 0,
+    "sensitive_path_findings": 0,
+    "scan_errors": 0,
+    "source_tests": {
+      "checks": 73,
+      "scope": "Voice/API checks reported by root; cleanup did not rerun tests"
+    },
+    "packaged_source_manifest_files": 142,
+    "packaged_changed_files": [
+      "frontend/server/conversation.py"
+    ],
+    "prior_packaged_hashes_retained": 141,
+    "changed_2_git_hashes_independently_matched": true,
+    "test_file_packaging": "frontend/tests/test_voice.py is source-audited but excluded from runtime build allowlist",
+    "deployed_application_hashes_match_manifest": 86,
+    "image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+    "runtime_owner_receipts_reviewed": true,
+    "legacy_app_avatar_absent_in_runtime_receipt": true,
+    "intended_product_acceptance": true,
+    "primary_physical_legacy_directory": "Ignored/generated remnants still present after automatic approval review rejection. Root owns permitted preservation/alignment; no bypass or filesystem-deletion claim.",
+    "acceptance_scope": "Root accepted same-session continuation product steps with exact full-playback receipts; raw recorder remains completed=false due optional transport diagnostic timeout. No new worker-overlap or physical-microphone claim."
+  },
+  "prior_incomplete_integrated_capture": {
+    "state": "stopped-unqualified",
+    "reported_by": "measurement via media owner status; private partial capture not promoted",
+    "elapsed_seconds_before_stop": 25,
+    "stop_reason": "Unexpected second /api/chat/messages request",
+    "reported_intended_ui_and_source_js_match": true,
+    "qualified_new_wavs": 0,
+    "qualified_full_playback_acknowledgments": 0,
+    "current_voice_qualified": false,
+    "final_media_changed": false,
+    "final_media_freeze_receipt_available": false,
+    "next": "Await root direction; no retry or partial-proof promotion by cleanup or media",
+    "source": "4a27f0e02ab8b1967af65725b85564cde1be8ac3",
+    "scope": "Failed prior4a27 capture; not a9d77 successor run"
+  },
+  "prior_incomplete_successor_capture": {
+    "source": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "state": "stopped-unqualified",
+    "reported_by": "measurement via media owner; private partial proof not promoted",
+    "elapsed_seconds_before_stop": 26.49,
+    "stop_reason": "Body capture/validation failure",
+    "reported_observations": [
+      "Intended UI and source matched",
+      "Bank reply and native speaking observed",
+      "New inquiry case3 created during foreground conversation"
+    ],
+    "qualified_new_wavs": 0,
+    "qualified_full_playback_acknowledgments": 0,
+    "current_voice_qualified": false,
+    "final_media_changed": false,
+    "final_media_freeze_receipt_available": false,
+    "next": "Await root direction; no retry or partial-proof promotion by cleanup or media"
+  },
+  "final_runtime_freeze": {
+    "observed_at": "2026-10-05T04:48:35.396244+00:00",
+    "source": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+    "read_only": true,
+    "provider_calls": 0,
+    "source_files": 142,
+    "source_verified": true,
+    "served_ui_verified": true,
+    "legacy_avatar_absent": true,
+    "bank_counts": {
+      "sandbox_cases": 0,
+      "sandbox_case_receipts": 0
+    },
+    "inquiry_counts": {
+      "inquiries": 3,
+      "workers": 6,
+      "events": 24,
+      "sqlite_sequence": 1
+    },
+    "case3_state": "informational_resolved",
+    "case3_workers": [
+      {
+        "role": "evidence",
+        "state": "completed"
+      },
+      {
+        "role": "next_steps",
+        "state": "completed"
+      }
+    ],
+    "public_documents": [
+      {
+        "path": "docs/submission/runtime-status.json",
+        "sha256": "6a865bf1f3b8fed209d027143bae4e626ab5c19fc1f217d0210a446a7fba8dc7"
+      },
+      {
+        "path": "docs/submission/runtime-final-freeze.json",
+        "sha256": "c25b7c87292eaa02e373a09ca4540ade9ddc232ef710891afaa6a3f6f820a72b"
+      },
+      {
+        "path": "docs/submission/runtime-source-final.json",
+        "sha256": "72288c07d072055fc928045e5f327c64071f7ef3967e2ed81eb119fc75c3367c"
+      }
+    ],
+    "public_document_pattern_scan": "zero credential candidates; no fresh history scan or auth probes"
+  },
+  "final_capture_artifact_delta": {
+    "source": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+    "whitelist_path": "docs/submission/measurements/native-final-public-whitelist.json",
+    "whitelist_sha256": "ed43ec768e085563b1b06e87fff812dbbdf629f127bc04e924731fde82062c08",
+    "measurement_owner_files_hash_verified": 24,
+    "manifest_itself_approved_for_inclusion": true,
+    "additional_manifest_runtime_and_root_documents": 6,
+    "public_texts_scanned": 16,
+    "credential_candidates": 0,
+    "audio_verified": [
+      {
+        "file": "foreground-calm.wav",
+        "sha256": "289fbbe598cc59fd5f977c36901a9781773b6cc68c72e8a7204a832f3b9b0fa6",
+        "samples": 158400,
+        "seconds": 6.6
+      },
+      {
+        "file": "informational-closure.wav",
+        "sha256": "e2a64aaec4c59b1f28cc17426b7f5786ad46295d10e587c7d56d932c5f379a4c",
+        "samples": 94800,
+        "seconds": 3.95
+      }
+    ],
+    "audio_format": "mono PCM16 at24kHz; hashes/header/sample counts independently verified",
+    "semantic_scope": "Provider captions/root-agent acceptance; second output informational helpful closure only; independent human audio review not claimed",
+    "webm_full_decode": "passed",
+    "webm_duration_seconds": 180.48,
+    "visual_review": "six integrated Savia/closure/archive frames visually reviewed, fictional customer/merchant, no visible credential overlay",
+    "raw_observer_completed": false,
+    "raw_observer_exit_code": 1,
+    "optional_diagnostic_timeout_seconds": 180,
+    "historical_failed_partial_summaries_retained": true,
+    "review_limits": "Sampled screenshots and full decode; no exhaustive OCR/frame/audio semantic human review",
+    "manifest_hash_refreshed_after_owner_root_acceptance_metadata": true
+  },
+  "prior_media_review": {
+    "public_entry_documents_checked": 7,
+    "link_findings": [],
+    "final_video_sha256_matches_receipt": true,
+    "final_video_duration_seconds": 150.626,
+    "full_decode_reported": "passed",
+    "visual_review": "Final video contact sheet and five-slide submission deck inspected: fictional cast/customer inserts, scoped simulated receipts and informational closure; no visible auth overlay",
+    "root_report": "Root owns current release report and final GO.",
+    "review_scope": "Historical creative preview and older source; does not qualify corrected integrated voice or final successor media."
+  },
+  "final_document_delta": {
+    "reviewed_document_hashes": {
+      "README.md": "5f9d5c457ef78091d13c008d0671f8fff2ec8227a9b79a4f5486d8099a1ac3a5",
+      "docs/README.md": "862574886f93d43916fa06284358c62a6afea3de370f4d6396b4ebd5403fb309",
+      "docs/submission/RELEASE_CANDIDATE.md": "63e25579d522f11e557a5be6e3cc15d7e3294927d7bf54be6397a7b5bdd86a17",
+      "frontend/README.md": "42c92861d36165346c48b4d29fdb5ac5d68314a27dba355570a3261c3148278e",
+      "docs/submission/CUSTOMER_JOURNEY.md": "57e69b24f972555530d4cf960a903f1d92a766390bfa48363b30b183513b47e8",
+      "frontend/src/avatar/README.md": "60b3484bffee6f3b8e7a0dc344bc19569fd97ca883bb496fda581fc491a4537d",
+      "docs/submission/assistant/README.md": "14988bb00d0b0575ea14c034025036050df88cb04856a1da7694c071cbf05133",
+      "docs/submission/assistant-status.json": "e264998070f18c715890e21efd937ec5f62ce469d5230ea60e04ed39692b2f57",
+      "docs/submission/customer-status.json": "0a794fda6903da1d3e575dc821d3bca80dc51758a6b918248cfb56f22c0f351a",
+      "docs/submission/voice-status.json": "29ab84e220dad4d6707187413ed7424e5294737043aacbfd7fd039ff67596fda",
+      "docs/submission/media-status.json": "c9374edb83117815a94c0b8d639ccfc1ea509642331e88697fb61c89a46a31bc",
+      "docs/submission/runtime-status.json": "6a865bf1f3b8fed209d027143bae4e626ab5c19fc1f217d0210a446a7fba8dc7",
+      "docs/submission/runtime-final-freeze.json": "c25b7c87292eaa02e373a09ca4540ade9ddc232ef710891afaa6a3f6f820a72b",
+      "docs/submission/runtime-source-final.json": "72288c07d072055fc928045e5f327c64071f7ef3967e2ed81eb119fc75c3367c"
+    },
+    "local_links_verified": 99,
+    "credential_candidates": 0,
+    "untracked_system_landscape_current_entry_links": 0,
+    "legacy_root_avatar_current_startup_links": 0
+  },
+  "artifact_byte_integrity": {
+    "git_attributes_delta": "Only four evidence-byte-preservation lines for docs/submission/**, scripts/submission/** and scripts/submission_media/**; no runtime/build source changes",
+    "reviewed": true,
+    "runtime_writer_final_staged_blob_hash_verification": "Required against both exact owner manifests before committing artifacts"
+  },
+  "publication_authorization": "Human-authorized public repository/tagged release; root publication GO after accepted product steps and normal final artifact audit. No further approval gate.",
+  "release_execution_pending": "Runtime ordinary artifact PR/merge and public tagged release/upload verification; root local-only preservation and ordinary checkout alignment. Not evidence of a completed publication.",
+  "local_cleanup_limitation": "Physical legacy generated remnants remain after automatic approval review rejected recursive removal. Tracked legacy source and deployed /app/avatar are absent; no filesystem-deletion claim or bypass. This is separate from public source/artifact qualification."
+}

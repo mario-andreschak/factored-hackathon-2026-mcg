@@ -1,0 +1,182 @@
+{
+  "schema": "savia-slow-story-observations/v1",
+  "scope": "serialized complete ES customer browser story; no other generic/bank calls in this interval; observer operation wrappers may count nested operations",
+  "time_window": "2026-10-04T19:35:00-05:00 to 19:43:10-05:00",
+  "observations": [
+    {
+      "observed_at": "2026-10-04T19:36:07.697628-05:00",
+      "kind": "model",
+      "stage": "detect_attack",
+      "model": "model-GPT-6 Luna",
+      "status": "ok",
+      "prompt_tokens": 14858,
+      "completion_tokens": 16,
+      "total_tokens": 14874,
+      "cached_prompt_tokens": 1792,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": null,
+      "cost_usd": null,
+      "request_system_chars": 3562,
+      "request_user_chars": 114,
+      "response_model": "model-GPT-6 Luna",
+      "response_id_kind": "codex",
+      "latency_ms": 33839
+    },
+    {
+      "observed_at": "2026-10-04T19:36:07.970130-05:00",
+      "kind": "model",
+      "stage": "detect_context",
+      "model": "model-GPT-6 Luna",
+      "status": "ok",
+      "prompt_tokens": 14399,
+      "completion_tokens": 17,
+      "total_tokens": 14416,
+      "cached_prompt_tokens": 1792,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": null,
+      "cost_usd": null,
+      "request_system_chars": 1785,
+      "request_user_chars": 142,
+      "response_model": "model-GPT-6 Luna",
+      "response_id_kind": "codex",
+      "latency_ms": 33703
+    },
+    {
+      "observed_at": "2026-10-04T19:36:10.355941-05:00",
+      "kind": "model",
+      "stage": "rewrite_decompose",
+      "model": "model-GPT-6 Luna",
+      "status": "ok",
+      "prompt_tokens": 14770,
+      "completion_tokens": 79,
+      "total_tokens": 14849,
+      "cached_prompt_tokens": 1792,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": null,
+      "cost_usd": null,
+      "request_system_chars": 3594,
+      "request_user_chars": 142,
+      "response_model": "model-GPT-6 Luna",
+      "response_id_kind": "codex",
+      "latency_ms": 37087
+    },
+    {
+      "observed_at": "2026-10-04T19:36:43.066392-05:00",
+      "kind": "model",
+      "stage": "detect_intent",
+      "model": "model-GPT-6 Luna",
+      "status": "ok",
+      "prompt_tokens": 13924,
+      "completion_tokens": 52,
+      "total_tokens": 13976,
+      "cached_prompt_tokens": 1792,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": null,
+      "cost_usd": null,
+      "request_system_chars": 3515,
+      "request_user_chars": 111,
+      "response_model": "model-GPT-6 Luna",
+      "response_id_kind": "codex",
+      "latency_ms": 32710
+    },
+    {
+      "observed_at": "2026-10-04T19:37:17.326321-05:00",
+      "kind": "model",
+      "stage": "extract_slots",
+      "model": "model-GPT-6 Luna",
+      "status": "ok",
+      "prompt_tokens": 15585,
+      "completion_tokens": 112,
+      "total_tokens": 15697,
+      "cached_prompt_tokens": 12032,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": null,
+      "cost_usd": null,
+      "request_system_chars": 9191,
+      "request_user_chars": 168,
+      "response_model": "model-GPT-6 Luna",
+      "response_id_kind": "codex",
+      "latency_ms": 34259
+    },
+    {
+      "observed_at": "2026-10-04T19:37:17.671851-05:00",
+      "kind": "bank_read",
+      "operation": "search_transactions",
+      "status": "ok",
+      "latency_ms": 345
+    },
+    {
+      "observed_at": "2026-10-04T19:37:17.990806-05:00",
+      "kind": "bank_read",
+      "operation": "get_transaction",
+      "status": "ok",
+      "latency_ms": 318
+    },
+    {
+      "observed_at": "2026-10-04T19:37:18.259469-05:00",
+      "kind": "bank_read",
+      "operation": "get_related_complaints",
+      "status": "ok",
+      "latency_ms": 268
+    },
+    {
+      "observed_at": "2026-10-04T19:37:18.294260-05:00",
+      "kind": "bank_read",
+      "operation": "host_action_status",
+      "status": "ok",
+      "latency_ms": 34
+    },
+    {
+      "observed_at": "2026-10-04T19:38:48.658644-05:00",
+      "kind": "model",
+      "stage": "generate",
+      "model": "model-GPT-6 Luna",
+      "status": "cancelled",
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "cached_prompt_tokens": null,
+      "cache_write_tokens": null,
+      "reasoning_tokens": null,
+      "cost_usd": null,
+      "request_system_chars": 21884,
+      "request_user_chars": 3005,
+      "latency_ms": 90359
+    },
+    {
+      "observed_at": "2026-10-04T19:41:55.519185-05:00",
+      "kind": "bank_action",
+      "operation": "prepare",
+      "status": "ok",
+      "latency_ms": 434
+    },
+    {
+      "observed_at": "2026-10-04T19:41:56.913013-05:00",
+      "kind": "bank_action",
+      "operation": "receipt",
+      "status": "ok",
+      "latency_ms": 5
+    },
+    {
+      "observed_at": "2026-10-04T19:41:56.913529-05:00",
+      "kind": "bank_action",
+      "operation": "confirm",
+      "status": "ok",
+      "latency_ms": 497
+    },
+    {
+      "observed_at": "2026-10-04T19:41:58.490223-05:00",
+      "kind": "bank_action",
+      "operation": "receipt",
+      "status": "ok",
+      "latency_ms": 24
+    },
+    {
+      "observed_at": "2026-10-04T19:43:09.549867-05:00",
+      "kind": "bank_action",
+      "operation": "receipt",
+      "status": "ok",
+      "latency_ms": 7
+    }
+  ]
+}

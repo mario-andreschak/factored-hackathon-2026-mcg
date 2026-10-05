@@ -1,0 +1,192 @@
+[
+  {
+    "snapshot": "01-overview"
+  },
+  {
+    "click": {
+      "name": "Nébula Market",
+      "name_regex": true
+    }
+  },
+  {
+    "snapshot": "02-selected-facts"
+  },
+  {
+    "click": {
+      "name": "Revisar este cargo"
+    }
+  },
+  {
+    "wait_enabled": {
+      "name": "Mensaje para el asistente"
+    }
+  },
+  {
+    "snapshot": "03-ready"
+  },
+  {
+    "fill": {
+      "name": "Mensaje para el asistente",
+      "value": "No reconozco esta compra. Explícame los datos y qué puedo hacer ahora."
+    }
+  },
+  {
+    "click": {
+      "name": "Enviar mensaje"
+    }
+  },
+  {
+    "wait_enabled": {
+      "name": "Mensaje para el asistente"
+    }
+  },
+  {
+    "snapshot": "04-grounded-answer"
+  },
+  {
+    "pause": {
+      "ms": 12000
+    }
+  },
+  {
+    "click_text": "Pedir ayuda a un equipo"
+  },
+  {
+    "fill": {
+      "name": "¿Qué necesitas aclarar?",
+      "value": "Ayúdame a comprobar si Nébula Market puede ser el nombre del comercio que recuerdo y a preparar los siguientes pasos con fecha, monto y folio."
+    }
+  },
+  {
+    "click": {
+      "name": "Enviar consulta"
+    }
+  },
+  {
+    "snapshot": "05-team-started"
+  },
+  {
+    "wait": {
+      "text": "Respuesta disponible",
+      "timeout": 90000
+    }
+  },
+  {
+    "scroll_text": "Ya tengo las dos perspectivas"
+  },
+  {
+    "snapshot": "06-team-result"
+  },
+  {
+    "pause": {
+      "ms": 15000
+    }
+  },
+  {
+    "click": {
+      "name": "Esta respuesta resolvió mi consulta"
+    }
+  },
+  {
+    "wait": {
+      "text": "Consulta informativa completada"
+    }
+  },
+  {
+    "snapshot": "07-customer-helpful"
+  },
+  {
+    "pause": {
+      "ms": 6000
+    }
+  },
+  {
+    "click": {
+      "name": "Empezar chat nuevo"
+    }
+  },
+  {
+    "snapshot": "08-new-chat-saved-inquiry"
+  },
+  {
+    "pause": {
+      "ms": 7000
+    }
+  },
+  {
+    "click": {
+      "name": "Ver conversación anterior"
+    }
+  },
+  {
+    "snapshot": "09-previous-context"
+  },
+  {
+    "pause": {
+      "ms": 7000
+    }
+  },
+  {
+    "reload": true
+  },
+  {
+    "click": {
+      "name": "Asistente",
+      "name_regex": true
+    }
+  },
+  {
+    "wait_enabled": {
+      "name": "Mensaje para el asistente"
+    }
+  },
+  {
+    "snapshot": "10-reload-saved-inquiry"
+  },
+  {
+    "pause": {
+      "ms": 7000
+    }
+  },
+  {
+    "reload": true
+  },
+  {
+    "click": {
+      "name": "Asistente",
+      "name_regex": true
+    }
+  },
+  {
+    "wait_enabled": {
+      "name": "Mensaje para el asistente"
+    }
+  },
+  {
+    "scroll_text": "Si ya tienes un folio, guárdalo"
+  },
+  {
+    "snapshot": "11-saved-useful-result"
+  },
+  {
+    "pause": {
+      "ms": 18000
+    }
+  },
+  {
+    "click": {
+      "name": "Ver conversación anterior"
+    }
+  },
+  {
+    "scroll_text": "La transacción identificada"
+  },
+  {
+    "snapshot": "12-returned-grounded-context"
+  },
+  {
+    "pause": {
+      "ms": 10000
+    }
+  }
+]

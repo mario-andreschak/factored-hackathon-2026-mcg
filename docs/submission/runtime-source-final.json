@@ -1,0 +1,61 @@
+{
+  "schema": "savia-integrated-source-checks/v1",
+  "state": "qualified-source-deployed-and-product-steps-accepted",
+  "base_head": "52806a4447e8f443cf112b71325aeca7fa6762fa",
+  "checks": {
+    "frontend_api": {
+      "passed": 367,
+      "subtests_passed": 336,
+      "seconds": 61.67,
+      "command": "python -m pytest -q --import-mode=importlib frontend/tests"
+    },
+    "api_history_followups_voice_inquiry_subset": {
+      "passed": 65,
+      "seconds": 28.66
+    },
+    "public_gateway": {
+      "passed": 8,
+      "actual_browser_form": true
+    },
+    "python_compile": {
+      "passed": true
+    },
+    "frontend": {
+      "format_check": true,
+      "passed": 129,
+      "seconds": 28.96,
+      "build": "TypeScript and Vite passed"
+    },
+    "canonical_inquiry_and_native_voice": {
+      "passed": 15,
+      "seconds": 2.55,
+      "command": "python -m pytest -q --import-mode=importlib savia_assistant/tests/test_api.py frontend/tests/test_voice.py"
+    },
+    "grounded_voice_successor": {
+      "focused_voice_passed": 43,
+      "combined_voice_api_passed": 73,
+      "seconds": 28.06,
+      "source_revision": "9d77a7599128b668b0e34f9c2937eb40b6bd3824"
+    }
+  },
+  "legacy_source": "tracked files deleted; local residual directory exists after recursive deletion policy rejection; excluded from image and new archives",
+  "deployment": "142 source hashes and served UI verified at source 9d77/image 484fe8; completed native product steps accepted separately from optional recorder diagnostic timeout",
+  "ci": "account billing/spending-limit block before execution; no billing changes",
+  "git_head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+  "source_pr": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/57",
+  "local_served_js": {
+    "path": "assets/index-DGVQHrRT.js",
+    "sha256": "f06ecbad1ea5089a227a04ea7468aeb8f4b1ef023ac04a98e6b71379771cc8bd",
+    "scope": "Windows local build; deployed Linux image hashes verified separately"
+  },
+  "formatted_customer_sources": {
+    "frontend/src/App.tsx": "d8260aa758d3de4d001f14d201f7cfb3a7c54fd081862c432a701a7637bfda33",
+    "frontend/src/types.ts": "e6dcae5e4b3db6fecf34c1a7f6040f61255b566382cbfec584d5db04cb3af26a",
+    "frontend/src/styles.css": "325a09943a919822be40fe85c991ccd0074e04beb882759bd5d5d56d86e02760",
+    "frontend/src/Assistant.test.tsx": "afb2d2a1371323acb20206e7e24e8a8a3bf86e31fafcfd010f2c5c1291198f05"
+  },
+  "base_qualification_revision": "4a27f0e02ab8b1967af65725b85564cde1be8ac3",
+  "candidate_image_digest": "sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5",
+  "deployment_receipt": "docs/submission/runtime-deployed.json",
+  "final_freeze_receipt": "docs/submission/runtime-final-freeze.json"
+}

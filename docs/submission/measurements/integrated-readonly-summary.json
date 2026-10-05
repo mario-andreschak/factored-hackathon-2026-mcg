@@ -1,0 +1,69 @@
+{
+  "schema": "savia-final-integrated-readonly/v1",
+  "observed_at": "2026-10-05T01:51:55.015211+00:00",
+  "source_git_head": "b6d46c106aaab64c3ad52c9bd4526d5dde594091",
+  "application_source_hash_count": 84,
+  "capture": "docs/submission/measurements/integrated-readonly-final/capture.json",
+  "fictional": true,
+  "actual_browser": true,
+  "authentication": {
+    "private_state_loaded": true,
+    "fresh_login": false,
+    "existing_session_http_status": 200
+  },
+  "served_js_assets": [
+    {
+      "path": "/assets/index-CS4iNHIX.js",
+      "status": 200,
+      "sha256": "4cf179a8790092207cc26948c5f00ad2ba99293ea7a5f3c687477c214bbc6a08",
+      "matches_startup_manifest": true
+    }
+  ],
+  "all_served_js_bytes_match_startup": true,
+  "api_request_methods": [
+    "GET"
+  ],
+  "api_requests": 21,
+  "non_get_api_requests": 0,
+  "model_chat_posts": 0,
+  "new_team_posts": 0,
+  "intake_confirm_posts": 0,
+  "all_recorded_api_responses_http200": true,
+  "exact_original_history_role_and_text": true,
+  "history_message_count": 2,
+  "retained_informational_cases": [
+    {
+      "id": "i_1016efd827bf47e0bd152a94d15b0b9f",
+      "state": "team_completed",
+      "completed_workers": 2,
+      "suggestions": [
+        "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas.",
+        "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+      ]
+    },
+    {
+      "id": "i_3f279d9cbe2149c4a7db0748447b6754",
+      "state": "informational_resolved",
+      "completed_workers": 2,
+      "suggestions": [
+        "El registro muestra 4280.75 MXN con fecha 2026-10-02. Compara la fecha y el monto con tus recibos antes de decidir si reconoces el cargo.",
+        "Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto."
+      ]
+    }
+  ],
+  "current_action_status": "none",
+  "current_followup_items": 0,
+  "ledger_read_only_counts": {
+    "sandbox_cases": 1,
+    "sandbox_case_receipts": 1
+  },
+  "bank_resolution_observed": false,
+  "limits": [
+    "Action status returned none and followup list was empty in this preserved team-story context.",
+    "The folio visible in the archived reply is historical text, not a newly verified receipt.",
+    "Raw snapshot 05-final-existing-receipt is retained but its name is misleading: the actual API returned none.",
+    "Original slow-story opt-in used another session whose browser cookie was not saved. No authority was transplanted.",
+    "Read-only ledger counts establish retained simulated records, not current bank authorization or resolution."
+  ],
+  "qualified_source_and_inquiry_replay": true
+}

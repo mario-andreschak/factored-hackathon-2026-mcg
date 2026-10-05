@@ -1,0 +1,3337 @@
+{
+  "schema": "savia-actual-browser-capture/v1",
+  "recorded_at": "2026-10-05T00:43:10.349Z",
+  "runtime": {
+    "schema": "savia-fictional-rc-runtime/v1",
+    "url": "http://127.0.0.1:43900",
+    "fixture": "new generated current-date fiction",
+    "bank": "shipped MCP Service in process",
+    "language": {
+      "url": "http://localhost:43420",
+      "model": "model-GPT-6 Luna",
+      "route": "generic /v1/chat/completions"
+    },
+    "simulated_intake": true,
+    "real_bank_actions": false,
+    "native_flow_execution": false,
+    "source_snapshot": "active local source; freeze at integration checkpoint"
+  },
+  "generated_only": true,
+  "actual_browser": true,
+  "mocked_requests": 0,
+  "events": [
+    {
+      "kind": "http",
+      "path": "/api/auth/me",
+      "status": 200,
+      "at_ms": 359
+    },
+    {
+      "kind": "http",
+      "path": "/api/overview",
+      "status": 200,
+      "at_ms": 469
+    },
+    {
+      "kind": "http",
+      "path": "/api/chat/status",
+      "status": 200,
+      "at_ms": 497
+    },
+    {
+      "kind": "http",
+      "path": "/api/chat/history",
+      "status": 200,
+      "at_ms": 570,
+      "public_response": {
+        "messages": [],
+        "active": false
+      }
+    },
+    {
+      "kind": "http",
+      "path": "/api/action/status",
+      "status": 401,
+      "at_ms": 606,
+      "public_response": {}
+    },
+    {
+      "index": 0,
+      "at_ms": 1120,
+      "step": "01-overview"
+    },
+    {
+      "index": 1,
+      "at_ms": 1227,
+      "step": "Nébula Market"
+    },
+    {
+      "index": 2,
+      "at_ms": 1288,
+      "step": "02-charge"
+    },
+    {
+      "index": 3,
+      "at_ms": 1420,
+      "step": "Revisar este cargo"
+    },
+    {
+      "index": 4,
+      "at_ms": 1492,
+      "step": "wait_enabled"
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 1503,
+      "public_response": {}
+    },
+    {
+      "index": 5,
+      "at_ms": 1518,
+      "step": "03-assistant-ready"
+    },
+    {
+      "index": 6,
+      "at_ms": 1633,
+      "step": "Mensaje para el asistente"
+    },
+    {
+      "index": 7,
+      "at_ms": 1650,
+      "step": "Enviar mensaje"
+    },
+    {
+      "index": 8,
+      "at_ms": 1708,
+      "step": "wait_enabled"
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 16583,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 31553,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 46506,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 61592,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 76614,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 91555,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 106528,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 121751,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 137017,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 152900,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 167315,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 181739,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 196747,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/chat/messages",
+      "status": 200,
+      "at_ms": 197811,
+      "public_response": {
+        "reply": "Revisa el cargo **txn_3c58c0b66b4802b22b323ca5**, **2026-10-02T02:14:00**, **4280.75 MXN**, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.",
+        "mode": "dispute",
+        "status": "waiting_for_input"
+      }
+    },
+    {
+      "index": 9,
+      "at_ms": 198306,
+      "step": "04-actual-answer"
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 211679,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 226587,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 241547,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 256638,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 271571,
+      "public_response": {}
+    },
+    {
+      "index": 10,
+      "at_ms": 275193,
+      "step": "Consultar estado de la solicitud"
+    },
+    {
+      "kind": "http",
+      "path": "/api/action/status",
+      "status": 200,
+      "at_ms": 275839,
+      "public_response": {
+        "state": "none"
+      }
+    },
+    {
+      "index": 11,
+      "at_ms": 275841,
+      "step": "pause"
+    },
+    {
+      "index": 12,
+      "at_ms": 276658,
+      "step": "05-action-status"
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 286609,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 301717,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 316615,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 331511,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 346529,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 361530,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 376504,
+      "public_response": {}
+    },
+    {
+      "index": 13,
+      "at_ms": 383462,
+      "step": "Revisar recepción simulada"
+    },
+    {
+      "index": 14,
+      "at_ms": 383619,
+      "step": "pause"
+    },
+    {
+      "kind": "http",
+      "path": "/api/action/prepare",
+      "status": 200,
+      "at_ms": 384247,
+      "public_response": {
+        "state": "pending_confirmation",
+        "message": "Confirma si deseas registrar una recepción simulada para este cargo. No es un reembolso ni una resolución bancaria."
+      }
+    },
+    {
+      "index": 15,
+      "at_ms": 384420,
+      "step": "06-explicit-consent"
+    },
+    {
+      "index": 16,
+      "at_ms": 384599,
+      "step": "Confirmo la recepción simulada para"
+    },
+    {
+      "index": 17,
+      "at_ms": 384620,
+      "step": "pause"
+    },
+    {
+      "index": 18,
+      "at_ms": 385420,
+      "step": "07-verified-receipt"
+    },
+    {
+      "index": 19,
+      "at_ms": 385541,
+      "step": "Quiero recibir seguimiento de esta recepción"
+    },
+    {
+      "kind": "http",
+      "path": "/api/action/confirm",
+      "status": 200,
+      "at_ms": 385648,
+      "public_response": {
+        "state": "intake_verified",
+        "message": "Recepción simulada registrada y verificada. Folio: CMP-SBX--HCaKBpE. No se ha resuelto una disputa ni emitido un reembolso."
+      },
+      "receipt": {
+        "kind": "simulated_intake",
+        "simulated": true,
+        "transaction": {
+          "transaction_reference": "txn_ab8722159baa",
+          "transaction_date": "2026-10-02T02:14:00",
+          "process_date": "2026-10-02",
+          "amount": "4280.75",
+          "currency": "MXN",
+          "status": "Approved",
+          "merchant": "Nébula Market",
+          "transaction_type": "Purchase",
+          "channel": "Card",
+          "product": "Tarjeta Crédito"
+        }
+      }
+    },
+    {
+      "index": 20,
+      "at_ms": 385789,
+      "step": "pause"
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 385893,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 385997,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 391798,
+      "public_response": {}
+    },
+    {
+      "index": 21,
+      "at_ms": 392789,
+      "step": "08-durable-followup"
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 406531,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 421500,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 436501,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 451513,
+      "public_response": {}
+    },
+    {
+      "index": 22,
+      "at_ms": 455257,
+      "step": "reload"
+    },
+    {
+      "kind": "http",
+      "path": "/api/auth/me",
+      "status": 200,
+      "at_ms": 455575
+    },
+    {
+      "kind": "http",
+      "path": "/api/overview",
+      "status": 200,
+      "at_ms": 456042
+    },
+    {
+      "kind": "http",
+      "path": "/api/chat/status",
+      "status": 200,
+      "at_ms": 456151
+    },
+    {
+      "kind": "http",
+      "path": "/api/chat/history",
+      "status": 200,
+      "at_ms": 456180,
+      "public_response": {
+        "messages": [
+          {
+            "role": "user",
+            "text": "No reconozco la compra de 4280.75 MXN del 2 de octubre de 2026 en mi tarjeta. Quiero revisarla.",
+            "selection": {
+              "amount": 4280.75,
+              "currency": "MXN",
+              "occurred_at": "2026-10-02T02:14:00",
+              "reference": "txn_3c58c0b66b4802b22b323ca5",
+              "status": "Approved",
+              "type": "Purchase"
+            }
+          },
+          {
+            "role": "assistant",
+            "text": "Revisa el cargo **txn_3c58c0b66b4802b22b323ca5**, **2026-10-02T02:14:00**, **4280.75 MXN**, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra."
+          }
+        ],
+        "active": false
+      }
+    },
+    {
+      "kind": "http",
+      "path": "/api/action/status",
+      "status": 200,
+      "at_ms": 456204,
+      "public_response": {
+        "state": "intake_verified",
+        "message": "Recepción simulada registrada y verificada. Folio: CMP-SBX--HCaKBpE. No se ha resuelto una disputa ni emitido un reembolso."
+      },
+      "receipt": {
+        "kind": "simulated_intake",
+        "simulated": true,
+        "transaction": {
+          "transaction_reference": "txn_ab8722159baa",
+          "transaction_date": "2026-10-02T02:14:00",
+          "process_date": "2026-10-02",
+          "amount": "4280.75",
+          "currency": "MXN",
+          "status": "Approved",
+          "merchant": "Nébula Market",
+          "transaction_type": "Purchase",
+          "channel": "Card",
+          "product": "Tarjeta Crédito"
+        }
+      }
+    },
+    {
+      "index": 23,
+      "at_ms": 456770,
+      "step": "Nébula Market"
+    },
+    {
+      "index": 24,
+      "at_ms": 456867,
+      "step": "Revisar este cargo"
+    },
+    {
+      "index": 25,
+      "at_ms": 456965,
+      "step": "wait_enabled"
+    },
+    {
+      "index": 26,
+      "at_ms": 457009,
+      "step": "pause"
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 457114,
+      "public_response": {}
+    },
+    {
+      "index": 27,
+      "at_ms": 457809,
+      "step": "scroll_text"
+    },
+    {
+      "index": 28,
+      "at_ms": 457926,
+      "step": "09-return-with-context"
+    },
+    {
+      "index": 29,
+      "at_ms": 458172,
+      "step": "Consultar ahora"
+    },
+    {
+      "index": 30,
+      "at_ms": 458204,
+      "step": "pause"
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups/check",
+      "status": 200,
+      "at_ms": 458303,
+      "public_response": {}
+    },
+    {
+      "kind": "http",
+      "path": "/api/followups",
+      "status": 200,
+      "at_ms": 458321,
+      "public_response": {}
+    },
+    {
+      "index": 31,
+      "at_ms": 458903,
+      "step": "10-rechecked-next-step"
+    }
+  ],
+  "snapshots": [
+    {
+      "name": "01-overview",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        }
+      ],
+      "at_ms": 1225
+    },
+    {
+      "name": "02-charge",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nDetalle del movimiento\nNébula Market\n−$4,280.75\nMXN\nAprobado\nFecha del movimiento\n02 oct 2026 · 02:14\nProducto\nTarjeta de crédito · 71BC68\nTipo de operación\nCompra\nCanal\nCard\nComercio\nNébula Market\nUbicación\nCiudad de México, México\nReferencia\ntxn_3c58c0b66b4802b22b323ca5\n¿No reconoces este cargo?\n\nComprueba el comercio, la fecha y el monto. Savia puede ayudarte a revisar el movimiento antes de solicitar atención humana.\n\nRevisar este cargo\n\nLa consulta es de solo lectura. Un caso humano solo se registra cuando recibes una confirmación verificable.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Revisar este cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        }
+      ],
+      "at_ms": 1419
+    },
+    {
+      "name": "03-assistant-ready",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nConectado a FLUJO · Recepción simulada disponible tras confirmación\nNébula Market\n02 oct 2026 · MXN 4,280.75\nVamos a entender tus movimientos.\n\nPuedes preguntarme por este movimiento, su estado o los siguientes pasos si no lo reconoces.\n\n¿Qué significa el estado de este movimiento?\nNo reconozco este cargo. ¿Qué puedo hacer?\n\nNo pudimos verificar la solicitud anterior. Consulta su estado antes de iniciar otra.\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "¿Qué significa el estado de este movimiento?",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "No reconozco este cargo. ¿Qué puedo hacer?",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "at_ms": 1630
+    },
+    {
+      "name": "04-actual-answer",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nConectado a FLUJO · Recepción simulada disponible tras confirmación\nNébula Market\n02 oct 2026 · MXN 4,280.75\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nVerifica el estado de la solicitud antes de iniciar o confirmar otra acción.\n\nConsultar estado de la solicitud\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco la compra de 4280.75 MXN del 2 de octubre de 2026 en mi tarjeta. Quiero revisarla.\n\nSavia\n\nRevisa el cargo txn_3c58c0b66b4802b22b323ca5, 2026-10-02T02:14:00, 4280.75 MXN, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "at_ms": 198693
+    },
+    {
+      "name": "05-action-status",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nConectado a FLUJO · Recepción simulada disponible tras confirmación\nNébula Market\n02 oct 2026 · MXN 4,280.75\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nConsultar estado de la solicitud\nRevisar recepción simulada\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco la compra de 4280.75 MXN del 2 de octubre de 2026 en mi tarjeta. Quiero revisarla.\n\nSavia\n\nRevisa el cargo txn_3c58c0b66b4802b22b323ca5, 2026-10-02T02:14:00, 4280.75 MXN, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Revisar recepción simulada",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "at_ms": 277044
+    },
+    {
+      "name": "06-explicit-consent",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nConectado a FLUJO · Recepción simulada disponible tras confirmación\nNébula Market\n02 oct 2026 · MXN 4,280.75\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nConfirma si deseas registrar una recepción simulada para este cargo. No es un reembolso ni una resolución bancaria.\n\nSolicitud pendiente para este cargo\nNébula Market\nFecha del movimiento: 02 de octubre de 2026\n4,280.75 MXN\nSnapshot histórico: 20261005T002110Z-82095c\nReferencia del cargo: txn_3c58c0b66b4802b22b323ca5\nConsultar estado de la solicitud\nConfirmo la recepción simulada para Nébula Market\nReferencia del cargo: txn_3c58c0b66b4802b22b323ca5\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco la compra de 4280.75 MXN del 2 de octubre de 2026 en mi tarjeta. Quiero revisarla.\n\nSavia\n\nRevisa el cargo txn_3c58c0b66b4802b22b323ca5, 2026-10-02T02:14:00, 4280.75 MXN, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Confirmo la recepción simulada para Nébula MarketReferencia del cargo: txn_3c58c0b66b4802b22b323ca5",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "at_ms": 384597
+    },
+    {
+      "name": "07-verified-receipt",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nConectado a FLUJO · Recepción simulada disponible tras confirmación\nNébula Market\n02 oct 2026 · MXN 4,280.75\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nConfirma si deseas registrar una recepción simulada para este cargo. No es un reembolso ni una resolución bancaria.\n\nSolicitud pendiente para este cargo\nNébula Market\nFecha del movimiento: 02 de octubre de 2026\n4,280.75 MXN\nSnapshot histórico: 20261005T002110Z-82095c\nReferencia del cargo: txn_3c58c0b66b4802b22b323ca5\nConsultar estado de la solicitud\nConfirmo la recepción simulada para Nébula Market\nReferencia del cargo: txn_3c58c0b66b4802b22b323ca5\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco la compra de 4280.75 MXN del 2 de octubre de 2026 en mi tarjeta. Quiero revisarla.\n\nSavia\n\nRevisa el cargo txn_3c58c0b66b4802b22b323ca5, 2026-10-02T02:14:00, 4280.75 MXN, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Confirmo la recepción simulada para Nébula MarketReferencia del cargo: txn_3c58c0b66b4802b22b323ca5",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "at_ms": 385539
+    },
+    {
+      "name": "08-durable-followup",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nConectado a FLUJO · Recepción simulada disponible tras confirmación\nNébula Market\n02 oct 2026 · MXN 4,280.75\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nRecepción simulada registrada y verificada. Folio: CMP-SBX--HCaKBpE. No se ha resuelto una disputa ni emitido un reembolso.\n\nYa hay una recepción simulada registrada para este cargo\n\nComprobante local: CMP-SBX--HCaKBpE\n\nReferencia del cargo: txn_3c58c0b66b4802b22b323ca5\n\nNébula Market\nFecha del movimiento\n02 de octubre de 2026\nFecha de procesamiento\n02 de octubre de 2026\nMXN\n4,280.75 MXN\nEstado registrado del movimiento\nAprobado\nEstado del registro simulado\nRecibido\nSnapshot del registro original\n20261005T002110Z-82095c\nRegistrado el\n05 de octubre de 2026\n\nEste comprobante local acredita el registro simulado. No indica una devolución, una disputa resuelta ni atención humana.\n\nConsultar estado de la solicitud\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco la compra de 4280.75 MXN del 2 de octubre de 2026 en mi tarjeta. Quiero revisarla.\n\nSavia\n\nRevisa el cargo txn_3c58c0b66b4802b22b323ca5, 2026-10-02T02:14:00, 4280.75 MXN, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.\n\nSeguimiento de esta recepción\n\nSeguimiento simulado de esta demostración. Solo consulta el estado disponible; no contacta al banco ni resuelve una disputa.\n\nConsultado\n\nVolví a comprobarlo: tu recibo sigue registrado. Aún no hay decisión del banco ni reembolso verificado.\n\nComprobante local\nCMP-SBX--HCaKBpE\nFecha del movimiento\n02 de octubre de 2026\nReferencia del cargo\n4,280.75 MXN\nÚltima consulta\n5 oct 2026, 00:41 UTC\nPróxima consulta\n5 oct 2026, 01:11 UTC\nPróximo paso\nGuarda el folio CMP-SBX--HCaKBpE y el cargo 4280.75 MXN · 2026-10-02T02:14:00 · Nébula Market. Si reconoces el comercio o tienes más información, cuéntamelo aquí. Para una disputa real, usa el canal oficial de tu banco; esta demo solo sigue el recibo simulado.\nConsultar ahora\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar ahora",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "at_ms": 392924
+    },
+    {
+      "name": "09-return-with-context",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nConectado a FLUJO · Recepción simulada disponible tras confirmación\nNébula Market\n02 oct 2026 · MXN 4,280.75\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nRecepción simulada registrada y verificada. Folio: CMP-SBX--HCaKBpE. No se ha resuelto una disputa ni emitido un reembolso.\n\nYa hay una recepción simulada registrada para este cargo\n\nComprobante local: CMP-SBX--HCaKBpE\n\nReferencia del cargo: txn_3c58c0b66b4802b22b323ca5\n\nNébula Market\nFecha del movimiento\n02 de octubre de 2026\nFecha de procesamiento\n02 de octubre de 2026\nMXN\n4,280.75 MXN\nEstado registrado del movimiento\nAprobado\nEstado del registro simulado\nRecibido\nSnapshot del registro original\n20261005T002110Z-82095c\nRegistrado el\n05 de octubre de 2026\n\nEste comprobante local acredita el registro simulado. No indica una devolución, una disputa resuelta ni atención humana.\n\nConsultar estado de la solicitud\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco la compra de 4280.75 MXN del 2 de octubre de 2026 en mi tarjeta. Quiero revisarla.\n\nSavia\n\nRevisa el cargo txn_3c58c0b66b4802b22b323ca5, 2026-10-02T02:14:00, 4280.75 MXN, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.\n\nSeguimiento de esta recepción\n\nSeguimiento simulado de esta demostración. Solo consulta el estado disponible; no contacta al banco ni resuelve una disputa.\n\nConsultado\n\nVolví a comprobarlo: tu recibo sigue registrado. Aún no hay decisión del banco ni reembolso verificado.\n\nComprobante local\nCMP-SBX--HCaKBpE\nFecha del movimiento\n02 de octubre de 2026\nReferencia del cargo\n4,280.75 MXN\nÚltima consulta\n5 oct 2026, 00:41 UTC\nPróxima consulta\n5 oct 2026, 01:11 UTC\nPróximo paso\nGuarda el folio CMP-SBX--HCaKBpE y el cargo 4280.75 MXN · 2026-10-02T02:14:00 · Nébula Market. Si reconoces el comercio o tienes más información, cuéntamelo aquí. Para una disputa real, usa el canal oficial de tu banco; esta demo solo sigue el recibo simulado.\nConsultar ahora\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar ahora",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "at_ms": 458169
+    },
+    {
+      "name": "10-rechecked-next-step",
+      "text": "savia\n.\nTU ESPACIO PERSONAL\nInicio\nMis productos\nMovimientos\nAsistente\nFLUJO\nTodo un poco más claro.\n\nEntiende un movimiento con ayuda de tu asistente.\n\nHablemos\nSobre esta experiencia\nS\nSantiago\nPerfil Plus\nInicio\n⌕\nDemostración con datos sintéticos\nS\nUN NUEVO DÍA, CON MÁS CLARIDAD\nHola, Santiago\n.\n\nQué bueno tener todo bajo control.\n\nMovimientos registrados hasta\n03 oct 2026\nTu saldo en cuentas\nMXN\nMXN 78,520.40\nSaldo del snapshot · 1 productos en esta moneda\nmay\njun\njul\nago\nsep\noct\nEntradas\nSalidas\nMXN · Aprobados\nSin conversiones entre monedas\nVer detalle\nUN PRODUCTO DESTACADO\nVer todos\nsavia.\nMXN\nTarjeta de crédito\n$10,980.20\nSANTIAGO\nREF 71BC68\nConsultar\nun cargo\nDescargar\nmovimientos\nVer mis\nproductos\nTus productos\n2\nVer todos\nCuenta de ahorro\nRef. 9FA78E · MXN\nSaldo en cuenta\n$78,520.40\nActivo\nTarjeta de crédito\nRef. 71BC68 · MXN\nSaldo del producto\n$10,980.20\nActivo\nÚltimos movimientos\nVer historial\n\nEl registro de lo que pasa con tu dinero.\n\nMovimiento\nFecha\nEstado\nMonto\nCasa Naranjo\nCompra\n03-oct\n2026\nPendiente\n$2,400.00\nMXN\nNébula Market\nCompra\n02-oct\n2026\nAprobado\n−$4,280.75\nMXN\nLuz Música\nCompra\n30-sep\n2026\nAprobado\n−$189.00\nMXN\nCafé Tilo\nCompra\n28-sep\n2026\nAprobado\n−$141.12\nMXN\nTransferencia\nApp\n26-sep\n2026\nAprobado\n$2,500.00\nMXN\nMercado Origen\nCompra\n20-sep\n2026\nAprobado\n−$954.58\nMXN\n21 movimientos en el historial del perfil\nEn qué se mueve\nMXN\n\nSalidas identificadas · Historial disponible\n\nTotal de salidas\n$10,984.74\n14 movimientos\nCompra en línea\n39%\nSupermercado\n33%\nEfectivo\n16%\nSuscripción\n7%\n\nTransferencias, pagos y ajustes no se clasifican como entradas o salidas.\n\n¿Un movimiento que no te suena?\n\nRevisa el comercio, la fecha y el monto antes de pedir ayuda.\n\nVer movimientos\nSavia · Tu dinero, en calma.\nDataset del hackathon\nTu asistente Savia\nIdioma de la interfaz\nEspañol\nPortuguês\nUn poco de claridad, cuando la necesitas.\nConectado a FLUJO · Recepción simulada disponible tras confirmación\nNébula Market\n02 oct 2026 · MXN 4,280.75\n¿No reconoces un cargo?\n\nLa recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.\n\nRecepción simulada registrada y verificada. Folio: CMP-SBX--HCaKBpE. No se ha resuelto una disputa ni emitido un reembolso.\n\nYa hay una recepción simulada registrada para este cargo\n\nComprobante local: CMP-SBX--HCaKBpE\n\nReferencia del cargo: txn_3c58c0b66b4802b22b323ca5\n\nNébula Market\nFecha del movimiento\n02 de octubre de 2026\nFecha de procesamiento\n02 de octubre de 2026\nMXN\n4,280.75 MXN\nEstado registrado del movimiento\nAprobado\nEstado del registro simulado\nRecibido\nSnapshot del registro original\n20261005T002110Z-82095c\nRegistrado el\n05 de octubre de 2026\n\nEste comprobante local acredita el registro simulado. No indica una devolución, una disputa resuelta ni atención humana.\n\nConsultar estado de la solicitud\nPreguntas para la revisión (opcional)\nUna pregunta por línea; hasta 8 preguntas de 240 caracteres. Se guardan solo cuando solicitas la revisión.\nPrefiero revisión humana\nTú\nCompra · 02 oct 2026 · MXN 4,280.75\n\nNo reconozco la compra de 4280.75 MXN del 2 de octubre de 2026 en mi tarjeta. Quiero revisarla.\n\nSavia\n\nRevisa el cargo txn_3c58c0b66b4802b22b323ca5, 2026-10-02T02:14:00, 4280.75 MXN, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.\n\nSeguimiento de esta recepción\n\nSeguimiento simulado de esta demostración. Solo consulta el estado disponible; no contacta al banco ni resuelve una disputa.\n\nConsultado\n\nVolví a comprobarlo: tu recibo sigue registrado. Aún no hay decisión del banco ni reembolso verificado.\n\nComprobante local\nCMP-SBX--HCaKBpE\nFecha del movimiento\n02 de octubre de 2026\nReferencia del cargo\n4,280.75 MXN\nÚltima consulta\n5 oct 2026, 00:43 UTC\nPróxima consulta\n5 oct 2026, 01:13 UTC\nPróximo paso\nGuarda el folio CMP-SBX--HCaKBpE y el cargo 4280.75 MXN · 2026-10-02T02:14:00 · Nébula Market. Si reconoces el comercio o tienes más información, cuéntamelo aquí. Para una disputa real, usa el canal oficial de tu banco; esta demo solo sigue el recibo simulado.\nConsultar ahora\n\nLas respuestas se basan en el dataset del hackathon. Los casos y acciones bancarias requieren atención humana.",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar menú"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Inicio",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mis productos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "AsistenteFLUJO",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Hablemos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Sobre esta experiencia",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar sesión"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Abrir menú"
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Buscar un movimiento",
+          "ariaLabel": "Buscar movimientos"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Demostración con datos sintéticos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Información de la demo"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Ocultar saldos"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "MXN",
+          "placeholder": null,
+          "ariaLabel": "Moneda del resumen"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver detalle",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "savia.MXNTarjeta de crédito$10,980.20SANTIAGOREF 71BC68",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Consultarun cargo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Descargarmovimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver misproductos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver todos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Cuenta de ahorroRef. 9FA78E · MXNSaldo en cuenta$78,520.40Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Tarjeta de créditoRef. 71BC68 · MXNSaldo del producto$10,980.20Activo",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver historial",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Casa NaranjoCompra Pendiente03-oct2026Pendiente$2,400.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Nébula MarketCompra Aprobado02-oct2026Aprobado−$4,280.75MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Luz MúsicaCompra Aprobado30-sep2026Aprobado−$189.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Café TiloCompra Aprobado28-sep2026Aprobado−$141.12MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "TransferenciaApp Aprobado26-sep2026Aprobado$2,500.00MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Mercado OrigenCompra Aprobado20-sep2026Aprobado−$954.58MXN",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Ver movimientos",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "Dataset del hackathon",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Cerrar"
+        },
+        {
+          "tag": "SELECT",
+          "type": "select-one",
+          "text": "EspañolPortuguês",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar estado de la solicitud",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "TEXTAREA",
+          "type": "textarea",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Prefiero revisión humana",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "BUTTON",
+          "type": "button",
+          "text": "Consultar ahora",
+          "placeholder": null,
+          "ariaLabel": null
+        },
+        {
+          "tag": "INPUT",
+          "type": "text",
+          "text": "",
+          "placeholder": "Escribe tu consulta…",
+          "ariaLabel": "Mensaje para el asistente"
+        },
+        {
+          "tag": "BUTTON",
+          "type": "submit",
+          "text": "",
+          "placeholder": null,
+          "ariaLabel": "Enviar mensaje"
+        }
+      ],
+      "at_ms": 459056
+    }
+  ]
+}

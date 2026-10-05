@@ -1,0 +1,55 @@
+{
+  "schema": "savia-organizer-requirements-audit/v1",
+  "updated_at": "2026-10-04T19:20:48-05:00",
+  "state": "complete",
+  "scope": "read-only local organizer PDF and prior offline evaluation audit",
+  "artifact": "docs/submission/measurements/requirements-and-prior-evidence.md",
+  "audit_calls": {"provider": 0, "banking": 0, "new_evaluation_runs": 0},
+  "submission": {
+    "source": "docs/reference/Datathon_2026_Kickoff.pdf",
+    "deadline_page": 6,
+    "close_date": "2026-10-05",
+    "cutoff_hour": null,
+    "cutoff_timezone": null,
+    "requirements_page": 18,
+    "public_repo_name_pattern": "factored-hackathon-2026-[team name]",
+    "deployed_tool_url_required": true,
+    "presentation_slides_min": 4,
+    "presentation_slides_max": 6,
+    "video_required": true,
+    "video_must_show": ["working solution", "core architectural decisions"],
+    "video_duration_numeric_limit": null,
+    "video_format_limit": null,
+    "separate_pitch_deck_required_by_audited_sources": false,
+    "destination": "hackathon.admin@factored.ai",
+    "message_sent": false
+  },
+  "prior_component_evaluation": {
+    "source": "docs/demo/intent_router_evaluation.json",
+    "scope": "offline intent labels only",
+    "test_n": 120,
+    "train_n": 307,
+    "languages": {"es": 60, "pt": 60},
+    "labels": ["inquiry", "dispute", "human", "other"],
+    "label_quality": "separately AI-authored synthetic diagnostic cases; independent human adjudication pending",
+    "holdout_sha256_verified": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+    "train_sha256_verified": "23f1022bbbbe51582cd50a88464cd85f885465729dfd7494e90a9be680190509",
+    "fixed_C": 8,
+    "fixed_tau": 0.65,
+    "keyword_baseline": {"accuracy": 0.583, "macro_f1": 0.569, "human_missed": 13, "human_n": 30, "unnecessary_human_routes": 6},
+    "tfidf_logistic": {"accuracy": 0.783, "macro_f1": 0.782, "human_missed": 3, "human_n": 30, "unnecessary_human_routes": 9},
+    "tfidf_logistic_abstention": {"accuracy": 0.542, "macro_f1": 0.548, "human_missed": 1, "human_n": 30, "unnecessary_human_routes": 52},
+    "safe_claim": "On 120 frozen synthetic ES/PT intent cases with AI-authored labels awaiting human review, the learned router achieved 78.3% label accuracy versus 58.3% for keywords.",
+    "does_not_establish": ["production improvement", "automated customer resolution", "bank authorization", "current deployment acceptance", "live provider capacity", "journey latency or cost"],
+    "replay_command": "python -m demo.evaluate_router --report-dir docs/submission/measurements/router-replay"
+  },
+  "remaining_release_dependencies": [
+    "Independent human adjudication required by frozen-holdout provenance remains pending.",
+    "Joined actual runnable UI/provider/tool journey and customer-usefulness measurements must be supplied by release leads.",
+    "Public repository/deployed tool links and final 4–6 slides/video must be checked by root."
+  ],
+  "changed_paths": [
+    "docs/submission/measurements/requirements-and-prior-evidence.md",
+    "docs/submission/measurements/requirements-and-prior-evidence.json"
+  ]
+}

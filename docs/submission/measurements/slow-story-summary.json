@@ -1,0 +1,83 @@
+{
+  "schema": "savia-recorded-story-summary/v1",
+  "runtime": {
+    "schema": "savia-fictional-rc-runtime/v1",
+    "url": "http://127.0.0.1:43900",
+    "fixture": "new generated current-date fiction",
+    "bank": "shipped MCP Service in process",
+    "language": {
+      "url": "http://localhost:43420",
+      "model": "model-GPT-6 Luna",
+      "route": "generic /v1/chat/completions"
+    },
+    "simulated_intake": true,
+    "real_bank_actions": false,
+    "native_flow_execution": false,
+    "source_snapshot": "active local source; freeze at integration checkpoint"
+  },
+  "generated_only": true,
+  "capture": "docs\\submission\\measurements\\story-es-v2\\capture.json",
+  "mocked_requests": 0,
+  "sample_size": 1,
+  "scope": "One actual fictional browser customer journey; observed host behavior, not independent human acceptance or live-bank resolution",
+  "first_visible_host_reply_ms": 196161,
+  "model_generated_answer_success": false,
+  "explicit_confirmation_click_observed": true,
+  "verified_simulated_receipt_observed": true,
+  "confirm_to_http_receipt_ms": 1049,
+  "actual_confirm_http_count": 1,
+  "actual_manual_followup_checks": 1,
+  "followup_after_reload_visible": true,
+  "followup_next_step_visible": true,
+  "actual_reply": "Revisa el cargo **txn_3c58c0b66b4802b22b323ca5**, **2026-10-02T02:14:00**, **4280.75 MXN**, Approved, Nébula Market, Card, Ciudad de México. Si deseas registrar una solicitud simulada, usa el control de confirmación del portal. Responder aquí en el chat no la registra.",
+  "markers": [
+    {
+      "name": "01-overview",
+      "at_ms": 1225
+    },
+    {
+      "name": "02-charge",
+      "at_ms": 1419
+    },
+    {
+      "name": "03-assistant-ready",
+      "at_ms": 1630
+    },
+    {
+      "name": "04-actual-answer",
+      "at_ms": 198693
+    },
+    {
+      "name": "05-action-status",
+      "at_ms": 277044
+    },
+    {
+      "name": "06-explicit-consent",
+      "at_ms": 384597
+    },
+    {
+      "name": "07-verified-receipt",
+      "at_ms": 385539
+    },
+    {
+      "name": "08-durable-followup",
+      "at_ms": 392924
+    },
+    {
+      "name": "09-return-with-context",
+      "at_ms": 458169
+    },
+    {
+      "name": "10-rechecked-next-step",
+      "at_ms": 459056
+    }
+  ],
+  "limits": [
+    "Browser event clock has no independently measured video-frame offset; visually verify editorial cut points",
+    "Full recorder wall duration includes video save/close overhead; use FFprobe for video duration",
+    "A local simulated receipt and continued status are not refund, human acceptance or resolved dispute"
+  ],
+  "frame_notes": {
+    "07-verified-receipt": "Premature snapshot name: frame still shows pending confirmation. Verified receipt is shown in 08-durable-followup and later frames; original raw events and filename retained."
+  }
+}

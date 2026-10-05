@@ -1,0 +1,32 @@
+{
+  "schema": "savia-final-runtime-freeze/v1",
+  "observed_at": "2026-10-05T04:48:35.396244+00:00",
+  "read_only": true,
+  "provider_calls": 0,
+  "source_git_head": "9d77a7599128b668b0e34f9c2937eb40b6bd3824",
+  "source_files": 142,
+  "source_verified": true,
+  "served_ui_verified": true,
+  "legacy_avatar_absent": true,
+  "bank_counts": {
+    "sandbox_cases": 0,
+    "sandbox_case_receipts": 0
+  },
+  "inquiry_counts": {
+    "inquiries": 3,
+    "workers": 6,
+    "events": 24,
+    "sqlite_sequence": 1
+  },
+  "case3_state": "informational_resolved",
+  "case3_workers": [
+    {
+      "role": "evidence",
+      "state": "completed"
+    },
+    {
+      "role": "next_steps",
+      "state": "completed"
+    }
+  ]
+}
