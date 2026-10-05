@@ -33,11 +33,27 @@ The request forwards the generic `teamLimits:{concurrency:9}` operationally to
 one lead plus nine children on each of ten team Machines, with root supervision
 separate. Stock recovered revision `f9d372a66dd2cb09f4bcfed34967404cf12d9007`
 supports the goal/run protocol but ignores `teamLimits` and installs concurrency10;
-it is not a supported nine-child activation pin. The owner is preparing a generic
-successor that retains the selected limits and forwards them through supervisor,
-delegation and workspace/Fly provisioning. That working source is not yet an
-accepted committed or deployed pin. Resolve that pin before activation; the
-disabled example's recovered revision is only a protocol reference.
+it is not a supported nine-child activation pin. The generic successor is now
+published in the private engine at
+[`290dd6a7c19fa92c267bddd04f625f6cfbe39459`](https://github.com/flujo-app/swarm-teams/commit/290dd6a7c19fa92c267bddd04f625f6cfbe39459),
+tree `ac679ed5e8d3eabab81af553bdb282456bae5e34`, under `swarm-teams/`.
+The upstream publication is draft [PR60](https://github.com/flujo-app/iambrokeplshlp/pull/60)
+at head `6b3a1cb4081b48faefddccc3d8a478e0219dfb33`, stacked on optional-profiles
+PR59. These are source publications, not an adopted running controller/image.
+
+The focused patch changes exactly `fleet/controller.mjs`,
+`fleet/provisioners.mjs` and `test/fleet.test.mjs`. It validates limits before goal
+creation, persists `goal.teamLimits`, passes the selected limits to supervisor
+installation, and forwards them through delegation to workspace/Fly installation.
+Stock defaults remain10. The source owner and recovery reviewer report eight
+loopback fleet fixture tests passing, including selected9 root/workspace-child
+installation and invalid11 rejection before goal creation. That evidence does not
+qualify live Fly installation, model work or fleet capacity. The consumer's exact
+`teamLimits:{concurrency:9}` body needs no optional-profile manifest.
+
+The disabled example names the published private-engine successor. Before
+activation, the runtime owner must select and verify the actual controller/source
+pin and deployed compatibility; publication alone does not supply that binding.
 
 `team_machines` is an upper bound1–10, not a headcount or working capacity claim.
 The configured digest pins the root-review execution pair described below;
@@ -145,7 +161,9 @@ flow identity. The source route is present on the preserved hackathon compatibil
 revision `0ba62296520a505e6d71eddf5aa650691f3dc311`. Its state loader can reconcile
 interruption/repair dangling messages and persist native state; this GET does not
 enable debugging, resume a run or submit model work. Actual deployed compatibility,
-access and these read side effects require native-owner qualification. Missing
+access and these read side effects require native-owner qualification. The native
+conversation detail GET can also flush/repair transcript state. A mutable installed
+flow GET cannot prove an original execution snapshot. Missing
 saved execution snapshots leave review pending. There is no fallback to mutable
 current flow definitions or dependency on invented upstream installation receipts
 or run snapshot-digest fields.
