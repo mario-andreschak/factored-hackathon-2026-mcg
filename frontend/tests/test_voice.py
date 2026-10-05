@@ -137,7 +137,7 @@ def sse(*deltas):
     return "".join(f"data: {line}\n\n" for line in [*lines, "[DONE]"])
 
 
-def audio_model(script):
+def audio_model(script, heard="¿Cuánto tengo en ahorros?"):
     """A scripted native audio model beside the scripted speech providers."""
     seen = []
 
@@ -145,7 +145,7 @@ def audio_model(script):
         if request.url.path.endswith("/chat/completions"):
             seen.append(json.loads(request.content))
             return httpx.Response(200, text=script(seen[-1]), headers={"content-type": "text/event-stream"})
-        return httpx.Response(200, json={"text": "¿Cuánto tengo en ahorros?"})
+        return httpx.Response(200, json={"text": heard})
 
     return httpx.MockTransport(handler), seen
 
@@ -175,9 +175,9 @@ def test_the_voice_answers_itself_and_hands_bank_requests_to_savia():
     talk, first, told, busy, seen = asyncio.run(run())
     assert talk.status() == {"conversation": True, "persona": "moss"}
     kinds = [e["type"] for e in first]
-    assert kinds[0] == "start" and kinds[-3:] == ["delegate", "heard", "complete"]
+    assert kinds[:2] == ["start", "heard"] and kinds[-2:] == ["delegate", "complete"]
     assert next(e for e in first if e["type"] == "heard")["text"] == "¿Cuánto tengo en ahorros?"
-    assert first[-3]["request"] == "Quiero saber mi saldo de ahorros."
+    assert first[-2]["request"] == "¿Cuánto tengo en ahorros?"
     assert first[-1]["text"] == "Claro, lo reviso."
     assert base64.b64decode(next(e for e in first if e["type"] == "audio")["data"]) == b"\x10\x00" * 300
     # The recording goes to the model as audio; Moss is the default, calm persona.
@@ -188,7 +188,7 @@ def test_the_voice_answers_itself_and_hands_bank_requests_to_savia():
     assert seen[1]["tool_choice"] == "none" and "$1.250.000 COP" in seen[1]["messages"][-1]["content"]
     assert [m["role"] for m in seen[1]["messages"][1:-1]] == ["user", "user", "assistant"]
     assert seen[1]["messages"][3]["content"] == "Claro, lo reviso."
-    assert "Quiero saber mi saldo" in seen[1]["messages"][2]["content"]
+    assert "¿Cuánto tengo en ahorros?" in seen[1]["messages"][2]["content"]
     assert [e["type"] for e in told] == ["start", "caption", "audio", "complete"]
     # While Savia works, the voice keeps talking but cannot send a second request.
     assert seen[2]["tool_choice"] == "none" and "todavía está trabajando" in seen[2]["messages"][0]["content"]
@@ -217,7 +217,7 @@ def test_voice_turn_route_streams_events_for_a_session(settings):  # noqa: F811
         assert reply.status_code == 200 and reply.headers["content-type"].startswith("application/x-ndjson")
         events = [json.loads(line) for line in reply.text.splitlines()]
         assert events[0]["type"] == "start" and events[0]["sample_rate"] == 24000 and len(events[0]["turn_id"]) == 24 and events[-1]["type"] == "complete"
-        assert {"type": "delegate", "request": "Quiero saber mi saldo de ahorros."} in events
+        assert {"type": "delegate", "request": "¿Cuánto tengo en ahorros?"} in events
         assert client.post("/api/voice/turn", json={"audio": wav(), "result": "x"}, headers=ORIGIN).status_code == 422
         assert client.post("/api/voice/turn", json={}, headers=ORIGIN).status_code == 422
         receipt = {"turn_id": events[-1]["turn_id"], "played_samples": events[-1]["samples"], "complete": True}
@@ -304,3 +304,103 @@ def test_dictation_narration_uses_only_current_host_chunks_once():
     talk.remember_result("s", reply)
     with pytest.raises(VoiceError):
         talk.consume_speech("s", spoken)
+
+
+@pytest.mark.parametrize("language,text", [
+    ("es", "Tranquilo, respira hondo. Todo va a salir bien."),
+    ("pt", "Fique tranquilo, respire fundo. Tudo vai ficar bem."),
+    ("es", "Estoy preocupado por mi saldo."),
+    ("es", "Mi cuenta está bien, me dijeron que el saldo está correcto."),
+    ("pt", "Estou preocupado com minha conta."),
+    ("es", "No quiero revisar mi cuenta, solo conversar."),
+    ("es", "Quiero tranquilizarme por mi saldo."),
+    ("pt", "Quero conversar sobre minha conta."),
+    ("es", "Mi banco revisa mi cuenta."),
+    ("es", "Sí, adelante."),
+])
+def test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output(language, text):
+    async def run():
+        from frontend.server.conversation import Conversation
+        transport, seen = audio_model(lambda body: ASKS, heard=text)
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        previous = [e async for e in await talk.turn("s", language, message="Revisa el saldo de mi cuenta.")]
+        talk.played("s", previous[-1]["turn_id"], previous[-1]["samples"], True)
+        current = [e async for e in await talk.turn("s", language, audio=wav())]
+        assert seen[-1]["tool_choice"] == "none" and seen[-1]["tools"] == []
+        assert "Nunca conviertas tranquilidad" in seen[-1]["messages"][0]["content"]
+        assert {"type": "heard", "text": text} in current
+        assert not any(e["type"] == "delegate" for e in current)
+        assert current[-1]["type"] == "complete"
+        assert talk._ledgers["s"][1][-1] == {"role": "user", "content": text}
+        await talk.close(), await voice.close()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("language,text", [
+    ("es", "¿Cuánto tengo en mi cuenta de ahorros?"),
+    ("es", "No reconozco este cargo."),
+    ("es", "Ayúdame a comparar este comercio con mis recibos y preparar el próximo paso."),
+    ("pt", "Qual é o saldo da minha conta?"),
+    ("pt", "Não reconheço esta cobrança."),
+    ("pt", "Ajude-me a comparar este comércio com meus recibos."),
+    ("es", "¿Qué comercio aparece en este cargo?"),
+    ("pt", "Qual o valor desta transação?"),
+])
+@pytest.mark.parametrize("audio", [False, True])
+def test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite(language, text, audio):
+    async def run():
+        from frontend.server.conversation import Conversation
+        transport, seen = audio_model(lambda body: ASKS, heard=text)
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        current = [e async for e in await talk.turn("s", language, **({"audio": wav()} if audio else {"message": text}))]
+        assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+        assert [e for e in current if e["type"] == "delegate"] == [{"type": "delegate", "request": text}]
+        assert current[-1]["type"] == "complete"
+        assert not any(m["role"] == "assistant" for m in talk._ledgers["s"][1])
+        talk.played("s", current[-1]["turn_id"], current[-1]["samples"], True)
+        assert talk._ledgers["s"][1][-1] == {"role": "assistant", "content": "Claro, lo reviso."}
+        busy = [e async for e in await talk.turn("s", language, message=text, working=True)]
+        assert seen[-1]["tool_choice"] == "none" and seen[-1]["tools"] == []
+        assert not any(e["type"] == "delegate" for e in busy)
+        await talk.close(), await voice.close()
+    asyncio.run(run())
+
+
+def test_failed_final_recognition_keeps_native_conversation_without_tools_or_added_asr():
+    async def run():
+        from frontend.server.conversation import Conversation
+        calls = []
+        def handler(request):
+            calls.append(request.url.path)
+            if request.url.path.endswith("/audio/transcriptions"):
+                return httpx.Response(503)
+            body = json.loads(request.content)
+            assert body["tools"] == [] and body["tool_choice"] == "none"
+            return httpx.Response(200, text=ASKS)
+        transport = httpx.MockTransport(handler)
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        events = [e async for e in await talk.turn("s", "es", audio=wav())]
+        assert len([p for p in calls if p.endswith("/audio/transcriptions")]) == 1
+        assert events[-1]["type"] == "complete" and not any(e["type"] == "delegate" for e in events)
+        await talk.close(), await voice.close()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("script", [
+    ASKS.replace("consultar_savia", "invented_tool"),
+    sse({"audio": {"data": PCM}}, {"tool_calls": [{"index": 0, "function": {"name": "consultar_savia", "arguments": "not JSON"}}]}),
+    sse({"audio": {"data": PCM}}, {"tool_calls": [{"index": 0, "function": {"name": "consultar_savia", "arguments": '{"solicitud": 42}'}}]}),
+])
+def test_unknown_or_malformed_model_tool_cannot_delegate_an_explicit_request(script):
+    async def run():
+        from frontend.server.conversation import Conversation
+        transport, _ = audio_model(lambda body: script)
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({}, voice, transport=transport)
+        events = [e async for e in await talk.turn("s", "es", message="Revisa mi saldo.")]
+        assert events[-1]["type"] == "complete" and not any(e["type"] == "delegate" for e in events)
+        await talk.close(), await voice.close()
+    asyncio.run(run())
