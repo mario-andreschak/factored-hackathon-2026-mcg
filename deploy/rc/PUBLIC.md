@@ -37,4 +37,5 @@ the other children when any component exits.
 
 The native voice client waits two continuous seconds of quiet. Resumed speech
 before that deadline remains one utterance. This behavior has unit and browser
-coverage; physical microphone behavior requires the deployed acceptance run.
+coverage. Physical microphone/AEC behavior remains unqualified; deployed
+acceptance uses prerecorded or typed input.
