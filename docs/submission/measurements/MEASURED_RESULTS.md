@@ -1,5 +1,20 @@
 # Measured release evidence
 
+## Existing infrastructure capacity and collaboration
+
+The FLUJO/inference foundation has already been tested beyond the two-reviewer
+customer film: **300/300 correct requests at client parallelism 300 through FLUJO**,
+400/400 direct inference HTTP successes (399 correct), real filesystem tools and
+collaboration runs with 18 Fly sandboxes live together. See
+[the infrastructure report](INFRASTRUCTURE_CAPACITY.md) and
+[aggregate receipt](infrastructure-capacity.json), rechecked against original
+per-request records without another provider call.
+
+A further paid fleet/load run for the submission video was skipped because of
+budget constraints. That decision is distinct from the failed customer attempt
+below. Successful load tests, sandbox exercises and customer recordings retain
+their original workloads and deployment identities.
+
 ## October 5: new deployed fleet attempt is incomplete
 
 The single authorized customer capture returned correct bank facts and complete foreground speech, but **failed the new fleet customer acceptance**. Its original root run failed on the first model call with HTTP404 because the Modal workspace was disabled. The case ends in `needs_attention`, with no reviewed suggestions or next-check time. There are zero delegated team leads, zero local staff and zero completed root-review children. Ten ready/configured machines do not establish 100 native executions. The original goal remains active and its root worker ready; the failed run is not a terminal goal or a cleanup receipt. No case was resubmitted.

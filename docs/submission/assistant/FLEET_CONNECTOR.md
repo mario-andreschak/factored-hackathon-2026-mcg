@@ -1,8 +1,14 @@
 # Application-owned recovered-fleet connector
 
-Source preparation only. No fleet, model, installation, provisioning, bank,
-ticket or notification operation was performed to qualify this connector.
-The frozen release candidate and its separate Listen acceptance retain their scope.
+The source-validation sections below describe the original connector review.
+The connector was subsequently deployed after the PR #66 startup configuration
+fix; an October 5 customer goal reached the native root but failed its first
+model call because the provider workspace was disabled. Successful 300-request
+FLUJO load and sandbox tests are separate infrastructure evidence. A further paid
+video run was skipped because of budget constraints. See the
+[infrastructure report](../measurements/INFRASTRUCTURE_CAPACITY.md),
+[actual attempt](../measurements/fleet-customer-attempt/receipt.json) and
+[release record](../RELEASE_CANDIDATE.md). Frozen recordings retain their scope.
 
 The existing `InquiryService` remains the case owner and follow-up loop. Its
 default mode still runs the two bounded bootstrap reviewers. An explicit private
