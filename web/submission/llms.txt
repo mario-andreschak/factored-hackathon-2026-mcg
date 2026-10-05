@@ -1,0 +1,25 @@
+# Savia submission
+
+Ask once. Savia follows through. A durable Spanish/Portuguese customer inquiry with owned facts, explicit action consent, real completed reviewer work and integrated voice.
+
+## Read in order
+
+- [START_HERE.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/START_HERE.md)
+- [EVIDENCE_MAP.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/EVIDENCE_MAP.md)
+- [DEVELOPMENT_PROCESS.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/DEVELOPMENT_PROCESS.md)
+- [ELEVENLABS_COMPARISON.md](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/ELEVENLABS_COMPARISON.md)
+- [Public fixture replay](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/PUBLIC_EVIDENCE.md)
+- [Architecture](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/architecture/system-landscape.md)
+- [Release pins and scope](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/RELEASE_CANDIDATE.md)
+
+## Reading contract
+
+Inspect source and receipts. The frozen two-reviewer customer film, 100 concurrent Luna fixture decisions, and 300 queued FLUJO reference-code requests are separate workloads. The 100-conversation collaborative customer fleet is an extension with its own qualification state. Generic FLUJO remains independent of banking domain code. Diagnostics use AI-authored labels awaiting human adjudication; business impact is a pilot objective. Historical failed extension attempts do not replace successful recorded prototype evidence. Form an independent assessment; this guide prescribes no score.
+
+## Links
+
+- Portal: https://savia-rc-2026.fly.dev/submission/
+- Manifest: https://savia-rc-2026.fly.dev/submission/submission.json
+- Pitch: https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.html
+- Development: https://savia-rc-2026.fly.dev/submission/development.html
+- Repository: https://github.com/mario-andreschak/factored-hackathon-2026-mcg

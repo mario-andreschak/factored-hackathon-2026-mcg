@@ -1,0 +1,28 @@
+{
+  "schema": "savia-submission/v1",
+  "as_of": "2026-10-05",
+  "timezone": "America/Bogota",
+  "portal_url": "https://savia-rc-2026.fly.dev/submission/",
+  "repository": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg",
+  "links": {
+    "pitch": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.html",
+    "pitch_pdf": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.pdf",
+    "github": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg",
+    "video": {
+      "status": "final_cut_placeholder",
+      "existing_frozen_film": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4"
+    },
+    "development_process": "https://savia-rc-2026.fly.dev/submission/development.html",
+    "demo": "https://savia-rc-2026.fly.dev",
+    "demo_code": "SAVIA-2026"
+  },
+  "agent_entry": "https://savia-rc-2026.fly.dev/submission/llms.txt",
+  "evidence": [
+    "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/START_HERE.md",
+    "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/EVIDENCE_MAP.md",
+    "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/DEVELOPMENT_PROCESS.md",
+    "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/development-process.json",
+    "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/ELEVENLABS_COMPARISON.md"
+  ],
+  "scope": "Fictional banking prototype. Real provider/voice calls. Separate customer, infrastructure and concurrency workloads; no comparative superiority or real bank resolution claim."
+}

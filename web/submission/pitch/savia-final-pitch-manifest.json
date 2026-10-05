@@ -1,0 +1,70 @@
+{
+  "schema": "savia-pitch-export/v1",
+  "slide_count": 6,
+  "files": {
+    "README.md": {
+      "bytes": 3591,
+      "sha256": "3c0ad3f31592689009ad0073ee9b6e74fa8ba74193120680e9e506d34b2fcf02"
+    },
+    "savia-final-pitch-contact-sheet.png": {
+      "bytes": 546928,
+      "sha256": "5e87498b9b9ce1ccc9e451aa5339af94e1d050b528e55b38303f888f8f76fa7f"
+    },
+    "savia-final-pitch-sources.json": {
+      "bytes": 10714,
+      "sha256": "39837f44f2c607457e50ab9f6b1d0af4681fb57bc99fbe490efbbf9da5962e6d"
+    },
+    "savia-final-pitch-speaker-notes.json": {
+      "bytes": 7444,
+      "sha256": "3e557ae675026dee665c34f9f66208438c7af0006f1bea0783e9e36939a6933c"
+    },
+    "savia-final-pitch-speaker-notes.md": {
+      "bytes": 8992,
+      "sha256": "e33a5d3a71066e9ac64f8a23bfce93bfdb5acbb779205df2ebd8cbf7e11081ed"
+    },
+    "savia-final-pitch-validation.json": {
+      "bytes": 574,
+      "sha256": "ea1eb8e7f514404db78aed9f4d5d098160bf0d8b3b914911b5c7bb7a8b9936ad"
+    },
+    "savia-final-pitch.html": {
+      "bytes": 11552,
+      "sha256": "d43220444b03cd383d03a7f1a3a44993b7e5c907d3231aa879010e6f553bc98e"
+    },
+    "savia-final-pitch.pdf": {
+      "bytes": 346979,
+      "sha256": "149092a838379e515242011bb88606c9dbb1a45dd4b7989a888b3c941fdb3f63"
+    },
+    "savia-final-pitch.pptx": {
+      "bytes": 220245,
+      "sha256": "206eecd973d56e9d29d21adba80cf1e602ab6377ba7c41ab76574be301958e9d"
+    },
+    "savia-integrated-closure-crop.png": {
+      "bytes": 164210,
+      "sha256": "ea95be89169b5c8a06c83278745984427a409d7726c507a4d90044c6c37e458e"
+    },
+    "slides/slide-01.png": {
+      "bytes": 59442,
+      "sha256": "c3d7934635500b205a6bee892a4aa9dabcea995ab57265a6af07b91796f7f905"
+    },
+    "slides/slide-02.png": {
+      "bytes": 140483,
+      "sha256": "99b78142219d1f285d60178bd4b78c18f36e24ecca04213337bc482e3a05eef1"
+    },
+    "slides/slide-03.png": {
+      "bytes": 52011,
+      "sha256": "9be369bb21de3f4db0a3942717403c621cae36c2ad9961f47472e5240a32ce71"
+    },
+    "slides/slide-04.png": {
+      "bytes": 54561,
+      "sha256": "53d9fdbc2dc00f358d6add6f03c5b020861c892d2c6e3bcf47873cee904e8f36"
+    },
+    "slides/slide-05.png": {
+      "bytes": 58912,
+      "sha256": "9ed843e570f835c4065047167ad5b335db2c624f79c1062eb8d2336aebbeeeeb"
+    },
+    "slides/slide-06.png": {
+      "bytes": 52299,
+      "sha256": "26afda833c5bf7aa28d53565f11eb99917045014323e753f5e585d4444310d26"
+    }
+  }
+}

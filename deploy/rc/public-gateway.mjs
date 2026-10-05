@@ -1,11 +1,54 @@
 import http from 'node:http';
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { pathToFileURL } from 'node:url';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { readFileSync, realpathSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const COOKIE = '__Host-rc-visitor';
 const SESSION_SECONDS = 8 * 60 * 60;
 const HOP_HEADERS = new Set(['connection', 'proxy-connection', 'keep-alive', 'transfer-encoding',
   'te', 'trailer', 'upgrade', 'proxy-authenticate', 'proxy-authorization']);
+const PORTAL_TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8', '.md': 'text/plain; charset=utf-8', '.vtt': 'text/vtt; charset=utf-8',
+  '.pdf': 'application/pdf', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation' };
+
+// Only the separately built public manifest is exposed. No repository browsing,
+// private history collection, customer state, or application auth is involved.
+function portalHandler(directory) {
+  let root, files;
+  try {
+    root = realpathSync(directory);
+    const manifest = JSON.parse(readFileSync(path.join(root, 'portal-manifest.json'), 'utf8'));
+    if (manifest.schema !== 'savia-public-portal/v1') throw new Error('Invalid portal manifest');
+    files = new Map(Object.entries(manifest.files).filter(([name, hash]) =>
+      /^[a-zA-Z0-9_./-]+$/.test(name) && !name.split('/').some(part => !part || part.startsWith('.'))
+      && PORTAL_TYPES[path.extname(name)] && /^[a-f0-9]{64}$/.test(hash)));
+  } catch { return (_req, res) => plain(res, 404, 'Submission portal unavailable'); }
+  return (req, res, pathname) => {
+    if (!['GET', 'HEAD'].includes(req.method)) { plain(res, 405, 'Method not allowed'); return; }
+    if (pathname === '/submission') {
+      res.writeHead(308, { Location: '/submission/', 'Cache-Control': 'no-cache' }); res.end(); return;
+    }
+    let name;
+    try { name = decodeURIComponent(pathname.slice('/submission/'.length)) || 'index.html'; }
+    catch { plain(res, 400, 'Bad request'); return; }
+    if (!files.has(name)) { plain(res, 404, 'Public artifact not found'); return; }
+    try {
+      const file = realpathSync(path.join(root, ...name.split('/')));
+      if (!file.startsWith(root + path.sep)) { plain(res, 404, 'Public artifact not found'); return; }
+      const bytes = readFileSync(file);
+      if (createHash('sha256').update(bytes).digest('hex') !== files.get(name)) {
+        plain(res, 503, 'Public artifact integrity check failed'); return;
+      }
+      res.writeHead(200, { 'Content-Type': PORTAL_TYPES[path.extname(name)], 'Content-Length': bytes.length,
+        'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Content-Security-Policy': "default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; media-src 'self' https://github.com https://*.githubusercontent.com; base-uri 'none'; frame-ancestors 'none'; form-action 'none'" });
+      res.end(req.method === 'HEAD' ? undefined : bytes);
+    } catch { plain(res, 404, 'Public artifact not found'); }
+  };
+}
 
 function readOrigin(value) {
   let url;
@@ -110,6 +153,7 @@ async function readCode(req) {
 
 export function createGateway(config, options = {}) {
   const appPort = options.appPort ?? 43900;
+  const publicPortal = portalHandler(options.portalDirectory ?? fileURLToPath(new URL('../../web/submission/', import.meta.url)));
   const now = options.now ?? Date.now;
   const signing = payload => createHmac('sha256', config.cookieSecret).update(payload).digest('base64url');
   const mintSession = () => {
@@ -168,6 +212,9 @@ export function createGateway(config, options = {}) {
     try { pathname = new URL(req.url, config.publicOrigin).pathname; } catch { plain(res, 400, 'Bad request'); return; }
     if (pathname === '/healthz' && req.method === 'GET') { await health(res); return; }
     if (!validHost(req)) { plain(res, 421, 'Misdirected request'); return; }
+    if (pathname === '/submission' || pathname.startsWith('/submission/')) {
+      publicPortal(req, res, pathname); return;
+    }
     if (pathname === '/_rc/enter') {
       if (req.method !== 'POST') { plain(res, 405, 'Method not allowed'); return; }
       if (!sameOrigin(req)) { plain(res, 403, 'Same-origin request required'); return; }

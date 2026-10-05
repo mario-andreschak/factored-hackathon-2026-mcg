@@ -1,0 +1,780 @@
+{
+  "schemaVersion": 1,
+  "title": "Savia: how we built the product",
+  "asOf": "2026-10-05",
+  "timezone": "America/Bogota",
+  "sourceSnapshot": {
+    "repository": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg",
+    "commit": "bcf2028893369ef4c396d23f2e17cfab1c5d2f0d",
+    "purpose": "Repository evidence reviewed for this public development story; individual measurements retain their original source pins."
+  },
+  "summary": "Human product and policy decisions, parallel agent-assisted engineering, independent review and recorded execution produced a Spanish/Portuguese customer application on an extensible FLUJO orchestration foundation.",
+  "publicDocument": "docs/submission/DEVELOPMENT_PROCESS.md",
+  "privacy": {
+    "audience": "public",
+    "sources": [
+      "Committed repository history",
+      "Public project documentation",
+      "Sanitized aggregate measurements",
+      "Fictional customer recordings"
+    ],
+    "excluded": [
+      "Private Slack, Codex and FLUJO conversation exports",
+      "Credentials and provider origins",
+      "Restricted organizer rows",
+      "Customer session cookies and bank authority"
+    ]
+  },
+  "strengths": [
+    {
+      "id": "data",
+      "headline": "5.9 million rows prepared",
+      "detail": "Six-table bronze/silver/gold pipeline with contracts, lineage, quarantine, customer-isolated lookup and atomic publication.",
+      "scope": "Historical supplied-data pipeline run; the committed manifest's 50-customer local-disk lookup sample measured p50 38.6 ms / p95 51.2 ms / maximum 65.4 ms.",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Pipeline design and historical measurements",
+          "path": "pipeline/README.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/pipeline/README.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Historical pipeline manifest",
+          "path": "docs/pipeline/manifest.json",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/pipeline/manifest.json"
+        }
+      ]
+    },
+    {
+      "id": "banking-acceptance",
+      "headline": "500/500 historical real-model customer requests",
+      "detail": "Independent customer oracle, successful MCP result, completed Sol attempt and delivered answer matched in 500 distinct conversations.",
+      "scope": "Historical banking integration revision recorded in its report; bounded admission, native-process peak 88. Concurrent submissions differ from simultaneous generation.",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Historical acceptance and owner audit",
+          "path": "docs/BANKING_MCP_IMPLEMENTATION.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/BANKING_MCP_IMPLEMENTATION.md"
+        }
+      ]
+    },
+    {
+      "id": "platform-capacity",
+      "headline": "300/300 correct parallel FLUJO requests",
+      "detail": "Neutral-reference repeat through production FLUJO flow-as-model interface with Qwen3.8-27B on a Modal H100.",
+      "scope": "October 4 infrastructure workload; p50 273.40 s / p95 441.60 s including queueing. The earlier differently worded stage remains in the receipt.",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Tested platform capacity",
+          "path": "docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Public aggregate capacity receipt",
+          "path": "docs/submission/measurements/infrastructure-capacity.json",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/infrastructure-capacity.json"
+        }
+      ]
+    },
+    {
+      "id": "collaboration",
+      "headline": "18 Fly leaf sandboxes live together",
+      "detail": "Recovered collaboration run with actual tools, shared findings, claim checking, 17 completed leaf runs and six matching output hashes.",
+      "scope": "Infrastructure exercise; separate from the 100-conversation Savia customer target. Provisioning limits and operator steering are retained in the source report.",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Recovered sandbox collaboration",
+          "path": "docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md"
+        }
+      ]
+    },
+    {
+      "id": "product",
+      "headline": "Working customer answers, reviewers, voice and retained context",
+      "detail": "Recorded grounded facts, two real structured model reviewers, helpful acknowledgment, complete native speech and saved advice after reload.",
+      "scope": "Dated fictional customer recordings with exact source/image/playback receipts; informational closure and simulated intake are distinct from bank resolution.",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Customer journey",
+          "path": "docs/submission/CUSTOMER_JOURNEY.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/CUSTOMER_JOURNEY.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Complete integrated native voice proof",
+          "path": "docs/submission/measurements/intended-savia-native/README.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/intended-savia-native/README.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Saved recommendations speech proof",
+          "path": "docs/submission/measurements/saved-recommendations-native/README.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/saved-recommendations-native/README.md"
+        }
+      ]
+    },
+    {
+      "id": "luna-provider",
+      "headline": "100/100 correct and bounded-safe Luna responses",
+      "detail": "One hundred overlapping subscription app-server turns across five frozen bilingual fixture scenarios, independently checked against oracle and deterministic baseline.",
+      "scope": "Direct provider benchmark, 50 ES / 50 PT; latency p50 37.400 s / p95 50.693 s. This is distinct from 100 cooperating agents and the deployed Savia path.",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Actual Luna workload and measured boundaries",
+          "path": "docs/submission/measurements/luna-100/README.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/README.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Independent benchmark audit",
+          "path": "docs/submission/measurements/luna-100/run-100/audit.json",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/run-100/audit.json"
+        }
+      ]
+    }
+  ],
+  "contributors": [
+    {
+      "id": "carlos",
+      "name": "Carlos Diaz",
+      "github": "cdiazcastilla",
+      "type": "human",
+      "contributions": [
+        "DuckDB pipeline and contracts",
+        "Quality diagnostics and lineage",
+        "Customer-isolated lookup and atomic snapshots",
+        "Learned intent router and keyword comparison"
+      ],
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "label": "Pipeline",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/1"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Pipeline review improvements",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/2"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Classifier",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/3"
+        }
+      ]
+    },
+    {
+      "id": "gloria",
+      "name": "Gloria",
+      "github": "gloriayantasalc",
+      "type": "human",
+      "contributions": [
+        "Prompt flow and R0–R18 decision motor",
+        "Multilingual policy resources",
+        "Metadata-only agent analytics",
+        "Movement-period customer experience"
+      ],
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Workflow authorship credit",
+          "path": "docs/DISPUTE_IMPLEMENTATION.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/DISPUTE_IMPLEMENTATION.md"
+        },
+        {
+          "kind": "commit",
+          "label": "Policy source",
+          "commit": "b5d0ef2c642312314e402ab3be870aba223c81ed",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/b5d0ef2c642312314e402ab3be870aba223c81ed"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Agent analytics",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/49"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Transaction period selection",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/50"
+        }
+      ]
+    },
+    {
+      "id": "mario",
+      "name": "Mario Andreschak",
+      "github": "mario-andreschak",
+      "type": "human",
+      "contributions": [
+        "Product direction",
+        "FLUJO platform and application boundary",
+        "Architecture stewardship",
+        "Review and merge coordination"
+      ],
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Owner-directed product boundary",
+          "path": "docs/FLUJO_PRODUCT_BOUNDARY.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/FLUJO_PRODUCT_BOUNDARY.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Owner-directed architecture",
+          "path": "docs/architecture/system-landscape.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/architecture/system-landscape.md"
+        },
+        {
+          "kind": "repository_history",
+          "label": "Repository commit history",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commits/main/"
+        }
+      ]
+    },
+    {
+      "id": "agents",
+      "name": "Agent-assisted engineering",
+      "gitIdentities": [
+        "flujo-app",
+        "FLUJO"
+      ],
+      "type": "automation",
+      "contributions": [
+        "MCP and application host",
+        "Executable workflow and recovery",
+        "Frontend and native voice",
+        "Deployment tooling and qualification",
+        "Public documentation"
+      ],
+      "creditNote": "Automation identities operating under human direction; they do not identify additional human teammates.",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "label": "Direct host",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/31"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Project host transport",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Integrated runtime",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/56"
+        }
+      ]
+    }
+  ],
+  "architecture": {
+    "principle": "Reusable orchestration, application-owned authority and evidence-bearing tools.",
+    "layers": [
+      {
+        "id": "customer",
+        "name": "Customer experience",
+        "owner": "Savia",
+        "responsibility": "Spanish/Portuguese text, native voice, selected facts, progress and saved results.",
+        "source": "frontend/"
+      },
+      {
+        "id": "case",
+        "name": "Application and case owner",
+        "owner": "Savia",
+        "responsibility": "Session, intent, goal, inquiry events, trusted selection and customer follow-through.",
+        "source": "savia_assistant/"
+      },
+      {
+        "id": "authority",
+        "name": "Authorized domain tools",
+        "owner": "Savia host and Banking MCP",
+        "responsibility": "Ownership, consent, exact signed calls, policy, revocation and receipt verification.",
+        "source": "banking_mcp/"
+      },
+      {
+        "id": "data",
+        "name": "Data plane",
+        "owner": "Pipeline",
+        "responsibility": "DuckDB, immutable Parquet snapshots, contracts and provenance.",
+        "source": "pipeline/"
+      },
+      {
+        "id": "orchestration",
+        "name": "Generic orchestration",
+        "owner": "FLUJO",
+        "responsibility": "Existing chat, flow, tools, MCP, execution and recovery interfaces; generic main stays independent of banking."
+      },
+      {
+        "id": "team",
+        "name": "Specialist fleet and review",
+        "owner": "Application specialization of recovered FLUJO teams",
+        "responsibility": "Native subflows, fleet messaging, board, claim review and recovered run binding.",
+        "source": "savia_assistant/fleet.py"
+      }
+    ],
+    "extensibility": [
+      "Replace application policy and tools for another industry while reusing generic orchestration.",
+      "Bind another configured provider without changing ownership or evidence contracts.",
+      "Extend team layout while reusing messaging, findings, review and recovery."
+    ],
+    "target": {
+      "teamMachines": 10,
+      "conversationsPerMachine": 10,
+      "layout": "One lead plus nine specialists per Machine; root supervision separate.",
+      "totalTeamConversations": 100,
+      "qualification": "Exact integrated 100-agent customer completion remains separate from successful infrastructure load and collaboration tests."
+    },
+    "evidence": [
+      {
+        "kind": "repository_document",
+        "label": "Generic/domain boundary",
+        "path": "docs/FLUJO_PRODUCT_BOUNDARY.md",
+        "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/FLUJO_PRODUCT_BOUNDARY.md"
+      },
+      {
+        "kind": "repository_document",
+        "label": "Technical product architecture",
+        "path": "docs/architecture/system-landscape.md",
+        "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/architecture/system-landscape.md"
+      },
+      {
+        "kind": "repository_document",
+        "label": "Case-to-fleet connector contract",
+        "path": "docs/submission/assistant/FLEET_CONNECTOR.md",
+        "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/assistant/FLEET_CONNECTOR.md"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "id": "audit",
+      "date": "2026-09-26",
+      "title": "Choose the workflow from data evidence",
+      "summary": "Profile the supplied data and challenge, identify useful charge-inquiry facts and establish a separate evaluation plan for weak labels.",
+      "contributors": [
+        "mario",
+        "agents"
+      ],
+      "evidence": [
+        {
+          "kind": "commit",
+          "label": "Initial hackathon audit",
+          "commit": "9367597bbba352ee9c745a3422a0f676931a57c7",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/9367597bbba352ee9c745a3422a0f676931a57c7"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Aggregate data review",
+          "path": "docs/DATA_REVIEW_2026-09-26.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/DATA_REVIEW_2026-09-26.md"
+        }
+      ]
+    },
+    {
+      "id": "pipeline",
+      "date": "2026-09-27",
+      "title": "Publish a reusable data plane",
+      "summary": "Carlos implements bronze/silver/gold processing; review strengthens customer isolation, safe reports and atomic publication. A six-table historical run processes approximately 5.9 million rows.",
+      "contributors": [
+        "carlos",
+        "agents"
+      ],
+      "evidence": [
+        {
+          "kind": "commit",
+          "label": "Pipeline implementation",
+          "commit": "35b34d968c4b182f0b9b893b1973721b35017c0f",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/35b34d968c4b182f0b9b893b1973721b35017c0f"
+        },
+        {
+          "kind": "commit",
+          "label": "Review improvements",
+          "commit": "0ff3a054edba8c846fbf1e32eef7063cc4c89784",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/0ff3a054edba8c846fbf1e32eef7063cc4c89784"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Contracts, stages and measured outputs",
+          "path": "pipeline/README.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/pipeline/README.md"
+        }
+      ]
+    },
+    {
+      "id": "routing-policy-tools",
+      "date": "2026-09-28",
+      "endDate": "2026-09-29",
+      "title": "Combine learned routing, human policy and authorized tools",
+      "summary": "An inspectable learned intent router is compared with keyword rules; Gloria supplies the decision motor; customer-bound banking tools reach a historically verified 500/500 real-model request phase.",
+      "contributors": [
+        "carlos",
+        "gloria",
+        "mario",
+        "agents"
+      ],
+      "measurements": [
+        {
+          "name": "Frozen raw-router label accuracy",
+          "value": "78.3%",
+          "baseline": "58.3%",
+          "n": 120,
+          "scope": "Balanced AI-authored ES/PT diagnostic holdout; human adjudication pending."
+        },
+        {
+          "name": "Abstaining router human-required misroutes",
+          "value": "1/30",
+          "scope": "Component safety/coverage tradeoff; not bank resolution."
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "commit",
+          "label": "Learned router",
+          "commit": "5f25097050991389f4a6a84b23f17120d45295c3",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/5f25097050991389f4a6a84b23f17120d45295c3"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Frozen diagnostic comparison",
+          "path": "docs/demo/intent_router_evaluation.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/demo/intent_router_evaluation.md"
+        },
+        {
+          "kind": "commit",
+          "label": "Policy and prompt resources",
+          "commit": "b5d0ef2c642312314e402ab3be870aba223c81ed",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/b5d0ef2c642312314e402ab3be870aba223c81ed"
+        },
+        {
+          "kind": "commit",
+          "label": "Successful 500-customer acceptance",
+          "commit": "0a3ab0d856e4837b3794a349e404153c44cffe8b",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/0a3ab0d856e4837b3794a349e404153c44cffe8b"
+        }
+      ]
+    },
+    {
+      "id": "portal",
+      "date": "2026-09-29",
+      "title": "Make verified banking facts usable",
+      "summary": "Savia's first portal connects snapshot data and chat, then integrates selected facts, explicit simulated-intake confirmation, receipt read-back, human handoff and replay-safe recovery.",
+      "contributors": [
+        "gloria",
+        "mario",
+        "agents"
+      ],
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "label": "Savia banking frontend",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/11"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Completed charge journey",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/23"
+        },
+        {
+          "kind": "commit",
+          "label": "Verified journey and canonical prompt",
+          "commit": "2e9a92a5329b1c7eae4c60ff96cdaddfdade1612",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/2e9a92a5329b1c7eae4c60ff96cdaddfdade1612"
+        }
+      ]
+    },
+    {
+      "id": "boundary-and-qualification",
+      "date": "2026-09-30",
+      "endDate": "2026-10-01",
+      "title": "Make the integration extensible and reviewable",
+      "summary": "Keep FLUJO main generic; move domain authority into Savia and Banking MCP. Independently qualify the combined workflow with frozen source maps, UI checks, build and fictional read-preview evidence.",
+      "contributors": [
+        "mario",
+        "gloria",
+        "agents"
+      ],
+      "measurements": [
+        {
+          "name": "Combined renamed source checkpoint",
+          "value": "1,725 passed tests; 428 passed subtests; 80 UI tests",
+          "source": "ea8f62176157cb016ff07db86c8d2e8c49272aa9",
+          "scope": "Dated source/build/fictional-preview qualification, not later runtime acceptance."
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "label": "Generic FLUJO boundary",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/29"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Trusted direct host",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/31"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Project-owned host transport",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Frozen source qualification",
+          "path": "docs/qualification/dispute-naming-source-2026-10-01.json",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/qualification/dispute-naming-source-2026-10-01.json"
+        }
+      ]
+    },
+    {
+      "id": "operation-and-usability",
+      "date": "2026-10-01",
+      "endDate": "2026-10-03",
+      "title": "Strengthen operation and daily use",
+      "summary": "Add resource-bounded Windows/Linux verification, immutable release provenance, metadata-only analytics, period selection, accessibility and multilingual refinements. Build a local replay for detailed development evidence.",
+      "contributors": [
+        "gloria",
+        "mario",
+        "agents"
+      ],
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "label": "Offline agent analytics",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/49"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Movement period selection",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/50"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Source-pinned Windows/Linux CI",
+          "path": "docs/LOCAL_CI.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/LOCAL_CI.md"
+        },
+        {
+          "kind": "commit",
+          "label": "Timestamped development replay",
+          "commit": "38dc6bb48c188648e2266638e29e8ecd5ecb4ec5",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/38dc6bb48c188648e2266638e29e8ecd5ecb4ec5"
+        }
+      ]
+    },
+    {
+      "id": "integrated-product",
+      "date": "2026-10-04",
+      "endDate": "2026-10-05",
+      "title": "Deliver voice, investigation and saved follow-through",
+      "summary": "Integrate Eyes and Moss into the customer dialog, record grounded facts and two real reviewers, complete native playback and queued closure, add saved-advice speech, and publish measured platform capacity and the fleet connector.",
+      "contributors": [
+        "gloria",
+        "mario",
+        "agents"
+      ],
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "label": "Final-day application",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/53"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Integrated native runtime",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/56"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Listen to saved recommendations",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/59"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Recovered fleet connector",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/62"
+        },
+        {
+          "kind": "pull_request",
+          "label": "Tested capacity and collaboration",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/74"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Current submission source and recording map",
+          "path": "docs/submission/RELEASE_CANDIDATE.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/RELEASE_CANDIDATE.md"
+        }
+      ]
+    },
+    {
+      "id": "public-evidence-sprint",
+      "date": "2026-10-05",
+      "title": "Publish fresh, reproducible public evidence",
+      "summary": "Complete 100/100 exact-correct and bounded-safe direct Luna provider responses on frozen ES/PT fixture tasks; independently audit oracle, baseline and turn overlap. A separate provider-free replay passes 67 checks and eleven pipeline/analytics invariants.",
+      "contributors": [
+        "mario",
+        "agents"
+      ],
+      "measurements": [
+        {
+          "name": "Luna direct subscription workload",
+          "value": "100/100 completed, exact-correct and bounded-safe",
+          "latencyP50Seconds": 37.4,
+          "latencyP95Seconds": 50.693,
+          "peakOverlappingTurns": 100,
+          "scope": "Five fixture scenarios, 50 ES / 50 PT. Direct app-server provider requests, not deployed Savia or agent collaboration; baseline also 100/100."
+        },
+        {
+          "name": "Public evidence replay",
+          "value": "67/67 checks and 11/11 invariants passed",
+          "scope": "Seven pipeline plus four analytics invariants; no external inference requests or private organizer-data recomputation."
+        }
+      ],
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Luna benchmark and scope",
+          "path": "docs/submission/measurements/luna-100/README.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/README.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Independent exact-output audit",
+          "path": "docs/submission/measurements/luna-100/run-100/audit.json",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/run-100/audit.json"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Provider-free public evidence replay",
+          "path": "docs/review/PUBLIC_EVIDENCE.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/PUBLIC_EVIDENCE.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Replay source and environment provenance",
+          "path": "docs/review/replay-receipt.json",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/replay-receipt.json"
+        }
+      ]
+    }
+  ],
+  "reproducibility": [
+    {
+      "step": 1,
+      "title": "Inspect the working customer story",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Customer journey",
+          "path": "docs/submission/CUSTOMER_JOURNEY.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/CUSTOMER_JOURNEY.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Successful integrated native captures",
+          "path": "docs/submission/measurements/intended-savia-native/README.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/intended-savia-native/README.md"
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Trace capabilities to implementation",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Pipeline commands and contracts",
+          "path": "pipeline/README.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/pipeline/README.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Trusted-host contract",
+          "path": "frontend/DIRECT_MCP.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/frontend/DIRECT_MCP.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Executable workflow",
+          "path": "docs/DISPUTE_IMPLEMENTATION.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/DISPUTE_IMPLEMENTATION.md"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Check the right measurement boundary",
+      "note": "Distinguish data lookup, routing, real-model capacity, sandbox collaboration and customer outcomes.",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Recorded customer measurements",
+          "path": "docs/submission/measurements/MEASURED_RESULTS.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/MEASURED_RESULTS.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Platform and collaboration scope",
+          "path": "docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md"
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Use committed source-pinned verification",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Independent verification jobs",
+          "path": ".github/workflows/tests.yml",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/.github/workflows/tests.yml"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Eleven-job Windows/Linux method",
+          "path": "docs/LOCAL_CI.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/LOCAL_CI.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Dated workflow qualification",
+          "path": "docs/DISPUTE_ACCEPTANCE.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/DISPUTE_ACCEPTANCE.md"
+        },
+        {
+          "kind": "repository_document",
+          "label": "Provider-free public replay command and receipts",
+          "path": "docs/review/PUBLIC_EVIDENCE.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/PUBLIC_EVIDENCE.md"
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "title": "Verify deployment and media identity",
+      "evidence": [
+        {
+          "kind": "repository_document",
+          "label": "Release identities and public assets",
+          "path": "docs/submission/RELEASE_CANDIDATE.md",
+          "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/RELEASE_CANDIDATE.md"
+        }
+      ]
+    }
+  ],
+  "evidenceScope": {
+    "publicCustomerData": "Generated fictional customers; no restricted organizer rows in this story or public recordings.",
+    "outcomes": "Informational closure, simulated intake, ticket submission and bank resolution remain distinct.",
+    "historicalMeasurements": "Successful component and infrastructure measurements stay attached to original workloads and source revisions; earlier incomplete attempts remain in linked reports.",
+    "expansion": "A deployed connector and tested platform foundation support the ten-by-ten product architecture; exact integrated completion, real human pickup and push/email delivery remain separate acceptance scopes.",
+    "replay": "The detailed web/dev-history export is a private local artifact. This JSON is a curated public evidence map and contains no copied conversation bodies.",
+    "providerBenchmark": "The 100-turn Luna result is a direct subscription app-server benchmark of frozen bilingual fixture grounding and no-action boundaries; it does not execute Savia, FLUJO, Banking MCP, voice or collaborating agents."
+  }
+}
