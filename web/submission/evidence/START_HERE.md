@@ -1,5 +1,11 @@
 # Start here: Savia, powered by FLUJO
 
+**The deterministic R0–R18 dispute engine is the foundation; voice and specialist
+collaboration extend it.** The [complete engine guide](DISPUTE_ENGINE.md) maps
+nineteen ordered rules, owned reads, clarification, explicit consent, simulated
+intake with independently verified receipts, durable recovery and human handoff
+to implemented source and executable tests.
+
 **Ask once. Explore options. Return for a clear next step.** Savia helps a
 customer understand an unfamiliar charge through Spanish or Portuguese
 conversation, checked transaction facts, background investigation and saved
@@ -32,7 +38,10 @@ provides the existing recorded demonstration.
    [saved-recommendation supplement](measurements/saved-recommendations-native/README.md)
    records one explicit Listen click, 8.2 seconds of actual native audio, exact
    full-playback acknowledgment and recovery of the saved advice after reload.
-3. **Understand the expandable system.** The
+3. **Inspect the core engine, then the expandable system.** The
+   [deterministic workflow](DISPUTE_ENGINE.md) is a complete submission foundation
+   independently of the avatar and swarm. Inspect its policy, runtime, response,
+   consent and recovery modules before assessing conversational enhancements. The
    [architecture](../architecture/system-landscape.md) separates the customer
    experience, orchestration, banking authority and data plane. The
    [FLUJO capacity evidence](measurements/INFRASTRUCTURE_CAPACITY.md) includes a

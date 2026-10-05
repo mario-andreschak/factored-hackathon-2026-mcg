@@ -1,5 +1,10 @@
 # Savia evidence map
 
+Start with the [core R0–R18 transaction dispute engine](DISPUTE_ENGINE.md):
+nineteen ordered policy rule identifiers and a complete authenticated, consented,
+receipt-verified, recoverable simulated banking workflow. The voice avatar and
+specialist swarm are enhancements over this implemented foundation.
+
 Reviewed 5 October 2026. Start with [the product review route](START_HERE.md)
 and [submission portal](https://savia-rc-2026.fly.dev/submission/). This map connects
 technical decisions to implementation, exact results and executable checks.

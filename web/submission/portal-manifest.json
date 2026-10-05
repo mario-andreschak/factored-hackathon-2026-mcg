@@ -6,11 +6,12 @@
     "development.html": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946",
     "evidence/development-process.json": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e",
     "evidence/DEVELOPMENT_PROCESS.md": "6a243e5ae0f72045814e069d5ce4bcec024aa33dabc21643339594721a9a4797",
+    "evidence/DISPUTE_ENGINE.md": "69dcc22337260682c2dd756f2de7285c8c57f2dbe7a4d99658a179c5f712d1ab",
     "evidence/ELEVENLABS_COMPARISON.md": "f601122bab85008f6f9d1c58682b47e1bb25b36c4300f68d87b36b920db82351",
-    "evidence/EVIDENCE_MAP.md": "32570962e736e59750c84cf0e6caa8b45fb29696ba3fdac598de8c6f2d106bca",
-    "evidence/START_HERE.md": "cd97d41998f56139580d51ba3ec7b4e7cfb488284646a371ce53106f30306cad",
-    "index.html": "754628e863f1d758ce68627b1465d147fd82feadf38e10b4f9a85c44ebce3a58",
-    "llms.txt": "427aba1569cb5666581aa2dea69211c74d87ee6f14754de6d9982297c50c55b7",
+    "evidence/EVIDENCE_MAP.md": "2539fb8d23bb798cca96cbb0ab36af9430e0116f264dfa2c733bd76d318efe25",
+    "evidence/START_HERE.md": "e4445c3901da65aed46a0eba77358dc1a0c85e473c977dc1042db282f7a67f98",
+    "index.html": "0fe81f2fbe9a8beed913b9973be4c4d6755b37bcbf8685c580777ce4fbaae8da",
+    "llms.txt": "4b80c56d987bf42a7815e2e6768b919fc8b6be01338823e868d39eb06f7f4aa1",
     "pitch/savia-final-pitch-manifest.json": "adf10a5371db8a3bfb15c071bdee4735da9e915be21e2abb9bdd9f735eb5543d",
     "pitch/savia-final-pitch-sources.json": "39837f44f2c607457e50ab9f6b1d0af4681fb57bc99fbe490efbbf9da5962e6d",
     "pitch/savia-final-pitch-speaker-notes.md": "e33a5d3a71066e9ac64f8a23bfce93bfdb5acbb779205df2ebd8cbf7e11081ed",
@@ -24,7 +25,7 @@
     "pitch/slides/slide-05.png": "9ed843e570f835c4065047167ad5b335db2c624f79c1062eb8d2336aebbeeeeb",
     "pitch/slides/slide-06.png": "26afda833c5bf7aa28d53565f11eb99917045014323e753f5e585d4444310d26",
     "savia-submission.vtt": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6",
-    "styles.css": "a687c3d4cf8d20739a632fab2165344acc91882eade80c1197cb48461fd89ff8",
-    "submission.json": "5ad7357bdf6e00464a2e09a0ad9c222569ebd9f17d2cc0d733fd391bdd157a72"
+    "styles.css": "a9cbd3074e43dc6a352a05c62e161c93d46469cca4d35b0e83a98c149e5479e5",
+    "submission.json": "12ba42788f93ab6b99022e20abed664fc8a183ba33960722b2e8e344e53c173f"
   }
 }
