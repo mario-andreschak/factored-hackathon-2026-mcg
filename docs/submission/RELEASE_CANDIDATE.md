@@ -1,7 +1,7 @@
 # Savia release candidate
 
 Status: rc.2 is the current frozen release; its rc.1 film and decks remain frozen.
-New deployment and actual qualification results are pending.
+The first new fleet/customer attempt is partial; further qualification is pending.
 The recovered swarm connector's [source and integration pins](assistant/FLEET_CONNECTOR.md)
 are merged; runtime qualification remains pending. Public visibility is verified.
 Full ten-by-ten swarm qualification remains pending. Updated 2026-10-05.
@@ -17,12 +17,28 @@ The avatar and voice are inside Savia's assistant dialog, from
 `frontend/src/avatar/`, based on
 `feature/savia-avatar-voice@2730d76de8e6847df4502c427ad9ced412f4a731` (PR 52).
 
-## Next actual qualification
+## Actual fleet/customer qualification
 
-New source/image pins, current customer and native voice acceptance, full
-ten-by-ten/native100 results and an actual 30-minute follow-up await runtime
-and measurement receipts. These results are pending; the frozen evidence below
-retains its original scope.
+The October 5 first attempt is partial; mandatory fleet customer acceptance
+failed. Its [receipt](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/0d23282d289f07f14d6a6bda82fb339ded6cee6a/docs/submission/measurements/fleet-customer-attempt/receipt.json)
+records application source `a5e48f09afe4241f6b08a2b94532b2bd3eb630f4`, image
+`sha256:35903f9a1ea70f8b3c589d5680ed50307efd34870ce004bdd1833b9029b6dc93`,
+native source `67d21ad3fe49059ab349d1315d02a9437daa1140` and controller source
+`290dd6a7c19fa92c267bddd04f625f6cfbe39459`. Later generic source review does not
+relabel that deployed native image.
+
+The bank reply matched the selected fictional facts. Foreground native speech
+completed 8.85 seconds / 212,400 PCM16 samples at 24 kHz with one exact HTTP 200
+full-playback acknowledgement. The original root run failed after 5,981 ms on
+its first model call: HTTP 404, Modal workspace disabled. Zero team leads, local
+staff, completed reviews or native100 population were verified. An active goal
+and ready root worker do not establish successful execution.
+
+No audible execution overlap was qualified: the failed root ended 2,828 ms before
+speaking was observed. The nominal 1,321 ms request overlap is not an audible or
+concurrency result. Guidance audio, reload/context and the actual 1,800-second
+follow-up remain unqualified. Any funded successor is a separate attempt; this
+failure and the frozen rc.1/rc.2 evidence retain their original scope.
 
 ## Frozen rc.2 Listen acceptance
 
