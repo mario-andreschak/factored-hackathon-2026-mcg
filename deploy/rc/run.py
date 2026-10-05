@@ -15,6 +15,7 @@ import sys
 import subprocess
 import threading
 import time
+from urllib.parse import urlsplit
 
 _OBSERVATION_LOCK = threading.Lock()
 
@@ -26,6 +27,17 @@ def observe(root, record):
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
+
+
+def source_revision():
+    manifest = ROOT / "source-manifest.json"
+    if manifest.is_file():
+        value = json.loads(manifest.read_text(encoding="utf-8"))
+        for name, digest in value["files"].items():
+            if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest:
+                raise ValueError("immutable application source mismatch")
+        return value["git_head"]
+    return subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
 
 
 def prepare(root: Path) -> None:
@@ -45,7 +57,8 @@ def prepare(root: Path) -> None:
 
 
 def application(root: Path, *, port: int, base_url: str, model_id: str,
-                provider: str = "flujo", provider_key: str | None = None):
+                provider: str = "flujo", provider_key: str | None = None,
+                public_origin: str | None = None, demo_code: str | None = None):
     from scripts.qualify_dispute_app import Fixture, application_source_hashes
     from banking_mcp.config import Config
     from banking_mcp.service import Service
@@ -125,8 +138,15 @@ def application(root: Path, *, port: int, base_url: str, model_id: str,
                                 source_root=fixture.source)
     # Authored fictional prior coverage, never 24h of observed bank operation.
     bank.store.attest_sandbox_coverage(coverage, "synthetic:joined-dispute-generated-ledger")
+    origin = public_origin or f"http://127.0.0.1:{port}"
+    parsed = urlsplit(origin)
+    if (parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password
+            or parsed.path or parsed.query or parsed.fragment
+            or (parsed.scheme == "http" and parsed.hostname not in {"localhost", "127.0.0.1", "::1"})):
+        raise ValueError("exact HTTPS public origin or loopback HTTP origin required")
     settings = Settings(data_dir=fixture.data, state_dir=state, static_dir=ROOT / "frontend/dist",
-        demo_code=fixture.demo_code, profiles=fixture.profiles, public_origin=f"http://127.0.0.1:{port}",
+        demo_code=demo_code or fixture.demo_code, profiles=fixture.profiles, public_origin=origin,
+        secure_cookie=origin.startswith("https://"),
         chat={"mode": "dispute-host/v1", "base_url": base_url, "model": "flow-Dispute",
               "execution_token": fixture.execution_token,
               "frontend_signing_key_file": str(fixture.signer), "frontend_kid": "qualification",
@@ -145,7 +165,7 @@ def application(root: Path, *, port: int, base_url: str, model_id: str,
                             "route": "generic completion" if provider == "flujo" else "explicit direct OpenRouter completion"},
                "simulated_intake": True, "real_bank_actions": False, "native_flow_execution": False,
                "source_snapshot": "startup Git revision plus exact application and served UI hashes",
-               "git_head": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
+               "git_head": source_revision(),
                "application_sources": source_hashes,
                "served_ui": {file.relative_to(settings.static_dir).as_posix(): hashlib.sha256(file.read_bytes()).hexdigest()
                              for file in sorted(settings.static_dir.rglob("*")) if file.is_file()},
@@ -165,6 +185,7 @@ def main():
     parser.add_argument("--model", default="model-GPT-6 Luna")
     parser.add_argument("--provider", choices=("flujo", "openrouter"), default="flujo")
     parser.add_argument("--provider-env", type=Path, default=ROOT / "avatar/openrouter.env")
+    parser.add_argument("--public-origin")
     args = parser.parse_args()
     root = args.private_dir.resolve()
     if not 1024 < args.port < 65536:
@@ -194,7 +215,8 @@ def main():
     if args.model not in {item.get("id") for item in response.json().get("data", [])}:
         raise ValueError("configured actual language model is unavailable")
     app, bank = application(root, port=args.port, base_url=args.flujo_url, model_id=args.model,
-                            provider=args.provider, provider_key=key)
+                            provider=args.provider, provider_key=key, public_origin=args.public_origin,
+                            demo_code=__import__("os").environ.get("RC_DEMO_CODE"))
     try:
         import uvicorn
         uvicorn.run(app, host="127.0.0.1", port=args.port, access_log=False)

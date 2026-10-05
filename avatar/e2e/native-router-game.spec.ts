@@ -15,7 +15,7 @@ async function game(page: Page) {
   return forbidden;
 }
 async function capture(page: Page, amplitude = .04) {
-  await page.evaluate(amplitude => { window.__nativeTransport.emit(amplitude, .6); window.__nativeTransport.emit(0, .7); }, amplitude);
+  await page.evaluate(amplitude => { window.__nativeTransport.emit(amplitude, .6); window.__nativeTransport.emit(0, 2.1); }, amplitude);
 }
 async function history(page: Page) {
   await page.getByRole('button', { name: 'Pausar la historia' }).click();

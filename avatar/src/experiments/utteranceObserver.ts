@@ -14,9 +14,10 @@ export class UtteranceCollector {
   private quiet = 0;
   private active = false;
   private draining = false;
-  constructor(readonly sampleRate: number, readonly maximumSeconds = 25) {
+  constructor(readonly sampleRate: number, readonly maximumSeconds = 25, readonly silenceSeconds = .5) {
     if (!Number.isFinite(sampleRate) || sampleRate <= 0 || sampleRate > 192000) throw new RangeError('Invalid microphone rate.');
     if (!Number.isFinite(maximumSeconds) || maximumSeconds < 1 || maximumSeconds > 25) throw new RangeError('Invalid utterance limit.');
+    if (!Number.isFinite(silenceSeconds) || silenceSeconds < .2 || silenceSeconds > 5) throw new RangeError('Invalid end-of-turn silence.');
   }
   reset() {
     this.pre.forEach(chunk => chunk.fill(0)); this.chunks.forEach(chunk => chunk.fill(0));
@@ -27,7 +28,7 @@ export class UtteranceCollector {
     if (!(samples instanceof Float32Array) || !samples.length || samples.length > this.sampleRate) return;
     const duration = samples.length / this.sampleRate;
     this.quiet = voiced ? 0 : this.quiet + duration;
-    if (this.draining) { if (this.quiet >= .5) this.reset(); return; }
+    if (this.draining) { if (this.quiet >= this.silenceSeconds) this.reset(); return; }
     if (!this.active) {
       this.onset = voiced ? this.onset + duration : 0;
       this.pre.push(samples.slice()); this.preSamples += samples.length;
@@ -46,10 +47,10 @@ export class UtteranceCollector {
       if (chunk.length) { this.chunks.push(chunk); this.samples += chunk.length; }
     }
     const capped = this.samples >= this.sampleRate * this.maximumSeconds;
-    if (!capped && this.quiet < .5) return;
+    if (!capped && this.quiet < this.silenceSeconds) return;
     const result = { chunks: this.chunks, sampleRate: this.sampleRate, capped };
     this.chunks = []; this.samples = 0; this.active = false; this.onset = 0;
-    this.draining = capped && this.quiet < .5;
+    this.draining = capped && this.quiet < this.silenceSeconds;
     if (!this.draining) this.reset();
     return result;
   }
