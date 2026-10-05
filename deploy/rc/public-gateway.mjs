@@ -52,7 +52,7 @@ function plain(res, status, text) {
 function landing(res, failed = false) {
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
     'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
-    'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });
+    'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin' });
   res.end(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Savia demo</title><style>body{font:16px system-ui;margin:0;min-height:100vh;display:grid;place-items:center;background:#10251f;color:#f4f1e8}main{width:min(25rem,82vw);padding:2rem;border:1px solid #49665c;border-radius:1rem}label{display:block;margin:1rem 0}input,button{box-sizing:border-box;width:100%;padding:.8rem;margin-top:.4rem;border:1px solid #789587;border-radius:.4rem;font:inherit}button{background:#b6e2ad;color:#10251f;border:0;cursor:pointer}.notice{color:#cee2d5}.error{color:#ffb5a8}</style><main><h1>Savia</h1><p class="notice">Fictional demonstration. This experience uses invented people, accounts, and transactions. Do not enter real personal or financial information.</p>${failed ? '<p class="error">That demo code was not accepted.</p>' : ''}<form method="post" action="/_rc/enter"><label>Demo code<input name="code" autocomplete="off" required maxlength="256"></label><button type="submit">Enter demo</button></form></main></html>`);
 }
 
