@@ -1,11 +1,11 @@
 # Savia — Factored AI & Data Hackathon 2026 — MCG
 
-A charge you don't recognize leaves you with two questions: what happened, and
-what happens next? **Ask once. Explore options with Savia's team. Return for a
-clear next step.** Savia is a friendly Spanish and Portuguese voice assistant
-that brings the question, verified transaction facts and follow-up together.
+Savia is a friendly Spanish and Portuguese voice assistant that follows customer
+inquiries, asks a team for different perspectives, and keeps helpful answers and
+follow-up together. **Ask once. Explore options with Savia's team. Return for a
+clear next step.**
 
-Customers can ask two Savia AI agents to consider an informational inquiry from
+The earlier recorded prototype shows two Savia AI agents considering an inquiry from
 different perspectives: evidence to compare and useful next steps. Their actual
 work status and suggestions are saved so the customer can return without losing
 the thread. Voice and keyboard conversation sit alongside the guarded banking
@@ -24,36 +24,29 @@ intake receipt records intake; it does not establish a refund or resolution of
 the underlying dispute. Marking an informational answer helpful does not resolve
 a bank case. A saved handoff packet does not establish human pickup.
 
-## Release and demo
+## Submission ready for human review
 
-Start with the [release candidate report](docs/submission/RELEASE_CANDIDATE.md) for the identified
-source/runtime, measured customer journey, recording, decks and remaining gates.
-The [submission guide](docs/SUBMISSION_GUIDE.md) maps organizer requirements to
-that report. Earlier source tests and recordings retain their original scope.
+**Ready for owner and Gloria's review, October 5, 2026**, under the owner's
+reduced scope: existing app, frozen media and truthful documentation. Further
+fleet runs, provisioning and funding approval are outside this release scope.
 
-Try the [public fictional demo](https://savia-rc-2026.fly.dev) with
-**`SAVIA-2026`** at the entry gate and customer profile login. Customers,
-movements and intake are simulated; provider completions and voice calls are
-real. The [public RC runbook](deploy/rc/PUBLIC.md) describes the isolated
-deployment and pinned source.
+Try [Savia](https://savia-rc-2026.fly.dev) with **SAVIA-2026** at the entry gate
+and fictional customer profile login. Customers, movements and intake are
+simulated; provider completions and voice calls are real.
 
-Media artifacts are in [submission media](docs/submission/media/), with
-the [editable submission deck](docs/submission/media/decks/savia-submission-deck.pptx)
-and [pitch deck](docs/submission/media/decks/savia-pitch-deck.pptx). The release
-report records final review, exports, recording and claim verification.
+- [Play or download the submission video](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4)
+- [Editable submission deck](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission-deck.pptx) and [PDF](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission-deck.pdf)
+- [Editable pitch deck](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-pitch-deck.pptx) and [PDF](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-pitch-deck.pdf)
+- [Customer story](docs/submission/CUSTOMER_JOURNEY.md) and [release report](docs/submission/RELEASE_CANDIDATE.md)
 
-The product story follows one fictional customer from an unrecognized charge to
-a useful answer, team exploration and a return visit with helpful status. A
-consented simulated intake, Portuguese clarification and honest failure/handoff
-show how the experience handles uncertainty. The [inquiry guide and actual
-proof](docs/submission/assistant/README.md) distinguish the two-agent provider run
-from the generic FLUJO MCP wiring. The release report owns final recorded claims.
-
-The portal's new-chat control archives the visible transcript and clears its
-selected context; the previous conversation remains viewable. Saved inquiries,
-bank receipts, pending consent and follow-ups remain separate. Inquiry tracking
-runs while the host is running, with quiet unchanged checks and a seven-day
-limit. Scheduling tests do not establish a week of observed operation.
+These assets are published in frozen rc.2, reusing the rc.1 film and decks.
+The story shows a useful grounded answer, two completed agent reviews, helpful
+informational closure and a return to saved context. The rc.2 supplement records
+spoken saved advice. A later fleet attempt failed its root model call; that
+prototype limitation is disclosed and does not block this submission.
+The [measurement appendix](docs/submission/measurements/MEASURED_RESULTS.md)
+preserves each recording's scope and failures. The
+[submission guide](docs/SUBMISSION_GUIDE.md) maps organizer requirements.
 
 ## Run locally
 
@@ -112,7 +105,7 @@ and [deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md) govern integrati
 The [frozen runtime source](docs/submission/runtime-source-final.json) identifies
 the accepted integrated Savia build. The
 [technical system landscape](docs/architecture/system-landscape.md) documents
-Savia's case lifecycle, native voice and recovered ten-by-ten FLUJO swarm design. The
+Savia's case lifecycle, native voice and recovered FLUJO swarm design. The
 [viewer](docs/architecture/deployment-landscapes.html#system) includes its
 diagram and retains the dated September 30 Docker/Fly configuration.
 
