@@ -2,6 +2,15 @@
 
 The static page in `web/dev-history/` brings together GitHub, Slack, Codex, FLUJO, project documentation and infrastructure evidence. It presents the development process as a sequential replay with a temporal system landscape, actual conversation trees, saved FLUJO execution graphs and machine inventory. Workstreams cover backend, MCP, dataset, frontend, deployment, review, steering, research and CI.
 
+The Landscape defaults to Savia's product architecture: customer website with
+googly eyes and Moss voice, case owner, authorized data tools, the recovered
+FLUJO swarm and its target ten-Machine, 100-conversation team, review, human
+handoff and customer updates. The scope selector preserves the development
+tooling view separately. Source events establish design evidence dates, not a
+claim that the complete customer fleet has run. See the
+[technical system landscape](architecture/system-landscape.md) for network,
+execution and storage contracts and current implementation coverage.
+
 ## Rebuild
 
 From the repository root, run Python 3.11 or later:

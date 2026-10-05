@@ -9,6 +9,7 @@ This index keeps older evidence discoverable without treating it as today's resu
 
 | Document | Use |
 | --- | --- |
+| [Technical system landscape](architecture/system-landscape.md) and [viewer](architecture/deployment-landscapes.html#system) | Savia lifecycle, ten-by-ten FLUJO swarm template, voice, data, human ticket and status delivery; current implementation mapped separately |
 | [Frontend runbook](../frontend/README.md) | Fictional invitation preview and private portal setup |
 | [Fictional RC startup](../deploy/rc/README.md) | Fresh local customer workflow; banking service in process and generic FLUJO language |
 | [Transaction dispute workflow](DISPUTE_IMPLEMENTATION.md) | Workflow setup, contributor credit and retained-state compatibility |

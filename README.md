@@ -111,8 +111,10 @@ repository, the banking MCP, or the owner-authorized isolated
 and [deployment source map](docs/FLUJO_HACKATHON_DEPLOYMENT.md) govern integration.
 The [frozen runtime source](docs/submission/runtime-source-final.json) identifies
 the accepted integrated Savia build. The
-[landscape viewer](docs/architecture/deployment-landscapes.html) retains the
-historical September 30 Docker/Fly configuration.
+[technical system landscape](docs/architecture/system-landscape.md) documents
+Savia's case lifecycle, native voice and recovered ten-by-ten FLUJO swarm design. The
+[viewer](docs/architecture/deployment-landscapes.html#system) includes its
+diagram and retains the dated September 30 Docker/Fly configuration.
 
 ## Development and evidence
 

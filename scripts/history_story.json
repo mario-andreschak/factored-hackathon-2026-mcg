@@ -5,44 +5,424 @@
       "id": "slack-bot",
       "title": "FLUJO joins the conversation",
       "description": "The first team-channel ping reaches FLUJO, and its response is persisted in the local conversation history.",
-      "evidenceIds": ["slack:C0C4T2FK24C:1790561006.727949", "flujo:default-workspace:slack-1a1ac049bc62a2444a206a247d778b22411397c23d404cf7:stream_a855b9c2-64a8-40d1-b823-abde9059afa2"]
+      "evidenceIds": [
+        "slack:C0C4T2FK24C:1790561006.727949",
+        "flujo:default-workspace:slack-1a1ac049bc62a2444a206a247d778b22411397c23d404cf7:stream_a855b9c2-64a8-40d1-b823-abde9059afa2"
+      ]
     },
     {
       "id": "governance",
       "title": "Codex takes the supervisor role",
       "description": "A dedicated supervisor reviews pull requests while parallel sessions own frontend, backend, dataset and MCP work.",
-      "evidenceIds": ["codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba", "slack:C0C4T2FK24C:1790696885.134539"]
+      "evidenceIds": [
+        "codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba",
+        "slack:C0C4T2FK24C:1790696885.134539"
+      ]
     },
     {
       "id": "parallel",
       "title": "Development splits into workstreams",
       "description": "The team reports five parallel sessions: frontend, backend, dataset, MCP, and supervision/review.",
-      "evidenceIds": ["slack:C0C4T2FK24C:1790696885.134539"]
+      "evidenceIds": [
+        "slack:C0C4T2FK24C:1790696885.134539"
+      ]
     },
     {
       "id": "self-governed",
       "title": "A FLUJO team governs the release loop",
       "description": "Codex sets up a FLUJO release team with a supervisor, builder, product auditor, independent reviewer and watchdog. A recurring coordinator keeps the work moving.",
-      "evidenceIds": ["flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3", "codex:message:msg_01a0f586-28d3-7cd2-ab7b-5c59c59dd352", "codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3", "flujo:default-workspace:9aeb217b-308d-4bd0-a114-5ec4740c6033:509f28a7-91b6-4196-83de-5c83e3c50e26", "flujo:default-workspace:873ab7c7-2c50-47bf-9066-6ef736c0cf8d:bdc7ed90-8182-4753-8c5d-0a6f547b388c"]
+      "evidenceIds": [
+        "flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3",
+        "codex:message:msg_01a0f586-28d3-7cd2-ab7b-5c59c59dd352",
+        "codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3",
+        "flujo:default-workspace:9aeb217b-308d-4bd0-a114-5ec4740c6033:509f28a7-91b6-4196-83de-5c83e3c50e26",
+        "flujo:default-workspace:873ab7c7-2c50-47bf-9066-6ef736c0cf8d:bdc7ed90-8182-4753-8c5d-0a6f547b388c"
+      ]
     },
     {
       "id": "ci",
       "title": "Local and Modal CI become recurring",
       "description": "The team chooses hourly Windows/Docker verification and a daily Modal run. The saved automation and a later completed local run provide distinct configuration and execution evidence.",
-      "evidenceIds": ["codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a", "codex:automation:daily-private-modal-ci:created:2026-10-01T16:41:58.302000Z", "codex:message:msg_093875e3f38f84e2016abee5a284f087d28c77e382c8a96d80"]
+      "evidenceIds": [
+        "codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a",
+        "codex:automation:daily-private-modal-ci:created:2026-10-01T16:41:58.302000Z",
+        "codex:message:msg_093875e3f38f84e2016abee5a284f087d28c77e382c8a96d80"
+      ]
     }
   ],
   "nodes": [
-    {"id":"codex-team","label":"Codex supervisors","source":"codex","description":"Parallel project threads and their subagents supervise PRs and coordinate workstreams.","evidenceIds":["codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba","slack:C0C4T2FK24C:1790696885.134539"]},
-    {"id":"flujo-team","label":"FLUJO dev team","source":"flujo","description":"Recurring coordinator · supervisor · builder · product auditor · independent reviewer · watchdog.","evidenceIds":["flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3","codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"]},
-    {"id":"local-ci","label":"Local Docker CI","source":"ci","description":"Hourly local verification across Windows and Docker Linux jobs.","evidenceIds":["codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a","codex:message:msg_093875e3f38f84e2016abee5a284f087d28c77e382c8a96d80"]},
-    {"id":"modal-ci","label":"Modal CI","source":"ci","description":"Daily cloud verification configured as a saved automation.","evidenceIds":["codex:automation:daily-private-modal-ci:created:2026-10-01T16:41:58.302000Z","codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a"]}
+    {
+      "id": "codex-team",
+      "label": "Codex supervisors",
+      "source": "codex",
+      "description": "Parallel project threads and their subagents supervise PRs and coordinate workstreams.",
+      "evidenceIds": [
+        "codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba",
+        "slack:C0C4T2FK24C:1790696885.134539"
+      ]
+    },
+    {
+      "id": "flujo-team",
+      "label": "FLUJO dev team",
+      "source": "flujo",
+      "description": "Recurring coordinator · supervisor · builder · product auditor · independent reviewer · watchdog.",
+      "evidenceIds": [
+        "flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3",
+        "codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"
+      ]
+    },
+    {
+      "id": "local-ci",
+      "label": "Local Docker CI",
+      "source": "ci",
+      "description": "Hourly local verification across Windows and Docker Linux jobs.",
+      "evidenceIds": [
+        "codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a",
+        "codex:message:msg_093875e3f38f84e2016abee5a284f087d28c77e382c8a96d80"
+      ]
+    },
+    {
+      "id": "modal-ci",
+      "label": "Modal CI",
+      "source": "ci",
+      "description": "Daily cloud verification configured as a saved automation.",
+      "evidenceIds": [
+        "codex:automation:daily-private-modal-ci:created:2026-10-01T16:41:58.302000Z",
+        "codex:message:msg_01a0f854-12d5-76e1-a9a8-d8bf124fa00a"
+      ]
+    },
+    {
+      "id": "savia-ui",
+      "label": "Savia website",
+      "source": "docs",
+      "group": "product",
+      "tag": "CUSTOMER UI",
+      "subtitle": "Googly eyes · calm Moss",
+      "detail": "HTTPS 443 / Web Audio",
+      "description": "Integrated assistant dialog; text, native voice and retained progress.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-host",
+      "label": "Savia case owner",
+      "source": "docs",
+      "group": "product",
+      "tag": "APPLICATION",
+      "subtitle": "Intent · criticality · mood",
+      "detail": "Gateway 8080 / API 43900",
+      "description": "Authenticated customer/goal binding; resolve immediately or commission investigation.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-supervisor",
+      "label": "swarm_supervisor",
+      "source": "docs",
+      "group": "product",
+      "tag": "EXISTING TEMPLATE",
+      "subtitle": "FLUJO flow · fleet control",
+      "detail": "fleet_delegate / fleet_wait",
+      "description": "Recovered supervisor coordinates evidence and acceptance using fleet delegate/message/wait.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-fleet",
+      "label": "10 Fly × 10 conversations",
+      "source": "docs",
+      "group": "product",
+      "tag": "PRODUCT TARGET",
+      "subtitle": "One lead + nine specialists / worker",
+      "detail": "100 conversations",
+      "description": "Ten Fly FLUJO Machines, 100 team conversations; native bound specialized to nine children plus lead.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-voice",
+      "label": "Moss native voice",
+      "source": "docs",
+      "group": "product",
+      "tag": "EXISTING INTERFACE",
+      "subtitle": "NDJSON · PCM24k · playback ACK",
+      "detail": "PCM16 mono / 24 kHz",
+      "description": "Authenticated host-result narration and foreground/background playback queue.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-data",
+      "label": "Owned data / MCP",
+      "source": "docs",
+      "group": "product",
+      "tag": "DATA AUTHORITY",
+      "subtitle": "DuckDB · Parquet · provenance",
+      "detail": "DuckDB / Parquet queries",
+      "description": "Offline publication and authorized bank/query tools supply scoped evidence.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-review",
+      "label": "Compare / challenge / synthesize",
+      "source": "docs",
+      "group": "product",
+      "tag": "TEMPLATE CYCLE",
+      "subtitle": "Evidence · feedback · independent check",
+      "detail": "Independent evidence checks",
+      "description": "Recovered explore/consolidate/compare/build/pick/claim-check cycle specialized to customer goals.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-board",
+      "label": "Fleet MCP + relay",
+      "source": "docs",
+      "group": "product",
+      "tag": "EXISTING MECHANISM",
+      "subtitle": "board_post · board_read · messages",
+      "detail": "Files remain worker-local",
+      "description": "Cross-worker board and authenticated relay; files remain worker-local.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-notify",
+      "label": "Savia status delivery",
+      "source": "docs",
+      "group": "product",
+      "tag": "CHANNEL INTEGRATION",
+      "subtitle": "Signed-in · push · email",
+      "detail": "Portal / Web Push / email",
+      "description": "Case event cursor drives customer-approved channels; push/email binding remains to qualify.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-state",
+      "label": "Case / swarm workspace",
+      "source": "docs",
+      "group": "product",
+      "tag": "PERSISTENCE",
+      "subtitle": "Owner ↔ goal ↔ run · recovery",
+      "detail": "Persist case-to-run binding",
+      "description": "Reuse existing workspace/run/kv/board stores with an authenticated Savia case projection.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-human",
+      "label": "Human ticket / follow-through",
+      "source": "docs",
+      "group": "product",
+      "tag": "INTEGRATION TARGET",
+      "subtitle": "Evidence packet · acceptance · result",
+      "detail": "Actual ticket acceptance",
+      "description": "Unmet goal creates one ticket; actual human status returns through Savia.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-model",
+      "label": "Configured inference",
+      "source": "docs",
+      "group": "product",
+      "tag": "EXISTING PROVIDERS",
+      "subtitle": "O / Modal · OpenRouter audio",
+      "detail": "Role-bound model profile",
+      "description": "Reuse established model profiles; separate current availability from prior inference evidence.",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    }
   ],
   "edges": [
-    {"id":"slack-flujo-direct","from":"slack","to":"flujo","label":"Bot request & response","evidenceIds":["slack:C0C4T2FK24C:1790561006.727949","flujo:default-workspace:slack-1a1ac049bc62a2444a206a247d778b22411397c23d404cf7:stream_a855b9c2-64a8-40d1-b823-abde9059afa2"]},
-    {"id":"codex-codex-team","from":"codex","to":"codex-team","label":"Parallel supervision","evidenceIds":["codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba","slack:C0C4T2FK24C:1790696885.134539"]},
-    {"id":"codex-flujo-team","from":"codex","to":"flujo-team","label":"Launch & steer","evidenceIds":["codex:message:msg_01a0f586-28d3-7cd2-ab7b-5c59c59dd352","codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"]},
-    {"id":"flujo-flujo-team","from":"flujo","to":"flujo-team","label":"Recurring release loop","evidenceIds":["flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3","codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"]},
-    {"id":"github-codex-team","from":"github","to":"codex-team","label":"PR supervision","evidenceIds":["codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba"]}
+    {
+      "id": "slack-flujo-direct",
+      "from": "slack",
+      "to": "flujo",
+      "label": "Bot request & response",
+      "evidenceIds": [
+        "slack:C0C4T2FK24C:1790561006.727949",
+        "flujo:default-workspace:slack-1a1ac049bc62a2444a206a247d778b22411397c23d404cf7:stream_a855b9c2-64a8-40d1-b823-abde9059afa2"
+      ]
+    },
+    {
+      "id": "codex-codex-team",
+      "from": "codex",
+      "to": "codex-team",
+      "label": "Parallel supervision",
+      "evidenceIds": [
+        "codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba",
+        "slack:C0C4T2FK24C:1790696885.134539"
+      ]
+    },
+    {
+      "id": "codex-flujo-team",
+      "from": "codex",
+      "to": "flujo-team",
+      "label": "Launch & steer",
+      "evidenceIds": [
+        "codex:message:msg_01a0f586-28d3-7cd2-ab7b-5c59c59dd352",
+        "codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"
+      ]
+    },
+    {
+      "id": "flujo-flujo-team",
+      "from": "flujo",
+      "to": "flujo-team",
+      "label": "Recurring release loop",
+      "evidenceIds": [
+        "flujo:default-workspace:1ebe5628-dcb0-4adf-b459-d40760823c1d:1922a9ad-ad0a-42c7-9ad8-777910ad2cb3",
+        "codex:message:msg_0d7996aebdaf8c3f016abdde44646087d28605385bb4d1c6c3"
+      ]
+    },
+    {
+      "id": "github-codex-team",
+      "from": "github",
+      "to": "codex-team",
+      "label": "PR supervision",
+      "evidenceIds": [
+        "codex:message:msg_01a0edce-eb0d-7a80-8412-4075a69af6ba"
+      ]
+    },
+    {
+      "id": "savia-ui-host",
+      "from": "savia-ui",
+      "to": "savia-host",
+      "label": "Authenticated HTTPS",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-host-voice",
+      "from": "savia-host",
+      "to": "savia-voice",
+      "label": "Native voice API",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-host-supervisor",
+      "from": "savia-host",
+      "to": "savia-supervisor",
+      "label": "Case goal / scoped task",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-supervisor-fleet",
+      "from": "savia-supervisor",
+      "to": "savia-fleet",
+      "label": "Deploy recovered team",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-fleet-board",
+      "from": "savia-fleet",
+      "to": "savia-board",
+      "label": "Fleet MCP / relay",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-fleet-data",
+      "from": "savia-fleet",
+      "to": "savia-data",
+      "label": "Authorized query tools",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-fleet-review",
+      "from": "savia-fleet",
+      "to": "savia-review",
+      "label": "Findings / feedback",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-review-supervisor",
+      "from": "savia-review",
+      "to": "savia-supervisor",
+      "label": "Reviewed result",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-supervisor-human",
+      "from": "savia-supervisor",
+      "to": "savia-human",
+      "label": "Goal unmet / actual ticket status",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-host-state",
+      "from": "savia-host",
+      "to": "savia-state",
+      "label": "Case ↔ swarm run",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-fleet-state",
+      "from": "savia-fleet",
+      "to": "savia-state",
+      "label": "Workspace / run recovery",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-supervisor-notify",
+      "from": "savia-supervisor",
+      "to": "savia-notify",
+      "label": "Meaningful case event",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-notify-ui",
+      "from": "savia-notify",
+      "to": "savia-ui",
+      "label": "Portal / push / email",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    },
+    {
+      "id": "savia-fleet-model",
+      "from": "savia-fleet",
+      "to": "savia-model",
+      "label": "Bound model inference",
+      "evidenceIds": [
+        "docs:docs/architecture/system-landscape.md:58070ff19771ff9c40e0da4ac0dba899f661039596dd375ee72e22dac2df2d4b"
+      ]
+    }
   ]
 }

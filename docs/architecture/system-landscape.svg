@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1500" width="2400" height="1500" role="img" aria-labelledby="title desc">
+<title id="title">Savia · technical product architecture</title><desc id="desc">One customer assistant · recovered swarm template · target: 10 Fly FLUJO workers × 10 agent conversations = 100 collaborating AIs</desc>
+<defs>
+<marker id="request" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2869b2"/></marker>
+<marker id="data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#117f72"/></marker>
+<marker id="batch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b87412"/></marker>
+<marker id="state" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8052a2"/></marker>
+</defs><style>
+text{font-family:Arial,Helvetica,sans-serif;fill:#18323d}
+.title{font-size:43px;font-weight:700}.sub{font-size:22px;fill:#57707c}
+.boundary{font-size:22px;font-weight:700;letter-spacing:.5px}
+.kicker{font-size:17px;font-weight:700;letter-spacing:1.1px;fill:#57707c}
+.node-title{font-size:27px;font-weight:700}.body{font-size:21px;fill:#365460}
+.small{font-size:19px;fill:#57707c}.label{font-size:19px;font-weight:600}
+.foot{font-size:21px;fill:#365460}
+</style><rect width="2400" height="1500" fill="#f7fafb"/>
+<text x="45" y="60" class="title">Savia · technical product architecture</text>
+<text x="45" y="100" class="sub">One customer assistant · recovered swarm template · target: 10 Fly FLUJO workers × 10 agent conversations = 100 collaborating AIs</text>
+<style>.boundary{font-size:19px}.node-title{font-size:20px}.body{font-size:18px}.kicker{font-size:13px}.label{font-size:17px}.small{font-size:18px}</style>
+<rect x="370" y="155" width="780" height="1200" rx="22" fill="#edf3f6" stroke="#91a7b2" stroke-width="2"/>
+<text x="395" y="190" class="boundary">SAVIA APPLICATION · website / voice / authorized banking tools</text>
+<rect x="1220" y="455" width="785" height="650" rx="22" fill="#e8f0f7" stroke="#9eafc1" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="1245" y="490" class="boundary">RECOVERED SWARM · TARGET FLEET · 10 Fly FLUJO Machines</text>
+<rect x="370" y="1120" width="780" height="235" rx="22" fill="#f5eff9" stroke="#b5a0c6" stroke-width="2"/>
+<text x="395" y="1155" class="boundary">SAVIA PERSISTENCE · current encrypted /data volume</text>
+<rect x="1220" y="1170" width="785" height="185" rx="22" fill="#f5eff9" stroke="#b5a0c6" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="1245" y="1205" class="boundary">SWARM PERSISTENCE · existing worker volumes + fleet registry</text>
+<g data-node="CSV / S3 datasets" data-box="45,235,275,160" data-target="false">
+<rect x="45" y="235" width="275" height="160" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="63" y="263" class="kicker">SOURCE INPUT</text>
+<text x="63" y="299" class="node-title">CSV / S3 datasets</text>
+<text x="63" y="332" class="body">Organizer source or</text>
+<text x="63" y="357" class="body">generated RC fiction</text>
+</g>
+<g data-node="DuckDB pipeline" data-box="410,235,330,160" data-target="false">
+<rect x="410" y="235" width="330" height="160" rx="18" fill="#fff9ed" stroke="#d3b27b" stroke-width="2"/>
+<text x="428" y="263" class="kicker">OFFLINE / FIRST BOOT</text>
+<text x="428" y="299" class="node-title">DuckDB pipeline</text>
+<text x="428" y="332" class="body">Bronze → silver → gold</text>
+<text x="428" y="357" class="body">Publish checked Parquet</text>
+</g>
+<g data-node="Moss · native conversation" data-box="780,235,330,190" data-target="false">
+<rect x="780" y="235" width="330" height="190" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="798" y="263" class="kicker">PYTHON VOICE MODULES</text>
+<text x="798" y="299" class="node-title">Moss · native conversation</text>
+<text x="798" y="332" class="body">GPT Audio + consultar_savia</text>
+<text x="798" y="357" class="body">Session-bound host narration</text>
+<text x="798" y="382" class="body">PCM playback ACK / turn ID</text>
+</g>
+<g data-node="GPT Audio" data-box="2090,235,265,190" data-target="false">
+<rect x="2090" y="235" width="265" height="190" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="2108" y="263" class="kicker">OPENROUTER · AUDIO</text>
+<text x="2108" y="299" class="node-title">GPT Audio</text>
+<text x="2108" y="332" class="body">openai/gpt-audio · coral</text>
+<text x="2108" y="357" class="body">Captions + PCM16 24 kHz</text>
+<text x="2108" y="382" class="body">HTTPS · server-held key</text>
+</g>
+<g data-node="Savia assistant" data-box="45,500,275,225" data-target="false">
+<rect x="45" y="500" width="275" height="225" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="63" y="528" class="kicker">CUSTOMER WEBSITE</text>
+<text x="63" y="564" class="node-title">Savia assistant</text>
+<text x="63" y="597" class="body">Googly eyes · calm Moss</text>
+<text x="63" y="622" class="body">Text / microphone input</text>
+<text x="63" y="647" class="body">Captions / PCM playback</text>
+<text x="63" y="672" class="body">Status and final answer</text>
+</g>
+<g data-node="Authenticated gateway" data-box="410,500,300,200" data-target="false">
+<rect x="410" y="500" width="300" height="200" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="428" y="528" class="kicker">NODE PROCESS · :8080</text>
+<text x="428" y="564" class="node-title">Authenticated gateway</text>
+<text x="428" y="597" class="body">Visitor gate / origin checks</text>
+<text x="428" y="622" class="body">HTTP → loopback :43900</text>
+<text x="428" y="647" class="body">Streaming proxy</text>
+</g>
+<g data-node="Savia case owner" data-box="780,500,330,220" data-target="false">
+<rect x="780" y="500" width="330" height="220" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="798" y="528" class="kicker">PYTHON API · :43900</text>
+<text x="798" y="564" class="node-title">Savia case owner</text>
+<text x="798" y="597" class="body">Intent / criticality / mood*</text>
+<text x="798" y="622" class="body">Resolve now or investigate</text>
+<text x="798" y="647" class="body">Scope tools + explicit consent</text>
+<text x="798" y="672" class="body">Retain case through handoff</text>
+</g>
+<g data-node="swarm_supervisor" data-box="1260,500,335,220" data-target="true">
+<rect x="1260" y="500" width="335" height="220" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="1278" y="528" class="kicker">EXISTING FLOW / FLEET CONTROL</text>
+<text x="1278" y="564" class="node-title">swarm_supervisor</text>
+<text x="1278" y="597" class="body">Goal / evidence / acceptance</text>
+<text x="1278" y="622" class="body">fleet_delegate / message / wait</text>
+<text x="1278" y="647" class="body">Install existing team flows</text>
+<text x="1278" y="672" class="body">Savia-specific task instructions</text>
+</g>
+<g data-node="Fly FLUJO workers" data-box="1640,500,325,220" data-target="true">
+<rect x="1640" y="500" width="325" height="220" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="1658" y="528" class="kicker">10 MACHINES × 10 CONVERSATIONS</text>
+<text x="1658" y="564" class="node-title">Fly FLUJO workers</text>
+<text x="1658" y="597" class="body">One lead + nine specialists</text>
+<text x="1658" y="622" class="body">Savia child concurrencyLimit = 9</text>
+<text x="1658" y="647" class="body">start / send_message / wait</text>
+<text x="1658" y="672" class="body">Each worker: own workspace</text>
+</g>
+<g data-node="O / Modal inference" data-box="2090,500,265,220" data-target="false">
+<rect x="2090" y="500" width="265" height="220" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2"/>
+<text x="2108" y="528" class="kicker">EXISTING MODEL PROFILE</text>
+<text x="2108" y="564" class="node-title">O / Modal inference</text>
+<text x="2108" y="597" class="body">Role-bound model calls</text>
+<text x="2108" y="622" class="body">OpenAI-compatible API</text>
+<text x="2108" y="647" class="body">Previously tested inference</text>
+<text x="2108" y="672" class="body">Availability checked at run</text>
+</g>
+<g data-node="Banking MCP / queries" data-box="410,805,300,190" data-target="false">
+<rect x="410" y="805" width="300" height="190" rx="18" fill="#effaf6" stroke="#6bb9a2" stroke-width="2"/>
+<text x="428" y="833" class="kicker">AUTHORIZED DATA SERVICE</text>
+<text x="428" y="869" class="node-title">Banking MCP / queries</text>
+<text x="428" y="902" class="body">Owned snapshot rows</text>
+<text x="428" y="927" class="body">DuckDB / Parquet reads</text>
+<text x="428" y="952" class="body">Query + evidence provenance</text>
+</g>
+<g data-node="Customer updates" data-box="780,805,330,190" data-target="false">
+<rect x="780" y="805" width="330" height="190" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2"/>
+<text x="798" y="833" class="kicker">SAVIA STATUS + ADAPTERS</text>
+<text x="798" y="869" class="node-title">Customer updates</text>
+<text x="798" y="902" class="body">Signed-in case event cursor</text>
+<text x="798" y="927" class="body">Moss queued narration</text>
+<text x="798" y="952" class="body">Push / email adapter binding*</text>
+</g>
+<g data-node="Compare and review" data-box="1260,815,335,240" data-target="true">
+<rect x="1260" y="815" width="335" height="240" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="1278" y="843" class="kicker">EXISTING TEMPLATE CYCLE</text>
+<text x="1278" y="879" class="node-title">Compare and review</text>
+<text x="1278" y="912" class="body">Explore → consolidate → compare</text>
+<text x="1278" y="937" class="body">Independent evidence check</text>
+<text x="1278" y="962" class="body">Feedback and focused tasks</text>
+<text x="1278" y="987" class="body">One reviewed result → Savia</text>
+</g>
+<g data-node="Cross-worker collaboration" data-box="1640,815,325,240" data-target="true">
+<rect x="1640" y="815" width="325" height="240" rx="18" fill="#fff" stroke="#91a7b2" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="1658" y="843" class="kicker">FLEET MCP + AUTH RELAY</text>
+<text x="1658" y="879" class="node-title">Cross-worker collaboration</text>
+<text x="1658" y="912" class="body">board_post / board_read</text>
+<text x="1658" y="937" class="body">fleet_message / fleet_wait</text>
+<text x="1658" y="962" class="body">Shared findings and opinions</text>
+<text x="1658" y="987" class="body">Files remain worker-local</text>
+</g>
+<g data-node="Push / email services" data-box="45,805,275,190" data-target="true">
+<rect x="45" y="805" width="275" height="190" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="63" y="833" class="kicker">DELIVERY CHANNELS · TARGET</text>
+<text x="63" y="869" class="node-title">Push / email services</text>
+<text x="63" y="902" class="body">Approved customer binding</text>
+<text x="63" y="927" class="body">Minimal status + case link</text>
+<text x="63" y="952" class="body">Stable event / delivery IDs</text>
+</g>
+<g data-node="Ticket / status adapter" data-box="2090,925,265,235" data-target="true">
+<rect x="2090" y="925" width="265" height="235" rx="18" fill="#f0f5fd" stroke="#8baacf" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="2108" y="953" class="kicker">HUMAN INTEGRATION · TARGET</text>
+<text x="2108" y="989" class="node-title">Ticket / status adapter</text>
+<text x="2108" y="1022" class="body">If goal cannot be met</text>
+<text x="2108" y="1047" class="body">Evidence + attempted steps</text>
+<text x="2108" y="1072" class="body">Actual acceptance / result</text>
+<text x="2108" y="1097" class="body">Savia continues follow-up</text>
+</g>
+<g data-node="CURRENT + Parquet" data-box="410,1170,330,160" data-target="false">
+<rect x="410" y="1170" width="330" height="160" rx="18" fill="#effaf6" stroke="#6bb9a2" stroke-width="2"/>
+<text x="428" y="1198" class="kicker">DATASET · READERS</text>
+<text x="428" y="1234" class="node-title">CURRENT + Parquet</text>
+<text x="428" y="1267" class="body">Snapshot + source manifests</text>
+<text x="428" y="1292" class="body">Owner-filtered queries</text>
+</g>
+<g data-node="Case / chat / bank state" data-box="780,1170,330,160" data-target="false">
+<rect x="780" y="1170" width="330" height="160" rx="18" fill="#f7f0fb" stroke="#b5a0c6" stroke-width="2"/>
+<text x="798" y="1198" class="kicker">APPLICATION STATE · SQLITE</text>
+<text x="798" y="1234" class="node-title">Case / chat / bank state</text>
+<text x="798" y="1267" class="body">Owner ↔ goal ↔ swarm run</text>
+<text x="798" y="1292" class="body">Events / consent / receipts</text>
+</g>
+<g data-node="Conversations / kv / board / runs / recovery" data-box="1260,1220,705,120" data-target="true">
+<rect x="1260" y="1220" width="705" height="120" rx="18" fill="#f7f0fb" stroke="#b5a0c6" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="1278" y="1248" class="kicker">REUSE EXISTING STORES</text>
+<text x="1278" y="1284" class="node-title">Conversations / kv / board / runs / recovery</text>
+<text x="1278" y="1317" class="body">Case binding references the swarm run; no duplicate orchestration engine</text>
+</g>
+<path d="M 320 315 L 410 315" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<path d="M 575 395 L 750 395 L 750 1095 L 390 1095 L 390 1250 L 410 1250" fill="none" stroke="#b87412" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#batch)" stroke-dasharray="9 7"/>
+<rect x="628.65" y="425" width="92.7" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="675" y="447" class="label" text-anchor="middle" style="fill:#b87412">publish</text>
+<path d="M 320 600 L 410 600" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="308.55" y="546" width="112.89999999999999" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="365" y="568" class="label" text-anchor="middle" style="fill:#2869b2">HTTPS:443</text>
+<text x="365" y="592" class="label" text-anchor="middle" style="fill:#2869b2">Fly TLS</text>
+<path d="M 710 600 L 780 600" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="713.8" y="551" width="62.4" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="745" y="573" class="label" text-anchor="middle" style="fill:#2869b2">HTTP</text>
+<path d="M 940 500 L 940 425" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="918.4" y="441" width="143.2" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="990" y="463" class="label" text-anchor="middle" style="fill:#2869b2">voice routes</text>
+<path d="M 1110 330 L 2090 330" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="1488.0" y="291" width="224.0" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1600" y="313" class="label" text-anchor="middle" style="fill:#2869b2">HTTPS · native audio</text>
+<path d="M 1110 600 L 1260 600" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)" stroke-dasharray="9 7"/>
+<rect x="1118.45" y="531" width="133.1" height="56" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1185" y="553" class="label" text-anchor="middle" style="fill:#2869b2">Flow API</text>
+<text x="1185" y="577" class="label" text-anchor="middle" style="fill:#2869b2">case + task</text>
+<path d="M 1595 600 L 1640 600" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)" stroke-dasharray="9 7"/>
+<path d="M 1965 600 L 2090 600" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)" stroke-dasharray="9 7"/>
+<rect x="1993.75" y="546" width="72.5" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="2030" y="568" class="label" text-anchor="middle" style="fill:#2869b2">HTTPS</text>
+<path d="M 1800 720 L 1800 815" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)" stroke-dasharray="9 7"/>
+<rect x="1703.15" y="752" width="193.7" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1800" y="774" class="label" text-anchor="middle" style="fill:#2869b2">fleet MCP / relay</text>
+<path d="M 1640 935 L 1595 935" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)" stroke-dasharray="9 7"/>
+<path d="M 1415 815 L 1415 720" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)" stroke-dasharray="9 7"/>
+<rect x="1328.25" y="751" width="173.5" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1415" y="773" class="label" text-anchor="middle" style="fill:#2869b2">compare / steer</text>
+<path d="M 1260 975 L 1170 975 L 1170 905 L 1110 905" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" stroke-dasharray="9 7"/>
+<rect x="1083.25" y="1008" width="173.5" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1170" y="1030" class="label" text-anchor="middle" style="fill:#2869b2">reviewed result</text>
+<path d="M 1260 665 L 1200 665 L 1200 1130 L 2050 1130 L 2050 1040 L 2090 1040" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)" stroke-dasharray="9 7"/>
+<rect x="1466.9" y="1108" width="446.2" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1690" y="1130" class="label" text-anchor="middle" style="fill:#2869b2">goal unmet → ticket; actual status → Savia</text>
+<path d="M 940 805 L 940 720" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<path d="M 865 720 L 865 745 L 665 745 L 665 805" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<rect x="603.5" y="759" width="123.0" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="665" y="781" class="label" text-anchor="middle" style="fill:#2869b2">bank tools</text>
+<path d="M 780 905 L 760 905 L 760 760 L 190 760 L 190 725" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)"/>
+<rect x="352.8" y="738" width="264.4" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="485" y="760" class="label" text-anchor="middle" style="fill:#2869b2">signed-in status → Savia</text>
+<path d="M 780 970 L 770 970 L 770 1040 L 350 1040 L 350 905 L 320 905" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" stroke-dasharray="9 7"/>
+<rect x="453.0" y="1018" width="224.0" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="565" y="1040" class="label" text-anchor="middle" style="fill:#2869b2">Web Push / email API</text>
+<path d="M 575 1170 L 575 995" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)"/>
+<rect x="513.5" y="1083" width="123.0" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="575" y="1105" class="label" text-anchor="middle" style="fill:#117f72">owned rows</text>
+<path d="M 710 875 L 730 875 L 730 790 L 1705 790 L 1705 720" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)" marker-start="url(#data)" stroke-dasharray="9 7"/>
+<rect x="831.95" y="768" width="436.09999999999997" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1050" y="790" class="label" text-anchor="middle" style="fill:#117f72">authorized MCP queries / bounded evidence</text>
+<path d="M 1030 995 L 1030 1170" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<rect x="933.15" y="1068" width="193.7" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1030" y="1090" class="label" text-anchor="middle" style="fill:#8052a2">persist / recover</text>
+<path d="M 1800 1055 L 1985 1055 L 1985 1280 L 1965 1280" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)" stroke-dasharray="9 7"/>
+<rect x="1692.85" y="1148" width="254.29999999999998" height="32" rx="7" fill="#f7fafb" stroke="#f7fafb" stroke-width="2"/>
+<text x="1820" y="1170" class="label" text-anchor="middle" style="fill:#8052a2">workspace / board state</text>
+<text x="45" y="174" class="kicker">CUSTOMER + SOURCE</text>
+<text x="1260" y="174" class="kicker">PRODUCT FLEET · NOT DEVELOPMENT / REVIEWER HOSTS</text>
+<text x="1260" y="220" class="small">Recovered flows: swarm_agent + swarm_team + swarm_supervisor.</text>
+<text x="1260" y="247" class="small">swarm_boot → flujo-cloud clone → install.mjs → ready worker.</text>
+<text x="1260" y="390" class="small">10 × (1 lead + 9 specialists) = 100 conversations; Savia coordinates the fleet.</text>
+<text x="45" y="1230" class="small">* Target wiring / assessment</text>
+<text x="45" y="1260" class="small">coverage is in the document.</text>
+<text x="2090" y="1250" class="small">Private scopes and keys</text>
+<text x="2090" y="1280" class="small">stay outside the browser.</text>
+<text x="45" y="1400" class="kicker">READING THE ARCHITECTURE</text>
+<path d="M 45 1430 L 100 1430" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)"/>
+<text x="120" y="1437" class="small">Existing request / response</text>
+<path d="M 575 1430 L 630 1430" fill="none" stroke="#2869b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#request)" marker-start="url(#request)" stroke-dasharray="9 7"/>
+<text x="650" y="1437" class="small">Target customer integration</text>
+<path d="M 1165 1430 L 1220 1430" fill="none" stroke="#117f72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#data)" marker-start="url(#data)"/>
+<text x="1240" y="1437" class="small">Authorized dataset reads</text>
+<path d="M 1730 1430 L 1785 1430" fill="none" stroke="#8052a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#state)" marker-start="url(#state)"/>
+<text x="1805" y="1437" class="small">Persistent state</text>
+<text x="45" y="1480" class="small">Dashed fleet: requested ten-by-ten customer topology, not a claim of current deployment. Existing template mechanics are source-verified. Amber: offline publication.</text>
+</svg>
