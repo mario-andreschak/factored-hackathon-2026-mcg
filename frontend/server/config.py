@@ -27,6 +27,7 @@ class Settings:
     session_seconds: int = 8 * 60 * 60
     profiles: dict = field(default_factory=dict, repr=False)
     chat: dict = field(default_factory=dict, repr=False)
+    voice: dict = field(default_factory=dict, repr=False)
 
     def __post_init__(self):
         if not isinstance(self.auth_mode, str) or self.auth_mode not in {"demo", "invite"}:
@@ -112,4 +113,5 @@ class Settings:
             public_origin=os.environ.get("BANKING_PUBLIC_ORIGIN") or config.get("public_origin"),
             profiles=config.get("profiles", {}),
             chat=config.get("chat", {}),
+            voice=config.get("voice", {}),
         )

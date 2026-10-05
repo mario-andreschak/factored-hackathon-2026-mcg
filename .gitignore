@@ -14,6 +14,8 @@ frontend/dist/
 frontend/*.tsbuildinfo
 frontend/.state/
 frontend/test-results/
+# Generated remnants from the deleted legacy UI are never release source.
+/avatar/
 demo/customer_v0/node_modules/
 deploy/fly/.overlay/
 

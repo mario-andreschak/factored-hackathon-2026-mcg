@@ -40,6 +40,16 @@ def source_revision():
     return subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
 
 
+def native_voice_config():
+    """Use the existing private server key for Savia's integrated voice only."""
+    return {"providers": [{"name": "openrouter", "kind": "openrouter",
+        "api_key_env": "OPENROUTER_API_KEY", "stt_model": "openai/whisper-large-v3",
+        "tts_model": "openai/gpt-4o-mini-tts-2025-12-15", "sample_rate": 24000,
+        "voices": {"es": "coral", "pt": "coral"}}],
+        "conversation": {"api_key_env": "OPENROUTER_API_KEY", "model": "openai/gpt-audio",
+                         "persona": "moss", "voice": "coral"}}
+
+
 def prepare(root: Path) -> None:
     from scripts.qualify_dispute_app import build_fixture, Fixture
     fixture = build_fixture(root)
@@ -58,7 +68,8 @@ def prepare(root: Path) -> None:
 
 def application(root: Path, *, port: int, base_url: str, model_id: str,
                 provider: str = "flujo", provider_key: str | None = None,
-                public_origin: str | None = None, demo_code: str | None = None):
+                public_origin: str | None = None, demo_code: str | None = None,
+                voice_config: dict | None = None):
     from scripts.qualify_dispute_app import Fixture, application_source_hashes
     from banking_mcp.config import Config
     from banking_mcp.service import Service
@@ -147,6 +158,7 @@ def application(root: Path, *, port: int, base_url: str, model_id: str,
     settings = Settings(data_dir=fixture.data, state_dir=state, static_dir=ROOT / "frontend/dist",
         demo_code=demo_code or fixture.demo_code, profiles=fixture.profiles, public_origin=origin,
         secure_cookie=origin.startswith("https://"),
+        voice=voice_config or {},
         chat={"mode": "dispute-host/v1", "base_url": base_url, "model": "flow-Dispute",
               "execution_token": fixture.execution_token,
               "frontend_signing_key_file": str(fixture.signer), "frontend_kid": "qualification",
@@ -164,6 +176,9 @@ def application(root: Path, *, port: int, base_url: str, model_id: str,
                "language": {"url": language.base_url, "model": model_id, "provider": provider,
                             "route": "generic completion" if provider == "flujo" else "explicit direct OpenRouter completion"},
                "simulated_intake": True, "real_bank_actions": False, "native_flow_execution": False,
+               "voice": {"surface": "integrated Savia UI", "configured": bool(voice_config),
+                         "native_model": (voice_config or {}).get("conversation", {}).get("model"),
+                         "specialized_fallbacks": "configured, separately qualified when used"},
                "source_snapshot": "startup Git revision plus exact application and served UI hashes",
                "git_head": source_revision(),
                "application_sources": source_hashes,
@@ -184,7 +199,7 @@ def main():
     parser.add_argument("--flujo-url", default="http://localhost:43420")
     parser.add_argument("--model", default="model-GPT-6 Luna")
     parser.add_argument("--provider", choices=("flujo", "openrouter"), default="flujo")
-    parser.add_argument("--provider-env", type=Path, default=ROOT / "avatar/openrouter.env")
+    parser.add_argument("--provider-env", type=Path, default=ROOT / "private/providers/openrouter.env")
     parser.add_argument("--public-origin")
     args = parser.parse_args()
     root = args.private_dir.resolve()
@@ -206,6 +221,8 @@ def main():
         key = os.environ.get("OPENROUTER_API_KEY") or values.get("OPENROUTER_API_KEY")
         if not key:
             raise ValueError("existing authorized private provider key required")
+        # Process-local provider configuration; no key enters browser/build/source receipts.
+        os.environ["OPENROUTER_API_KEY"] = key
         if args.model.startswith("model-"):
             args.model = values.get("OPENROUTER_CHAT_MODEL", "google/gemini-3.1-flash-lite")
         response = httpx.get("https://openrouter.ai/api/v1/models", timeout=10)
@@ -216,7 +233,8 @@ def main():
         raise ValueError("configured actual language model is unavailable")
     app, bank = application(root, port=args.port, base_url=args.flujo_url, model_id=args.model,
                             provider=args.provider, provider_key=key, public_origin=args.public_origin,
-                            demo_code=__import__("os").environ.get("RC_DEMO_CODE"))
+                            demo_code=__import__("os").environ.get("RC_DEMO_CODE"),
+                            voice_config=native_voice_config() if args.provider == "openrouter" else None)
     try:
         import uvicorn
         uvicorn.run(app, host="127.0.0.1", port=args.port, access_log=False)

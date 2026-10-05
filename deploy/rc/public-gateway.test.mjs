@@ -9,10 +9,9 @@ import { createGateway, readConfig } from './public-gateway.mjs';
 const ORIGIN = 'https://savia-fictional.example';
 const HOST = 'savia-fictional.example';
 const CODE = 'SAVIA-2026';
-const TOKEN = 'private-avatar-gateway-token-0123456789';
 const SECRET = 'visitor-cookie-signing-secret-0123456789';
 const config = readConfig({ RC_PUBLIC_ORIGIN: ORIGIN, RC_DEMO_CODE: CODE,
-  RC_COOKIE_SECRET: SECRET, AVATAR_ACCESS_GATE_TOKEN: TOKEN });
+  RC_COOKIE_SECRET: SECRET });
 
 async function listen(server) {
   server.listen(0, '127.0.0.1');
@@ -23,7 +22,7 @@ async function listen(server) {
 async function fixture(t, { now = Date.now } = {}) {
   const forwarded = [];
   const sockets = new Set();
-  const avatar = http.createServer((req, res) => {
+  const app = http.createServer((req, res) => {
     forwarded.push({ url: req.url, headers: req.headers });
     if (req.url === '/stream') {
       res.writeHead(200, { 'Content-Type': 'text/event-stream' });
@@ -32,9 +31,9 @@ async function fixture(t, { now = Date.now } = {}) {
       return;
     }
     req.resume();
-    req.on('end', () => res.end('avatar response'));
+    req.on('end', () => res.end('Savia response'));
   });
-  avatar.on('upgrade', (req, socket, head) => {
+  app.on('upgrade', (req, socket, head) => {
     forwarded.push({ url: req.url, headers: req.headers });
     const accept = createHash('sha1').update(req.headers['sec-websocket-key']
       + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
@@ -42,14 +41,12 @@ async function fixture(t, { now = Date.now } = {}) {
     if (head.length) socket.write(head);
     socket.on('data', bytes => socket.write(bytes));
   });
-  const python = http.createServer((req, res) => { req.resume(); res.end(JSON.stringify({ status: 'ok' })); });
-  for (const server of [avatar, python]) server.on('connection', socket => {
+  for (const server of [app]) server.on('connection', socket => {
     sockets.add(socket);
     socket.on('close', () => sockets.delete(socket));
   });
-  const avatarPort = await listen(avatar);
-  const pythonPort = await listen(python);
-  const gateway = createGateway(config, { avatarPort, pythonPort, now });
+  const appPort = await listen(app);
+  const gateway = createGateway(config, { appPort, now });
   gateway.on('connection', socket => {
     sockets.add(socket);
     socket.on('close', () => sockets.delete(socket));
@@ -57,7 +54,7 @@ async function fixture(t, { now = Date.now } = {}) {
   const gatewayPort = await listen(gateway);
   t.after(async () => {
     for (const socket of sockets) socket.destroy();
-    await Promise.all([avatar, python, gateway].map(server => new Promise(resolve => {
+    await Promise.all([app, gateway].map(server => new Promise(resolve => {
       server.close(resolve);
       server.closeAllConnections();
     })));
@@ -99,7 +96,7 @@ function upgrade(port, headers = {}) {
     });
     socket.on('data', chunk => {
       received = Buffer.concat([received, chunk]);
-      if (/^HTTP\/1\.1 (?:101|401|502)/.test(received.toString('utf8'))) {
+      if (/^HTTP\/1\.1 (?:101|401|403|502)/.test(received.toString('utf8'))) {
         clearTimeout(timeout); socket.destroy(); resolve(received.toString('utf8'));
       }
     });
@@ -109,11 +106,11 @@ function upgrade(port, headers = {}) {
 
 test('requires HTTPS origin and private secrets at startup', () => {
   assert.throws(() => readConfig({ RC_PUBLIC_ORIGIN: 'http://savia-fictional.example', RC_DEMO_CODE: CODE,
-    RC_COOKIE_SECRET: SECRET, AVATAR_ACCESS_GATE_TOKEN: TOKEN }), /HTTPS/);
+    RC_COOKIE_SECRET: SECRET }), /HTTPS/);
   assert.throws(() => readConfig({ RC_PUBLIC_ORIGIN: ORIGIN, RC_DEMO_CODE: CODE,
-    RC_COOKIE_SECRET: 'short', AVATAR_ACCESS_GATE_TOKEN: TOKEN }), /RC_COOKIE_SECRET/);
-  assert.throws(() => readConfig({ RC_PUBLIC_ORIGIN: ORIGIN, RC_DEMO_CODE: CODE,
-    RC_COOKIE_SECRET: SECRET, AVATAR_ACCESS_GATE_TOKEN: '' }), /AVATAR_ACCESS_GATE_TOKEN/);
+    RC_COOKIE_SECRET: 'short' }), /RC_COOKIE_SECRET/);
+  assert.throws(() => readConfig({ RC_PUBLIC_ORIGIN: ORIGIN, RC_DEMO_CODE: '',
+    RC_COOKIE_SECRET: SECRET }), /RC_DEMO_CODE/);
 });
 
 test('landing is fictional, code entry checks host and same-origin, and issues an eight-hour secure cookie', async t => {
@@ -122,7 +119,7 @@ test('landing is fictional, code entry checks host and same-origin, and issues a
   assert.equal(page.status, 200);
   assert.match(page.body, /Fictional demonstration/);
   assert.match(page.body, /Do not enter real personal or financial information/);
-  assert.doesNotMatch(page.body, new RegExp(TOKEN));
+  assert.doesNotMatch(page.body, new RegExp(SECRET));
   assert.equal((await enter(f.gatewayPort, { origin: 'https://attacker.example' })).status, 403);
   assert.equal((await enter(f.gatewayPort, { host: 'attacker.example' })).status, 421);
   assert.equal((await enter(f.gatewayPort, { code: 'wrong' })).body.includes('not accepted'), true);
@@ -146,7 +143,7 @@ test('signed visitor cookie rejects tampering and expiry; unauthenticated APIs r
   assert.equal((await request(f.gatewayPort, '/api/avatar/config', { headers: { Cookie: cookie } })).status, 401);
 });
 
-test('proxy strips caller gateway and forwarded headers, injects private gate, preserves Origin and streams', async t => {
+test('proxy strips untrusted headers, preserves customer cookie and Origin, and streams Savia', async t => {
   const f = await fixture(t);
   const cookie = cookieOf(await enter(f.gatewayPort));
   const response = await request(f.gatewayPort, '/stream', { headers: { Cookie: cookie,
@@ -158,7 +155,7 @@ test('proxy strips caller gateway and forwarded headers, injects private gate, p
   const seen = f.forwarded[0].headers;
   assert.equal(seen.host, HOST);
   assert.equal(seen.origin, ORIGIN);
-  assert.equal(seen['x-avatar-gateway-token'], TOKEN);
+  assert.equal(seen['x-avatar-gateway-token'], undefined);
   assert.equal(seen['x-forwarded-host'], HOST);
   assert.equal(seen['x-forwarded-proto'], 'https');
   assert.equal(seen.forwarded, undefined);
@@ -166,22 +163,34 @@ test('proxy strips caller gateway and forwarded headers, injects private gate, p
   assert.equal(seen.cookie, undefined);
 });
 
-test('authenticated WebSocket upgrades receive the injected gate; unauthenticated upgrades are denied', async t => {
+test('authenticated same-origin WebSocket upgrades reach Savia; unauthorized upgrades are denied', async t => {
   const f = await fixture(t);
   assert.match(await upgrade(f.gatewayPort), /^HTTP\/1\.1 401/);
   const cookie = cookieOf(await enter(f.gatewayPort));
-  assert.match(await upgrade(f.gatewayPort, { Cookie: cookie, 'X-Avatar-Gateway-Token': 'spoofed' }), /^HTTP\/1\.1 101/);
-  assert.equal(f.forwarded[0].headers['x-avatar-gateway-token'], TOKEN);
+  assert.match(await upgrade(f.gatewayPort, { Cookie: cookie }), /^HTTP\/1\.1 403/);
+  assert.match(await upgrade(f.gatewayPort, { Cookie: cookie, Origin: ORIGIN, 'X-Avatar-Gateway-Token': 'spoofed' }), /^HTTP\/1\.1 101/);
+  assert.equal(f.forwarded[0].headers['x-avatar-gateway-token'], undefined);
   assert.equal(f.forwarded[0].headers.host, HOST);
 });
 
-test('public health checks fixed services with public Host and private avatar gate without exposing it', async t => {
+test('public health checks only fixed Savia with public Host and exposes no secret', async t => {
   const f = await fixture(t);
   const response = await request(f.gatewayPort, '/healthz');
   assert.equal(response.status, 200);
-  assert.deepEqual(JSON.parse(response.body), { status: 'ok', python: true, avatar: true });
+  assert.deepEqual(JSON.parse(response.body), { status: 'ok', savia: true });
   assert.equal(f.forwarded[0].url, '/healthz');
-  assert.equal(f.forwarded[0].headers['x-avatar-gateway-token'], TOKEN);
+  assert.equal(f.forwarded[0].headers['x-avatar-gateway-token'], undefined);
   assert.equal(f.forwarded[0].headers.host, HOST);
-  assert.doesNotMatch(response.body, new RegExp(TOKEN));
+  assert.doesNotMatch(response.body, new RegExp(SECRET));
+});
+
+test('authenticated Savia mutations reject null or foreign Origin and keep the customer cookie', async t => {
+  const f = await fixture(t);
+  const cookie = cookieOf(await enter(f.gatewayPort)) + '; bank-session=owned-fictional-cookie';
+  for (const origin of ['null', 'https://attacker.example']) {
+    assert.equal((await request(f.gatewayPort, '/api/voice/turn', { method: 'POST', headers: { Cookie: cookie, Origin: origin }, body: '{}' })).status, 403);
+  }
+  const response = await request(f.gatewayPort, '/api/voice/turn', { method: 'POST', headers: { Cookie: cookie, Origin: ORIGIN }, body: '{}' });
+  assert.equal(response.status, 200);
+  assert.equal(f.forwarded[0].headers.cookie, 'bank-session=owned-fictional-cookie');
 });

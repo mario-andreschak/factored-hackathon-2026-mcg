@@ -79,13 +79,14 @@ necessary to distinguish usable model outputs from safe fallback responses.
 
 When replaying from the isolated Git worktree, pass `--private-dir` as the
 absolute path of the original fictional instance and `--provider-env` as the
-absolute path of the existing private `avatar/openrouter.env`. Neither file is
+absolute path of the existing private `private/providers/openrouter.env`. Neither file is
 copied into the source snapshot. The launcher also accepts an existing
 `OPENROUTER_API_KEY` environment value when that private file is absent.
 
-The voice lead runs the separate avatar on <http://127.0.0.1:43941> with
-`SAVIA_UPSTREAM=http://127.0.0.1:43900` and
-`SAVIA_PUBLIC_ORIGIN=http://127.0.0.1:43900`. Its read bridge uses the same
-authenticated portal session. Voice provider configuration remains server-side.
-Provider audio transfers and the endpointed request/response transport must be
-disclosed in the demonstration; interruption is separately measured.
+The current voice interface lives inside Savia's frontend. The same authenticated
+Python app serves its conversation, transcription, speech and played-receipt
+routes. Native OpenRouter `openai/gpt-audio` is configured with the existing
+server-only key. The voice model cannot execute a bank action; customer requests
+still use the authenticated host, and spoken results use its verified reply.
+Configured STT/TTS fallbacks need separate qualification when used. Physical
+microphone/AEC behavior remains unqualified by prerecorded or typed acceptance.

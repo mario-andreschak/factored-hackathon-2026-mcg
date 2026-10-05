@@ -26,11 +26,7 @@ export function readConfig(env = process.env) {
   if (typeof cookieSecret !== 'string' || Buffer.byteLength(cookieSecret) < 32) {
     throw new Error('RC_COOKIE_SECRET must contain at least 32 bytes');
   }
-  const avatarToken = env.AVATAR_ACCESS_GATE_TOKEN;
-  if (typeof avatarToken !== 'string' || !/^[a-zA-Z0-9_-]{32,256}$/.test(avatarToken)) {
-    throw new Error('AVATAR_ACCESS_GATE_TOKEN must be a private gateway token');
-  }
-  return { publicOrigin, publicHost: new URL(publicOrigin).host.toLowerCase(), demoCode, cookieSecret, avatarToken };
+  return { publicOrigin, publicHost: new URL(publicOrigin).host.toLowerCase(), demoCode, cookieSecret };
 }
 
 function equal(left, right) {
@@ -89,7 +85,6 @@ function forwardHeaders(req, config, upgrade = false) {
   headers['x-forwarded-host'] = config.publicHost;
   headers['x-forwarded-proto'] = 'https';
   headers['x-forwarded-for'] = req.socket.remoteAddress || '';
-  headers['x-avatar-gateway-token'] = config.avatarToken;
   if (upgrade) { headers.connection = 'Upgrade'; headers.upgrade = req.headers.upgrade; }
   return headers;
 }
@@ -114,8 +109,7 @@ async function readCode(req) {
 }
 
 export function createGateway(config, options = {}) {
-  const avatarPort = options.avatarPort ?? 43941;
-  const pythonPort = options.pythonPort ?? 43900;
+  const appPort = options.appPort ?? 43900;
   const now = options.now ?? Date.now;
   const signing = payload => createHmac('sha256', config.cookieSecret).update(payload).digest('base64url');
   const mintSession = () => {
@@ -140,13 +134,13 @@ export function createGateway(config, options = {}) {
     && (!req.headers['sec-fetch-site'] || req.headers['sec-fetch-site'] === 'same-origin');
 
   const proxy = (req, res) => {
-    const upstream = http.request({ hostname: '127.0.0.1', port: avatarPort, method: req.method,
+    const upstream = http.request({ hostname: '127.0.0.1', port: appPort, method: req.method,
       path: req.url, headers: forwardHeaders(req, config) }, response => {
       res.writeHead(response.statusCode || 502, cleanResponseHeaders(response));
       response.pipe(res);
       response.on('error', () => res.destroy());
     });
-    upstream.on('error', () => { if (!res.headersSent) plain(res, 502, 'Avatar service unavailable'); else res.destroy(); });
+    upstream.on('error', () => { if (!res.headersSent) plain(res, 502, 'Savia service unavailable'); else res.destroy(); });
     req.on('aborted', () => upstream.destroy());
     res.on('close', () => { if (!res.writableFinished) upstream.destroy(); });
     req.pipe(upstream);
@@ -163,14 +157,10 @@ export function createGateway(config, options = {}) {
     request.on('error', () => resolve(false));
   });
   const health = async res => {
-    const [python, avatar] = await Promise.all([
-      probe(pythonPort, { host: config.publicHost }),
-      probe(avatarPort, { host: config.publicHost, 'x-avatar-gateway-token': config.avatarToken }),
-    ]);
-    const ready = python && avatar;
+    const ready = await probe(appPort, { host: config.publicHost });
     res.writeHead(ready ? 200 : 503, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff' });
-    res.end(JSON.stringify({ status: ready ? 'ok' : 'unavailable', python, avatar }));
+    res.end(JSON.stringify({ status: ready ? 'ok' : 'unavailable', savia: ready }));
   };
 
   const server = http.createServer(async (req, res) => {
@@ -190,7 +180,12 @@ export function createGateway(config, options = {}) {
       } catch { plain(res, 400, 'Invalid form submission'); }
       return;
     }
-    if (checkSession(req)) { proxy(req, res); return; }
+    if (checkSession(req)) {
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && !sameOrigin(req)) {
+        plain(res, 403, 'Same-origin request required'); return;
+      }
+      proxy(req, res); return;
+    }
     if (pathname === '/' && req.method === 'GET') { landing(res); return; }
     plain(res, 401, 'Demo access required');
   });
@@ -199,7 +194,10 @@ export function createGateway(config, options = {}) {
     if (!validHost(req) || !checkSession(req)) {
       socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\nContent-Length: 0\r\n\r\n'); return;
     }
-    const upstream = http.request({ hostname: '127.0.0.1', port: avatarPort, method: req.method,
+    if (!sameOrigin(req)) {
+      socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\nContent-Length: 0\r\n\r\n'); return;
+    }
+    const upstream = http.request({ hostname: '127.0.0.1', port: appPort, method: req.method,
       path: req.url, headers: forwardHeaders(req, config, true) });
     upstream.on('upgrade', (response, upstreamSocket, upstreamHead) => {
       const headers = cleanResponseHeaders(response);

@@ -56,3 +56,38 @@ def test_cookie_auth_stable_owner_server_projection_and_explicit_resolution(tmp_
         assert client.get("/api/assistant/cases").json()["items"][0]["next_check_at"] is None
         service.model = None
         assert client.post("/api/assistant/cases",json={"message":"Otra pregunta"}).status_code==503
+
+
+def test_voice_update_registers_only_completed_host_reply_for_current_session():
+    app = FastAPI()
+    app.state.bank_state = SimpleNamespace(secret=b"b" * 32)
+    app.state.repository = SimpleNamespace(profile_customer=lambda profile: "trusted-customer")
+    case_id = "i_" + "c" * 32
+    item = {"id":case_id, "state":"queued", "events":[{"id":1}],
+            "voice_update":{"version":"1", "reply":"Exact canonical host reply",
+                            "mode":"assistant", "status":"completed"}}
+    app.state.inquiries = SimpleNamespace(list=lambda owner,language:{"items":[item]})
+    remembered = []
+    app.state.conversation = SimpleNamespace(remember_result=lambda session_id,reply:remembered.append((session_id,reply)))
+    def authenticate(request):
+        if not request.cookies.get("login"):
+            raise HTTPException(401)
+        return SimpleNamespace(profile_id="alice", id=request.cookies["login"])
+    install_routes(app, authenticate)
+    with TestClient(app) as client:
+        assert client.get("/api/assistant/voice-update",params={"case_id":case_id}).status_code == 401
+        assert remembered == []
+        client.cookies.set("login", "current-authorized-session")
+        for state in ("queued", "team_working", "needs_attention", "human_working"):
+            item["state"] = state
+            assert client.get("/api/assistant/voice-update",params={"case_id":case_id}).status_code == 200
+        assert remembered == []
+        for state in ("team_completed", "awaiting_customer", "informational_resolved"):
+            item["state"] = state
+            payload = client.get("/api/assistant/voice-update",params={"case_id":case_id}).json()
+            assert remembered[-1] == ("current-authorized-session", payload["reply"])
+            count = len(remembered)
+            assert client.get("/api/assistant/voice-update",params={"case_id":case_id,"after_event_id":1}).status_code == 204
+            assert len(remembered) == count
+        del app.state.conversation
+        assert client.get("/api/assistant/voice-update",params={"case_id":case_id}).status_code == 200

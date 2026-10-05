@@ -3,13 +3,14 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import hmac
+import json
 import logging
 import re
 from contextlib import asynccontextmanager, suppress
 from typing import Annotated, Literal
 
-from fastapi import FastAPI, HTTPException, Query, Request, Response
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, Response
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 import duckdb
 
@@ -17,6 +18,8 @@ from .config import PROFILE_IDS, Settings
 from .repository import HISTORY_PERIODS, MAX_HISTORY_PERIOD, DatasetUnavailable, Repository
 from .state import Session, State
 from .action import render_action_error
+from .conversation import Conversation
+from .voice import VoiceError, VoiceService, load_config as load_voice_config
 
 
 COOKIE = "flujo_bank_session"
@@ -55,6 +58,35 @@ class FollowupBody(BaseModel):
     language: Literal["es", "pt"] = "es"
 
 
+class TranscribeBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    audio: str = Field(min_length=60, max_length=2_800_000, pattern=r"^[A-Za-z0-9+/]+={0,2}$")
+    language: Literal["es", "pt"] = "es"
+
+
+class SpeakBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    text: str = Field(min_length=1, max_length=1200)
+    language: Literal["es", "pt"] = "es"
+
+
+class TurnBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    audio: str | None = Field(default=None, min_length=60, max_length=2_800_000, pattern=r"^[A-Za-z0-9+/]+={0,2}$")
+    message: str | None = Field(default=None, min_length=1, max_length=2000)
+    result: str | None = Field(default=None, min_length=1, max_length=4000)
+    language: Literal["es", "pt"] = "es"
+    working: bool = False
+    fresh: bool = False
+
+
+class PlayedBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    turn_id: str = Field(pattern=r"^[A-Za-z0-9_-]{24}$")
+    played_samples: int = Field(ge=0, le=1_440_000)
+    complete: bool
+
+
 class ConfirmActionBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     pending_handle: str = Field(pattern=r"^[A-Za-z0-9_-]{32,64}$")
@@ -86,7 +118,8 @@ class HandoffActionBody(BaseModel):
         return normalized
 
 
-def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_backend=None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_backend=None,
+               voice_transport=None) -> FastAPI:
     # Initialize lazily, allowing imports/build checks without a dataset mount.
     settings = settings or Settings.from_env()
     try:
@@ -160,6 +193,9 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         # Even an unconfigured restart retains and accounts for past pending
         # revocations; it cannot sign a worker request without approved config.
         app.state.chat_service = chat_service
+        voice_config = load_voice_config(settings.voice)
+        app.state.voice_service = VoiceService(voice_config, transport=voice_transport)
+        app.state.conversation = Conversation(voice_config, app.state.voice_service, transport=voice_transport)
         from .followups import Followups
         app.state.followups = Followups(settings.state_dir, chat_service)
         app.state.inquiries = (InquiryService(settings.state_dir, model=getattr(dispute_factory, "model", None))
@@ -194,6 +230,8 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
             if app.state.inquiry_task:
                 with suppress(asyncio.CancelledError):
                     await app.state.inquiry_task
+            await app.state.conversation.close()
+            await app.state.voice_service.close()
 
     app = FastAPI(title="FLUJO banking demo", version="0.1.0", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
@@ -246,6 +284,7 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         # Deny local chat and persist worker revocation before deleting the
         # browser session. A failed queue must never be reported as confirmed.
         service = request.app.state.chat_service
+        request.app.state.conversation.forget(current.id)
         disposition = "unavailable"
         failed = False
         try:
@@ -375,12 +414,67 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         return {"transactions": data["transactions"], "metadata": data["metadata"]}
 
     @app.get("/api/chat/status")
-    def chat_status(request: Request):
+    def chat_status(request: Request, background: BackgroundTasks):
         current = session(request)
         customer = request.app.state.repository.profile_customer(current.profile_id)
         if service := request.app.state.chat_service:
-            return service.status(customer)
+            status = service.status(customer)
+            if status.get("available") and request.app.state.voice_service.status()["available"]:
+                status = {**status, "voice": {"available": True, **request.app.state.conversation.status()}}
+                background.add_task(request.app.state.voice_service.warm)
+            return status
         return {"available": False, "mode": "unconfigured", "reason": "El asistente FLUJO aún no está conectado."}
+
+    @app.post("/api/voice/transcribe")
+    async def voice_transcribe(body: TranscribeBody, request: Request):
+        current = session(request)
+        voice = request.app.state.voice_service
+        try:
+            voice.admit(current.id)
+            return {"text": await voice.transcribe(body.audio, body.language)}
+        except VoiceError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+
+    @app.post("/api/voice/speak")
+    async def voice_speak(body: SpeakBody, request: Request):
+        current = session(request)
+        voice = request.app.state.voice_service
+        try:
+            if not voice.status()["available"]:
+                raise VoiceError(503, "La voz no está disponible ahora.")
+            request.app.state.conversation.consume_speech(current.id, body.text)
+            voice.admit(current.id)
+            sample_rate, stream = await voice.speak(body.text, body.language)
+        except VoiceError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+        return StreamingResponse(stream, media_type="audio/pcm", headers={
+            "X-Audio-Sample-Rate": str(sample_rate), "X-Audio-Channels": "1",
+            "X-Audio-Format": "s16le", "X-Accel-Buffering": "no"})
+
+    @app.post("/api/voice/turn")
+    async def voice_turn(body: TurnBody, request: Request):
+        current = session(request)
+        try:
+            request.app.state.voice_service.admit(current.id)
+            events = await request.app.state.conversation.turn(
+                current.id, body.language, audio=body.audio, message=body.message,
+                result=body.result, working=body.working, fresh=body.fresh)
+        except VoiceError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
+
+        async def lines():
+            async for event in events:
+                yield json.dumps(event, ensure_ascii=False) + "\n"
+        return StreamingResponse(lines(), media_type="application/x-ndjson", headers={"X-Accel-Buffering": "no"})
+
+    @app.post("/api/voice/played")
+    def voice_played(body: PlayedBody, request: Request):
+        current = session(request)
+        try:
+            return request.app.state.conversation.played(
+                current.id, body.turn_id, body.played_samples, body.complete)
+        except VoiceError as exc:
+            raise HTTPException(exc.status_code, exc.message) from None
 
     @app.get("/api/chat/history")
     def chat_history(request: Request):
@@ -439,15 +533,19 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
             if workflow is None and dispute_factory is None and bank_backend is None:
                 if getattr(body, "query_scope_id", None) is not None:
                     raise HTTPException(422, render_action_error("invalid_action", body.language))
-                return await service.send(customer, current.id, current.expires_at, message,
+                result = await service.send(customer, current.id, current.expires_at, message,
                     display_message=body.message.strip(), selection=public_selection,
                     facts=minimized, language=body.language)
-            return await service.send(customer, current.id, current.expires_at, message,
+            else:
+                result = await service.send(customer, current.id, current.expires_at, message,
                                       display_message=body.message.strip(), selection=public_selection,
                                       language=body.language,
                                       facts=minimized,
                                       **({"query_scope_id": getattr(body, "query_scope_id", None)} if getattr(body, "query_scope_id", None) else {}),
                                       **({"workflow": workflow} if workflow is not None else {}))
+            if isinstance(result.get("reply"), str) and result["reply"]:
+                request.app.state.conversation.remember_result(current.id, result["reply"])
+            return result
         except Exception as exc:
             from .chat import ChatError
             if isinstance(exc, ChatError):
@@ -505,7 +603,9 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
             result = await service.action(customer, current.id, current.expires_at,
                                           operation, target_reference=target_reference,
                                           **({"query_scope_id": query_scope_id} if query_scope_id else {}), **context)
-            return render_action_result(result, language)
+            rendered = render_action_result(result, language)
+            request.app.state.conversation.remember_result(current.id, rendered["message"])
+            return rendered
         except ChatError as exc:
             raise HTTPException(exc.status_code, render_action_error(exc.code, language)) from None
         except ValueError:
