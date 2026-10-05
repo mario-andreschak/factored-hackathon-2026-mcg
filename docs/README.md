@@ -17,7 +17,7 @@ This index keeps older evidence discoverable without treating it as today's resu
 | [Banking MCP](../banking_mcp/README.md) | Scoped tools and private identity/configuration contract |
 | [Pipeline](../pipeline/README.md) | Snapshot preparation, quality checks and lineage |
 | [Savia eyes and voice](../frontend/src/avatar/README.md) | Integrated assistant dialog and authenticated Python voice; use the release report for runtime acceptance |
-| [Frozen Savia runtime](submission/runtime-source-final.json) | Accepted integrated Savia source and checks; current runtime identity and freeze receipt pointers |
+| [Frozen Savia runtime](submission/runtime-source-final.json) | Original rc.1 integrated source and checks; the release record identifies the qualified live successor |
 | [Local CI](LOCAL_CI.md) | Exact-source Windows/Linux checks and resource bounds |
 | [FLUJO product boundary](FLUJO_PRODUCT_BOUNDARY.md) | Where generic and banking code belong |
 | [FLUJO deployment source map](FLUJO_HACKATHON_DEPLOYMENT.md) | Dated branch/image identities; use the release report for current deployment |

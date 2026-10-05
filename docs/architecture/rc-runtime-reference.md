@@ -1,6 +1,8 @@
 # Savia RC — implementation reference
 
-Reviewed 5 October 2026. Deployment: [savia-rc-2026.fly.dev](https://savia-rc-2026.fly.dev). Application source: `9d77a7599128b668b0e34f9c2937eb40b6bd3824`. This document describes the integrated Savia submission: browser-rendered googly eyes, the Moss voice persona, authenticated banking inquiry and two informational workers.
+Reviewed 5 October 2026. Deployment: [savia-rc-2026.fly.dev](https://savia-rc-2026.fly.dev). Current application source: `7089ca7b63006a066477415aaf54a6932d21a9b2`, branch `codex/savia-listen-saved-result`; image `sha256:39457d88ec4a8577d32dc4623bab5f71a5e5349b808c002db0e258510ce0d38e`. This document describes the integrated Savia submission: browser-rendered googly eyes, the Moss voice persona, authenticated banking inquiry and two informational workers. The original rc.1 source and its recorded journey remain pinned separately below.
+
+The current successor adds an explicit **Escuchar recomendaciones / Ouvir recomendações** control for saved completed team results while voice is active. Its supporting capture records one useful, condensed merchant/receipt reply, 8.2 seconds of actual PCM and one exact full-playback acknowledgement, with no new banking question or workers. It preserves the three inquiries and the grounded conversation after reload. See [the scoped supporting record](../submission/measurements/saved-recommendations-native/README.md); this does not qualify the target 100-conversation fleet.
 
 ## 1. Deployment and process topology
 
@@ -114,8 +116,8 @@ Provider or bank failures remain explicit failed/unverified states. A failed nar
 | Gateway ingress / upstream | `0.0.0.0:8080` / `127.0.0.1:43900` |
 | Provider configuration | `OPENROUTER_API_KEY` from server secrets; optional `OPENROUTER_CHAT_MODEL` override; native voice configured in `run.py` |
 | Runtime directory | `/data/rc-private`; application state in `instance/` |
-| Frozen application commit | `9d77a7599128b668b0e34f9c2937eb40b6bd3824` |
-| Deployed image digest | `sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5` |
+| Original rc.1 application commit | `9d77a7599128b668b0e34f9c2937eb40b6bd3824` |
+| Original rc.1 image digest | `sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5` |
 | Live checks for this document | Fly Machine `started`; 1 CPU / 1024 MB / encrypted 1 GB volume; public `/healthz` HTTP 200 with `savia:true` |
 | Customer-path evidence | Frozen release record: grounded bank answer, both actual workers, saved suggestions, new-chat recovery and two full native-playback acknowledgements |
 
