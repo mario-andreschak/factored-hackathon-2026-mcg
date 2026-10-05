@@ -3,8 +3,7 @@
 Status: rc.1 submission artifacts are frozen; the deployed Listen successor is qualified.
 The recovered swarm connector's [source and integration pins](assistant/FLEET_CONNECTOR.md)
 are merged; runtime qualification remains pending. Public visibility is verified.
-Physical legacy-folder cleanup and full ten-by-ten swarm qualification remain
-pending. Updated 2026-10-05.
+Full ten-by-ten swarm qualification remains pending. Updated 2026-10-05.
 
 Release target: [v0.1.0-rc.1](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.1).
 
@@ -112,7 +111,7 @@ FLUJO main remains general purpose. Its legacy release-team worktrees are clean
 at signed `c20ef41db311293ee4f8e2d9f83762f662f3382f`; see
 [WORKTREE_CHECK.md](WORKTREE_CHECK.md).
 
-## Public release and remaining local cleanup
+## Public release and local scope
 
 The repository is public. The supplemental
 [rc.2 release](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.2)
@@ -125,6 +124,11 @@ The tagged release contains the film, editable decks, PDFs and measured
 qualification reports. Historical credential admission was revoked. Hosted
 GitHub jobs never started because of account billing limits; local checks are
 reported separately.
+
+Owner scope correction, October 5: ignored local legacy remnants are outside RC
+acceptance. Physical deletion is not a release gate or required manual action.
+Dated and frozen cleanup receipts retain their original observations; this
+correction does not assert that ignored remnants disappeared.
 
 Tracked legacy root `avatar/` source is deleted and `/app/avatar` is absent from
 the deployed image. No legacy code archive was created. Physical deletion of
