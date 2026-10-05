@@ -8,23 +8,23 @@ Savia starts with a customer saying, “I don't recognize this transaction.” T
 
 Confirm once. Savia blocks the owned card, writes a durable status, and rereads an independent receipt. Asking never writes. Foreign cards, missing consent, and tampered receipts are refused.[^card-ledger]
 
-The blocked status survives a new login. Spanish and Portuguese requests open the same consent flow. One hundred concurrent confirmations produce exactly one block and one receipt. [Card control and concurrency evidence](measurements/CARD_BLOCK_VERIFICATION.md) · [Pinned public acceptance](measurements/card-block-live/README.md).
+The blocked status survives a new login. Spanish and Portuguese requests open the same consent flow. One hundred concurrent confirmations produce exactly one block and one receipt. [Card control and concurrency evidence](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/CARD_BLOCK_VERIFICATION.md) · [Pinned public acceptance](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/card-block-live/README.md).
 
 ## One customer voice. Ten teams behind it.
 
-300/300 concurrent FLUJO. 18 sandboxes live together. The customer path we recorded is two reviewers; the architecture is ready to scale. [Foundation capacity](measurements/INFRASTRUCTURE_CAPACITY.md) · [Recorded customer story](CUSTOMER_JOURNEY.md) · [Workload identities and original results](measurements/MEASURED_RESULTS.md).
+300/300 concurrent FLUJO. 18 sandboxes live together. The customer path we recorded is two reviewers; the architecture is ready to scale. [Foundation capacity](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md) · [Recorded customer story](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/CUSTOMER_JOURNEY.md) · [Workload identities and original results](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/MEASURED_RESULTS.md).
 
 ## What the bank can inspect
 
 | Customer or bank need | Savia capability | Source and measured evidence |
 | --- | --- | --- |
-| Understand an unfamiliar charge | Owned transaction facts, ordered decision rules and bounded explanation | [Complete engine](DISPUTE_ENGINE.md), [actual grounded reply](measurements/team-story-summary.json) |
-| Hear useful guidance | Voice in the same assistant, acknowledged playback and queued completed updates | [Native voice capture](measurements/intended-savia-native/README.md), [saved recommendation speech](measurements/saved-recommendations-native/README.md) |
-| Compare perspectives and return | Two completed reviewers, durable inquiries, saved suggestions and a return visit | [Customer story](CUSTOMER_JOURNEY.md), [original receipts](measurements/MEASURED_RESULTS.md) |
-| Control the card action | Host-resolved owned selection, explicit consent, durable status and independent receipt readback | [Action host](../../dispute_workflow/action_host.py), [confirmed public action](measurements/card-block-live/README.md) |
-| Control models and deployment | Banking authority behind generic chat, flow, tool and MCP interfaces | [FLUJO platform guide](FLUJO_PLATFORM_EVIDENCE.md), [product boundary](../FLUJO_PRODUCT_BOUNDARY.md), [direct-host contract](../../frontend/DIRECT_MCP.md) |
-| Trace the data and operating decisions | Immutable snapshots, row accounting, ownership exclusion and reproducible diagnostics | [Public replay](../review/PUBLIC_EVIDENCE.md), [measured operating decisions](../review/OPERATING_DECISIONS.md) |
-| Inspect provider capacity | 100/100 grounded ES/PT Luna fixture decisions from concurrent local submissions | [Workload, oracle, baseline, outputs and timings](measurements/luna-100/README.md) |
+| Understand an unfamiliar charge | Owned transaction facts, ordered decision rules and bounded explanation | [Complete engine](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/DISPUTE_ENGINE.md), [actual grounded reply](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/team-story-summary.json) |
+| Hear useful guidance | Voice in the same assistant, acknowledged playback and queued completed updates | [Native voice capture](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/intended-savia-native/README.md), [saved recommendation speech](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/saved-recommendations-native/README.md) |
+| Compare perspectives and return | Two completed reviewers, durable inquiries, saved suggestions and a return visit | [Customer story](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/CUSTOMER_JOURNEY.md), [original receipts](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/MEASURED_RESULTS.md) |
+| Control the card action | Host-resolved owned selection, explicit consent, durable status and independent receipt readback | [Action host](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/dispute_workflow/action_host.py), [confirmed public action](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/card-block-live/README.md) |
+| Control models and deployment | Banking authority behind generic chat, flow, tool and MCP interfaces | [FLUJO platform guide](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/FLUJO_PLATFORM_EVIDENCE.md), [product boundary](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/FLUJO_PRODUCT_BOUNDARY.md), [direct-host contract](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/frontend/DIRECT_MCP.md) |
+| Trace the data and operating decisions | Immutable snapshots, row accounting, ownership exclusion and reproducible diagnostics | [Public replay](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/PUBLIC_EVIDENCE.md), [measured operating decisions](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/OPERATING_DECISIONS.md) |
+| Inspect provider capacity | 100/100 grounded ES/PT Luna fixture decisions from concurrent local submissions | [Workload, oracle, baseline, outputs and timings](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/README.md) |
 
 ## The bank pilot
 
@@ -39,3 +39,7 @@ ElevenLabs' [September 28 announcement, updated October 5](https://elevenlabs.io
 The 300/300 result measures concurrently submitted FLUJO reference-code requests, including queueing. Luna's 100 turns measure a separate ES/PT fixture workload; its deterministic baseline also achieves 100/100. The recorded customer collaboration has two completed reviewers. Exact 100-agent customer completion remains a qualification step. Each result retains its source and denominator in the linked receipts.
 
 Demo customers and the card ledger are fictional. Savia does not move real money, assign a live banker, or claim measured ROI.
+
+---
+
+[Public source document](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/ELEVENLABS_COMPARISON.md)

@@ -13,12 +13,12 @@ The engineering story has substance at every layer:
 
 | Achievement | Why it matters | Inspect the evidence |
 | --- | --- | --- |
-| **5.9 million rows** prepared through bronze, silver and gold | A repeatable data product with contracts, lineage, quarantine and atomic publication | [Pipeline and measured run](../../pipeline/README.md), [manifest](../pipeline/manifest.json) |
-| **500/500** historical provider-backed requests over fictional customer fixtures, using Sol | Independent customer-oracle, MCP-result and persisted-state checks under bounded admission | [Banking acceptance and exact scope](../BANKING_MCP_IMPLEMENTATION.md#current-model-capacity) |
-| **300/300** correct parallel FLUJO requests in the neutral-reference repeat | A measured orchestration and inference foundation behind the customer example | [Capacity report](measurements/INFRASTRUCTURE_CAPACITY.md), [aggregate receipt](measurements/infrastructure-capacity.json) |
-| **18 Fly leaf sandboxes live together** in a recovered collaboration run | Actual teams, tools, shared findings and result checking | [Sandbox collaboration evidence](measurements/INFRASTRUCTURE_CAPACITY.md#real-sandbox-and-collaboration-runs) |
-| **100/100 correct and bounded-safe Luna responses** | A frozen bilingual fixture oracle, independent audit and 100 overlapping subscription app-server turns | [Luna benchmark](measurements/luna-100/README.md), [independent audit](measurements/luna-100/run-100/audit.json) |
-| **Recorded customer answers, two real reviewers, native speech and retained context** | Working product behavior that a reviewer can inspect directly | [Customer journey](CUSTOMER_JOURNEY.md), [native proof](measurements/intended-savia-native/README.md), [saved recommendation speech](measurements/saved-recommendations-native/README.md) |
+| **5.9 million rows** prepared through bronze, silver and gold | A repeatable data product with contracts, lineage, quarantine and atomic publication | [Pipeline and measured run](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/pipeline/README.md), [manifest](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/pipeline/manifest.json) |
+| **500/500** historical provider-backed requests over fictional customer fixtures, using Sol | Independent customer-oracle, MCP-result and persisted-state checks under bounded admission | [Banking acceptance and exact scope](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/BANKING_MCP_IMPLEMENTATION.md#current-model-capacity) |
+| **300/300** correct parallel FLUJO requests in the neutral-reference repeat | A measured orchestration and inference foundation behind the customer example | [Capacity report](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md), [aggregate receipt](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/infrastructure-capacity.json) |
+| **18 Fly leaf sandboxes live together** in a recovered collaboration run | Actual teams, tools, shared findings and result checking | [Sandbox collaboration evidence](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md#real-sandbox-and-collaboration-runs) |
+| **100/100 correct and bounded-safe Luna responses** | A frozen bilingual fixture oracle, independent audit and 100 overlapping subscription app-server turns | [Luna benchmark](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/README.md), [independent audit](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/run-100/audit.json) |
+| **Recorded customer answers, two real reviewers, native speech and retained context** | Working product behavior that a reviewer can inspect directly | [Customer journey](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/CUSTOMER_JOURNEY.md), [native proof](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/intended-savia-native/README.md), [saved recommendation speech](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/saved-recommendations-native/README.md) |
 
 These measurements describe different workloads and source revisions. Together they
 show a substantial implemented product and a tested platform foundation. The capacity
@@ -30,8 +30,8 @@ collaboration. Neither is a completed 100-agent Savia customer investigation.
 | Contributor | Contribution supported by repository evidence |
 | --- | --- |
 | **Carlos Diaz** (`cdiazcastilla`) | DuckDB pipeline, contracts, quality diagnostics, customer-isolated lookups, atomic snapshots, learned intent router and its keyword comparison. [PR 1](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/1), [PR 2](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/2), [PR 3](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/3). |
-| **Gloria** (`gloriayantasalc`) | Prompt flow and R0–R18 decision motor, multilingual policy resources, metadata-only agent analytics, and customer movement-period selection. [Workflow credit](../DISPUTE_IMPLEMENTATION.md), [policy source](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/b5d0ef2c642312314e402ab3be870aba223c81ed), [PR 49](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/49), [PR 50](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/50). |
-| **Mario Andreschak** (`mario-andreschak`) | Product direction, FLUJO platform and application boundary, architecture stewardship, review and merge coordination. [Product boundary](../FLUJO_PRODUCT_BOUNDARY.md), [architecture](../architecture/system-landscape.md), [repository history](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commits/main/). |
+| **Gloria** (`gloriayantasalc`) | Prompt flow and R0–R18 decision motor, multilingual policy resources, metadata-only agent analytics, and customer movement-period selection. [Workflow credit](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/DISPUTE_IMPLEMENTATION.md), [policy source](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/b5d0ef2c642312314e402ab3be870aba223c81ed), [PR 49](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/49), [PR 50](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/50). |
+| **Mario Andreschak** (`mario-andreschak`) | Product direction, FLUJO platform and application boundary, architecture stewardship, review and merge coordination. [Product boundary](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/FLUJO_PRODUCT_BOUNDARY.md), [architecture](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/architecture/system-landscape.md), [repository history](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commits/main/). |
 | **Agent-assisted engineering** (`flujo-app` / `FLUJO` Git identities) | MCP and application host integration, executable workflow, recovery, frontend, native voice, deployment tooling, qualification and documentation under human direction. These Git identities identify automation, rather than additional human teammates. [Direct-host PR 31](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/31), [host transport PR 32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32), [integrated runtime PR 56](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/56). |
 
 ## From evidence to application: the milestones
@@ -44,7 +44,7 @@ evaluation. This made the product grounded from the start: selected transaction
 facts, explicit uncertainty and a concrete next step.
 
 Evidence: [initial audit commit](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/9367597bbba352ee9c745a3422a0f676931a57c7),
-[aggregate data review](../DATA_REVIEW_2026-09-26.md).
+[aggregate data review](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/DATA_REVIEW_2026-09-26.md).
 
 ### 27 September — publish a reusable data plane
 
@@ -61,7 +61,7 @@ boundary remain in the pipeline report.
 
 Evidence: [pipeline implementation](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/35b34d968c4b182f0b9b893b1973721b35017c0f),
 [review improvements](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/0ff3a054edba8c846fbf1e32eef7063cc4c89784),
-[pipeline guide](../../pipeline/README.md).
+[pipeline guide](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/pipeline/README.md).
 
 ### 28–29 September — combine learned routing, human policy and authorized tools
 
@@ -79,7 +79,7 @@ and ownership audits. The report retains the earlier attempts and the exact revi
 of the successful run.
 
 Evidence: [router commit](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/5f25097050991389f4a6a84b23f17120d45295c3),
-[diagnostic comparison](../demo/intent_router_evaluation.md),
+[diagnostic comparison](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/demo/intent_router_evaluation.md),
 [Gloria's policy commit](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/b5d0ef2c642312314e402ab3be870aba223c81ed),
 [500-customer acceptance commit](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/0a3ab0d856e4837b3794a349e404153c44cffe8b).
 
@@ -112,7 +112,7 @@ runtime installation and customer recordings have separate receipts.
 Evidence: [boundary PR 29](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/29),
 [direct-host PR 31](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/31),
 [host transport PR 32](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/32),
-[source qualification](../qualification/dispute-naming-source-2026-10-01.json).
+[source qualification](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/qualification/dispute-naming-source-2026-10-01.json).
 
 ### 1–3 October — improve operation, reviewability and daily use
 
@@ -128,7 +128,7 @@ repository evidence in a smaller form.
 
 Evidence: [analytics PR 49](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/49),
 [period selection PR 50](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/50),
-[CI method](../LOCAL_CI.md),
+[CI method](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/LOCAL_CI.md),
 [replay implementation](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/commit/38dc6bb48c188648e2266638e29e8ecd5ecb4ec5).
 
 ### 4–5 October — deliver one coherent voice and investigation experience
@@ -152,7 +152,7 @@ Evidence: [final-day PR 53](https://github.com/mario-andreschak/factored-hackath
 [saved speech PR 59](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/59),
 [fleet connector PR 62](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/62),
 [capacity evidence PR 74](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/74),
-[current submission and source map](RELEASE_CANDIDATE.md).
+[current submission and source map](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/RELEASE_CANDIDATE.md).
 
 ### 5 October — give reviewers a fresh, reproducible evidence package
 
@@ -168,10 +168,10 @@ pipeline/analytics invariants**. It exercises reproducible publication, late
 corrections, ownership exclusions and metadata outcome calculations. Reviewers can
 rerun the same public fixtures without private data or paid model access.
 
-Evidence: [Luna workload, results and scope](measurements/luna-100/README.md),
-[independent benchmark audit](measurements/luna-100/run-100/audit.json),
-[public evidence replay](../review/PUBLIC_EVIDENCE.md),
-[replay source and environment receipt](../review/replay-receipt.json).
+Evidence: [Luna workload, results and scope](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/README.md),
+[independent benchmark audit](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/luna-100/run-100/audit.json),
+[public evidence replay](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/PUBLIC_EVIDENCE.md),
+[replay source and environment receipt](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/replay-receipt.json).
 
 ## The architecture the development produced
 
@@ -191,28 +191,28 @@ FLUJO's orchestration interfaces and replace Savia's domain policy/tools. A new
 provider can reuse the task and evidence contracts. A larger specialist team can
 reuse fleet messaging, shared findings, review and recovery. The current customer
 recordings and larger infrastructure runs retain their own execution boundaries.
-See the [technical architecture](../architecture/system-landscape.md),
-[fleet connector](assistant/FLEET_CONNECTOR.md), and
-[FLUJO product boundary](../FLUJO_PRODUCT_BOUNDARY.md).
+See the [technical architecture](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/architecture/system-landscape.md),
+[fleet connector](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/assistant/FLEET_CONNECTOR.md), and
+[FLUJO product boundary](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/FLUJO_PRODUCT_BOUNDARY.md).
 
 ## How to reproduce and review the work
 
-1. **Start with the product.** Follow the [customer journey](CUSTOMER_JOURNEY.md)
+1. **Start with the product.** Follow the [customer journey](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/CUSTOMER_JOURNEY.md)
    and inspect the successful voice and saved-result captures linked above.
 2. **Trace a capability to source.** Use the milestone PRs, pipeline contracts,
    trusted-host contract and executable workflow. The
-   [machine-readable story](development-process.json) supplies the same evidence map.
+   [machine-readable story](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/development-process.json) supplies the same evidence map.
 3. **Check the appropriate workload.** Data lookup, routing quality, real-model
    capacity, collaborating sandboxes and customer outcomes each have their own
    denominators, source revisions and latency boundaries.
 4. **Use the committed verification commands.** The
-   [workflow](../../.github/workflows/tests.yml) separates pipeline/MCP, frontend API,
+   [workflow](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/.github/workflows/tests.yml) separates pipeline/MCP, frontend API,
    UI, workflow and platform-source checks. The
-   [local CI method](../LOCAL_CI.md) records all eleven Windows/Linux jobs for one
-   immutable head; [workflow acceptance](../DISPUTE_ACCEPTANCE.md) links dated receipts.
-   The [public evidence replay](../review/PUBLIC_EVIDENCE.md) supplies a
+   [local CI method](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/LOCAL_CI.md) records all eleven Windows/Linux jobs for one
+   immutable head; [workflow acceptance](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/DISPUTE_ACCEPTANCE.md) links dated receipts.
+   The [public evidence replay](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/review/PUBLIC_EVIDENCE.md) supplies a
    provider-free review command and exact source hashes.
-5. **Verify the release identity.** The [release report](RELEASE_CANDIDATE.md) joins
+5. **Verify the release identity.** The [release report](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/RELEASE_CANDIDATE.md) joins
    deployed source, image and served assets to the original recordings. Public demos
    use generated fictional customers; simulated intake and informational closure
    retain their exact meanings.
@@ -222,3 +222,7 @@ links and aggregate evidence. It includes no private team-chat export, credentia
 restricted organizer rows or customer session state. Historical and incomplete
 attempts remain available in the linked reports, allowing successful evidence to be
 assessed without losing provenance.
+
+---
+
+[Public source document](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/DEVELOPMENT_PROCESS.md)

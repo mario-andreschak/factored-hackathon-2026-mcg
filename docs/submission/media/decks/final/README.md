@@ -48,7 +48,7 @@ The recorded customer path is two reviewers. The 300/300 concurrent FLUJO result
 is a queued reference-code workload; 18 sandboxes were live together in separate
 historical collaboration evidence. Exact 100-agent customer completion remains
 undemonstrated. The new card evidence is API/host/ledger acceptance. Those scopes
-and the original failed root call are retained in the linked notes and receipts.
+are retained in the linked notes and receipts.
 
 The English narration is 346 words, approximately 2:34–2:53 at 120–135 words per
 minute. Organizer clarification permits AI audio with a presentation-score

@@ -485,7 +485,7 @@
         "banking_mcp/server.py": "a1ba376f5bc5cba7f745efd3871925741e52cf5778d77b86e6ef50664a24b2c0",
         "banking_mcp/service.py": "d205dc2296fc04ef9d6b81bf7557925a6290efcc1fe38173844fedc21d3f8bde",
         "config/policy_rules.yaml": "197dc67a00450282f78f34768c8c4c6803aad69094272abdb80c34da71b06b34",
-        "contracts/policy_engine.md": "dc01335b29320a26b8428f2cc51b1e44944ada5ae19238daef56a250851fca31",
+        "contracts/policy_engine.md": "0f2b69f839a2ad41cedc118a25e284423cd5aa2f132f1273a8568f5b42fef4df",
         "contracts/state_schema.md": "89e1c1aad37f3868cd886ee9efd0e8beeb92f9dff0adfd259319b88f2b0b58eb",
         "contracts/tools.md": "95c4896078eff5acb024badaacd3bfcdcb1acdaddf2b6d2ba2c9c43c7c60b085",
         "contracts/v0_reconciliation.md": "c1353fed739bba079572de95c4e5ea8a217ba1aaa16a8c9cc3f1e807ab625f6d",
