@@ -1,0 +1,105 @@
+{
+  "schema": "savia-saved-recommendations-supplement/v1",
+  "source_git_head": "7089ca7b63006a066477415aaf54a6932d21a9b2",
+  "image_digest": "sha256:39457d88ec4a8577d32dc4623bab5f71a5e5349b808c002db0e258510ce0d38e",
+  "actual_served_js": [
+    {
+      "path": "/assets/index-TIZbOJMX.js",
+      "status": 200,
+      "sha256": "858dc7574d91da577b0691cdc198304dd11a5f0af39ed985cc3a5ce9d096c49e"
+    },
+    {
+      "path": "/assets/index-TIZbOJMX.js",
+      "status": 200,
+      "sha256": "858dc7574d91da577b0691cdc198304dd11a5f0af39ed985cc3a5ce9d096c49e"
+    }
+  ],
+  "started_at_utc": "2026-10-05T06:15:49.899Z",
+  "finished_at_utc": "2026-10-05T06:16:13.615Z",
+  "technical_product_checks_passed": true,
+  "recorder_exit_code": 0,
+  "once_only_root_go_consumed": true,
+  "rerun_performed": false,
+  "release_coordinator_semantic_acceptance": true,
+  "independent_human_audio_review": "pending",
+  "agent_caption_review": {
+    "useful_grounded_recommendation": true,
+    "merchant_named": true,
+    "receipt_review_suggested": true,
+    "customer_feedback_invited": true,
+    "bank_resolution_or_refund_claimed": false,
+    "all_canonical_suggestions_spoken": false,
+    "limitation": "The native voice condenses the evidence suggestion. It omits the conditional folio guidance and explicit bank-not-resolved caveat present in the canonical reply and visible suggestions."
+  },
+  "canonical_result": "El comercio registrado es «Nébula Market». Compara el nombre del comercio con tus recibos: el nombre registrado puede ser diferente del que recuerdas. Si ya tienes un folio, guárdalo junto con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto. Las sugerencias siguen disponibles. Cuéntame si te ayudaron o si necesitas otra explicación.",
+  "canonical_event": 23,
+  "audio": {
+    "file": "useful-recommendations.wav",
+    "sha256": "d485b29c02bf6b8b6e947e5846a9b68101c7c7f5b271f4e28d440a046fd9b84f",
+    "provider_caption": "El comercio es «Nébula Market». Revisa tus recibos y cuéntame si te sirvió o si te hace falta algo más.",
+    "samples": 196800,
+    "sample_rate_hz": 24000,
+    "channels": 1,
+    "encoding": "PCM16LE",
+    "seconds": 8.2,
+    "actual_browser_response_clone": true,
+    "audio_injection": false,
+    "exact_full_playback_ack": {
+      "http_status": 200,
+      "complete": true,
+      "played_samples": 196800,
+      "exact_samples": true,
+      "token_sha256": "05405ec7ec027cc60b312b9ac9afe0ef83508b82a65345074b98288b26e5fe19",
+      "at_ms": 16109
+    }
+  },
+  "request_counts": {
+    "native_result_streams": 1,
+    "full_played_acks": 1,
+    "banking_chat": 0,
+    "new_inquiries": 0,
+    "new_workers": 0,
+    "asr": 0,
+    "resolutions": 0,
+    "history_reset": 0
+  },
+  "retained_context": {
+    "fresh_reload_history_and_cases_observed": true,
+    "same_three_inquiry_states": true,
+    "same_completed_workers_and_suggestions": true,
+    "exact_original_grounded_bank_reply_rendered": true,
+    "target_state": "awaiting_customer",
+    "bank_authority": false,
+    "additional_native_streams_after_reload": 0
+  },
+  "timings_ms": {
+    "listen_clicked": 6232,
+    "canonical_available": 6517,
+    "native_requested": 6532,
+    "speaking_observed": 7520,
+    "native_pcm_complete": 9181,
+    "full_played": 16109,
+    "recorder_total": 23717
+  },
+  "video": {
+    "file": "actual-browser.webm",
+    "seconds": 22.32,
+    "unedited_actual_browser_video": true,
+    "embedded_audio": false,
+    "audio_file": "useful-recommendations.wav",
+    "qualification": "Browser recording is silent. Native PCM is supplied separately; no audiovisual synchronization claim."
+  },
+  "scope": "One explicit Listen control on the second saved informational inquiry, using the original authenticated session and unchanged silent file-backed microphone. No new background team work in this capture.",
+  "physical_microphone_qualified": false,
+  "provider_cost_usd": null,
+  "owned_browser_contexts_closed": true,
+  "optional_observation_diagnostics": "Unused ACK response body was canceled after HTTP200; an optional response.finished diagnostic reports context closed. Exact full PCM, complete ACK, required checks and EXIT0 succeeded.",
+  "private_exclusions": [
+    "cookies",
+    "raw native NDJSON",
+    "private bindings",
+    "private raw observer errors"
+  ],
+  "frozen_rc1_film_decks_tag_and_evidence_changed": false,
+  "release_coordinator_acceptance_scope": "Accepted as useful condensed saved worker recommendation speech; no full or verbatim narration of both canonical suggestions claimed."
+}

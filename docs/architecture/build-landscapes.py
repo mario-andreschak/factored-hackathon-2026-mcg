@@ -6,6 +6,7 @@ facts were reviewed against the running Docker mounts and deploy/fly sources.
 from html import escape
 from pathlib import Path
 import json
+from system_landscape import system_svg, system_section, standalone, DOCUMENT_CSS
 
 ROOT = Path(__file__).resolve().parent
 WIDTH, HEIGHT = 2400, 1320
@@ -301,7 +302,7 @@ Evidence:
 '''
 
 
-def viewer(docker_svg, fly_svg):
+def historical_viewer(docker_svg, fly_svg):
     return '''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Docker &amp; Fly · deployment landscapes</title><style>
@@ -317,8 +318,32 @@ article{max-width:1250px;margin:24px auto 50px;background:#fff;border:1px solid 
 <script>function select(id){for(const item of ['docker','fly']){document.getElementById(item).hidden=item!==id;document.getElementById(item+'-tab').setAttribute('aria-pressed',String(item===id))}location.hash=id}function zoom(){const active=document.body.classList.toggle('zoom');document.getElementById('zoom').setAttribute('aria-pressed',String(active));document.getElementById('zoom').textContent=active?'Fit to window':'Actual size / pan'}if(location.hash==='#fly')select('fly');</script></body></html>'''
 
 
+def scoped_svg(svg, prefix):
+    # SVG identifiers share the HTML document namespace, including hidden tabs.
+    for identifier in ['title', 'desc', *COLORS]:
+        svg = svg.replace(f'id="{identifier}"', f'id="{prefix}-{identifier}"')
+        svg = svg.replace(f'url(#{identifier})', f'url(#{prefix}-{identifier})')
+    return svg.replace('aria-labelledby="title desc"', f'aria-labelledby="{prefix}-title {prefix}-desc"')
+
+
+def viewer(docker_svg, fly_svg, current_svg):
+    html = historical_viewer(scoped_svg(docker_svg, 'docker'), scoped_svg(fly_svg, 'fly'))
+    html = html.replace('Docker &amp; Fly · deployment landscapes', 'Savia · technical product architecture')
+    html = html.replace('</style>', DOCUMENT_CSS + '\n@media print{article.technical{display:block!important}}\n</style>', 1)
+    html = html.replace('<h1>Deployment landscapes</h1>', '<h1>System landscape</h1>')
+    html = html.replace('<nav aria-label="Deployment">', '<nav aria-label="Deployment"><button id="system-tab" aria-pressed="true" onclick="select(\'system\')">Savia · architecture</button>')
+    html = html.replace('id="docker-tab" aria-pressed="true"', 'id="docker-tab" aria-pressed="false"')
+    html = html.replace('Docker · local</button>', 'Docker · Sep 30</button>').replace('Fly · hosted</button>', 'Fly · Sep 30</button>')
+    html = html.replace('<a href="deployment-landscapes.pdf" download>Download both as PDF</a>', '<a href="system-landscape.pdf" download>Technical PDF</a><a href="deployment-landscapes.pdf" download>Sep 30 PDF</a>')
+    html = html.replace('<a href="landscape-notes.md">Full source notes</a>', '<a href="system-landscape.md">Document source</a>')
+    html = html.replace('<section id="docker">', system_section(scoped_svg(current_svg, 'system'))+'<section id="docker" hidden>')
+    html = html.replace("['docker','fly']", "['system','docker','fly']")
+    html = html.replace("if(location.hash==='#fly')select('fly');", "function selectHash(){const id=location.hash.slice(1);select(['system','docker','fly'].includes(id)?id:'system')}window.addEventListener('hashchange',selectHash);selectHash();")
+    return html
+
+
 if __name__ == '__main__':
-    docker_svg, fly_svg = docker(), fly()
-    for name, content in [('docker-landscape.svg',docker_svg), ('fly-landscape.svg',fly_svg), ('deployment-landscapes.html',viewer(docker_svg,fly_svg)), ('landscape-notes.md',NOTES)]:
+    docker_svg, fly_svg, current_svg = docker(), fly(), system_svg(Diagram)
+    for name, content in [('docker-landscape.svg',docker_svg), ('fly-landscape.svg',fly_svg), ('system-landscape.svg',current_svg), ('system-landscape.html',standalone(current_svg)), ('deployment-landscapes.html',viewer(docker_svg,fly_svg,current_svg)), ('landscape-notes.md',NOTES)]:
         (ROOT/name).write_text(content,encoding='utf-8')
-    print(json.dumps({'written':['docker-landscape.svg','fly-landscape.svg','deployment-landscapes.html','landscape-notes.md']}))
+    print(json.dumps({'written':['docker-landscape.svg','fly-landscape.svg','system-landscape.svg','system-landscape.html','deployment-landscapes.html','landscape-notes.md']}))

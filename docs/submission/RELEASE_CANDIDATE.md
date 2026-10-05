@@ -1,7 +1,8 @@
 # Savia release candidate
 
-Status: submission release candidate ready; product and artifacts accepted and frozen.
-Updated 2026-10-05 05:08 UTC.
+Status: rc.1 submission artifacts are frozen; the deployed Listen successor is qualified.
+The recovered swarm connector is in development. Public visibility and physical
+legacy-folder cleanup remain pending. Updated 2026-10-05.
 
 Release target: [v0.1.0-rc.1](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.1).
 
@@ -14,7 +15,34 @@ The avatar and voice are inside Savia's assistant dialog, from
 `frontend/src/avatar/`, based on
 `feature/savia-avatar-voice@2730d76de8e6847df4502c427ad9ced412f4a731` (PR 52).
 
-## Customer and voice acceptance
+## Qualified live successor
+
+[PR 59](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/59)
+adds an explicit control to hear saved, completed team recommendations. Application
+source is `7089ca7b63006a066477415aaf54a6932d21a9b2`, branch
+`codex/savia-listen-saved-result`; the deployed image is
+`sha256:39457d88ec4a8577d32dc4623bab5f71a5e5349b808c002db0e258510ce0d38e`.
+Its 142 source hashes and served UI were verified on the unchanged Machine and
+encrypted volume. The three inquiries, six completed workers and zero bank cases
+or receipts were preserved. The affected 76 UI checks and production build pass.
+
+The [supporting recording](measurements/saved-recommendations-native/README.md)
+uses the existing second inquiry and legitimate session. One actual native reply
+provides useful merchant and receipt guidance: 8.2 seconds, 196,800 PCM16 samples
+at 24 kHz, and one exact HTTP 200 full-playback acknowledgement. Reload retains
+the grounded reply and completed suggestions without another voice stream. The
+runner exits successfully. No bank question, inquiry, worker, ASR, resolution or
+history reset was added. Speech condenses the advice; it omits the conditional
+folio recommendation and bank-not-resolved caveat rather than reading both
+suggestions verbatim. The browser clip is video-only; its WAV is supplied separately.
+
+The product target reuses the recovered `swarm_agent`, `swarm_team`,
+`swarm_supervisor` and `swarm_boot` template: ten Fly team Machines, each with one
+lead and nine specialists, with Savia's root separate. The current deployed
+prototype still demonstrates two reviewers. Exact 100-conversation customer
+execution, real human pickup and customer push/email delivery are unqualified.
+
+## Original rc.1 customer and voice acceptance
 
 The recorded customer story retains one useful grounded bank answer, two real
 completed agent reviews, helpful informational closure, new chat and the exact
@@ -56,7 +84,7 @@ The MP4 SHA-256 is
 `44e8dad7fdfdc6bd3b8b50b5aee83ea97f62c9e8412b20a1655a937cabd0fccb`.
 Creative generation and media changes are finished.
 
-## Frozen source
+## Frozen rc.1 source
 
 Application source:
 [`9d77a7599128b668b0e34f9c2937eb40b6bd3824`](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/tree/9d77a7599128b668b0e34f9c2937eb40b6bd3824),
