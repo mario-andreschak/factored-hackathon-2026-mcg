@@ -46,6 +46,12 @@ const copy = {
     empty: "Aún no tienes consultas.",
     events: "Actualizaciones",
     suggestions: "Sugerencias del equipo",
+    listen: "Escuchar recomendaciones",
+    listening: "Preparando la voz…",
+    listenQueued: "Recomendaciones enviadas a la voz",
+    activateVoice: "Activa Hablar con Savia para escucharlas.",
+    listenFailed:
+      "No pudimos preparar estas recomendaciones para la voz. Puedes leerlas aquí.",
     next: "Siguiente paso",
     refreshError: "No pudimos cargar las consultas. Intenta de nuevo.",
     serviceError:
@@ -76,6 +82,12 @@ const copy = {
     empty: "Você ainda não tem consultas.",
     events: "Atualizações",
     suggestions: "Sugestões da equipe",
+    listen: "Ouvir recomendações",
+    listening: "Preparando a voz…",
+    listenQueued: "Recomendações enviadas para a voz",
+    activateVoice: "Ative Falar com Savia para ouvi-las.",
+    listenFailed:
+      "Não foi possível preparar estas recomendações para a voz. Você pode lê-las aqui.",
     next: "Próximo passo",
     refreshError: "Não foi possível carregar as consultas. Tente novamente.",
     serviceError:
@@ -130,6 +142,8 @@ export function InquiryPanel({
   onExpired,
   onContextUpdate,
   onVoiceUpdate,
+  voiceActive = false,
+  onListenRecommendations,
 }: {
   language: Language;
   transactionReference?: string | null;
@@ -137,6 +151,11 @@ export function InquiryPanel({
   onExpired: () => void;
   onContextUpdate?: () => void;
   onVoiceUpdate?: (caseId: string, eventId: number) => void;
+  voiceActive?: boolean;
+  onListenRecommendations?: (
+    caseId: string,
+    eventId: number,
+  ) => Promise<boolean>;
 }) {
   const t = copy[language];
   const [items, setItems] = useState<InquiryCase[]>([]);
@@ -145,6 +164,9 @@ export function InquiryPanel({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [listeningEvent, setListeningEvent] = useState<string | null>(null);
+  const [requestedEvents, setRequestedEvents] = useState(new Set<string>());
+  const listenPending = useRef(false);
   const previousStates = useRef<Map<string, string> | null>(null);
   const voiceEventCursors = useRef<Map<string, number>>(new Map());
   const onVoiceUpdateRef = useRef(onVoiceUpdate);
@@ -324,6 +346,35 @@ export function InquiryPanel({
     }
   }
 
+  async function listenToRecommendations(item: InquiryCase) {
+    const eventId = item.events?.at(-1)?.id;
+    const key = `${item.id}:${eventId}`;
+    if (
+      !voiceActive ||
+      !onListenRecommendations ||
+      listenPending.current ||
+      requestedEvents.has(key) ||
+      !/^i_[a-f0-9]{32}$/.test(item.id) ||
+      typeof eventId !== "number" ||
+      !Number.isSafeInteger(eventId) ||
+      eventId <= 0
+    )
+      return;
+    listenPending.current = true;
+    setListeningEvent(key);
+    setError("");
+    try {
+      if (await onListenRecommendations(item.id, eventId))
+        setRequestedEvents((current) => new Set(current).add(key));
+      else setError(t.listenFailed);
+    } catch {
+      setError(t.listenFailed);
+    } finally {
+      listenPending.current = false;
+      setListeningEvent(null);
+    }
+  }
+
   return (
     <section className="inquiry-panel" aria-labelledby="inquiry-title">
       <header className="inquiry-panel__header">
@@ -411,6 +462,38 @@ export function InquiryPanel({
                         </li>
                       ))}
                   </ul>
+                )}
+              {["team_completed", "awaiting_customer"].includes(item.state) &&
+                onListenRecommendations &&
+                item.workers.some(
+                  (worker) => worker.state === "completed" && worker.suggestion,
+                ) && (
+                  <div>
+                    <button
+                      type="button"
+                      className="inquiry-card__helpful inquiry-card__listen"
+                      disabled={
+                        !voiceActive ||
+                        listeningEvent !== null ||
+                        requestedEvents.has(
+                          `${item.id}:${item.events?.at(-1)?.id}`,
+                        )
+                      }
+                      onClick={() => void listenToRecommendations(item)}
+                    >
+                      {requestedEvents.has(
+                        `${item.id}:${item.events?.at(-1)?.id}`,
+                      )
+                        ? t.listenQueued
+                        : listeningEvent ===
+                            `${item.id}:${item.events?.at(-1)?.id}`
+                          ? t.listening
+                          : t.listen}
+                    </button>
+                    {!voiceActive && (
+                      <p className="inquiry-panel__muted">{t.activateVoice}</p>
+                    )}
+                  </div>
                 )}
               {["team_completed", "awaiting_customer"].includes(item.state) && (
                 <button
