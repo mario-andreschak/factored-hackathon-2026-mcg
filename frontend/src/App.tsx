@@ -65,6 +65,8 @@ import {
   number,
   periodParam,
   productShort,
+  ptStatusNames,
+  ptTypeNames,
   statusNames,
   typeNames,
 } from "./lib";
@@ -118,7 +120,7 @@ function Badge({
     <span className={`badge ${status.toLowerCase()}`}>
       <span />
       {language === "pt"
-        ? ptStatus[status] || statusNames[status] || status
+        ? ptStatusNames[status] || statusNames[status] || status
         : statusNames[status] || status}
     </span>
   );
@@ -249,7 +251,7 @@ const loginCopy = {
       "Experiência de demonstração com dados sintéticos do hackathon. Os nomes são apelidos; os produtos e lançamentos vêm do conjunto de dados.",
     footer: "Seu dinheiro, com tranquilidade.",
     portalLanguageNotice:
-      "Após entrar, a navegação, os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português. O Assistente usa o idioma escolhido aqui. Nomes de estabelecimentos, cidades e canais da origem são exibidos como recebidos.",
+      "Após entrar, a navegação, os produtos, seus detalhes, os movimentos e as informações da demonstração estarão em português. O Assistente usa o idioma escolhido aqui. Nomes de estabelecimentos e cidades são exibidos como recebidos. Canais conhecidos podem aparecer traduzidos; os demais mantêm o nome da origem.",
     sessionNotice:
       "O acesso deste navegador foi removido, mas não foi possível confirmar o encerramento completo da sessão e do Assistente. Peça ajuda antes de usar outra conta.",
     errors: {
@@ -890,10 +892,12 @@ function TransactionTable({
                 {t.merchant ? (
                   portalType(t.type, language)
                 ) : (
-                  <span lang="">{t.channel}</span>
+                  <span lang={t.channel === "Card" ? undefined : ""}>
+                    {portalChannel(t.channel, language)}
+                  </span>
                 )}{" "}
                 {!compact && (
-                  <span>
+                  <span className="transaction-reference">
                     · Ref. {t.product_reference.slice(-6).toUpperCase()}
                   </span>
                 )}
@@ -1184,7 +1188,9 @@ function TransactionDetail({
           </div>
           <div>
             <dt>Canal</dt>
-            <dd lang="">{t.channel}</dd>
+            <dd lang={t.channel === "Card" ? undefined : ""}>
+              {portalChannel(t.channel, language)}
+            </dd>
           </div>
           <div>
             <dt>{pt ? "Estabelecimento" : "Comercio"}</dt>
@@ -1289,17 +1295,6 @@ function AssistantText({ text }: { text: string }) {
 }
 
 type ActionLanguage = "es" | "pt";
-const ptStatus: Record<string, string> = {
-  Approved: "Aprovado",
-  Pending: "Pendente",
-  Declined: "Recusado",
-  Reversed: "Estornado",
-  Active: "Ativo",
-  Blocked: "Bloqueado",
-  Closed: "Encerrado",
-  Suspended: "Suspenso",
-  Inactive: "Inativo",
-};
 const ptCategories: Record<string, string> = {
   Food: "Alimentação",
   Other: "Outros",
@@ -1320,14 +1315,6 @@ const ptCategories: Record<string, string> = {
   Efectivo: "Dinheiro",
   Suscripción: "Assinaturas",
 };
-const ptTypes: Record<string, string> = {
-  Purchase: "Compra",
-  Withdrawal: "Saque",
-  Transfer: "Transferência",
-  Payment: "Pagamento",
-  Deposit: "Depósito",
-  Adjustment: "Ajuste",
-};
 const ptProducts: Record<string, string> = {
   "Cuenta Ahorro": "Conta poupança",
   "Préstamo Personal": "Empréstimo pessoal",
@@ -1340,8 +1327,10 @@ const ptProducts: Record<string, string> = {
 };
 const portalType = (value: string, language: ActionLanguage) =>
   language === "pt"
-    ? ptTypes[value] || typeNames[value] || value
+    ? ptTypeNames[value] || typeNames[value] || value
     : typeNames[value] || value;
+const portalChannel = (value: string, language: ActionLanguage) =>
+  value === "Card" ? (language === "pt" ? "Cartão" : "Tarjeta") : value;
 const portalProduct = (value: string, language: ActionLanguage) =>
   language === "pt"
     ? ptProducts[value] || productShort(value)
@@ -3289,12 +3278,96 @@ export default function App() {
     };
   }, [authenticated, actionLanguagePreference]);
   const dataController = useRef<AbortController | null>(null);
+  const periodSelect = useRef<HTMLSelectElement>(null);
+  const periodRetry = useRef<HTMLButtonElement>(null);
+  const periodFocusPending = useRef(false);
+  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
+  const mobileMenuClose = useRef<HTMLButtonElement>(null);
+  const desktopNavigationTarget = useRef<HTMLButtonElement>(null);
+  const sidebar = useRef<HTMLElement>(null);
+  // CSS can blur a sidebar control to BODY before the media-query change fires.
+  const sidebarHadFocus = useRef(false);
+  const wasMobileMenuOpen = useRef(false);
+  const menuLaunchedModal = useRef(false);
+  const restoreMenuFocus = () => {
+    const mobile = window.matchMedia?.("(max-width: 640px)").matches;
+    if (mobile === false) {
+      desktopNavigationTarget.current?.focus();
+    } else {
+      mobileMenuTrigger.current?.focus();
+    }
+  };
+  useLayoutEffect(() => {
+    if (mobileMenu) {
+      mobileMenuClose.current?.focus();
+    } else if (wasMobileMenuOpen.current && !assistant && !info) {
+      restoreMenuFocus();
+    }
+    wasMobileMenuOpen.current = mobileMenu;
+  }, [mobileMenu, assistant, info]);
+  useEffect(() => {
+    if (!assistant && !info && menuLaunchedModal.current) {
+      menuLaunchedModal.current = false;
+      restoreMenuFocus();
+    }
+  }, [assistant, info]);
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const mobile = window.matchMedia("(max-width: 640px)");
+    const onViewportChange = () => {
+      if (!mobile.matches) {
+        setMobileMenu(false);
+      } else if (
+        !mobileMenu &&
+        !assistant &&
+        !info &&
+        sidebarHadFocus.current
+      ) {
+        const focused = document.activeElement;
+        if (sidebar.current?.contains(focused) || focused === document.body) {
+          mobileMenuTrigger.current?.focus();
+          sidebarHadFocus.current = false;
+        }
+      }
+    };
+    mobile.addEventListener("change", onViewportChange);
+    return () => mobile.removeEventListener("change", onViewportChange);
+  }, [mobileMenu, assistant, info]);
+  // A refetch unmounts the select. Restore focus only if the customer has not
+  // focused or interacted with another control during the request.
+  useEffect(() => {
+    const movedFocus = (event: FocusEvent) => {
+      if (periodFocusPending.current && event.target !== periodSelect.current) {
+        periodFocusPending.current = false;
+      }
+    };
+    const pointerAway = (event: PointerEvent) => {
+      if (periodFocusPending.current && event.target !== periodSelect.current) {
+        periodFocusPending.current = false;
+      }
+    };
+    const tabAway = (event: KeyboardEvent) => {
+      if (periodFocusPending.current && event.key === "Tab") {
+        periodFocusPending.current = false;
+      }
+    };
+    document.addEventListener("focusin", movedFocus);
+    document.addEventListener("pointerdown", pointerAway);
+    document.addEventListener("keydown", tabAway);
+    return () => {
+      document.removeEventListener("focusin", movedFocus);
+      document.removeEventListener("pointerdown", pointerAway);
+      document.removeEventListener("keydown", tabAway);
+    };
+  }, []);
   // Read by load() so login, retry and period changes all fetch the same window.
   const periodRef = useRef<HistoryPeriod>(defaultHistoryPeriod);
   const expired = useCallback(() => {
     dataController.current?.abort();
+    periodFocusPending.current = false;
     setAuthenticated(false);
     setData(null);
+    setMobileMenu(false);
     setAssistant(false);
     setSelectedTx(null);
     setSelectedProduct(null);
@@ -3362,13 +3435,20 @@ export default function App() {
       else {
         setAuthenticated(true);
         setError(
-          "No pudimos cargar el snapshot bancario. Comprueba la conexión y vuelve a intentar.",
+          "No pudimos cargar los datos bancarios. Vuelve a intentarlo en unos momentos.",
         );
       }
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
   }, [expired]);
+  useLayoutEffect(() => {
+    if (!periodFocusPending.current || loading || authenticated !== true)
+      return;
+    const target = error ? periodRetry.current : periodSelect.current;
+    if (document.activeElement === document.body) target?.focus();
+    periodFocusPending.current = false;
+  }, [authenticated, error, loading, page, period]);
   useEffect(() => () => dataController.current?.abort(), []);
   useEffect(() => {
     api<{ auth_mode?: "demo" | "invite" }>("/api/auth/me", {
@@ -3431,6 +3511,8 @@ export default function App() {
     closeInfo = useCallback(() => setInfo(false), []);
   function changePeriod(next: HistoryPeriod) {
     // The server bounds the history, so a new window is a new fetch.
+    periodFocusPending.current =
+      document.activeElement === periodSelect.current;
     periodRef.current = next;
     setPeriod(next);
     setMonth("all");
@@ -3442,6 +3524,7 @@ export default function App() {
     if (next !== "transactions") setQuery("");
   }
   function openChat(t: Transaction | null = null) {
+    if (mobileMenu) menuLaunchedModal.current = true;
     setChatSelection(t);
     setSelectedTx(null);
     setAssistant(true);
@@ -3498,7 +3581,7 @@ export default function App() {
           label(t),
           t.type,
           typeNames[t.type],
-          ptTypes[t.type],
+          ptTypeNames[t.type],
           t.channel,
           t.currency,
           t.reference,
@@ -3516,7 +3599,7 @@ export default function App() {
     products.find((p) => /tarjeta.*cr[eé]dito/i.test(p.type)) || products[0];
   const paginationTotal = Math.max(1, Math.ceil(filtered.length / 10));
   function download(items: Transaction[]) {
-    csv(items);
+    csv(items, actionLanguagePreference);
     setToast(
       pt
         ? "Seus movimentos foram baixados em CSV."
@@ -3526,12 +3609,60 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside
+        ref={sidebar}
         className={`sidebar ${mobileMenu ? "mobile-open" : ""}`}
         lang={shellLang}
+        onFocusCapture={() => {
+          sidebarHadFocus.current = true;
+        }}
+        onBlurCapture={(event) => {
+          const next = event.relatedTarget;
+          if (
+            (next &&
+              next !== document.body &&
+              !event.currentTarget.contains(next as Node)) ||
+            !window.matchMedia?.("(max-width: 640px)").matches
+          ) {
+            sidebarHadFocus.current = false;
+          }
+        }}
+        role={mobileMenu ? "dialog" : undefined}
+        aria-modal={mobileMenu ? true : undefined}
+        aria-label={
+          mobileMenu
+            ? pt
+              ? "Menu de navegação"
+              : "Menú de navegación"
+            : undefined
+        }
+        onKeyDown={(event) => {
+          if (!mobileMenu) return;
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setMobileMenu(false);
+            return;
+          }
+          if (event.key !== "Tab") return;
+          const controls = Array.from(
+            event.currentTarget.querySelectorAll<HTMLElement>(
+              'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter((control) => control.tabIndex >= 0);
+          const first = controls[0];
+          const last = controls.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first?.focus();
+          }
+        }}
       >
         <div className="sidebar-brand">
           <Brand />
           <button
+            ref={mobileMenuClose}
             className="icon-button mobile-close"
             aria-label={pt ? "Fechar menu" : "Cerrar menú"}
             onClick={() => setMobileMenu(false)}
@@ -3547,6 +3678,7 @@ export default function App() {
             <button
               className={page === n.id ? "active" : ""}
               key={n.id}
+              ref={page === n.id ? desktopNavigationTarget : undefined}
               onClick={() => navigate(n.id)}
             >
               <n.icon size={20} />
@@ -3584,7 +3716,12 @@ export default function App() {
                   ? "Confira os detalhes de cada cobrança no seu histórico."
                   : "Revisa los detalles de cada cargo en tu historial."}
             </p>
-            <button onClick={() => openChat()}>
+            <button
+              onClick={() => {
+                openChat();
+                setMobileMenu(false);
+              }}
+            >
               {chatStatus.available
                 ? pt
                   ? "Vamos conversar"
@@ -3595,7 +3732,14 @@ export default function App() {
               <ArrowUpRight size={16} />
             </button>
           </div>
-          <button className="sidebar-info" onClick={() => setInfo(true)}>
+          <button
+            className="sidebar-info"
+            onClick={() => {
+              if (mobileMenu) menuLaunchedModal.current = true;
+              setInfo(true);
+              setMobileMenu(false);
+            }}
+          >
             <ShieldCheck size={18} />
             {pt ? "Sobre esta experiência" : "Sobre esta experiencia"}
             <ArrowUpRight size={14} />
@@ -3624,16 +3768,19 @@ export default function App() {
       {mobileMenu && (
         <button
           className="mobile-shade"
-          aria-label={pt ? "Fechar menu" : "Cerrar menú"}
+          aria-hidden="true"
+          tabIndex={-1}
           onClick={() => setMobileMenu(false)}
         />
       )}
-      <div className="main-shell">
+      <div className="main-shell" inert={mobileMenu}>
         <header className="topbar" lang={shellLang}>
           <div className="topbar-title">
             <button
+              ref={mobileMenuTrigger}
               className="icon-button mobile-menu"
               aria-label={pt ? "Abrir menu" : "Abrir menú"}
+              aria-expanded={mobileMenu}
               onClick={() => setMobileMenu(true)}
             >
               <Menu size={21} />
@@ -3658,7 +3805,6 @@ export default function App() {
                   setPage("transactions");
                 }}
               />
-              <kbd>⌕</kbd>
             </label>
             <button className="snapshot-pill" onClick={() => setInfo(true)}>
               <span className="live-dot" />
@@ -3688,15 +3834,24 @@ export default function App() {
               <ShieldCheck size={36} />
               <h1>
                 {pt
-                  ? "Um momento para reconectar."
-                  : "Un momento para reconectar."}
+                  ? "Não foi possível carregar seus dados."
+                  : "No pudimos cargar tus datos."}
               </h1>
               <p role="alert">
                 {pt
-                  ? "Não foi possível carregar os dados bancários. Verifique a conexão e tente novamente."
+                  ? "Não foi possível carregar os dados bancários. Tente novamente em alguns instantes."
                   : error}
               </p>
-              <button className="button primary" onClick={load}>
+              <button
+                ref={periodRetry}
+                className="button primary"
+                onClick={() => {
+                  periodFocusPending.current =
+                    page === "transactions" &&
+                    document.activeElement === periodRetry.current;
+                  load();
+                }}
+              >
                 {pt ? "Tentar novamente" : "Volver a intentar"}
                 <ArrowRight size={17} />
               </button>
@@ -4151,9 +4306,13 @@ export default function App() {
               {page === "transactions" && (
                 <>
                   {pt && (
-                    <p className="data-footnote" lang="pt-BR">
-                      Nomes de estabelecimentos, cidades e canais da origem são
-                      exibidos como recebidos.
+                    <p
+                      className="data-footnote transaction-origin-note"
+                      lang="pt-BR"
+                    >
+                      Nomes de estabelecimentos e cidades são exibidos como
+                      recebidos. Canais conhecidos podem aparecer traduzidos; os
+                      demais mantêm o nome da origem.
                     </p>
                   )}
                   <div className="transactions-toolbar">
@@ -4240,7 +4399,7 @@ export default function App() {
                           {["Approved", "Pending", "Declined", "Reversed"].map(
                             (s) => (
                               <option key={s} value={s}>
-                                {pt ? ptStatus[s] : statusNames[s]}
+                                {pt ? ptStatusNames[s] : statusNames[s]}
                               </option>
                             ),
                           )}
@@ -4251,6 +4410,7 @@ export default function App() {
                           {pt ? "Período" : "Periodo"}
                         </span>
                         <select
+                          ref={periodSelect}
                           aria-label={
                             pt
                               ? "Período dos movimentos"
@@ -4342,7 +4502,9 @@ export default function App() {
                       <div>
                         <button
                           className="icon-button"
-                          aria-label="Página anterior"
+                          aria-label={
+                            pt ? "Ir para a página anterior" : "Página anterior"
+                          }
                           lang={shellLang}
                           disabled={pagination === 1}
                           onClick={() => setPagination(pagination - 1)}

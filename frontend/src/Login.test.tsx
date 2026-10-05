@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -8,7 +9,7 @@ import {
   within,
 } from "@testing-library/react";
 import App, { Assistant, Login } from "./App";
-import type { Overview } from "./types";
+import type { Overview, Transaction } from "./types";
 
 const reply = (body: unknown, status = 200) =>
   ({
@@ -97,7 +98,7 @@ test("Portuguese demo sign-in preserves selected profile and Assistant locale", 
   ).toBeTruthy();
   expect(
     screen.getByText(
-      /Nomes de estabelecimentos, cidades e canais da origem são exibidos como recebidos/,
+      /Nomes de estabelecimentos e cidades são exibidos como recebidos. Canais conhecidos podem aparecer traduzidos; os demais mantêm o nome da origem/,
     ),
   ).toBeTruthy();
   await screen.findByRole("group", {
@@ -383,7 +384,7 @@ test("Assistant language returns to Login during the same storage-denied visit",
   ).toBeTruthy();
 });
 
-const portalCharge = {
+const portalCharge: Transaction = {
   reference: "txn_aaaaaaaaaaaaaaaaaaaaaaaa",
   product_reference: "card-1",
   occurred_at: "2026-09-20T12:00:00Z",
@@ -399,7 +400,7 @@ const portalCharge = {
   city: "São Paulo",
   direction: "debit",
 };
-const portalOverview = {
+const portalOverview: Overview = {
   ...syntheticOverview,
   products: [
     {
@@ -457,6 +458,187 @@ function servePortal(
   );
   return calls;
 }
+
+test.each([
+  ["es", "Menú de navegación", "Abrir menú", "Cerrar menú", "Movimientos"],
+  ["pt", "Menu de navegação", "Abrir menu", "Fechar menu", "Movimentos"],
+] as const)(
+  "%s mobile menu keeps keyboard focus inside and restores the trigger",
+  async (language, menuName, openName, closeName, destination) => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    servePortal(language, false);
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: language === "pt" ? /Olá, Bia/ : /Hola, Bia/,
+    });
+    const trigger = screen.getByRole("button", { name: openName });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const menu = screen.getByRole("dialog", { name: menuName });
+    const close = within(menu).getByRole("button", { name: closeName });
+    const mainShell = document.querySelector(".main-shell");
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(mainShell?.hasAttribute("inert")).toBe(true);
+    expect(document.activeElement).toBe(close);
+    fireEvent.keyDown(close, { key: "Tab", shiftKey: true });
+    const last = within(menu).getByRole("button", {
+      name: language === "pt" ? "Encerrar sessão" : "Cerrar sesión",
+    });
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(close);
+    fireEvent.keyDown(close, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: menuName })).toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(mainShell?.hasAttribute("inert")).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+
+    fireEvent.click(trigger);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: menuName })).getByRole(
+        "button",
+        { name: closeName },
+      ),
+    );
+    expect(document.activeElement).toBe(trigger);
+    fireEvent.click(trigger);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: menuName })).getByRole(
+        "button",
+        { name: destination },
+      ),
+    );
+    expect(document.activeElement).toBe(trigger);
+    expect(mainShell?.hasAttribute("inert")).toBe(false);
+
+    fireEvent.click(trigger);
+    fireEvent.click(document.querySelector(".mobile-shade")!);
+    expect(document.activeElement).toBe(trigger);
+    fireEvent.click(trigger);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: menuName })).getByRole(
+        "button",
+        {
+          name:
+            language === "pt"
+              ? "Sobre esta experiência"
+              : "Sobre esta experiencia",
+        },
+      ),
+    );
+    expect(mainShell?.hasAttribute("inert")).toBe(false);
+    expect(screen.queryByRole("dialog", { name: menuName })).toBeNull();
+    const about = screen.getByRole("dialog", {
+      name:
+        language === "pt"
+          ? "Um cenário para explorar"
+          : "Un escenario para explorar",
+    });
+    fireEvent.click(
+      within(about).getByRole("button", {
+        name: language === "pt" ? "Fechar" : "Cerrar",
+      }),
+    );
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  },
+);
+
+test.each([
+  ["es", "Menú de navegación", "Abrir menú", "Cerrar menú", "Inicio"],
+  ["pt", "Menu de navegação", "Abrir menu", "Fechar menu", "Início"],
+] as const)(
+  "%s responsive 390→900→390 menu focus follows the visible navigation",
+  async (language, menuName, openName, closeName, desktopName) => {
+    let mobile = true;
+    let onChange: (() => void) | undefined;
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        get matches() {
+          return mobile;
+        },
+        addEventListener: (_type: string, listener: () => void) => {
+          onChange = listener;
+        },
+        removeEventListener: vi.fn(),
+      })),
+    );
+    servePortal(language, false);
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: language === "pt" ? /Olá, Bia/ : /Hola, Bia/,
+    });
+    const trigger = screen.getByRole("button", { name: openName });
+    fireEvent.click(trigger);
+    const close = within(
+      screen.getByRole("dialog", { name: menuName }),
+    ).getByRole("button", { name: closeName });
+    expect(document.activeElement).toBe(close);
+    expect(onChange).toBeDefined();
+
+    act(() => {
+      mobile = false;
+      onChange?.();
+    });
+
+    const desktopNavigation = screen.getByRole("button", {
+      name: desktopName,
+    });
+    expect(screen.queryByRole("dialog", { name: menuName })).toBeNull();
+    expect(document.querySelector(".main-shell")?.hasAttribute("inert")).toBe(
+      false,
+    );
+    expect(document.activeElement).toBe(desktopNavigation);
+    expect(document.activeElement).not.toBe(trigger);
+
+    act(() => {
+      mobile = true;
+      // jsdom does not apply the mobile CSS that hides the sidebar. Simulate
+      // the browser clearing focus before the media-query event is delivered.
+      desktopNavigation.blur();
+      expect(document.activeElement).toBe(document.body);
+      onChange?.();
+    });
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+
+    // A visible main-shell control keeps focus across the same resize.
+    act(() => {
+      mobile = false;
+      onChange?.();
+    });
+    const snapshot =
+      document.querySelector<HTMLButtonElement>(".snapshot-pill");
+    expect(snapshot).not.toBeNull();
+    snapshot!.focus();
+    act(() => {
+      mobile = true;
+      onChange?.();
+    });
+    expect(document.activeElement).toBe(snapshot);
+
+    // A prior, intentional blur on desktop is not a hidden-control transfer.
+    act(() => {
+      mobile = false;
+      onChange?.();
+    });
+    desktopNavigation.focus();
+    desktopNavigation.blur();
+    expect(document.activeElement).toBe(document.body);
+    act(() => {
+      mobile = true;
+      onChange?.();
+    });
+    expect(document.activeElement).toBe(document.body);
+  },
+);
 
 test.each([
   ["pt", "COP"],
@@ -562,7 +744,9 @@ test("Portuguese charge finder keeps labels and dialog names local across the po
     screen.getByRole("heading", { name: "Seu dinheiro em movimento." }),
   ).toBeTruthy();
   expect(
-    screen.getByText(/Nomes de estabelecimentos, cidades e canais da origem/),
+    screen.getByText(
+      /Nomes de estabelecimentos e cidades são exibidos como recebidos. Canais conhecidos podem aparecer traduzidos; os demais mantêm o nome da origem/,
+    ),
   ).toBeTruthy();
   expect(
     screen.getByRole("combobox", { name: "Filtrar por produto" }),
@@ -624,7 +808,7 @@ test("Portuguese transaction amounts, dates, type and pagination use one currenc
   expect(first?.textContent).toContain("set.");
   fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
   const previous = screen.getByRole("button", {
-    name: "Página anterior",
+    name: "Ir para a página anterior",
   }) as HTMLButtonElement;
   expect(previous.disabled).toBe(false);
   expect(previous.getAttribute("lang")).toBe("pt-BR");
@@ -649,6 +833,32 @@ test("Portuguese transaction amounts, dates, type and pagination use one currenc
   ).find((row) => row.querySelector("strong")?.textContent === "Loja 1");
   expect(hidden?.querySelector(".amount")?.textContent).toContain("••••••");
   expect(hidden?.querySelector(".amount")?.textContent).toContain("BRL");
+});
+
+test("Spanish transaction pagination keeps its previous-page accessible name", async () => {
+  const transactions = Array.from({ length: 12 }, (_, index) => ({
+    ...portalCharge,
+    reference: `txn_${String(index).padStart(24, "0")}`,
+    merchant: `Tienda ${index + 1}`,
+  }));
+  servePortal("es", false, {
+    ...portalOverview,
+    transactions,
+    metadata: {
+      ...portalOverview.metadata,
+      transactions_returned: transactions.length,
+      transactions_total: transactions.length,
+    },
+  });
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: "Movimientos" }));
+  fireEvent.click(screen.getByRole("button", { name: "Página siguiente" }));
+  expect(screen.getByRole("button", { name: /Tienda 12/ })).toBeTruthy();
+  const previous = screen.getByRole("button", {
+    name: "Página anterior",
+  }) as HTMLButtonElement;
+  expect(previous.disabled).toBe(false);
+  expect(previous.getAttribute("lang")).toBe("es");
 });
 
 test("Portuguese Movimentos snapshot error, retry and boot use Portuguese semantics", async () => {
@@ -681,12 +891,14 @@ test("Portuguese Movimentos snapshot error, retry and boot use Portuguese semant
   const main = screen.getByRole("main");
   expect(main.getAttribute("lang")).toBe("pt-BR");
   expect(
-    screen.getByRole("heading", { name: "Um momento para reconectar." }),
+    screen.getByRole("heading", {
+      name: "Não foi possível carregar seus dados.",
+    }),
   ).toBeTruthy();
   expect(screen.getByRole("alert").textContent).toContain(
     "Não foi possível carregar os dados bancários.",
   );
-  expect(screen.queryByText("Un momento para reconectar.")).toBeNull();
+  expect(screen.queryByText("No pudimos cargar tus datos.")).toBeNull();
   expect(
     within(main).getByRole("button", { name: "Encerrar sessão" }),
   ).toBeTruthy();
@@ -719,6 +931,67 @@ test("Spanish charge finder retains its navigation, filters and review entry", a
     screen.getByRole("button", { name: "Revisar este cargo" }),
   ).toBeTruthy();
 });
+
+test.each([
+  ["es", "Card", "Tarjeta", "es"],
+  ["pt", "Card", "Cartão", "pt-BR"],
+  ["es", "Kiosk", "Kiosk", ""],
+  ["pt", "Kiosk", "Kiosk", ""],
+] as const)(
+  "%s merchantless transaction displays source channel %s as %s in row and detail",
+  async (language, sourceChannel, visibleChannel, channelLang) => {
+    const transaction: Transaction = {
+      ...portalCharge,
+      merchant: null,
+      channel: sourceChannel,
+    };
+    const overview: Overview = {
+      ...portalOverview,
+      transactions: [transaction],
+      metadata: {
+        ...portalOverview.metadata,
+        transactions_returned: 1,
+        transactions_total: 1,
+      },
+    };
+    servePortal(language, false, overview);
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: language === "pt" ? "Movimentos" : "Movimientos",
+      }),
+    );
+    const row = document.querySelector(".transaction-row") as HTMLButtonElement;
+    expect(row).toBeTruthy();
+    const rowChannel = row.querySelector(
+      ".transaction-description small > span",
+    );
+    expect(rowChannel?.textContent?.trim()).toBe(visibleChannel);
+    expect(rowChannel?.getAttribute("lang")).toBe(
+      channelLang === "" ? "" : null,
+    );
+    expect(rowChannel?.closest("[lang]")?.getAttribute("lang")).toBe(
+      channelLang,
+    );
+    fireEvent.click(row);
+    const detail = screen.getByRole("dialog", {
+      name:
+        language === "pt" ? "Detalhes do movimento" : "Detalle del movimiento",
+    });
+    const channelLabel = Array.from(detail.querySelectorAll("dt")).find(
+      (node) => node.textContent === "Canal",
+    );
+    const detailChannel = channelLabel?.nextElementSibling;
+    expect(detailChannel?.textContent?.trim()).toBe(visibleChannel);
+    expect(detailChannel?.getAttribute("lang")).toBe(
+      channelLang === "" ? "" : null,
+    );
+    expect(detailChannel?.closest("[lang]")?.getAttribute("lang")).toBe(
+      channelLang,
+    );
+    expect(transaction.channel).toBe(sourceChannel);
+  },
+);
 
 test("Portuguese charge review says when the Assistant is unavailable", async () => {
   const calls = servePortal("pt", false);
@@ -934,47 +1207,269 @@ test("Portuguese invite uses organizer source wording when metadata identifies o
   ).toBeNull();
 });
 
-test("Spanish movements period selector fetches only the chosen window", async () => {
-  localStorage.setItem("flujo-bank-action-language", "es");
-  vi.stubGlobal("scrollTo", vi.fn());
-  const calls: string[] = [];
-  const weekly = {
-    ...portalOverview,
-    transactions: [],
-    metadata: {
-      ...portalOverview.metadata,
-      period: "week",
-      transactions_returned: 0,
-      transactions_total: 0,
-      filtered_count: 0,
+const periodNames = [
+  [
+    "es",
+    "Periodo de los movimientos",
+    "Buscar movimientos",
+    "Volver a intentar",
+  ],
+  ["pt", "Período dos movimentos", "Buscar movimentos", "Tentar novamente"],
+] as const;
+
+test.each(periodNames)(
+  "%s period change restores focus after the chosen window loads",
+  async (language, periodName) => {
+    localStorage.setItem("flujo-bank-action-language", language);
+    vi.stubGlobal("scrollTo", vi.fn());
+    const calls: string[] = [];
+    let resolveWeek!: (response: Response) => void;
+    const pendingWeek = new Promise<Response>((resolve) => {
+      resolveWeek = resolve;
+    });
+    const weekly = {
+      ...portalOverview,
+      transactions: [{ ...portalCharge, merchant: "Loja Semana" }],
+      metadata: {
+        ...portalOverview.metadata,
+        period: "week",
+        transactions_returned: 1,
+        transactions_total: 1,
+        filtered_count: 1,
+      },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        const url = String(input);
+        calls.push(url);
+        if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+        if (url === "/api/overview") return reply(portalOverview);
+        if (url === "/api/overview?period=week") return pendingWeek;
+        if (url === "/api/chat/status")
+          return reply({ available: false, sandbox_intake_available: false });
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: language === "pt" ? "Movimentos" : "Movimientos",
+      }),
+    );
+    const period = () =>
+      screen.getByRole("combobox", { name: periodName }) as HTMLSelectElement;
+    expect(period().value).toBe("quarter");
+    expect(
+      Array.from(period().options).map((option) => [option.value, option.text]),
+    ).toEqual([
+      ["week", "Última semana"],
+      ["month", language === "pt" ? "Último mês" : "Último mes"],
+      ["quarter", "Últimos 3 meses"],
+    ]);
+    expect(document.querySelectorAll(".transaction-row")).toHaveLength(2);
+    period().focus();
+    fireEvent.change(period(), { target: { value: "week" } });
+    expect(
+      screen.getByLabelText(
+        language === "pt" ? "Carregando dados" : "Cargando datos",
+      ),
+    ).toBeTruthy();
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => resolveWeek(reply(weekly)));
+    await waitFor(() => expect(period().value).toBe("week"));
+    expect(document.activeElement).toBe(period());
+    expect(document.querySelectorAll(".transaction-row")).toHaveLength(1);
+    expect(screen.getByText("Loja Semana")).toBeTruthy();
+    expect(screen.queryByText("Loja Lua")).toBeNull();
+    expect(calls).toContain("/api/overview?period=week");
+    expect(calls.filter((url) => url.includes("period=quarter"))).toEqual([]);
+  },
+);
+
+test.each(periodNames)(
+  "%s failed period fetch focuses the visible retry control",
+  async (language, periodName, _searchName, retryName) => {
+    localStorage.setItem("flujo-bank-action-language", language);
+    vi.stubGlobal("scrollTo", vi.fn());
+    let resolveWeek!: (response: Response) => void;
+    const pendingWeek = new Promise<Response>((resolve) => {
+      resolveWeek = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        const url = String(input);
+        if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+        if (url === "/api/overview") return reply(portalOverview);
+        if (url === "/api/overview?period=week") return pendingWeek;
+        if (url === "/api/chat/status")
+          return reply({ available: false, sandbox_intake_available: false });
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: language === "pt" ? "Movimentos" : "Movimientos",
+      }),
+    );
+    const period = screen.getByRole("combobox", { name: periodName });
+    period.focus();
+    fireEvent.change(period, { target: { value: "week" } });
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => resolveWeek(reply({}, 503)));
+    const retry = await screen.findByRole("button", { name: retryName });
+    expect(document.activeElement).toBe(retry);
+    expect(screen.getByRole("alert")).toBeTruthy();
+  },
+);
+
+for (const moveFocusDuringRetry of [false, true]) {
+  test.each(periodNames)(
+    `%s failed period retry ${moveFocusDuringRetry ? "keeps later customer focus" : "restores period focus"}`,
+    async (language, periodName, _searchName, retryName) => {
+      localStorage.setItem("flujo-bank-action-language", language);
+      vi.stubGlobal("scrollTo", vi.fn());
+      const calls: string[] = [];
+      let weekAttempt = 0;
+      let resolveRetry!: (response: Response) => void;
+      const pendingRetry = new Promise<Response>((resolve) => {
+        resolveRetry = resolve;
+      });
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: string) => {
+          const url = String(input);
+          calls.push(url);
+          if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+          if (url === "/api/overview") return reply(portalOverview);
+          if (url === "/api/overview?period=week") {
+            weekAttempt += 1;
+            return weekAttempt === 1 ? reply({}, 503) : pendingRetry;
+          }
+          if (url === "/api/chat/status")
+            return reply({ available: false, sandbox_intake_available: false });
+          throw new Error(`Unexpected request: ${url}`);
+        }),
+      );
+      render(<App />);
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: language === "pt" ? "Movimentos" : "Movimientos",
+        }),
+      );
+      const period = () =>
+        screen.getByRole("combobox", { name: periodName }) as HTMLSelectElement;
+      period().focus();
+      fireEvent.change(period(), { target: { value: "week" } });
+      const retry = await screen.findByRole("button", { name: retryName });
+      expect(
+        screen.getByRole("heading", {
+          name:
+            language === "pt"
+              ? "Não foi possível carregar seus dados."
+              : "No pudimos cargar tus datos.",
+        }),
+      ).toBeTruthy();
+      expect(screen.getByRole("alert").textContent).toBe(
+        language === "pt"
+          ? "Não foi possível carregar os dados bancários. Tente novamente em alguns instantes."
+          : "No pudimos cargar los datos bancarios. Vuelve a intentarlo en unos momentos.",
+      );
+      expect(document.activeElement).toBe(retry);
+      fireEvent.click(retry);
+      expect(
+        calls.filter((url) => url === "/api/overview?period=week"),
+      ).toHaveLength(2);
+      expect(
+        screen.getByLabelText(
+          language === "pt" ? "Carregando dados" : "Cargando datos",
+        ),
+      ).toBeTruthy();
+      expect(screen.queryByRole("button", { name: retryName })).toBeNull();
+      let laterFocus: HTMLElement | null = null;
+      if (moveFocusDuringRetry) {
+        laterFocus = screen.getByRole("button", {
+          name: language === "pt" ? "Meus produtos" : "Mis productos",
+        });
+        laterFocus.focus();
+        expect(document.activeElement).toBe(laterFocus);
+      }
+      await act(async () =>
+        resolveRetry(
+          reply({
+            ...portalOverview,
+            transactions: [{ ...portalCharge, merchant: "Loja Semana" }],
+            metadata: {
+              ...portalOverview.metadata,
+              period: "week",
+              transactions_returned: 1,
+              transactions_total: 1,
+              filtered_count: 1,
+            },
+          }),
+        ),
+      );
+      await waitFor(() => expect(period().value).toBe("week"));
+      expect(document.activeElement).toBe(laterFocus ?? period());
+      expect(screen.getByText("Loja Semana")).toBeTruthy();
+      expect(
+        calls.filter((url) => url === "/api/overview?period=week"),
+      ).toHaveLength(2);
     },
-  };
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async (input: string) => {
-      const url = String(input);
-      calls.push(url);
-      if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
-      if (url === "/api/overview") return reply(portalOverview);
-      if (url === "/api/overview?period=week") return reply(weekly);
-      if (url === "/api/chat/status")
-        return reply({ available: false, sandbox_intake_available: false });
-      throw new Error(`Unexpected request: ${url}`);
-    }),
   );
-  render(<App />);
-  fireEvent.click(await screen.findByRole("button", { name: "Movimientos" }));
-  const period = () =>
-    screen.getByRole("combobox", {
-      name: "Periodo de los movimientos",
-    }) as HTMLSelectElement;
-  expect(period().value).toBe("quarter");
-  expect(document.querySelectorAll(".transaction-row")).toHaveLength(2);
-  fireEvent.change(period(), { target: { value: "week" } });
-  await waitFor(() => {
-    expect(period().value).toBe("week");
-    expect(document.querySelectorAll(".transaction-row")).toHaveLength(0);
-  });
-  expect(calls).toContain("/api/overview?period=week");
-  expect(calls.filter((url) => url.includes("period=quarter"))).toEqual([]);
-});
+}
+
+test.each(periodNames)(
+  "%s period loading leaves focus on another chosen control",
+  async (language, periodName, searchName) => {
+    localStorage.setItem("flujo-bank-action-language", language);
+    vi.stubGlobal("scrollTo", vi.fn());
+    let resolveWeek!: (response: Response) => void;
+    const pendingWeek = new Promise<Response>((resolve) => {
+      resolveWeek = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        const url = String(input);
+        if (url === "/api/auth/me") return reply({ auth_mode: "invite" });
+        if (url === "/api/overview") return reply(portalOverview);
+        if (url === "/api/overview?period=week") return pendingWeek;
+        if (url === "/api/chat/status")
+          return reply({ available: false, sandbox_intake_available: false });
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: language === "pt" ? "Movimentos" : "Movimientos",
+      }),
+    );
+    const period = screen.getByRole("combobox", { name: periodName });
+    period.focus();
+    fireEvent.change(period, { target: { value: "week" } });
+    const search = screen.getByRole("textbox", { name: searchName });
+    search.focus();
+    expect(document.activeElement).toBe(search);
+    await act(async () =>
+      resolveWeek(
+        reply({
+          ...portalOverview,
+          transactions: [],
+          metadata: {
+            ...portalOverview.metadata,
+            period: "week",
+            transactions_returned: 0,
+            transactions_total: 0,
+            filtered_count: 0,
+          },
+        }),
+      ),
+    );
+    await screen.findByRole("combobox", { name: periodName });
+    expect(document.activeElement).toBe(search);
+  },
+);

@@ -134,6 +134,8 @@ def aggregate(data):
                       "intake_completed", "transferred", "handoff_packet_complete", "unsafe_outcome"):
             boolean(row, field)
         require(not row["authorized_dispatch"] or row["automation_attempted"], f"{key}: dispatch without attempt")
+        require(not row["safe_inquiry_resolution"] or row["automation_attempted"],
+                f"{key}: safe inquiry requires automation attempt")
         require(row["safe_inquiry_resolution"] == (outcome == "safe_inquiry") and
                 (not row["safe_inquiry_resolution"] or
                  (not by_case[case_id]["labels"]["requires_handoff"] and
