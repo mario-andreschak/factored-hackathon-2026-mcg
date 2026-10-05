@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from scripts.package_preflight import context
+from deploy.rc import build_public_context
 
 
 class ContextTests(unittest.TestCase):
@@ -134,6 +135,27 @@ class ContextTests(unittest.TestCase):
         self.commit("Missing helper")
         with self.assertRaisesRegex(context.ContextError, "required committed file missing.*verify_installed"):
             self.build()
+
+    def test_public_rc_excludes_test_fixtures_but_rejects_private_keys(self):
+        self.write("deploy/rc/public-gateway.mjs", b"// Synthetic public gateway.\n")
+        self.write("deploy/rc/fixtures/loopback-test.key", b"PUBLIC_TEST_KEY_SENTINEL\n")
+        self.write("deploy/rc/fixtures/loopback-test.crt", b"PUBLIC_TEST_CERT_SENTINEL\n")
+        self.commit("Public gateway with test-only TLS fixtures")
+        output = self.root / "public-rc-context"
+        with patch.object(build_public_context, "ROOT", self.repo):
+            build_public_context.export(output, "HEAD")
+        manifest = json.loads((output / "source-manifest.json").read_text())
+        self.assertEqual((output / "deploy/rc/public-gateway.mjs").read_bytes(),
+                         b"// Synthetic public gateway.\n")
+        self.assertFalse((output / "deploy/rc/fixtures").exists())
+        self.assertFalse(any(name.startswith("deploy/rc/fixtures/")
+                             for name in manifest["files"]))
+        # A sibling with a similar name must still hit the secret-suffix guard.
+        self.write("deploy/rc/fixtures-private/production.key", b"PRIVATE_KEY_SENTINEL\n")
+        self.commit("Private key outside test fixture directory")
+        with patch.object(build_public_context, "ROOT", self.repo):
+            with self.assertRaisesRegex(ValueError, "private or generated file in build allowlist"):
+                build_public_context.export(self.root / "denied-public-rc-context", "HEAD")
 
 
 class StaticAuditTests(unittest.TestCase):
