@@ -2466,9 +2466,12 @@ export function Assistant({
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
   const voiceOwnerEpoch = useRef(0);
+  const voiceUpdateRequests = useRef(new Set<AbortController>());
+  const pendingVoiceUpdates = useRef(new Set<string>());
   const voiceScope = useRef({ language: actionLanguage, profileId });
   const stopVoice = useCallback(() => {
     voiceOwnerEpoch.current += 1;
+    for (const request of voiceUpdateRequests.current) request.abort();
     voice.stop();
   }, [voice.stop]);
   const startVoice = useCallback(async () => {
@@ -2491,63 +2494,93 @@ export function Assistant({
     (archiveLimit > 0 || (!viewingArchivedChat && archiveMessageCount > 0)),
   );
   const narrateVoiceUpdate = useCallback(
-    (caseId: string, eventId: number) => {
+    async (
+      caseId: string,
+      eventId: number,
+      recommendationsOnly = false,
+    ): Promise<boolean> => {
       if (
         !/^i_[a-f0-9]{32}$/.test(caseId) ||
         !Number.isSafeInteger(eventId) ||
         eventId <= 0
       )
-        return;
+        return false;
       const nativeOwner = voiceRef.current.getSessionOwner();
-      if (!voiceRef.current.active || nativeOwner === null) return;
+      if (!voiceRef.current.active || nativeOwner === null) return false;
       const afterEventId = voiceUpdateCursors.current.get(caseId) ?? 0;
-      if (eventId <= afterEventId) return;
-      voiceUpdateCursors.current.set(caseId, eventId);
-      const ownerEpoch = voiceOwnerEpoch.current;
-      void api<
-        | {
-            reply: string;
-            event_id: number;
-            inquiry_state: string;
-            bank_authority: false;
-          }
-        | undefined
-      >(
-        `/api/assistant/voice-update?case_id=${encodeURIComponent(caseId)}&after_event_id=${afterEventId}&language=${actionLanguageRef.current}`,
+      const pendingKey = `${caseId}:${eventId}`;
+      if (
+        eventId <= afterEventId ||
+        pendingVoiceUpdates.current.has(pendingKey)
       )
-        .then((result) => {
-          if (
-            !result ||
-            result.bank_authority !== false ||
-            typeof result.reply !== "string" ||
-            !Number.isSafeInteger(result.event_id) ||
-            result.event_id <= afterEventId ||
-            ![
-              "team_completed",
-              "awaiting_customer",
-              "informational_resolved",
-            ].includes(result.inquiry_state) ||
-            result.event_id <= (spokenVoiceUpdates.current.get(caseId) ?? 0) ||
-            ownerEpoch !== voiceOwnerEpoch.current ||
-            voiceRef.current.getSessionOwner() !== nativeOwner ||
-            !voiceRef.current.active ||
-            !alive.current
-          )
-            return;
-          if (voiceRef.current.narrate(result.reply, nativeOwner))
-            spokenVoiceUpdates.current.set(caseId, result.event_id);
-        })
-        .catch((error) => {
-          if (
-            ownerEpoch !== voiceOwnerEpoch.current ||
-            voiceRef.current.getSessionOwner() !== nativeOwner ||
-            !voiceRef.current.active ||
-            !alive.current
-          )
-            return;
-          if (error instanceof ApiError && error.status === 401) onExpired();
-          // A missed voice update must not interrupt the customer’s chat.
-        });
+        return false;
+      pendingVoiceUpdates.current.add(pendingKey);
+      const request = new AbortController();
+      voiceUpdateRequests.current.add(request);
+      const ownerEpoch = voiceOwnerEpoch.current;
+      try {
+        const result = await api<
+          | {
+              reply: string;
+              event_id: number;
+              inquiry_state: string;
+              bank_authority: false;
+            }
+          | undefined
+        >(
+          `/api/assistant/voice-update?case_id=${encodeURIComponent(caseId)}&after_event_id=${afterEventId}&language=${actionLanguageRef.current}`,
+          {
+            signal: AbortSignal.any([
+              request.signal,
+              AbortSignal.timeout(10_000),
+            ]),
+          },
+        );
+        if (
+          !result ||
+          result.bank_authority !== false ||
+          typeof result.reply !== "string" ||
+          !Number.isSafeInteger(result.event_id) ||
+          result.event_id <= afterEventId ||
+          !(
+            recommendationsOnly
+              ? ["team_completed", "awaiting_customer"]
+              : [
+                  "team_completed",
+                  "awaiting_customer",
+                  "informational_resolved",
+                ]
+          ).includes(result.inquiry_state) ||
+          result.event_id <= (spokenVoiceUpdates.current.get(caseId) ?? 0) ||
+          ownerEpoch !== voiceOwnerEpoch.current ||
+          voiceRef.current.getSessionOwner() !== nativeOwner ||
+          !voiceRef.current.active ||
+          !alive.current ||
+          request.signal.aborted
+        )
+          return false;
+        if (voiceRef.current.narrate(result.reply, nativeOwner)) {
+          spokenVoiceUpdates.current.set(caseId, result.event_id);
+          voiceUpdateCursors.current.set(caseId, result.event_id);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        if (
+          ownerEpoch !== voiceOwnerEpoch.current ||
+          voiceRef.current.getSessionOwner() !== nativeOwner ||
+          !voiceRef.current.active ||
+          !alive.current ||
+          request.signal.aborted
+        )
+          return false;
+        if (error instanceof ApiError && error.status === 401) onExpired();
+        // A missed voice update must not interrupt the customer’s chat.
+        return false;
+      } finally {
+        pendingVoiceUpdates.current.delete(pendingKey);
+        voiceUpdateRequests.current.delete(request);
+      }
     },
     [onExpired],
   );
@@ -2564,6 +2597,7 @@ export function Assistant({
     ) {
       voiceScope.current = { language: actionLanguage, profileId };
       voiceOwnerEpoch.current += 1;
+      for (const request of voiceUpdateRequests.current) request.abort();
     }
   }, [actionLanguage, profileId]);
   selectedReferenceRef.current = selected?.reference || null;
@@ -2761,6 +2795,7 @@ export function Assistant({
     return () => {
       alive.current = false;
       voiceOwnerEpoch.current += 1;
+      for (const request of voiceUpdateRequests.current) request.abort();
       controller.current?.abort();
     };
   }, []);
@@ -3922,7 +3957,13 @@ export function Assistant({
             ""
           }
           onExpired={onExpired}
-          onVoiceUpdate={narrateVoiceUpdate}
+          onVoiceUpdate={(caseId, eventId) => {
+            void narrateVoiceUpdate(caseId, eventId);
+          }}
+          voiceActive={voice.active}
+          onListenRecommendations={(caseId, eventId) =>
+            narrateVoiceUpdate(caseId, eventId, true)
+          }
         />
       )}
       <form

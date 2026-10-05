@@ -274,4 +274,144 @@ describe("InquiryPanel API boundaries", () => {
     render(<InquiryPanel {...props} />);
     await waitFor(() => expect(props.onExpired).toHaveBeenCalledOnce());
   });
+
+  it("requires active voice and an intentional once-only click for saved recommendations", async () => {
+    const saved = {
+      ...caseItem,
+      id: `i_${"d".repeat(32)}`,
+      state: "awaiting_customer",
+      workers: [
+        {
+          role: "evidence",
+          state: "completed",
+          suggestion: "Compara el comercio con tus recibos.",
+        },
+      ],
+    };
+    apiMock.mockResolvedValue({ items: [saved] });
+    const listen = vi.fn().mockResolvedValue(true);
+    const view = render(
+      <InquiryPanel {...props} onListenRecommendations={listen} />,
+    );
+    const button = await screen.findByRole("button", {
+      name: "Escuchar recomendaciones",
+    });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      screen.getByText("Activa Hablar con Savia para escucharlas."),
+    ).toBeTruthy();
+    fireEvent.click(button);
+    expect(listen).not.toHaveBeenCalled();
+    view.rerender(
+      <InquiryPanel {...props} voiceActive onListenRecommendations={listen} />,
+    );
+    expect(listen).not.toHaveBeenCalled();
+    fireEvent.click(button);
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(listen).toHaveBeenCalledExactlyOnceWith(saved.id, 101),
+    );
+    const queued = await screen.findByRole("button", {
+      name: "Recomendaciones enviadas a la voz",
+    });
+    expect((queued as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      apiMock.mock.calls.every(
+        ([url]) => url === "/api/assistant/cases?language=es",
+      ),
+    ).toBe(true);
+  });
+
+  it("offers no Listen control for closed or unfinished results and localizes its label", async () => {
+    const workers = [
+      {
+        role: "evidence",
+        state: "completed",
+        suggestion: "Confira seus recibos.",
+      },
+    ];
+    apiMock.mockResolvedValue({
+      items: [
+        {
+          ...caseItem,
+          id: `i_${"e".repeat(32)}`,
+          state: "informational_resolved",
+          workers,
+        },
+        {
+          ...caseItem,
+          id: `i_${"f".repeat(32)}`,
+          state: "team_completed",
+          workers: [],
+        },
+      ],
+    });
+    const listen = vi.fn().mockResolvedValue(true);
+    const view = render(
+      <InquiryPanel {...props} voiceActive onListenRecommendations={listen} />,
+    );
+    await screen.findByText("Consulta informativa completada");
+    expect(
+      screen.queryByRole("button", { name: "Escuchar recomendaciones" }),
+    ).toBeNull();
+    apiMock.mockResolvedValue({
+      items: [
+        {
+          ...caseItem,
+          id: `i_${"a".repeat(32)}`,
+          state: "team_completed",
+          workers,
+        },
+      ],
+    });
+    view.rerender(
+      <InquiryPanel
+        {...props}
+        language="pt"
+        voiceActive
+        onListenRecommendations={listen}
+      />,
+    );
+    expect(
+      await screen.findByRole("button", { name: "Ouvir recomendações" }),
+    ).toBeTruthy();
+    expect(listen).not.toHaveBeenCalled();
+  });
+
+  it("keeps a rejected Listen request available and reports that the written advice remains", async () => {
+    apiMock.mockResolvedValue({
+      items: [
+        {
+          ...caseItem,
+          id: `i_${"a".repeat(32)}`,
+          state: "team_completed",
+          workers: [
+            {
+              role: "evidence",
+              state: "completed",
+              suggestion: "Compara tus recibos.",
+            },
+          ],
+        },
+      ],
+    });
+    const listen = vi.fn().mockResolvedValue(false);
+    render(
+      <InquiryPanel {...props} voiceActive onListenRecommendations={listen} />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Escuchar recomendaciones" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Puedes leerlas aquí.",
+    );
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Escuchar recomendaciones",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+    expect(screen.getByText("Compara tus recibos.")).toBeTruthy();
+  });
 });

@@ -39,6 +39,11 @@ const voiceHarness = vi.hoisted(() => ({
 const inquiryHarness = vi.hoisted(() => ({
   props: null as null | {
     onVoiceUpdate?: (caseId: string, eventId: number) => void;
+    onListenRecommendations?: (
+      caseId: string,
+      eventId: number,
+    ) => Promise<boolean>;
+    voiceActive?: boolean;
   },
 }));
 vi.mock("./avatar/useSaviaVoice", () => ({
@@ -2860,9 +2865,7 @@ test("spoken chat and authenticated completed team updates narrate their canonic
       if (url.startsWith("/api/followups?")) return response({ items: [] });
       if (url.startsWith("/api/assistant/voice-update?")) {
         expect(url).toContain(`case_id=${caseId}`);
-        expect(url).toContain(
-          `after_event_id=${pendingUpdates.length ? 101 : 0}`,
-        );
+        expect(url).toContain("after_event_id=0");
         expect(url).toContain("language=es");
         return new Promise<Response>((resolve) => pendingUpdates.push(resolve));
       }
@@ -3049,4 +3052,153 @@ test("savia context events publish public selection and history without referenc
   expect(context.messages[0]).not.toHaveProperty("query_id");
   expect(context.messages[0].selection).not.toHaveProperty("reference");
   window.removeEventListener("savia:context", listener);
+});
+
+const savedVoiceProps = {
+  open: true,
+  status: {
+    available: true,
+    sandbox_intake_available: false,
+    voice: { available: true, conversation: true, persona: "moss" as const },
+  },
+  selected: null,
+  transactions: [],
+  onSelectTransaction: vi.fn(),
+  hidden: false,
+  synthetic: true,
+  onClose: vi.fn(),
+  onExpired: vi.fn(),
+  profileId: "saved-voice-profile",
+};
+const savedVoiceCase = `i_${"d".repeat(32)}`;
+const savedVoiceReply =
+  "Compara Nébula Market con tus recibos. Guardar una solicitud no significa que el banco la haya resuelto.";
+function installSavedVoiceFetch(
+  update: (init?: RequestInit) => Promise<Response>,
+) {
+  const fetchMock = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/chat/history")
+        return response({ active: false, messages: [] });
+      if (url.startsWith("/api/followups?")) return response({ items: [] });
+      if (url.startsWith("/api/assistant/voice-update?")) {
+        expect(url).toContain(
+          `case_id=${savedVoiceCase}&after_event_id=0&language=es`,
+        );
+        return update(init);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    },
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+const savedVoiceResponse = (state = "awaiting_customer") =>
+  response({
+    reply: savedVoiceReply,
+    event_id: 201,
+    inquiry_state: state,
+    bank_authority: false,
+  });
+
+test("intentional Listen leaves inactive events unconsumed and queues the authenticated saved reply once", async () => {
+  const fetchMock = installSavedVoiceFetch(async () => savedVoiceResponse());
+  const view = render(<Assistant {...savedVoiceProps} />);
+  await screen.findByText("Vamos a entender tus movimientos.");
+  expect(
+    await inquiryHarness.props!.onListenRecommendations!(savedVoiceCase, 201),
+  ).toBe(false);
+  expect(
+    fetchMock.mock.calls.some(([url]) => String(url).includes("voice-update")),
+  ).toBe(false);
+  voiceHarness.active = true;
+  const owner = Symbol("explicit-listen-owner");
+  voiceHarness.owner = owner;
+  view.rerender(<Assistant {...savedVoiceProps} />);
+  expect(inquiryHarness.props!.voiceActive).toBe(true);
+  expect(voiceHarness.narrate).not.toHaveBeenCalled();
+  expect(
+    await inquiryHarness.props!.onListenRecommendations!(savedVoiceCase, 201),
+  ).toBe(true);
+  expect(voiceHarness.narrate).toHaveBeenCalledExactlyOnceWith(
+    savedVoiceReply,
+    owner,
+  );
+  expect(
+    await inquiryHarness.props!.onListenRecommendations!(savedVoiceCase, 201),
+  ).toBe(false);
+  expect(
+    fetchMock.mock.calls.filter(([url]) =>
+      String(url).includes("voice-update"),
+    ),
+  ).toHaveLength(1);
+  expect(
+    fetchMock.mock.calls.every(
+      ([, init]) => !init?.method || init.method === "GET",
+    ),
+  ).toBe(true);
+});
+
+test("intentional Listen rejects closure snapshots and advances its cursor only after native queue acceptance", async () => {
+  voiceHarness.active = true;
+  voiceHarness.owner = Symbol("listen-owner");
+  let state = "informational_resolved";
+  installSavedVoiceFetch(async () => savedVoiceResponse(state));
+  render(<Assistant {...savedVoiceProps} />);
+  await screen.findByText("Vamos a entender tus movimientos.");
+  expect(
+    await inquiryHarness.props!.onListenRecommendations!(savedVoiceCase, 201),
+  ).toBe(false);
+  expect(voiceHarness.narrate).not.toHaveBeenCalled();
+  state = "team_completed";
+  voiceHarness.narrate.mockReturnValueOnce(false);
+  expect(
+    await inquiryHarness.props!.onListenRecommendations!(savedVoiceCase, 201),
+  ).toBe(false);
+  expect(
+    await inquiryHarness.props!.onListenRecommendations!(savedVoiceCase, 201),
+  ).toBe(true);
+  expect(voiceHarness.narrate).toHaveBeenCalledTimes(2);
+});
+
+test("stopping voice aborts pending Listen and rejects late results without consuming the saved event", async () => {
+  voiceHarness.active = true;
+  voiceHarness.owner = Symbol("old-listen-owner");
+  const pending: ((value: Response) => void)[] = [];
+  const signals: AbortSignal[] = [];
+  installSavedVoiceFetch((init) => {
+    signals.push(init!.signal!);
+    return new Promise((resolve) => pending.push(resolve));
+  });
+  const view = render(<Assistant {...savedVoiceProps} />);
+  await screen.findByText("Vamos a entender tus movimientos.");
+  const first = inquiryHarness.props!.onListenRecommendations!(
+    savedVoiceCase,
+    201,
+  );
+  expect(
+    await inquiryHarness.props!.onListenRecommendations!(savedVoiceCase, 201),
+  ).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Terminar voz" }));
+  expect(signals[0].aborted).toBe(true);
+  voiceHarness.active = false;
+  voiceHarness.owner = null;
+  pending[0](savedVoiceResponse());
+  expect(await first).toBe(false);
+  expect(voiceHarness.narrate).not.toHaveBeenCalled();
+  voiceHarness.active = true;
+  const owner = Symbol("new-listen-owner");
+  voiceHarness.owner = owner;
+  view.rerender(<Assistant {...savedVoiceProps} />);
+  const second = inquiryHarness.props!.onListenRecommendations!(
+    savedVoiceCase,
+    201,
+  );
+  pending[1](savedVoiceResponse());
+  expect(await second).toBe(true);
+  expect(voiceHarness.narrate).toHaveBeenCalledExactlyOnceWith(
+    savedVoiceReply,
+    owner,
+  );
 });
