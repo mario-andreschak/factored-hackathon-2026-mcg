@@ -55,6 +55,11 @@ export function useInquiryVoiceUpdates(options: Options) {
       if (previous === 0 && body.inquiry_state === 'informational_resolved') {
         cursors.current.set(caseId, body.event_id); replies.current.set(caseId, body.reply); return;
       }
+      // Pending snapshots can become stale while foreground audio drains. Keep
+      // their cursor/UI status, then announce the useful completed update once.
+      if (['queued', 'team_working'].includes(body.inquiry_state)) {
+        cursors.current.set(caseId, body.event_id); replies.current.set(caseId, body.reply); return;
+      }
       // Worker start/completion events can share the same reviewed status copy.
       if (body.reply === replies.current.get(caseId)) { cursors.current.set(caseId, body.event_id); return; }
       const receipt = await fetch('/api/avatar/native-result-receipt', {

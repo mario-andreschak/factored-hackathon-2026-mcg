@@ -180,11 +180,11 @@ test('an owned inquiry pointer queues its verified update after foreground speec
   await setup(page);
   const caseId = 'i_' + 'c'.repeat(32), reply = 'El equipo tiene dos perspectivas útiles. ¿Te ayudan a decidir?';
   const queries: string[] = [], receipts: Record<string, unknown>[] = [];
-  let version = 7;
+  let version = 7, phase = 'queued';
   await page.route('**/savia/api/assistant/voice-update?**', route => {
     const url = new URL(route.request().url()); queries.push(url.search);
-    return route.fulfill({ json: { reply, mode: 'assistant', status: 'completed', event_id: version,
-      inquiry_state: url.searchParams.get('case_id') === caseId ? 'team_completed' : 'informational_resolved', bank_authority: false } });
+    return route.fulfill({ json: { reply: phase === 'queued' ? 'Voy a revisar esto con mi equipo.' : reply, mode: 'assistant', status: 'completed', event_id: version,
+      inquiry_state: url.searchParams.get('case_id') === caseId ? phase : 'informational_resolved', bank_authority: false } });
   });
   await page.route('**/api/avatar/native-result-receipt', route => {
     const body = route.request().postDataJSON() as Record<string, unknown>; receipts.push(body);
@@ -204,18 +204,22 @@ test('an owned inquiry pointer queues its verified update after foreground speec
   await submitText(page, 'Mientras espero, sigo pensando qué información guardar.');
   await expect.poll(async () => (await requests(page, 'native-turn')).length).toBe(2);
   await frame.evaluate(pointer => window.parent.postMessage(pointer, location.origin), pointer);
+  await expect.poll(() => queries.length).toBe(1);
+  expect(receipts).toEqual([]); // Pending snapshots stay in the UI, never stale speech.
+  phase = 'team_completed'; version = 8;
+  await frame.evaluate(pointer => window.parent.postMessage(pointer, location.origin), { ...pointer, event_id: version });
   await expect.poll(() => receipts).toEqual([{ reply, locale: 'es' }]);
   expect(await requests(page, 'native-result')).toHaveLength(0);
-  expect(queries).toEqual([`?case_id=${caseId}&after_event_id=0&language=es`]);
+  expect(queries).toEqual([`?case_id=${caseId}&after_event_id=0&language=es`, `?case_id=${caseId}&after_event_id=7&language=es`]);
 
   await frame.evaluate(pointer => {
     window.parent.postMessage(pointer, location.origin);
     window.parent.postMessage({ ...pointer, reply: 'Invented human resolution' }, location.origin);
   }, pointer);
-  version = 8;
+  version = 9;
   await frame.evaluate(pointer => window.parent.postMessage(pointer, location.origin), { ...pointer, event_id: version });
-  await expect.poll(() => queries.length).toBe(2);
-  expect(queries[1]).toBe(`?case_id=${caseId}&after_event_id=7&language=es`);
+  await expect.poll(() => queries.length).toBe(3);
+  expect(queries[2]).toBe(`?case_id=${caseId}&after_event_id=8&language=es`);
   expect(receipts).toEqual([{ reply, locale: 'es' }]); // Same copy, newer worker event.
 
   await page.evaluate(() => { window.__nativeTransport.autoComplete = true; window.__nativeTransport.finish('fixture-native-2'); });
@@ -227,7 +231,7 @@ test('an owned inquiry pointer queues its verified update after foreground speec
   await frame.evaluate(pointer => window.parent.postMessage(pointer, location.origin), {
     type: 'savia:inquiry-update', case_id: 'i_' + 'd'.repeat(32), event_id: version,
   });
-  await expect.poll(() => queries.length).toBe(3);
+  await expect.poll(() => queries.length).toBe(4);
   expect(receipts).toHaveLength(1); // An old closed inquiry is not a new closure announcement.
   expect(await requests(page, 'native-result')).toHaveLength(1);
 });

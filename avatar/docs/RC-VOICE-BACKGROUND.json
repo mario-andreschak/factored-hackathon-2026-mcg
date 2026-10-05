@@ -1,0 +1,95 @@
+{
+  "schema": "savia-actual-voice-background-receipt/v1",
+  "recorded_at": "2026-10-05T01:12:35.229Z",
+  "interaction_qualified": true,
+  "bank_answer_success": false,
+  "bank_result": "Inquiry failure honestly narrated",
+  "provider": "OpenRouter / openai/gpt-audio",
+  "background_provider": "direct OpenRouter / google/gemini-3.1-flash-lite",
+  "fixture": "runtime-owned generated-only fiction",
+  "physical_microphone_qualified": false,
+  "input": "typed Spanish; file-backed silent browser microphone",
+  "separate_audio_input_receipt": "avatar/docs/RC-VOICE-AUDIO-INPUT.json",
+  "source_sha256": {
+    "avatar/src/Workbench.tsx": "dda4d8fb5c02af3b1947a780e8320c0f7fd5bd89ff87a41643637a3831e1f90c",
+    "avatar/src/Game.tsx": "5226110b80b46fb046118c2d5b0b953068ef9aecad1a8688e6dcecfba9a31451",
+    "avatar/src/useNativeRouterVoice.ts": "7716d0bce5048ec18485cca3d8b6bd75e4d3184e3e39f09820df9f41821593fb",
+    "avatar/server/app.mjs": "81b38394d27b01cb81261daff56e09d7d355face9de53b4850ba429bb303783b",
+    "avatar/server/native-turns.mjs": "b2663ade88ce47d065ba700cb991a308f6a1ac683c9e9486854896c7e3eee0b0",
+    "avatar/server/openrouter-native.mjs": "aba191c606035d8d6511520c1aa7e24eaab69ac107593ed6a1bb28ab5c2f7d1a",
+    "avatar/server/savia.mjs": "b63700b9a6cfdec715274c650981b3d0f3ce2d8272c62b9cff6a6c7e6b4a5dec"
+  },
+  "capture": "private/rc-voice-background-20261004-v3/release-voice.webm",
+  "counts": {
+    "/api/avatar/native-turn": 2,
+    "/savia/api/chat/messages": 1,
+    "/api/avatar/native-result": 1
+  },
+  "read": {
+    "start_ms": 4913,
+    "end_ms": 12312,
+    "latency_ms": 7399,
+    "http_status": 200
+  },
+  "foreground": {
+    "submitted_ms": 5145,
+    "first_pcm_milestone_ms": 7519,
+    "first_pcm_after_submit_ms": 2374,
+    "completed_ack_ms": 17619,
+    "pcm_started_during_read": true,
+    "fully_played_during_read": false,
+    "audio": "private/rc-voice-background-20261004-v3/native-02.wav",
+    "transcript": "En este momento puedes guardar la fecha del pago, el monto y el comercio o beneficiario. Así te será más fácil identificar cualquier cargo extraño.",
+    "usage": {
+      "promptTokens": 434,
+      "completionTokens": 247,
+      "totalTokens": 681,
+      "inputAudioTokens": 0,
+      "outputAudioTokens": 200,
+      "costUsd": 0.014355
+    }
+  },
+  "result": {
+    "receipt_http_status": 200,
+    "receipt_ms": 12404,
+    "start_ms": 17621,
+    "completed_ack_http_status": 200,
+    "completed_ack_ms": 24188,
+    "delivered_once": true,
+    "waited_for_foreground_drain": true,
+    "audio": "private/rc-voice-background-20261004-v3/native-03.wav",
+    "transcript": "No se pudo completar la consulta ahora. Te sugiero intentarlo de nuevo en unos momentos.",
+    "usage": {
+      "promptTokens": 513,
+      "completionTokens": 137,
+      "totalTokens": 650,
+      "inputAudioTokens": 0,
+      "outputAudioTokens": 105,
+      "costUsd": 0.0083225
+    }
+  },
+  "initial_turn": {
+    "interrupted": true,
+    "cancellation_ack_http_status": 200,
+    "complete_audio_capture": false,
+    "complete_heard_history": false
+  },
+  "output_sample_rate_hz": 24000,
+  "output_sample_rate_qualification": "assumed",
+  "bank_actions": false,
+  "native_flujo_flow": false,
+  "bank_failure_cause": {
+    "tool": "search_transactions",
+    "error": "invalid_date_window",
+    "attempts": 3,
+    "policy": "TOOL_ERROR/R9",
+    "provider_generation_completed": true
+  },
+  "public_evidence": {
+    "video": "docs/submission/measurements/voice-overlap/voice-overlap.webm",
+    "foreground_audio": "docs/submission/measurements/voice-overlap/foreground-help.wav",
+    "result_audio": "docs/submission/measurements/voice-overlap/inquiry-failure.wav",
+    "events": "docs/submission/measurements/voice-overlap/events.json",
+    "visual_video_contains_native_audio": false
+  }
+}
