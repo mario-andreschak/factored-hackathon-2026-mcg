@@ -1,5 +1,11 @@
 # Online banking frontend
 
+> Historical organizer-snapshot portal and deployment review, primarily September
+> 29. The source/runtime claims below keep that scope. The separate final-day
+> [fictional local RC](../deploy/rc/README.md) uses fresh fixtures and an in-process
+> banking service; see the [release report](submission/RELEASE_CANDIDATE.md) for
+> current measured behavior and hosted-runtime identity.
+
 The portal gives hackathon customers a sign-in flow, product and balance
 overview, transaction exploration and support using the organizer dataset.
 React/Vite assets and a FastAPI API ship in one Docker image. The data API

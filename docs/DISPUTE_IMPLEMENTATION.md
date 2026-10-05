@@ -1,5 +1,10 @@
 # Transaction dispute workflow release candidate
 
+> Setup and frozen qualification history. For the final-day source/runtime,
+> startup and measured customer journey, use the
+> [release candidate report](submission/RELEASE_CANDIDATE.md). The reports below keep
+> their original pins and scope; they do not qualify later edits or deployment.
+
 The transaction dispute workflow implements the authenticated Spanish/Portuguese
 unrecognized-charge journey: executable interpretation prompts, emotion/language detection, ordered
 R0–R18 decisions, owned source reads, scoped clarification, explicit simulated

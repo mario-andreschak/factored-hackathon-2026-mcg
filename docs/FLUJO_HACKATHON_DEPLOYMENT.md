@@ -1,5 +1,10 @@
 # FLUJO hackathon branch and deployment source map
 
+> This is the dated source/deployment history below. Use the
+> [release candidate report](submission/RELEASE_CANDIDATE.md) for the final-day source,
+> running image and customer-path acceptance; the older pins here remain evidence
+> of their original observation, not a current runtime inventory.
+
 Updated September 30, 2026, following the owner's request to preserve the
 reversed hackathon PRs on a separate FLUJO branch. This replaces the earlier
 categorical ban on separate hackathon branches; generic main remains protected

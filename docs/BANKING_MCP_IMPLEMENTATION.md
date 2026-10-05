@@ -1,5 +1,10 @@
 # Banking MCP implementation
 
+> Dated September 29 worker/MCP evidence. “What runs now” below describes that
+> observation, not the final-day deployment map. The separate
+> [fictional local RC](../deploy/rc/README.md) uses the banking service in process;
+> consult the [release report](submission/RELEASE_CANDIDATE.md) for current scope.
+
 Updated September 29, 2026.
 
 ## What runs now

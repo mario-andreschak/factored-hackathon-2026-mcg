@@ -1,5 +1,10 @@
 # Banking MCP: decisions and remaining acceptance
 
+> Historical integration decisions. The [documentation index](README.md) identifies
+> current setup/contracts; the [release candidate report](submission/RELEASE_CANDIDATE.md)
+> identifies actual final-day runtime and acceptance. “Implemented” and “remaining”
+> below refer to the dated source observations, not the new candidate.
+
 Updated September 29, 2026, after four coordinated reviews and implementation.
 This replaces the earlier proposal. See [implementation and measurements](BANKING_MCP_IMPLEMENTATION.md)
 and [operator demo instructions](BANKING_OPERATOR_DEMO.md).
