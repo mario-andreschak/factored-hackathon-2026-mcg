@@ -9,6 +9,9 @@ from deploy.rc.run import prepare, application
 
 def test_savia_spanish_portuguese_card_block_is_owned_confirmed_and_read_back(tmp_path):
     root = tmp_path / "fictional-rc"
+    # Match public_start.py's private state directory on POSIX. The durable
+    # bank-generation pin correctly refuses an insecure 0755 parent.
+    root.mkdir(mode=0o700)
     prepare(root)
     fixture = json.loads((root / "fixture.json").read_text(encoding="utf-8"))
     app, bank = application(root, port=43905, base_url="http://localhost:43420", model_id="model-GPT-6 Luna")
