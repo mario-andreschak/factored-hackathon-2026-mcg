@@ -1,11 +1,12 @@
 # Savia release candidate
 
-Status: rc.1 submission artifacts are frozen; the deployed Listen successor is qualified.
+Status: rc.2 is the current frozen release; its rc.1 film and decks remain frozen.
+The first new fleet/customer attempt is partial; further qualification is pending.
 The recovered swarm connector's [source and integration pins](assistant/FLEET_CONNECTOR.md)
 are merged; runtime qualification remains pending. Public visibility is verified.
 Full ten-by-ten swarm qualification remains pending. Updated 2026-10-05.
 
-Release target: [v0.1.0-rc.1](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.1).
+Current frozen release: [v0.1.0-rc.2](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.2).
 
 Savia follows a customer inquiry toward a helpful answer, asks a small agent
 team for different perspectives, and keeps the conversation and suggestions
@@ -16,7 +17,38 @@ The avatar and voice are inside Savia's assistant dialog, from
 `frontend/src/avatar/`, based on
 `feature/savia-avatar-voice@2730d76de8e6847df4502c427ad9ced412f4a731` (PR 52).
 
-## Qualified live successor
+## Actual fleet/customer qualification
+
+The October 5 first attempt is partial; mandatory fleet customer acceptance
+failed. Its [merged receipt](measurements/fleet-customer-attempt/receipt.json)
+from [PR 70](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/70)
+records application source `a5e48f09afe4241f6b08a2b94532b2bd3eb630f4`, image
+`sha256:35903f9a1ea70f8b3c589d5680ed50307efd34870ce004bdd1833b9029b6dc93`,
+native source `67d21ad3fe49059ab349d1315d02a9437daa1140` and controller source
+`290dd6a7c19fa92c267bddd04f625f6cfbe39459`. Later generic source review does not
+relabel that deployed native image.
+
+The bank reply matched the selected fictional facts. Foreground native speech
+completed 8.85 seconds / 212,400 PCM16 samples at 24 kHz with one exact HTTP 200
+full-playback acknowledgement. The original root run failed after 5,981 ms on
+its first model call: HTTP 404, Modal workspace disabled. Zero team leads, local
+staff, completed reviews or native100 population were verified. An active goal
+and ready root worker do not establish successful execution.
+
+No audible execution overlap was qualified: the failed root ended 2,828 ms before
+speaking was observed. The nominal 1,321 ms request overlap is not an audible or
+concurrency result. Guidance audio, reload/context and the actual 1,800-second
+follow-up remain unqualified. Any funded successor is a separate attempt; this
+failure and the frozen rc.1/rc.2 evidence retain their original scope.
+
+The original root was retired through the existing operator DELETE at 18:04 UTC
+(13:04 Bogotá). Its case, goal, run, board and volume were preserved; the retained
+goal is still `ACTIVE` and the run is `FAILED`. Retirement is not goal completion.
+Provider funding remains pending owner approval. A productive customer
+journey and its normal-clock 30-minute follow-up are outstanding; rc.3 is not
+ready.
+
+## Frozen rc.2 Listen acceptance
 
 [PR 59](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/59)
 adds an explicit control to hear saved, completed team recommendations. Application
@@ -39,8 +71,8 @@ suggestions verbatim. The browser clip is video-only; its WAV is supplied separa
 
 The product target reuses the recovered `swarm_agent`, `swarm_team`,
 `swarm_supervisor` and `swarm_boot` template: ten Fly team Machines, each with one
-lead and nine specialists, with Savia's root separate. The current deployed
-prototype still demonstrates two reviewers. Exact 100-conversation customer
+lead and nine specialists, with Savia's root separate. The qualified rc.2
+prototype demonstrated two reviewers. Exact 100-conversation customer
 execution, real human pickup and customer push/email delivery are unqualified.
 
 ## Original rc.1 customer and voice acceptance
@@ -119,11 +151,15 @@ is non-draft with 20 assets. Public visibility was verified on October 5 via
 `gh`, anonymous GitHub repository/release APIs and the visible Public repository
 badge. This closes the public visibility gate.
 
-The final source and artifact audit passed and publication is authorized.
-The tagged release contains the film, editable decks, PDFs and measured
-qualification reports. Historical credential admission was revoked. Hosted
-GitHub jobs never started because of account billing limits; local checks are
-reported separately.
+The frozen releases passed their source and artifact audits and contain the
+film, editable decks, PDFs and measured qualification reports. Historical
+credential admission was revoked. Hosted GitHub jobs now execute:
+[PR 66](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/66)
+startup/manifest checks pass on Ubuntu and Windows, and
+[PR 67](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/67)
+passes the real Chrome gateway check. Eight preexisting Windows HISTORY failures
+remain. Linux deployment qualification is separate from those Windows failures
+and from the pending new live/customer/native100 results above.
 
 Owner scope correction, October 5: ignored local legacy remnants are outside RC
 acceptance. Physical deletion is not a release gate or required manual action.
