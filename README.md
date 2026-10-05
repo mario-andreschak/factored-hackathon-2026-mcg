@@ -127,7 +127,7 @@ replay backed by private caches; it is not a public submission artifact.
 
 | Directory | Purpose |
 | --- | --- |
-| `frontend/`, `avatar/` | Customer portal and voice companion |
+| `frontend/`, `frontend/src/avatar/` | Customer portal and integrated voice companion |
 | `savia_assistant/` | Durable informational inquiries, two-agent exploration and scoped MCP |
 | `banking_mcp/`, `dispute_workflow/` | Scoped banking tools and dispute workflow |
 | `pipeline/`, `ml/` | Data preparation and diagnostic intent-router evaluation |
