@@ -16,6 +16,7 @@ class Intake(BaseModel):
     message: str = Field(min_length=1, max_length=1000)
     language: Literal["es", "pt"] = "es"
     transaction_reference: str | None = Field(default=None, pattern=r"^txn_[a-f0-9]{24}$")
+    request_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
 
 
 class Resolution(BaseModel):
@@ -64,8 +65,14 @@ def install_routes(app, authenticate):
     @app.post("/api/assistant/cases", status_code=202)
     def create_case(body: Intake, request: Request):
         current, owner, service = scoped(request)
-        if service.model is None:
-            raise HTTPException(503, "Los agentes no están conectados / Os agentes não estão conectados")
+        request_context = {"transaction_reference":body.transaction_reference}
+        try:
+            original = service.accepted(owner,body.message.strip(),body.language,body.request_id,
+                                        request_context=request_context)
+        except ValueError:
+            raise HTTPException(409, "La solicitud ya tiene otros datos / A solicitação já tem outros dados") from None
+        if original is not None:
+            return {"id":original, **service.list(owner,body.language)}
         facts = None
         if body.transaction_reference:
             selected = request.app.state.repository.transaction(current.profile_id, body.transaction_reference)
@@ -81,8 +88,13 @@ def install_routes(app, authenticate):
             except (ValueError, TypeError, KeyError):
                 raise HTTPException(422, "Datos visibles inválidos / Dados visíveis inválidos") from None
         try:
-            case_id = service.create(owner, body.message.strip(), body.language, facts)
-        except ValueError:
+            case_id = service.create(owner, body.message.strip(), body.language, facts, request_id=body.request_id,
+                                     allow_new=service.available,request_context=request_context)
+        except ValueError as exc:
+            if str(exc) == "request_conflict":
+                raise HTTPException(409, "La solicitud ya tiene otros datos / A solicitação já tem outros dados") from None
+            if str(exc) == "agents_unavailable":
+                raise HTTPException(503, "Los agentes no están conectados / Os agentes não estão conectados") from None
             raise HTTPException(422, "Consulta inválida o límite alcanzado / Consulta inválida ou limite atingido") from None
         return {"id": case_id, **service.list(owner, body.language)}
 
@@ -93,6 +105,8 @@ def install_routes(app, authenticate):
             service.resolve(owner, case_id)
         except KeyError:
             raise HTTPException(404, "Consulta no disponible / Consulta indisponível") from None
-        except ValueError:
+        except ValueError as exc:
+            if str(exc) == "review_required":
+                raise HTTPException(409, "Aún no hay una respuesta revisada para cerrar esta consulta / Ainda não há uma resposta revisada para encerrar esta consulta") from None
             raise HTTPException(409, "El equipo sigue trabajando / A equipe continua trabalhando") from None
         return {"id": case_id, "state": "informational_resolved", "bank_authority": False}

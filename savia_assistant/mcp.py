@@ -5,12 +5,15 @@ tools cannot select owners, bank sessions, facts, credentials or models.
 """
 import os
 import hmac
+import json
+from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 from .service import InquiryService
 
 
 def configured_service():
+    from .fleet import configured_fleet
     from dispute_workflow.model import FlujoModel
     mode = os.environ.get("SAVIA_INQUIRY_PROVIDER", "flujo")
     base = os.environ.get("SAVIA_INQUIRY_MODEL_URL", "http://localhost:43420")
@@ -23,7 +26,12 @@ def configured_service():
         model = FlujoModel(base, model_id, token, timeout=30)
     else:
         raise ValueError("explicit_provider_required")
-    return InquiryService(os.environ["SAVIA_INQUIRY_STATE_DIR"], model=model)
+    fleet_config = {}
+    if filename := os.environ.get("BANKING_CONFIG_FILE"):
+        configured = json.loads(Path(filename).read_text(encoding="utf-8-sig"))
+        fleet_config = configured.get("inquiries", {})
+    return InquiryService(os.environ["SAVIA_INQUIRY_STATE_DIR"], model=model,
+                          fleet=configured_fleet(fleet_config))
 
 
 def main():
@@ -49,7 +57,8 @@ def main():
         """Run one due scoped inquiry team/follow-up pass; no banking operations.
 
         Invoke from a generic FLUJO scheduled flow. Unchanged follow-ups do not
-        append events. New teams make two bounded concurrent model calls.
+        append events. Bootstrap teams make two bounded concurrent model calls;
+        an explicitly bound recovered fleet uses the original submit/status path.
         """
         await service.check(owner=owner)
         return {"provider": os.environ.get("SAVIA_INQUIRY_PROVIDER", "flujo"),

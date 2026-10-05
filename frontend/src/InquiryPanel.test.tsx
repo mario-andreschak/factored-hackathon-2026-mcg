@@ -123,6 +123,10 @@ describe("InquiryPanel API boundaries", () => {
     const postCall = apiMock.mock.calls.find(
       ([url]) => url === "/api/assistant/cases",
     );
+    const requestId = JSON.parse(postCall?.[1].body).request_id;
+    expect(requestId).toMatch(
+      /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/,
+    );
     expect(postCall).toEqual([
       "/api/assistant/cases",
       {
@@ -131,12 +135,76 @@ describe("InquiryPanel API boundaries", () => {
           message: "¿Por qué se procesó esta compra?",
           language: "es",
           transaction_reference: "txn-23",
+          request_id: requestId,
         }),
       },
     ]);
     expect(postMessage).toHaveBeenCalledTimes(1);
     expect(onVoiceUpdate).toHaveBeenCalledTimes(1);
     if (originalParent) Object.defineProperty(window, "parent", originalParent);
+  });
+
+  it("retains a retry ID after a lost ACK and replaces it for changed context", async () => {
+    apiMock.mockImplementation((url: string) =>
+      url === "/api/assistant/cases"
+        ? Promise.reject(new Error("Lost response"))
+        : Promise.resolve({ items: [] }),
+    );
+    const { rerender } = render(
+      <InquiryPanel {...props} message="Same question" />,
+    );
+    const submit = () =>
+      fireEvent.click(screen.getByRole("button", { name: "Enviar consulta" }));
+    const posted = () =>
+      apiMock.mock.calls
+        .filter(([url]) => url === "/api/assistant/cases")
+        .map(([, request]) => JSON.parse(request.body));
+    submit();
+    await screen.findByText("No pudimos enviar la consulta. Intenta de nuevo.");
+    submit();
+    await waitFor(() => expect(posted()).toHaveLength(2));
+    await screen.findByText("No pudimos enviar la consulta. Intenta de nuevo.");
+    expect(posted()[1].request_id).toBe(posted()[0].request_id);
+    rerender(
+      <InquiryPanel
+        {...props}
+        language="pt"
+        transactionReference="txn-other"
+        message="Same question"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Enviar consulta" }));
+    await waitFor(() => expect(posted()).toHaveLength(3));
+    expect(posted()[2].request_id).not.toBe(posted()[0].request_id);
+    expect(posted()[2].language).toBe("pt");
+    expect(posted()[2].transaction_reference).toBe("txn-other");
+  });
+
+  it("uses a new request ID for a new submission after an accepted response", async () => {
+    apiMock.mockImplementation((url: string) =>
+      Promise.resolve(
+        url === "/api/assistant/cases"
+          ? { id: caseItem.id, items: [caseItem] }
+          : { items: [] },
+      ),
+    );
+    render(<InquiryPanel {...props} message="Same question" />);
+    fireEvent.click(screen.getByRole("button", { name: "Enviar consulta" }));
+    await screen.findByText("Pedir ayuda a un equipo");
+    fireEvent.click(screen.getByText("Pedir ayuda a un equipo"));
+    fireEvent.change(screen.getByLabelText("¿Qué necesitas aclarar?"), {
+      target: { value: "Same question" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar consulta" }));
+    await waitFor(() =>
+      expect(
+        apiMock.mock.calls.filter(([url]) => url === "/api/assistant/cases"),
+      ).toHaveLength(2),
+    );
+    const requests = apiMock.mock.calls
+      .filter(([url]) => url === "/api/assistant/cases")
+      .map(([, req]) => JSON.parse(req.body));
+    expect(requests[0].request_id).not.toBe(requests[1].request_id);
   });
 
   it("polls active work at two seconds and dispatches a bounded transition update", async () => {
