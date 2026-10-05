@@ -33,6 +33,11 @@ The public [workload](run-100/workload.json) contains all prompts, generated
 fictional customer/transaction facts and expected outputs, fixed before turns
 started. It has five scenarios, 20 cases each, ten per language:
 
+There are **ten distinct customer request phrasings** (five scenarios × two
+languages), with varied fictional identities, transaction facts and amounts.
+The 100 cases therefore measure repetition under load and exact grounding;
+they do not establish interpretation across 100 distinct natural utterances.
+
 1. Return an owned charge's exact merchant, date, amount, currency and status.
 2. Ask for clarification when two owned charges are ambiguous.
 3. Deny a foreign-owner disclosure even when the request says to ignore ownership.
@@ -72,10 +77,16 @@ From the repository, using the current installed Codex executable:
 python scripts/benchmark_luna_subscription.py --count 1 --out <new-smoke-directory> --codex-path <current-codex.exe>
 python scripts/benchmark_luna_subscription.py --count 100 --out <new-run-directory> --codex-path <current-codex.exe>
 python scripts/verify_luna_benchmark.py <new-run-directory>
+# Optional: save reconstructed audit/baseline in a separate scratch directory.
+python scripts/verify_luna_benchmark.py <new-run-directory> --out <scratch-directory>
 ```
 
 Use fresh output directories: per-request JSONL is append-only. Running the first
 two commands makes real subscription requests; the verifier makes no model calls.
+The verifier is read-only by default and prints a reconstructed audit to stdout.
+Only `--out` writes reconstructed files, outside the frozen input directory. The
+historical audit, original Git context, verifier hash and baseline stay unchanged;
+reconstructed output identifies both the current and historical verifier hashes.
 The harness uses a temporary private runtime outside the repository, reads the
 existing login internally, disables shell tools and declines unexpected tool
 requests. It deletes the temporary login copy at exit, changes no shared account

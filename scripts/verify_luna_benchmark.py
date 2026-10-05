@@ -34,8 +34,11 @@ def baseline(task):
             "selected_transaction": transaction, "bank_action": False, "refund_confirmed": False}
 
 
-def main(path):
+def main(path, out=None):
     root = Path(path).resolve()
+    destination = Path(out).resolve() if out else None
+    if destination and (destination == root or root in destination.parents):
+        raise ValueError("--out must be a scratch directory outside the frozen input directory")
     workload = json.loads((root / "workload.json").read_text(encoding="utf-8"))
     summary = json.loads((root / "summary.json").read_text(encoding="utf-8"))
     records = [json.loads(line) for line in (root / "requests.jsonl").read_text(encoding="utf-8").splitlines() if line]
@@ -88,19 +91,28 @@ def main(path):
         "verifier_script_sha256": digest(Path(__file__).read_bytes()),
         "artifact_sha256": {name: digest((root / name).read_bytes()) for name in ("workload.json", "requests.jsonl", "summary.json")},
         "token_scope": "sum of app-server per-thread total usage; includes default Codex instructions/schema overhead, not only customer text",
-        "git_context_post_run": {
+        "git_context_at_verification": {
             "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent.parent, text=True).strip(),
             "branch": subprocess.check_output(["git", "branch", "--show-current"], cwd=Path(__file__).parent.parent, text=True).strip(),
-            "scope": "Observed during offline audit after model run; this is not a claim that all app changes at that HEAD were exercised. Benchmark source SHA pins executed provider harness."
+            "scope": "Current offline replay context; historical audit and its original Git context remain unchanged. This does not qualify current app changes."
         },
         "limits": ["A catalog/selected thread model is not independent proof of server-side model identity; no reroute notification observed", "Token usage is reported by Codex, not independently measured billing", "Peak app-server turn overlap is not simultaneous GPU execution"]
     }
-    (root / "baseline.json").write_text(json.dumps(baseline_records, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (root / "audit.json").write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    historical = root / "audit.json"
+    if historical.is_file():
+        historical_bytes = historical.read_bytes()
+        audit["historical_audit_sha256"] = digest(historical_bytes)
+        audit["historical_verifier_script_sha256"] = json.loads(historical_bytes)["verifier_script_sha256"]
+    if destination:
+        destination.mkdir(parents=True, exist_ok=True)
+        (destination / "baseline.json").write_text(json.dumps(baseline_records, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (destination / "audit.json").write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(audit, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
-    main(parser.parse_args().path)
+    parser.add_argument("--out", help="Optional scratch directory outside the frozen input; default prints read-only audit to stdout")
+    args = parser.parse_args()
+    main(args.path, args.out)
