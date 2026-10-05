@@ -5,7 +5,7 @@ inquiries, asks a team for different perspectives, and keeps helpful answers and
 follow-up together. **Ask once. Explore options with Savia's team. Return for a
 clear next step.**
 
-Customers can ask two Savia AI agents to consider an informational inquiry from
+The earlier recorded prototype shows two Savia AI agents considering an inquiry from
 different perspectives: evidence to compare and useful next steps. Their actual
 work status and suggestions are saved so the customer can return without losing
 the thread. Voice and keyboard conversation sit alongside the guarded banking
