@@ -1,0 +1,17 @@
+# Savia rc.2: hear saved recommendations
+
+[Try the fictional demo](https://savia-rc-2026.fly.dev) with **SAVIA-2026** at the entry gate and customer profile login.
+
+An explicit **Escuchar recomendaciones** control now speaks completed, saved team advice even when the inquiry panel loaded before voice was enabled. [PR 59](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/59) uses the existing canonical result endpoint and ownership guards. The affected 76 UI checks and production build passed. Hosted CI did not execute because the GitHub account payment/spending-limit check blocked it.
+
+The deployed application source is `7089ca7b63006a066477415aaf54a6932d21a9b2`; image `sha256:39457d88ec4a8577d32dc4623bab5f71a5e5349b808c002db0e258510ce0d38e`. The actual served asset is `assets/index-TIZbOJMX.js`, SHA-256 `858dc7574d91da577b0691cdc198304dd11a5f0af39ed985cc3a5ce9d096c49e`. The [read-only deployment freeze](runtime-listen-freeze.json) verifies all 142 packaged source hashes, served UI, and absence of the legacy root avatar. The same Machine and encrypted volume retained three inquiries, six completed workers, and zero bank cases or receipts. The freeze observed 24 inquiry events before capture.
+
+The [supplemental capture](measurements/saved-recommendations-native/README.md) used the original session and second saved inquiry. One ordinary Listen click produced one actual native result: 8.2 seconds, 196,800 mono PCM16 samples at 24 kHz, and one exact HTTP 200 full-playback acknowledgment. The recorder exited successfully. Fresh reload retained the original grounded bank reply and completed suggestions without another stream. No bank chat, inquiry, worker, ASR, resolution, or history reset was requested.
+
+The spoken response gives useful merchant and receipt advice and invites feedback. It condenses the saved evidence suggestion; the conditional folio guidance and explicit bank-not-resolved caveat remain in the canonical reply and visible suggestions but were omitted from speech. This proves useful condensed recommendation speech, not full narration of both suggestions. Independent human audio review remains pending. The 22.32-second browser recording is video-only; actual native audio is supplied separately, with no synchronization claim.
+
+The [rc.1 report](RELEASE_CANDIDATE.md), film, decks, captions, and earlier evidence retain their frozen bytes. The 140.611-second film and both editable five-slide decks are reused by rc.2. Its optional recorder timeout and earlier incomplete captures remain disclosed. This successor adds supporting evidence without rerendering those deliverables or changing the rc.1 tag.
+
+This deployed prototype demonstrates two completed reviewers per inquiry. The recovered swarm target is ten existing Fly team Machines with one lead and nine specialist conversations each, with Savia root supervision separate. Exact simultaneous 100-conversation customer execution, physical microphone quality, real bank resolution, human pickup, and customer push/email delivery are unqualified. FLUJO is not executed in this deployed image; the recovered connector remains a separate integration lane.
+
+Tracked legacy root avatar source and deployed legacy code are absent. Automatic approval review rejected recursive deletion of remaining local ignored legacy folders as “blocked by policy”; manual local cleanup remains pending. Public repository visibility requires the owner's GitHub admin session.
