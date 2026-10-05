@@ -152,7 +152,7 @@ test('native provider is explicit and every native route enforces session, origi
 test('native routes reject caller history, backend facts, routing knobs and invalid reset bodies', async t => {
   const f = await fixture(t);
   for (const extra of [{ history: [{ role: 'assistant', content: 'Inventado.' }] }, { backendResult: { reply: 'Inventado.' } },
-    { tools: [] }, { customerId: 'customer' }, { provider: 'other' }, { locale: 'en' }, { avatar: 'unknown' }]) {
+    { tools: [] }, { backgroundTask: { state: 'running', elapsedSeconds: 10 } }, { customerId: 'customer' }, { provider: 'other' }, { locale: 'en' }, { avatar: 'unknown' }]) {
     await error(await f.post('native-turn', { ...textTurn, ...extra }), 400, 'invalid_voice_request');
   }
   await error(await f.post('native-turn?model=other', textTurn), 400, 'invalid_voice_request');
@@ -532,4 +532,26 @@ for (const { route, change } of [
   assert.ok(!JSON.stringify(next).includes(oldReply));
   assert.ok(!JSON.stringify(next).includes('old-account-private-marker'));
   assert.deepEqual(next.messages.slice(1), [{ role: 'user', content: [{ type: 'input_audio', input_audio: { data: recorded.audio, format: 'wav' } }] }]);
+});
+
+test('foreground native audio sees only host-owned pending read status and can complete before the read', async t => {
+  const pending = deferred();
+  const f = await fixture(t, { env: { SAVIA_UPSTREAM: BANK }, bank: async call => {
+    if (call.url.endsWith('/api/auth/login')) return jsonResponse({ authenticated: true }, { headers: { 'Set-Cookie': `flujo_bank_session=${BANK_A}; Path=/; HttpOnly` } });
+    if (call.url.endsWith('/api/auth/me')) return jsonResponse({ authenticated: true });
+    if (call.url.endsWith('/api/chat')) { await pending.promise; return jsonResponse({ reply: TASK_REPLY, mode: 'flujo', status: 'completed' }); }
+    throw new Error('Unowned synthetic banking path.');
+  } });
+  await f.post('/savia/api/auth/login', { profile: 'synthetic', code: 'synthetic' });
+  const read = f.post('task', { message: 'Consulta mi cargo ficticio.' });
+  await until(() => f.calls.some(call => call.url.endsWith('/api/chat')));
+  const output = await lines(await f.post('native-turn', { ...textTurn, message: 'Mientras revisas, ¿qué debo guardar?' }));
+  assert.equal(output.at(-1).type, 'complete');
+  const prompt = f.calls.filter(item => item.kind === 'native').at(-1).body.messages[0].content;
+  assert.match(prompt, /Trusted host status:.*read-only Savia inquiry is running in the background/);
+  assert.ok(!prompt.includes(BANK_A)); assert.ok(!prompt.includes('Consulta mi cargo ficticio.'));
+  pending.resolve(); assert.equal((await read).status, 200);
+  await lines(await f.post('native-turn', textTurn));
+  const next = f.calls.filter(item => item.kind === 'native').at(-1).body.messages[0].content;
+  assert.ok(!next.includes('Trusted host status:'));
 });

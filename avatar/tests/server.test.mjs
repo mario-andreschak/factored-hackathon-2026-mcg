@@ -375,3 +375,24 @@ test('installed Savia anonymous integration remains protected behind the actual 
   const task = await request('/api/avatar/task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"message":"hello"}' });
   assert.equal(task.status, 401);
 });
+
+test('portal scope and language stay in the cookie-owned proxy, while follow-up routes admit only language', async t => {
+  const calls = [];
+  const { request } = await fixture(t, { saviaUpstream: 'http://127.0.0.1:43800', saviaOrigin: 'http://127.0.0.1:43800' }, async (url, options) => {
+    calls.push({ url, body: options.body ? JSON.parse(Buffer.from(options.body).toString()) : undefined });
+    return new Response(JSON.stringify({ items: [] }), { headers: { 'Content-Type': 'application/json' } });
+  });
+  const post = (path, body) => request(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const body = { message: 'Revisa este cargo.', language: 'pt', transaction_reference: 'txn_' + 'a'.repeat(24), query_scope_id: 'q_' + 'b'.repeat(32) };
+  assert.equal((await post('/savia/api/chat', body)).status, 200); assert.deepEqual(calls.at(-1).body, body);
+  for (const extra of [{ language: 'en' }, { query_scope_id: 'private_id' }, { customer_id: 'forged' }])
+    assert.equal((await post('/savia/api/chat', { ...body, ...extra })).status, 400);
+  for (const path of ['/savia/api/followups', '/savia/api/followups/check']) {
+    assert.equal((await post(path, { language: 'es' })).status, 200);
+    assert.equal((await post(path, { language: 'es', receipt_id: 'forged' })).status, 400);
+  }
+  assert.equal((await request('/savia/api/followups?language=pt')).status, 200);
+  assert.equal((await request('/savia/api/action/status?language=es')).status, 200);
+  assert.equal((await post('/savia/api/action/confirm', { language: 'es' })).status, 404);
+  assert.equal(calls.length, 5);
+});

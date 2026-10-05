@@ -128,7 +128,12 @@ export function createAvatarServer({ config = readConfig(), fetchImpl = fetch, n
     const owner = createHash('sha256').update(session.bankToken).digest('hex');
     if (taskOwners.has(owner)) throw new PublicError(409, 'task_active', 'A task is already running. Wait for its result before sending another.');
     taskOwners.add(owner);
-    return () => taskOwners.delete(owner);
+    const task = { owner: session.bankToken, startedAt: now() };
+    session.backgroundTask = task;
+    return () => {
+      taskOwners.delete(owner);
+      if (session.backgroundTask === task) session.backgroundTask = null;
+    };
   }
 
   const server = createServer({ maxHeaderSize: 16 * 1024 }, async (req, res) => {
@@ -208,7 +213,7 @@ export function createAvatarServer({ config = readConfig(), fetchImpl = fetch, n
             const value = validateNativeTurn(resultTurn ? { avatar: payload.avatar, locale: payload.locale,
               message: payload.locale === 'pt' ? 'Resuma o resultado confirmado com precisão.' : 'Resume el resultado confirmado con precisión.' } : payload);
             let backendResult;
-            if (resultTurn || session.native.hasPrivateContext()) {
+            if (resultTurn || session.native.hasPrivateContext() || session.backgroundTask?.owner === session.bankToken && session.bankToken) {
               // A fresh Savia identity check precedes consuming a single-use, server-held receipt.
               const owner = session.bankToken;
               await verifyBankSession(config, session, fetchImpl, signal);
@@ -218,8 +223,12 @@ export function createAvatarServer({ config = readConfig(), fetchImpl = fetch, n
             const started = session.native.begin(resultTurn ? { ...value, message: '' } : value, session.bankToken, owned);
             turn = started.turn;
             backendResult ??= session.native.latestResult();
+            const backgroundTask = session.backgroundTask?.owner === session.bankToken && session.bankToken
+              ? { state: 'running', elapsedSeconds: Math.min(600, Math.max(0, Math.floor((now() - session.backgroundTask.startedAt) / 1000))) }
+              : undefined;
             const result = await streamNativeTurn(value, config, fetchImpl, signal, res,
               { turnId: turn.id, history: started.history, onQualifiedResult: result => session.native.qualify(turn, result),
+                ...(backgroundTask ? { backgroundTask } : {}),
                 ...(backendResult ? { backendResult } : {}) });
             session.native.finish(turn, result);
           }

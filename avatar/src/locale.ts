@@ -69,6 +69,7 @@ const es = {
   },
   game: {
     firstListen: 'Cuéntame qué tienes en mente.',
+    audioNotice: 'Compañero de IA. Al activar el micrófono, tu audio se envía a {provider} para responder y transcribir. Evita contraseñas y códigos. Puedes silenciarlo o escribir.',
     backgroundTranscriptionUnavailable: 'La transcripción no está disponible. Puedes seguir hablando.',
     saviaNotConnected: 'Savia no está conectado. Estás explorando una vista previa.',
     previousRequestBusy: 'Savia todavía está revisando tu solicitud anterior.',
@@ -123,6 +124,7 @@ const pt: Messages = {
   },
   game: {
     firstListen: 'Conte o que está passando pela sua cabeça.',
+    audioNotice: 'Companheiro de IA. Ao ativar o microfone, seu áudio é enviado a {provider} para responder e transcrever. Evite senhas e códigos. Você pode silenciar ou escrever.',
     backgroundTranscriptionUnavailable: 'A transcrição não está disponível. Você pode continuar falando.',
     saviaNotConnected: 'Savia não está conectado. Você está explorando uma prévia.',
     previousRequestBusy: 'Savia ainda está verificando sua solicitação anterior.',

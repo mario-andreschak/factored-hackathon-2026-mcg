@@ -13,6 +13,9 @@ export const SAVIA_API_ROUTES = Object.freeze({
   '/api/chat/history': ['GET'],
   '/api/chat': ['POST'],
   '/api/chat/messages': ['POST'],
+  '/api/action/status': ['GET'],
+  '/api/followups': ['GET', 'POST'],
+  '/api/followups/check': ['POST'],
 });
 
 export function cookieValue(header, name) {
@@ -91,11 +94,18 @@ export async function proxySavia(req, res, url, config, session, fetchImpl, sign
     body = await readBody(req, 24 * 1024);
     if (['/api/chat', '/api/chat/messages'].includes(route.path)) {
       const payload = parseJson(body);
-      if (Object.keys(payload).some(key => !['message', 'transaction_reference'].includes(key)) ||
+      if (Object.keys(payload).some(key => !['message', 'transaction_reference', 'language', 'query_scope_id'].includes(key)) ||
           typeof payload.message !== 'string' || !payload.message.trim() || payload.message.length > 4000 ||
+          (payload.language !== undefined && !['es', 'pt'].includes(payload.language)) ||
+          (payload.query_scope_id !== undefined && (typeof payload.query_scope_id !== 'string' || !/^q_[a-f0-9]{32}$/.test(payload.query_scope_id))) ||
           (payload.transaction_reference !== undefined && (typeof payload.transaction_reference !== 'string' || !/^txn_[a-f0-9]{24}$/.test(payload.transaction_reference)))) {
         throw new PublicError(400, 'invalid_task', 'Send a message of 1 to 4000 characters and only an optional Savia transaction reference.');
       }
+    }
+    if (['/api/followups', '/api/followups/check'].includes(route.path)) {
+      const payload = parseJson(body);
+      if (Object.keys(payload).some(key => key !== 'language') || !['es', 'pt'].includes(payload.language))
+        throw new PublicError(400, 'invalid_task', 'Send only a supported follow-up language.');
     }
     // Login codes are passed only to the existing, fixed Savia login endpoint.
     // The avatar never accepts them in its own task or Realtime configuration.
@@ -153,7 +163,7 @@ export async function proxySavia(req, res, url, config, session, fetchImpl, sign
       requestBankToken && session.bankToken === requestBankToken && !signal.aborted && onTaskResult) {
     try {
       const parsed = JSON.parse(result.toString('utf8'));
-      if (typeof parsed.reply === 'string' && parsed.reply.length <= 8000 && parsed.mode === 'flujo' &&
+      if (typeof parsed.reply === 'string' && parsed.reply.length <= 8000 && ['flujo', 'dispute'].includes(parsed.mode) &&
           ['completed', 'waiting_for_input'].includes(parsed.status))
         onTaskResult({ reply: parsed.reply, mode: parsed.mode, status: parsed.status }, requestBankToken);
     } catch { /* An unrecognized upstream shape never becomes trusted narration. */ }
@@ -181,9 +191,9 @@ export async function delegateTask(message, config, session, fetchImpl, signal) 
   try { result = JSON.parse((await readResponse(response)).toString('utf8')); }
   catch { throw new PublicError(502, 'invalid_upstream_response', 'Savia returned an invalid response.'); }
   if (typeof result.reply !== 'string' || result.reply.length < 1 || result.reply.length > 100_000 ||
-      result.mode !== 'flujo' || !['completed', 'waiting_for_input'].includes(result.status)) {
+      !['flujo', 'dispute'].includes(result.mode) || !['completed', 'waiting_for_input'].includes(result.status)) {
     throw new PublicError(502, 'invalid_upstream_response', 'Savia returned an invalid response.');
   }
   // Explicit projection excludes worker metadata and upstream conversation/customer IDs.
-  return { reply: result.reply, mode: 'flujo', status: result.status };
+  return { reply: result.reply, mode: result.mode, status: result.status };
 }

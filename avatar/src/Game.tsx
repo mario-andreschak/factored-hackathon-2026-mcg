@@ -14,6 +14,7 @@ import { useGeminiLive } from './useGeminiLive';
 import { usePersonaPlex } from './experiments/usePersonaPlex';
 import { useAmbience } from './useAmbience';
 import { isNativeReadRequest } from './nativeReadBridge';
+import { voiceMilestone } from './voiceTelemetry';
 import './game.css';
 
 const DEFAULT_CONFIG: AvatarConfig = { voiceAvailable: false, backendAvailable: false, saviaUrl: '', mode: 'demo', realtimeModel: '', voiceProvider: 'none' };
@@ -41,6 +42,8 @@ export default function Game() {
   const [previewPhase, setPreviewPhase] = useState<Phase>('idle'), [previewLevel, setPreviewLevel] = useState(0);
   const [notice, setNotice] = useState(''), [taskBusy, setTaskBusy] = useState(false);
   const [preview, setPreview] = useState(false);
+  const audioProvider = config.voiceProvider === 'gemini-live' ? 'Google' : config.voiceProvider === 'openai-realtime' ? 'OpenAI' : config.voiceProvider === 'personaplex' ? 'PersonaPlex / OpenRouter' : 'OpenRouter / OpenAI';
+  const audioNotice = formatMessage(copy.game.audioNotice, { provider: audioProvider });
   const pointer = useRef({ x: 0, y: 0 }), workbench = useRef<WorkbenchHandle>(null);
   const sceneEpoch = useRef(0), taskEpoch = useRef(0), bankSeen = useRef(false), bankSessionKnown = useRef(false);
   const taskOwner = useRef<symbol | null>(null), personaEngaged = useRef(false), nativeEngaged = useRef(false);
@@ -85,12 +88,14 @@ export default function Game() {
     if (taskOwner.current) throw new Error(getMessages(state.current.locale).game.previousRequestBusy);
     const owner = Symbol('savia-read'); taskOwner.current = owner;
     setTaskBusy(true);
+    voiceMilestone('task-start');
     try {
       await wait(400);
       if (epoch !== taskEpoch.current) throw new Error(getMessages(state.current.locale).game.previousRequestWithheld);
       if (execution?.signal?.aborted) throw new Error(getMessages(state.current.locale).game.requestStoppedBeforeSend);
       if (!workbench.current) throw new Error(getMessages(state.current.locale).game.poolOpening);
       const result = await workbench.current.execute(message, execution);
+      voiceMilestone('task-complete');
       if (epoch !== taskEpoch.current) throw new Error(getMessages(state.current.locale).game.previousResponseWithheld);
       bankSeen.current = true; return result;
     } finally {
@@ -363,6 +368,7 @@ export default function Game() {
     {entered ? <Suspense fallback={<div className="darkness" />}><World locale={locale} avatar={avatar} sceneIndex={sceneIndex} phase={phase} audioLevel={level} reducedMotion={reducedMotion} pointer={pointer.current} /></Suspense> : <div className={`darkness ${awakened ? 'eyes-awake' : ''} ${voice.connecting && !initialListening ? 'eyes-connecting' : ''}`} style={{ '--listen-level': level } as React.CSSProperties}>
       <svg className="drawn-eyes" viewBox="0 0 190 58" aria-hidden="true"><path d="M15 32 Q 42 6 70 29" /><path d="M120 29 Q 148 6 175 32" /></svg>
       {!awakened && <button className="wake-surface" onClick={() => void wake()} aria-label={copy.ui.wakeWorld} />}
+      {!awakened && (config.voiceAvailable || config.initialVoiceAvailable) && <p className="audio-provider-notice">{audioNotice}</p>}
       {awakened && !voice.connected && voice.connecting && <span className="sr-only" role="status">{initialListening ? copy.status.listening : copy.status.connectingVoice}</span>}
       {initialListening && <div className="first-listen"><span>{copy.game.firstListen}</span><button onClick={() => { personaplex.disconnect(); setAwakened(false); }} aria-label={copy.ui.stopListening}><MicOff size={14} /></button></div>}
       {voice.connected && <span className="sr-only" role="status">{voice.muted ? copy.status.microphoneMuted : copy.status.listening}</span>}
@@ -378,6 +384,7 @@ export default function Game() {
       <button className="resume-game" onClick={() => setPaused(false)}><Play size={15} />{copy.ui.returnWorld}</button>
       <div className="pause-characters">{(Object.keys(AVATARS) as AvatarId[]).map(id => <button key={id} aria-label={formatMessage(copy.ui.chooseCharacter, { name: characters[id].name })} aria-pressed={avatar === id} onClick={() => pickAvatar(id)} className={avatar === id ? 'chosen' : ''}><CharacterIcon id={id} /><span>{characters[id].name}</span></button>)}</div>
       <div className="pause-options">
+        {(config.voiceAvailable || config.initialVoiceAvailable) && <p className="audio-provider-notice audio-provider-notice-menu">{audioNotice}</p>}
         <div className="pause-language" role="group" aria-label={copy.ui.language}>
           <button aria-pressed={locale === 'es'} disabled={taskBusy} onClick={() => changeLocale('es')} lang="es-CO">Español{locale === 'es' && <Check size={15} />}</button>
           <button aria-pressed={locale === 'pt'} disabled={taskBusy} onClick={() => changeLocale('pt')} lang="pt-BR">Português{locale === 'pt' && <Check size={15} />}</button>

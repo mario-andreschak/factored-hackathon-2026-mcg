@@ -7,6 +7,7 @@ import { voiceCopy, voiceError, VoiceLocaleError, voiceRequestError, voiceRespon
 import { UtteranceCollector } from './experiments/utteranceObserver';
 import { nativeAbortable, nativeAudioBytes, nativeIdentifier, NativeRouterPlayback, readNativeTurn } from './nativeRouterPlayback';
 import type { NativePlayed, NativeTurnEvent } from './nativeRouterPlayback';
+import { voiceMilestone } from './voiceTelemetry';
 
 interface Options {
   avatar: AvatarId;
@@ -71,7 +72,9 @@ export function useNativeRouterVoice(options: Options) {
   }, []);
   const stopResponse = useCallback((s: Session, hold: boolean, dropPending = true) => {
     s.generation++; s.manualHold = hold; if (dropPending) s.pending = undefined;
-    const turn = s.response; turn?.abort.abort();
+    const turn = s.response;
+    if (turn && !turn.abort.signal.aborted) voiceMilestone('voice-interrupted');
+    turn?.abort.abort();
     if (turn?.turnId) s.playback?.cancel(turn.turnId);
     setAudioLevel(0); if (current(s)) { opts.current.onInterrupted?.(); setPhase(s.muted ? 'idle' : 'listening'); }
   }, [current]);
@@ -150,6 +153,7 @@ export function useNativeRouterVoice(options: Options) {
       const payload = input.taskId ? { taskId: input.taskId, avatar: input.avatar }
         : input.audio ? { audio: input.audio, format: 'wav', avatar: input.avatar } : { message: input.message, avatar: input.avatar };
       const response = await request(s, path, payload, turn.abort.signal);
+      voiceMilestone('voice-start');
       if (!liveTurn(s, turn)) { await response.body?.cancel(); throw cancelled(); }
       await readNativeTurn(response, AbortSignal.any([turn.abort.signal, s.abort.signal]), async event => {
         if (!liveTurn(s, turn)) throw cancelled();
@@ -158,6 +162,7 @@ export function useNativeRouterVoice(options: Options) {
           if (!s.playback?.begin(event.turnId)) throw new VoiceLocaleError('unsupportedAudio');
           if (input.audio) observe.current(s, { turnId: event.turnId, audio: input.audio, serial: input.serial });
         } else if (event.type === 'audio') {
+          voiceMilestone('voice-audio');
           await s.playback!.enqueue(event.turnId, nativeAudioBytes(event.data), turn.abort.signal);
           if (liveTurn(s, turn)) refresh(s);
         } else if (event.type === 'caption') {
@@ -169,7 +174,7 @@ export function useNativeRouterVoice(options: Options) {
       if (!turn.complete || !turn.turnId || !liveTurn(s, turn)) throw new VoiceLocaleError('streamFailed');
       await s.playback!.drain(turn.turnId, turn.complete.samples, turn.abort.signal);
       await nativeAbortable(s.ackBarrier, turn.abort.signal);
-      if (liveTurn(s, turn)) opts.current.onTranscript(`native-${turn.turnId}`, 'assistant', turn.complete.text, true);
+      if (liveTurn(s, turn)) { voiceMilestone('voice-complete'); opts.current.onTranscript(`native-${turn.turnId}`, 'assistant', turn.complete.text, true); }
     } catch (e) {
       if (turn.turnId) s.playback?.cancel(turn.turnId);
       if (current(s) && s.response === turn && s.generation === turn.generation) {
@@ -265,6 +270,7 @@ export function useNativeRouterVoice(options: Options) {
         s.raf = requestAnimationFrame(measure);
       };
       s.raf = requestAnimationFrame(measure);
+      pump.current(s); // Typed input admitted during microphone setup starts once capture/playback are ready.
     } catch (e) {
       if (current(s)) { disconnect(); setError(e instanceof DOMException && e.name === 'NotAllowedError' ? voiceCopy(s.locale).microphoneDenied : voiceError(s.locale, e)); }
     }
@@ -290,7 +296,7 @@ export function useNativeRouterVoice(options: Options) {
     setError(''); refresh(s);
   }, [current, invalidateObserver, refresh, stopResponse]);
   const sendText = useCallback((text: string) => {
-    const s = session.current; if (!s?.ready || !text.trim()) return false;
+    const s = session.current; if (!s || s.abort.signal.aborted || !text.trim()) return false;
     if (text.length > 4000) { setError(voiceCopy(s.locale).messageTooLong); return false; }
     s.serial++; enqueue(s, { message: text.trim() }); return true;
   }, [enqueue]);

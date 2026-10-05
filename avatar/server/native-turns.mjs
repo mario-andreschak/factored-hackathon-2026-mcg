@@ -105,7 +105,7 @@ export function createNativeTurns({ now = Date.now } = {}) {
     },
     receipt(result, bankToken) {
       bind(bankToken); sweep();
-      if (!bankToken || !only(result, ['reply', 'mode', 'status']) || result.mode !== 'flujo' ||
+      if (!bankToken || !only(result, ['reply', 'mode', 'status']) || !['flujo', 'dispute'].includes(result.mode) ||
           !['completed', 'waiting_for_input'].includes(result.status) || typeof result.reply !== 'string' ||
           !result.reply.trim() || result.reply.length > 8000) return null;
       privateContext = true;

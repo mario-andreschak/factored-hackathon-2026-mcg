@@ -1,5 +1,10 @@
 # elsewhere.
 
+The final-day local candidate and recording recipe are in
+[RC voice runbook](docs/RC-VOICE.md). It uses the fresh fictional portal on
+43900 and native audio on 43941, with conversation during background reads,
+account-owned result delivery, and a provider notice before microphone use.
+
 A separate cinematic voice companion for Savia. Begin in darkness with drawn
 eyes, describe what is on your mind, and enter one of three worlds: Moss's ancient
 forest, Orbit's observatory, or Spark's desert outpost. Ten original forest scenes,

@@ -86,3 +86,13 @@ test('qualification allows an early full-played ACK without releasing delivery r
   state.bind(null);
   assert.equal(response.signal.aborted, true); assert.deepEqual(state.history(), []);
 });
+
+test('fresh dispute-host display facts acquire one server-owned result receipt without granting action authority', () => {
+  const state = createNativeTurns();
+  const result = { reply: 'El cargo ficticio es de 42.17 USD. No se realizó una acción.', mode: 'dispute', status: 'completed' };
+  const taskId = state.receipt(result, 'fictional-owner');
+  assert.ok(taskId);
+  assert.deepEqual(state.consumeReceipt({ taskId, avatar: 'moss', locale: 'es' }, 'fictional-owner'), result);
+  assert.throws(() => state.consumeReceipt({ taskId, avatar: 'moss', locale: 'es' }, 'fictional-owner'));
+  assert.equal(state.receipt({ ...result, capability: 'forged' }, 'fictional-owner'), null);
+});
