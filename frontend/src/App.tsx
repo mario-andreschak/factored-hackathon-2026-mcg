@@ -47,11 +47,13 @@ import type {
   HandoffPacket,
   HistoryPeriod,
   IntakeReceipt,
+  Followup,
   Overview,
   Product,
   Profile,
   Transaction,
 } from "./types";
+import { InquiryPanel } from "./InquiryPanel";
 import {
   api,
   ApiError,
@@ -1374,6 +1376,17 @@ const portalNumber = (value: number, language: ActionLanguage) =>
     ? new Intl.NumberFormat("pt-BR").format(value)
     : number(value);
 const ACTION_LANGUAGE_STORAGE = "flujo-bank-action-language";
+const chatArchiveStorageKey = (profileId: string) =>
+  `savia-chat-archive:${encodeURIComponent(profileId)}`;
+function savedChatArchiveCutoff(profileId?: string | null): number {
+  if (!profileId || typeof window === "undefined") return 0;
+  try {
+    const value = Number(window.localStorage.getItem(chatArchiveStorageKey(profileId)));
+    return Number.isSafeInteger(value) && value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
 const assistantCopy = {
   es: {
     title: "Tu asistente Savia",
@@ -1381,8 +1394,8 @@ const assistantCopy = {
     language: "Idioma de la interfaz",
     tagline: "Un poco de claridad, cuando la necesitas.",
     connectedIntake:
-      "Conectado a FLUJO · Recepción simulada disponible tras confirmación",
-    connectedReadOnly: "Conectado a FLUJO · Consulta de solo lectura",
+      "Savia conectada · Recepción simulada disponible tras confirmación",
+    connectedReadOnly: "Savia conectada · Consulta de solo lectura",
     unavailable: "El asistente no está disponible ahora",
     historyLimited:
       "Mostramos los mensajes más recientes. El asistente mantiene el contexto de esta conversación.",
@@ -1401,7 +1414,11 @@ const assistantCopy = {
       "¿Cómo puedo consultar un cargo que no reconozco?",
     ],
     you: "Tú",
-    thinking: "Consultando tus datos con FLUJO…",
+    thinking: "Consultando tus datos…",
+    newChat: "Empezar chat nuevo",
+    viewPreviousChat: "Ver conversación anterior",
+    returnToCurrentChat: "Volver al chat actual",
+    archivedChatNotice: "Esta es tu conversación anterior. Vuelve al chat actual para escribir un mensaje nuevo.",
     recover: "Recuperar conversación",
     historyError:
       "No pudimos recuperar tu conversación. Vuelve a intentar antes de enviar una consulta.",
@@ -1424,8 +1441,8 @@ const assistantCopy = {
     language: "Idioma da interface",
     tagline: "Um pouco de clareza quando você precisa.",
     connectedIntake:
-      "Conectado ao FLUJO · Registro simulado disponível após confirmação",
-    connectedReadOnly: "Conectado ao FLUJO · Consulta somente de leitura",
+      "Savia conectada · Registro simulado disponível após confirmação",
+    connectedReadOnly: "Savia conectada · Consulta somente de leitura",
     unavailable: "O assistente não está disponível agora",
     historyLimited:
       "Mostramos as mensagens mais recentes. O assistente mantém o contexto desta conversa.",
@@ -1444,7 +1461,11 @@ const assistantCopy = {
       "Como posso consultar uma cobrança que não reconheço?",
     ],
     you: "Você",
-    thinking: "Consultando seus dados com o FLUJO…",
+    thinking: "Consultando seus dados…",
+    newChat: "Começar uma nova conversa",
+    viewPreviousChat: "Ver conversa anterior",
+    returnToCurrentChat: "Voltar à conversa atual",
+    archivedChatNotice: "Esta é sua conversa anterior. Volte à conversa atual para escrever uma nova mensagem.",
     recover: "Recuperar conversa",
     historyError:
       "Não foi possível recuperar sua conversa. Tente novamente antes de enviar uma pergunta.",
@@ -1479,6 +1500,28 @@ const actionCopy = {
     title: "¿No reconoces un cargo?",
     disclosure:
       "La recepción es una simulación. No bloquea tarjetas, devuelve dinero ni resuelve una disputa.",
+    followupTitle: "Seguimiento de esta recepción",
+    followupDisclosure:
+      "Seguimiento simulado de esta demostración. Solo consulta el estado disponible; no contacta al banco ni resuelve una disputa.",
+    followupOptIn: "Quiero recibir seguimiento de esta recepción",
+    followupChecking: "Guardando tu preferencia…",
+    followupCheckNow: "Consultar ahora",
+    followupCheckingNow: "Consultando…",
+    followupLastCheck: "Última consulta",
+    followupNextCheck: "Próxima consulta",
+    followupNextStep: "Próximo paso",
+    followupNoCheck: "Aún no se ha consultado",
+    followupError: "No pudimos cargar el seguimiento. Intenta de nuevo.",
+    followupEnrollError:
+      "No pudimos guardar tu preferencia. Vuelve a consultar el estado de la recepción.",
+    followupCheckError:
+      "No pudimos consultar el seguimiento ahora. Puedes intentarlo más tarde.",
+    followupStates: {
+      scheduled: "Programado",
+      checked: "Consultado",
+      unavailable: "Sin información disponible",
+      paused: "En pausa",
+    },
     language: "Idioma de esta respuesta",
     pendingCharge: "Solicitud pendiente para este cargo",
     pendingReview: "Solicitud de revisión pendiente",
@@ -1521,6 +1564,7 @@ const actionCopy = {
     servingSnapshot: "Snapshot de esta consulta",
     receiptSnapshot: "Snapshot del registro original",
     simulatedStatus: "Estado del registro simulado",
+    technicalDetails: "Ver detalles técnicos",
     received: "Recibido",
     factsAsOf: "Snapshot consultado el",
     snapshotReadNotice:
@@ -1582,6 +1626,28 @@ const actionCopy = {
     title: "Não reconhece uma cobrança?",
     disclosure:
       "O registro é uma simulação. Não bloqueia cartões, devolve dinheiro nem resolve uma contestação.",
+    followupTitle: "Acompanhamento deste registro",
+    followupDisclosure:
+      "Acompanhamento simulado desta demonstração. Consulta apenas o estado disponível; não contata o banco nem resolve uma contestação.",
+    followupOptIn: "Quero receber acompanhamento deste registro",
+    followupChecking: "Salvando sua preferência…",
+    followupCheckNow: "Consultar agora",
+    followupCheckingNow: "Consultando…",
+    followupLastCheck: "Última consulta",
+    followupNextCheck: "Próxima consulta",
+    followupNextStep: "Próximo passo",
+    followupNoCheck: "Ainda não foi consultado",
+    followupError: "Não foi possível carregar o acompanhamento. Tente novamente.",
+    followupEnrollError:
+      "Não foi possível salvar sua preferência. Consulte novamente o estado do registro.",
+    followupCheckError:
+      "Não foi possível consultar o acompanhamento agora. Você pode tentar mais tarde.",
+    followupStates: {
+      scheduled: "Agendado",
+      checked: "Consultado",
+      unavailable: "Sem informação disponível",
+      paused: "Pausado",
+    },
     language: "Idioma desta resposta",
     pendingCharge: "Solicitação pendente para este lançamento",
     pendingReview: "Solicitação de análise pendente",
@@ -1624,6 +1690,7 @@ const actionCopy = {
     servingSnapshot: "Snapshot desta consulta",
     receiptSnapshot: "Snapshot do registro original",
     simulatedStatus: "Estado do registro simulado",
+    technicalDetails: "Ver detalhes técnicos",
     received: "Recebido",
     factsAsOf: "Snapshot consultado em",
     snapshotReadNotice:
@@ -2005,9 +2072,6 @@ function ReceiptEvidence({
       <p>
         <strong>{copy.receiptLabel}:</strong> <code>{receipt.id}</code>
       </p>
-      <p>
-        <strong>{copy.chargeReference}:</strong> <code>{targetReference}</code>
-      </p>
       <EvidenceFacts
         facts={receipt.transaction}
         language={language}
@@ -2019,25 +2083,30 @@ function ReceiptEvidence({
           <dd>{copy.received}</dd>
         </div>
         <div>
-          <dt>{copy.receiptSnapshot}</dt>
-          <dd>
-            <code>{receipt.snapshot}</code>
-          </dd>
-        </div>
-        {snapshotName(servingSnapshot) && (
-          <div>
-            <dt>{copy.servingSnapshot}</dt>
-            <dd>
-              <code>{servingSnapshot}</code>
-            </dd>
-          </div>
-        )}
-        <div>
           <dt>{copy.savedAt}</dt>
           <dd>{actionDate(receipt.created_at, language)}</dd>
         </div>
       </dl>
-      <p>{copy.existingCaseNote}</p>
+      <details className="action-technical">
+        <summary>{copy.technicalDetails}</summary>
+        <dl>
+          <div>
+            <dt>{copy.chargeReference}</dt>
+            <dd><code>{targetReference}</code></dd>
+          </div>
+          <div>
+            <dt>{copy.receiptSnapshot}</dt>
+            <dd><code>{receipt.snapshot}</code></dd>
+          </div>
+          {snapshotName(servingSnapshot) && (
+            <div>
+              <dt>{copy.servingSnapshot}</dt>
+              <dd><code>{servingSnapshot}</code></dd>
+            </div>
+          )}
+        </dl>
+      </details>
+      {!previous && <p>{copy.existingCaseNote}</p>}
     </section>
   );
 }
@@ -2065,15 +2134,6 @@ function HandoffEvidence({
       <h4>{previous ? copy.priorHandoffTitle : copy.savedReview}</h4>
       {previous && <p>{copy.priorHandoffNote}</p>}
       <p>
-        <strong>{copy.handoffLabel}:</strong> <code>{packet.id}</code>
-      </p>
-      {targetReference && (
-        <p>
-          <strong>{copy.chargeReference}:</strong>{" "}
-          <code>{targetReference}</code>
-        </p>
-      )}
-      <p>
         <strong>{copy.reasonLabel}:</strong>{" "}
         {
           handoffReasons[language][
@@ -2089,35 +2149,51 @@ function HandoffEvidence({
         />
       )}
       <dl>
-        {packet.snapshot && (
-          <div>
-            <dt>{copy.snapshot}</dt>
-            <dd>
-              <code>{packet.snapshot}</code>
-            </dd>
-          </div>
-        )}
-        {packet.transaction_provenance && (
-          <>
-            <div>
-              <dt>{copy.factsSource}</dt>
-              <dd>{copy.ownedSnapshot}</dd>
-            </div>
-            <div>
-              <dt>{copy.factsAsOf}</dt>
-              <dd>
-                {actionMoment(packet.transaction_provenance.as_of, language)}
-              </dd>
-            </div>
-          </>
-        )}
         <div>
           <dt>{copy.savedAt}</dt>
           <dd>{actionDate(packet.created_at, language)}</dd>
         </div>
       </dl>
+      <details className="action-technical">
+        <summary>{copy.technicalDetails}</summary>
+        <dl>
+          <div>
+            <dt>{copy.handoffLabel}</dt>
+            <dd><code>{packet.id}</code></dd>
+          </div>
+          {targetReference && (
+            <div>
+              <dt>{copy.chargeReference}</dt>
+              <dd><code>{targetReference}</code></dd>
+            </div>
+          )}
+          {packet.snapshot && (
+            <div>
+              <dt>{copy.snapshot}</dt>
+              <dd><code>{packet.snapshot}</code></dd>
+            </div>
+          )}
+          {packet.transaction_provenance && (
+            <>
+              <div>
+                <dt>{copy.factsSource}</dt>
+                <dd>{copy.ownedSnapshot}</dd>
+              </div>
+              <div>
+                <dt>{copy.factsAsOf}</dt>
+                <dd>
+                  {actionMoment(packet.transaction_provenance.as_of, language)}
+                </dd>
+              </div>
+              <div>
+                <dt>{copy.snapshot}</dt>
+                <dd>{copy.snapshotReadNotice}</dd>
+              </div>
+            </>
+          )}
+        </dl>
+      </details>
       <p>{copy.currentness[packet.transaction_currentness]}</p>
-      {packet.transaction_provenance && <p>{copy.snapshotReadNotice}</p>}
       {packet.unanswered_questions.length ? (
         <>
           <strong>{copy.questions}</strong>
@@ -2157,6 +2233,23 @@ function actionMoment(value: string, language: ActionLanguage): string {
       timeZone: "UTC",
       hourCycle: "h23",
     }).format(new Date(value)) + " UTC"
+  );
+}
+
+function followupMoment(value: number | null, language: ActionLanguage): string {
+  if (value === null || !Number.isFinite(value))
+    return actionCopy[language].followupNoCheck;
+  const milliseconds = value < 1_000_000_000_000 ? value * 1000 : value;
+  return (
+    new Intl.DateTimeFormat(language === "pt" ? "pt-BR" : "es-MX", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+      hourCycle: "h23",
+    }).format(new Date(milliseconds))
   );
 }
 
@@ -2202,6 +2295,7 @@ export function Assistant({
   onClose,
   onExpired,
   initialLanguage = savedActionLanguage(),
+  profileId,
   onLanguageChange,
 }: {
   open: boolean;
@@ -2214,6 +2308,7 @@ export function Assistant({
   onClose: () => void;
   onExpired: () => void;
   initialLanguage?: ActionLanguage;
+  profileId?: string | null;
   onLanguageChange?: (language: ActionLanguage) => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]),
@@ -2227,6 +2322,9 @@ export function Assistant({
     [activeQueryId, setActiveQueryId] = useState<string | null>(null),
     [input, setInput] = useState(""),
     [action, setAction] = useState<ActionResult | null>(null),
+    [followups, setFollowups] = useState<Followup[]>([]),
+    [followupBusy, setFollowupBusy] = useState(false),
+    [followupError, setFollowupError] = useState(""),
     [actionReady, setActionReady] = useState(false),
     [actionBusy, setActionBusy] = useState(false),
     [actionStatusLoading, setActionStatusLoading] = useState(false),
@@ -2240,6 +2338,10 @@ export function Assistant({
     [historyReady, setHistoryReady] = useState(false),
     [historyLimited, setHistoryLimited] = useState(false),
     [historyAttempt, setHistoryAttempt] = useState(0),
+    [archiveCutoff, setArchiveCutoff] = useState(() =>
+      savedChatArchiveCutoff(profileId),
+    ),
+    [viewingArchivedChat, setViewingArchivedChat] = useState(false),
     [consentAmountVisible, setConsentAmountVisible] = useState(false),
     [handoffQuestionDraft, setHandoffQuestionDraft] = useState("");
   const consentSummaryId = useId();
@@ -2254,7 +2356,51 @@ export function Assistant({
   const copy = actionCopy[actionLanguage];
   const ui = assistantCopy[actionLanguage];
   const uiLang = actionLanguage === "pt" ? "pt-BR" : "es";
+  const archiveLimit = Math.max(0, Math.min(archiveCutoff, messages.length));
+  const visibleMessages = viewingArchivedChat
+    ? messages.slice(0, archiveLimit)
+    : messages.slice(archiveLimit);
+  const hasArchivedChat = Boolean(profileId && archiveLimit > 0);
+  const showChatArchiveControls = Boolean(
+    profileId &&
+      historyReady &&
+      (archiveLimit > 0 || (!viewingArchivedChat && messages.length > 0)),
+  );
   selectedReferenceRef.current = selected?.reference || null;
+  useEffect(() => {
+    setArchiveCutoff(savedChatArchiveCutoff(profileId));
+    setViewingArchivedChat(false);
+  }, [profileId]);
+  function startNewChat() {
+    if (!profileId || messages.length <= archiveLimit) return;
+    const cutoff = messages.length;
+    setArchiveCutoff(cutoff);
+    setViewingArchivedChat(false);
+    setInput("");
+    selectionOverrideRef.current = null;
+    activeQueryIdRef.current = null;
+    setActiveQueryId(null);
+    setQueryScopes([]);
+    onSelectTransaction(null);
+    try {
+      window.localStorage.setItem(chatArchiveStorageKey(profileId), String(cutoff));
+    } catch {
+      // The current visit still starts a fresh visible conversation.
+    }
+  }
+  const reloadFollowups = useCallback(
+    async (language: ActionLanguage, signal?: AbortSignal) => {
+      const result = await api<{ items: Followup[] }>(
+        `/api/followups?language=${language}`,
+        { signal },
+      );
+      if (alive.current && !signal?.aborted) {
+        setFollowups(Array.isArray(result.items) ? result.items : []);
+        setFollowupError("");
+      }
+    },
+    [],
+  );
   function compatibleQueryId(
     queryId: string | null,
     scopes: typeof queryScopes,
@@ -2295,6 +2441,68 @@ export function Assistant({
   useEffect(() => {
     if (open) end.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy, open]);
+  useEffect(() => {
+    const publicSelection = selected
+      ? {
+          occurred_at: selected.occurred_at,
+          type: selected.type,
+          category: selected.category,
+          amount: selected.amount,
+          currency: selected.currency,
+          status: selected.status,
+          channel: selected.channel,
+          merchant: selected.merchant,
+          country: selected.country,
+          city: selected.city,
+          direction: selected.direction,
+        }
+      : null;
+    const publicMessages = visibleMessages.map((message) => ({
+      role: message.role,
+      text: message.text,
+      ...(message.selection
+        ? {
+            selection: {
+              occurred_at: message.selection.occurred_at,
+              type: message.selection.type,
+              amount: message.selection.amount,
+              currency: message.selection.currency,
+              status: message.selection.status,
+            },
+          }
+        : {}),
+    }));
+    window.dispatchEvent(
+      new CustomEvent("savia:context", {
+        detail: { selection: publicSelection, messages: publicMessages },
+      }),
+    );
+  }, [selected, visibleMessages]);
+  useEffect(() => {
+    if (!open || !status.available || !historyReady) return;
+    const followupController = new AbortController();
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let inFlight = false;
+    const load = () => {
+      if (inFlight) return;
+      inFlight = true;
+      void reloadFollowups(actionLanguage, followupController.signal)
+        .catch((error) => {
+          if (followupController.signal.aborted || !alive.current) return;
+          if (error instanceof ApiError && error.status === 401) onExpired();
+          else setFollowupError(actionCopy[actionLanguage].followupError);
+        })
+        .finally(() => {
+          inFlight = false;
+        });
+    };
+    load();
+    timer = setInterval(load, 15_000);
+    return () => {
+      followupController.abort();
+      if (timer) clearInterval(timer);
+    };
+  }, [open, status.available, historyReady, actionLanguage, reloadFollowups, onExpired]);
   useEffect(() => {
     // A pending action belongs to its original charge, even when the visitor
     // opens another charge. Rotate only a completed or unused request ID.
@@ -2346,7 +2554,11 @@ export function Assistant({
           setHistoryLimited(Boolean(result.limited));
           setHistoryReady(true);
           setBusy(result.active);
-          if (!result.active && status.sandbox_intake_available) {
+          if (
+            !result.active &&
+            status.sandbox_intake_available &&
+            result.messages.length > 0
+          ) {
             const requestedLanguage = actionLanguageRef.current;
             const sequence = ++actionStatusSequence.current;
             setActionStatusLoading(true);
@@ -2414,7 +2626,13 @@ export function Assistant({
     };
   }, [status.available, historyAttempt, onExpired]);
   async function send(text: string) {
-    if (!text.trim() || busy || !status.available || !historyReady) return;
+    if (
+      !text.trim() ||
+      busy ||
+      viewingArchivedChat ||
+      !status.available ||
+      !historyReady
+    ) return;
     const queryScopeId = compatibleQueryId(
       activeQueryIdRef.current,
       queryScopes,
@@ -2472,6 +2690,23 @@ export function Assistant({
         result.queries || [],
       );
       setActiveQueryId(activeQueryIdRef.current);
+      if (status.sandbox_intake_available) {
+        const requestedLanguage = actionLanguageRef.current;
+        setActionReady(false);
+        setError("");
+        try {
+          await loadActionStatus(requestedLanguage);
+        } catch {
+          if (
+            !alive.current ||
+            requestedLanguage !== actionLanguageRef.current
+          )
+            return;
+          // Keep the completed chat reply visible while action status recovers.
+          setActionReady(false);
+          setError(actionCopy[requestedLanguage].statusFailed);
+        }
+      }
     } catch (e) {
       if (!alive.current) return;
       if (e instanceof ApiError && e.status === 401) {
@@ -2528,7 +2763,8 @@ export function Assistant({
     if (
       !status.available ||
       !status.sandbox_intake_available ||
-      !historyReady
+      !historyReady ||
+      messages.length === 0
     ) {
       setError((current) =>
         current === assistantCopy[previousLanguage].historyError
@@ -2683,6 +2919,48 @@ export function Assistant({
       if (alive.current) setActionBusy(false);
     }
   }
+  async function enrollFollowup() {
+    if (followupBusy || !receipt) return;
+    setFollowupBusy(true);
+    setFollowupError("");
+    try {
+      await api<unknown>("/api/followups", {
+        method: "POST",
+        body: JSON.stringify({ language: actionLanguage }),
+      });
+      await reloadFollowups(actionLanguage);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) onExpired();
+      else if (error instanceof ApiError && error.status === 409) {
+        try {
+          await reloadFollowups(actionLanguage);
+        } catch {
+          setFollowupError(copy.followupEnrollError);
+        }
+      } else {
+        setFollowupError(copy.followupEnrollError);
+      }
+    } finally {
+      if (alive.current) setFollowupBusy(false);
+    }
+  }
+  async function checkFollowups() {
+    if (followupBusy) return;
+    setFollowupBusy(true);
+    setFollowupError("");
+    try {
+      await api<unknown>("/api/followups/check", {
+        method: "POST",
+        body: JSON.stringify({ language: actionLanguage }),
+      });
+      await reloadFollowups(actionLanguage);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) onExpired();
+      else setFollowupError(copy.followupCheckError);
+    } finally {
+      if (alive.current) setFollowupBusy(false);
+    }
+  }
   const actionBlocksNewCharge =
     action !== null && action.state !== "none" && !actionIsTerminal(action);
   const actionTarget = transactions.find(
@@ -2720,6 +2998,9 @@ export function Assistant({
   const handoffPacket = verifiedHandoff(action);
   const priorReceipt = priorReceiptForTarget(action, selected?.reference);
   const priorHandoff = priorGeneralHandoff(action);
+  const currentFollowups = receipt
+    ? followups.filter((item) => item.receipt_id === receipt.id)
+    : [];
   const canRetryHandoff =
     actionReady &&
     (action?.state === "handoff_unverified" ||
@@ -2811,7 +3092,9 @@ export function Assistant({
         (messages.length > 0 || action) && (
           <div className="action-panel" lang={uiLang}>
             <strong lang={uiLang}>{copy.title}</strong>
-            <p lang={uiLang}>{copy.disclosure}</p>
+            {!receipt && !priorReceipt && !handoffPacket && (
+              <p lang={uiLang}>{copy.disclosure}</p>
+            )}
             {action && (
               <p role="status" className="action-result">
                 {action.message ||
@@ -2894,21 +3177,34 @@ export function Assistant({
                           )}{" "}
                           {preparedFacts.currency}
                         </span>
-                        <span>
-                          {copy.snapshot}: <code>{action!.snapshot}</code>
-                        </span>
-                        <span>
-                          {copy.chargeReference}:{" "}
-                          <code>{action!.target_reference}</code>
-                        </span>
                       </>
                     ) : (
-                      action?.target_reference || copy.noCharge
+                      copy.noCharge
                     )}
                   </small>
                 </span>
               </div>
             )}
+            {actionBlocksNewCharge &&
+              (action?.snapshot || action?.target_reference) && (
+                <details className="action-technical">
+                  <summary>{copy.technicalDetails}</summary>
+                  <dl>
+                    {action.target_reference && (
+                      <div>
+                        <dt>{copy.chargeReference}</dt>
+                        <dd><code>{action.target_reference}</code></dd>
+                      </div>
+                    )}
+                    {action.snapshot && (
+                      <div>
+                        <dt>{copy.snapshot}</dt>
+                        <dd><code>{action.snapshot}</code></dd>
+                      </div>
+                    )}
+                  </dl>
+                </details>
+              )}
             {actionBlocksNewCharge &&
               action?.target_reference &&
               !selectedIsActionTarget && (
@@ -3000,7 +3296,15 @@ export function Assistant({
                       </span>
                     </span>
                     <small>
-                      {copy.chargeReference}: {action.target_reference}
+                      {actionDate(
+                        preparedFacts.transaction_date,
+                        actionLanguage,
+                      )}{" "}
+                      · {evidenceAmount(
+                        preparedFacts,
+                        actionLanguage,
+                        hidden && !consentAmountVisible,
+                      )} {preparedFacts.currency}
                     </small>
                   </button>
                 </>
@@ -3086,6 +3390,44 @@ export function Assistant({
             )}
           </div>
         )}
+      {showChatArchiveControls && (
+        <div className="chat-archive-controls" lang={uiLang}>
+          {viewingArchivedChat ? (
+            <>
+              <p>{ui.archivedChatNotice}</p>
+              <button
+                type="button"
+                className="button outline"
+                onClick={() => setViewingArchivedChat(false)}
+              >
+                {ui.returnToCurrentChat}
+              </button>
+            </>
+          ) : (
+            <>
+              {hasArchivedChat && (
+                <button
+                  type="button"
+                  className="button outline"
+                  onClick={() => setViewingArchivedChat(true)}
+                >
+                  {ui.viewPreviousChat}
+                </button>
+              )}
+              {messages.length > archiveLimit && (
+                <button
+                  type="button"
+                  className="button outline"
+                  disabled={busy || actionBusy}
+                  onClick={startNewChat}
+                >
+                  {ui.newChat}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
       <div className="chat-messages" aria-live="polite">
         {historyLimited && (
           <p className="modal-disclosure" lang={uiLang}>
@@ -3097,7 +3439,7 @@ export function Assistant({
             <LoaderCircle size={16} className="spin" />
             {ui.recovering}
           </div>
-        ) : messages.length === 0 && !busy ? (
+        ) : visibleMessages.length === 0 && !busy ? (
           <div className="chat-welcome" lang={uiLang}>
             <MessageCircle size={30} />
             <h3>{ui.welcome}</h3>
@@ -3107,7 +3449,7 @@ export function Assistant({
                 (text) => (
                   <button
                     key={text}
-                    disabled={!status.available || !historyReady}
+                    disabled={!status.available || !historyReady || viewingArchivedChat}
                     onClick={() => send(text)}
                   >
                     {text}
@@ -3118,8 +3460,12 @@ export function Assistant({
             </div>
           </div>
         ) : (
-          messages.map((m, i) => (
-            <div key={i} className={`chat-message ${m.role}`}>
+          visibleMessages.map((m, i) => (
+            <div
+              key={i}
+              className={`chat-message ${m.role}`}
+              data-savia-reply={m.role === "assistant" ? m.text : undefined}
+            >
               <span lang={uiLang}>
                 {m.role === "assistant" ? "Savia" : ui.you}
               </span>
@@ -3167,6 +3513,95 @@ export function Assistant({
         )}
         <div ref={end} />
       </div>
+      {historyReady &&
+        (receipt || followups.length > 0) && (
+          <section className="action-panel followup-panel" lang={uiLang}>
+            <strong>{copy.followupTitle}</strong>
+            <p>{copy.followupDisclosure}</p>
+            {followupError && <p role="alert">{followupError}</p>}
+            {followups.map((item) => (
+              <article className="followup-item" key={item.id}>
+                <strong>{copy.followupStates[item.state] || item.state}</strong>
+                <p>{item.message}</p>
+                <dl>
+                  <div>
+                    <dt>{copy.receiptLabel}</dt>
+                    <dd><code>{item.receipt_id}</code></dd>
+                  </div>
+                  {receipt?.id === item.receipt_id && (
+                    <>
+                      <div>
+                        <dt>{copy.eventDate}</dt>
+                        <dd>
+                          {actionDate(
+                            receipt.transaction.transaction_date,
+                            actionLanguage,
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{copy.chargeReference}</dt>
+                        <dd>
+                          {evidenceAmount(
+                            receipt.transaction,
+                            actionLanguage,
+                            hidden,
+                          )} {receipt.transaction.currency}
+                        </dd>
+                      </div>
+                    </>
+                  )}
+                  <div>
+                    <dt>{copy.followupLastCheck}</dt>
+                    <dd>
+                      {followupMoment(item.last_checked_at, actionLanguage)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{copy.followupNextCheck}</dt>
+                    <dd>
+                      {followupMoment(item.next_check_at, actionLanguage)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{copy.followupNextStep}</dt>
+                    <dd>{item.next_step}</dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
+            {receipt && currentFollowups.length === 0 && !followupError && (
+              <button
+                type="button"
+                className="button primary"
+                disabled={followupBusy}
+                onClick={enrollFollowup}
+              >
+                {followupBusy ? copy.followupChecking : copy.followupOptIn}
+              </button>
+            )}
+            {followups.length > 0 && (
+              <button
+                type="button"
+                className="button outline"
+                disabled={followupBusy}
+                onClick={checkFollowups}
+              >
+                {followupBusy
+                  ? copy.followupCheckingNow
+                  : copy.followupCheckNow}
+              </button>
+            )}
+          </section>
+        )}
+      {open && profileId && (
+        <InquiryPanel
+          language={actionLanguage}
+          transactionReference={selected?.reference}
+          message={input || [...messages].reverse().find((item) => item.role === "user")?.text || ""}
+          onExpired={onExpired}
+        />
+      )}
       <form
         className="chat-input"
         onSubmit={(e) => {
@@ -3220,12 +3655,12 @@ export function Assistant({
               : ui.disconnectedPlaceholder
           }
           maxLength={2000}
-          disabled={!status.available || !historyReady || busy}
+          disabled={!status.available || !historyReady || busy || viewingArchivedChat}
         />
         <button
           aria-label={ui.sendLabel}
           lang={uiLang}
-          disabled={!status.available || !historyReady || busy || !input.trim()}
+          disabled={!status.available || !historyReady || busy || viewingArchivedChat || !input.trim()}
         >
           <Send size={19} />
         </button>
@@ -3559,6 +3994,8 @@ export default function App() {
     );
   const pt = actionLanguagePreference === "pt";
   const shellLang = pt ? "pt-BR" : "es";
+  const organizerSynthetic =
+    data?.metadata.dataset === "organizer-synthetic-snapshot";
   const synthetic = data
     ? data.metadata.dataset === "team-synthetic-fixture"
     : authMode === "invite";
@@ -3813,8 +4250,8 @@ export default function App() {
                   ? "Cenário sintético"
                   : "Escenario sintético"
                 : pt
-                  ? "Dados sintéticos do organizador"
-                  : "Datos sintéticos del organizador"}
+                  ? "Demonstração com dados sintéticos"
+                  : "Demostración con datos sintéticos"}
             </button>
             <button
               className="icon-button help-button"
@@ -4550,9 +4987,13 @@ export default function App() {
                     ? pt
                       ? "Protótipo sintético"
                       : "Prototipo sintético"
-                    : pt
-                      ? "Dados do hackathon"
-                      : "Dataset del hackathon"}
+                    : organizerSynthetic
+                      ? pt
+                        ? "Dados sintéticos do organizador"
+                        : "Datos sintéticos del organizador"
+                      : pt
+                        ? "Dados do hackathon"
+                        : "Dataset del hackathon"}
                   <ArrowUpRight size={13} />
                 </button>
               </footer>
@@ -4588,6 +5029,7 @@ export default function App() {
         />
       )}
       <Assistant
+        key={profile?.id ?? "unknown-profile"}
         open={assistant}
         status={chatStatus}
         selected={chatSelection}
@@ -4597,6 +5039,7 @@ export default function App() {
         synthetic={synthetic}
         onClose={closeAssistant}
         onExpired={expired}
+        profileId={profile?.id ?? null}
         initialLanguage={actionLanguagePreference}
         onLanguageChange={setActionLanguagePreference}
       />
@@ -4607,9 +5050,13 @@ export default function App() {
               ? pt
                 ? "Um cenário para explorar"
                 : "Un escenario para explorar"
+              : organizerSynthetic
+                ? pt
+                  ? "Dados sintéticos do organizador"
+                  : "Datos sintéticos del organizador"
               : pt
-                ? "Dados sintéticos do organizador"
-                : "Datos sintéticos del organizador"
+                ? "Demonstração com dados sintéticos"
+                : "Demostración con datos sintéticos"
           }
           titleLang={shellLang}
           closeLabel={pt ? "Fechar" : "Cerrar"}

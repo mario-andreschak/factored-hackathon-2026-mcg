@@ -11,6 +11,20 @@ Bank authority now belongs to this host; FLUJO provides bounded generic language
 guidance. Legacy worker-bound state requires explicit reconciliation and isolated
 state. A joined direct-host/MCP service image has not been built or deployed;
 local Vite builds and the fictional frontend preview do not establish that runtime.
+The [fictional local release candidate](../deploy/rc/README.md) exercises the
+project's banking service in process with actual generic FLUJO language calls,
+explicit simulated intake and durable receipt follow-up. Its in-process bank
+boundary is distinct from a deployed network MCP or native workflow image.
+
+After a verified simulated receipt, the customer can opt into follow-up in the
+assistant. The host saves the receipt and checks it in the background immediately,
+then every 30 minutes while the eight-hour session remains authorized. The view
+shows the last/next check, verified status and next step; unchanged checks refresh
+the clock silently. Reloads and host restarts retain this context without repeating
+confirmation. Logout or expiry pauses checks. The bank service currently exposes
+simulated intake status only, so a saved receipt does not imply a bank decision or
+refund. Follow-up uses `/api/followups` and `/api/followups/check` with the existing
+authenticated cookie; it accepts no browser-supplied receipt or bank capability.
 
 The transaction dispute workflow has a separate native workflow and private
 configuration. See [workflow setup and qualification](../docs/DISPUTE_IMPLEMENTATION.md)
@@ -230,3 +244,16 @@ Set `BANKING_PUBLIC_ORIGIN` to
 the Vite URL while developing. Build with `npm run build`.
 
 See [architecture, dataset lineage and deployment evidence](../docs/ONLINE_BANKING_FRONTEND.md).
+
+The joined local RC additionally loads the app-owned `savia_assistant` inquiry
+service. Customers can explicitly ask two bounded informational agents for help,
+see their actual status and useful suggestions, and mark an informational answer
+helpful. Saved inquiries survive renewed login; their scheduler has no bank
+authority. The standalone frontend image excludes this optional service and
+reports team creation unavailable. See the [customer journey](../docs/submission/CUSTOMER_JOURNEY.md).
+
+The assistant's **Nueva conversación** control archives the visible transcript
+for the current profile and clears the selected context. Previous conversation
+remains viewable; receipts, consent, inquiry cards and follow-ups stay preserved.
+The banking workbench keeps its guarded task dialogue. General conversational
+voice and keyboard turns belong to the Savia voice companion.

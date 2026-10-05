@@ -50,6 +50,11 @@ class PrepareActionBody(BaseModel):
     query_scope_id: str | None = Field(default=None, pattern=r"^q_[a-f0-9]{32}$")
 
 
+class FollowupBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    language: Literal["es", "pt"] = "es"
+
+
 class ConfirmActionBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     pending_handle: str = Field(pattern=r"^[A-Za-z0-9_-]{32,64}$")
@@ -84,6 +89,15 @@ class HandoffActionBody(BaseModel):
 def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_backend=None) -> FastAPI:
     # Initialize lazily, allowing imports/build checks without a dataset mount.
     settings = settings or Settings.from_env()
+    try:
+        from savia_assistant import InquiryService
+        from savia_assistant.api import install_routes
+    except ModuleNotFoundError as exc:
+        if exc.name != "savia_assistant":
+            raise
+        # The standalone frontend image excludes the optional app-owned team.
+        InquiryService = None
+        install_routes = None
 
     @asynccontextmanager
     async def lifespan(app):
@@ -146,22 +160,40 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         # Even an unconfigured restart retains and accounts for past pending
         # revocations; it cannot sign a worker request without approved config.
         app.state.chat_service = chat_service
+        from .followups import Followups
+        app.state.followups = Followups(settings.state_dir, chat_service)
+        app.state.inquiries = (InquiryService(settings.state_dir, model=getattr(dispute_factory, "model", None))
+                               if InquiryService else None)
         stop_retries = asyncio.Event()
+        app.state.followup_task = asyncio.create_task(app.state.followups.loop(stop_retries))
+        app.state.inquiry_task = (asyncio.create_task(app.state.inquiries.loop(stop_retries))
+                                  if app.state.inquiries else None)
         app.state.revoke_retry_task = asyncio.create_task(
             app.state.chat_service.retry_pending_loop(stop_retries))
 
         def report_retry_exit(task):
             if not task.cancelled() and task.exception():
-                logger.error("Chat revocation retry loop stopped: %s", type(task.exception()).__name__)
+                logger.error("Background host retry loop stopped: %s", type(task.exception()).__name__)
 
         app.state.revoke_retry_task.add_done_callback(report_retry_exit)
+        app.state.followup_task.add_done_callback(report_retry_exit)
+        if app.state.inquiry_task:
+            app.state.inquiry_task.add_done_callback(report_retry_exit)
         try:
             yield
         finally:
             stop_retries.set()
             app.state.revoke_retry_task.cancel()
+            app.state.followup_task.cancel()
+            if app.state.inquiry_task:
+                app.state.inquiry_task.cancel()
             with suppress(asyncio.CancelledError):
                 await app.state.revoke_retry_task
+            with suppress(asyncio.CancelledError):
+                await app.state.followup_task
+            if app.state.inquiry_task:
+                with suppress(asyncio.CancelledError):
+                    await app.state.inquiry_task
 
     app = FastAPI(title="FLUJO banking demo", version="0.1.0", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
@@ -196,6 +228,19 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
         if not value:
             raise HTTPException(401, "Inicia sesión para ver tu banca.")
         return value
+
+    if install_routes:
+        install_routes(app, session)
+    else:
+        @app.get("/api/assistant/cases")
+        def disabled_inquiries(request: Request):
+            session(request)
+            return {"items": []}
+
+        @app.post("/api/assistant/cases")
+        def disabled_inquiry_create(request: Request):
+            session(request)
+            raise HTTPException(503, "Los agentes no están conectados / Os agentes não estão conectados")
 
     async def revoke(request: Request, current: Session) -> tuple[str, bool]:
         # Deny local chat and persist worker revocation before deleting the
@@ -399,6 +444,8 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
                     facts=minimized, language=body.language)
             return await service.send(customer, current.id, current.expires_at, message,
                                       display_message=body.message.strip(), selection=public_selection,
+                                      language=body.language,
+                                      facts=minimized,
                                       **({"query_scope_id": getattr(body, "query_scope_id", None)} if getattr(body, "query_scope_id", None) else {}),
                                       **({"workflow": workflow} if workflow is not None else {}))
         except Exception as exc:
@@ -479,6 +526,33 @@ def create_app(settings: Settings | None = None, *, dispute_factory=None, bank_b
             raise HTTPException(exc.status_code, render_action_error(exc.code, language)) from None
         except ValueError:
             raise HTTPException(502, render_action_error("action_status_unverified", language)) from None
+
+    async def followup_request(request: Request, language: str, operation: str):
+        current = session(request)
+        customer = request.app.state.repository.profile_customer(current.profile_id)
+        tracker = request.app.state.followups
+        from .chat import ChatError
+        try:
+            if operation == "enroll":
+                tracker.enroll(customer, current.id, current.expires_at)
+            elif operation == "check":
+                if tracker.list(customer, current.id, current.expires_at, language)["items"]:
+                    await tracker.check(session_id=current.id, force=True)
+            return tracker.list(customer, current.id, current.expires_at, language)
+        except ChatError as exc:
+            raise HTTPException(exc.status_code, render_action_error(exc.code, language)) from None
+
+    @app.get("/api/followups")
+    async def followups(request: Request, language: Literal["es", "pt"] = "es"):
+        return await followup_request(request, language, "list")
+
+    @app.post("/api/followups")
+    async def enroll_followup(body: FollowupBody, request: Request):
+        return await followup_request(request, body.language, "enroll")
+
+    @app.post("/api/followups/check")
+    async def check_followup(body: FollowupBody, request: Request):
+        return await followup_request(request, body.language, "check")
 
     @app.post("/api/action/prepare")
     async def action_prepare(body: PrepareActionBody, request: Request):

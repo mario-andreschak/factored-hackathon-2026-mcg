@@ -638,8 +638,16 @@ def _business(state: dict, cfg: dict, *, trusted: bool, now: datetime | None,
         return _decision(cfg, "R15", "CLARIFY", "duplicate_check_required", next_step="read_related_complaints")
     case = _exact_case(state, target, cfg)
     if case:
+        envelope = case.get("receipt", {})
+        receipt = envelope.get("receipt", {}) if isinstance(envelope, dict) else {}
+        verified = (isinstance(envelope, dict) and envelope.get("state") == "verified" and isinstance(receipt, dict)
+                    and receipt.get("id") == case["complaint_id"]
+                    and receipt.get("kind") == "simulated_intake" and receipt.get("simulated") is True
+                    and receipt.get("status") == "received")
         return _decision(cfg, "R15", "INFORM_EXISTING_CASE", "exact_open_case",
-                         updates={"existing_case": {"found": True, "complaint_id": case["complaint_id"], "status": case["status"]}},
+                         updates={"existing_case": {"found": True, "complaint_id": case["complaint_id"],
+                            "status": receipt["status"] if verified else case["status"],
+                            **({"receipt": {**deepcopy(receipt), "verified": True}} if verified else {})}},
                          clear_pending=trusted)
     if related.get("status") != "ok" or related.get("duplicate_check") != "clear_in_snapshot":
         return _decision(cfg, "R15", "HANDOFF", "missing_evidence", clear_pending=trusted)

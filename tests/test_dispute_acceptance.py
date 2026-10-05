@@ -432,6 +432,53 @@ def test_runtime_inquiry_uses_revalidated_target_without_consent(tmp_path):
     assert_no_action_authority(state, bank)
 
 
+def test_owned_selection_search_uses_host_date_and_reference_not_model_guesses(tmp_path):
+    target = transaction()
+    selection = {"reference": TRANSACTION_ID, "occurred_at": target["transaction_date"],
+        "type": target["transaction_type"], "amount": target["amount"], "currency": target["currency"], "status": target["transaction_status"]}
+    stages = ObservedStages(intent="TRANSACTION_INQUIRY", slots={
+        "date_from": "2020-01-01", "date_to": "2030-01-01", "amount": 99999, "merchant": "invented",
+        "currency": None, "currency_raw": "pesos"})
+    runner, stages, bank = workflow(tmp_path, stages=stages)
+    state = run_workflow(runner, "¿Qué comercio figura en este cargo?", selection=selection, turn_id="selected-date")
+    assert mode(state) == "INFORM"
+    search = next(args for name, args in bank.calls if name == "search_transactions")
+    expected_date = target["transaction_date"][:10]
+    assert search == {"slots": {"transaction_id": TRANSACTION_ID, "date_from": expected_date, "date_to": expected_date}}
+    assert state["workflow_state"]["transaction_id"] == TRANSACTION_ID
+    assert not any(name == "get_customer_profile" for name, _ in bank.calls)
+    assert_no_action_authority(state, bank)
+
+
+@pytest.mark.parametrize("tamper", [None, "missing_receipt", "wrong_case", "wrong_target", "unverified"])
+def test_runtime_existing_case_requires_independent_exact_receipt(tmp_path, tamper):
+    envelope = {"state": "verified", "receipt": {"id": COMPLAINT_ID,
+        "kind": "simulated_intake", "simulated": True, "status": "received"}}
+    case = dict(complaint_id=COMPLAINT_ID, transaction_id=TRANSACTION_ID,
+        status="Open", linkage="exact_sandbox", receipt=envelope)
+    reread = deepcopy(case)
+    if tamper == "missing_receipt": reread.pop("receipt")
+    if tamper == "wrong_case": reread["complaint_id"] = "CMP-SBX-Other123"
+    if tamper == "wrong_target": reread["transaction_id"] = OTHER_TRANSACTION_ID
+    if tamper == "unverified": reread["receipt"]["state"] = "action_unverified"
+    bank = ObservedBank(overrides={"get_related_complaints": related(
+        duplicate_check="exact_open_case", complaints=[case]),
+        "get_complaint": {"status": "ok", "complaint": reread}})
+    runner, stages, bank = workflow(tmp_path, bank=bank)
+    state = run_workflow(runner, "No reconozco este cargo de 25.50 USD.", turn_id="existing")
+    assert ("get_complaint", {"complaint_id": COMPLAINT_ID, "snapshot_id": SNAPSHOT}) in bank.calls
+    assert_no_action_authority(state, bank)
+    if tamper:
+        assert mode(state) == "TOOL_ERROR"
+        assert not state["workflow_state"]["existing_case"]["found"]
+    else:
+        assert mode(state) == "INFORM_EXISTING_CASE"
+        assert state["workflow_state"]["existing_case"]["receipt"]["verified"] is True
+        assert state["workflow_state"]["existing_case"]["status"] == "received"
+        assert "existing_case_receipt_unverified" not in state["turn"]["validation_errors"]
+        assert COMPLAINT_ID in state["response"]["message"]
+
+
 @pytest.mark.parametrize("language,message", [
     ("es", "¿Cuánto saldo tengo disponible?"),
     ("pt", "Quanto tenho de saldo disponível?"),

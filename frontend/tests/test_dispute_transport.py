@@ -76,6 +76,16 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
         return jwt.decode(request.headers["X-Flujo-User-Assertion"], self.signer.public_key(),
             algorithms=["EdDSA"], issuer="approved-frontend", audience="flujo-banking-ingress")
 
+    async def test_fresh_action_status_is_empty_without_admitting_chat_or_bank_call(self):
+        enabled = ChatService({**self.config, "action_enabled": True}, self.root / "fresh")
+        enabled._transport = httpx.MockTransport(self.respond)
+        self.assertEqual(await enabled.action_status("customer-a", self.session_a, self.expiry), {"state": "none"})
+        self.assertEqual(enabled.history("customer-a", self.session_a, self.expiry)["messages"], [])
+        self.assertEqual(self.requests, [])
+        with enabled._connection() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM chat_sessions").fetchone()[0], 0)
+
+
     async def test_action_requires_inquiry_and_sends_fresh_bound_assertion(self):
         enabled = ChatService({**self.config, "action_enabled": True}, self.root / "actions")
         with self.assertRaises(ChatError) as missing:
