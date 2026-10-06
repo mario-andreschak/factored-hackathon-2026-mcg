@@ -430,12 +430,71 @@ def test_aggregate_quality_and_lineage_are_pinned_before_publication(ws, monkeyp
         assert manifest["source_validation"] == snapshot["source_validation"]
         assert (build / "quality_report.md").is_file()
         assert manifest["tables"]["transactions"]["silver"]["reconciles"]
+        assert manifest["publication_status"] == "ready"
+        assert "published" not in manifest
+        assert json.loads((ws / "reports" / "manifest.json").read_text(encoding="utf-8")) == manifest
+        assert (ws / "reports" / "quality_report.md").read_bytes() == (build / "quality_report.md").read_bytes()
         observed.append(build_id)
         original(out, build_id)
 
     monkeypatch.setattr(cli, "publish", check_ready)
     code, _ = run(ws)
     assert code == 0 and observed == [gold_dir(ws).parent.name]
+
+
+@pytest.mark.parametrize("blocked_report", ["manifest.json", "quality_report.md"])
+def test_required_external_report_failure_keeps_previous_snapshot(ws, blocked_report):
+    """A complete new gold snapshot is not serving until all required reports finish."""
+    run(ws)
+    previous = gold_dir(ws)
+    pointer = (ws / "out" / "CURRENT").read_bytes()
+    lineage = {name: (previous.parent / name).read_bytes()
+               for name in ("source_objects.json", "snapshot.json", "manifest.json", "quality_report.md")}
+    before = get_customer_transactions(previous, cid(6), limit=100)
+    assert {row["transaction_id"]: row["transaction_status"] for row in before}["TXN00000904"] == "Pending"
+    write_late_batch(ws / "src")
+    blocked = ws / "reports" / blocked_report
+    blocked.unlink()
+    blocked.mkdir()
+
+    with pytest.raises(OSError):
+        run(ws)
+
+    assert (ws / "out" / "CURRENT").read_bytes() == pointer
+    assert gold_dir(ws) == previous
+    assert get_customer_transactions(gold_dir(ws), cid(6), limit=100) == before
+    assert {name: (previous.parent / name).read_bytes() for name in lineage} == lineage
+    candidate, = (build for build in (ws / "out" / "builds").iterdir() if build != previous.parent)
+    new_rows = get_customer_transactions(candidate / "gold", cid(6), limit=100)
+    assert {row["transaction_id"]: row["transaction_status"] for row in new_rows}["TXN00000904"] == "Reversed"
+    assert "TXN00000951" in {row["transaction_id"] for row in new_rows}
+    candidate_report = json.loads((candidate / "manifest.json").read_text(encoding="utf-8"))
+    assert candidate_report["publication_status"] == "ready"
+    assert "published" not in candidate_report
+
+
+def test_pointer_swap_failure_does_not_record_publication_success(ws, monkeypatch):
+    from pipeline import __main__ as cli
+    run(ws)
+    previous = gold_dir(ws)
+    pointer = (ws / "out" / "CURRENT").read_bytes()
+    write_late_batch(ws / "src")
+
+    def refuse_swap(out, build_id):
+        assert (ws / "reports" / "quality_report.md").is_file()
+        raise OSError("synthetic pointer swap failure")
+
+    monkeypatch.setattr(cli, "publish", refuse_swap)
+    with pytest.raises(OSError, match="synthetic pointer swap failure"):
+        run(ws)
+
+    assert (ws / "out" / "CURRENT").read_bytes() == pointer
+    assert gold_dir(ws) == previous
+    report = json.loads((ws / "reports" / "manifest.json").read_text(encoding="utf-8"))
+    assert report["publication_status"] == "ready" and "published" not in report
+    assert report["run_id"] != previous.parent.name
+    assert json.loads((ws / "out" / "builds" / report["run_id"] / "manifest.json").read_text(
+        encoding="utf-8")) == report
 
 
 def test_missing_banking_output_is_never_published(ws, monkeypatch):
@@ -763,7 +822,7 @@ def test_review_p1_failed_build_keeps_last_good_snapshot(ws):
 
     _corrupt_first_transactions_file(ws)
     code, m = run(ws)
-    assert code == 2 and m["contract_failures"] and m["published"] is False
+    assert code == 2 and m["contract_failures"] and m["publication_status"] == "not_ready"
     assert current_gold(ws / "out") == good_build                       # pointer unchanged
     assert _customer_ids(get_customer_transactions(current_gold(ws / "out"), cid(3), limit=100)) == before
     # Gold was not even built for the failed run.
