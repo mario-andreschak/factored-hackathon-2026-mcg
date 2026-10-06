@@ -1,0 +1,75 @@
+{
+  "schema": "savia-whatsapp-local-validation/v1",
+  "client_date": "2026-10-05",
+  "timezone": "America/Bogota",
+  "stream": "codex/savia-whatsapp-local",
+  "rc_revision": "843da50698b559dc748bea4505d1d93483ff29b3",
+  "mcp_base_revision": "65d39c4d83b7e9bacdd65e46059f18f185199f8d",
+  "mcp_overlay": "Baileys browser descriptor Desktop to Chrome in exported copy only",
+  "coordination": "RC coordinator acknowledged the rc.3 baseline and separate feature/deployment boundary",
+  "windows_tests": {
+    "passed": 65,
+    "subtests_passed": 28,
+    "posix_permission_test": "skipped on Windows",
+    "existing_rc_voice_tests_passed": 43,
+    "real_rc_route_integration_with_scripted_provider": true,
+    "phone_lid_alias_echo_regression_checks_passed": true
+  },
+  "actual_native_provider_smoke": {
+    "success": true,
+    "fictional_profile": "mexico",
+    "voice_turns": 1,
+    "sample_rate": 24000,
+    "samples": 266400,
+    "seconds": 11.1,
+    "wav_sha256": "81a3988453f1e429dd8d7d5c81551781a03fa32d1d5e71dc1c1910b0469096c7",
+    "whatsapp_sent": false,
+    "playback_verified": false
+  },
+  "actual_whatsapp_mcp": {
+    "isolated_source_installed_and_built": true,
+    "get_backend_status_connected": true,
+    "baileys_qr_generated_after_overlay": true,
+    "self_number_configured": true,
+    "configured_fictional_profile": "colombia",
+    "personal_phone_paired": true,
+    "owner_confirmed_text_to_text_and_voice_reply": true,
+    "confirmed_delivered_input_types": ["chat", "ptt"],
+    "confirmed_outbound_types": ["chat", "ptt"],
+    "messages_sent": 4,
+    "voice_note_delivery_verified": true,
+    "uncertain_delivery": false,
+    "test_stopped_by_owner": true,
+    "heard_playback_acknowledged": false,
+    "incoming_voice_note_over_whatsapp_tested": true,
+    "webjs": "two unpaired starts failed during upstream authentication-state evaluation after navigation"
+  },
+  "actual_native_audio_input_smoke": {
+    "source": "Savia-generated sample converted to Opus and decoded through the bridge codec",
+    "success": true,
+    "input_bytes": 532878,
+    "recognized": true,
+    "output_samples": 135600,
+    "sample_rate": 24000,
+    "whatsapp_sent": false,
+    "playback_verified": false
+  },
+  "container": {
+    "linux_recipe_built": true,
+    "baileys_and_native_sqlite_imports_verified": true,
+    "original_recipe_image": "sha256:1ae30a33840b8fb324b6c866f55538c398292d728af13717031778d136512bd5",
+    "posix_startup_defect_found": "umask 022 made the bank-pin parent directory 0755; existing RC admission correctly denied it",
+    "posix_fix": "standalone launcher applies umask 077 before fresh state and child creation; existing RC permission gate unchanged",
+    "fresh_rc_initialization_with_private_umask_verified": true,
+    "final_bundle_image_receipt": "separate private output receipt after source-package build; no image self-reference in package manifest",
+    "phone_or_account_runtime_in_container_tested": false,
+    "crash_or_redeployment_continuity_verified": false
+  },
+  "deployment_modified": false,
+  "flujo_modified": false,
+  "original_whatsapp_repository_modified": false,
+  "remaining_acceptance": [
+    "Personal-account runtime in the container and crash/redeployment continuity",
+    "A real playback signal before recording generated speech as heard"
+  ]
+}

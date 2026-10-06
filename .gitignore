@@ -24,3 +24,7 @@ web/dev-history/data/
 # Agent analytics output and pseudonym key
 agent-analytics*.sqlite3
 agent-analytics*.key
+
+# Optional WhatsApp experiment state and package outputs never enter the RC.
+/standalone/savia_whatsapp/.local/
+/standalone/savia_whatsapp/packages/

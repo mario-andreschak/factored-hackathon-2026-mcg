@@ -1,0 +1,15 @@
+services:
+  savia-whatsapp-local:
+    build:
+      context: ../..
+      dockerfile: standalone/savia_whatsapp/Dockerfile
+    ports:
+      - "127.0.0.1:43980:43980"
+    environment:
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:?Set a private OpenRouter key}"
+    volumes:
+      - savia-whatsapp-local:/state
+    init: true
+    stop_grace_period: 25s
+volumes:
+  savia-whatsapp-local:
