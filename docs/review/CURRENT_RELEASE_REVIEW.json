@@ -1,0 +1,58 @@
+{
+  "schema": "savia-single-current-release-review-archive/v1",
+  "assessment_scope": "Complete current repository submission assessed as a fictional hackathon dispute prototype, including deterministic core, generic/isolated architecture, development history, data, AI/voice/team integrations, ML/evaluation, analytics, presentation and ElevenLabs positioning. Production-scale extensions are assessed as limitations separately from confirmed defects.",
+  "head": "0ee43ecd861c56c8f3557ca48550e12a7a9b8167",
+  "tree": "7661a70afb65cab2b6edf9ce58434e3e1779f5f1",
+  "review_count": 1,
+  "total": 88,
+  "maximum": 100,
+  "dimensions": [
+    {
+      "name": "Technical judgment",
+      "score": 19,
+      "maximum": 20,
+      "reason": "The implemented R0–R18 engine separates authentication, owned selection, explicit host consent, policy, action admission and independent receipt verification. Missing risk or duplicate evidence leads to handoff rather than optimistic execution. Durable attempted markers, ledger-generation fencing, revocation and read-only recovery address uncertain effects. Banking source stays in Savia/MCP or the explicitly isolated FLUJO branch; generic language interfaces receive minimized facts. Source-pinned releases and narrowly scoped receipts are unusually careful. Current offline authority, API, service and analytics checks passed. The remaining point reflects integration complexity and limited endurance/crash evidence, not a confirmed prototype blocker."
+    },
+    {
+      "name": "AI engineering",
+      "score": 17,
+      "maximum": 20,
+      "reason": "A working customer assistant joins bounded model interpretation, actual two-role reviewer completions, durable inquiries, saved suggestions, quiet follow-up and native speech. The provider is denied banking commit authority. Canonical result speech buffers audio until the provider transcript matches the host script; device-clock completion and current-turn/sample admission govern playback acknowledgment. Failure recovery is implemented and tested. The current two MESSAGE admission artifacts preserve exact ES/PT requests and complete PCM, while prior UI playback is correctly kept at its original revision. The two reviewers choose from small structured suggestion contracts; the larger fleet customer run failed before delegation and has no accepted investigation result. Small customer/voice samples, unadjudicated waveform fidelity and incomplete joined fleet acceptance limit the demonstrated AI breadth."
+    },
+    {
+      "name": "Data engineering",
+      "score": 19,
+      "maximum": 20,
+      "reason": "The DuckDB bronze/silver/gold pipeline preserves lineage, types and quarantines invalid rows, reconciles every source row, resolves corrections deterministically and flags ownership violations. Gold serves customer-sharded owned data. The implementation finishes immutable snapshot and required external reports before atomically swapping CURRENT, serializes writers, retains old snapshots and keeps readers on a complete generation. Synthetic regression checks exercise corrections, late arrivals, failure publication and isolation; the historical six-table 5,899,720-row run has explicit aggregate receipts and lookup denominators. The 39-file qualified core comparison has exactly the documented banking snapshot-reader delta, covered by separate publication qualification. Source inventories are not VersionId-pinned, full refresh and stale-lock recovery remain operational constraints, and atomic rename is not a cross-filesystem or power-loss guarantee."
+    },
+    {
+      "name": "ML/evaluation",
+      "score": 15,
+      "maximum": 20,
+      "reason": "The team correctly rejects apparent learning from 42 transcript templates and 100% held-out text reuse. The independent AI-authored 120-case ES/PT diagnostic is frozen by hash, balanced, screened for overlap, and evaluates a fixed TF-IDF/logistic model against keywords and abstention using parameters selected on training only. I reproduced the published metrics: 94/120 versus 70/120 correct; human-required misses 3/30 versus 13/30, falling to 1/30 with 52 unnecessary human routes. Error lists, uncertainty and per-language results are exposed. The Luna offline audit also reproduces all 100 structured outputs against its deterministic baseline. However all router ground-truth labels remain AI-proposed, the completed semantic audit covers only 8/120, no language-speaking human adjudication exists, and the Luna workload has only 10 repeated phrases with a baseline that already scores 100/100. This is credible component evaluation, not strong evidence of real-customer generalization or learned added value."
+    },
+    {
+      "name": "Data analytics",
+      "score": 18,
+      "maximum": 20,
+      "reason": "Analytics is executable, metadata-only and read-only against operational sources, with HMAC pseudonyms, explicit grains and coverage. It separates workflow intent from independently validated current host action slots and refuses to count malformed, foreign or conflicting evidence as verified completion. Operating analysis connects ownership defects, template leakage, routing miss/escalation tradeoffs, latency tails and token overhead to product decisions. I reproduced its numeric calculations and Luna oracle/timing aggregates. The reporting preserves n=3 customer usefulness, the separate post-fix n=1 and infrastructure/provider boundaries rather than pooling successes. Cost is explicitly unknown. Current slots are not lifetime actions, exact turn/query linkage and card-ledger joins are absent, feedback is sparse, and no causal ROI, human pickup or repeat-contact benefit is measured."
+    }
+  ],
+  "original_reports": [
+    {
+      "source": ".tmp/current-release-review.md",
+      "path": "docs/review/final-repo-reviews/current-release-review.md",
+      "sha256": "1899f355f43a076e8eb18e06d1e05cfcf2b585c8b7cea0486c5af6d235c007ba",
+      "bytes": 17792
+    },
+    {
+      "source": ".tmp/current-release-review.json",
+      "path": "docs/review/final-repo-reviews/current-release-review.json",
+      "sha256": "0921f468a89ea17cf052af01a3c2f814215dc4b5a5b09c86fc481e7269d83b28",
+      "bytes": 16960
+    }
+  ],
+  "cohort_gate_claim": false,
+  "aggregation": "None. One current-source review; never pooled with prior cohorts.",
+  "source_qualification_pull_request": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/91"
+}
