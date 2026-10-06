@@ -212,6 +212,51 @@ def rc_module():
     return module
 
 
+class ReadOnlyBankBackend:
+    """Keep session revocation and query reads, without bank action authority."""
+
+    def __init__(self, backend):
+        self._backend = backend
+
+    async def post(self, path, headers, payload, chat):
+        from frontend.server.chat import ChatError
+        if path != "/v1/banking/session/revoke":
+            raise ChatError("action_unavailable", 403, "La recepción simulada no está habilitada.")
+        return await self._backend.post(path, headers, payload, chat)
+
+    def cancel(self, *args, **kwargs):
+        # Stock RC cancellation writes the bank before deleting frontend state.
+        # Declining here preserves both stores, including retained pending work.
+        return False
+
+    def query_scope(self, *args, **kwargs):
+        return self._backend.query_scope(*args, **kwargs)
+
+
+def enforce_readonly_bank_authority(app):
+    from frontend.server.dispute_chat import DisputeChatService
+    service = app.state.chat_service
+    if not isinstance(service, DisputeChatService) or service._bank_backend is None:
+        raise RuntimeError("Standalone RC requires its admitted in-process bank backend")
+    service._action_enabled = False
+    if not isinstance(service._bank_backend, ReadOnlyBankBackend):
+        service._bank_backend = ReadOnlyBankBackend(service._bank_backend)
+
+
+def install_readonly_bank_authority(app):
+    original = app.router.lifespan_context
+
+    @asynccontextmanager
+    async def readonly_lifespan(application):
+        async with original(application):
+            # RC constructs chat during startup. Apply before accepting requests
+            # or yielding control to its newly scheduled background tasks.
+            enforce_readonly_bank_authority(application)
+            yield
+
+    app.router.lifespan_context = readonly_lifespan
+
+
 def serve_rc(state: Path, port: int):
     """Run only this experiment's RC, with native voice and no inherited fleet config."""
     import uvicorn
@@ -221,6 +266,7 @@ def serve_rc(state: Path, port: int):
                                   model_id="google/gemini-3.1-flash-lite", provider="openrouter",
                                   provider_key=os.environ["OPENROUTER_API_KEY"],
                                   voice_config=module.native_voice_config(), inquiry_config={})
+    install_readonly_bank_authority(app)
     # Actions are out of scope; block the routes as well as keeping them absent from the adapter.
     @app.middleware("http")
     async def deny_actions(request, call_next):

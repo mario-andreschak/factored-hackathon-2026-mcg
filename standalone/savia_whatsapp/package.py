@@ -34,7 +34,7 @@ def build_package(destination: Path, mcp_repo: Path):
              "control.html", "operator_auth.py", "docs/video-notes.md", "docs/validation.json", "tests/test_bridge.py",
              "tests/test_savia.py", "tests/test_runtime.py", "tests/test_package.py", "tests/test_linux_runtime.py",
              "tests/test_alias_identity.py", "tests/test_bundle_admission.py", "tests/test_cli_binding.py",
-             "tests/test_operator_auth.py", "docs/DEPLOYMENT_CONTRACT.md")
+             "tests/test_operator_auth.py", "tests/test_readonly_authority.py", "docs/DEPLOYMENT_CONTRACT.md")
     paths += [feature / name for name in names if (feature / name).is_file()]
     for path in paths:
         if path.is_symlink() or any(parent.is_symlink() or (hasattr(parent, "is_junction") and parent.is_junction())
