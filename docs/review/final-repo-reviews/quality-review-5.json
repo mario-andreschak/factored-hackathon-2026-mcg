@@ -1,0 +1,68 @@
+{
+  "schema": "savia-independent-repository-assessment/v1",
+  "review_id": "quality-review-5",
+  "repository": "C:/Users/Moe/.codex/worktrees/savia-review-evidence/factored-hackathon-2026",
+  "head": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+  "tree": "f6a8a5c64cf9cbae5fb9729f8a0f43ffd5958804",
+  "scope": "Complete Savia/FLUJO fictional hackathon submission: deterministic core, implemented conversational enhancements, expandable architecture, data/ML/analytics and original evidence.",
+  "independent": true,
+  "earlier_ratings_read": false,
+  "other_repositories_read": false,
+  "web_access": false,
+  "provider_requests": 0,
+  "bank_requests": 0,
+  "installs": 0,
+  "delegation": false,
+  "scores": {
+    "technical_judgment": {"score": 19, "maximum": 20, "reason": "Pure ordered policy, host-bound ownership/consent, exact admission, receipt readback, idempotency and recovery are implemented and independently tested. Good reusable FLUJO/domain separation. Remaining point concerns integration/claim precision."},
+    "ai_engineering": {"score": 17, "maximum": 20, "reason": "Integrated ES/PT voice, observable playback, two real bounded reviewer calls, durable inquiry/fleet contracts and canonical TTS narration. Specialist analysis is constrained to advice enums; current narration has source tests rather than a matched new recording, and human semantic/audio review is pending. Larger fleet completion is not a mandatory score gate."},
+    "data_engineering": {"score": 19, "maximum": 20, "reason": "Contracts, quarantine, deterministic corrections, lineage, owner-sharded serving and atomic immutable publication are robust. Historical full data accounting and public fixture tests. Full refresh, static source inventory assumptions and measured high-concurrency lookup latency remain limits."},
+    "ml_evaluation": {"score": 16, "maximum": 20, "reason": "Rejects template leakage; fixed diagnostic has train-only parameters, baselines, abstention tradeoffs, uncertainty and provenance. Luna outputs are verifiable but ten repeated phrases and a tying baseline are narrow. Explicit pre-submission human label adjudication remains pending."},
+    "data_analytics": {"score": 18, "maximum": 20, "reason": "Useful product decisions from ownership/leakage/latency/safety measurements. Privacy-conscious read-only analytics validates host outcomes separately with clear denominators. Cost, exact query attribution, lifetime card outcomes and representative customer cohorts remain missing."}
+  },
+  "total": 89,
+  "maximum": 100,
+  "first_five_findings_discovery_order": [
+    {"order": 1, "type": "strength", "source": "README.md", "finding": "Complete implemented core and inspectable submission beyond the pitch, with explicit fictional-data and real-bank limits.", "later_verified": "Substantive source and 1078 fresh core checks."},
+    {"order": 2, "type": "claim_precision", "source": "README.md; docs/submission/START_HERE.md", "finding": "Headline ten-team/ready-to-scale language is stronger than the joined customer evidence: dated root model failure produced no accepted fleet result. Foundation capacity remains independently valuable; exact larger customer completion is separate scope."},
+    {"order": 3, "type": "strength", "source": "AGENTS.md; docs/FLUJO_PRODUCT_BOUNDARY.md", "finding": "Banking application authority and data stay outside general-purpose FLUJO main; reusable platform contracts are inspectable."},
+    {"order": 4, "type": "comparison_limit", "source": "docs/submission/ELEVENLABS_COMPARISON.md; web/submission/pitch/savia-final-pitch.html", "finding": "Dated vendor links and measurement caveats are good, but polished-voice-not-case rhetoric implies competitor limitations not established by repo evidence. Two-person attribution needs the same qualification as notes preserving three historic contributors."},
+    {"order": 5, "type": "mixed", "source": "pipeline/README.md; ml/README.md; docs/ml/router_holdout_provenance.md", "finding": "Ownership and template-leakage diagnosis materially improve the product; frozen router labels remain AI-authored and the explicit pre-submission human adjudication requirement is pending."}
+  ],
+  "comparison_quality": {
+    "internal_baselines": "Strong fixed keyword/raw learned/abstaining comparison with paired uncertainty, human miss and handoff-burden metrics; deterministic Luna baseline ties every oracle.",
+    "commercial_reference": "Useful dated positioning with vendor-reported scopes and no matched performance claim; rhetorical competitor absence and ready-to-scale language exceed measured evidence.",
+    "live_customer_evidence": "Original n=3 usefulness is 2/3 despite transport/history 3/3; post-fix PT n=1 uses deterministic host fallback and is correctly separate. Older narration omitted caveats; new canonical TTS source is tested, not relabeled as old live evidence.",
+    "external_verification": "None: repository-only constraint; linked vendor article/video were not opened."
+  },
+  "checks": [
+    {"name": "core_engine", "command": "python docs/submission/measurements/core-engine-final/core-engine-run.py --repo . --expected-head df957f99a6e544cde5a698cfb6d9685e92ee3255 --out .tmp/quality-review-5/core", "tests": 1078, "passed_tests": 1078, "failures": 0, "errors": 0, "skipped": 0, "pytest_seconds": 90.71, "harness_seconds": 91.332, "external_connection_attempts": 0, "wrapper_passed": false, "source_hashes_changed": false, "instrumentation_issue": "PYTEST_ADDOPTS Windows absolute basetemp backslashes were stripped, creating generated untracked root scratch. Wrapper failed clean-status gate. Verified exact path and moved only generated scratch into assigned directory; original receipt preserved.", "artifacts": ".tmp/quality-review-5/core/"},
+    {"name": "supplemental", "suites": ["tests/test_pipeline.py", "tests/test_agent_analytics.py", "tests/test_host_outcome_analytics.py", "savia_assistant/tests/test_service.py", "tests/test_card_block.py", "frontend/tests/test_voice.py"], "tests": 182, "passed_tests": 182, "failures": 0, "errors": 0, "skipped": 0, "pytest_seconds": 79.96, "external_connection_attempts": 0, "harness": "Reused existing core worker network guard with these six suites and relative assigned-scratch basetemp.", "artifacts": ".tmp/quality-review-5/supplemental/; .tmp/quality-review-5/supplemental-output.txt"},
+    {"name": "luna_original_records_offline_audit", "records": 100, "correct": 100, "bounded_safe": 100, "independent_baseline_matches": 100, "peak_overlapping_app_server_turns": 100, "provider_replay": false, "artifacts": ".tmp/quality-review-5/luna-audit/"},
+    {"name": "source_hashes", "current_protected_files_unchanged": 185, "core_receipt_hashes_matched": 39, "canonical_voice_analytics_hashes_matched": 10, "earlier_live_receipt_git_blobs_matched": 153, "earlier_live_receipt_entries": 177, "note": "24 genuine final-source differences retain separate acceptance scopes. Additional raw worktree mismatches include Windows CRLF conversion and are not product changes.", "artifacts": ".tmp/quality-review-5/hash-verification.json"},
+    {"name": "copied_flujo_source", "verified_files": 39, "verified_bytes": 619009, "upstream_commit": "0be972ac7b748703d09e407ef96beba45ab17b2a", "git_blob_and_sha256_match": true, "artifacts": ".tmp/quality-review-5/flujo-source-check.json"},
+    {"name": "native_audio_artifacts", "byte_hashes_matched": 2, "sample_rate_hz": 24000, "seconds": [6.6, 3.95], "human_comprehension_verified": false}
+  ],
+  "fresh_passed_tests_total": 1260,
+  "limitations": [
+    "No scikit-learn available; no installs, model retraining or fixed-model replay. Source, frozen datasets, provenance, metrics and errors inspected.",
+    "Historical organizer 5.9-million-row build not recomputed; public synthetic pipeline suites executed.",
+    "No full frontend build/current browser acceptance or external deployment verification.",
+    "No current human audio/semantic review, physical microphone test, provider replay or real-bank certification.",
+    "FLUJO subset exact-byte verified; upstream 104-test suite not rerun.",
+    "Source tests, historical recordings, provider/load tests and separate infrastructure exercises retain their own boundaries."
+  ],
+  "defects_and_gates": [
+    {"finding": "Pending human label adjudication violates the holdout protocol's explicit before-final-submission evidence requirement.", "scope": "ML evaluation acceptance; not deterministic-core functionality."},
+    {"finding": "Capacity and competitive headlines can imply acceptance/advantage stronger than available evidence.", "scope": "Submission claim precision."},
+    {"finding": "Latest canonical narration is source-qualified, with no new matched current customer recording or human waveform review.", "scope": "Conversation evidence breadth."},
+    {"finding": "Cost, query attribution and lifetime card outcomes are not joined into operating analytics.", "scope": "Measured service operations."}
+  ],
+  "core_blockers_found": false,
+  "outside_required_scope": ["Exact 100-agent customer completion", "Real-bank actions/certification", "Push/email and actual human pickup", "Multi-day reliability", "New film replacing requested placeholder destination"],
+  "useful_improvements": ["Independent ES/PT label/audio adjudication", "Bounded current-source joined customer capture", "Evidence-aligned capacity/comparison headlines", "Persistent query/request/receipt attribution and token/cost data", "Untouched varied utterance evaluation and defined customer outcome cohort"],
+  "source_unchanged": true,
+  "final_tracked_status_clean": true,
+  "product_edits": 0,
+  "outputs": {"markdown": ".tmp/quality-review-5.md", "json": ".tmp/quality-review-5.json", "scratch": ".tmp/quality-review-5/"}
+}

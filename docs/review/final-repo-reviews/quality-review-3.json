@@ -1,0 +1,411 @@
+{
+  "schema": "independent-savia-repository-quality-review/v1",
+  "reviewer": "quality_review_3",
+  "observed_at_utc": "2026-10-06T00:07:53.857786+00:00",
+  "repository": "C:\\Users\\Moe\\.codex\\worktrees\\savia-review-evidence\\factored-hackathon-2026",
+  "head": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+  "assessment_scope": "Complete declared hackathon Savia/FLUJO submission: deterministic core, implemented conversational enhancements, expandable architecture and repository evidence. Fictional banking prototype; larger fleet and real-bank qualification are separate scopes. Video placeholder is an authorized destination, not an incompleteness deduction.",
+  "total_score": 88,
+  "maximum": 100,
+  "dimensions": [
+    {
+      "name": "technical judgment",
+      "score": 19,
+      "maximum": 20,
+      "explanation": "A substantial executable R0-R18 core separates pure policy, owner-scoped reads, explicit host consent, signed admission, exact independent receipt readback, durable recovery and revocation. Current core replay passes 1,078 checks. Generic FLUJO and banking application responsibilities are clearly separated. Remaining deduction covers the breadth limits of textual semantic guards and some overbroad public wording; this is not a real-bank certification score."
+    },
+    {
+      "name": "AI engineering",
+      "score": 18,
+      "maximum": 20,
+      "explanation": "Integrated ES/PT customer UI, actual native speech, playback acknowledgments, durable inquiries, two actual role-specific model calls, saved suggestions, quiet follow-up and an implemented recoverable fleet connector constitute a working AI application. Source explicitly bounds model authority and validates structured outputs. The two reviewers select controlled enum suggestions rather than establish novel investigation findings; small usefulness samples and changed narration source leave broader quality unmeasured. Larger fleet completion is a separate scope and is not required for this score."
+    },
+    {
+      "name": "data engineering",
+      "score": 18,
+      "maximum": 20,
+      "explanation": "The six-table pipeline has bronze lineage, typed contracts, quarantine, deterministic dedup/upsert behavior, owner-safe gold, consumer outputs, serialized writers and atomic immutable publication. The 5,899,720-row original manifest reconciles, and offline fixture tests exercise failures and recovery. Deductions reflect bounded static-inventory/ETag freshness assumptions and pronounced lookup tail latency at concurrency 50/500; private full data was not independently recomputed."
+    },
+    {
+      "name": "ML/evaluation",
+      "score": 15,
+      "maximum": 20,
+      "explanation": "The team identifies unusable weak labels and complete transcript-template leakage, then uses an independently AI-authored frozen bilingual diagnostic with fixed training-selected parameters, baselines, class/language metrics, error lists and confidence intervals. The published 94/120 learned result improves on 70/120 keywords, while abstention creates 52 unnecessary handoffs and still misses 1/30 human-required cases. Human adjudication explicitly required by the provenance protocol remains pending. The Luna 100-case oracle is reproducible but repeats ten phrasings and ties the deterministic baseline, limiting generalization and incremental-ML claims."
+    },
+    {
+      "name": "data analytics",
+      "score": 18,
+      "maximum": 20,
+      "explanation": "Operational metadata extraction is read-only, privacy-conscious and explicit about workflow intent versus saved host outcome, latest-slot denominators, source coverage, recovery and latency. Original data findings change grounding/model choices, and operating evidence separates quality, HTTP success, token overhead and queue-inclusive latency. Remaining gaps are persistent provider token/cost telemetry, card-ledger/cohort attribution, human-adjudicated usefulness and larger longitudinal samples; real ROI is correctly unclaimed."
+    }
+  ],
+  "first_five_findings_in_discovery_order": [
+    {
+      "discovery_order": 1,
+      "kind": "strength",
+      "title": "The declared core is implemented and authority boundaries are deliberate",
+      "evidence": [
+        "README.md",
+        "AGENTS.md",
+        "docs/FLUJO_PRODUCT_BOUNDARY.md",
+        "docs/submission/DISPUTE_ENGINE.md",
+        "dispute_workflow/policy.py",
+        "dispute_workflow/runtime.py",
+        "dispute_workflow/action_host.py"
+      ],
+      "detail": "The first review route leads to executable R0-R18 decisions, query-scoped durable state and a runtime with no write port. Explicit host controls own consent and Banking MCP owns the simulated ledger. Later source inspection and 1,078 fresh passing core checks substantiate this foundation."
+    },
+    {
+      "discovery_order": 2,
+      "kind": "scope/evidence",
+      "title": "Conversational successes and infrastructure results retain separate, honest scopes",
+      "evidence": [
+        "docs/submission/START_HERE.md",
+        "docs/submission/EVIDENCE_MAP.md",
+        "docs/submission/measurements/MEASURED_RESULTS.md",
+        "docs/submission/measurements/team-story-summary.json",
+        "docs/submission/measurements/fleet-customer-attempt/receipt.json"
+      ],
+      "detail": "Two real bounded model workers, saved results and voice receipts are concrete successes. The later integrated fleet attempt failed before delegation on a disabled provider workspace and is preserved as failed. The 300-request foundation workload and 18-live-sandbox collaboration do not qualify a 100-agent customer journey. The larger fleet is an extension scope, so this is not a blocker for the declared hackathon submission."
+    },
+    {
+      "discovery_order": 3,
+      "kind": "wording/comparison limitation",
+      "title": "Commercial positioning is useful but comparative superiority is unproved",
+      "evidence": [
+        "docs/submission/ELEVENLABS_COMPARISON.md:3",
+        "docs/submission/ELEVENLABS_COMPARISON.md:15",
+        "docs/submission/ELEVENLABS_COMPARISON.md:33",
+        "docs/submission/media/decks/final/savia-final-pitch.html",
+        "docs/architecture/system-landscape.md:13"
+      ],
+      "detail": "The comparison supports Savia capabilities and attributes vendor statements, but contains no matched alternative configuration or performance/value experiment. “Architecture is ready to scale,” “Same admission rules a production host would use,” and the architecture introduction describing 100 specialists/push/email in present tense go beyond demonstrated acceptance. Later target/limit disclosures reduce confusion but do not substantiate those sentences. No rival-platform incapability can be concluded from this repository-only review."
+    },
+    {
+      "discovery_order": 4,
+      "kind": "strength",
+      "title": "Data diagnosis changes the product and is backed by serving safeguards",
+      "evidence": [
+        "pipeline/README.md",
+        "pipeline/silver.py",
+        "pipeline/gold.py",
+        "pipeline/__main__.py",
+        "pipeline/writer.py",
+        "docs/pipeline/manifest.json"
+      ],
+      "detail": "All six declared families reconcile to 5,899,720 rows. The ownership defect in 44,570 populated complaint-product links is treated as a reason to use newly selected owned transactions, rather than relying on foreign-key existence. Source filters ownership, preserves invalid records as quality evidence and publishes only a complete successful snapshot. These counts are original aggregate evidence, not freshly reread private rows."
+    },
+    {
+      "discovery_order": 5,
+      "kind": "evaluation gap",
+      "title": "Label validity is the principal unfinished evaluation gate",
+      "evidence": [
+        "ml/README.md",
+        "docs/ml/router_holdout_provenance.md:74",
+        "docs/demo/intent_router_evaluation.md",
+        "demo/evaluate_router.py",
+        "ml/router.py"
+      ],
+      "detail": "The authors disclose 42 normalized transcript texts and 100% held-out template overlap, freeze 120 independent AI-authored ES/PT examples and avoid outcome-driven tuning. Their own protocol requires independent human adjudication before final submission, but it is still pending. This limits strong routing-quality claims despite a credible source-backed diagnostic and is the main reason ML/evaluation scores below the other dimensions."
+    }
+  ],
+  "comparison_quality": "A useful qualitative positioning/evidence map, with dated vendor attribution and clear performance-boundary notes. No matched ElevenLabs runtime, feature acceptance test, cost experiment or customer-value comparison exists here. Source inspection supports Savia capabilities; it does not demonstrate superiority or absence of comparable competitor integration capabilities.",
+  "defects_and_blockers": {
+    "executed_test_failures": 0,
+    "core_submission_blocker_found": false,
+    "outstanding_declared_evaluation_gate": "Independent human adjudication required by docs/ml/router_holdout_provenance.md:74 remains pending. It limits ground-truth-based ML claims, not the deterministic core implementation.",
+    "unsupported_wording": [
+      "docs/submission/ELEVENLABS_COMPARISON.md:15 scale-readiness assertion",
+      "README.md:72 / comparison.md:33 production-admission equivalence",
+      "docs/architecture/system-landscape.md:13 unqualified present-tense 100-specialist and push/email lifecycle, despite later target disclosures"
+    ],
+    "revision_limit": "153/177 deployed-app manifest files match current Git blob bytes; all 22 dispute/banking Python files match. Changed conversation.py and voice.py require their own live speech acceptance. Filesystem-byte comparison separately captures CRLF differences. This is not a failure of the historically pinned card API acceptance."
+  },
+  "useful_improvements": [
+    {
+      "priority": "high for evaluation credibility",
+      "action": "Complete independent ES/PT human label adjudication, preserve disagreements and freeze a new untouched utterance/scenario set before further tuning. Use family-aware uncertainty estimates and a handoff-load objective."
+    },
+    {
+      "priority": "medium",
+      "action": "Make scale and delivery introductory copy explicitly target architecture. Replace production-admission equivalence and rhetorical competitor incapability with the measured owned-selection/consent/receipt properties. Keep the useful bank-controlled deployment positioning."
+    },
+    {
+      "priority": "medium",
+      "action": "Qualify changed canonical narration/voice code on its own pinned source if claiming deployed verbatim host-outcome speech. Preserve existing successful native recordings at their dated condensed-speech scope."
+    },
+    {
+      "priority": "medium",
+      "action": "Persist provider usage and outcome attribution with a stable privacy-safe operation/query link. Add card-ledger history and cohort denominators before using latest host slots as operating success metrics."
+    },
+    {
+      "priority": "medium for expansion",
+      "action": "Investigate customer lookup tail latency and query admission/cache strategy using the existing measured 50/500-caller profiles. Benchmark improvements on the same workload before making scalable-interactivity claims."
+    },
+    {
+      "priority": "optional product-quality evidence",
+      "action": "Human-review native audio and suggestion helpfulness; compare the two bounded model role choices with reviewed deterministic advice on a matched workload. This would measure customer value beyond successful transport/enum selection."
+    }
+  ],
+  "checks": [
+    {
+      "name": "Fresh deterministic core",
+      "command": "python docs/submission/measurements/core-engine-final/core-engine-run.py --repo . --expected-head df957f99a6e544cde5a698cfb6d9685e92ee3255 --out .tmp/quality-review-3/core",
+      "result": "passed",
+      "tests": 1078,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 134.902,
+      "source_manifest_files": 185,
+      "source_unchanged": true,
+      "external_python_attempts": 0,
+      "artifact": ".tmp/quality-review-3/core/receipt.json"
+    },
+    {
+      "name": "Bounded existing component set",
+      "command": "python -m pytest -q --import-mode=importlib -p no:cacheprovider --basetemp=.tmp/quality-review-3/components-temp --junitxml=.tmp/quality-review-3/components-junit.xml tests/test_pipeline.py tests/test_row_hash.py tests/test_dataset_health.py tests/test_card_block.py tests/test_card_block_api.py tests/test_agent_analytics.py tests/test_host_outcome_analytics.py savia_assistant/tests/test_service.py savia_assistant/tests/test_fleet.py frontend/tests/test_followups.py frontend/tests/test_voice.py",
+      "result": "passed",
+      "tests": 247,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 128.86,
+      "artifact": ".tmp/quality-review-3/components-junit.xml"
+    },
+    {
+      "name": "Generic FLUJO copied source bytes",
+      "command": "node docs/submission/measurements/flujo-platform/verify-source.cjs",
+      "result": "passed",
+      "files": 39,
+      "bytes": 619009,
+      "upstream_commit": "0be972ac7b748703d09e407ef96beba45ab17b2a"
+    },
+    {
+      "name": "Generic FLUJO dependency-free retry smoke",
+      "command": "node --experimental-strip-types --require ./docs/submission/measurements/flujo-platform/offline-preload.cjs ./docs/submission/measurements/flujo-platform/offline-smoke.mjs",
+      "result": "passed",
+      "checks": 5,
+      "initial_attempt": "Bare node invocation lacked documented TypeScript-stripping flag and failed ERR_UNKNOWN_FILE_EXTENSION; corrected documented invocation passed. No implementation defect inferred."
+    },
+    {
+      "name": "Frozen actual provider-record audit",
+      "command": "python scripts/verify_luna_benchmark.py docs/submission/measurements/luna-100/run-100 --out .tmp/quality-review-3/luna-audit",
+      "result": "passed",
+      "records": 100,
+      "exact_correct": 100,
+      "bounded_safe": 100,
+      "independent_baseline_matches": 100,
+      "peak_overlapping_turns": 100,
+      "provider_requests": 0,
+      "artifact": ".tmp/quality-review-3/luna-audit/audit.json"
+    },
+    {
+      "name": "Independent content/hash/denominator verification",
+      "command": "python .tmp/quality-review-3/verify_artifacts.py",
+      "result": "passed",
+      "artifact": ".tmp/quality-review-3/artifact-checks.json",
+      "details": {
+        "pipeline_manifest_accounting": {
+          "tables": {
+            "customers": 150000,
+            "products": 400000,
+            "transactions": 4425008,
+            "call_center_interactions": 686296,
+            "call_transcripts": 171321,
+            "complaints": 67095
+          },
+          "total_rows": 5899720,
+          "all_six_reconcile": true,
+          "private_source_rows_recomputed": false
+        },
+        "historical_core_manifest": {
+          "files": 184,
+          "matching_current_filesystem_bytes": 176,
+          "filesystem_changed": [
+            "contracts/policy_engine.md",
+            "frontend/server/conversation.py",
+            "frontend/server/deployment_transition.py",
+            "frontend/server/voice.py",
+            "resources/dispute_workflow.flow.json",
+            "tests/test_card_block_api.py",
+            "tests/test_dispute_deployment_transition.py",
+            "tests/test_history_codex.py"
+          ],
+          "matching_current_git_blob_bytes": 174,
+          "git_blob_changed": [
+            "contracts/policy_engine.md",
+            "frontend/server/conversation.py",
+            "frontend/server/deployment_transition.py",
+            "frontend/server/voice.py",
+            "resources/dispute_workflow.flow.json",
+            "tests/dev_history_graph.test.cjs",
+            "tests/dev_history_replay.test.cjs",
+            "tests/test_card_block_api.py",
+            "tests/test_dispute_deployment_transition.py",
+            "tests/test_history_codex.py"
+          ],
+          "domain_python_files": 22,
+          "domain_python_changed": []
+        },
+        "deployed_app_manifest": {
+          "files": 177,
+          "matching_current_filesystem_bytes": 121,
+          "filesystem_changed": [
+            "contracts/policy_engine.md",
+            "deploy/rc/Dockerfile.public",
+            "deploy/rc/Dockerfile.successor",
+            "deploy/rc/fly.public.toml",
+            "deploy/rc/public-gateway.browser.test.mjs",
+            "deploy/rc/public-gateway.mjs",
+            "deploy/rc/public-gateway.test.mjs",
+            "deploy/rc/submission-portal.test.mjs",
+            "frontend/index.html",
+            "frontend/public/avatar-audio-capture.js",
+            "frontend/public/favicon.svg",
+            "frontend/server/conversation.py",
+            "frontend/server/voice.py",
+            "frontend/src/App.tsx",
+            "frontend/src/Assistant.test.tsx",
+            "frontend/src/CardBlockControl.test.tsx",
+            "frontend/src/CardBlockControl.tsx",
+            "frontend/src/InquiryPanel.css",
+            "frontend/src/InquiryPanel.test.tsx",
+            "frontend/src/InquiryPanel.tsx",
+            "frontend/src/Login.test.tsx",
+            "frontend/src/avatar/Eyes.tsx",
+            "frontend/src/avatar/README.md",
+            "frontend/src/avatar/audio.ts",
+            "frontend/src/avatar/eyes.module.css",
+            "frontend/src/avatar/native-voice.test.tsx",
+            "frontend/src/avatar/useSaviaVoice.ts",
+            "frontend/src/avatar/utteranceObserver.ts",
+            "frontend/src/avatar/voice.test.tsx",
+            "frontend/src/lib.test.ts",
+            "frontend/src/lib.ts",
+            "frontend/src/main.tsx",
+            "frontend/src/styles.css",
+            "frontend/src/types.ts",
+            "frontend/src/vite-env.d.ts",
+            "frontend/vite.config.ts",
+            "resources/dispute_workflow.flow.json",
+            "web/submission/evidence/DEVELOPMENT_PROCESS.md",
+            "web/submission/evidence/DISPUTE_ENGINE.md",
+            "web/submission/evidence/ELEVENLABS_COMPARISON.md",
+            "web/submission/evidence/EVIDENCE_MAP.md",
+            "web/submission/evidence/START_HERE.md",
+            "web/submission/index.html",
+            "web/submission/pitch/savia-final-pitch-manifest.json",
+            "web/submission/pitch/savia-final-pitch-sources.json",
+            "web/submission/pitch/savia-final-pitch-speaker-notes.md",
+            "web/submission/pitch/savia-final-pitch.html",
+            "web/submission/pitch/savia-final-pitch.pdf",
+            "web/submission/pitch/savia-final-pitch.pptx",
+            "web/submission/pitch/slides/slide-01.png",
+            "web/submission/pitch/slides/slide-02.png",
+            "web/submission/pitch/slides/slide-03.png",
+            "web/submission/pitch/slides/slide-04.png",
+            "web/submission/pitch/slides/slide-05.png",
+            "web/submission/pitch/slides/slide-06.png",
+            "web/submission/portal-manifest.json"
+          ],
+          "matching_current_git_blob_bytes": 153,
+          "git_blob_changed": [
+            "contracts/policy_engine.md",
+            "frontend/server/conversation.py",
+            "frontend/server/voice.py",
+            "frontend/src/avatar/README.md",
+            "resources/dispute_workflow.flow.json",
+            "web/submission/evidence/DEVELOPMENT_PROCESS.md",
+            "web/submission/evidence/DISPUTE_ENGINE.md",
+            "web/submission/evidence/ELEVENLABS_COMPARISON.md",
+            "web/submission/evidence/EVIDENCE_MAP.md",
+            "web/submission/evidence/START_HERE.md",
+            "web/submission/index.html",
+            "web/submission/pitch/savia-final-pitch-manifest.json",
+            "web/submission/pitch/savia-final-pitch-sources.json",
+            "web/submission/pitch/savia-final-pitch-speaker-notes.md",
+            "web/submission/pitch/savia-final-pitch.html",
+            "web/submission/pitch/savia-final-pitch.pdf",
+            "web/submission/pitch/savia-final-pitch.pptx",
+            "web/submission/pitch/slides/slide-01.png",
+            "web/submission/pitch/slides/slide-02.png",
+            "web/submission/pitch/slides/slide-03.png",
+            "web/submission/pitch/slides/slide-04.png",
+            "web/submission/pitch/slides/slide-05.png",
+            "web/submission/pitch/slides/slide-06.png",
+            "web/submission/portal-manifest.json"
+          ],
+          "domain_python_files": 22,
+          "domain_python_changed": []
+        },
+        "router_reconciliation": {
+          "holdout_hash": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+          "systems": {
+            "keyword_baseline": {
+              "correct": 70,
+              "cases": 120,
+              "human_missed": 13,
+              "unnecessary_handoffs": 6,
+              "prediction_scope": "rerun keyword source"
+            },
+            "tfidf_logistic": {
+              "correct": 94,
+              "cases": 120,
+              "human_missed": 3,
+              "unnecessary_handoffs": 9,
+              "prediction_scope": "reconstructed published error records; learned model not rerun"
+            },
+            "tfidf_logistic_abstention": {
+              "correct": 65,
+              "cases": 120,
+              "human_missed": 1,
+              "unnecessary_handoffs": 52,
+              "prediction_scope": "reconstructed published error records; learned model not rerun"
+            }
+          },
+          "human_adjudication": "pending"
+        },
+        "native_wav": {
+          "sha256_matches": true,
+          "samples": 196800,
+          "sample_rate": 24000,
+          "seconds": 8.2,
+          "receipt_ack_sample_count_matches": true,
+          "human_audio_listening_performed": false
+        },
+        "live_card_receipt": {
+          "status": "passed",
+          "completed_cases": 2,
+          "case_count": 2,
+          "http_step_count": 43,
+          "fresh_requests_performed": false
+        },
+        "scope": "Repository-only offline content/hash/denominator checks; historical remote observations are not reobserved."
+      }
+    }
+  ],
+  "pytest_checks_total": 1325,
+  "other_behavior_checks": 5,
+  "limits": [
+    "No earlier assessment/rating reports were read; no other repository, chat, reviewer, website, provider or real bank was queried. No delegation or installation occurred.",
+    "No private full-data rerun: original six-table counts were arithmetically reconciled and public fixtures tested.",
+    "scikit-learn is absent in the existing runtime, so learned model fitting and similarity screening were not rerun. Frozen hashes, keyword source, published error-record predictions and denominators were checked independently. An unused pandas dependency probe also failed; pandas is not required by the selected checks.",
+    "No frontend npm install/build/UI suite or nine-suite full upstream FLUJO replay: existing dependency cache/complete neighboring source was outside permitted scope. Five copied-module behavior checks and all 39 copied-source hashes were verified.",
+    "No fresh graphical customer journey, physical microphone capture, human audio listening/adjudication, provider response generation, actual fleet run, production bank action, human pickup or longitudinal ROI study was performed.",
+    "Historical provider/remote observations remain evidence tied to their original receipts, not independently reobserved live state or blanket current-HEAD acceptance.",
+    "Source tests, fixtures, structural guards and finite examples do not prove arbitrary semantic safety."
+  ],
+  "source_unchanged": true,
+  "git_status_before": "clean",
+  "git_status_after": "clean",
+  "writes_only": [
+    ".tmp/quality-review-3/**",
+    ".tmp/quality-review-3.md",
+    ".tmp/quality-review-3.json"
+  ],
+  "report_paths": {
+    "markdown": "C:\\Users\\Moe\\.codex\\worktrees\\savia-review-evidence\\factored-hackathon-2026\\.tmp\\quality-review-3.md",
+    "json": "C:\\Users\\Moe\\.codex\\worktrees\\savia-review-evidence\\factored-hackathon-2026\\.tmp\\quality-review-3.json"
+  }
+}

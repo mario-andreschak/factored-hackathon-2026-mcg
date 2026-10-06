@@ -124,6 +124,21 @@ def test_pinned_manifest_from_another_build_is_rejected(dataset):
     assert "manifest_build_mismatch" in health.check_dataset(dataset)["errors"]
 
 
+def test_legacy_published_manifest_remains_usable(dataset):
+    def legacy(value):
+        value.pop("publication_status")
+        value["published"] = True
+    rewrite_json(current_build(dataset) / "manifest.json", legacy)
+    assert health.check_dataset(dataset)["ok"]
+
+
+@pytest.mark.parametrize("status", ["not_ready", "unknown"])
+def test_current_cannot_make_an_unready_manifest_healthy(dataset, status):
+    rewrite_json(current_build(dataset) / "manifest.json",
+                 lambda value: value.update(publication_status=status, published=True))
+    assert "manifest_build_mismatch" in health.check_dataset(dataset)["errors"]
+
+
 def test_validated_build_requires_a_pinned_manifest(dataset):
     (current_build(dataset) / "manifest.json").unlink()
     assert "pinned_manifest_missing" in health.check_dataset(dataset)["errors"]

@@ -27,3 +27,6 @@ A separate fresh post-pitch assessment at `2c90d9c6` scored the complete submiss
 [unaltered report](final-repo-reviews/post-pitch-2c90d9c6.md) and
 [archival manifest](POST_PITCH_REVIEW.json) are preserved as another snapshot;
 they do not replace a member of either five-review cohort.
+
+
+A later independent five-review round assesses the complete post-PR-79 submission at `df957f99a6e544cde5a698cfb6d9685e92ee3255`. Its [unaltered quality-review reports and result](QUALITY_REPO_REVIEWS.md) remain a separate cohort; this earlier cohort and its unmet threshold are unchanged.

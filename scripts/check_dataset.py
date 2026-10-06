@@ -315,7 +315,12 @@ def check_dataset(out: Path | str, env_path: Path | str | None = None) -> dict:
             if not _contained(manifest_path, build):
                 raise HealthFailure("metadata_path_unsafe")
             manifest = _read_json(manifest_path)
-            if manifest.get("run_id") != build_id or manifest.get("published") is not True:
+            # CURRENT has already established which snapshot is serving.
+            # New manifests record pre-publication readiness; the old boolean
+            # remains accepted for historical immutable snapshots.
+            ready = (manifest.get("publication_status") == "ready"
+                     if "publication_status" in manifest else manifest.get("published") is True)
+            if manifest.get("run_id") != build_id or not ready:
                 raise HealthFailure("manifest_build_mismatch")
             if manifest.get("source_fingerprint") != lineage["fingerprint"]:
                 raise HealthFailure("manifest_source_fingerprint_mismatch")
