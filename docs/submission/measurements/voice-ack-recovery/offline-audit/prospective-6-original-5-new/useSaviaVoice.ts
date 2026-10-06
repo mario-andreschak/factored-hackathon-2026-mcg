@@ -405,7 +405,6 @@ export function useSaviaVoice(options: Options) {
           await ack.body?.cancel();
         };
         const ack = s.ackBarrier.then(publish);
-        // Keep this turn's failure, but let later turns wait for settlement.
         s.ackBarrier = ack.catch(() => {});
         await ack;
         acknowledged = true;

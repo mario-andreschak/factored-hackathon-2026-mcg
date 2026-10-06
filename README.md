@@ -83,7 +83,7 @@ The human pitch above explains the product. This table maps technical claims to 
 
 **Live successor:** [confirmed card protection in Spanish and Portuguese, deployed source/image pins and public asset verification](docs/submission/measurements/card-block-live/README.md). [Independent fresh source review and its exact scope](docs/review/FRESH_AGENT_REVIEW.md).
 
-**Fresh dispute-core qualification:** [1,078 passing offline checks](docs/submission/measurements/core-engine-final/README.md), with 39 executed core source files independently matched to the deployed source.
+**Pinned dispute-core qualification:** [1,078 passing offline checks](docs/submission/measurements/core-engine-final/README.md), with 39 executed core source files matched to the recorded `f3c57b26` deployment. The current release retains 38 unchanged files; the banking snapshot reader has [separate publication-boundary qualification](docs/submission/measurements/pipeline-publication/README.md).
 
 | Evaluation dimension | What to inspect | Evidence |
 | --- | --- | --- |

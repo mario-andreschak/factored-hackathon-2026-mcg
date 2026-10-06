@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="148" failures="0" errors="0" time="27.8487898">
+    <testsuite name="src/Assistant.test.tsx" timestamp="2026-10-06T01:20:20.232Z" tests="68" failures="0" errors="0" skipped="0" time="8.3566959">
+        <testcase classname="src/Assistant.test.tsx" name="es assistant selection and transcript use localized type, date and amount" time="0.3373041">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt assistant selection and transcript use localized type, date and amount" time="0.0573212">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="assistant selection and transcript metadata follow ES to PT to ES without changing the charge" time="0.2999934">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es parent reopen to charge clears an incompatible hidden query before sending" time="0.2276332">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt parent reopen to general clears an incompatible hidden query before sending" time="0.1360814">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="restored null-reference query clears the stale charge on chat submit" time="0.16816">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="rapid Portuguese query switch submits its different charge reference" time="0.1122732">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="mismatched stored query blocks a stale charge action before POST" time="0.1198747">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="Portuguese consent and saved status survive refresh without submitting an action" time="0.4673946">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es explicit consent names the saved charge and chat yes has no action authority" time="0.4054528">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt explicit consent names the saved charge and chat yes has no action authority" time="0.2016218">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="hidden amount requires a local review before explicit consent" time="0.1273028">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="amount review and confirmation wait for status recovery" time="0.130476">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="missing saved facts prevents explicit confirmation of an unverified prepared charge" time="0.0463426">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="missing saved snapshot prevents explicit confirmation of an unverified prepared charge" time="0.0440345">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="changed amount prevents explicit confirmation of an unverified prepared charge" time="0.0588547">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="changed event date prevents explicit confirmation of an unverified prepared charge" time="0.0460723">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="changed currency prevents explicit confirmation of an unverified prepared charge" time="0.0436065">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="wrong reference shape prevents explicit confirmation of an unverified prepared charge" time="0.0454408">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es explicit human review after a saved intake lets the host prepare the existing case" time="0.187187">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt explicit human review after a saved intake lets the host prepare the existing case" time="0.1538471">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es existing case readback shows the local receipt and prevents another intake for the same charge" time="0.1675748">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt existing case readback shows the local receipt and prevents another intake for the same charge" time="0.15707">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es saved handoff false displays only verified packet facts, questions and no human response" time="0.0382788">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt saved handoff false displays only verified packet facts, questions and no human response" time="0.0360682">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es saved handoff true displays only verified packet facts, questions and no human response" time="0.0313253">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt saved handoff true displays only verified packet facts, questions and no human response" time="0.0367362">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="unverified outer state cannot surface a handoff packet as verified" time="0.0383111">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="human response claimed cannot surface a handoff packet as verified" time="0.0600699">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="mismatched provenance cannot surface a handoff packet as verified" time="0.2190179">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="missing packet questions cannot surface a handoff packet as verified" time="0.0898934">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="oversized questions cannot surface a handoff packet as verified" time="0.0948313">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="noncanonical or control-bearing saved question cannot surface a handoff packet as verified" time="0.0737052">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="noncanonical or control-bearing saved question cannot surface a handoff packet as verified" time="0.0371393">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="noncanonical or control-bearing saved question cannot surface a handoff packet as verified" time="0.0365444">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="noncanonical or control-bearing saved question cannot surface a handoff packet as verified" time="0.0566444">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="noncanonical or control-bearing saved question cannot surface a handoff packet as verified" time="0.0471216">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="wrong receipt status leaves an existing case unverified and locked" time="0.0651285">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="not simulated leaves an existing case unverified and locked" time="0.0541006">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="missing original snapshot leaves an existing case unverified and locked" time="0.074992">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es saved handoff keeps exact decimal precision in displayed facts" time="0.0404178">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt saved handoff keeps exact decimal precision in displayed facts" time="0.0429922">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es explicit handoff freezes questions and charge binding across retry" time="0.3328381">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt explicit handoff freezes questions and charge binding across retry" time="0.1930721">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="question limits prevent malformed explicit handoff without submitting" time="0.0806835">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es retained previous receipt survives an uncertain follow-up without consent authority or relabeling" time="0.2610613">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt retained previous receipt survives an uncertain follow-up without consent authority or relabeling" time="0.2291195">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es terminal general handoff reload and language change create a fresh request UUID and preserve prior evidence through retry" time="0.1849893">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt terminal general handoff reload and language change create a fresh request UUID and preserve prior evidence through retry" time="0.2628907">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="mismatched or malformed retained receipt stays hidden and supplies no authority" time="0.0620027">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="mismatched or malformed retained receipt stays hidden and supplies no authority" time="0.0544112">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="mismatched or malformed retained receipt stays hidden and supplies no authority" time="0.0382229">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="a nongeneral retained handoff stays hidden" time="0.0573056">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="a nongeneral retained handoff stays hidden" time="0.113055">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="exhausted recovery shows one opaque review code and the ES/PT sharing route" time="0.1114616">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="Portuguese is selectable before history loads and stays available when chat is unavailable" time="0.1409696">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="Portuguese recovery copy permits retry while server transcript remains unlabelled" time="0.1188732">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="Portuguese selection before the first chat avoids unbound action status and logs no customer out" time="0.1380698">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="es customers can opt into and inspect simulated follow-up" time="0.12567">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="pt customers can opt into and inspect simulated follow-up" time="0.1099323">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="saved follow-up remains reachable without the current receipt and follows conversation" time="0.0772547">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="new chat archives visible history per profile, survives reload and keeps follow-ups" time="0.3176883">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="voice stage shows heard/caption turns and stops when the Assistant closes" time="0.0935287">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="spoken chat and authenticated completed team updates narrate their canonical replies" time="0.1587621">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="savia context events publish public selection and history without references" time="0.036049">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="intentional Listen leaves inactive events unconsumed and queues the authenticated saved reply once" time="0.0280297">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="intentional Listen rejects closure snapshots and advances its cursor only after native queue acceptance" time="0.0548647">
+        </testcase>
+        <testcase classname="src/Assistant.test.tsx" name="stopping voice aborts pending Listen and rejects late results without consuming the saved event" time="0.05745">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/CardBlockControl.test.tsx" timestamp="2026-10-06T01:20:20.245Z" tests="6" failures="0" errors="0" skipped="0" time="1.2328696">
+        <testcase classname="src/CardBlockControl.test.tsx" name="preparation does not confirm; explicit confirmation shows verified receipt and narrates" time="0.116934">
+        </testcase>
+        <testcase classname="src/CardBlockControl.test.tsx" name="uncertain confirmation can only recover status and never retries the write" time="0.5310246">
+        </testcase>
+        <testcase classname="src/CardBlockControl.test.tsx" name="invalid receipt never displays or speaks success" time="0.1412059">
+        </testcase>
+        <testcase classname="src/CardBlockControl.test.tsx" name="expired prepared intent offers a new explicit preparation" time="0.2897139">
+        </testcase>
+        <testcase classname="src/CardBlockControl.test.tsx" name="fresh browser reads durable blocked status without a confirm" time="0.0516443">
+        </testcase>
+        <testcase classname="src/CardBlockControl.test.tsx" name="renewed session safely clears a server-rejected old prepared handle" time="0.0871805">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/InquiryPanel.test.tsx" timestamp="2026-10-06T01:20:20.246Z" tests="10" failures="0" errors="0" skipped="0" time="3.468514">
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; renders the actual backend state, localized status and numeric event timestamps" time="0.7466955">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; sends the editable prompt, language and selected transaction reference" time="0.1340037">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; retains a retry ID after a lost ACK and replaces it for changed context" time="0.179844">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; uses a new request ID for a new submission after an accepted response" time="0.0500884">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; polls active work at two seconds and dispatches a bounded transition update" time="2.030598">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; marks team responses helpful through the explicit resolve contract" time="0.1060236">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; shows service unavailability and expires an unauthorized session" time="0.0159042">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; requires active voice and an intentional once-only click for saved recommendations" time="0.0475712">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; offers no Listen control for closed or unfinished results and localizes its label" time="0.1039416">
+        </testcase>
+        <testcase classname="src/InquiryPanel.test.tsx" name="InquiryPanel API boundaries &gt; keeps a rejected Listen request available and reports that the written advice remains" time="0.0501256">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/Login.test.tsx" timestamp="2026-10-06T01:20:20.247Z" tests="46" failures="0" errors="0" skipped="0" time="13.4440648">
+        <testcase classname="src/Login.test.tsx" name="Portuguese demo sign-in preserves selected profile and Assistant locale" time="0.9792433">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese invite retry, error, and success retain invite-only auth" time="0.2924155">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Spanish defaults and non-401 failures remain safe and local" time="0.1269565">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese sign-in reaches Assistant when storage reads and writes are denied" time="0.3223125">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Assistant language returns to Login during the same storage-denied visit" time="0.5025795">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es mobile menu keeps keyboard focus inside and restores the trigger" time="0.6606569">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt mobile menu keeps keyboard focus inside and restores the trigger" time="0.5071769">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es responsive 390→900→390 menu focus follows the visible navigation" time="0.3332516">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt responsive 390→900→390 menu focus follows the visible navigation" time="0.2936322">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt Home shows COP once in visible and hidden balances" time="0.1501872">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt Home shows ARS once in visible and hidden balances" time="0.1691205">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es Home shows COP once in visible and hidden balances" time="0.2074951">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es Home shows ARS once in visible and hidden balances" time="0.1943317">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Compra en línea as Compras online in Spending" time="0.0733091">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Compra anulada as Compra cancelada in Spending" time="0.0683008">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Cafetería as Cafeteria in Spending" time="0.0685231">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Nómina as Salário in Spending" time="0.0673942">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Transferencia as Transferência in Spending" time="0.0798728">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Hogar as Casa e lar in Spending" time="0.0623148">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Supermercado as Supermercado in Spending" time="0.0914302">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Efectivo as Dinheiro in Spending" time="0.1151251">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Suscripción as Assinaturas in Spending" time="0.0783002">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Home displays source category Categoria inédita as Categoria inédita in Spending" time="0.0677298">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese charge finder keeps labels and dialog names local across the portal" time="0.7853456">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese transaction amounts, dates, type and pagination use one currency label" time="1.2178646">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Spanish transaction pagination keeps its previous-page accessible name" time="0.5053958">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese Movimentos snapshot error, retry and boot use Portuguese semantics" time="0.1302938">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Spanish charge finder retains its navigation, filters and review entry" time="0.4419953">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es merchantless transaction displays source channel Card as Tarjeta in row and detail" time="0.3238161">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt merchantless transaction displays source channel Card as Cartão in row and detail" time="0.2337765">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es merchantless transaction displays source channel Kiosk as Kiosk in row and detail" time="0.1493892">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt merchantless transaction displays source channel Kiosk as Kiosk in row and detail" time="0.1764431">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese charge review says when the Assistant is unavailable" time="0.2530445">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt Home, Products, detail and About use matching language and synthetic disclosure" time="0.6302322">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es Home, Products, detail and About use matching language and synthetic disclosure" time="0.5642458">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="Portuguese invite uses organizer source wording when metadata identifies organizer data" time="0.1580002">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es period change restores focus after the chosen window loads" time="0.2392088">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt period change restores focus after the chosen window loads" time="0.2984792">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es failed period fetch focuses the visible retry control" time="0.3555441">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt failed period fetch focuses the visible retry control" time="0.1626994">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es failed period retry restores period focus" time="0.2549549">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt failed period retry restores period focus" time="0.2115425">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es failed period retry keeps later customer focus" time="0.2892979">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt failed period retry keeps later customer focus" time="0.2593327">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="es period loading leaves focus on another chosen control" time="0.1520966">
+        </testcase>
+        <testcase classname="src/Login.test.tsx" name="pt period loading leaves focus on another chosen control" time="0.1363741">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/avatar/native-voice.test.tsx" timestamp="2026-10-06T01:20:20.254Z" tests="11" failures="0" errors="0" skipped="0" time="0.5444343">
+        <testcase classname="src/avatar/native-voice.test.tsx" name="a thinking pause stays one recording; background work permits foreground speech and queued team narration waits for hardware playback" time="0.1579218">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="barge-in clears an unheard partial caption without a full-played acknowledgement" time="0.0281911">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="capped speech and its resumed tail cannot dispatch or release a queued result before two continuous quiet seconds" time="0.1291058">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="collector retains both speech segments and resets the deadline after a thinking pause" time="0.0018332">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="starting a new chat discards queued narration and partial microphone input while keeping capture available" time="0.0322044">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="a late team reply cannot move from an old microphone session into a restarted voice session" time="0.0051188">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="a 503 played failure discards only that caption and the next native turn gets its own exact receipt" time="0.0927387">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="a 409 played failure discards only that caption and the next native turn gets its own exact receipt" time="0.0403878">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="a network played failure discards only that caption and the next native turn gets its own exact receipt" time="0.0183589">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="a played 401 still closes capture and expires authentication" time="0.0095756">
+        </testcase>
+        <testcase classname="src/avatar/native-voice.test.tsx" name="the next native request waits for an outstanding receipt to settle even when it fails" time="0.0266352">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/avatar/voice.test.tsx" timestamp="2026-10-06T01:20:20.255Z" tests="4" failures="0" errors="0" skipped="0" time="0.7970823">
+        <testcase classname="src/avatar/voice.test.tsx" name="the assistant shows the eyes, and offers voice only when the server does" time="0.5361782">
+        </testcase>
+        <testcase classname="src/avatar/voice.test.tsx" name="the calm persona&apos;s eyes are the default, with or without the conversational voice" time="0.1494935">
+        </testcase>
+        <testcase classname="src/avatar/voice.test.tsx" name="a browser without a microphone explains itself and keeps the chat usable" time="0.1087708">
+        </testcase>
+        <testcase classname="src/avatar/voice.test.tsx" name="spoken text drops markdown and internal references" time="0.0007994">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib.test.ts" timestamp="2026-10-06T01:20:20.256Z" tests="3" failures="0" errors="0" skipped="0" time="0.0051289">
+        <testcase classname="src/lib.test.ts" name="transaction CSV locale &gt; exports Portuguese headers and portal terms, including a missing merchant fallback" time="0.0024696">
+        </testcase>
+        <testcase classname="src/lib.test.ts" name="transaction CSV locale &gt; exports Spanish headers and known type and status labels" time="0.000408">
+        </testcase>
+        <testcase classname="src/lib.test.ts" name="transaction CSV locale &gt; preserves unknown values and CSV formula and quote protection" time="0.0002284">
+        </testcase>
+    </testsuite>
+</testsuites>

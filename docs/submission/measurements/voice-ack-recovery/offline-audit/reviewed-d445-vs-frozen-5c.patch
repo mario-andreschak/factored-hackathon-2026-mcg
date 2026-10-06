@@ -1,0 +1,179 @@
+diff --git a/README.md b/README.md
+index c4c0f901..6017bdd4 100644
+--- a/README.md
++++ b/README.md
+@@ -83,7 +83,7 @@ The human pitch above explains the product. This table maps technical claims to
+ 
+ **Live successor:** [confirmed card protection in Spanish and Portuguese, deployed source/image pins and public asset verification](docs/submission/measurements/card-block-live/README.md). [Independent fresh source review and its exact scope](docs/review/FRESH_AGENT_REVIEW.md).
+ 
+-**Fresh dispute-core qualification:** [1,078 passing offline checks](docs/submission/measurements/core-engine-final/README.md), with 39 executed core source files independently matched to the deployed source.
++**Pinned dispute-core qualification:** [1,078 passing offline checks](docs/submission/measurements/core-engine-final/README.md), with 39 executed core source files matched to the recorded `f3c57b26` deployment. The current release retains 38 unchanged files; the banking snapshot reader has [separate publication-boundary qualification](docs/submission/measurements/pipeline-publication/README.md).
+ 
+ | Evaluation dimension | What to inspect | Evidence |
+ | --- | --- | --- |
+diff --git a/frontend/src/avatar/native-voice.test.tsx b/frontend/src/avatar/native-voice.test.tsx
+index f7a52e59..87f4df9a 100644
+--- a/frontend/src/avatar/native-voice.test.tsx
++++ b/frontend/src/avatar/native-voice.test.tsx
+@@ -354,3 +354,144 @@ test("a late team reply cannot move from an old microphone session into a restar
+   await tick();
+   expect(turns()).toHaveLength(0);
+ });
++
++test.each([503, 409, "network"])(
++  "a %s played failure discards only that caption and the next native turn gets its own exact receipt",
++  async (failure) => {
++    const normalFetch = vi.mocked(fetch).getMockImplementation()!;
++    vi.mocked(fetch).mockImplementation(async (path, init) => {
++      const response = await normalFetch(path, init);
++      if (path === "/api/voice/played" && acks().length === 1) {
++        if (failure === "network")
++          throw new TypeError("scripted transient network loss");
++        return new Response("{}", { status: Number(failure) });
++      }
++      return response;
++    });
++    const callbacks = { ...options(), paused: false };
++    const hook = renderHook(() => useSaviaVoice(callbacks));
++    await act(async () => {
++      await hook.result.current.start();
++    });
++    feed(3, 0.04);
++    feed(20, 0);
++    await tick();
++    const context = Context.instances[0];
++    act(() => {
++      context.currentTime = 1;
++      context.deviceTime = 1;
++      context.sources[0].onended?.();
++    });
++    await tick();
++    expect(acks()).toHaveLength(1);
++    expect(hook.result.current.error).toBe("unavailable");
++    expect(hook.result.current.active).toBe(true);
++    expect(callbacks.onCaption).toHaveBeenLastCalledWith(
++      expect.any(String),
++      "",
++      true,
++    );
++    expect(
++      callbacks.onCaption.mock.calls.some(
++        ([, text, final]) => text === "Estoy aquí mientras esperas." && final,
++      ),
++    ).toBe(false);
++    act(() => hook.result.current.clearError());
++    feed(3, 0.08);
++    feed(20, 0);
++    await tick();
++    expect(turns()).toHaveLength(2);
++    expect(turns()[1].body.fresh).toBe(false);
++    expect(
++      requests.filter((request) => request.path === "/api/voice/transcribe"),
++    ).toHaveLength(0);
++    expect(acks()).toHaveLength(1); // The new waveform has not drained.
++    act(() => {
++      context.currentTime = 2;
++      context.deviceTime = 2;
++      context.sources[1].onended?.();
++    });
++    await tick();
++    expect(acks().map((request) => request.body)).toEqual([
++      { turn_id: "A".repeat(24), played_samples: 240, complete: true },
++      { turn_id: "B".repeat(24), played_samples: 240, complete: true },
++    ]);
++    expect(callbacks.onCaption).toHaveBeenLastCalledWith(
++      expect.any(String),
++      "Estoy aquí mientras esperas.",
++      true,
++    );
++  },
++);
++
++test("a played 401 still closes capture and expires authentication", async () => {
++  const normalFetch = vi.mocked(fetch).getMockImplementation()!;
++  vi.mocked(fetch).mockImplementation(async (path, init) => {
++    const response = await normalFetch(path, init);
++    return path === "/api/voice/played"
++      ? new Response("{}", { status: 401 })
++      : response;
++  });
++  const callbacks = { ...options(), paused: false, onExpired: vi.fn() };
++  const hook = renderHook(() => useSaviaVoice(callbacks));
++  await act(async () => {
++    await hook.result.current.start();
++  });
++  feed(3, 0.04);
++  feed(20, 0);
++  await tick();
++  const context = Context.instances[0];
++  act(() => {
++    context.currentTime = 1;
++    context.deviceTime = 1;
++    context.sources[0].onended?.();
++  });
++  await tick();
++  expect(acks()).toHaveLength(1);
++  expect(hook.result.current.active).toBe(false);
++  expect(callbacks.onExpired).toHaveBeenCalledOnce();
++  feed(3, 0.08);
++  feed(20, 0);
++  await tick();
++  expect(turns()).toHaveLength(1);
++});
++
++test("the next native request waits for an outstanding receipt to settle even when it fails", async () => {
++  const normalFetch = vi.mocked(fetch).getMockImplementation()!;
++  let rejectAck!: (reason: Error) => void;
++  const pendingAck = new Promise<Response>((_resolve, reject) => {
++    rejectAck = reject;
++  });
++  vi.mocked(fetch).mockImplementation(async (path, init) => {
++    const response = await normalFetch(path, init);
++    return path === "/api/voice/played" && acks().length === 1
++      ? pendingAck
++      : response;
++  });
++  const hook = renderHook(() => useSaviaVoice({ ...options(), paused: false }));
++  await act(async () => {
++    await hook.result.current.start();
++  });
++  feed(3, 0.04);
++  feed(20, 0);
++  await tick();
++  const context = Context.instances[0];
++  act(() => {
++    context.currentTime = 1;
++    context.deviceTime = 1;
++    context.sources[0].onended?.();
++  });
++  await tick();
++  expect(acks()).toHaveLength(1);
++  feed(3, 0.08);
++  feed(20, 0);
++  await tick();
++  expect(turns()).toHaveLength(1); // No new /turn while old /played remains unresolved.
++  act(() => rejectAck(new TypeError("lost receipt response")));
++  await tick();
++  expect(turns()).toHaveLength(2);
++  expect(
++    requests.filter((request) => request.path === "/api/voice/transcribe"),
++  ).toHaveLength(0);
++  expect(acks()).toHaveLength(1);
++});
+diff --git a/frontend/src/avatar/useSaviaVoice.ts b/frontend/src/avatar/useSaviaVoice.ts
+index 1d37d0a2..cdef921f 100644
+--- a/frontend/src/avatar/useSaviaVoice.ts
++++ b/frontend/src/avatar/useSaviaVoice.ts
+@@ -404,8 +404,10 @@ export function useSaviaVoice(options: Options) {
+           if (!ack.ok) throw new Error("unavailable");
+           await ack.body?.cancel();
+         };
+-        s.ackBarrier = s.ackBarrier.then(publish);
+-        await s.ackBarrier;
++        const ack = s.ackBarrier.then(publish);
++        // Keep this turn's failure, but let later turns wait for settlement.
++        s.ackBarrier = ack.catch(() => {});
++        await ack;
+         acknowledged = true;
+         if (own && current(s) && ownOwner === s.owner)
+           opts.current.onCaption?.(id, finalText, true);
