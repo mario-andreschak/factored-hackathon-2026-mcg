@@ -63,7 +63,9 @@ demonstration in 140.611 seconds.
    The [public offline replay](../review/PUBLIC_EVIDENCE.md) passes 67/67 source
    checks plus seven pipeline and four analytics invariants. Use the
    [evidence map](EVIDENCE_MAP.md) for source files, tests, exact denominators,
-   reproduction commands and the boundary of each result. The
+   reproduction commands and the boundary of each result. [Live canonical voice](measurements/native-canonical-live/README.md)
+   adds two exact Spanish/Portuguese registered captions, actual full-playback
+   acknowledgments and owned-card saved-status rereads. The
    [verified presentation and host outcomes](measurements/verified-outcomes/README.md)
    add canonical result narration and separate current host receipts from planned
    workflow outcomes, with 183 passing tests and 195 subtests. The

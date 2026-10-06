@@ -175,6 +175,15 @@ Evidence: [Luna workload, results and scope](https://github.com/mario-andreschak
 
 ## The architecture the development produced
 
+The latest [source qualification](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/measurements/verified-outcomes/README.md)
+strengthens two boundaries identified through independent review: registered
+host replies now supply the exact narration script, and read-only analytics
+reports verified host intake/handoff snapshots separately from workflow intent.
+The combined affected suite passed 183 tests and 195 subtests; independent code
+reviews checked playback interruption, malformed audio, admission identity,
+privacy and outcome denominators. Earlier recordings retain their original
+source identities, and live acceptance remains a separately pinned workload.
+
 ```mermaid
 flowchart LR
   Customer[Customer: text and native voice] --> Savia[Savia: session, goal and case owner]

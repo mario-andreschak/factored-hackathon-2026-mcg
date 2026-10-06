@@ -53,12 +53,9 @@ live acceptance above.
 
 The prototype's two-reviewer film is a demonstrated customer workload. The
 300-request benchmark and sandbox runs demonstrate other infrastructure
-workloads. The [October 5 integrated fleet receipt](measurements/fleet-customer-attempt/receipt.json)
-records checked bank facts, complete native speech and original-root correlation,
-but no accepted fleet result after its provider's HTTP 404. Keep the successful
-infrastructure results and that incomplete customer integration at their actual
-scopes. The [dated ElevenLabs comparison](ELEVENLABS_COMPARISON.md) is the
-separate product-alternative analysis.
+workloads. [Measured results and original receipts](measurements/MEASURED_RESULTS.md)
+retain the customer and infrastructure denominators. The
+[dated ElevenLabs comparison](ELEVENLABS_COMPARISON.md) gives the product positioning.
 
 ## Data engineering
 
@@ -66,7 +63,7 @@ separate product-alternative analysis.
 | --- | --- | --- |
 | [Full pipeline manifest](../pipeline/manifest.json), [quality report](../pipeline/quality_report.md) | **5,899,720 rows**, six table families, **4,390 source objects**, 991.2 s for the September 27/28 full run. Every table reconciles raw = silver + quarantine + removed duplicates. | [Bronze](../../pipeline/bronze.py), [silver](../../pipeline/silver.py), [gold](../../pipeline/gold.py), [contracts](../../pipeline/contracts.yaml), [end-to-end fixture tests](../../tests/test_pipeline.py) |
 | Owned serving snapshot | **4,425,008/4,425,008 ownership-valid transactions** in 128 stable buckets. Published-manifest lookup sample: **50 customers**, p50 38.6 ms, p95 51.2 ms, max 65.4 ms on local disk. | [Scoped lookup](../../pipeline/lookup.py), [banking service](../../banking_mcp/service.py); receipt timings describe this exact run, not every machine or later rebuild. |
-| Atomic publication and recovery | Isolated immutable builds; `CURRENT` is replaced only after successful contract/gold completion. A failed build leaves the previous snapshot serving. Deterministic PK deduplication, late-arrival/upsert behavior, schema drift and row lineage are exercised on labeled fixtures. | [Writer lock](../../pipeline/writer.py), [common snapshot handling](../../pipeline/common.py), [synthetic fixture](../../pipeline/fixture.py), [dataset health tests](../../tests/test_dataset_health.py), [row-hash tests](../../tests/test_row_hash.py) |
+| Atomic publication and recovery | Isolated immutable builds; contract/gold validation and required snapshot/external reports finish before `CURRENT` is replaced. Stage, report and pointer-swap failures preserve the previous serving snapshot. Deterministic PK deduplication, late arrivals, schema drift and row lineage are exercised on labeled fixtures. | [249 tests and 106 subtests with exact source](measurements/pipeline-publication/README.md), [writer lock](../../pipeline/writer.py), [common snapshot handling](../../pipeline/common.py), [synthetic fixture](../../pipeline/fixture.py), [dataset health tests](../../tests/test_dataset_health.py), [row-hash tests](../../tests/test_row_hash.py) |
 | Consumer-specific gold | **3,927 contact-demand aggregates**; 171,321 classifier rows with customer/time splits; scenario seed candidates; serving transactions. | [Pipeline account](../../pipeline/README.md), [gold outputs](../../pipeline/gold.py), [source verification](../../pipeline/verify.py) |
 
 Organizer rows and credentials remain private; committed receipts contain
