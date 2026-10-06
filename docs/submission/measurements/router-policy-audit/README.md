@@ -7,11 +7,10 @@ completed automated semantic validation of **8/120 synthetic requests**. It is
 not human adjudication, a classifier accuracy measurement, or approval of the
 remaining 112 labels.
 
-On **October 5, 2026 (America/Bogota)**, the owner explained that they did not
-speak the sample languages and delegated the choice to the agents: “i dont speak
-that language, you know best”. For the bounded hackathon handover, the
-coordinator used this disclosed automated sample audit in place of the earlier
-human-only pre-submission plan. The owner did not supply labels or human label
+On **October 5, 2026 (America/Bogota)**, the owner delegated the language
+review to the agents. For the bounded hackathon handover, the coordinator used
+this disclosed automated sample audit in place of the earlier human-only
+pre-submission plan. The owner did not supply labels or human label
 approval. Language-speaking human adjudication remains pending and is needed
 before claiming human-validated labels or real-customer quality.
 
