@@ -1,0 +1,1 @@
+Offline server semantics passed: new turn drops prior pending receipt, stale/wrong/duplicate ACK rejected, only exact current ACK appends heard assistant history; zero provider calls.

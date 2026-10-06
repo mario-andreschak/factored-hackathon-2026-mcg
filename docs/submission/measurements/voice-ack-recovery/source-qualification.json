@@ -1,0 +1,21 @@
+{
+  "schema": "savia-native-ack-recovery-source/v1",
+  "qualified_code_head": "d44527764c8082dbb10a59e9382c78813fa80716",
+  "qualified_code_tree": "6bfec44a7333053931414f65c7e8b2a80ba1e040",
+  "git_source_hashes": {
+    "README.md": "10eeed741e4353814b1cd8881ddf97cb9c99ecdf2fd53fc559e8e48fc3a4fcfb",
+    "frontend/src/avatar/useSaviaVoice.ts": "ab9af140ab42581dc9b78eaee8be0b3d475ee3e1d05e5a5a21508d6868eb58f6",
+    "frontend/src/avatar/native-voice.test.tsx": "f50817c8a5374e00e4d35f70fc6462c495925283f5fd7a1e095553c8f3041ab3"
+  },
+  "frontend_tests_passed": 148,
+  "test_files_passed": 7,
+  "new_failure_cases": 5,
+  "command": "npm test -- --reporter=default --reporter=junit --outputFile=<scratch>/savia-ack-recovery-ui.xml",
+  "original_junit_sha256": "b2de1c9afa5526bfb882cbd181021fd38c8f80c472005f673f1a325e780ec229",
+  "published_junit_sha256": "bb275c889011a3dbf21b4de62ea666e4d4908bd955bd219e63a19102e26d2b06",
+  "publication_derivative": "Only the seven hostname attributes removed from the original bytes; all other bytes retained.",
+  "protected_sources_unchanged": 89,
+  "provider_calls": 0,
+  "bank_writes": 0,
+  "scope": "Full frontend suite for the committed settlement-barrier successor; live acceptance and compiled browser source are separate qualifications."
+}

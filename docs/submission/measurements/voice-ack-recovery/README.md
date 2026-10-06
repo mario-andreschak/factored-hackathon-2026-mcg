@@ -1,0 +1,9 @@
+# Native voice acknowledgment recovery
+
+After a failed playback acknowledgment, the next healthy voice turn can proceed once that acknowledgment settles. The failed turn still reports its error. Savia neither retries an uncertain receipt nor assumes that the assistant was heard; the server accepts only the exact current full-playback acknowledgment before adding heard history.
+
+The reviewed code is `d44527764c8082dbb10a59e9382c78813fa80716`, tree `6bfec44a7333053931414f65c7e8b2a80ba1e040`. Its [source qualification](source-qualification.json) records **148 passing frontend tests across seven files**, including five new cases for 503, 409, network failure, authentication expiry and an outstanding receipt. The published [JUnit](frontend-junit.xml) removes hostname attributes only; its original and derivative hashes are recorded separately. This offline suite makes no provider calls or bank writes.
+
+The [preserved offline audit](offline-audit/evidence-index.json) retains the frozen `5c943f30` reproduction, both prospective test harnesses, the reviewed patch and a mocked server receipt probe. Captured text outputs are UTF-8 transcriptions of earlier tool responses, not original terminal byte streams or new executions. The frozen reproduction selected one bug test and skipped six existing cases; the prospective eleven-case run skipped its original bug assertion. These runs are separate from the committed 148-test suite and are not added to its count.
+
+The source fix changes the two frontend voice files and a technical README line clarifying the dated 39-file core receipt. Banking ownership, consent, current-turn admission, sample bounds and the audio-device clock gate retain their existing rules. A fresh compiled browser and any live playback observations require their own source and image pins; this source receipt does not claim deployment or new live acceptance. Frozen review reports and scores remain unchanged.

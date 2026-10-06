@@ -1,0 +1,85 @@
+{
+  "schema": "savia-ack-recovery-offline-audit/v1",
+  "frozen_source": "5c943f3060ba2784f8cd69458038ece2deb88a3d",
+  "reviewed_successor": "d44527764c8082dbb10a59e9382c78813fa80716",
+  "reviewed_successor_tree": "6bfec44a7333053931414f65c7e8b2a80ba1e040",
+  "approval": "approved; no material blocker",
+  "review_scope": "exact Git diff, existing captured offline hook and MockTransport outputs; no new provider, build or deployment",
+  "changed_paths_from_frozen": [
+    "README.md",
+    "frontend/src/avatar/native-voice.test.tsx",
+    "frontend/src/avatar/useSaviaVoice.ts"
+  ],
+  "direct_source_commit_changed_paths": [
+    "README.md",
+    "frontend/src/avatar/native-voice.test.tsx",
+    "frontend/src/avatar/useSaviaVoice.ts"
+  ],
+  "server_sources_unchanged": {
+    "frontend/server/conversation.py": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+    "frontend/server/app.py": "28f6a87ae01614b7b7f32c0b5f4f7d40744e1abe0b922233e40039db16828a7a",
+    "frontend/server/voice.py": "eb5c758ad232e43eed522f14b518e8eb9272d31cb92cb61b753e4dce55c75616"
+  },
+  "output_provenance": {
+    "kind": "UTF-8 transcription of existing tool response text, not preexisting terminal files",
+    "raw_terminal_byte_identity_claimed": false,
+    "fresh_executions_claimed": false,
+    "frozen_reproduction": "1 passed; 6 existing cases skipped; frozen hook bytes reconstructed from exact Git blob",
+    "prospective_10": "6 original native tests plus 4 new error/authentication cases; pending-receipt test had not yet been added",
+    "prospective_11": "6 original native tests plus 5 new recovery/authentication/serialization cases; original bug assertion skipped",
+    "server_probe": "executed as an inline PowerShell here-string; preserved harness reconstructs that exact Python source",
+    "prospective_10_harness": "prospective-6-original-4-new; exact case set present for the 10-test captured run"
+  },
+  "commands": {
+    "frozen_reproduction": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs -t 'triage:'",
+    "prospective_10_and_11": "node node_modules/vitest/vitest.mjs run --config vitest.config.mjs -t '^(?!triage:)'",
+    "server_probe": "run server-receipt-probe.py with repository imports available and existing Python 3.13 dependencies"
+  },
+  "runtime_note": "node_modules junction is intentionally excluded; hooks use existing local dependencies; all fetch/model responses are mocked",
+  "files": {
+    "frozen-reproduction/audio.ts": "819aba8280bfef42d370da35927893d02990fc740565d631723a290711e40ef5",
+    "frozen-reproduction/native-voice.test.tsx": "398a816c417194e9c68b6871dc477156aa7cc1bf7578992eceb67088ee06fd72",
+    "frozen-reproduction/package.json": "ccdf8de44295f59be00f6b8cf1359959938a16a4ccf8c55940d8af1894748c5f",
+    "frozen-reproduction/useSaviaVoice.ts": "51f163cc42e4e10b8f1053e36dad12195a42ce0a362e1268f4a275083120ac39",
+    "frozen-reproduction/utteranceObserver.ts": "9b1ba6469308d048a9e32c35c4d059216f49300f54fe78dca311fd5b51d9fc65",
+    "frozen-reproduction/vitest.config.mjs": "d7bcfb59403caca8848ac34c99f6df132e49de95abf63606542e34f47c42c401",
+    "frozen-reproduction-tool-output.txt": "789619c886813aab71bb026b5cbd91d10ddd2832ea4b73f1e0ae1e0f916e3b51",
+    "prospective-10-tests-tool-output.txt": "cc5eec4f8459ec91b6d9231dedbc2f3e75aa862dbe0c6d5922cfca7489be6b08",
+    "prospective-11-tests-tool-output.txt": "6bc16a17e3f0d51f1aab8588e29c14c34db72c5e3bf88d784d9ced060b3135c8",
+    "prospective-6-original-4-new/audio.ts": "819aba8280bfef42d370da35927893d02990fc740565d631723a290711e40ef5",
+    "prospective-6-original-4-new/native-voice.test.tsx": "e57514a788123c2b1cf088fd5d89f1099959eb93ddc38f86dccc2b26f64df59d",
+    "prospective-6-original-4-new/package.json": "ccdf8de44295f59be00f6b8cf1359959938a16a4ccf8c55940d8af1894748c5f",
+    "prospective-6-original-4-new/useSaviaVoice.ts": "413accd1f4a05ffd372667dfaf1f34ef45813ce769005a1b7f4e581395cf8f17",
+    "prospective-6-original-4-new/utteranceObserver.ts": "9b1ba6469308d048a9e32c35c4d059216f49300f54fe78dca311fd5b51d9fc65",
+    "prospective-6-original-4-new/vitest.config.mjs": "d7bcfb59403caca8848ac34c99f6df132e49de95abf63606542e34f47c42c401",
+    "prospective-6-original-5-new/audio.ts": "819aba8280bfef42d370da35927893d02990fc740565d631723a290711e40ef5",
+    "prospective-6-original-5-new/native-voice.test.tsx": "f8172e89d84aea8af1e911fc1cf56faf4b656fae8fbefb4180fad10262e53534",
+    "prospective-6-original-5-new/package.json": "ccdf8de44295f59be00f6b8cf1359959938a16a4ccf8c55940d8af1894748c5f",
+    "prospective-6-original-5-new/useSaviaVoice.ts": "413accd1f4a05ffd372667dfaf1f34ef45813ce769005a1b7f4e581395cf8f17",
+    "prospective-6-original-5-new/utteranceObserver.ts": "9b1ba6469308d048a9e32c35c4d059216f49300f54fe78dca311fd5b51d9fc65",
+    "prospective-6-original-5-new/vitest.config.mjs": "d7bcfb59403caca8848ac34c99f6df132e49de95abf63606542e34f47c42c401",
+    "reviewed-d445-vs-frozen-5c.patch": "03221cc48b163ace029d33ce02b73e2ce35d5cb6e8e4fb7de53341a9fdb1e37c",
+    "server-receipt-probe-tool-output.txt": "fe5eea4f53ebc3d5f329a842395f6b41d82a8219bad78f570c85b0682b2bb3d6",
+    "server-receipt-probe.py": "dd55b1b912356d79439e8f6226983e8fd973c012c087386a2726d335a0abcf91"
+  },
+  "coordinator_full_frontend_junit": {
+    "path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-recovery-ui.xml",
+    "sha256": "b2de1c9afa5526bfb882cbd181021fd38c8f80c472005f673f1a325e780ec229",
+    "tests": "148",
+    "failures": "0",
+    "errors": "0",
+    "native_suite": [
+      {
+        "name": "src/avatar/native-voice.test.tsx",
+        "timestamp": "2026-10-06T01:20:20.254Z",
+        "hostname": "M",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.5444343"
+      }
+    ],
+    "scope": "existing coordinator-run raw JUnit; not independently re-executed in this review"
+  }
+}
