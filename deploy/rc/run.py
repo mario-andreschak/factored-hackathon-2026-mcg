@@ -47,7 +47,7 @@ def native_voice_config():
         "tts_model": "openai/gpt-4o-mini-tts-2025-12-15", "sample_rate": 24000,
         "voices": {"es": "coral", "pt": "coral"}}],
         "conversation": {"api_key_env": "OPENROUTER_API_KEY", "model": "openai/gpt-audio",
-                         "persona": "moss", "voice": "coral"}}
+                         "persona": "moss", "voice": "coral", "result_transport": "native_exact"}}
 
 
 def prepare(root: Path) -> None:
