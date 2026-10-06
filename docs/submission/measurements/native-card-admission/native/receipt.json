@@ -1,0 +1,194 @@
+{
+  "schema": "savia-card-admission-native-message-live/v1",
+  "preparedOnly": false,
+  "maximumDurationMs": 120000,
+  "maximumProviderEligibleRequests": 2,
+  "cases": [
+    {
+      "language": "es",
+      "fictionalProfile": "mexico",
+      "inputMessage": "bloquea mi tarjeta",
+      "servedAssets": [
+        {
+          "path": "assets/index-CuDtvZeC.css",
+          "status": 200,
+          "sha256": "0b66d29c208e0cae9005e82dfb0835b904307d7d2fefb0a750af632d664e3898"
+        },
+        {
+          "path": "assets/index-Css6KlOl.js",
+          "status": 200,
+          "sha256": "92efe3fcb1b2f6a217225b0bfcc982956edddf8f5c2d28d63904b9edd96a0116"
+        },
+        {
+          "path": "assets/manrope-latin-800-normal-BfWYOv1c.woff2",
+          "status": 200,
+          "sha256": "74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49"
+        },
+        {
+          "path": "assets/dm-sans-latin-400-normal-CW0RaeGs.woff2",
+          "status": 200,
+          "sha256": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006"
+        },
+        {
+          "path": "assets/manrope-latin-600-normal-4f0koTD-.woff2",
+          "status": 200,
+          "sha256": "f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593"
+        },
+        {
+          "path": "assets/dm-sans-latin-600-normal-Aqo67rzb.woff2",
+          "status": 200,
+          "sha256": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120"
+        },
+        {
+          "path": "assets/manrope-latin-500-normal-BYYD-dBL.woff2",
+          "status": 200,
+          "sha256": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc"
+        },
+        {
+          "path": "assets/dm-sans-latin-500-normal-B9HHJjqV.woff2",
+          "status": 200,
+          "sha256": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d"
+        },
+        {
+          "path": "assets/manrope-latin-700-normal-BZp_XxE4.woff2",
+          "status": 200,
+          "sha256": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71"
+        }
+      ],
+      "passed": true,
+      "ndjsonSha256": "64de9404edf660535da9d0842f004a1175f3b5a4976b1471ecfe236ee914f0c9",
+      "nativeAdmission": {
+        "passed": true,
+        "exactDelegate": true,
+        "delegateRequest": "bloquea mi tarjeta",
+        "terminalComplete": true,
+        "sampleRate": 24000,
+        "samples": 151200,
+        "audioChunks": 26,
+        "providerToolChoiceObservedThroughSourceBoundDelegate": true,
+        "caption": "Entiendo, vamos a ver esto ya.",
+        "unsupportedActionClaimsManualReviewRequired": true,
+        "audioPlayed": false,
+        "actualUIPlayedAck": false,
+        "asrQualified": false,
+        "microphoneQualified": false
+      },
+      "existingCardProtection": {
+        "beforeVerified": true,
+        "afterVerified": true,
+        "savedReceiptSha256": "bae20836b3eebd746367d514d88d1723de10656c9518f3b8cb60de3cacaf0924",
+        "savedReceiptUnchanged": true,
+        "statusReads": 2,
+        "newCardWrites": 0
+      }
+    },
+    {
+      "language": "pt",
+      "fictionalProfile": "colombia",
+      "inputMessage": "bloqueie meu cartão",
+      "servedAssets": [
+        {
+          "path": "assets/index-CuDtvZeC.css",
+          "status": 200,
+          "sha256": "0b66d29c208e0cae9005e82dfb0835b904307d7d2fefb0a750af632d664e3898"
+        },
+        {
+          "path": "assets/index-Css6KlOl.js",
+          "status": 200,
+          "sha256": "92efe3fcb1b2f6a217225b0bfcc982956edddf8f5c2d28d63904b9edd96a0116"
+        },
+        {
+          "path": "assets/manrope-latin-800-normal-BfWYOv1c.woff2",
+          "status": 200,
+          "sha256": "74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49"
+        },
+        {
+          "path": "assets/dm-sans-latin-400-normal-CW0RaeGs.woff2",
+          "status": 200,
+          "sha256": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006"
+        },
+        {
+          "path": "assets/dm-sans-latin-600-normal-Aqo67rzb.woff2",
+          "status": 200,
+          "sha256": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120"
+        },
+        {
+          "path": "assets/manrope-latin-600-normal-4f0koTD-.woff2",
+          "status": 200,
+          "sha256": "f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593"
+        },
+        {
+          "path": "assets/dm-sans-latin-500-normal-B9HHJjqV.woff2",
+          "status": 200,
+          "sha256": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d"
+        },
+        {
+          "path": "assets/manrope-latin-500-normal-BYYD-dBL.woff2",
+          "status": 200,
+          "sha256": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc"
+        },
+        {
+          "path": "assets/manrope-latin-700-normal-BZp_XxE4.woff2",
+          "status": 200,
+          "sha256": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71"
+        }
+      ],
+      "passed": true,
+      "ndjsonSha256": "08bfe9a35b153142c0ac05dc3071ce51e3abb3041389f39452f55ee17509dbea",
+      "nativeAdmission": {
+        "passed": true,
+        "exactDelegate": true,
+        "delegateRequest": "bloqueie meu cartão",
+        "terminalComplete": true,
+        "sampleRate": 24000,
+        "samples": 57600,
+        "audioChunks": 10,
+        "providerToolChoiceObservedThroughSourceBoundDelegate": true,
+        "caption": "Entendo... já vamos ver isso.",
+        "unsupportedActionClaimsManualReviewRequired": true,
+        "audioPlayed": false,
+        "actualUIPlayedAck": false,
+        "asrQualified": false,
+        "microphoneQualified": false
+      },
+      "existingCardProtection": {
+        "beforeVerified": true,
+        "afterVerified": true,
+        "savedReceiptSha256": "da586e06ac22111c448df1243fb134079d14260c01bd7171067827f0adfbd564",
+        "savedReceiptUnchanged": true,
+        "statusReads": 2,
+        "newCardWrites": 0
+      }
+    }
+  ],
+  "phrases": {
+    "es": "bloquea mi tarjeta",
+    "pt": "bloqueie meu cartão"
+  },
+  "endpoint": "/api/voice/turn",
+  "inputKind": "message",
+  "voiceUIOff": true,
+  "asrQualified": false,
+  "microphoneQualified": false,
+  "freshUIPlaybackQualified": false,
+  "playedACKRequests": 0,
+  "resultSpeechRequests": 0,
+  "chatDispatchRequests": 0,
+  "cardWrites": 0,
+  "authentication": "Normal browser gateway/profile/code forms; unrecorded, storage in memory",
+  "output": "Private NDJSON and mechanical receipt. No publication; no credential/config/storage output.",
+  "observedDelegateMeaning": "Source-bound evidence of admitted tool availability and real provider consultar_savia choice; exact input preserved",
+  "retainedEvidence": "Dated c44 native_exact host-result speech and real UI /played ACK proof; no new positive UI claim",
+  "startedAt": "2026-10-06T03:02:14.384Z",
+  "source": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+  "imageDigest": "sha256:11854442ddd395614d8d9c7cd030d3256365941613a730657c6740406709827c",
+  "browserSource": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "descriptorSha256": "c086702b39c483f92958f0b78e63cdab0146e40ab538c413ea44ad004301cd8c",
+  "helperSha256": "ac65086cba480cb93b5b6decea71039791e3336ff9b4598d2198c9cc996ece79",
+  "observedProviderEligibleRequests": 2,
+  "observedCardStatusRequests": 4,
+  "passed": true,
+  "failure": null,
+  "finishedAt": "2026-10-06T03:02:32.926Z",
+  "durationMs": 18542
+}

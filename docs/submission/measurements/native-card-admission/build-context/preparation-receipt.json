@@ -1,0 +1,31 @@
+{
+  "schema": "savia-card-admission-preparation/v1",
+  "application_source": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+  "git_tree": "1638e0be90b1046bbada1972b6ace1ee62a8e4fa",
+  "base_image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "browser_source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "portal_source": "634aa5244374b3e105ef7864fa100530bab45ec2",
+  "changed_exported_sources": [
+    "frontend/server/conversation.py",
+    "resources/dispute_workflow.flow.json"
+  ],
+  "source_files": 183,
+  "initial_browser_files": 21,
+  "successor_browser_files": 21,
+  "native_files": 4,
+  "portal_files": 28,
+  "public_portal_files": 27,
+  "pitch_delivery_files": 12,
+  "pitch_and_media_files": 16,
+  "source_manifest_sha256": "0f287b3149044eabec595be6e31e678dce8ff647c5650176bfada102b170587a",
+  "descriptor_sha256": "c086702b39c483f92958f0b78e63cdab0146e40ab538c413ea44ad004301cd8c",
+  "verifier_sha256": "2f5f4719d0d8d777a879054b3ef62075cc83132b17cf7cf0d4aba79003ad0a94",
+  "prepare_helper_sha256": "ec26003b73bf449d6a5e44abe8c111686b38d5d1be2deb90951e2de0ee7591b9",
+  "dockerfile_sha256": "92aefaca8dbcebbb7cdb872246f76c24d2342f208dc8dedffe664379ce44e6a8",
+  "frontend_compilations": 0,
+  "docker_builds": 0,
+  "provider_calls": 0,
+  "machine_writes": 0,
+  "build_context": "[private-local-path]",
+  "scope": "One runtime source + exact required generated graph hash refresh + source metadata overlay. Base UI/native/pitch/media bytes retained."
+}

@@ -1,0 +1,271 @@
+........................................................FFFFFFF......... [ 87%]
+.FFFFFFF..                                                               [100%]
+================================== FAILURES ===================================
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-bloquea mi tarjeta] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Bloquee mi tarjeta.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-bloqueie meu cart\xe3o] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Quiero bloquear mi tarjeta.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Quero bloquear meu cart\xe3o.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Por favor, bloquea mi tarjeta.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Por favor, bloqueie meu cart\xe3o.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-bloquea mi tarjeta] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Bloquee mi tarjeta.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-bloqueie meu cart\xe3o] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Quiero bloquear mi tarjeta.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Quero bloquear meu cart\xe3o.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Por favor, bloquea mi tarjeta.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+_ test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Por favor, bloqueie meu cart\xe3o.] _
+frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)
+=========================== short test summary info ===========================
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-bloquea mi tarjeta]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Bloquee mi tarjeta.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-bloqueie meu cart\xe3o]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Quiero bloquear mi tarjeta.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Quero bloquear meu cart\xe3o.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Por favor, bloquea mi tarjeta.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Por favor, bloqueie meu cart\xe3o.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-bloquea mi tarjeta]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Bloquee mi tarjeta.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-bloqueie meu cart\xe3o]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Quiero bloquear mi tarjeta.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Quero bloquear meu cart\xe3o.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Por favor, bloquea mi tarjeta.]
+FAILED frontend/tests/test_voice.py::test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Por favor, bloqueie meu cart\xe3o.]
+14 failed, 68 passed, 81 deselected in 2.06s

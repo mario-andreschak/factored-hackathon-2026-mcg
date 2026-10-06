@@ -1,0 +1,100 @@
+{
+  "schema": "savia-native-card-admission-public-qualification/v1",
+  "qualification_source": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+  "qualification_tree": "1638e0be90b1046bbada1972b6ace1ee62a8e4fa",
+  "merge_commit": "164a596fbab17bbb5bfb963d3b8bd2ae78f16a0a",
+  "immutable_image": "registry.fly.io/savia-rc-2026@sha256:11854442ddd395614d8d9c7cd030d3256365941613a730657c6740406709827c",
+  "actual_ci": {
+    "receipt": "ci/f2fa-pr90-ci.json",
+    "successful_checks": 22,
+    "raw_json_unchanged": true
+  },
+  "build": {
+    "receipt": "build/f2fa-build-observed.json",
+    "evidence_kind": "Structured transcription of observed tool output, not an original raw build log",
+    "exit_code": 0
+  },
+  "promotion": {
+    "receipt": "runtime/promotion-verification.json",
+    "complete_configuration_preserved": true,
+    "full_private_config_published": false
+  },
+  "runtime": {
+    "receipt": "runtime/runtime-verification.json",
+    "source_files": 183,
+    "application_files": 149,
+    "analytics_files": 6,
+    "portal_source_files": 28,
+    "retained_browser_files": 21,
+    "retained_native_files": 4,
+    "retained_pitch_media_files": 16
+  },
+  "component_provenance": {
+    "application_source": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+    "browser_source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+    "portal_source": "634aa5244374b3e105ef7864fa100530bab45ec2",
+    "browser_build_provenance_sha256": "666544efb1bf6afa6a4b0f053982fc70be2c776c1123fe237a17c2703bfd061e",
+    "dates": "Captured receipt timestamps retained per component; browser compilation and historical UI playback proof are not relabeled as fresh."
+  },
+  "public_http": {
+    "receipt": "runtime/public-assets-verification.json",
+    "public_payloads": 27,
+    "health": 200,
+    "gateway": 200,
+    "anonymous_api": 401,
+    "internal_manifest": 404
+  },
+  "independent_public_audit": {
+    "receipt": "public/portal-successor-f2fa597a-verification.json",
+    "public_payloads": 27,
+    "markdown_links": 251,
+    "boundaries": 5,
+    "runtime_tuple": "Supplied from root SSH proof; not independently inspected by this HTTP harness"
+  },
+  "native": {
+    "receipt": "native/receipt.json",
+    "input_kind": "message",
+    "actual_cases": 2,
+    "provider_eligible_requests": 2,
+    "status_reads": 4,
+    "duration_ms": 18542,
+    "voice_ui_off": true,
+    "exact_delegates": true,
+    "terminal_complete_audio": true,
+    "card_writes": 0,
+    "played_ack_requests": 0,
+    "host_chat_dispatches": 0,
+    "result_speech_calls": 0,
+    "asr_qualified": false,
+    "microphone_qualified": false,
+    "fresh_ui_playback_qualified": false,
+    "caption_review": "native/caption-review.json",
+    "caption_review_kind": "Root AI text-only review; no human or waveform-listening claim",
+    "case_streams": [
+      "native/es.ndjson",
+      "native/pt.ndjson"
+    ],
+    "derived_wavs": [
+      "native/es.wav",
+      "native/pt.wav"
+    ]
+  },
+  "historical_ui_proof": {
+    "readme": "../voice-ack-live/README.md",
+    "receipt": "../voice-ack-live/receipt.json",
+    "native_receipt": "../voice-ack-live/native-receipt.json",
+    "scope": "Dated c44 retained UI/result-playback ACK proof, link only; unchanged"
+  },
+  "derivations": "artifacts.json",
+  "public_hashes": "SHA256SUMS.txt",
+  "publication_scope": "Technical appendix only. Historical cohorts unchanged. New source qualification uses final f2fa Git bytes; any later documentation-only freeze is a separate Git stage.",
+  "excluded_private_material": [
+    "Full machine config",
+    "Binding/configuration values",
+    "Cookies/auth/provider keys",
+    "Storage state",
+    "Opaque capabilities/turn identifiers",
+    "Signed URLs",
+    "Screenshots"
+  ]
+}

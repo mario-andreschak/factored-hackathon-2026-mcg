@@ -1,0 +1,21 @@
+{
+  "schema": "savia-card-admission-observed-build/v1",
+  "evidence_kind": "Structured transcription of observed exec tool output, not original terminal bytes or a new execution",
+  "source": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+  "source_tree": "1638e0be90b1046bbada1972b6ace1ee62a8e4fa",
+  "readiness_sha256": "8c5b295c48dca6b25cc5e01d6ae24ea2a806dead4e5f2291ed51f6de6cb9006c",
+  "descriptor_sha256": "c086702b39c483f92958f0b78e63cdab0146e40ab538c413ea44ad004301cd8c",
+  "exec_session": 91335,
+  "exec_exit_code": 0,
+  "base_image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "built_image": "registry.fly.io/savia-rc-2026@sha256:11854442ddd395614d8d9c7cd030d3256365941613a730657c6740406709827c",
+  "tag": "registry.fly.io/savia-rc-2026:native-card-f2fa597a481a",
+  "build_only": true,
+  "observed_before": {"source_files": 183, "retained_browser_files": 21, "retained_native_files": 4, "retained_portal_files": 28, "source_integrity": true},
+  "observed_after": {"source_files": 183, "retained_browser_files": 21, "retained_native_files": 4, "retained_portal_files": 28, "source_integrity": true},
+  "changed_runtime_files": ["frontend/server/conversation.py", "resources/dispute_workflow.flow.json"],
+  "browser_recompiled": false,
+  "provider_calls": 0,
+  "machine_updates": 0,
+  "scope": "Completed build and registry push; deployment and native acceptance are separate receipts."
+}

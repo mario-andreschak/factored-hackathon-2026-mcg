@@ -1,0 +1,378 @@
+{
+  "qualification": "offline scripted-provider source-qualified regression evidence",
+  "baseline_commit": "582a4bf2ac332ad09039945400bbd7d20b05a170",
+  "baseline_tree": "9c3e22cfc624aa6173123f36a69af312a97a9d7c",
+  "code_commit": "67bdb975be17bb41437a073c6ace65bc6c398035",
+  "code_tree": "9fe52ca024fd42da834d0ded441ff6e1948be24c",
+  "frozen_head": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+  "frozen_tree": "1638e0be90b1046bbada1972b6ace1ee62a8e4fa",
+  "execution_status": "Captured from the pre-commit working tree on the baseline commit; exact source/test byte identity subsequently verified against the code commit, historical frozen HEAD and final frozen HEAD. No test rerun represented.",
+  "source_qualification": {
+    "baseline/conversation.py": {
+      "repository_path": "frontend/server/conversation.py",
+      "saved_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+      "committed_matches": {
+        "582a4bf2ac332ad09039945400bbd7d20b05a170": {
+          "git_blob": "ccc4f6975d81df8d04b5b86c5303f4b90fdafc1f",
+          "git_blob_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+          "saved_bytes_match_git_blob_exactly": true
+        }
+      },
+      "saved_crlf_count": 0
+    },
+    "fixed/conversation.py": {
+      "repository_path": "frontend/server/conversation.py",
+      "saved_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+      "committed_matches": {
+        "67bdb975be17bb41437a073c6ace65bc6c398035": {
+          "git_blob": "74dad03bdc48046aaea9c2626f6c30fa9d8c8eae",
+          "git_blob_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+          "saved_bytes_match_git_blob_exactly": true
+        },
+        "b13cd3f24f624969484b28f1acceca085cf858eb": {
+          "git_blob": "74dad03bdc48046aaea9c2626f6c30fa9d8c8eae",
+          "git_blob_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+          "saved_bytes_match_git_blob_exactly": true
+        },
+        "f2fa597a481a87b5301531cf180f8f61d1f3ba70": {
+          "git_blob": "74dad03bdc48046aaea9c2626f6c30fa9d8c8eae",
+          "git_blob_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+          "saved_bytes_match_git_blob_exactly": true
+        }
+      },
+      "saved_crlf_count": 0
+    },
+    "baseline/test_voice.py": {
+      "repository_path": "frontend/tests/test_voice.py",
+      "saved_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+      "committed_matches": {
+        "67bdb975be17bb41437a073c6ace65bc6c398035": {
+          "git_blob": "0330de1b86f02e1c040bf94a230877723a17eea4",
+          "git_blob_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+          "saved_bytes_match_git_blob_exactly": true
+        },
+        "b13cd3f24f624969484b28f1acceca085cf858eb": {
+          "git_blob": "0330de1b86f02e1c040bf94a230877723a17eea4",
+          "git_blob_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+          "saved_bytes_match_git_blob_exactly": true
+        },
+        "f2fa597a481a87b5301531cf180f8f61d1f3ba70": {
+          "git_blob": "0330de1b86f02e1c040bf94a230877723a17eea4",
+          "git_blob_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+          "saved_bytes_match_git_blob_exactly": true
+        }
+      },
+      "saved_crlf_count": 0
+    },
+    "fixed/test_voice.py": {
+      "repository_path": "frontend/tests/test_voice.py",
+      "saved_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+      "committed_matches": {
+        "67bdb975be17bb41437a073c6ace65bc6c398035": {
+          "git_blob": "0330de1b86f02e1c040bf94a230877723a17eea4",
+          "git_blob_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+          "saved_bytes_match_git_blob_exactly": true
+        },
+        "b13cd3f24f624969484b28f1acceca085cf858eb": {
+          "git_blob": "0330de1b86f02e1c040bf94a230877723a17eea4",
+          "git_blob_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+          "saved_bytes_match_git_blob_exactly": true
+        },
+        "f2fa597a481a87b5301531cf180f8f61d1f3ba70": {
+          "git_blob": "0330de1b86f02e1c040bf94a230877723a17eea4",
+          "git_blob_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+          "saved_bytes_match_git_blob_exactly": true
+        }
+      },
+      "saved_crlf_count": 0
+    }
+  },
+  "frozen_file_sha256": {
+    "frontend/server/conversation.py": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+    "frontend/tests/test_action_evidence.py": "be1893075096b3b6b2ee50642810c48ddda749ad5f13926aeabd7765cd6836f8",
+    "frontend/tests/test_api.py": "8fd58b458c5024ac10619a76b86487645dd3c7f59528b5a8dcc1ac64063cb255",
+    "frontend/tests/test_bank_controller.py": "f6eea446f539de5a1084d4c40def2e6915bf79244d500fc382f403349536cc54",
+    "frontend/tests/test_chat.py": "dee70cfaff5c9b88aa9502199ac95401122e3b4c320679fadb2472c02c1befd3",
+    "frontend/tests/test_voice.py": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+    "tests/test_card_block.py": "2b14913036cd0315cc4e4156ed30e8be4ad8b42bb81ad07e3d37505ec473ceb2",
+    "tests/test_card_block_api.py": "48b563ac608452f382b94e37d7e70a105fdf04b2d1ac3ea40492b08f8abeb34f"
+  },
+  "runs": [
+    {
+      "name": "baseline regression fixture",
+      "junit": "baseline.xml",
+      "stdout": "baseline-stdout.txt",
+      "command": "python -m pytest -q frontend/tests/test_voice.py -k \"explicit_current_bank_request or current_smalltalk\" --tb=short --junitxml=<private-baseline-output>",
+      "pytest": {
+        "failed": 14,
+        "passed": 68,
+        "deselected": 81
+      },
+      "junit_testcases": 82,
+      "source": "Committed baseline production source plus augmented, then-uncommitted regression test fixture; baseline test fixture equals final test file.",
+      "original_junit_summary": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "14",
+        "skipped": "0",
+        "tests": "82",
+        "time": "2.019",
+        "timestamp": "2026-10-05T21:33:59.447068-05:00"
+      },
+      "junit_suite_count": 82
+    },
+    {
+      "name": "fixed voice",
+      "junit": "voice.xml",
+      "stdout": "voice-stdout.txt",
+      "command": "python -m pytest -q frontend/tests/test_voice.py --tb=short --junitxml=<private-voice-output>",
+      "pytest": {
+        "passed": 163
+      },
+      "junit_testcases": 163,
+      "original_junit_summary": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "163",
+        "time": "2.441",
+        "timestamp": "2026-10-05T21:34:59.211689-05:00"
+      },
+      "junit_suite_count": 163
+    },
+    {
+      "name": "fixed card and card API",
+      "junit": "card.xml",
+      "stdout": "card-stdout.txt",
+      "command": "python -m pytest -q tests/test_card_block.py tests/test_card_block_api.py --tb=short --junitxml=<private-card-output>",
+      "pytest": {
+        "passed": 20
+      },
+      "junit_testcases": 20,
+      "original_junit_summary": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "20",
+        "time": "11.913",
+        "timestamp": "2026-10-05T21:34:59.215506-05:00"
+      },
+      "junit_suite_count": 20
+    },
+    {
+      "name": "fixed controller, action, chat and API",
+      "junit": "actions.xml",
+      "stdout": "actions-stdout.txt",
+      "command": "python -m pytest -q frontend/tests/test_bank_controller.py frontend/tests/test_action_evidence.py frontend/tests/test_chat.py frontend/tests/test_api.py --tb=short --junitxml=<private-actions-output>",
+      "pytest": {
+        "passed": 136,
+        "subtests_passed": 112
+      },
+      "junit_testcases": 136,
+      "original_junit_summary": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "248",
+        "time": "23.294",
+        "timestamp": "2026-10-05T21:34:59.225977-05:00"
+      },
+      "junit_suite_count": 248,
+      "count_explanation": "136 actual testcase elements; suite tests attribute is 248 including the 112 passing subtests reported in original stdout. The XML has no subtest elements."
+    }
+  ],
+  "artifact_derivations": [
+    {
+      "original": "baseline/conversation.py",
+      "public": "baseline-conversation.py",
+      "original_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+      "public_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+      "original_bytes": 34300,
+      "public_bytes": 34300,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "fixed/conversation.py",
+      "public": "conversation.py",
+      "original_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+      "public_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+      "original_bytes": 34334,
+      "public_bytes": 34334,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "baseline/test_voice.py",
+      "public": "test_voice.py",
+      "original_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+      "public_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+      "original_bytes": 51092,
+      "public_bytes": 51092,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "fixed/test_voice.py",
+      "public": "test_voice.py",
+      "original_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+      "public_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+      "original_bytes": 51092,
+      "public_bytes": 51092,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "fixed/patch.diff",
+      "public": "patch.diff",
+      "original_sha256": "6a08a8e133fb0c2a765c52c5a39abe2e64ca89aeb55ccd064660e6288a334cda",
+      "public_sha256": "6a08a8e133fb0c2a765c52c5a39abe2e64ca89aeb55ccd064660e6288a334cda",
+      "original_bytes": 5232,
+      "public_bytes": 5232,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "fixed/runtime.json",
+      "public": "environment.json",
+      "original_sha256": "7c44f5e20f2820adbe4d5141878d6749d1c5620024337508a61d808d9c5b571f",
+      "public_sha256": "7c44f5e20f2820adbe4d5141878d6749d1c5620024337508a61d808d9c5b571f",
+      "original_bytes": 258,
+      "public_bytes": 258,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "baseline/stdout.txt",
+      "public": "baseline-stdout.txt",
+      "original_sha256": "6c91b235bb6edf46e1fd87912ccccfed4b2e27fb08509a117cea81a62ccd27fa",
+      "public_sha256": "6c91b235bb6edf46e1fd87912ccccfed4b2e27fb08509a117cea81a62ccd27fa",
+      "original_bytes": 16220,
+      "public_bytes": 16220,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "baseline/evidence.xml",
+      "public": "baseline.xml",
+      "original_sha256": "b3b43d3201a699442a76ebe8678b9d262302788060385f1c23f44060b48f19e3",
+      "public_sha256": "a520cd440e6f3160d7f79c00d5b414cbff6fc0ec50537c66676b7e8ccce820be",
+      "original_bytes": 30158,
+      "public_bytes": 30145,
+      "transformation": "Delete exactly one hostname attribute including its preceding whitespace; byte regex \\shostname=\"[^\"]*\". No XML reserialization.",
+      "hostname_attributes_removed": 1
+    },
+    {
+      "original": "fixed/voice-stdout.txt",
+      "public": "voice-stdout.txt",
+      "original_sha256": "18ede951970d18f20df2a2edfd828874103377802234a2f43404f69baddad1f3",
+      "public_sha256": "18ede951970d18f20df2a2edfd828874103377802234a2f43404f69baddad1f3",
+      "original_bytes": 264,
+      "public_bytes": 264,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "fixed/voice.xml",
+      "public": "voice.xml",
+      "original_sha256": "0d3a4b14e6b940590f624ee45d9493b1b5d0baead1875eedfac08f276b528e9b",
+      "public_sha256": "5ea225e0d0f46b10fe3c9328fe277c0b89099dfb497f5a975eb27325d286c794",
+      "original_bytes": 44846,
+      "public_bytes": 44833,
+      "transformation": "Delete exactly one hostname attribute including its preceding whitespace; byte regex \\shostname=\"[^\"]*\". No XML reserialization.",
+      "hostname_attributes_removed": 1
+    },
+    {
+      "original": "fixed/card-stdout.txt",
+      "public": "card-stdout.txt",
+      "original_sha256": "d0317971617252c85e3367fac7734f1a97489348801eed0cbee085e12f77ebc8",
+      "public_sha256": "d0317971617252c85e3367fac7734f1a97489348801eed0cbee085e12f77ebc8",
+      "original_bytes": 102,
+      "public_bytes": 102,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "fixed/card.xml",
+      "public": "card.xml",
+      "original_sha256": "a183023d6d490e2fdf115ee4c281e50f50cc1e39751087325a79f255c550415d",
+      "public_sha256": "e7e87e774f23b1f49de90f69825854b899377c23ec0817682aac7617721738be",
+      "original_bytes": 2967,
+      "public_bytes": 2954,
+      "transformation": "Delete exactly one hostname attribute including its preceding whitespace; byte regex \\shostname=\"[^\"]*\". No XML reserialization.",
+      "hostname_attributes_removed": 1
+    },
+    {
+      "original": "fixed/actions-stdout.txt",
+      "public": "actions-stdout.txt",
+      "original_sha256": "2a9b7d14f1d1b493f4d3fd546dfc388cf7968efd512abc13b8ed1fc92024b8d3",
+      "public_sha256": "2a9b7d14f1d1b493f4d3fd546dfc388cf7968efd512abc13b8ed1fc92024b8d3",
+      "original_bytes": 228,
+      "public_bytes": 228,
+      "transformation": "Identity; exact original bytes.",
+      "hostname_attributes_removed": 0
+    },
+    {
+      "original": "fixed/actions.xml",
+      "public": "actions.xml",
+      "original_sha256": "af19ca0bd71c395a5337340cae1bc8033f39783361c2b066133f4c41c7b5a224",
+      "public_sha256": "9e92bead03b8d0ff09e70175b000cf81c49396a4f59532f3e9bef43905bc22ce",
+      "original_bytes": 21033,
+      "public_bytes": 21020,
+      "transformation": "Delete exactly one hostname attribute including its preceding whitespace; byte regex \\shostname=\"[^\"]*\". No XML reserialization.",
+      "hostname_attributes_removed": 1
+    }
+  ],
+  "limits": [
+    "Local offline tests with scripted transports and fictional card data.",
+    "No CI, provider, browser/UI, live-path, image, or deployment acceptance claim.",
+    "No production bank operation authorized by native delegation. Owned selection, explicit confirmation and independent receipt rules remain required."
+  ],
+  "redaction": "Only hostname attributes were removed from the four public XML derivatives. No identifying machine temp paths occurred in stdout/JUnit. All stdout, source/test copies, patch and environment bytes are unchanged. Original evidence remains private and unchanged.",
+  "historical_frozen_head": "b13cd3f24f624969484b28f1acceca085cf858eb",
+  "historical_frozen_tree": "c21fa444870dc059b9d8b0459f3610f27bbd5af8",
+  "qualification_phases": [
+    {
+      "phase": "pre-commit captured offline tests",
+      "source_base": "582a4bf2ac332ad09039945400bbd7d20b05a170",
+      "subsequent_code_commit": "67bdb975be17bb41437a073c6ace65bc6c398035",
+      "raw_evidence": "Captured original stdout/JUnit in this bundle; no new tests run during preparation."
+    },
+    {
+      "phase": "historical frozen source qualification",
+      "frozen_head": "b13cd3f24f624969484b28f1acceca085cf858eb",
+      "tree": "c21fa444870dc059b9d8b0459f3610f27bbd5af8",
+      "tests_rerun": false
+    },
+    {
+      "phase": "final regenerated-graph source qualification",
+      "frozen_head": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+      "tree": "1638e0be90b1046bbada1972b6ace1ee62a8e4fa",
+      "tests_rerun": false,
+      "source_test_identity": "Captured fixed conversation and voice test bytes remain exact Git blobs, unchanged from code commit and historical freeze.",
+      "graph": {
+        "repository_path": "resources/dispute_workflow.flow.json",
+        "sha256": "43fd857863961f4d87d62b85c9a25ae261b59aa2e74d14c8b3e7cf8406a41d03",
+        "change_from_historical_freeze": "Exactly one protected conversation.py source hash replaced; all other graph bytes are unchanged.",
+        "old_conversation_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+        "new_conversation_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+        "protected_hash_map_path": [
+          "disputeWorkflow",
+          "stageManifest",
+          "sourceHashes"
+        ],
+        "protected_hashes_verified": 89,
+        "compiler_nodes_stages": "Unchanged graph bytes outside that source-hash replacement.",
+        "root_reported_graph_validation": {
+          "passed": 11,
+          "subtests_passed": 89,
+          "evidence_kind": "Root tool-response observation, independently reviewed by root; no original stdout/JUnit available in this bundle and no fabricated log."
+        }
+      }
+    }
+  ],
+  "source_line_endings": "All saved source/test copies contain zero CRLF sequences and match the indicated Git blob bytes exactly. No normalization was necessary or performed on evidence."
+}
