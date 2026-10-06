@@ -1,0 +1,53 @@
+{
+  "schema": "savia-final-product-artifacts/v1",
+  "files": {
+    "card-continuity-harness.mjs": {
+      "sha256": "ff88cbf03f3fe0e3ca71dc78b77fe754d0a356df8385c7823bcbc6f3b178987a",
+      "bytes": 3989
+    },
+    "card-status-continuity.json": {
+      "sha256": "123830af3eb17b9445ee93d9f3305bb42952a212fcf8b6d515d5f605bc226d26",
+      "bytes": 1161
+    },
+    "merged-source-gates.xml": {
+      "sha256": "4a10c0dfb0c4459dac15fbd087b4bf947f20ec9c88838d8e73201428033b22b4",
+      "bytes": 4842
+    },
+    "public-assets-harness.py": {
+      "sha256": "998a60ad43bbbe6a627563078ea3e1f99ca56fd9b0ee67b225ec8ec4af4e2fb4",
+      "bytes": 2732
+    },
+    "public-assets-verification.json": {
+      "sha256": "b311b4b5d7c6c4b0a3ac8b3966b757038e5af0066329aa32b2c56a031039efc1",
+      "bytes": 9452
+    },
+    "README.md": {
+      "sha256": "f8659fb9a5de923ca21ff5ccf0c24a15a05c967536e7c4559c5bfbde125eab95",
+      "bytes": 3212
+    },
+    "release-layer-verifier.py": {
+      "sha256": "8b1804eaf812cc7146b1bebd8ce7ec9b9a9bf512d99952dc15a404be36bf2567",
+      "bytes": 2813
+    },
+    "release-layer.Dockerfile": {
+      "sha256": "3c0fcd0d7bd9434908c5bc97a1d1249b99265adea30460cd5e1588f7d1f4c0cd",
+      "bytes": 564
+    },
+    "retained-runtime.json": {
+      "sha256": "25b0147d438efaf0bf3abf5e796f63059feb0282d7e454de026895225b638e22",
+      "bytes": 25386
+    },
+    "runtime-harness.py": {
+      "sha256": "ba61ea66501befe652877061b5de271de5f6e9a9d244c763c7242d0be3a3efcc",
+      "bytes": 4100
+    },
+    "runtime-verification.json": {
+      "sha256": "b682f3cc3784e803a7f285a4fbed8ebcd9090ab9394fd2533595fea331bbbb27",
+      "bytes": 51342
+    },
+    "source-qualification.json": {
+      "sha256": "0db4d4ec4642393377de766d1fbbde5e9c3fd00611bab400818e6609c0e168c8",
+      "bytes": 11985
+    }
+  }
+}
