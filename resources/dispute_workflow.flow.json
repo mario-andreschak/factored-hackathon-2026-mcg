@@ -511,7 +511,7 @@
         "frontend/server/bank_rpc.py": "d67942b8349991c2ea718089830bdc3ab68973aebcc08f71d38ef04d3f58baba",
         "frontend/server/chat.py": "cd4352ad81fbd6b44b39f84185e83e174f8dd0fdca2db005bc31386a0318551e",
         "frontend/server/config.py": "efeb46d52d989384b0a7a936d29e966c5e9122804e9254e949119155948a78a3",
-        "frontend/server/conversation.py": "a6155bc4acc16fc326294d9f97f2adbdb85d465dec61e5beb578b566b98339bb",
+        "frontend/server/conversation.py": "3d7c10833fe73eb69f01ff9d2acb385c865529fc85e7f232f0e1333cec04e49c",
         "frontend/server/deployment_transition.py": "9b4f5963a6ee5eecbaf277c25fb43a90483c722e65e8fa342f4ae9bd54d02945",
         "frontend/server/dispute_chat.py": "a3bc4dd9a6743770755617970a8c377069bf920d16e1738bf51592bc501ef260",
         "frontend/server/followups.py": "318925b4d12e53fddfd7388c5ec3a2a1960be13e5760bd639b80fda391d9dc61",
