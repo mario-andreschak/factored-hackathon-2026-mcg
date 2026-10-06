@@ -1,0 +1,83 @@
+{
+  "schema": "savia-router-policy-audit-replay/v1",
+  "scope": "automated semantic policy-label agreement on eight fixed synthetic requests",
+  "dataset_sha256": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+  "dataset_rows": 120,
+  "packet_sha256": "cb7cd689f9ee2543f3c32eca33d9ea8a0efa772c28f20dc72164037a65551d62",
+  "seed": "savia-human-sample-v1-20261005",
+  "sample_selection_reproduced": true,
+  "audited_cases": 8,
+  "total_label_language_strata": 8,
+  "reviewer_agreement_count": 8,
+  "agreement_with_proposed_labels": {
+    "a": 8,
+    "b": 8
+  },
+  "cases": [
+    {
+      "id": "A",
+      "lang": "pt",
+      "proposed_label": "inquiry",
+      "audit_a": "inquiry",
+      "audit_b": "inquiry"
+    },
+    {
+      "id": "B",
+      "lang": "pt",
+      "proposed_label": "human",
+      "audit_a": "human",
+      "audit_b": "human"
+    },
+    {
+      "id": "C",
+      "lang": "pt",
+      "proposed_label": "dispute",
+      "audit_a": "dispute",
+      "audit_b": "dispute"
+    },
+    {
+      "id": "D",
+      "lang": "es",
+      "proposed_label": "human",
+      "audit_a": "human",
+      "audit_b": "human"
+    },
+    {
+      "id": "E",
+      "lang": "pt",
+      "proposed_label": "other",
+      "audit_a": "other",
+      "audit_b": "other"
+    },
+    {
+      "id": "F",
+      "lang": "es",
+      "proposed_label": "other",
+      "audit_a": "other",
+      "audit_b": "other"
+    },
+    {
+      "id": "G",
+      "lang": "es",
+      "proposed_label": "dispute",
+      "audit_a": "dispute",
+      "audit_b": "dispute"
+    },
+    {
+      "id": "H",
+      "lang": "es",
+      "proposed_label": "inquiry",
+      "audit_a": "inquiry",
+      "audit_b": "inquiry"
+    }
+  ],
+  "human_adjudication": false,
+  "classifier_predictions_or_training": false,
+  "new_holdout_accuracy_measurement": false,
+  "limits": [
+    "Both semantic audits are AI-generated; agreement is not independent human truth.",
+    "One case per original class/language stratum covers 8 of 120 synthetic requests.",
+    "The reproducibility script checks identity, sampling and agreement, not semantic correctness.",
+    "No inference about the remaining 112 labels, real customer quality or intent prevalence follows."
+  ]
+}

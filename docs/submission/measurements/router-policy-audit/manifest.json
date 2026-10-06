@@ -1,0 +1,55 @@
+{
+  "schema": "savia-router-policy-audit-manifest/v1",
+  "owner_direction_date": "2026-10-05",
+  "owner_direction_timezone": "America/Bogota",
+  "owner_direction": "Owner said they do not speak the sample languages and delegated the choice to the agents.",
+  "handover_choice": "Disclosed automated eight-case policy audit replaces the earlier human-only pre-submission plan for this bounded hackathon handover; no human label approval is asserted.",
+  "method": "Two fresh Codex agents with no inherited conversation context each received only the same fixed label-free packet and written protocol. Raw audit outputs were frozen before comparison with the original CSV labels.",
+  "reviewer_input_exclusions": [
+    "original CSV and proposed labels",
+    "training data",
+    "classifier predictions",
+    "the other audit",
+    "prior review reports",
+    "other chats and repositories",
+    "web sources"
+  ],
+  "independence_limit": "Task-material separation only; both semantic judgments are AI-generated and may share language-model biases.",
+  "selection": "Lowest SHA256 of UTF-8(seed + text) within each original proposed class/language stratum; selected cases sorted by the same hash, then assigned A through H.",
+  "selection_seed": "savia-human-sample-v1-20261005",
+  "dataset": {
+    "path": "ml/data/router_test.csv",
+    "sha256": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+    "bytes": 12986,
+    "rows": 120,
+    "authorship": "AI-authored proposed labels"
+  },
+  "frozen_inputs_sha256": {
+    "human-adjudication-sample.json": "cb7cd689f9ee2543f3c32eca33d9ea8a0efa772c28f20dc72164037a65551d62",
+    "policy-label-audit-a.json": "2a488bbc77a14e364a32e0809f720dfba53be7699dbfd30e90c764f05a13bd38",
+    "policy-label-audit-b.json": "579ec5d7fd191bca830ec2d725edcd66c79df3cdaa5c1f9815b49f65cb4737cc"
+  },
+  "frozen_inputs_bytes": {
+    "human-adjudication-sample.json": 1471,
+    "policy-label-audit-a.json": 4021,
+    "policy-label-audit-b.json": 3701
+  },
+  "reviewers": {
+    "a": {
+      "file": "policy-label-audit-a.json",
+      "class_field": "label"
+    },
+    "b": {
+      "file": "policy-label-audit-b.json",
+      "class_field": "class"
+    }
+  },
+  "reproduction_script": "scripts/audit_router_policy_sample.py",
+  "reproduction_script_sha256": "2fd584950af060a9c85c455537f8248fb323a3b68772e3a8532c659e3e497a66",
+  "reproduction_command": "python scripts/audit_router_policy_sample.py",
+  "human_adjudication": "pending; required for stronger human-validated or real-customer quality claims",
+  "classifier_or_dataset_changes": false,
+  "new_holdout_accuracy_measurement": false,
+  "comparison_sha256": "4e7953704336084e5b21aceb17b8d33c0e4940a6a9dce123c646daf44c13f88f",
+  "assembly_started_utc": "2026-10-06T00:52:13Z"
+}
