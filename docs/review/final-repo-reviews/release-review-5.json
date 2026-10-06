@@ -1,0 +1,573 @@
+{
+  "schema": "savia-independent-release-review/v1",
+  "review_id": "release-review-5",
+  "head": "5c943f3060ba2784f8cd69458038ece2deb88a3d",
+  "tree": "6109d8d7067665860db363808b04eade4b91fdcc",
+  "reviewed_at_utc": "2026-10-06T01:34:10.592780+00:00",
+  "assessment_scope": "Complete declared fictional-bank Savia/FLUJO hackathon submission: product/pitch, complete R0–R18 engine, application and generic FLUJO evidence, architecture/development, data pipeline, ML/evaluation, analytics, voice/card and current release qualification. Separate scopes: standalone full generic platform certification, real-bank certification, full 100-agent customer completion and measured ROI.",
+  "rubric_note": "Independent five-dimension review instrument, not official organizer numeric weights.",
+  "total": 89,
+  "maximum": 100,
+  "dimensions": [
+    {
+      "name": "Technical judgment",
+      "score": 18,
+      "maximum": 20,
+      "reason": "Strong deterministic R0–R18 decisions, owner/session/query/snapshot binding, explicit host consent, missing-risk fail-closed behavior, receipt integrity, terminal uncertainty/replay and durable state. Source and independent fixture checks support a complete fictional workflow. Limited broad end-to-end endurance and crash/cross-process guarantees cap assurance; real-bank certification is outside the assessed scope."
+    },
+    {
+      "name": "AI engineering",
+      "score": 18,
+      "maximum": 20,
+      "reason": "Integrated bilingual customer UI/voice, grounded selected facts, two actual reviewers and saved follow-up; fleet source independently verifies original native findings/reviews and installation identities. Genuine generic FLUJO source/capacity evidence is included. Live customer samples and suggestion contracts are narrow; larger fleet/human delivery are explicit future acceptance scopes, not reasons to erase implemented success."
+    },
+    {
+      "name": "Data engineering",
+      "score": 19,
+      "maximum": 20,
+      "reason": "Substantial six-table bronze/silver/gold pipeline with lineage, contracts/quarantine, deterministic deduplication, ownership, late arrivals/corrections, exact 5,899,720-row reconciliation, isolated cursors and validated report-before-CURRENT publication. Current fixture checks pass. Static S3 inventory assumptions, lack of power-loss proof and stale-lock operator recovery leave one point of residual assurance."
+    },
+    {
+      "name": "ML/evaluation",
+      "score": 16,
+      "maximum": 20,
+      "reason": "Thoughtful rejection of unusable supplied labels; TF-IDF/logistic routing has training-only CV, a frozen independently AI-authored 120-case ES/PT diagnostic, keyword/abstention comparison, uncertainty and error slices. Luna records/audit support 100/100 exact and bounded-safe completions, with a 100/100 deterministic baseline and only ten phrasings. Human adjudication remains pending and eight automated labels are not human truth. Missing local scikit-learn prevents new refitting, while artifact hashes/matrices independently reproduce."
+    },
+    {
+      "name": "Data analytics",
+      "score": 18,
+      "maximum": 20,
+      "reason": "Source findings drive product choices; operating analysis distinguishes safety misses/handoff burden, useful answers/HTTP/persistence, and unrelated latency/capacity workloads. Read-only metadata/HMAC extraction keeps workflow intent separate from verified current host slots and reports malformed/conflicting evidence and cancellation/revocation coverage. Durable usage/cost, exact turn-query-action linkage, and card/lifetime/cohort outcome integration remain material gaps; measured ROI is outside the submission claim."
+    }
+  ],
+  "first_five_findings_in_discovery_order": [
+    {
+      "order": 1,
+      "type": "strength_and_qualification",
+      "finding": "Retained owned-transaction explanation, two completed reviewers, helpful acknowledgment and saved context form a working customer journey; 100 team conversations are an explicit architecture target.",
+      "sources": [
+        "README.md",
+        "savia_assistant/service.py:176",
+        "docs/submission/measurements/team-story-summary.json"
+      ],
+      "discovery": "Initial README read before source/receipt verification."
+    },
+    {
+      "order": 2,
+      "type": "strength",
+      "finding": "The complete R0–R18 deterministic motor is the core; the historical 1,725-test/428-subtest source claim is dated and is not a new whole-HEAD pass.",
+      "sources": [
+        "README.md",
+        "docs/submission/DISPUTE_ENGINE.md",
+        "dispute_workflow/policy.py:413",
+        "docs/qualification/dispute-naming-source-2026-10-01.json"
+      ],
+      "discovery": "Initial README engine section."
+    },
+    {
+      "order": 3,
+      "type": "strength_and_domain_qualification",
+      "finding": "Owned-card protection has explicit consent, durable status and independent receipt readback, and is correctly labeled fictional/demo-ledger behavior.",
+      "sources": [
+        "README.md",
+        "dispute_workflow/action_host.py:66",
+        "banking_mcp/actions.py:104",
+        "banking_mcp/actions.py:175",
+        "docs/submission/measurements/CARD_BLOCK_VERIFICATION.md"
+      ],
+      "discovery": "Initial README voice/card section."
+    },
+    {
+      "order": 4,
+      "type": "data_strength_and_source_limitation",
+      "finding": "The data audit exposed cross-owner historical complaint-product links and template-heavy transcripts; owned transactions and independent synthetic routing diagnostics are justified design responses.",
+      "sources": [
+        "README.md",
+        "pipeline/README.md",
+        "pipeline/gold.py",
+        "docs/pipeline/manifest.json",
+        "ml/README.md"
+      ],
+      "discovery": "Initial README data discussion."
+    },
+    {
+      "order": 5,
+      "type": "strength_and_deployment_qualification",
+      "finding": "FLUJO remains generic; domain work belongs here/Banking MCP or the isolated owner-authorized branch, while source preservation does not imply deployment acceptance.",
+      "sources": [
+        "AGENTS.md",
+        "docs/FLUJO_PRODUCT_BOUNDARY.md",
+        "docs/FLUJO_HACKATHON_DEPLOYMENT.md",
+        "docs/submission/FLUJO_PLATFORM_EVIDENCE.md"
+      ],
+      "discovery": "Initial repository instructions and boundary read, after README."
+    }
+  ],
+  "checks": [
+    {
+      "name": "Frozen source identity before and after",
+      "status": "passed",
+      "observations": {
+        "head": "5c943f3060ba2784f8cd69458038ece2deb88a3d",
+        "tree": "6109d8d7067665860db363808b04eade4b91fdcc",
+        "tracked_status": "",
+        "expected_head_and_tree_match": true
+      }
+    },
+    {
+      "name": "Selected current Python suites",
+      "status": "passed",
+      "command": [
+        "python",
+        ".tmp/release-review-5-check.py"
+      ],
+      "pytest_args": [
+        "-q",
+        "--import-mode=importlib",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=.tmp/release-review-5-pytest-temp",
+        "--junitxml=.tmp/release-review-5-pytest.xml",
+        "tests/test_dispute_policy.py",
+        "tests/test_dispute_query_policy.py",
+        "tests/test_dispute_acceptance.py",
+        "tests/test_dispute_action_host.py",
+        "tests/test_dispute_prior_receipts.py",
+        "tests/test_dispute_state.py",
+        "tests/test_card_block.py",
+        "tests/test_card_block_api.py",
+        "savia_assistant/tests/test_service.py",
+        "savia_assistant/tests/test_fleet.py",
+        "tests/test_pipeline.py",
+        "tests/test_dataset_health.py",
+        "tests/test_row_hash.py",
+        "tests/test_host_outcome_analytics.py",
+        "tests/test_agent_analytics.py"
+      ],
+      "suites": [
+        "tests/test_dispute_policy.py",
+        "tests/test_dispute_query_policy.py",
+        "tests/test_dispute_acceptance.py",
+        "tests/test_dispute_action_host.py",
+        "tests/test_dispute_prior_receipts.py",
+        "tests/test_dispute_state.py",
+        "tests/test_card_block.py",
+        "tests/test_card_block_api.py",
+        "savia_assistant/tests/test_service.py",
+        "savia_assistant/tests/test_fleet.py",
+        "tests/test_pipeline.py",
+        "tests/test_dataset_health.py",
+        "tests/test_row_hash.py",
+        "tests/test_host_outcome_analytics.py",
+        "tests/test_agent_analytics.py"
+      ],
+      "counts": {
+        "tests": 478,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 478
+      },
+      "pytest_seconds": 286.13,
+      "harness_seconds": 286.43534649999856,
+      "guarded_external_attempts": [],
+      "environment": {
+        "pytest": "9.1.1",
+        "duckdb": "1.5.5",
+        "numpy": "2.2.5",
+        "scikit-learn": null,
+        "PyYAML": "6.0.2",
+        "scipy": "1.18.0",
+        "mcp": "1.30.0",
+        "fastapi": "0.141.1",
+        "httpx": "0.28.1",
+        "rfc8785": "0.1.4",
+        "cryptography": "46.0.7",
+        "PyJWT": "2.15.1"
+      },
+      "artifacts": [
+        ".tmp/release-review-5-pytest.log",
+        ".tmp/release-review-5-pytest.xml",
+        ".tmp/release-review-5-checks.json"
+      ]
+    },
+    {
+      "name": "Focused current voice suite",
+      "status": "passed",
+      "command": [
+        "python",
+        ".tmp/release-review-5-voice.py"
+      ],
+      "pytest_args": [
+        "-q",
+        "--import-mode=importlib",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=.tmp/release-review-5-voice-temp",
+        "--junitxml=.tmp/release-review-5-voice.xml",
+        "frontend/tests/test_voice.py",
+        "-k",
+        "result or playback or played or native"
+      ],
+      "counts": {
+        "tests": 66,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 66
+      },
+      "deselected": 41,
+      "pytest_seconds": 1.64,
+      "harness_seconds": 1.9170156999989558,
+      "guarded_external_attempts": [],
+      "artifacts": [
+        ".tmp/release-review-5-voice.log",
+        ".tmp/release-review-5-voice.xml"
+      ]
+    },
+    {
+      "name": "Gateway/portal final retry",
+      "status": "passed",
+      "command": [
+        "node",
+        "--require",
+        "./.tmp/release-review-5-loopback-guard.cjs",
+        "--test",
+        "deploy/rc/public-gateway.test.mjs",
+        "deploy/rc/submission-portal.test.mjs"
+      ],
+      "counts": {
+        "tests": 8,
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      "duration_ms": 396.4753,
+      "guarded_external_attempts": 0,
+      "artifact": ".tmp/release-review-5-node-retry.log",
+      "prior_attempt": {
+        "status": "reviewer_guard_failure",
+        "passed": 1,
+        "failed": 7,
+        "reason": "The generic packet deny-all guard blocked required loopback node:http.request/node:net.connect. Corrected with loopback-aware instrumentation; no product failure inferred.",
+        "artifact": ".tmp/release-review-5-node.log"
+      }
+    },
+    {
+      "name": "Generic FLUJO copied source and dependency-free smoke",
+      "status": "passed",
+      "commands": [
+        "node verify-source.cjs --git-ref=HEAD",
+        "node --experimental-strip-types --require ./offline-preload.cjs ./offline-smoke.mjs"
+      ],
+      "source": "docs/submission/measurements/flujo-platform",
+      "observations": {
+        "upstream_commit": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+        "files": 39,
+        "bytes": 619009,
+        "checks_passed": 5
+      },
+      "limitations": "Five retry checks, not a new full upstream suite/build/interoperability or Savia runtime acceptance."
+    },
+    {
+      "name": "Luna frozen workload verifier",
+      "status": "passed",
+      "command": [
+        "python",
+        "scripts/verify_luna_benchmark.py",
+        "docs/submission/measurements/luna-100/run-100",
+        "--out",
+        ".tmp/release-review-5-luna"
+      ],
+      "observations": {
+        "records": 100,
+        "unique_ids": 100,
+        "correct": 100,
+        "bounded_safe": 100,
+        "baseline_oracle_matches": 100,
+        "es_cases": 50,
+        "pt_cases": 50,
+        "peak_overlapping_turns": 100,
+        "p50_seconds": 37.4,
+        "p95_seconds": 50.693,
+        "reported_total_tokens": 1331396
+      },
+      "artifact": ".tmp/release-review-5-luna/audit.json"
+    },
+    {
+      "name": "Router policy audit replay",
+      "status": "passed",
+      "command": [
+        "python",
+        "scripts/audit_router_policy_sample.py"
+      ],
+      "observations": {
+        "cases": 8,
+        "dataset_cases": 120,
+        "agreement": 8,
+        "human_adjudication": false,
+        "sample_and_hashes_reproduced": true
+      }
+    },
+    {
+      "name": "Own artifact/pin audit",
+      "status": "passed_after_reviewer_schema_fix",
+      "command": [
+        "python",
+        ".tmp/release-review-5-audit.py"
+      ],
+      "followup": [
+        "python",
+        ".tmp/release-review-5-pin-audit.py"
+      ],
+      "observations": {
+        "final_runtime_git_blobs": {
+          "matched": 183,
+          "total": 183
+        },
+        "raw_runtime_python": {
+          "matched": 62,
+          "total": 62
+        },
+        "checkout_only_crlf_differences": 32,
+        "canonical_voice_artifacts": {
+          "matched": 15,
+          "total": 15
+        },
+        "audio": {
+          "es": {
+            "channels": 1,
+            "width_bytes": 2,
+            "rate": 24000,
+            "samples": 309600,
+            "duration": 12.9
+          },
+          "pt": {
+            "channels": 1,
+            "width_bytes": 2,
+            "rate": 24000,
+            "samples": 397200,
+            "duration": 16.55
+          }
+        },
+        "pipeline_accounting": {
+          "raw_total": 5899720,
+          "source_objects": 4390,
+          "tables": [
+            {
+              "table": "customers",
+              "raw": 150000,
+              "silver": 150000,
+              "quarantine": 0,
+              "duplicates": 0,
+              "reported_reconciles": true
+            },
+            {
+              "table": "products",
+              "raw": 400000,
+              "silver": 400000,
+              "quarantine": 0,
+              "duplicates": 0,
+              "reported_reconciles": true
+            },
+            {
+              "table": "transactions",
+              "raw": 4425008,
+              "silver": 4425008,
+              "quarantine": 0,
+              "duplicates": 0,
+              "reported_reconciles": true
+            },
+            {
+              "table": "call_center_interactions",
+              "raw": 686296,
+              "silver": 686296,
+              "quarantine": 0,
+              "duplicates": 0,
+              "reported_reconciles": true
+            },
+            {
+              "table": "call_transcripts",
+              "raw": 171321,
+              "silver": 171321,
+              "quarantine": 0,
+              "duplicates": 0,
+              "reported_reconciles": true
+            },
+            {
+              "table": "complaints",
+              "raw": 67095,
+              "silver": 67095,
+              "quarantine": 0,
+              "duplicates": 0,
+              "reported_reconciles": true
+            }
+          ]
+        },
+        "router": {
+          "holdout_count": 120,
+          "holdout_hash": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+          "train_hash": "23f1022bbbbe51582cd50a88464cd85f885465729dfd7494e90a9be680190509",
+          "system_metrics": {
+            "keyword_baseline": {
+              "correct": 70,
+              "total": 120,
+              "accuracy": 0.5833333333333334,
+              "human_missed": 13,
+              "unnecessary_handoffs": 6,
+              "confusion_matches": true
+            },
+            "tfidf_logistic": {
+              "correct": 94,
+              "total": 120,
+              "accuracy": 0.7833333333333333,
+              "human_missed": 3,
+              "unnecessary_handoffs": 9,
+              "confusion_matches": true
+            },
+            "tfidf_logistic_abstention": {
+              "correct": 65,
+              "total": 120,
+              "accuracy": 0.5416666666666666,
+              "human_missed": 1,
+              "unnecessary_handoffs": 52,
+              "confusion_matches": true
+            }
+          }
+        },
+        "core_current_congruence": {
+          "total": 22,
+          "matched": 21,
+          "changed": [
+            "banking_mcp/repository.py"
+          ]
+        }
+      },
+      "prior_failure": "KeyError for my wrong duplicates_removed key; historical key is duplicate_rows_removed. Fixed in scratch and audit completed.",
+      "artifact": ".tmp/release-review-5-audit.json"
+    },
+    {
+      "name": "Learned-router refit replay",
+      "status": "environment_limited",
+      "command": [
+        "python",
+        "-m",
+        "demo.evaluate_router",
+        "--report-dir",
+        ".tmp/release-review-5-router"
+      ],
+      "failure": "ModuleNotFoundError: No module named sklearn before fitting. No dependency installed; no fresh learned-output claim.",
+      "artifact": ".tmp/release-review-5-router-failure.log"
+    },
+    {
+      "name": "Other reviewer setup failures",
+      "status": "retained_and_resolved_or_recorded",
+      "observations": [
+        "Initial package metadata list aborted on absent scikit-learn; safe per-package inventory records missing dependency.",
+        "First PowerShell-quoted voice preparation had parser error before execution; literal here-string preparation then ran and all selected voice checks passed.",
+        "Initial inventory included a nonexistent docs/submission/flujo-source path; correct packet path docs/submission/measurements/flujo-platform was followed."
+      ]
+    }
+  ],
+  "defects_and_gaps": [
+    {
+      "type": "no_reproduced_current_blocker",
+      "severity": "none",
+      "finding": "No reproduced ownership, consent, idempotency, receipt-integrity or snapshot-publication defect in the selected current checks.",
+      "scope": "Declared fictional-bank hackathon prototype, not universal or real-bank certification."
+    },
+    {
+      "type": "evaluation_gap",
+      "severity": "material_quality_limit",
+      "finding": "Synthetic AI-authored ground truth and narrow semantic diversity; eight labels reviewed by AI are 8/120 agreement, not independent human truth. Raw/abstaining router human misses remain 3/30 and 1/30, with 52 unnecessary human routes under abstention.",
+      "sources": [
+        "ml/README.md",
+        "docs/ml/router_holdout_provenance.md",
+        "docs/demo/intent_router_evaluation.md",
+        "docs/submission/measurements/luna-100/README.md"
+      ],
+      "action": "Version untouched human-adjudicated ES/PT cases, including negation/security/vulnerability/regional and open-ended selected-fact cases; preserve the frozen holdout and report escalation burden alongside safety."
+    },
+    {
+      "type": "speech_evidence_gap",
+      "severity": "material_quality_limit",
+      "finding": "Exact registered captions and PCM playback ACKs do not establish waveform-script alignment, full caveat comprehension, physical microphone/AEC or complete speech after a clean premature PCM EOF.",
+      "sources": [
+        "frontend/server/conversation.py:231",
+        "docs/submission/measurements/native-canonical-live/README.md",
+        "docs/submission/measurements/verified-outcomes/README.md"
+      ],
+      "action": "Independent full WAV listening/transcription and actual-device microphone/interruption qualification."
+    },
+    {
+      "type": "analytics_gap",
+      "severity": "material_measurement_limit",
+      "finding": "Model usage/cost is not durably persisted; exact workflow turn/query-to-host-action attribution is unknown; current-slot analytics does not join card/lifetime/cohort outcomes.",
+      "sources": [
+        "analytics/README.md",
+        "analytics/host.py",
+        "docs/review/OPERATING_DECISIONS.md"
+      ],
+      "action": "Persist supplied usage and explicit operation/query linkage; build bounded card/lifetime/cohort projections before pilot cost/resolution/repeat-contact claims."
+    },
+    {
+      "type": "declared_target_and_historical_failure",
+      "severity": "separate_acceptance_scope",
+      "finding": "October 5 integrated ten-by-ten customer attempt failed on disabled provider workspace before accepted fleet result. Recorded two-reviewer customer success, generic capacity and real sandbox collaboration remain valid separate workloads. Real ticket pickup/push/email/multi-day reliability are unqualified.",
+      "sources": [
+        "docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md",
+        "docs/architecture/system-landscape.md",
+        "savia_assistant/fleet.py:312"
+      ],
+      "action": "Qualify original run bindings, headcounts, collaboration and accepted customer findings, then real ticket/delivery adapters; do not require these future scopes to relabel the current recorded prototype."
+    },
+    {
+      "type": "historical_product_failure_with_bounded_recovery",
+      "severity": "limited_sample_evidence",
+      "finding": "Original customer comparison n=3 has useful answers 2/3, including a Portuguese selected-fact failure. Separate n=1 retry displays useful facts through trusted fallback rather than accepted free-form model generation.",
+      "sources": [
+        "docs/submission/measurements/MEASURED_RESULTS.md",
+        "docs/submission/measurements/final-comparison-counted.json",
+        "docs/submission/measurements/post-fix-pt-selected-counted.json"
+      ],
+      "action": "Preserve denominators and test fresh diverse selected-fact cases rather than pooling the retry into the original result."
+    },
+    {
+      "type": "operational_assurance_gap",
+      "severity": "declared_limit",
+      "finding": "S3 ingestion assumes stable inventory rather than VersionId pins; pointer replacement does not prove power-loss durability or a transaction across filesystems; generic packet is a partial source subset with dependency-cache differences and mocks.",
+      "sources": [
+        "pipeline/README.md",
+        "docs/submission/measurements/pipeline-publication/README.md",
+        "docs/submission/FLUJO_PLATFORM_EVIDENCE.md"
+      ],
+      "action": "Clean locked builds, interoperability, crash and endurance acceptance would strengthen future deployment assurance."
+    },
+    {
+      "type": "minor_presentation_precision",
+      "severity": "minor",
+      "finding": "ElevenLabs comparison says built with two people while the README/development story credit three contributors; competitive claims are positioning/vendor reported, not a matched experiment.",
+      "sources": [
+        "docs/submission/ELEVENLABS_COMPARISON.md",
+        "README.md",
+        "docs/submission/DEVELOPMENT_PROCESS.md"
+      ],
+      "action": "Align contributor phrasing and keep vendor metrics separate from measured Savia workload claims."
+    }
+  ],
+  "limitations": [
+    "Repository-only review; no external availability, providers, deployment, neighboring repositories, private source data or remote film playback.",
+    "The historical full supplied-data counts were reconciled as published aggregates and mechanisms were exercised with synthetic fixtures; private organizer rows were not reread.",
+    "Selected existing checks plus artifact/source congruence, not a full unchanged suite replay or complete Windows/Linux/native/compiler certification.",
+    "External connection guards are instrumentation, not an operating-system sandbox; provider/MCP doubles and loopback plumbing are part of the offline test scope.",
+    "scikit-learn absent; NumPy 2.2.5 and SciPy 1.18.0 differ from historical ML replay. No learned refit or dependency installation.",
+    "Frontend node_modules absent; no new React production build/UI suite. Generic FLUJO full upstream tests require a full pinned checkout/dependency cache outside this permitted repo-only review.",
+    "Core historical 1,078 results do not transfer to entire current HEAD: current repository.py includes the separately qualified readiness/legacy manifest change. Final runtime manifest matches all current 183 Git blobs.",
+    "Model catalog and recorded request model are not independent server-side identity attestation; overlap is not GPU concurrency; exact fixture correctness is not general real-customer quality.",
+    "Real-bank certification, live money/refund, human pickup, full 100-agent customer completion and measured ROI are separate scopes and were not required for this fictional-bank submission score."
+  ],
+  "actual_blockers": [],
+  "report_path": ".tmp/release-review-5.md",
+  "report_sha256": "fc47f028f8ca7a3895461f3090ebec1321a10e23420975827aae2f38d80c501b",
+  "finalized_score_preserved": true
+}
