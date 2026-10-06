@@ -64,6 +64,9 @@ provides the existing recorded demonstration.
    checks plus seven pipeline and four analytics invariants. Use the
    [evidence map](EVIDENCE_MAP.md) for source files, tests, exact denominators,
    reproduction commands and the boundary of each result. The
+   [verified presentation and host outcomes](measurements/verified-outcomes/README.md)
+   add canonical result narration and separate current host receipts from planned
+   workflow outcomes, with 183 passing tests and 195 subtests. The
    [development process](DEVELOPMENT_PROCESS.md) connects those decisions to
    implementation, review and deployment. The
    [ElevenLabs comparison](ELEVENLABS_COMPARISON.md) evaluates the alternatives

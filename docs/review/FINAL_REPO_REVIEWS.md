@@ -21,3 +21,9 @@ The final-video placeholder is an explicitly requested destination and was not t
 The complete-submission rubric has five 20-point dimensions: technical judgment, AI engineering, data engineering, ML/evaluation and data analytics. Generic FLUJO uses architecture/extensibility 25, execution/integration 25, safety/recovery 20, reproducible engineering 20 and usability 10. These are review instruments, not official organizer numeric ratings.
 
 All ten report files are copied byte for byte. [The aggregate manifest](FINAL_REPO_REVIEWS.json) records SHA-256 identities and all original totals. [The earlier five-review cohort](FRESH_REPO_REVIEWS.md) and the separately coordinated [92/100 review](FRESH_AGENT_REVIEW.md), which uses a different scoring granularity, remain separate. Improvements and future assessments must be recorded as later cohorts rather than replacing these results.
+
+A separate fresh post-pitch assessment at `2c90d9c6` scored the complete submission
+89/100 before the canonical voice and host-analytics follow-ups. Its
+[unaltered report](final-repo-reviews/post-pitch-2c90d9c6.md) and
+[archival manifest](POST_PITCH_REVIEW.json) are preserved as another snapshot;
+they do not replace a member of either five-review cohort.

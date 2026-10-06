@@ -197,12 +197,14 @@ class VoiceService:
                 logger.warning("Voice transcription via %s failed: %s", provider.name, type(exc).__name__)
         raise VoiceError(503, "El reconocimiento de voz no está disponible. Puedes escribir.")
 
-    async def speak(self, text: str, language: str) -> tuple[int, AsyncIterator[bytes]]:
+    async def speak(self, text: str, language: str, *,
+                    required_sample_rate: int | None = None) -> tuple[int, AsyncIterator[bytes]]:
         """Open the first provider that starts streaming; return its rate and raw s16le PCM."""
         text = _CONTROL.sub(" ", text).strip()
         if not text or len(text) > MAX_TEXT:
             raise VoiceError(422, "El texto para leer no es válido.")
-        for provider in (p for p in self.providers if p.tts_model):
+        for provider in (p for p in self.providers if p.tts_model
+                         and (required_sample_rate is None or p.sample_rate == required_sample_rate)):
             body = {"model": provider.tts_model, "input": text, "response_format": "pcm",
                     **({"voice": provider.voices[language]} if language in provider.voices else {})}
             request = self.client.build_request(
@@ -213,10 +215,21 @@ class VoiceService:
                 response = await self.client.send(request, stream=True)
                 if response.status_code != 200:
                     raise httpx.HTTPError(f"status {response.status_code}")
+                content_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+                if content_type and content_type not in {"audio/pcm", "audio/x-pcm", "audio/raw", "application/octet-stream"}:
+                    raise ValueError("unsupported speech content type")
                 chunks = response.aiter_bytes()
                 first = await anext(chunks, b"")
-                # A WAV or JSON body here would be played as noise.
-                if not first or first[:4] == b"RIFF" or first[:1] == b"{":
+                # Transport fragments do not align with a container or error prefix.
+                while first and (len(first) < 4 or not first.lstrip()) and len(first) < 128:
+                    extra = await anext(chunks, b"")
+                    if not extra:
+                        break
+                    first += extra
+                # A container or JSON body here would be played as raw PCM noise.
+                if (not first or not first.lstrip()
+                        or first[:4] in {b"RIFF", b"RIFX", b"RF64", b"OggS", b"fLaC", b"\x1a\x45\xdf\xa3"}
+                        or first[:3] == b"ID3" or first.lstrip()[:1] in {b"{", b"["}):
                     raise ValueError("unsupported speech format")
             except (httpx.HTTPError, ValueError) as exc:
                 if response is not None:
@@ -231,11 +244,12 @@ class VoiceService:
                     while chunk:
                         sent += len(chunk)
                         if sent > MAX_SPEECH_BYTES:
-                            break
+                            raise VoiceError(503, "La voz no está disponible ahora. Puedes escribir.")
                         yield chunk
                         chunk = await anext(chunks, b"")
                 except httpx.HTTPError as exc:
                     logger.warning("Voice speech via %s ended early: %s", name, type(exc).__name__)
+                    raise VoiceError(503, "La voz no está disponible ahora. Puedes escribir.") from None
                 finally:
                     await response.aclose()
 

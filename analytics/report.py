@@ -26,6 +26,55 @@ def _distribution(db: sqlite3.Connection, sql: str, *args) -> dict[str, int]:
     return {str(key): count for key, count in db.execute(sql, args)}
 
 
+def _host_summary(db: sqlite3.Connection) -> dict[str, Any]:
+    tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if not {"host_sources", "host_sessions", "host_actions", "host_cancellations"} <= tables:
+        return {"status": "unavailable", "reason": "rebuild_with_host_snapshot_schema"}
+    sources = _distribution(db, "SELECT status,count(*) FROM host_sources GROUP BY 1")
+    slots = db.execute("SELECT count(*) FROM host_actions").fetchone()[0]
+    sessions, expired, revoked = db.execute(
+        "SELECT count(*),sum(expired),sum(local_revoked) FROM host_sessions").fetchone()
+    states = _distribution(db, "SELECT outcome,count(*) FROM host_actions GROUP BY 1")
+    verified = sum(states.get(key, 0) for key in (
+        "verified_simulated_intake", "verified_existing_simulated_intake", "verified_handoff_request"))
+    prior = db.execute("SELECT sum(retained_prior_receipt),sum(retained_prior_handoff) FROM host_actions").fetchone()
+    coverage = db.execute("SELECT sum(rejected_bindings),sum(invalid_sessions) FROM host_sources").fetchone()
+    updated = db.execute("SELECT min(updated_at),max(updated_at) FROM host_actions").fetchone()
+    created = db.execute("SELECT min(verified_record_created_at),max(verified_record_created_at) FROM host_actions").fetchone()
+    cancelled = db.execute("SELECT count(*),min(cancelled_at),max(cancelled_at) FROM host_cancellations").fetchone()
+    built = db.execute("SELECT value FROM meta WHERE key='built_at'").fetchone()
+    return {
+        "status": "available" if sources.get("supported") else "unavailable",
+        "source": "persisted_frontend_host_projection",
+        "grain": "one_latest_action_slot_per_owner_session_expiry; not_lifetime_action_counts",
+        "workflow_attribution": "unknown; workflow_intent_outcomes_are_separate",
+        "verification": "saved_host_readback_shape_checked; no_live_bank_read_or_recovery",
+        "built_at": built[0] if built else None,
+        "sources": sources,
+        "denominators": {"admitted_session_snapshots": sessions, "current_action_slots": slots,
+                         "rejected_binding_source_rows": coverage[0] or 0,
+                         "invalid_session_source_rows": coverage[1] or 0},
+        "outcomes": states,
+        "verified_terminal_slot_rate": _rate(verified, slots),
+        "time_coverage": {"action_updated_from": updated[0], "action_updated_through": updated[1],
+                          "verified_record_created_from": created[0], "verified_record_created_through": created[1]},
+        "retained_prior_evidence_slots": {"receipt": prior[0] or 0, "handoff": prior[1] or 0},
+        "recovery": {"slots_with_attempts": db.execute(
+            "SELECT count(*) FROM host_actions WHERE recovery_attempts>0").fetchone()[0],
+            "exhausted_slots": db.execute(
+                "SELECT count(*) FROM host_actions WHERE recovery_exhausted=1").fetchone()[0]},
+        "lifecycle": {"expired_session_snapshots": expired or 0, "locally_revoked_session_snapshots": revoked or 0,
+                      "revocation_states": _distribution(db,
+                          "SELECT revocation_state,count(*) FROM host_sessions GROUP BY 1"),
+                      "revocation_source_coverage": _distribution(db,
+                          "SELECT revocation_status,count(*) FROM host_sources GROUP BY 1"),
+                      "retained_cancelled_handles": cancelled[0],
+                      "cancellation_source_coverage": _distribution(db,
+                          "SELECT cancellation_status,count(*) FROM host_sources GROUP BY 1"),
+                      "cancelled_from": cancelled[1], "cancelled_through": cancelled[2]},
+    }
+
+
 def summarize(db_path: Path) -> dict[str, Any]:
     with closing(sqlite3.connect(Path(db_path).resolve().as_uri() + "?mode=ro", uri=True)) as db:
         conversations = db.execute("SELECT count(*) FROM conversations").fetchone()[0]
@@ -55,6 +104,7 @@ def summarize(db_path: Path) -> dict[str, Any]:
                        "workflow_turns": turns,
                        "transcript_only_turns": db.execute(
                            "SELECT count(*) FROM turns WHERE source='transcript'").fetchone()[0]},
+            "current_host_snapshot": _host_summary(db),
             "outcomes": _distribution(db, "SELECT outcome,count(*) FROM conversations GROUP BY 1 ORDER BY 2 DESC"),
             "containment_rate": _rate(workflow_conversations - handed_off, workflow_conversations),
             "handoff_reasons": _distribution(db, """SELECT handoff_reason,count(*) FROM turns
@@ -97,6 +147,7 @@ def render(summary: dict[str, Any]) -> str:
     section("Volumen", summary["volume"])
     lines.append(f"\nTasa de contención (sin handoff): {summary['containment_rate']}")
     section("Resultado por conversación", summary["outcomes"])
+    section("Observación actual del host (separada de la intención del flujo)", summary["current_host_snapshot"])
     section("Motivos de handoff (turnos)", summary["handoff_reasons"])
     section("Turnos por conversación", summary["turns_per_conversation"])
     section("Turnos hasta identificar la transacción", summary["turns_to_identify_transaction"])

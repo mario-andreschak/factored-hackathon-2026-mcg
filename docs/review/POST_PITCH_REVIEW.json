@@ -1,0 +1,18 @@
+{
+  "schema": "savia-separate-post-pitch-assessment/v1",
+  "source_commit": "2c90d9c6da8895f8781a20b71e78ebf475bbef22",
+  "complete_submission_score": 89,
+  "scope": "Separate fresh repository-only review coordinated in the publication chat after pitch changes and before voice/analytics follow-ups. Target score and earlier assessments were not supplied. This does not replace either five-review cohort.",
+  "reports": [
+    {
+      "path": "final-repo-reviews/post-pitch-2c90d9c6.md",
+      "sha256": "d48bc8c2c364f5a6338fad4cc19b4581dce4503b32519fafe7c8476814424b26",
+      "publication_transform": "none"
+    },
+    {
+      "path": "final-repo-reviews/post-pitch-2c90d9c6.json",
+      "sha256": "7af299630d593ac5b8b06eecdb0f38b1b4c1bdac281e396d1b21130a228e8c7f",
+      "publication_transform": "none"
+    }
+  ]
+}

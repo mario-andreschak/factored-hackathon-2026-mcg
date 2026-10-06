@@ -17,8 +17,10 @@ import secrets
 import sqlite3
 from typing import Any, Iterable
 
+from .host import SCHEMA as HOST_SCHEMA, snapshots
 
-SCHEMA_VERSION = "1"
+
+SCHEMA_VERSION = "2"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -68,7 +70,7 @@ CREATE TABLE IF NOT EXISTS feedback (
     label TEXT, created_at TEXT NOT NULL,
     CHECK(turn_id IS NOT NULL OR conversation_id IS NOT NULL)
 );
-"""
+""" + HOST_SCHEMA
 
 _BARRIERS = frozenset({"merge_parallel", "query_preflight_barrier"})
 _INFORMED = frozenset({"INFORM", "INFORM_EXISTING_CASE", "COMPLAINT_STATUS", "SMALL_TALK"})
@@ -325,11 +327,13 @@ def build(out_path: Path, *, workflow_dbs: Iterable[Path] = (), chat_dbs: Iterab
           key_path: Path | None = None, now: datetime | None = None) -> dict[str, int]:
     """Rebuild derived tables from the given sources; reviewer feedback is kept."""
     out_path = Path(out_path).resolve()
-    workflow_dbs = [Path(path).resolve() for path in workflow_dbs]
-    chat_dbs = [Path(path).resolve() for path in chat_dbs]
+    workflow_dbs = sorted({Path(path).resolve() for path in workflow_dbs})
+    chat_dbs = sorted({Path(path).resolve() for path in chat_dbs})
     if out_path in workflow_dbs or out_path in chat_dbs:
         raise ValueError("the analytics output must be a separate database")
     pseudonym = Pseudonymizer(key_path or out_path.with_suffix(".key"))
+    built_at = now or datetime.now(timezone.utc)
+    host_tables = snapshots(chat_dbs, pseudonym, built_at)
     operations: dict[str, dict] = {}
     sessions: dict[str, dict] = {}
     for path in chat_dbs:
@@ -381,6 +385,11 @@ def build(out_path: Path, *, workflow_dbs: Iterable[Path] = (), chat_dbs: Iterab
         db.execute("DELETE FROM node_calls")
         db.execute("DELETE FROM turns")
         db.execute("DELETE FROM conversations")
+        for table, records in zip(("host_sources", "host_sessions", "host_actions", "host_cancellations"), host_tables):
+            db.execute(f"DELETE FROM {table}")
+            columns = tuple(row[1] for row in db.execute(f"PRAGMA table_info({table})"))
+            db.executemany(f"INSERT INTO {table}({','.join(columns)}) VALUES ({','.join('?' for _ in columns)})",
+                           [tuple(record.get(column) for column in columns) for record in records])
         placeholders = ",".join("?" for _ in TURN_COLUMNS)
         db.executemany(f"INSERT INTO turns({','.join(TURN_COLUMNS)}) VALUES ({placeholders})",
                        [tuple(record.get(column) for column in TURN_COLUMNS) for record in turns.values()])
@@ -394,7 +403,7 @@ def build(out_path: Path, *, workflow_dbs: Iterable[Path] = (), chat_dbs: Iterab
             columns = tuple(conversations[0])
             db.executemany(f"INSERT INTO conversations({','.join(columns)}) VALUES ({','.join('?' for _ in columns)})",
                            [tuple(item[column] for column in columns) for item in conversations])
-        built = (now or datetime.now(timezone.utc)).isoformat().replace("+00:00", "Z")
+        built = built_at.isoformat().replace("+00:00", "Z")
         db.executemany("INSERT INTO meta VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
                        [("schema_version", SCHEMA_VERSION), ("built_at", built)])
     return {"turns": len(turns), "conversations": len(by_conversation),

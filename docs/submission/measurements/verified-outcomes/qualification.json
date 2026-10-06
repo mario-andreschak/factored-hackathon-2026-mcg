@@ -1,0 +1,53 @@
+{
+  "schema": "savia-verified-presentation-source-qualification/v1",
+  "combined_test_source": "00a1e800dd65f125e123faf1edc8f81965c03af5",
+  "integrated_source": "410f087d64a66e2e18dd5dab019b48f65b5bd01c",
+  "base_main": "c7115ba74ddfd4c005acd41cfe11b2b4ac9f607d",
+  "original_voice_commit": "492e21b409732acdd55a8b893079972e75e6f58c",
+  "original_analytics_commit": "a09b71f7afc87f9ac011d21e8438f302f96638dd",
+  "source_files_sha256": {
+    "frontend/server/conversation.py": "a6155bc4acc16fc326294d9f97f2adbdb85d465dec61e5beb578b566b98339bb",
+    "frontend/server/voice.py": "eb5c758ad232e43eed522f14b518e8eb9272d31cb92cb61b753e4dce55c75616",
+    "frontend/src/avatar/README.md": "70ab2cb7e506b31ad74d06c5db5f6dd00b9c8f39fb1e34ab2f6fd7bff1a9be29",
+    "frontend/tests/test_voice.py": "d2cf8cba3b664a4cf6af7dc2fe198935735160ba95e3e4fac44802c15b8630a3",
+    "analytics/host.py": "7905a13100331058a6891415c6c33eaf7dd0de343acac72d799eed9b33f45e87",
+    "analytics/extract.py": "6f13841f30b325650de543a8cf2ffe089a8c47ee07dcb63a99563fb0a7e4129d",
+    "analytics/report.py": "0dc63e16436849d4782e4d73182c334bd3b714eaa867377d2292bba13f942a2e",
+    "analytics/README.md": "74e4a797ce51c05832e4ae2dbcf0e2a645fe632ca9bb8c69c9b6954c0f3007de",
+    "tests/test_host_outcome_analytics.py": "5fd1d935297c8b73f073fedf03b6463be74a446e157ee2586ef8943ed5ba75b2",
+    "resources/dispute_workflow.flow.json": "4219d9686a6d05cc492edeec531f6f05b4de6784dc7d7f8a175c9bbb51f1f107"
+  },
+  "selected_component_bytes_unchanged_during_integration": true,
+  "combined_checks": {
+    "passed_tests": 183,
+    "passed_subtests": 195,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "pytest_seconds": 56.39,
+    "junit_sha256": "1f1fe21f5df30fc8938694131d2fdaba1570673e881740dde66bf5cae87313b8",
+    "junit_scope": "original local output retained as scratch; hostname is not published",
+    "command": "python -m pytest frontend/tests/test_voice.py frontend/tests/test_api.py frontend/tests/test_dispute_locale.py frontend/tests/test_action_error_locale.py tests/test_host_outcome_analytics.py tests/test_agent_analytics.py tests/test_report_customer_outcomes.py tests/test_dispute_graph.py -q --junitxml=.tmp/verified-outcomes-tests.xml"
+  },
+  "merged_source_gates": {
+    "source": "410f087d64a66e2e18dd5dab019b48f65b5bd01c",
+    "passed_tests": 22,
+    "passed_subtests": 106,
+    "failures": 0,
+    "seconds": 0.43,
+    "command": "python -m pytest tests/test_dispute_graph.py::DisputeManifestFreshnessTests tests/test_synthetic_integration_contract.py::SourceGates -q"
+  },
+  "independent_code_review": {
+    "voice": "approved after 62 focused tests and independent fragmented-WAV rejection probe",
+    "analytics": "approved after 49 focused tests and malformed-BLOB handling probe",
+    "overlap": "Independent checks overlap the combined suite and are not additive."
+  },
+  "limits": [
+    "Source qualification using existing offline fixtures and provider mocks; no new production or live provider workload.",
+    "Canonical speech input and returned-byte playback acknowledgment are checked, not waveform/text semantic alignment or human comprehension.",
+    "Raw even PCM EOF cannot itself establish complete narration.",
+    "Host outcome denominator is current admitted action slots, not lifetime actions or final bank resolution.",
+    "Exact workflow-turn/query attribution, card-block lifetime joins and operational dollar-cost measurement remain outside this change.",
+    "Source qualification does not update earlier live recordings, audits or deployment identities."
+  ]
+}
