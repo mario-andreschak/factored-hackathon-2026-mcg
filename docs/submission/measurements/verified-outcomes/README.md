@@ -1,13 +1,18 @@
 # Verified presentation and host outcome snapshots
 
-The current source keeps verified results consistent across presentation and
+The source qualified here keeps verified results consistent across presentation and
 measurement. Registered Savia replies go to speech synthesis as the canonical
 host script, retaining financial limits and next steps. Analytics observes the
 host's saved verified result separately from the workflow's planned outcome.
 
+The [live compatible native successor](../native-canonical-live/README.md)
+records exact Spanish/Portuguese host captions, actual browser playback and
+owned-card status rereads at its own source and image pins. The qualification
+below retains its original dedicated-TTS source and provider-mock scope.
+
 ## Canonical result narration
 
-The voice layer reads every registered result through the existing TTS provider.
+The qualified voice layer reads every registered result through the existing TTS provider.
 It preserves the whole plain-text script in bounded chunks, requires 24 kHz,
 rejects fragmented container/error bodies, and records canonical assistant
 history only after the exact, once-only playback acknowledgment. Native speech

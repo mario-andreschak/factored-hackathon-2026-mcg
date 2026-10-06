@@ -1,0 +1,171 @@
+{
+  "schema": "savia-public-asset-acceptance/v1",
+  "at_utc": "2026-10-06T00:29:26.556901+00:00",
+  "runtime_source": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+  "runtime_image": "sha256:9aa240aa6fd4616e2f029d6667ea234aa7ec8f7c1c8e1eef7a918d640a1b8b9d",
+  "files": [
+    {
+      "path": "assets/mark.svg",
+      "status": 200,
+      "sha256": "79464cd0ee801ee9d8d51d23dfa9029a25c46991875fd6574d088e328c6594bb",
+      "bytes": 205
+    },
+    {
+      "path": "assets/savia-customer.png",
+      "status": 200,
+      "sha256": "b2c280fcf2daeed17a56fb6af5403d1f19ca8c9f8ce39a643145deaa2b718587",
+      "bytes": 695055
+    },
+    {
+      "path": "development.html",
+      "status": 200,
+      "sha256": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946",
+      "bytes": 9326
+    },
+    {
+      "path": "engine.html",
+      "status": 200,
+      "sha256": "23945dfbb3050dfcf51667395d8aa3d423b9568bd275f57208712e1882a4eb03",
+      "bytes": 11976
+    },
+    {
+      "path": "evidence/development-process.json",
+      "status": 200,
+      "sha256": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e",
+      "bytes": 33852
+    },
+    {
+      "path": "evidence/DEVELOPMENT_PROCESS.md",
+      "status": 200,
+      "sha256": "a8cf9bb103988e233eb1feb7b0f031ec4ed09a6b2daccd99cff63a39cccfeb6f",
+      "bytes": 19432
+    },
+    {
+      "path": "evidence/DISPUTE_ENGINE.md",
+      "status": 200,
+      "sha256": "1e857bf728ab746bd791b83a71c37c1ef413969b1452587bad346d89f7e3c498",
+      "bytes": 9819
+    },
+    {
+      "path": "evidence/ELEVENLABS_COMPARISON.md",
+      "status": 200,
+      "sha256": "67d692d7ac25894684b7be3c8cbd84e83dbe10e6d097e869bc8b26b70e22a548",
+      "bytes": 6524
+    },
+    {
+      "path": "evidence/EVIDENCE_MAP.md",
+      "status": 200,
+      "sha256": "656096ae0f8525c391e6f1eaca6c90c5f01ee4e53258dcb76e4f8d292709f5f6",
+      "bytes": 24615
+    },
+    {
+      "path": "evidence/START_HERE.md",
+      "status": 200,
+      "sha256": "82313785f0a9ca3892d2ef8a5dfb3bf2abd80df54f42e9e5b9b588b6b23d123c",
+      "bytes": 10577
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "sha256": "4f894d96b4e0d011d90fcc9ef85262956aca282c7a5ab4b1bd08b8cc33417990",
+      "bytes": 11299
+    },
+    {
+      "path": "llms.txt",
+      "status": 200,
+      "sha256": "4b80c56d987bf42a7815e2e6768b919fc8b6be01338823e868d39eb06f7f4aa1",
+      "bytes": 2430
+    },
+    {
+      "path": "pitch/savia-final-pitch-manifest.json",
+      "status": 200,
+      "sha256": "fccf39be86793d6b4aa4510001ff3422cafddac5ea02c20ad05b6503e6290268",
+      "bytes": 2488
+    },
+    {
+      "path": "pitch/savia-final-pitch-sources.json",
+      "status": 200,
+      "sha256": "88ca2ccc33cc4874f9a1630c0475727f888ab0e0e3dc59823f9c94499ca6b436",
+      "bytes": 13885
+    },
+    {
+      "path": "pitch/savia-final-pitch-speaker-notes.md",
+      "status": 200,
+      "sha256": "89156421b0b29ba7a745ea99b19820bb16fa52f70a6045cef070c2940b3c80d9",
+      "bytes": 12277
+    },
+    {
+      "path": "pitch/savia-final-pitch.html",
+      "status": 200,
+      "sha256": "31c418736c9b83805a087e70b53c1f3227bbffc9d7efe1ae1d86973c8f06a67f",
+      "bytes": 15369
+    },
+    {
+      "path": "pitch/savia-final-pitch.pdf",
+      "status": 200,
+      "sha256": "656eaddffb8a513b3ec65ca7cd8bd48f5800d1d4934e47a2948685c7030efd84",
+      "bytes": 348446
+    },
+    {
+      "path": "pitch/savia-final-pitch.pptx",
+      "status": 200,
+      "sha256": "6793894acf7ff6aa3d6c0cb897eacc9cfb900aa2d09ea8ad5ecfd5a95fcfed3f",
+      "bytes": 220902
+    },
+    {
+      "path": "pitch/slides/slide-01.png",
+      "status": 200,
+      "sha256": "96a40905192c7ed8b2de0295350b2244b334d06a32aacddd6c1c34a2c62f981a",
+      "bytes": 55830
+    },
+    {
+      "path": "pitch/slides/slide-02.png",
+      "status": 200,
+      "sha256": "ae52252d43774a47faa6e6a6409c17359dccd4199ae5d17490b5422811e6aeab",
+      "bytes": 144228
+    },
+    {
+      "path": "pitch/slides/slide-03.png",
+      "status": 200,
+      "sha256": "6a6a62e803a4f293ff6562c5899f66d0309f31eafe25c4149ef61f9290ac123a",
+      "bytes": 51040
+    },
+    {
+      "path": "pitch/slides/slide-04.png",
+      "status": 200,
+      "sha256": "eabca0607882740c935463d780838d4679123c4afed2bbb5e58109acb3335058",
+      "bytes": 53815
+    },
+    {
+      "path": "pitch/slides/slide-05.png",
+      "status": 200,
+      "sha256": "de7225b54632655e6b43251dbec33f24539e2010ad756475db1853782961621d",
+      "bytes": 58570
+    },
+    {
+      "path": "pitch/slides/slide-06.png",
+      "status": 200,
+      "sha256": "54014d1f240ae72d0d56d061886cc865ec10f4eb503c3501a683b193090c7644",
+      "bytes": 52377
+    },
+    {
+      "path": "savia-submission.vtt",
+      "status": 200,
+      "sha256": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6",
+      "bytes": 2268
+    },
+    {
+      "path": "styles.css",
+      "status": 200,
+      "sha256": "d5e8be817afee552c2ad8c9104baa37f1e33c3ed100620333e34ab29b9f5bad0",
+      "bytes": 7946
+    },
+    {
+      "path": "submission.json",
+      "status": 200,
+      "sha256": "12ba42788f93ab6b99022e20abed664fc8a183ba33960722b2e8e344e53c173f",
+      "bytes": 1897
+    }
+  ],
+  "unchanged_portal_component": "4a7341209e56fd66468774316a0cc5883172e426"
+}

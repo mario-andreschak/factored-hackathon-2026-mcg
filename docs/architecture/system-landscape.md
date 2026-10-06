@@ -4,15 +4,14 @@ Current capacity evidence is in the
 [infrastructure report](../submission/measurements/INFRASTRUCTURE_CAPACITY.md):
 300/300 correct requests through local production FLUJO at client parallelism 300,
 real Fly sandbox collaboration, and the later deployed Savia fleet connector.
-The original rc.1 inventory in section 7 is historical; use the
-[release report](../submission/RELEASE_CANDIDATE.md) for current deployment pins.
-A further paid fleet/load run for the submission video was skipped because of
-budget constraints. Exact 100-agent customer completion remains distinct from
-successful infrastructure tests.
+Section 7 identifies the current deployed application and its source verification.
+The [release report](../submission/RELEASE_CANDIDATE.md) preserves the original
+customer recordings and their deployment pins. Exact 100-agent customer completion
+remains a separate qualification from the measured infrastructure workloads.
 
-Design updated 5 October 2026. Savia is the customer's assistant throughout the life of a problem. It resolves a request immediately when possible; otherwise it commissions a team of 100 specialist AI agents, reviews their findings and returns one coherent answer. An unresolved goal becomes a human ticket. Status reaches the customer through Savia, browser push or email.
+Design updated 5 October 2026. Savia's target lifecycle keeps one assistant with the customer throughout a problem. The design answers immediately when permitted facts are sufficient; otherwise it commissions ten teams totaling 100 specialist conversations, reviews their findings and returns one coherent answer. It connects unresolved goals to a human ticket and delivers status through Savia, customer-approved browser push or email. The recorded customer path demonstrates two completed reviewers, saved follow-up and native voice; the full fleet, live ticket acceptance and push/email delivery are integration targets.
 
-This is the owner-directed product architecture. The target uses the recovered Claude swarm implementation: ten Fly FLUJO Machines, each with ten intercommunicating conversations. Savia's customer application coordinates that fleet. Development and reviewer Machines are outside the product. Section 7 maps the design to current evidence.
+This is the owner-directed product architecture. The target uses the recovered Claude swarm implementation: ten Fly FLUJO Machines, each with ten intercommunicating conversations, coordinated by Savia's customer application. Development and reviewer Machines are outside the product. Sections 2–6 describe that target lifecycle and its interfaces; section 7 maps each part to current evidence.
 
 ## 1. Runtime, network and data boundaries
 
@@ -140,11 +139,11 @@ Deduplicate delivery by `(case_id, event_id, channel)` and reuse that identity a
 | Logged-in and spoken status | Implemented and recorded in the integrated customer path |
 | Push/email | Reuse intended adapters; exact installation, customer binding and delivery acceptance still need verification |
 
-The current customer RC is one Fly Machine `851d7dc4460048` in `iad`, one shared CPU, 1024 MB RAM and encrypted 1 GB volume `vol_4qlemp91ly8qn98r` at `/data`. Its ingress is 8080; Python listens on loopback 43900. Live metadata and public `/healthz` HTTP 200 were read on 5 October 2026. It contains a temporary two-role inquiry demonstrator. The recovered swarm separately proves existing worker/team mechanics; neither establishes the requested integrated ten-by-ten customer run.
+The October 5 native acceptance runs on one Fly Machine `851d7dc4460048` in `iad`, two shared CPUs, 4096 MB RAM and encrypted 1 GB volume `vol_4qlemp91ly8qn98r` at `/data`. Its ingress is 8080; Python listens on loopback 43900. That healthy image is source-verified against 183 application files, with the 22 browser-build and four native-runtime file hashes preserved. The recorded customer inquiry path has two completed reviewers. The recovered swarm separately proves existing worker/team mechanics; the integrated ten-by-ten customer run has its own acceptance gate.
 
 The recovered README records a real Fly team with two parallel agents and a mixed tree with 18 Fly leaf sandboxes live together. These qualify different run scopes. Existing O/Modal inference is already tested; current availability and the exact ten-worker customer integration remain separate checks. This diagram does not provision Machines or replay prior work.
 
-Frozen application source: `9d77a7599128b668b0e34f9c2937eb40b6bd3824`. Image: `sha256:484fe8edc07ac37dd78f61deb7a08254352b8ce597fa8265f917706e93d199a5`. Customer-path acceptance is recorded in the release evidence. The [RC implementation reference](rc-runtime-reference.md) gives exact database paths, APIs and current failure limits. The 100-agent design remains the product target.
+Native acceptance source: `6219bc81a8a4c7f2936769e7727e5146dd2713d0`. Image: `sha256:9aa240aa6fd4616e2f029d6667ea234aa7ec8f7c1c8e1eef7a918d640a1b8b9d`. [Actual bilingual playback, source verification and status rereads](../submission/measurements/native-canonical-live/README.md) preserve that observation. Customer-path recordings retain their original source and image pins in the release evidence. The [RC implementation reference](rc-runtime-reference.md) gives database paths and API contracts. The 100-agent design remains the product target.
 
 ## 8. Source and regeneration
 

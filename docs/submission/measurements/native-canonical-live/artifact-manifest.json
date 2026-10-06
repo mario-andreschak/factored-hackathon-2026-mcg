@@ -1,0 +1,113 @@
+{
+  "schema": "savia-native-canonical-guidance-artifacts/v1",
+  "sourceRevision": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+  "imageDigest": "sha256:9aa240aa6fd4616e2f029d6667ea234aa7ec8f7c1c8e1eef7a918d640a1b8b9d",
+  "privateBrowserReceiptSha256": "df4dcacdf342755f616cd31bb00ebfc8c4a418aef845697f3db19d0553967dfc",
+  "sourceManifestSha256": "666b3dfd1f0bbf2579ca7b422349e888ab834a9869b8e55b18b851f7e9b95888",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "166b2ae49e21f9b7298f736324674989164c23cb78304dda353f8f66e895ffb4",
+      "bytes": 4219,
+      "byte_exact_copy": false
+    },
+    {
+      "path": "es/01-owned-existing-card-state.png",
+      "sha256": "22f42ba23d2104665ed13e9dffd3751961a4b247f2659a3651327c30eb8c10ca",
+      "bytes": 250277,
+      "byte_exact_copy": true,
+      "scope": "Authenticated generated-fiction product screenshot; no entry/login recording"
+    },
+    {
+      "path": "es/02-actual-guidance-speaking.png",
+      "sha256": "ed56d627b4b1d6bae6687b246d394d1296b2defc02082f66ac1d1d102fe1a297",
+      "bytes": 244968,
+      "byte_exact_copy": true,
+      "scope": "Authenticated generated-fiction product screenshot; no entry/login recording"
+    },
+    {
+      "path": "es/03-guidance-played-and-card-state.png",
+      "sha256": "ed56d627b4b1d6bae6687b246d394d1296b2defc02082f66ac1d1d102fe1a297",
+      "bytes": 244968,
+      "byte_exact_copy": true,
+      "scope": "Authenticated generated-fiction product screenshot; no entry/login recording"
+    },
+    {
+      "path": "es/native-guidance.wav",
+      "sha256": "850b89a2ccae31e0c6d026d2f3135ceaf810d3105f169afc59b62b4be3ca3df0",
+      "bytes": 619244,
+      "byte_exact_copy": true,
+      "scope": "Actual browser response.clone PCM wrapped in WAV; no audio injection"
+    },
+    {
+      "path": "live-harness.mjs",
+      "sha256": "b731467af6f42ff2406019f3dffccd053f82ed0c73208756c54a8662f28af5ff",
+      "bytes": 29444,
+      "byte_exact_copy": true,
+      "scope": "Byte-exact observed live harness provenance with original local paths and private-binding execution gate"
+    },
+    {
+      "path": "offline-6219-harness.py",
+      "sha256": "6686f80fdf80a66e1f4c352bfc23489e2c6fbb7bffb80fa6f29b54203d489e0e",
+      "bytes": 20481,
+      "byte_exact_copy": true,
+      "scope": "Observed offline harness provenance with original local runtime paths"
+    },
+    {
+      "path": "offline-6219-receipt.json",
+      "sha256": "e54dd4792be30abb6fd1f399ba81d43462677afdfb3ca563581a52779715546d",
+      "bytes": 33047,
+      "byte_exact_copy": true,
+      "scope": "Byte-exact offline receipt; disposable generated fiction and scripted provider SSE"
+    },
+    {
+      "path": "pt/01-owned-existing-card-state.png",
+      "sha256": "7bf9cde5a0da78210b68fd86156a07b6f78e56f17fe2140b07083a81353fdbe5",
+      "bytes": 227268,
+      "byte_exact_copy": true,
+      "scope": "Authenticated generated-fiction product screenshot; no entry/login recording"
+    },
+    {
+      "path": "pt/02-actual-guidance-speaking.png",
+      "sha256": "450fd551bc080ca12703ce5f78663eb826d0300c6673985b9dbdbac3493280b1",
+      "bytes": 198790,
+      "byte_exact_copy": true,
+      "scope": "Authenticated generated-fiction product screenshot; no entry/login recording"
+    },
+    {
+      "path": "pt/03-guidance-played-and-card-state.png",
+      "sha256": "450fd551bc080ca12703ce5f78663eb826d0300c6673985b9dbdbac3493280b1",
+      "bytes": 198790,
+      "byte_exact_copy": true,
+      "scope": "Authenticated generated-fiction product screenshot; no entry/login recording"
+    },
+    {
+      "path": "pt/native-guidance.wav",
+      "sha256": "78d6fa85eb917bdf2d622855a090306a60c9e9bffecc445d6e707c8980a0ad05",
+      "bytes": 794444,
+      "byte_exact_copy": true,
+      "scope": "Actual browser response.clone PCM wrapped in WAV; no audio injection"
+    },
+    {
+      "path": "public-assets-verification.json",
+      "sha256": "5d59b725892d136aaf71169c2cf9bc3c8532ada0689ab68546d5b99254b29e70",
+      "bytes": 5399,
+      "byte_exact_copy": true,
+      "scope": "6219 runtime public portal asset acceptance"
+    },
+    {
+      "path": "receipt.json",
+      "sha256": "bd6aef3d1fd5cd64fc0646fbf62baec8e63b40031cd57b2362d4ef158455e568",
+      "bytes": 13403,
+      "byte_exact_copy": false
+    },
+    {
+      "path": "runtime-verification.json",
+      "sha256": "907b0cbe1c9982bcd8a64594df12a771db208effa9662f575d93972a02e0f66b",
+      "bytes": 49088,
+      "byte_exact_copy": true,
+      "scope": "6219 source, retained browser/native hashes and deployment proof; no environment/private configuration"
+    }
+  ],
+  "note": "Manifest excludes its own checksum; private input identified by hash only, never copied."
+}

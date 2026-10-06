@@ -21,6 +21,7 @@ Public runtime acceptance retains a separate deployment receipt.
 
 | Evidence | Exact result and scope | Implementation / verification |
 | --- | --- | --- |
+| [Live canonical Spanish/Portuguese voice](measurements/native-canonical-live/README.md) | **2/2 registered guidance captions match the host script; 2/2 exact product-UI playback acknowledgments**. Actual 24 kHz PCM: 309,600 samples / 12.90 s ES; 397,200 / 16.55 s PT. Existing owned-card receipts survive independent status rereads; two tampered narration requests return 409. These are guidance and separate saved-status observations. | [Exact source, image, scripts, audio and receipt](measurements/native-canonical-live/receipt.json), [buffered result transport](../../frontend/server/conversation.py), [device-clock playback](../../frontend/src/avatar/useSaviaVoice.ts) |
 | [Recorded two-reviewer inquiry](measurements/team-story-summary.json) | **2/2 actual model workers completed**; 4.278 s from create-request start to the first completed UI poll; seven work events, then an eighth explicit helpful-closure event. Saved date/amount and receipt advice survives new chat/reload. This is an actual direct-provider customer example over fictional bank data. | [Inquiry service](../../savia_assistant/service.py), [inquiry API](../../savia_assistant/api.py), [assistant tests](../../savia_assistant/tests/) |
 | [Saved recommendations spoken](measurements/saved-recommendations-native/receipt.json) | **1 native stream and 1 exact full-playback HTTP 200 acknowledgment**; 196,800 mono PCM16 samples at 24 kHz = 8.2 s. Reload retains the original reply and suggestions, with no second stream. Source `7089ca7`, image `39457d88…`; recorder exit 0. | [Voice state machine](../../frontend/src/avatar/useSaviaVoice.ts), [conversation authority](../../frontend/server/conversation.py), [capture description and audio](measurements/saved-recommendations-native/README.md) |
 | [Release source-byte verification](runtime-listen-freeze.json) | **142/142 packaged source files verified**, actual served UI verified, three retained inquiries and six completed workers in that dated rc.2 deployment. | [Public gateway](../../deploy/rc/public-gateway.mjs), [startup](../../deploy/rc/public_start.py), [release report](RELEASE_CANDIDATE_RC2.md) |
@@ -32,11 +33,12 @@ audio-review status. Informational helpful closure is a customer acknowledgment,
 and a simulated intake receipt records intake; neither is a bank refund or
 dispute resolution.
 
-The [current source qualification](measurements/verified-outcomes/README.md)
+The [presentation and host-outcome qualification](measurements/verified-outcomes/README.md)
 adds canonical host-script narration for registered results and read-only
 verified host outcome snapshots. Its 183 tests and 195 subtests exercise the
 presentation and measurement boundaries. The original native recordings retain
-their dated meaning; deployment acceptance is separately pinned.
+their dated meaning. The compatible native successor has the separately pinned
+live acceptance above.
 
 ## AI engineering and expandable FLUJO orchestration
 
