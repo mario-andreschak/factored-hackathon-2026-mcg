@@ -404,8 +404,10 @@ export function useSaviaVoice(options: Options) {
           if (!ack.ok) throw new Error("unavailable");
           await ack.body?.cancel();
         };
-        s.ackBarrier = s.ackBarrier.then(publish);
-        await s.ackBarrier;
+        const ack = s.ackBarrier.then(publish);
+        // Keep this turn's failure, but let later turns wait for settlement.
+        s.ackBarrier = ack.catch(() => {});
+        await ack;
         acknowledged = true;
         if (own && current(s) && ownOwner === s.owner)
           opts.current.onCaption?.(id, finalText, true);
