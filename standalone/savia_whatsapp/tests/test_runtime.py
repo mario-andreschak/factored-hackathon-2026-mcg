@@ -24,6 +24,8 @@ class Process:
 
 @pytest.fixture
 def offline(monkeypatch):
+    monkeypatch.setattr(runtime, "verified_bundle", lambda *_: {
+        "feature_revision": "offline-test", "package_manifest_sha256": "offline-test"})
     monkeypatch.setattr(runtime, "ensure_ports_available", lambda: None)
     monkeypatch.setattr(runtime, "provider_key", lambda _: "")
     monkeypatch.setattr(runtime.subprocess, "Popen", Process)

@@ -13,6 +13,11 @@ def test_cli_rc_initializes_real_fixture_with_private_ledger_permissions(tmp_pat
     from standalone.savia_whatsapp import runtime
     import uvicorn
 
+    # Real RC initialization belongs to the admitted source package. The image
+    # qualification runs this test with genuine source and permission checks.
+    if not (runtime.ROOT / "standalone-package.json").is_file():
+        pytest.skip("Real RC startup requires an admitted exported bundle")
+
     previous_umask = os.umask(0o022)
     try:
         # No account state, retained bank ledger, consent, or authorization gate

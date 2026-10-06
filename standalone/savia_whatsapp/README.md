@@ -7,8 +7,10 @@ The exported copy applies one recorded compatibility overlay: Baileys' browser
 descriptor changes from `Desktop` to `Chrome`. The unmodified driver produced no
 pairing QR locally; the overlay produced a real QR. This matches the upstream
 [reported fix](https://github.com/WhiskeySockets/Baileys/issues/2671).
-Nothing in this directory is part of the public RC build or Fly deployment.
-The RC coordinator confirmed this source boundary on October 5, 2026.
+This component stays separate from the public Savia build and its customer ledger.
+The owner authorized private Fly promotion on October 5, 2026; source preparation
+does not establish hosted acceptance. The [deployment contract](docs/DEPLOYMENT_CONTRACT.md)
+defines the private companion and paired-state handoff. Generic FLUJO remains unchanged.
 
 The linked [ElevenLabs video](https://www.youtube.com/watch?v=1QJTfaaxVag) is a
 bank-dispute voice-call demo. Its native YouTube transcript is available;
@@ -20,17 +22,22 @@ request card numbers/OTP, freeze cards, give provisional credit or submit disput
 
 ## Local Windows run
 
-Use Python 3.13, Node 22+, npm and FFmpeg. All commands below run from the isolated
-worktree root. No provider key belongs in source, arguments, screenshots or the ZIP.
+Use Python 3.13, Node 22+, npm and FFmpeg. Export from this repository, then launch
+inside the exported bundle. The server verifies both source manifests and rejects
+an ordinary checkout, so newer main cannot silently run under the RC.3 label.
+No provider key belongs in source, arguments, screenshots or the ZIP.
 
 ```powershell
-python -m pip install -r standalone/savia_whatsapp/requirements.txt
+$saviaLabState = Join-Path (Get-Location) 'private/whatsapp-local/state'
 python -m standalone.savia_whatsapp package --destination private/whatsapp-local/bundle --mcp-repo C:\Users\Moe\Documents\GitHub\mcp-whatsapp-web
-Push-Location private/whatsapp-local/bundle/whatsapp-mcp
+Push-Location private/whatsapp-local/bundle
+python -m pip install -r standalone/savia_whatsapp/requirements.txt
+Push-Location whatsapp-mcp
 npm.cmd ci --no-audit --no-fund
 npm.cmd run build
 Pop-Location
-python -m standalone.savia_whatsapp serve --state private/whatsapp-local/state --mcp-dir private/whatsapp-local/bundle/whatsapp-mcp --provider-env C:\Users\Moe\Documents\GitHub\factored-hackathon-2026\private\providers\openrouter.env
+python -m standalone.savia_whatsapp serve --state $saviaLabState --mcp-dir (Resolve-Path whatsapp-mcp).Path --provider-env C:\Users\Moe\Documents\GitHub\factored-hackathon-2026\private\providers\openrouter.env
+Pop-Location
 ```
 
 Open <http://127.0.0.1:43980>. Enter your own WhatsApp number with country code,
@@ -83,8 +90,14 @@ Chrome/Edge, but two local starts hit an upstream pre-pairing navigation error;
 that alternative remains unqualified. Drivers require
 independent device pairing and their sessions are not interchangeable. Docker
 publishes only `127.0.0.1:43980`; the account-control MCP remains internal. This
-recipe is preparation for a later deployment decision. No Fly application, route,
-secrets, machine, submission artifact or generic FLUJO code is changed.
+recipe is also the source context for the authorized private companion. Append
+`--fly-private` to the image's existing entrypoint for its private IPv6 control
+binding; this mode requires `SAVIA_WHATSAPP_OPERATOR_TOKEN` from a private secret.
+All account-control API routes require operator authentication, including status
+and QR retrieval. The static sign-in screen holds an expiring access token only
+in page memory; it never uses cookies, URLs or browser storage for credentials.
+Use an authenticated Fly tunnel on local port 43980. No public service is supported.
+Source preparation changes no Fly resources, submission artifact or generic FLUJO.
 The pinned Baileys store also retains an owner lease after an abrupt process kill;
 changing container hostname or PID can require manual session-owner reconciliation.
 Preserve the volume and credentials; automatic lease/credential deletion is not a

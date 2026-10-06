@@ -4,12 +4,14 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 import importlib.util
+import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
 import socket
+import stat
 import subprocess
 import sys
 
@@ -22,6 +24,158 @@ from .bridge import Bridge, Journal
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTROL_PORT, MCP_PORT, SAVIA_PORT = 43980, 43981, 43982
+
+_SOURCE_TREES = ("banking_mcp", "dispute_workflow", "savia_assistant", "pipeline", "resources", "config",
+                 "frontend/server", "frontend/src", "frontend/public", "deploy/rc", "contracts", "standalone",
+                 "whatsapp-mcp/src", "whatsapp-mcp/public")
+_GENERATED_DIRS = {"__pycache__", "node_modules", "dist", ".pytest_cache", ".git"}
+_REQUIRED_FEATURE = {"standalone/__init__.py", *(
+    "standalone/savia_whatsapp/" + name for name in
+    ("__init__.py", "__main__.py", "runtime.py", "bridge.py", "savia.py", "whatsapp.py", "control.html",
+     "operator_auth.py"))}
+_REQUIRED_MCP = {"whatsapp-mcp/" + name for name in
+                 ("package.json", "package-lock.json", "tsconfig.json", "LICENSE", "src/index.ts")}
+
+
+class BundleAdmissionError(ValueError):
+    """The supplied public source is not an admitted standalone bundle."""
+
+
+def _admission_error(reason):
+    raise BundleAdmissionError(reason + "; export a fresh standalone package and launch inside its bundle directory.")
+
+
+def _regular_file(root: Path, name: str) -> Path:
+    """Validate portable manifest paths without resolving away a symlink."""
+    if not isinstance(name, str) or not name or "\\" in name or ":" in name or "\0" in name:
+        _admission_error("Unsafe package source path")
+    relative = PurePosixPath(name)
+    if not relative.parts or relative.is_absolute() or relative.as_posix() != name \
+            or any(part in {".", ".."} for part in relative.parts):
+        _admission_error("Unsafe package source path")
+    path = root
+    try:
+        for part in relative.parts:
+            path /= part
+            mode = path.lstat().st_mode
+            if stat.S_ISLNK(mode) or (hasattr(path, "is_junction") and path.is_junction()):
+                _admission_error("Linked package source is not allowed")
+        if not stat.S_ISREG(mode):
+            _admission_error("Package source must be a regular file")
+    except OSError:
+        _admission_error("Required package source is missing or unreadable")
+    return path
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            _admission_error("Duplicate manifest fields are not allowed")
+        result[key] = value
+    return result
+
+
+def _read_manifest(name):
+    path = _regular_file(ROOT, name)
+    try:
+        if path.stat().st_size > 4 * 1024 * 1024:
+            _admission_error("Package manifest is too large")
+        payload = path.read_bytes()
+        value = json.loads(payload.decode("utf-8"), object_pairs_hook=_unique_object)
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        _admission_error("Package manifest is unreadable or invalid")
+    if not isinstance(value, dict):
+        _admission_error("Package manifest must be an object")
+    return value, payload
+
+
+def _hash_map(manifest):
+    files = manifest.get("files")
+    if not isinstance(files, dict) or not files or len(files) > 20000 or any(
+            not isinstance(name, str) or not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest)
+            for name, digest in files.items()):
+        _admission_error("Package manifest requires valid source hashes")
+    return files
+
+
+def _source_coverage(files, *, root=None, trees=None):
+    # Dependency/build output is generated after export. All public source in the
+    # imported RC, feature and MCP trees must belong to the admitted manifest.
+    root = root if root is not None else ROOT
+    for name in trees if trees is not None else _SOURCE_TREES:
+        directory = root / name
+        if not directory.exists():
+            continue
+        if directory.is_symlink() or (hasattr(directory, "is_junction") and directory.is_junction()):
+            _admission_error("Linked package source is not allowed")
+        for current, directories, filenames in os.walk(directory, followlinks=False):
+            directories[:] = [item for item in directories if item not in _GENERATED_DIRS]
+            for item in directories:
+                child = Path(current) / item
+                if child.is_symlink() or (hasattr(child, "is_junction") and child.is_junction()):
+                    _admission_error("Linked package source is not allowed")
+            for item in filenames:
+                if item.endswith((".pyc", ".pyo")):
+                    continue
+                relative = (Path(current) / item).relative_to(root).as_posix()
+                if relative not in files:
+                    _admission_error("Public source is absent from the package manifest")
+
+
+def verified_bundle(mcp_dir: Path | None = None) -> dict[str, str]:
+    """Admit a pinned exported bundle, including an optional installed MCP copy.
+
+    This checks manifest consistency and public source integrity without Git.
+    Generated MCP dist/dependency assets belong to the separately qualified image
+    build; their source inputs, including the recorded overlay, are checked here.
+    """
+    package, payload = _read_manifest("standalone-package.json")
+    source, _ = _read_manifest("source-manifest.json")
+    if package.get("schema") != "savia-whatsapp-local-package/v1" \
+            or package.get("rc_revision") != RC_REVISION or package.get("whatsapp_mcp_revision") != MCP_REVISION \
+            or source.get("schema") != "savia-public-rc-source/v1" or source.get("git_head") != RC_REVISION:
+        _admission_error("Standalone source pins or manifest schemas do not match the qualified RC")
+    feature = package.get("feature_revision")
+    if not isinstance(feature, str) or not re.fullmatch(r"[0-9a-f]{40}", feature):
+        _admission_error("A committed feature revision is required")
+    if any(package.get(name) is not False for name in ("real_bank_actions", "state_included", "secrets_included")) \
+            or source.get("fiction_only") is not True or source.get("flujo_built") is not False:
+        _admission_error("Standalone package boundary declarations do not match")
+    files, rc_files = _hash_map(package), _hash_map(source)
+    rc_names = {name for name in files if not name.startswith(("standalone/", "whatsapp-mcp/"))
+                and name not in {"source-manifest.json", ".dockerignore"}}
+    if not (_REQUIRED_FEATURE | _REQUIRED_MCP | {"deploy/rc/run.py", "source-manifest.json"}) <= files.keys() \
+            or "deploy/rc/run.py" not in rc_files or rc_names != rc_files.keys() \
+            or any(files.get(name) != digest for name, digest in rc_files.items()):
+        _admission_error("RC and standalone source coverage disagree")
+    for name, digest in files.items():
+        path = _regular_file(ROOT, name)
+        try:
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            _admission_error("Package source is unreadable")
+        if actual != digest:
+            _admission_error("Package source hash mismatch")
+    _source_coverage(files)
+    if mcp_dir is not None:
+        mcp_dir = Path(mcp_dir)
+        if mcp_dir.is_symlink() or (hasattr(mcp_dir, "is_junction") and mcp_dir.is_junction()):
+            _admission_error("Linked installed MCP source is not allowed")
+        for name, digest in files.items():
+            if not name.startswith("whatsapp-mcp/"):
+                continue
+            installed = _regular_file(mcp_dir, name.removeprefix("whatsapp-mcp/"))
+            try:
+                actual = hashlib.sha256(installed.read_bytes()).hexdigest()
+            except OSError:
+                _admission_error("Installed MCP source is unreadable")
+            if actual != digest:
+                _admission_error("Installed MCP source differs from the admitted bundle")
+        _source_coverage({name.removeprefix("whatsapp-mcp/"): digest for name, digest in files.items()
+                          if name.startswith("whatsapp-mcp/")}, root=mcp_dir, trees=("src", "public"))
+    return {"rc_revision": RC_REVISION, "whatsapp_mcp_revision": MCP_REVISION,
+            "feature_revision": feature, "package_manifest_sha256": hashlib.sha256(payload).hexdigest()}
 
 
 def ensure_ports_available():
@@ -49,9 +203,12 @@ def provider_key(filename: Path | None):
 
 
 def rc_module():
+    verified_bundle()
     spec = importlib.util.spec_from_file_location("isolated_rc", ROOT / "deploy/rc/run.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    if module.source_revision() != RC_REVISION:
+        _admission_error("Loaded RC source revision disagrees with its admitted manifest")
     return module
 
 
@@ -83,7 +240,10 @@ class Configure(BaseModel):
 
 
 def create_control(state: Path, mcp_dir: Path, provider_file: Path | None,
-                   *, backend="baileys", ffmpeg="ffmpeg"):
+                   *, backend="baileys", ffmpeg="ffmpeg", hosted=False):
+    admitted = verified_bundle(mcp_dir)
+    from .operator_auth import OperatorAuth
+    operator = OperatorAuth(hosted)
     private_creation_policy()
     state = state.resolve()
     state.mkdir(parents=True, exist_ok=True)
@@ -129,7 +289,8 @@ def create_control(state: Path, mcp_dir: Path, provider_file: Path | None,
         # Explicit paths protect the user's other accounts and experiments.
         mcp_runtime = state / "mcp-runtime"
         clean_env = {name: value for name, value in os.environ.items()
-                     if not name.startswith(("WHATSAPP_", "BAILEYS_", "MCP_", "BANKING_", "SAVIA_", "RC_"))}
+                     if name != "OPENROUTER_API_KEY"
+                     and not name.startswith(("WHATSAPP_", "BAILEYS_", "MCP_", "BANKING_", "SAVIA_", "RC_"))}
         clean_env.update(WHATSAPP_BACKEND=backend, WHATSAPP_HEADLESS="true",
                          WHATSAPP_SESSION_DIR=str(state / "whatsapp-session"),
                          BAILEYS_SESSION_DIR=str(state / "baileys-session"),
@@ -204,6 +365,8 @@ def create_control(state: Path, mcp_dir: Path, provider_file: Path | None,
                 return Response(status_code=403)
         return await call_next(request)
 
+    operator.install(app)
+
     async def connection():
         if not config_file.is_file():
             raise HTTPException(409, "Enter your own WhatsApp number first")
@@ -237,6 +400,9 @@ def create_control(state: Path, mcp_dir: Path, provider_file: Path | None,
     async def status():
         value = {"configured": config_file.is_file(), "provider_configured": bool(key),
                  "rc_source": RC_REVISION, "mcp_source": MCP_REVISION,
+                 "loaded_feature_revision": admitted["feature_revision"],
+                 "package_manifest_sha256": admitted["package_manifest_sha256"],
+                 "operator_authentication": operator.enabled,
                  "mcp_overlay": "Baileys browser descriptor: Desktop to Chrome",
                  "children_running": all(process.poll() is None for process in children),
                  "running": bool(holder["bridge"] and holder["bridge"].running),
