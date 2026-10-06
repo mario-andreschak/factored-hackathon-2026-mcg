@@ -1,0 +1,29 @@
+{
+  "schema": "savia-final-card-status-continuity/v1",
+  "at_utc": "2026-10-06T00:55:41.865Z",
+  "application_source": "634aa5244374b3e105ef7864fa100530bab45ec2",
+  "image": "registry.fly.io/savia-rc-2026@sha256:44bc554cd82ad62db51d536d580df248cbb188d24732e7ec1ed8133617c632a0",
+  "passed": true,
+  "http_checks": 12,
+  "cases": [
+    {
+      "language": "es",
+      "fictionalProfile": "mexico",
+      "owned_status_verified": true,
+      "saved_receipt_sha256": "bae20836b3eebd746367d514d88d1723de10656c9518f3b8cb60de3cacaf0924",
+      "matches_dated_predecessor_receipt": true,
+      "independent_reads": 2
+    },
+    {
+      "language": "pt",
+      "fictionalProfile": "colombia",
+      "owned_status_verified": true,
+      "saved_receipt_sha256": "da586e06ac22111c448df1243fb134079d14260c01bd7171067827f0adfbd564",
+      "matches_dated_predecessor_receipt": true,
+      "independent_reads": 2
+    }
+  ],
+  "new_card_prepare_confirm_cancel_requests": 0,
+  "provider_calls": 0,
+  "scope": "Read-only owned-card status and unchanged saved-receipt verification after image promotion. New authentication sessions only; no new card block or voice acceptance."
+}

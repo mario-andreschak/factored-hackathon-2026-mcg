@@ -19,7 +19,7 @@ The blocked status survives a new login. Spanish and Portuguese requests open th
 | Customer or bank need | Savia capability | Source and measured evidence |
 | --- | --- | --- |
 | Understand an unfamiliar charge | Owned transaction facts, ordered decision rules and bounded explanation | [Complete engine](DISPUTE_ENGINE.md), [actual grounded reply](measurements/team-story-summary.json) |
-| Hear useful guidance | Voice in the same assistant, acknowledged playback and queued completed updates | [Native voice capture](measurements/intended-savia-native/README.md), [saved recommendation speech](measurements/saved-recommendations-native/README.md) |
+| Hear useful guidance | Voice in the same assistant, acknowledged playback and queued completed updates | [Canonical ES/PT guidance and playback](measurements/native-canonical-live/README.md), [native voice capture](measurements/intended-savia-native/README.md), [saved recommendation speech](measurements/saved-recommendations-native/README.md) |
 | Compare perspectives and return | Two completed reviewers, durable inquiries, saved suggestions and a return visit | [Customer story](CUSTOMER_JOURNEY.md), [original receipts](measurements/MEASURED_RESULTS.md) |
 | Control the card action | Host-resolved owned selection, explicit consent, durable status and independent receipt readback | [Action host](../../dispute_workflow/action_host.py), [confirmed public action](measurements/card-block-live/README.md) |
 | Control models and deployment | Banking authority behind generic chat, flow, tool and MCP interfaces | [FLUJO platform guide](FLUJO_PLATFORM_EVIDENCE.md), [product boundary](../FLUJO_PRODUCT_BOUNDARY.md), [direct-host contract](../../frontend/DIRECT_MCP.md) |

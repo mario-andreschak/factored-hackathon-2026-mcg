@@ -1,0 +1,48 @@
+{
+  "schema": "savia-blind-human-sample/v1",
+  "dataset_sha256": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+  "selection": "One lowest SHA256(seed+text) case per original label/language stratum; no predictions used; shuffled by same hash. Labels withheld.",
+  "seed": "savia-human-sample-v1-20261005",
+  "cases": [
+    {
+      "id": "A",
+      "text": "Quanto tenho de limite livre no cartão agora?",
+      "lang": "pt"
+    },
+    {
+      "id": "B",
+      "text": "Meu cuidador está me pressionando a entregar o controle da conta e tenho medo de ficar sem meu dinheiro.",
+      "lang": "pt"
+    },
+    {
+      "id": "C",
+      "text": "O valor lançado no cartão é maior que o valor do recibo da compra.",
+      "lang": "pt"
+    },
+    {
+      "id": "D",
+      "text": "Si no atienden este cobro duplicado, voy a iniciar una demanda contra el banco.",
+      "lang": "es"
+    },
+    {
+      "id": "E",
+      "text": "Me indica uma receita fácil pro almoço.",
+      "lang": "pt"
+    },
+    {
+      "id": "F",
+      "text": "¿Aceptan mascotas dentro de la sucursal?",
+      "lang": "es"
+    },
+    {
+      "id": "G",
+      "text": "La devolución figura como hecha en el comercio, pero sigo sin tener esa plata en la cuenta.",
+      "lang": "es"
+    },
+    {
+      "id": "H",
+      "text": "Che, mandé plata hace un rato. ¿Podés decirme si sigue en proceso?",
+      "lang": "es"
+    }
+  ]
+}

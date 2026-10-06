@@ -1,102 +1,39 @@
 # Savia release candidate
 
-**READY FOR HUMAN REVIEW — owner and Gloria, October 5, 2026.**
-The owner has limited this submission to the existing app, frozen video and decks,
-and honest documentation. New fleet runs, provisioning, funding approval and
-additional follow-up qualification are outside this release scope.
+**Current public product release — October 5, 2026, America/Bogota.**
 
-Savia is a friendly Spanish and Portuguese voice assistant that follows customer
-inquiries, asks a team for different perspectives, and keeps useful answers and
-follow-up together when the customer returns.
+Open the [submission portal](https://savia-rc-2026.fly.dev/submission/) for the human pitch, completed customer film, repository and development story. Try [Savia](https://savia-rc-2026.fly.dev) with **SAVIA-2026** at the entry gate and fictional-profile login. The [six-slide product pitch](media/decks/final/savia-final-pitch.pdf) follows Why → What → How; its [editable PowerPoint](media/decks/final/savia-final-pitch.pptx) and presenter notes share the final product narration.
 
-## Tested infrastructure behind the customer story
+## Current runtime and acceptance
 
-The foundation is already load-tested: **300 parallel requests through FLUJO,
-300/300 correct results**, plus 400 direct inference requests (400 HTTP successes,
-399 correct), real filesystem tools and collaboration runs with 18 Fly sandboxes
-live together. See the [infrastructure report](measurements/INFRASTRUCTURE_CAPACITY.md)
-and [public aggregate receipt](measurements/infrastructure-capacity.json).
+| Component | Qualified source or observation |
+| --- | --- |
+| Application, standalone analytics sources and public portal | `634aa5244374b3e105ef7864fa100530bab45ec2`, tree `e27ee184520af7fde74831cd553faf1899b4babe` |
+| Running image | `registry.fly.io/savia-rc-2026@sha256:44bc554cd82ad62db51d536d580df248cbb188d24732e7ec1ed8133617c632a0` |
+| Source and machine continuity | All 183 sources, 22 built browser files and four native runtime files verified; complete machine configuration preserved except image |
+| Public submission | All 27 allowlisted payloads match; health and entry guard verified |
+| Card ledger after promotion | Two ES/PT owned-card saved receipts match the dated predecessor; 12 HTTP checks, zero new card blocks or provider calls |
+| Canonical native voice | Actual two-language captions and exact product-UI playback acknowledgments on `6219bc81` / image `9aa240aa…`; those accepted transport bytes are unchanged in the final layer |
 
-Savia uses the recovered ten-Machine architecture, one lead plus nine specialists
-per team and root supervision separate. Its customer connector is implemented
-and deployed. The two reviewers in the frozen film describe that recording,
-not the tested infrastructure's capacity ceiling.
+[Final release receipts and harnesses](measurements/final-product/README.md) pin the running source, hashes, unchanged configuration, public assets and card continuity. [Live canonical voice](measurements/native-canonical-live/README.md) keeps the original audio, screenshots and exact dated source/image. Source qualification and a merge are distinct from a live observation; neither changes an older receipt's pin.
 
-A further paid fleet/load run for the submission video was skipped because of
-budget constraints. Existing successful tests retain their measured scope. The
-earlier October 5 integrated attempt's disabled-provider failure is preserved
-below; it was started, whereas the further run was skipped.
+## Product evidence
 
-## Open the submission
+The complete [R0–R18 engine](DISPUTE_ENGINE.md) owns deterministic policy, selected facts, explicit consent, independently verified receipts and recovery. [Card protection](measurements/CARD_BLOCK_VERIFICATION.md) demonstrates one owned card, confirmed durable status and independent reread; 100 concurrent confirmations create exactly one block and receipt. Demo ledger. Same admission rules a production host would use.
 
-Try [Savia](https://savia-rc-2026.fly.dev) with **SAVIA-2026** at the entry gate
-and fictional customer profile login.
+The 140.611-second [customer film](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4) records a grounded answer, two completed reviewers, helpful informational closure and saved context. The [saved-recommendation capture](measurements/saved-recommendations-native/README.md) adds actual speech, exact full-playback acknowledgment and recovery after reload. [Luna](measurements/luna-100/README.md) completed 100/100 concurrent ES/PT fixture decisions; [FLUJO capacity](measurements/INFRASTRUCTURE_CAPACITY.md) returned 300/300 reference results and records collaboration with 18 live sandboxes. Each is its own workload. The ten-team customer architecture retains its separate acceptance gate.
 
-- [Play or download the submission video](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4)
-- [Editable submission deck](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission-deck.pptx) and [PDF](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission-deck.pdf)
-- [Editable pitch deck](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-pitch-deck.pptx) and [PDF](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-pitch-deck.pdf)
-- [Customer story](CUSTOMER_JOURNEY.md) and [measurement appendix](measurements/MEASURED_RESULTS.md)
+The [publication-boundary qualification](measurements/pipeline-publication/README.md) verifies report completion before the serving-pointer swap and compatible banking/health consumers. [Verified presentation and host outcomes](measurements/verified-outcomes/README.md) retain their dated source and test qualification.
 
-These published assets belong to [frozen rc.2](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/tag/v0.1.0-rc.2),
-which reuses the rc.1 film and decks. The video is 140.611 seconds, 1080p, with
-both complete integrated voice clips; decoding passed. Both editable decks and
-PDFs have five slides/pages. The [media freeze receipt](media/media-freeze-receipt.json)
-retains exact hashes. This documentation update leaves those assets unchanged.
-
-## The customer story and prototype limits
-
-A fictional customer selects an unfamiliar charge and asks Savia for help.
-Savia explains checked transaction facts, offers team exploration, and retains
-suggestions and conversation context. The recorded story shows two real completed
-reviewers, the customer marking an informational answer helpful, a new chat view,
-and a return to the saved bank reply and suggestions. The rc.2 supplement shows
-**Escuchar recomendaciones** speaking useful condensed merchant and receipt advice.
-
-The integrated avatar and conversational voice live inside the assistant dialog
-at `frontend/src/avatar/`, based on
-`feature/savia-avatar-voice@2730d76de8e6847df4502c427ad9ced412f4a731` (PR 52).
-Native audio and exact full-playback acknowledgements support the recorded voice
-claims. The original recorder's optional diagnostic timeout remains disclosed in
-the appendix; physical microphone quality and independent human audio review are
-unqualified. Human review of the submission is the next step.
-
-The later October 5 fleet attempt returned correct fictional bank facts and a
-complete foreground voice reply, but its root model call failed because the
-provider workspace was disabled. No completed team reviews resulted from that
-attempt. It is a disclosed prototype limitation, not a blocker for this submission
-under the owner's reduced scope. Its [original receipt](measurements/fleet-customer-attempt/receipt.json)
-and full trace remain in the measurement appendix; the earlier successful
-recordings keep their original scope.
-
-Follow-up and saved context are part of the product. Earlier recorded checks
-support their stated behavior; no new extended follow-up run is required for this
-handoff. Exact ten-Machine/100-conversation customer completion, real human pickup
-and customer push/email delivery remain unqualified. Existing infrastructure load
-and sandbox tests are documented above. No refund or real bank resolution is
-claimed. Simulated intake requires explicit consent and a separately verified receipt; informational
-closure means that the customer found an answer helpful.
-
-## Source and evidence provenance
+## Historical source and media provenance
 
 | Evidence | Application source and image | Retained provenance |
 | --- | --- | --- |
 | Frozen rc.1 film and customer story | `9d77a759` / `sha256:484fe8ed…199a5` | [Source manifest](runtime-source-final.json), [deployment receipt](runtime-deployed.json), [native receipt](measurements/intended-savia-native/receipt.json) |
 | Frozen rc.2 saved recommendation speech | `7089ca7b` / `sha256:39457d88…0d38e` | [Read-only freeze](runtime-listen-freeze.json), [supporting capture](measurements/saved-recommendations-native/README.md) |
-| Later deployed prototype and partial fleet attempt | `a5e48f09` / `sha256:35903f9a…6dc93` | [Actual attempt receipt](measurements/fleet-customer-attempt/receipt.json), with full application/native/controller pins |
+| Later October 5 prototype | `a5e48f09` / `sha256:35903f9a…6dc93` | [Dated customer measurements and original receipts](measurements/MEASURED_RESULTS.md) |
+| Accepted canonical native transport | `6219bc81` / `sha256:9aa240aa…a1b8b9d` | [Two-language live audit](measurements/native-canonical-live/README.md) |
 
-The later prototype uses native source `67d21ad3` and controller `290dd6a7`;
-their full pins are retained in that receipt.
-Newer source merges do not relabel these deployed images. Frozen rc.1/rc.2 tags,
-recordings, captions, hashes and historical receipts retain their original scope.
-The [measurement appendix](measurements/MEASURED_RESULTS.md) preserves language
-comparisons, timing boundaries, provider failures and incomplete captures.
+Frozen rc.1/rc.2 tags, recordings, captions, hashes and historical receipts retain their original scope. The [media freeze receipt](media/media-freeze-receipt.json) keeps the original film and two five-slide deck exports; the current six-slide pitch is a separately retained final artifact. [Measured results](measurements/MEASURED_RESULTS.md) preserve complete workload histories, timings and original receipts.
 
-The repository and frozen release assets are public. Private credentials,
-customer state and simulated ledgers remain outside tracked submission material.
-Ignored local legacy remnants are outside release acceptance. The integrated
-frontend avatar is the active voice source.
-
-**FLUJO main stays general purpose.** Banking integration belongs in this
-repository, the banking MCP or the owner-authorized isolated hackathon branch.
-The [product boundary](../FLUJO_PRODUCT_BOUNDARY.md) and
-[deployment source map](../FLUJO_HACKATHON_DEPLOYMENT.md) govern that separation.
+Private credentials, session state and simulated ledgers remain outside tracked submission material. **FLUJO main stays general purpose.** Banking integration belongs here, in Banking MCP or on the isolated hackathon branch, following the [product boundary](../FLUJO_PRODUCT_BOUNDARY.md) and [deployment source map](../FLUJO_HACKATHON_DEPLOYMENT.md).

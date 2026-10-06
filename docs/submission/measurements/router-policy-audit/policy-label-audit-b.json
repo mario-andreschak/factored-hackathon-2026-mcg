@@ -1,0 +1,73 @@
+{
+  "schema": "savia-automated-policy-label-audit/v1",
+  "audit_id": "b",
+  "status": "frozen_before_coordinator_comparison",
+  "packet_path": "C:/Users/Moe/.codex/worktrees/savia-submission-portal/factored-hackathon-2026/.tmp/human-adjudication-sample.json",
+  "packet_sha256": "cb7cd689f9ee2543f3c32eca33d9ea8a0efa772c28f20dc72164037a65551d62",
+  "method": "Automated semantic checking of the eight fixed requests using only the supplied packet and classification protocol. Packet proposals, original labels, predictions, other audits, and prior reviews were unavailable to this audit.",
+  "priority": "human trigger > asserted transaction problem > neutral own-account or transaction facts > other",
+  "cases": [
+    {
+      "id": "A",
+      "class": "inquiry",
+      "confidence": "clear",
+      "literal_english_gloss": "How much unused limit do I have on the card right now?",
+      "policy_reason": "A neutral question about the customer's own available card limit; no problem or human trigger is asserted."
+    },
+    {
+      "id": "B",
+      "class": "human",
+      "confidence": "clear",
+      "literal_english_gloss": "My caregiver is pressuring me to hand over control of the account and I am afraid of being left without my money.",
+      "policy_reason": "Asserted caregiver pressure to surrender account control and fear of losing access to money trigger the coercive-control and vulnerability rule."
+    },
+    {
+      "id": "C",
+      "class": "dispute",
+      "confidence": "clear",
+      "literal_english_gloss": "The amount posted to the card is greater than the amount on the purchase receipt.",
+      "policy_reason": "The customer asserts an incorrect charge amount by describing a mismatch with the purchase receipt."
+    },
+    {
+      "id": "D",
+      "class": "human",
+      "confidence": "clear",
+      "literal_english_gloss": "If you do not address this duplicate charge, I am going to file a lawsuit against the bank.",
+      "policy_reason": "An explicit legal threat takes priority over the also-asserted duplicate-charge dispute."
+    },
+    {
+      "id": "E",
+      "class": "other",
+      "confidence": "clear",
+      "literal_english_gloss": "Suggest an easy recipe for lunch to me.",
+      "policy_reason": "A recipe request is outside the chosen inquiry and dispute support scope."
+    },
+    {
+      "id": "F",
+      "class": "other",
+      "confidence": "clear",
+      "literal_english_gloss": "Do you allow pets inside the branch?",
+      "policy_reason": "A question about branch facilities or access policy is outside the chosen inquiry and dispute support scope."
+    },
+    {
+      "id": "G",
+      "class": "dispute",
+      "confidence": "clear",
+      "literal_english_gloss": "The refund is shown as done at the merchant, but I still do not have that money in the account.",
+      "policy_reason": "The customer asserts a missing refund despite the merchant showing it as completed."
+    },
+    {
+      "id": "H",
+      "class": "inquiry",
+      "confidence": "clear",
+      "literal_english_gloss": "Hey, I sent money a short while ago. Can you tell me whether it is still being processed?",
+      "policy_reason": "A neutral question about the status of the customer's own transfer; no failure, nonreceipt, deduction problem, or human trigger is asserted."
+    }
+  ],
+  "limitations": [
+    "These are AI-generated policy labels, not independent human adjudication or human label approval.",
+    "The delegated audit does not substitute for a language-speaking human reviewer.",
+    "Only eight fixed requests were checked; this does not fully validate the 120-case dataset.",
+    "No model score or prediction-based evaluation was computed."
+  ]
+}

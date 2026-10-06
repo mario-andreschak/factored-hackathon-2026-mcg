@@ -1,0 +1,30 @@
+{
+  "scope": "Read-only CUA DOM inspection of the public submission portal; no banking writes or provider calls",
+  "url": "https://savia-rc-2026.fly.dev/submission/",
+  "coordinator_portal_source": "634aa5244374b3e105ef7864fa100530bab45ec2",
+  "viewport_width": 390,
+  "document_width": 375,
+  "navigation": [
+    {
+      "text": "Savia Pitch",
+      "top": 98.59375
+    },
+    {
+      "text": "Savia GitHub",
+      "top": 98.59375
+    },
+    {
+      "text": "Savia Video",
+      "top": 98.59375
+    },
+    {
+      "text": "Development Process",
+      "top": 132.984375
+    }
+  ],
+  "images_complete": 2,
+  "video_error": null,
+  "caption_tracks": 1,
+  "viewport_override_reset": true,
+  "submission_tab_marked_deliverable": true
+}
