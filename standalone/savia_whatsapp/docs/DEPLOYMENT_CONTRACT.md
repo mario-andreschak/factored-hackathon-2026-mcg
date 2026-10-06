@@ -29,6 +29,14 @@ state creation or RC execution. `/status` includes the admitted feature revision
 and package-manifest hash. Compiled Node assets are identified by the qualified
 image/build receipt; source hashes alone are not a compiled-image attestation.
 
+The standalone startup wrapper disables chat action availability and replaces
+its internal bank backend with a read-only authority boundary before serving.
+Retained prepare recovery cannot send an action POST, and cancellation cannot
+expire bank pending state or delete frontend pending state. The internal backend
+permits only session revocation POSTs and query-scope reads; ordinary workflow
+bank reads remain available. HTTP action/follow-up blocks remain an additional
+boundary. The pinned RC.3 source itself is unchanged.
+
 Public evidence is the dated `validation.json`: owner-confirmed text-to-text/PTT
 and independently observed PTT-to-text/PTT, four outbound replies, no uncertain
 send. Frozen Windows and Linux suites passed 65 tests and 28 subtests, with one
