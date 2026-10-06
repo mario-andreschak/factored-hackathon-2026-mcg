@@ -91,15 +91,16 @@ class Bridge:
         self.ready = asyncio.Event()
 
     async def process(self, message):
-        if self.journal.known(message.id) or message.timestamp < self.started_at:
+        identifier = getattr(message, "dedupe_id", "") or message.id
+        if self.journal.known(identifier) or message.timestamp < self.started_at:
             return
         # In a self-chat, the user's notes are also fromMe. Text is explicitly addressed.
         text = message.body.strip() if message.type == "chat" else ""
         is_voice = message.type in {"ptt", "audio"} and message.has_media
         if not is_voice and not text.casefold().startswith("!savia "):
-            self.journal.set(message.id, "ignored")
+            self.journal.set(identifier, "ignored")
             return
-        self.journal.set(message.id, "processing")
+        self.journal.set(identifier, "processing")
         self.busy, self.last_state = True, "generating"
         attempted_delivery = False
         try:
@@ -111,24 +112,24 @@ class Bridge:
                 reply = await self.savia.converse(audio_wav=wav)
             else:
                 reply = await self.savia.converse(message=text[7:].strip())
-            self.journal.set(message.id, "sending")
+            self.journal.set(identifier, "sending")
             self.last_state = "sending"
             attempted_delivery = True
             receipt = await self.whatsapp.send_text("Savia · demostración ficticia\n" + reply.text)
-            self.journal.sent(receipt.id)
+            self.journal.sent(getattr(receipt, "dedupe_id", "") or receipt.id)
             if reply.voice_turns:
                 receipt = await self.whatsapp.send_voice_note(reply.voice_turns[-1].wav, "audio/wav")
-                self.journal.sent(receipt.id)
-            self.journal.set(message.id, "delivered")
+                self.journal.sent(getattr(receipt, "dedupe_id", "") or receipt.id)
+            self.journal.set(identifier, "delivered")
             self.processed += 1
             self.last_state = "delivered_not_playback_verified"
         except asyncio.CancelledError:
-            self.journal.set(message.id, "uncertain" if attempted_delivery else "failed_interrupted")
+            self.journal.set(identifier, "uncertain" if attempted_delivery else "failed_interrupted")
             self.last_state, self.running = "operator_review_required" if attempted_delivery else "generation_failed", False
             raise
         except Exception:
             # Any transport failure may hide a successful WhatsApp send; never blindly retry.
-            self.journal.set(message.id, "uncertain" if attempted_delivery else "failed")
+            self.journal.set(identifier, "uncertain" if attempted_delivery else "failed")
             self.last_state, self.running = "operator_review_required" if attempted_delivery else "generation_failed", False
         finally:
             self.busy = False
@@ -140,7 +141,7 @@ class Bridge:
         # Baseline only this configured chat; exclude all pre-existing history.
         try:
             for message in await self.whatsapp.list_messages(after_timestamp=0):
-                self.journal.set(message.id, "baseline")
+                self.journal.set(getattr(message, "dedupe_id", "") or message.id, "baseline")
         except Exception:
             self.last_state = "startup_failed"
             self.ready.set()

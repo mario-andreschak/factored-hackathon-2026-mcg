@@ -15,6 +15,7 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
 from datetime import timedelta
 import json
+import hashlib
 import math
 from pathlib import Path
 import re
@@ -107,6 +108,7 @@ class Message:
     timestamp: float
     from_me: bool
     has_media: bool
+    dedupe_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -119,6 +121,7 @@ class Media:
 class SentReceipt:
     id: str
     timestamp: float | None = None
+    dedupe_id: str = ""
 
 
 class ToolSession(Protocol):
@@ -145,6 +148,12 @@ def _boolean(value: Any, label: str) -> bool:
     if not isinstance(value, bool):
         raise WhatsAppMcpError(f"Invalid {label} in MCP response.")
     return value
+
+
+def _unique_json_object(pairs):
+    if len({key for key, _ in pairs}) != len(pairs):
+        raise ValueError("Duplicate key")
+    return dict(pairs)
 
 
 class WhatsAppMcpAdapter:
@@ -208,6 +217,46 @@ class WhatsAppMcpAdapter:
         if _jid_key(chat_id) != _jid_key(self.config.chat_jid):
             raise ChatPolicyError("Only the configured test chat can be accessed.")
 
+    def _message_identity(self, identifier: str, chat_id: str, from_me: bool) -> str:
+        """Normalize only the pinned Baileys key inside an authorized direct chat.
+
+        The MCP projection establishes chat scope before this is called. A raw
+        key may retain a LID even after the MCP has resolved chatId to its phone
+        alias. This does not establish or remember any new phone/LID binding.
+        Keep the opaque identifier unchanged for MCP retrieval and downloads.
+        """
+        self._authorize_chat(chat_id)
+        if not identifier.startswith("b1:"):
+            return identifier
+        encoded = identifier[3:]
+        try:
+            if len(identifier) > 4096 or not re.fullmatch(r"[A-Za-z0-9_-]+", encoded):
+                raise ValueError
+            raw = base64.b64decode(encoded + "=" * (-len(encoded) % 4), altchars=b"-_", validate=True)
+            value = json.loads(raw.decode("utf-8"), object_pairs_hook=_unique_json_object)
+            if not isinstance(value, dict) or set(value) not in (
+                    {"remoteJid", "id", "fromMe"}, {"remoteJid", "id", "fromMe", "participant"}) \
+                    or not isinstance(value["id"], str) or not value["id"] \
+                    or len(value["id"]) > 1024 or any(ord(char) < 32 for char in value["id"]) \
+                    or type(value["fromMe"]) is not bool or value["fromMe"] != from_me:
+                raise ValueError
+            remote = _jid_key(value["remoteJid"])
+            context = _jid_key(chat_id)
+            # A resolved phone key must agree with the authorized projection.
+            # An unresolved LID cannot authorize a chat: chatId was checked above.
+            if remote.startswith("phone:") and remote != context:
+                raise ChatPolicyError("The message key conflicts with its authorized chat.")
+            participant = _jid_key(value["participant"]) if "participant" in value else ""
+        except ChatPolicyError:
+            raise
+        except (ValueError, TypeError, UnicodeError, binascii.Error):
+            raise WhatsAppMcpError("MCP returned an invalid pinned Baileys message key.") from None
+        # Include target and direction so another chat or inbound key cannot
+        # collide. Participant identity remains explicit; it is never guessed.
+        key = json.dumps(["baileys-key/v1", context, value["id"], from_me, participant],
+                         separators=(",", ":"), ensure_ascii=False)
+        return "baileys-key/v1:" + hashlib.sha256(key.encode("utf-8")).hexdigest()
+
     async def _call(self, tool: str, arguments: dict[str, Any]) -> Any:
         if self._session is None:
             raise WhatsAppMcpError("Enter the MCP adapter before calling tools.")
@@ -269,11 +318,14 @@ class WhatsAppMcpAdapter:
             raise WhatsAppMcpError("MCP returned an invalid message.")
         chat = _string(data.get("chatId"), "message chat")
         self._authorize_chat(chat)
+        identifier = _string(data.get("id"), "message ID")
+        from_me = _boolean(data.get("fromMe"), "message direction")
         return Message(
-            _string(data.get("id"), "message ID"), chat,
+            identifier, chat,
             _string(data.get("body"), "message body", empty=True),
             _string(data.get("type"), "message type"), _number(data.get("timestamp"), "message timestamp"),
-            _boolean(data.get("fromMe"), "message direction"), _boolean(data.get("hasMedia"), "media flag"),
+            from_me, _boolean(data.get("hasMedia"), "media flag"),
+            self._message_identity(identifier, chat, from_me),
         )
 
     async def list_messages(
@@ -299,10 +351,14 @@ class WhatsAppMcpAdapter:
         excluded = set(seen_ids) | self._sent_ids
         unique: dict[str, Message] = {}
         for message in messages:
-            if message.timestamp >= cursor and message.id not in excluded:
-                if message.id in unique and unique[message.id] != message:
+            identity = message.dedupe_id or message.id
+            if message.timestamp >= cursor and message.id not in excluded and identity not in excluded:
+                previous = unique.get(identity)
+                if previous is not None and (
+                        previous.body, previous.type, previous.timestamp, previous.from_me, previous.has_media) != (
+                        message.body, message.type, message.timestamp, message.from_me, message.has_media):
                     raise WhatsAppMcpError("MCP returned inconsistent duplicate message IDs.")
-                unique[message.id] = message
+                unique[identity] = message
         for message in unique.values():
             self._observed_messages[message.id] = message.chat_id
             self._observed_messages.move_to_end(message.id)
@@ -348,10 +404,11 @@ class WhatsAppMcpAdapter:
                 raise WhatsAppMcpError("MCP returned no successful send receipt.")
             receipt_id = _string(data.get("messageId"), "send receipt ID")
             timestamp = _number(data["timestamp"], "send timestamp") if "timestamp" in data else None
+            identity = self._message_identity(receipt_id, self.config.chat_jid, True)
         except Exception as error:
             raise UncertainSendError("WhatsApp delivery is unconfirmed. Check the test chat before retrying.") from error
-        self._sent_ids.add(receipt_id)
-        return SentReceipt(receipt_id, timestamp)
+        self._sent_ids.update((receipt_id, identity))
+        return SentReceipt(receipt_id, timestamp, identity)
 
     async def send_text(self, text: str) -> SentReceipt:
         if not isinstance(text, str) or not text.strip() or len(text) > 16_000:

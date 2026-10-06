@@ -32,7 +32,8 @@ def build_package(destination: Path, mcp_repo: Path):
     names = ("__init__.py", "__main__.py", "runtime.py", "bridge.py", "savia.py", "whatsapp.py",
              "package.py", "README.md", "requirements.txt", "Dockerfile", ".dockerignore", "compose.yml",
              "control.html", "docs/video-notes.md", "docs/validation.json", "tests/test_bridge.py",
-             "tests/test_savia.py", "tests/test_runtime.py", "tests/test_package.py", "tests/test_linux_runtime.py")
+             "tests/test_savia.py", "tests/test_runtime.py", "tests/test_package.py", "tests/test_linux_runtime.py",
+             "tests/test_alias_identity.py")
     paths += [feature / name for name in names if (feature / name).is_file()]
     for path in paths:
         if path.is_symlink() or any(parent.is_symlink() or (hasattr(parent, "is_junction") and parent.is_junction())

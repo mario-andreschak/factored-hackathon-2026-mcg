@@ -8,11 +8,12 @@
   "mcp_overlay": "Baileys browser descriptor Desktop to Chrome in exported copy only",
   "coordination": "RC coordinator acknowledged the rc.3 baseline and separate feature/deployment boundary",
   "windows_tests": {
-    "passed": 53,
+    "passed": 65,
     "subtests_passed": 28,
     "posix_permission_test": "skipped on Windows",
     "existing_rc_voice_tests_passed": 43,
-    "real_rc_route_integration_with_scripted_provider": true
+    "real_rc_route_integration_with_scripted_provider": true,
+    "phone_lid_alias_echo_regression_checks_passed": true
   },
   "actual_native_provider_smoke": {
     "success": true,
@@ -29,11 +30,29 @@
     "isolated_source_installed_and_built": true,
     "get_backend_status_connected": true,
     "baileys_qr_generated_after_overlay": true,
-    "self_number_configured": false,
-    "personal_phone_paired": false,
-    "messages_sent": 0,
-    "voice_note_delivery_verified": false,
+    "self_number_configured": true,
+    "configured_fictional_profile": "colombia",
+    "personal_phone_paired": true,
+    "owner_confirmed_text_to_text_and_voice_reply": true,
+    "confirmed_delivered_input_types": ["chat", "ptt"],
+    "confirmed_outbound_types": ["chat", "ptt"],
+    "messages_sent": 4,
+    "voice_note_delivery_verified": true,
+    "uncertain_delivery": false,
+    "test_stopped_by_owner": true,
+    "heard_playback_acknowledged": false,
+    "incoming_voice_note_over_whatsapp_tested": true,
     "webjs": "two unpaired starts failed during upstream authentication-state evaluation after navigation"
+  },
+  "actual_native_audio_input_smoke": {
+    "source": "Savia-generated sample converted to Opus and decoded through the bridge codec",
+    "success": true,
+    "input_bytes": 532878,
+    "recognized": true,
+    "output_samples": 135600,
+    "sample_rate": 24000,
+    "whatsapp_sent": false,
+    "playback_verified": false
   },
   "container": {
     "linux_recipe_built": true,
@@ -50,8 +69,7 @@
   "flujo_modified": false,
   "original_whatsapp_repository_modified": false,
   "remaining_acceptance": [
-    "Owner enters their own number locally and pairs their phone",
-    "Actual text and voice-note exchange in the configured self chat",
-    "Owner reviews audible output; WhatsApp sending is not playback evidence"
+    "Personal-account runtime in the container and crash/redeployment continuity",
+    "A real playback signal before recording generated speech as heard"
   ]
 }

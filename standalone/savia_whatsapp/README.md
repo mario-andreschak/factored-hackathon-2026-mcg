@@ -129,3 +129,14 @@ schemas, private-chat boundaries, same-second cursors, self-message direction,
 echo suppression and uncertain delivery/restart behavior. Offline tests do not
 prove phone pairing, personal-account delivery or human audio playback. The
 dated [validation record](docs/validation.json) distinguishes these observations.
+
+On October 5, the owner paired the personal phone, started the self-chat test,
+sent a text message, confirmed both text and PTT audio replies, and stopped it.
+The local journal and self-chat receipts independently matched one delivered input
+and two outgoing messages with no uncertain send. A subsequent incoming PTT voice
+note also produced confirmed text and PTT replies, bringing the outgoing count to
+four. Opus decoding and a real native audio-input turn additionally passed using
+Savia's generated sample. The bridge normalizes the pinned Baileys message identity
+within the authorized chat so phone/LID address changes cannot turn its outgoing
+voice into a new input; raw IDs remain unchanged for media retrieval. No playback
+acknowledgement was invented, and personal session state is excluded from the bundle.
