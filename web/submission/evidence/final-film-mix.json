@@ -1,0 +1,42 @@
+{
+  "schema": "savia-final-film-music-receipt/v1",
+  "source_movie": {
+    "file": "mcg-final_nomusic.mp4",
+    "sha256": "e80d9b80a119d7b7b5c42046f512ec22c7beef6096c15167077bb9c8907ebdec"
+  },
+  "film": {
+    "file": "mcg-final.mp4",
+    "sha256": "dbd06865c1c79aa3bc707e7909c2b5259bb2b55ed5829b8f08f8df666f53efc5",
+    "duration_seconds": 178.9,
+    "width": 1920,
+    "height": 1080,
+    "frame_rate": "30/1",
+    "frames": 5367,
+    "picture_copied_without_reencoding": true,
+    "video_packet_sha256": "168d9f464eaa390d53c95fd703339213a2e3320e61c7daba438662e0555ff859",
+    "complete_video_bitstream_sha256": "37eeab6b563f4dbc9d3ac3d31ab6748aa23954d69e6a651dff3db477571a4da1"
+  },
+  "music": {
+    "title": "Evolution of Trust",
+    "artist": "DumbstruckBinauralBeats5376",
+    "source_url": "https://suno.com/s/qOrgiYdPQi1eoREk",
+    "song_id": "fb40d9a5-bae2-4fc9-9009-886d145da5c1",
+    "source_duration_seconds": 179.44,
+    "acquired_duration_seconds": 179.46,
+    "acquisition": "Complete normal Suno playback captured directly at 192 kbps Opus, then decoded to 48 kHz stereo PCM. No new music synthesis; not a bit-perfect original download.",
+    "decoded_pcm_sha256": "07444d9dc9899c4c0231cd3cb9263c995bd859753941473a3ec4cdfdcf95196a"
+  },
+  "audio_mix": {
+    "original_narration_gain": 1.0,
+    "music_target_lufs": -25,
+    "music_ducked_during_narration": true,
+    "music_fade_in_seconds": 1.25,
+    "music_fade_out_seconds": 4,
+    "final_lufs": -17.12,
+    "final_true_peak_dbtp": -1.47
+  },
+  "original_inputs_unchanged": true,
+  "complete_decode_passed": true,
+  "new_video_generation_calls": 0,
+  "new_speech_generation_calls": 0
+}

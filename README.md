@@ -8,7 +8,12 @@
 
 **[Try Savia](https://savia-rc-2026.fly.dev)** · entry and profile code: **`SAVIA-2026`**
 
-**[Watch the 2:21 customer film](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4)** · **[Six-slide product pitch](docs/submission/media/decks/final/savia-final-pitch.pdf)** · **[Editable slides](docs/submission/media/decks/final/savia-final-pitch.pptx)**
+**[Watch the 2:59 final film](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/savia-final-film-2026-10-05/mcg-final.mp4)** · **[Six-slide product pitch](docs/submission/media/decks/final/savia-final-pitch.pdf)** · **[Editable slides](docs/submission/media/decks/final/savia-final-pitch.pptx)**
+
+The final presentation uses the team's supplied movie and narration, with
+[Evolution of Trust](https://suno.com/s/qOrgiYdPQi1eoREk) by
+DumbstruckBinauralBeats5376. The [archived 140.611-second working demonstration](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4)
+and its runtime evidence retain their original scope.
 
 ![Savia's customer workbench and integrated assistant](docs/submission/media/decks/savia-hero-customer.png)
 

@@ -14,15 +14,20 @@ AI and orchestration engineering.
 
 Open the [submission portal](https://savia-rc-2026.fly.dev/submission/) for the four
 submission destinations: **Savia Pitch, Savia GitHub, Savia Video and Savia
-Development Process**. The customer film shows the qualified recorded
-demonstration in 140.611 seconds.
+Development Process**. The final presentation film is 178.9 seconds and uses
+the team's supplied movie and narration, with the requested soundtrack.
 
 | Destination | Direct access |
 | --- | --- |
 | Savia Pitch | [Six-slide pitch](https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.html), [PDF](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/media/decks/final/savia-final-pitch.pdf), [editable PowerPoint](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/media/decks/final/savia-final-pitch.pptx) |
 | Savia GitHub | [Repository](https://github.com/mario-andreschak/factored-hackathon-2026-mcg) |
-| Savia Video | [Customer film](https://savia-rc-2026.fly.dev/submission/#video); [qualified 140.611-second demonstration](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4) |
+| Savia Video | [Watch on the portal](https://savia-rc-2026.fly.dev/submission/#video); [final 2:59 film](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/savia-final-film-2026-10-05/mcg-final.mp4) |
 | Savia Development Process | [Readable development account](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/submission/DEVELOPMENT_PROCESS.md), [visual timeline](https://savia-rc-2026.fly.dev/submission/development.html) |
+
+Music: [Evolution of Trust](https://suno.com/s/qOrgiYdPQi1eoREk) by
+DumbstruckBinauralBeats5376. The [qualified 140.611-second working demonstration](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4)
+remains archived with its original runtime evidence. The final presentation edit
+does not change the source, denominator or acceptance of those measurements.
 
 ## A useful review route
 

@@ -19,10 +19,15 @@ Ask once. Savia follows through. The foundation is the complete deterministic R0
 
 Inspect source and receipts. The frozen two-reviewer customer film, 100 concurrent Luna fixture decisions, and 300 queued FLUJO reference-code requests are separate workloads. The 100-conversation collaborative customer fleet is the target architecture, with its own acceptance gate. Generic FLUJO remains independent of banking domain code. Each measurement retains its source, denominator and scope in the linked evidence.
 
+The current presentation film is a 178.9-second edit of the team's supplied final movie and narration, with the requested Suno music. It does not replace the archived working demonstration or change runtime acceptance.
+
 ## Links
 
 - Portal: https://savia-rc-2026.fly.dev/submission/
 - Manifest: https://savia-rc-2026.fly.dev/submission/submission.json
 - Pitch: https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.html
+- Final film: https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/savia-final-film-2026-10-05/mcg-final.mp4
+- Music: Evolution of Trust by DumbstruckBinauralBeats5376 — https://suno.com/s/qOrgiYdPQi1eoREk
+- Archived working-demo film (140.611 seconds): https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4
 - Development: https://savia-rc-2026.fly.dev/submission/development.html
 - Repository: https://github.com/mario-andreschak/factored-hackathon-2026-mcg

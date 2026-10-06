@@ -9,9 +9,19 @@
     "pitch_pdf": "https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.pdf",
     "github": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg",
     "video": {
-      "status": "qualified_frozen_customer_film",
-      "duration_seconds": 140.611,
-      "existing_frozen_film": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4"
+      "status": "final_presentation_film",
+      "duration_seconds": 178.9,
+      "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/savia-final-film-2026-10-05/mcg-final.mp4",
+      "source": "User-provided final movie with its existing narration; requested music mixed locally without changing the video frames.",
+      "music": {
+        "title": "Evolution of Trust",
+        "artist": "DumbstruckBinauralBeats5376",
+        "source_url": "https://suno.com/s/qOrgiYdPQi1eoREk"
+      },
+      "evidence_scope": "Presentation edit. Archived working-demo film and runtime measurements retain their original source, duration and acceptance scope.",
+      "existing_frozen_film": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4",
+      "sha256": "dbd06865c1c79aa3bc707e7909c2b5259bb2b55ed5829b8f08f8df666f53efc5",
+      "receipt": "https://savia-rc-2026.fly.dev/submission/evidence/final-film-mix.json"
     },
     "development_process": "https://savia-rc-2026.fly.dev/submission/development.html",
     "demo": "https://savia-rc-2026.fly.dev",
