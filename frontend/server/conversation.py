@@ -420,8 +420,18 @@ class Conversation:
                     re.sub(r"\s+", " ", transcript).strip() != re.sub(r"\s+", " ", caption).strip():
                 raise ValueError("unverified result")
             prefix = bytes(pcm[:128])
+            # Reject recognized encoded headers, including bare MPEG/ADTS without ID3.
+            # These conservative signatures are not an exhaustive PCM format detector.
+            mpeg_header = (len(prefix) >= 4 and prefix[0] == 0xff and (prefix[1] & 0xe0) == 0xe0
+                           and (prefix[1] & 0x18) != 0x08 and (prefix[1] & 0x06) != 0
+                           and (prefix[2] & 0xf0) != 0xf0 and (prefix[2] & 0x0c) != 0x0c)
+            adts_header = (len(prefix) >= 7 and prefix[0] == 0xff and (prefix[1] & 0xf6) == 0xf0
+                           and ((prefix[2] >> 2) & 0x0f) < 13
+                           and ((prefix[3] & 3) << 11 | prefix[4] << 3 | prefix[5] >> 5)
+                           >= (7 if prefix[1] & 1 else 9))
             if (not prefix.lstrip()
-                    or prefix[:4] in {b"RIFF", b"RIFX", b"RF64", b"OggS", b"fLaC", b"\x1a\x45\xdf\xa3"}
+                    or prefix[:4] in {b"RIFF", b"RIFX", b"RF64", b"FORM", b"OggS", b"fLaC", b"\x1a\x45\xdf\xa3"}
+                    or prefix[4:8] == b"ftyp" or mpeg_header or adts_header
                     or prefix[:3] == b"ID3" or prefix.lstrip()[:1] in {b"{", b"[", b"<"}):
                 raise ValueError("unsupported speech format")
             yield {"type": "start", "sample_rate": SAMPLE_RATE, "turn_id": turn_id}

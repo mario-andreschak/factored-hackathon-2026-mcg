@@ -426,7 +426,7 @@ def test_native_exact_buffers_every_byte_and_uses_isolated_configured_reader_wit
     'data: invalid json\n\ndata: [DONE]\n\n',
     'data: {"choices":[{"delta":{"audio":"invalid"}}]}\n\ndata: [DONE]\n\n',
 ])
-def test_native_exact_rejects_unverified_output_before_any_caption_or_audio_and_keeps_registered_fallback(script):
+def test_native_exact_rejects_unverified_output_before_any_caption_or_audio_and_keeps_registered_fallback(script, rejected_samples=300):
     async def run():
         from frontend.server.conversation import Conversation
         transport, seen = audio_model(lambda body: script)
@@ -439,7 +439,7 @@ def test_native_exact_rejects_unverified_output_before_any_caption_or_audio_and_
         assert "s" not in talk._pending
         assert not any(item["role"] == "assistant" for item in talk._ledgers["s"][1])
         with pytest.raises(VoiceError):
-            talk.played("s", talk._active["s"], 300, True)
+            talk.played("s", talk._active["s"], rejected_samples, True)
         with pytest.raises(VoiceError):
             talk.consume_speech("s", "Reembolsé 500 USD y el banco resolvió tu disputa.")
         talk.consume_speech("s", reply)
@@ -462,6 +462,9 @@ def test_native_exact_done_cannot_override_a_known_truncated_or_nonstop_finish(f
     b"RIFF" + b"\0" * 40, b"RIFX" + b"\0" * 40, b"RF64" + b"\0" * 40,
     b"OggS" + b"\0" * 40, b"fLaC" + b"\0" * 40, b"\x1a\x45\xdf\xa3" + b"\0" * 40,
     b"ID3" + b"\0" * 41, b'    {"error":"failed"}', b"    []", b"  <html>error</html>",
+    struct.pack(">I", 24) + b"ftypM4A " + b"\0" * 12,
+    b"\xff\xfb\x90\x64" + b"\0" * 414,
+    b"\xff\xf1\x60\x40\x05\x7f\xfc" + b"\0" * 35,
 ])
 def test_native_exact_rejects_fragmented_container_json_or_html_as_pcm(payload):
     if len(payload) % 2:
@@ -470,6 +473,36 @@ def test_native_exact_rejects_fragmented_container_json_or_html_as_pcm(payload):
     script = sse({"audio": {"transcript": reply, "data": base64.b64encode(payload[:1]).decode()}},
                  {"audio": {"data": base64.b64encode(payload[1:]).decode()}})
     test_native_exact_rejects_unverified_output_before_any_caption_or_audio_and_keeps_registered_fallback(script)
+
+
+def test_native_exact_rejects_valid_300_frame_aiff_before_counting_its_container_bytes_as_samples():
+    # A valid mono s16 AIFF at 24 kHz has 300 frames, but 654 container bytes.
+    rate_80 = b"\x40\x0d\xbb\x80\x00\x00\x00\x00\x00\x00"
+    comm = b"COMM" + struct.pack(">IhIh", 18, 1, 300, 16) + rate_80
+    ssnd = b"SSND" + struct.pack(">III", 608, 0, 0) + b"\x00\x10" * 300
+    payload = b"FORM" + struct.pack(">I", 4 + len(comm) + len(ssnd)) + b"AIFF" + comm + ssnd
+    assert len(payload) == 654 and struct.unpack(">I", payload[22:26])[0] == 300
+    reply = "Recepción simulada registrada. No hubo reembolso."
+    script = sse({"audio": {"transcript": reply, "data": base64.b64encode(payload[:3]).decode()}},
+                 {"audio": {"data": base64.b64encode(payload[3:]).decode()}})
+    # Rejection must expose no audio, pending receipt or fictitious 327-sample ACK.
+    test_native_exact_rejects_unverified_output_before_any_caption_or_audio_and_keeps_registered_fallback(script, rejected_samples=327)
+
+
+def test_native_exact_negative_pcm_sample_bytes_are_not_treated_as_bare_mpeg_sync():
+    async def run():
+        from frontend.server.conversation import Conversation
+        reply = "Recepción simulada registrada. No hubo reembolso."
+        pcm = b"\xff\xff" * 300
+        transport, _ = audio_model(lambda body: sse({"audio": {"transcript": reply, "data": base64.b64encode(pcm).decode()}}))
+        voice = VoiceService({"providers": [ROUTER]}, transport=transport)
+        talk = Conversation({"conversation": {"api_key": "k", "result_transport": "native_exact"}}, voice, transport=transport)
+        talk.remember_result("s", reply)
+        events = [event async for event in await talk.turn("s", "es", result=reply)]
+        assert [event["type"] for event in events] == ["start", "caption", "audio", "complete"]
+        assert events[-1]["samples"] == 300 and base64.b64decode(events[2]["data"]) == pcm
+        await talk.close(), await voice.close()
+    asyncio.run(run())
 
 
 @pytest.mark.parametrize("reply", ["Recepción simulada registrada. No hubo reembolso.",
