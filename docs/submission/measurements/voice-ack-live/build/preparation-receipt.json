@@ -1,0 +1,31 @@
+{
+  "schema": "savia-ui-successor-preparation/v1",
+  "git_head": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "git_tree": "fabf02d622f51302e229137405e3607356d00ab0",
+  "context": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a",
+  "isolated_frontend_work": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-frontend-build-c44d416fcf1a",
+  "base_image": "registry.fly.io/savia-rc-2026@sha256:44bc554cd82ad62db51d536d580df248cbb188d24732e7ec1ed8133617c632a0",
+  "changed_exported_sources": [
+    "frontend/src/avatar/native-voice.test.tsx",
+    "frontend/src/avatar/useSaviaVoice.ts"
+  ],
+  "source_files": 183,
+  "new_browser_files": 21,
+  "old_browser_files": 22,
+  "native_files": 4,
+  "portal_files_retained": 28,
+  "pitch_files_retained": 12,
+  "pitch_media_files_retained": 16,
+  "source_manifest_sha256": "6ad47268b2d09dac11fdb74b9f73bff436b8aeed16ae183b15cf824f3828f806",
+  "portal_source_manifest_sha256": "652268ee73698b9f73219da6b2a5482bcfbab4efb02fcee7776f7ab9d16b57b7",
+  "build_provenance_sha256": "666544efb1bf6afa6a4b0f053982fc70be2c776c1123fe237a17c2703bfd061e",
+  "expected_guards_sha256": "3d200c1f58957b3b3a032dbde642633e6c34eee70c7bee26734cdf0e1d137dd9",
+  "layer_verifier_sha256": "be18516367db625156c97244419c21047f7de3c69885023ae30d562203f11d7c",
+  "prepare_helper_sha256": "de0fd2ed7a68cd366d7115386d401e2e732475679193cc866c35e2b6fb694f8a",
+  "dockerfile_sha256": "0411376ef09c732d8eeb150040561ea6c3159eb60d6d707105c0cf4c40f77ddb",
+  "frontend_built": true,
+  "docker_built": false,
+  "deployed": false,
+  "provider_calls": 0,
+  "runtime_configuration": "inherited unchanged; helper supplies no machine update or deployment configuration"
+}

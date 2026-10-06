@@ -1,0 +1,291 @@
+{
+  "schema": "savia-ack-public-preparation/v1",
+  "prepared_only": true,
+  "application_source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "git_tree": "fabf02d622f51302e229137405e3607356d00ab0",
+  "expected_image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "files": {
+    "ci-exact-source.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-public-prepared\\ci-exact-source.json",
+      "original_sha256": "247522a6c4b620bed5ce9e558671ef8ce5ccd71dc451e50b17995429f142c014",
+      "public_sha256": "247522a6c4b620bed5ce9e558671ef8ce5ccd71dc451e50b17995429f142c014",
+      "bytes": 7688,
+      "conversion": "byte-identical",
+      "classification": "raw pre-merge public CI status JSON;22 successes;not merge receipt"
+    },
+    "helpers/binding_gate.mjs": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\binding_gate.mjs",
+      "original_sha256": "f324afe4b5ae0b0e2f496181bd391516cd4f0e0bdf42a77edf3841cc3c927d07",
+      "public_sha256": "f324afe4b5ae0b0e2f496181bd391516cd4f0e0bdf42a77edf3841cc3c927d07",
+      "bytes": 5136,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/capture_savia_audio.mjs": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\capture_savia_audio.mjs",
+      "original_sha256": "118d1a124e2d4a256ebc94728633d4c0ecad2a0f67e20e83a83fe63ce299a4f6",
+      "public_sha256": "118d1a124e2d4a256ebc94728633d4c0ecad2a0f67e20e83a83fe63ce299a4f6",
+      "bytes": 6369,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/card_continuity.mjs": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\card_continuity.mjs",
+      "original_sha256": "3f9912ec0d8c0fed6064195e35632b092927548b5ca19bad55f1a25abb1f3b79",
+      "public_sha256": "3f9912ec0d8c0fed6064195e35632b092927548b5ca19bad55f1a25abb1f3b79",
+      "bytes": 4512,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/dated-predecessor-card-receipt.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\dated-predecessor-card-receipt.json",
+      "original_sha256": "bd6aef3d1fd5cd64fc0646fbf62baec8e63b40031cd57b2362d4ef158455e568",
+      "public_sha256": "bd6aef3d1fd5cd64fc0646fbf62baec8e63b40031cd57b2362d4ef158455e568",
+      "bytes": 13403,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/native_live.mjs": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\native_live.mjs",
+      "original_sha256": "2e5c4ec95643222a8892af03d1e60cefc8d19fcc45860acb1715f5ad043c7db7",
+      "public_sha256": "2e5c4ec95643222a8892af03d1e60cefc8d19fcc45860acb1715f5ad043c7db7",
+      "bytes": 30547,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/offline-node-tests.txt": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\offline-node-tests.txt",
+      "original_sha256": "ed98cbe56c43d3a92ea103d3a16ed959bed9ca5259cb6ad47dfe4a32857c7fab",
+      "public_sha256": "ed98cbe56c43d3a92ea103d3a16ed959bed9ca5259cb6ad47dfe4a32857c7fab",
+      "bytes": 819,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/offline-python-tests.txt": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\offline-python-tests.txt",
+      "original_sha256": "9a9646a2a10435d665cefb9de10af0a2b42591ab2a981bf3c96e664b997d575c",
+      "public_sha256": "9a9646a2a10435d665cefb9de10af0a2b42591ab2a981bf3c96e664b997d575c",
+      "bytes": 798,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/prepare_native_binding.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\prepare_native_binding.py",
+      "original_sha256": "58351fa3239b5060f50cd9417c2d53c634dfe83095b88dbdd130d1bc8afc5c67",
+      "public_sha256": "58351fa3239b5060f50cd9417c2d53c634dfe83095b88dbdd130d1bc8afc5c67",
+      "bytes": 3895,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/promote_successor.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\promote_successor.py",
+      "original_sha256": "a888addf46e0b06866a511cc8a4675490205c5da8a3a132718c59f7041031045",
+      "public_sha256": "a888addf46e0b06866a511cc8a4675490205c5da8a3a132718c59f7041031045",
+      "bytes": 5237,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/qualify_runtime.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\qualify_runtime.py",
+      "original_sha256": "26ffaed259200e99c0e5c52172972285670447a409d5f5a5b1a467c58fc18e20",
+      "public_sha256": "26ffaed259200e99c0e5c52172972285670447a409d5f5a5b1a467c58fc18e20",
+      "bytes": 6084,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/README.txt": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\README.txt",
+      "original_sha256": "5f91b1daf709b282acc77a21512fc07a8e1d13fd3bc1db8abebaa864dfbe3344",
+      "public_sha256": "5f91b1daf709b282acc77a21512fc07a8e1d13fd3bc1db8abebaa864dfbe3344",
+      "bytes": 5847,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/successor_common.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\successor_common.py",
+      "original_sha256": "ed1d8a9250842c65d0749f9600a9e39add759459060a46a7ec401552a6eb2846",
+      "public_sha256": "ed1d8a9250842c65d0749f9600a9e39add759459060a46a7ec401552a6eb2846",
+      "bytes": 8703,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/test_binding_gate.mjs": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\test_binding_gate.mjs",
+      "original_sha256": "f70c0b974bcd3ff7b2da0769991fcec2bf950d951ea79b6a289fd9ac1a859f39",
+      "public_sha256": "f70c0b974bcd3ff7b2da0769991fcec2bf950d951ea79b6a289fd9ac1a859f39",
+      "bytes": 4442,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/test_helpers.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\test_helpers.py",
+      "original_sha256": "93bf81823e2da11d859bff7875a9c3a016038b7e730290c6fe6cd5c15713a76f",
+      "public_sha256": "93bf81823e2da11d859bff7875a9c3a016038b7e730290c6fe6cd5c15713a76f",
+      "bytes": 4315,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/verify_public_assets.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\verify_public_assets.py",
+      "original_sha256": "c867f9f177b0142569090ed872a4fa6cbbfb7a2314edd571cacdd8885471b2aa",
+      "public_sha256": "c867f9f177b0142569090ed872a4fa6cbbfb7a2314edd571cacdd8885471b2aa",
+      "bytes": 3125,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "helpers/readiness.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ack-successor-qualification\\readiness.json",
+      "original_sha256": "d7f978b5e1e41077e0b70d2c1bcedd95a5b4600214c62f9478d16dec914c03d9",
+      "public_sha256": "d7f978b5e1e41077e0b70d2c1bcedd95a5b4600214c62f9478d16dec914c03d9",
+      "bytes": 2350,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/Dockerfile": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\Dockerfile",
+      "original_sha256": "0411376ef09c732d8eeb150040561ea6c3159eb60d6d707105c0cf4c40f77ddb",
+      "public_sha256": "0411376ef09c732d8eeb150040561ea6c3159eb60d6d707105c0cf4c40f77ddb",
+      "bytes": 863,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/.dockerignore": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\.dockerignore",
+      "original_sha256": "f4775f01d127df7de9c632f8d566ac935c4e71858009b713a52a8f26b693ced9",
+      "public_sha256": "f4775f01d127df7de9c632f8d566ac935c4e71858009b713a52a8f26b693ced9",
+      "bytes": 419,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/expected-ui-runtime.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\expected-ui-runtime.json",
+      "original_sha256": "3d200c1f58957b3b3a032dbde642633e6c34eee70c7bee26734cdf0e1d137dd9",
+      "public_sha256": "3d200c1f58957b3b3a032dbde642633e6c34eee70c7bee26734cdf0e1d137dd9",
+      "bytes": 51113,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/browser-build-provenance.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\browser-build-provenance.json",
+      "original_sha256": "666544efb1bf6afa6a4b0f053982fc70be2c776c1123fe237a17c2703bfd061e",
+      "public_sha256": "666544efb1bf6afa6a4b0f053982fc70be2c776c1123fe237a17c2703bfd061e",
+      "bytes": 10078,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/preparation-receipt.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\preparation-receipt.json",
+      "original_sha256": "c39f957f9efe7546369ea7f8c7972bf937e4bd151e43f9e3cff500a8b694e4dd",
+      "public_sha256": "c39f957f9efe7546369ea7f8c7972bf937e4bd151e43f9e3cff500a8b694e4dd",
+      "bytes": 1666,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/verify_ui_layer.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\verify_ui_layer.py",
+      "original_sha256": "be18516367db625156c97244419c21047f7de3c69885023ae30d562203f11d7c",
+      "public_sha256": "be18516367db625156c97244419c21047f7de3c69885023ae30d562203f11d7c",
+      "bytes": 7791,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/helpers/prepare_ui_successor.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-successor-helper\\prepare_ui_successor.py",
+      "original_sha256": "de0fd2ed7a68cd366d7115386d401e2e732475679193cc866c35e2b6fb694f8a",
+      "public_sha256": "de0fd2ed7a68cd366d7115386d401e2e732475679193cc866c35e2b6fb694f8a",
+      "bytes": 19160,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/helpers/build-only-c44d416fcf1a.ps1": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-successor-helper\\build-only-c44d416fcf1a.ps1",
+      "original_sha256": "0afa65326d5912cd22b0cd2f9dfd3b55a350199849a3b8600bc1e62df47b9c83",
+      "public_sha256": "0afa65326d5912cd22b0cd2f9dfd3b55a350199849a3b8600bc1e62df47b9c83",
+      "bytes": 3744,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/helpers/build-only-c44d416fcf1a.fly.toml": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-successor-helper\\build-only-c44d416fcf1a.fly.toml",
+      "original_sha256": "b7cc1c6925a2a1f526ffa7407b89f83c10d22ae9a866f80bbd35db8a81b426f3",
+      "public_sha256": "b7cc1c6925a2a1f526ffa7407b89f83c10d22ae9a866f80bbd35db8a81b426f3",
+      "bytes": 105,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "build/helpers/README.txt": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-successor-helper\\README.txt",
+      "original_sha256": "18c921d86f187b1ca7e4ece151b7b7b4bd7d5726acf968320afd624594b82aa3",
+      "public_sha256": "18c921d86f187b1ca7e4ece151b7b7b4bd7d5726acf968320afd624594b82aa3",
+      "bytes": 2210,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "source/source-manifest.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\application\\source-manifest.json",
+      "original_sha256": "6ad47268b2d09dac11fdb74b9f73bff436b8aeed16ae183b15cf824f3828f806",
+      "public_sha256": "6ad47268b2d09dac11fdb74b9f73bff436b8aeed16ae183b15cf824f3828f806",
+      "bytes": 22573,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "source/portal-source-manifest.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\application\\portal-source-manifest.json",
+      "original_sha256": "652268ee73698b9f73219da6b2a5482bcfbab4efb02fcee7776f7ab9d16b57b7",
+      "public_sha256": "652268ee73698b9f73219da6b2a5482bcfbab4efb02fcee7776f7ab9d16b57b7",
+      "bytes": 4452,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "source/frontend/src/avatar/useSaviaVoice.ts": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\application\\frontend\\src\\avatar\\useSaviaVoice.ts",
+      "original_sha256": "ab9af140ab42581dc9b78eaee8be0b3d475ee3e1d05e5a5a21508d6868eb58f6",
+      "public_sha256": "ab9af140ab42581dc9b78eaee8be0b3d475ee3e1d05e5a5a21508d6868eb58f6",
+      "bytes": 24902,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "source/frontend/src/avatar/native-voice.test.tsx": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\application\\frontend\\src\\avatar\\native-voice.test.tsx",
+      "original_sha256": "f50817c8a5374e00e4d35f70fc6462c495925283f5fd7a1e095553c8f3041ab3",
+      "public_sha256": "f50817c8a5374e00e4d35f70fc6462c495925283f5fd7a1e095553c8f3041ab3",
+      "bytes": 15108,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "source/frontend/server/conversation.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\application\\frontend\\server\\conversation.py",
+      "original_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+      "public_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+      "bytes": 34300,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "source/frontend/server/voice.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\application\\frontend\\server\\voice.py",
+      "original_sha256": "eb5c758ad232e43eed522f14b518e8eb9272d31cb92cb61b753e4dce55c75616",
+      "public_sha256": "eb5c758ad232e43eed522f14b518e8eb9272d31cb92cb61b753e4dce55c75616",
+      "bytes": 12516,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "source/deploy/rc/run.py": {
+      "original_path": "C:\\Users\\Moe\\.codex\\tmp\\savia-ui-runtime-c44d416fcf1a\\application\\deploy\\rc\\run.py",
+      "original_sha256": "4e245c0c35556b39d25196276b216edeb53084b8f410e09c7790b94219ba3075",
+      "public_sha256": "4e245c0c35556b39d25196276b216edeb53084b8f410e09c7790b94219ba3075",
+      "bytes": 13794,
+      "conversion": "byte-identical",
+      "classification": "public byte-identical source/metadata"
+    },
+    "portal-external-destinations-634aa524.json": {
+      "original_path": "C:\\Users\\Moe\\.codex\\worktrees\\savia-review-evidence\\factored-hackathon-2026\\.tmp\\portal-external-destinations-634aa524.json",
+      "original_sha256": "d3a7d938434908316c7b5532f65f4cc448cfa5e219de09833409038d18e624cc",
+      "public_sha256": "d3a7d938434908316c7b5532f65f4cc448cfa5e219de09833409038d18e624cc",
+      "bytes": 688,
+      "conversion": "byte-identical",
+      "classification": "exact existing HEAD-only public-destination receipt;no film playback acceptance"
+    }
+  },
+  "runtime_acceptance": "pending actual runtime/public/card/native receipts",
+  "provider_calls_performed_by_builder": 0
+}

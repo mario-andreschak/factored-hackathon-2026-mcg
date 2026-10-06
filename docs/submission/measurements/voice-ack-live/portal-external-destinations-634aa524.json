@@ -1,0 +1,20 @@
+[
+  {
+    "name": "github",
+    "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg",
+    "status": 200,
+    "final_host": "github.com",
+    "content_type": "text/html; charset=utf-8",
+    "content_length": null,
+    "scope": "HEAD only; no body read or film playback"
+  },
+  {
+    "name": "film",
+    "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4",
+    "status": 200,
+    "final_host": "release-assets.githubusercontent.com",
+    "content_type": "application/octet-stream",
+    "content_length": "19894979",
+    "scope": "HEAD only; no body read or film playback"
+  }
+]

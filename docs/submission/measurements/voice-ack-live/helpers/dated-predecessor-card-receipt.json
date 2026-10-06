@@ -1,0 +1,328 @@
+{
+  "schema": "savia-native-canonical-guidance-public-audit/v1",
+  "passed": true,
+  "startedAtUtc": "2026-10-06T00:33:43.597Z",
+  "finishedAtUtc": "2026-10-06T00:34:54.490Z",
+  "durationMs": 70894,
+  "origin": "https://savia-rc-2026.fly.dev",
+  "runtime": {
+    "git_head": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+    "image_digest": "sha256:9aa240aa6fd4616e2f029d6667ea234aa7ec8f7c1c8e1eef7a918d640a1b8b9d",
+    "source_manifest_sha256": "666b3dfd1f0bbf2579ca7b422349e888ab834a9869b8e55b18b851f7e9b95888",
+    "reverified_at_utc": "2026-10-06T00:27:57.031386+00:00"
+  },
+  "sourceComponentMap": {
+    "application": {
+      "git_head": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+      "git_tree": "43b094c3adb431cdd2ef8b4429e09062970370c8",
+      "scope": "149 exported application sources excluding portal and standalone analytics"
+    },
+    "analytics_cli": {
+      "git_head": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+      "git_tree": "43b094c3adb431cdd2ef8b4429e09062970370c8",
+      "source_files": 6,
+      "scope": "six standalone metadata-only source files; no automatic background execution"
+    },
+    "portal": {
+      "git_head": "4a7341209e56fd66468774316a0cc5883172e426",
+      "git_tree": "7cb21664bf44600f4d6ae511d9886ae5d561517e",
+      "scope": "28 public files unchanged and Git-congruent with application source"
+    },
+    "browser_build": {
+      "source": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+      "scope": "22 retained built files; executable UI build inputs unchanged"
+    }
+  },
+  "runtimeSourceFileCount": 183,
+  "retainedBrowserFileCount": 22,
+  "retainedNativeRuntimeFileCount": 4,
+  "liveHarness": {
+    "path": "live-harness.mjs",
+    "sha256": "b731467af6f42ff2406019f3dffccd053f82ed0c73208756c54a8662f28af5ff",
+    "execution": "root-authorized immutable source/image binding"
+  },
+  "counts": {
+    "actualNativeResultRequests": 2,
+    "actualUIExactPlaybackAcks": 2,
+    "tamperedResult409Refusals": 2,
+    "newCardPrepareConfirmCancelRequests": 0,
+    "qualifiedCases": 2,
+    "maximumProviderEligibleResultRequests": 2,
+    "maximumDurationMs": 120000
+  },
+  "providerUsage": null,
+  "providerCostUsd": null,
+  "usageCostScope": "Usage and cost metadata unavailable in captured provider responses; no inferred cost.",
+  "cases": [
+    {
+      "language": "es",
+      "fictionalProfile": "mexico",
+      "typedMessage": "bloquea mi tarjeta",
+      "passed": true,
+      "uiGuidancePlayback": {
+        "canonicalHostReply": "Puedo bloquear tu tarjeta ficticia ahora. En «Bloquear mi tarjeta ahora», selecciona tu tarjeta y confirma el bloqueo. Solo diré que está bloqueada cuando lea el recibo guardado. No se modifica ningún banco real.",
+        "canonicalHostReplySha256": "efbf877f85b1f70d4674c2a6405a46f806dbdf7e5a811185fbefd72f38258bc5",
+        "actualNativeCaption": "Puedo bloquear tu tarjeta ficticia ahora. En «Bloquear mi tarjeta ahora», selecciona tu tarjeta y confirma el bloqueo. Solo diré que está bloqueada cuando lea el recibo guardado. No se modifica ningún banco real.",
+        "strictHostCaptionEquality": true,
+        "actualUIResultInputEqualToHostReply": true,
+        "actualHostReplyVisibleInDOM": true,
+        "noRealBankCaveatPreserved": true,
+        "source": "actual normal product UI host reply, read through native_exact",
+        "audio": {
+          "path": "es/native-guidance.wav",
+          "transport": "actual browser fetch response.clone",
+          "audioInjection": false,
+          "channels": 1,
+          "sampleFormat": "pcm16",
+          "sampleRate": 24000,
+          "samples": 309600,
+          "pcmBytes": 619200,
+          "seconds": 12.9,
+          "pcmSha256": "e81d0e8c5f4d64a6e919302ef4e623e03c3b254ba9348135edb4653c431b0d08",
+          "wavSha256": "850b89a2ccae31e0c6d026d2f3135ceaf810d3105f169afc59b62b4be3ca3df0",
+          "eventCount": 29
+        },
+        "actualUIAck": {
+          "httpStatus": 200,
+          "complete": true,
+          "playedSamples": 309600,
+          "exactSamples": true,
+          "afterStreamCompletion": true,
+          "emittedByProductUI": true,
+          "noHarnessAckInjection": true,
+          "atMs": 30153
+        },
+        "speakingPhaseObservedAtMs": 16969,
+        "providerUsage": null,
+        "providerCostUsd": null
+      },
+      "existingCardProtection": {
+        "initialOwnedStatusVerified": true,
+        "state": "card_block_verified",
+        "receiptStatus": "blocked",
+        "simulated": true,
+        "realBankAction": false,
+        "initialSavedReceiptSha256": "bae20836b3eebd746367d514d88d1723de10656c9518f3b8cb60de3cacaf0924",
+        "observedIndependentlyFromGuidancePlayback": true,
+        "newPrepareConfirmCancelRequests": 0,
+        "rereadVerified": true,
+        "rereadSavedReceiptSha256": "bae20836b3eebd746367d514d88d1723de10656c9518f3b8cb60de3cacaf0924",
+        "savedReceiptUnchanged": true
+      },
+      "tamperedResult": {
+        "httpStatus": 409,
+        "providerEligible": false,
+        "captureRejectedAsExpected": true
+      },
+      "observedProductResponses": [
+        {
+          "path": "/api/cards/block",
+          "method": "POST",
+          "status": 200,
+          "atMs": 11368
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "status": 200,
+          "atMs": 13131
+        },
+        {
+          "path": "/api/voice/turn",
+          "method": "POST",
+          "status": 200,
+          "atMs": 16848
+        },
+        {
+          "path": "/api/voice/played",
+          "method": "POST",
+          "status": 200,
+          "atMs": 30153
+        },
+        {
+          "path": "/api/cards/block",
+          "method": "POST",
+          "status": 200,
+          "atMs": 30656
+        },
+        {
+          "path": "/api/voice/turn",
+          "method": "POST",
+          "status": 409,
+          "atMs": 30967
+        }
+      ],
+      "screenshots": [
+        {
+          "path": "es/01-owned-existing-card-state.png",
+          "sha256": "22f42ba23d2104665ed13e9dffd3751961a4b247f2659a3651327c30eb8c10ca"
+        },
+        {
+          "path": "es/02-actual-guidance-speaking.png",
+          "sha256": "ed56d627b4b1d6bae6687b246d394d1296b2defc02082f66ac1d1d102fe1a297"
+        },
+        {
+          "path": "es/03-guidance-played-and-card-state.png",
+          "sha256": "ed56d627b4b1d6bae6687b246d394d1296b2defc02082f66ac1d1d102fe1a297"
+        }
+      ],
+      "optionalBackgroundVoiceRequestsBlocked": 0
+    },
+    {
+      "language": "pt",
+      "fictionalProfile": "colombia",
+      "typedMessage": "bloqueie meu cartão",
+      "passed": true,
+      "uiGuidancePlayback": {
+        "canonicalHostReply": "Posso bloquear seu cartão fictício agora. Em «Bloquear meu cartão agora», selecione seu cartão e confirme o bloqueio. Só direi que está bloqueado depois de ler o recibo salvo. Nenhum banco real será alterado.",
+        "canonicalHostReplySha256": "8b72e997a9dd7e71611b3a4df48479f53f6e97a1cafa58d47c37b205137e5e72",
+        "actualNativeCaption": "Posso bloquear seu cartão fictício agora. Em «Bloquear meu cartão agora», selecione seu cartão e confirme o bloqueio. Só direi que está bloqueado depois de ler o recibo salvo. Nenhum banco real será alterado.",
+        "strictHostCaptionEquality": true,
+        "actualUIResultInputEqualToHostReply": true,
+        "actualHostReplyVisibleInDOM": true,
+        "noRealBankCaveatPreserved": true,
+        "source": "actual normal product UI host reply, read through native_exact",
+        "audio": {
+          "path": "pt/native-guidance.wav",
+          "transport": "actual browser fetch response.clone",
+          "audioInjection": false,
+          "channels": 1,
+          "sampleFormat": "pcm16",
+          "sampleRate": 24000,
+          "samples": 397200,
+          "pcmBytes": 794400,
+          "seconds": 16.55,
+          "pcmSha256": "98da13e0b6e8406eb7259998861011c7498e5cce7605bb486c2c7cc8bf4cee2d",
+          "wavSha256": "78d6fa85eb917bdf2d622855a090306a60c9e9bffecc445d6e707c8980a0ad05",
+          "eventCount": 37
+        },
+        "actualUIAck": {
+          "httpStatus": 200,
+          "complete": true,
+          "playedSamples": 397200,
+          "exactSamples": true,
+          "afterStreamCompletion": true,
+          "emittedByProductUI": true,
+          "noHarnessAckInjection": true,
+          "atMs": 67576
+        },
+        "speakingPhaseObservedAtMs": 50794,
+        "providerUsage": null,
+        "providerCostUsd": null
+      },
+      "existingCardProtection": {
+        "initialOwnedStatusVerified": true,
+        "state": "card_block_verified",
+        "receiptStatus": "blocked",
+        "simulated": true,
+        "realBankAction": false,
+        "initialSavedReceiptSha256": "da586e06ac22111c448df1243fb134079d14260c01bd7171067827f0adfbd564",
+        "observedIndependentlyFromGuidancePlayback": true,
+        "newPrepareConfirmCancelRequests": 0,
+        "rereadVerified": true,
+        "rereadSavedReceiptSha256": "da586e06ac22111c448df1243fb134079d14260c01bd7171067827f0adfbd564",
+        "savedReceiptUnchanged": true
+      },
+      "tamperedResult": {
+        "httpStatus": 409,
+        "providerEligible": false,
+        "captureRejectedAsExpected": true
+      },
+      "observedProductResponses": [
+        {
+          "path": "/api/cards/block",
+          "method": "POST",
+          "status": 200,
+          "atMs": 44196
+        },
+        {
+          "path": "/api/chat/messages",
+          "method": "POST",
+          "status": 200,
+          "atMs": 45962
+        },
+        {
+          "path": "/api/voice/turn",
+          "method": "POST",
+          "status": 200,
+          "atMs": 50331
+        },
+        {
+          "path": "/api/voice/played",
+          "method": "POST",
+          "status": 200,
+          "atMs": 67576
+        },
+        {
+          "path": "/api/cards/block",
+          "method": "POST",
+          "status": 200,
+          "atMs": 68453
+        },
+        {
+          "path": "/api/voice/turn",
+          "method": "POST",
+          "status": 409,
+          "atMs": 69010
+        }
+      ],
+      "screenshots": [
+        {
+          "path": "pt/01-owned-existing-card-state.png",
+          "sha256": "7bf9cde5a0da78210b68fd86156a07b6f78e56f17fe2140b07083a81353fdbe5"
+        },
+        {
+          "path": "pt/02-actual-guidance-speaking.png",
+          "sha256": "450fd551bc080ca12703ce5f78663eb826d0300c6673985b9dbdbac3493280b1"
+        },
+        {
+          "path": "pt/03-guidance-played-and-card-state.png",
+          "sha256": "450fd551bc080ca12703ce5f78663eb826d0300c6673985b9dbdbac3493280b1"
+        }
+      ],
+      "optionalBackgroundVoiceRequestsBlocked": 0
+    }
+  ],
+  "offlineQualification": {
+    "sourceRevision": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+    "harness": "offline-6219-harness.py",
+    "receipt": "offline-6219-receipt.json",
+    "httpChecks": 43,
+    "cases": 2,
+    "mockedNativeExactRequests": 2,
+    "realProviderCalls": 0,
+    "externalSocketConnectionAttempts": 0,
+    "sourceFilesVerifiedBeforeAndAfter": 183,
+    "disposableFictionalCardBlocks": 2,
+    "fixtureAutomaticallyRemoved": true,
+    "sourceBytesUnchanged": true
+  },
+  "sourceQualification": {
+    "successorRevision": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+    "voiceTestsPassed": 107,
+    "sourceGateTestsPassed": 1,
+    "protectedSourceSubtestsPassed": 89,
+    "historicalSeparateSourceGateRevision": "5df3b02699c1c9b3f2731eecaa9150a460ded228",
+    "historicalSeparateSourceGateTestsPassed": 32,
+    "aggregateAcrossRevisions": false,
+    "scope": "Release qualification reported by root/reviewer; artifact extraction did not rerun source tests."
+  },
+  "privacy": {
+    "publicReceipt": "Whitelist extraction with login credentials, cookies, opaque capability handles, absolute local paths and stacks omitted.",
+    "entryFormRecorded": false,
+    "browserStorageStatePersisted": false,
+    "rawPrivateBrowserReceiptPublished": false,
+    "rawPrivateRuntimeBindingPublished": false,
+    "offlineRawProvenance": "Explicit byte-exact offline harness/receipt preserve original local provenance paths.",
+    "screenshotFixtureIdentifiers": "PT first screenshot retains the generated card reference and BLK-SBX saved-receipt UI record ID; these are fictional record identifiers, not bearer capabilities."
+  },
+  "limits": [
+    "Live audio is card guidance; the already blocked owned-card status and unchanged saved-receipt rereads are separate observations.",
+    "No new card block or confirmation was performed in the live capture. Status operations do not emit the card-confirmation narration callback.",
+    "Exact host/caption equality is observed text consistency; it does not prove spoken waveform alignment or human comprehension.",
+    "Product UI ACK follows its device-clock drain gate; physical hearing, microphone/AEC and fleet-wide acceptance were not measured.",
+    "Offline native SSE is scripted mock evidence, not live provider availability evidence.",
+    "Usage and provider cost are unavailable; retained analytics CLI sources were not executed."
+  ],
+  "screenshotScope": "Authenticated generated-fiction UI snapshots at named checkpoints. Scrolled viewports can omit the card panel or avatar; screenshots alone do not prove speaking or playback completion. Canonical caption/PCM/ACK claims use observed product responses and controls."
+}

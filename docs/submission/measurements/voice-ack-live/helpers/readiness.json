@@ -1,0 +1,47 @@
+{
+  "schema": "savia-ack-successor-helper-readiness/v1",
+  "at_utc": "2026-10-06T01:43:25.024686+00:00",
+  "prepared_only": true,
+  "source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "tree": "fabf02d622f51302e229137405e3607356d00ab0",
+  "descriptor_sha256": "3d200c1f58957b3b3a032dbde642633e6c34eee70c7bee26734cdf0e1d137dd9",
+  "files": {
+    "binding_gate.mjs": "f324afe4b5ae0b0e2f496181bd391516cd4f0e0bdf42a77edf3841cc3c927d07",
+    "capture_savia_audio.mjs": "118d1a124e2d4a256ebc94728633d4c0ecad2a0f67e20e83a83fe63ce299a4f6",
+    "card_continuity.mjs": "3f9912ec0d8c0fed6064195e35632b092927548b5ca19bad55f1a25abb1f3b79",
+    "dated-predecessor-card-receipt.json": "bd6aef3d1fd5cd64fc0646fbf62baec8e63b40031cd57b2362d4ef158455e568",
+    "native_live.mjs": "2e5c4ec95643222a8892af03d1e60cefc8d19fcc45860acb1715f5ad043c7db7",
+    "offline-node-tests.txt": "ed98cbe56c43d3a92ea103d3a16ed959bed9ca5259cb6ad47dfe4a32857c7fab",
+    "offline-python-tests.txt": "9a9646a2a10435d665cefb9de10af0a2b42591ab2a981bf3c96e664b997d575c",
+    "prepare_native_binding.py": "58351fa3239b5060f50cd9417c2d53c634dfe83095b88dbdd130d1bc8afc5c67",
+    "promote_successor.py": "a888addf46e0b06866a511cc8a4675490205c5da8a3a132718c59f7041031045",
+    "qualify_runtime.py": "26ffaed259200e99c0e5c52172972285670447a409d5f5a5b1a467c58fc18e20",
+    "README.txt": "5f91b1daf709b282acc77a21512fc07a8e1d13fd3bc1db8abebaa864dfbe3344",
+    "successor_common.py": "ed1d8a9250842c65d0749f9600a9e39add759459060a46a7ec401552a6eb2846",
+    "test_binding_gate.mjs": "f70c0b974bcd3ff7b2da0769991fcec2bf950d951ea79b6a289fd9ac1a859f39",
+    "test_helpers.py": "93bf81823e2da11d859bff7875a9c3a016038b7e730290c6fe6cd5c15713a76f",
+    "verify_public_assets.py": "c867f9f177b0142569090ed872a4fa6cbbfb7a2314edd571cacdd8885471b2aa"
+  },
+  "offline_checks": {
+    "python_tests": 6,
+    "node_tests": 5,
+    "python_ast": "passed",
+    "node_syntax": "passed",
+    "local_context_hashes": "passed",
+    "native_describe": "passed"
+  },
+  "components": {
+    "source": 183,
+    "fresh_browser": 21,
+    "retained_native": 4,
+    "retained_portal": 28,
+    "retained_pitch_delivery": 12,
+    "retained_pitch_media": 16
+  },
+  "network_calls": 0,
+  "provider_calls": 0,
+  "machine_writes": 0,
+  "repo_edits": 0,
+  "builds": 0,
+  "live_acceptance": "not performed; future root execution required"
+}

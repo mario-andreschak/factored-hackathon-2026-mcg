@@ -1,0 +1,163 @@
+{
+  "schema": "savia-voice-ack-live-public-attempt/v1",
+  "passed": false,
+  "application_source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "git_tree": "fabf02d622f51302e229137405e3607356d00ab0",
+  "browser_source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "source_manifest_sha256": "6ad47268b2d09dac11fdb74b9f73bff436b8aeed16ae183b15cf824f3828f806",
+  "expected_ui_runtime_sha256": "3d200c1f58957b3b3a032dbde642633e6c34eee70c7bee26734cdf0e1d137dd9",
+  "served_ui": {
+    "assets/dm-sans-latin-400-normal-BwCSEQnW.woff": "38702875fe179437d200e7ba6f7fab4d497ffe48117ef332029b2081751186ad",
+    "assets/dm-sans-latin-400-normal-CW0RaeGs.woff2": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006",
+    "assets/dm-sans-latin-500-normal-B9HHJjqV.woff2": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d",
+    "assets/dm-sans-latin-500-normal-Dr3UlScf.woff": "7deb957e430b780ee3272d801af4f9f2211b1330ec40a312a8f25309eacb4034",
+    "assets/dm-sans-latin-600-normal-Aqo67rzb.woff2": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120",
+    "assets/dm-sans-latin-600-normal-BmdmIIQ2.woff": "e7351257e49400eff05aca30a2007289194a900860d30c30770d8b8732897564",
+    "assets/index-Css6KlOl.js": "92efe3fcb1b2f6a217225b0bfcc982956edddf8f5c2d28d63904b9edd96a0116",
+    "assets/index-CuDtvZeC.css": "0b66d29c208e0cae9005e82dfb0835b904307d7d2fefb0a750af632d664e3898",
+    "assets/manrope-latin-400-normal-8tf8FM3T.woff": "1bf66c29a29f1b71d507cb97fc138cd130b856ed05b55decd3a2944b413cb636",
+    "assets/manrope-latin-400-normal-PaqtzbVb.woff2": "849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3",
+    "assets/manrope-latin-500-normal-BYYD-dBL.woff2": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc",
+    "assets/manrope-latin-500-normal-DMZssgOp.woff": "c805ac8fd73fb95ddba74e624500c7d7d9a8ec6434d723bb6a9b76173c9e41b4",
+    "assets/manrope-latin-600-normal-4f0koTD-.woff2": "f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593",
+    "assets/manrope-latin-600-normal-BqgrALkZ.woff": "8d1f509774bca963fa02faf674678ce9244474306361ca2798583fa600346df6",
+    "assets/manrope-latin-700-normal-BZp_XxE4.woff2": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71",
+    "assets/manrope-latin-700-normal-DGRFkw-m.woff": "e5d35fda4759b0d63ebcc6cca0627d98d9208254ce851c85df29e4d12aeafb61",
+    "assets/manrope-latin-800-normal-BfWYOv1c.woff2": "74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49",
+    "assets/manrope-latin-800-normal-uHUdIJgA.woff": "ce954acb78379d559111a15d29925f3390b69161b2b1365c38b0f19c76991bac",
+    "avatar-audio-capture.js": "00d53b3152f780b2b9f51d6d9738ef67196bf32b70e9a1220c9d47c194f2432c",
+    "favicon.svg": "e2b11f931e5f2a82a3034160ae5dd0131e06c2f80d9ac8be6b753936142734c9",
+    "index.html": "d037abe01589b849e5f55c7176871267ab7d479df10ce326e6f336c2e004a9bd"
+  },
+  "portal_source": "634aa5244374b3e105ef7864fa100530bab45ec2",
+  "retained_native_server_source": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+  "critical_server_hashes": {
+    "frontend/server/conversation.py": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+    "frontend/server/voice.py": "eb5c758ad232e43eed522f14b518e8eb9272d31cb92cb61b753e4dce55c75616",
+    "deploy/rc/run.py": "4e245c0c35556b39d25196276b216edeb53084b8f410e09c7790b94219ba3075"
+  },
+  "native_harness_sha256": "2e5c4ec95643222a8892af03d1e60cefc8d19fcc45860acb1715f5ad043c7db7",
+  "capture_helper_sha256": "118d1a124e2d4a256ebc94728633d4c0ecad2a0f67e20e83a83fe63ce299a4f6",
+  "started_at": "2026-10-06T01:48:18.912Z",
+  "finished_at": "2026-10-06T01:49:18.800Z",
+  "duration_ms": 59888,
+  "new_provider_eligible_result_requests": 1,
+  "actual_product_ui_full_playback_acks": 1,
+  "provider_ineligible_negative_requests": 1,
+  "new_card_writes": 0,
+  "asr_input_requests": 0,
+  "fallback_voice_requests": 0,
+  "provider_cost_usd": null,
+  "cases": [
+    {
+      "case_passed": true,
+      "language": "es",
+      "fictional_profile": "mexico",
+      "typed_message": "bloquea mi tarjeta",
+      "actual_host_reply": "Puedo bloquear tu tarjeta ficticia ahora. En «Bloquear mi tarjeta ahora», selecciona tu tarjeta y confirma el bloqueo. Solo diré que está bloqueada cuando lea el recibo guardado. No se modifica ningún banco real.",
+      "actual_native_caption": "Puedo bloquear tu tarjeta ficticia ahora. En «Bloquear mi tarjeta ahora», selecciona tu tarjeta y confirma el bloqueo. Solo diré que está bloqueada cuando lea el recibo guardado. No se modifica ningún banco real.",
+      "caption_sha256": "efbf877f85b1f70d4674c2a6405a46f806dbdf7e5a811185fbefd72f38258bc5",
+      "strict_host_caption_equality": true,
+      "no_real_bank_caveat_present": true,
+      "sample_rate": 24000,
+      "samples": 399600,
+      "seconds": 16.65,
+      "pcm_sha256": "9b409eca5ce288244191a51ee151e4e40321e0fe5aa3f38837a027a99f072894",
+      "audio": "native/es.wav",
+      "events": "native/es.ndjson",
+      "actual_ui_playback_ack": {
+        "httpStatus": 200,
+        "complete": true,
+        "playedSamples": 399600,
+        "exactSamples": true,
+        "afterStreamCompletion": true,
+        "emittedByProductUI": true,
+        "noHarnessAckInjection": true,
+        "atMs": 44685
+      },
+      "existing_card_protection": {
+        "initialOwnedStatusVerified": true,
+        "state": "card_block_verified",
+        "receiptStatus": "blocked",
+        "simulated": true,
+        "realBankAction": false,
+        "initialSavedReceiptSha256": "bae20836b3eebd746367d514d88d1723de10656c9518f3b8cb60de3cacaf0924",
+        "rereadSavedReceiptSha256": "bae20836b3eebd746367d514d88d1723de10656c9518f3b8cb60de3cacaf0924",
+        "savedReceiptUnchanged": true,
+        "newPrepareConfirmCancelRequests": 0
+      },
+      "observed_served_assets": [
+        {
+          "path": "assets/index-CuDtvZeC.css",
+          "sha256": "0b66d29c208e0cae9005e82dfb0835b904307d7d2fefb0a750af632d664e3898",
+          "status": 200
+        },
+        {
+          "path": "assets/index-Css6KlOl.js",
+          "sha256": "92efe3fcb1b2f6a217225b0bfcc982956edddf8f5c2d28d63904b9edd96a0116",
+          "status": 200
+        },
+        {
+          "path": "assets/manrope-latin-800-normal-BfWYOv1c.woff2",
+          "sha256": "74c161dbcbce7c3590803cc72dc1f63313c360e13367aba5075a7b7b3818ea49",
+          "status": 200
+        },
+        {
+          "path": "assets/dm-sans-latin-400-normal-CW0RaeGs.woff2",
+          "sha256": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006",
+          "status": 200
+        },
+        {
+          "path": "assets/dm-sans-latin-600-normal-Aqo67rzb.woff2",
+          "sha256": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120",
+          "status": 200
+        },
+        {
+          "path": "assets/manrope-latin-500-normal-BYYD-dBL.woff2",
+          "sha256": "19874318747181a650eda439c37955220b849d9c4797c9e0718ee67d4bf929bc",
+          "status": 200
+        },
+        {
+          "path": "assets/manrope-latin-700-normal-BZp_XxE4.woff2",
+          "sha256": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71",
+          "status": 200
+        },
+        {
+          "path": "assets/dm-sans-latin-500-normal-B9HHJjqV.woff2",
+          "sha256": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d",
+          "status": 200
+        },
+        {
+          "path": "assets/manrope-latin-600-normal-4f0koTD-.woff2",
+          "sha256": "f7ac6258da20ab7541939b59851155753d1d24f1b30cbcb949077a3faa3d1593",
+          "status": 200
+        }
+      ],
+      "tampered_registered_result": {
+        "http_status": 409,
+        "provider_eligible": false
+      },
+      "physical_microphone_qualified": false,
+      "physical_hearing_qualified": false,
+      "waveform_text_alignment_qualified": false
+    }
+  ],
+  "receipt_source": "Actual passive browser fetch clone plus product UI /api/voice/played request andHTTP200 observations;no ACK injected",
+  "scope": "Original two-case batch failed in unrecorded auth wait before PT case creation;ES case completed successfully. Timeout may be profiles or login;exact wait is not identifiable from saved receipt.",
+  "failure": "page.waitForResponse: Timeout 10000ms exceeded while waiting for event \"response\"",
+  "original_batch_remains_failed": true,
+  "limits": [
+    "Live ACK error recovery is not injected;offline148/148 source coverage contains503/network/auth recovery tests.",
+    "Exact provider caption matching does not prove waveform/text alignment or physical hearing.",
+    "No full film playback, provider dollar-cost, fleet, or broad production acceptance.",
+    "Original6219 native proofs remain dated predecessor evidence and are unchanged."
+  ],
+  "privacy": {
+    "auth_recording": false,
+    "storage_state_published": false,
+    "private_config_or_binding_published": false,
+    "turn_receipt_capabilities_published": false,
+    "screenshots_or_video_published": false
+  }
+}
