@@ -1,0 +1,12 @@
+{
+  "schema": "savia-card-admission-promotion/v1",
+  "at_utc": "2026-10-06T02:58:58.081563+00:00",
+  "application_source": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+  "previous_image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "image": "registry.fly.io/savia-rc-2026@sha256:11854442ddd395614d8d9c7cd030d3256365941613a730657c6740406709827c",
+  "expected_descriptor_sha256": "c086702b39c483f92958f0b78e63cdab0146e40ab538c413ea44ad004301cd8c",
+  "accepted_private_snapshot_sha256": "d200c224aa858c4991f0c13d18a52743b750cb27fcffdf4ac7e62bc811fd781c",
+  "configuration_preserved": true,
+  "provider_calls": 0,
+  "scope": "Image-only promotion; no runtime/customer/native acceptance claim."
+}

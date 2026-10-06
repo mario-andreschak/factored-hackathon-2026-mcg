@@ -1,0 +1,643 @@
+{
+  "schema": "savia-card-admission-public-derivations/v1",
+  "artifacts": [
+    {
+      "original": "build-context/.dockerignore",
+      "public": "build-context/.dockerignore",
+      "original_sha256": "13fbd54cbedecc03693369371d708339cb78060e2bfc335a574158a2cdae45e9",
+      "public_sha256": "13fbd54cbedecc03693369371d708339cb78060e2bfc335a574158a2cdae45e9",
+      "original_bytes": 289,
+      "public_bytes": 289,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "build-context/Dockerfile",
+      "public": "build-context/Dockerfile",
+      "original_sha256": "92aefaca8dbcebbb7cdb872246f76c24d2342f208dc8dedffe664379ce44e6a8",
+      "public_sha256": "92aefaca8dbcebbb7cdb872246f76c24d2342f208dc8dedffe664379ce44e6a8",
+      "original_bytes": 952,
+      "public_bytes": 952,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "build-context/application/frontend/server/conversation.py",
+      "public": "build-context/application/frontend/server/conversation.py",
+      "original_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+      "public_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+      "original_bytes": 34334,
+      "public_bytes": 34334,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "build-context/application/resources/dispute_workflow.flow.json",
+      "public": "build-context/application/resources/dispute_workflow.flow.json",
+      "original_sha256": "43fd857863961f4d87d62b85c9a25ae261b59aa2e74d14c8b3e7cf8406a41d03",
+      "public_sha256": "43fd857863961f4d87d62b85c9a25ae261b59aa2e74d14c8b3e7cf8406a41d03",
+      "original_bytes": 28853,
+      "public_bytes": 28853,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "build-context/application/source-manifest.json",
+      "public": "build-context/application/source-manifest.json",
+      "original_sha256": "0f287b3149044eabec595be6e31e678dce8ff647c5650176bfada102b170587a",
+      "public_sha256": "0f287b3149044eabec595be6e31e678dce8ff647c5650176bfada102b170587a",
+      "original_bytes": 22777,
+      "public_bytes": 22777,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "build-context/expected-server-runtime.json",
+      "public": "build-context/expected-server-runtime.json",
+      "original_sha256": "c086702b39c483f92958f0b78e63cdab0146e40ab538c413ea44ad004301cd8c",
+      "public_sha256": "c086702b39c483f92958f0b78e63cdab0146e40ab538c413ea44ad004301cd8c",
+      "original_bytes": 51094,
+      "public_bytes": 51094,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "build-context/preparation-receipt.json",
+      "public": "build-context/preparation-receipt.json",
+      "original_sha256": "776f8b6f1decf2a31d5ae41575d9b23a2f2617e9e6f88cbaa40c7e90baae488b",
+      "public_sha256": "be3f098b132f0c0c21584f2a2a4d2bab5d0fbd83e4c9cc227dd31c9be19bc533",
+      "original_bytes": 1594,
+      "public_bytes": 1519,
+      "transformations": [
+        "JSON parsed and serialized as UTF-8 with two-space indentation and terminal LF",
+        "Replaced identifying absolute local path"
+      ]
+    },
+    {
+      "original": "build-context/verify_server_layer.py",
+      "public": "build-context/verify_server_layer.py",
+      "original_sha256": "2f5f4719d0d8d777a879054b3ef62075cc83132b17cf7cf0d4aba79003ad0a94",
+      "public_sha256": "2f5f4719d0d8d777a879054b3ef62075cc83132b17cf7cf0d4aba79003ad0a94",
+      "original_bytes": 6778,
+      "public_bytes": 6778,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "actual-build/f2fa-build-observed.json",
+      "public": "build/f2fa-build-observed.json",
+      "original_sha256": "515fa5567ca35491b3fd3cf9d06b0b3fa0d49e3e0ceb3443d0c980d4276c6cbe",
+      "public_sha256": "515fa5567ca35491b3fd3cf9d06b0b3fa0d49e3e0ceb3443d0c980d4276c6cbe",
+      "original_bytes": 1459,
+      "public_bytes": 1459,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "actual-ci/f2fa-pr90-ci.json",
+      "public": "ci/f2fa-pr90-ci.json",
+      "original_sha256": "70baa34161b9376a9aefa796a5d3bd43b56a77c226030c7033238f0fe9045dc9",
+      "public_sha256": "70baa34161b9376a9aefa796a5d3bd43b56a77c226030c7033238f0fe9045dc9",
+      "original_bytes": 7767,
+      "public_bytes": 7767,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "actual-ci/f2fa-pr90-merge.json",
+      "public": "ci/f2fa-pr90-merge.json",
+      "original_sha256": "6af0f4fc253d953819d7da3029e53197aa162f106ced373631506bff2b4c2a57",
+      "public_sha256": "6af0f4fc253d953819d7da3029e53197aa162f106ced373631506bff2b4c2a57",
+      "original_bytes": 442,
+      "public_bytes": 442,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "actual-native-caption-review/native-caption-review.json",
+      "public": "native/caption-review.json",
+      "original_sha256": "17379c2a49eba99b63d7a2260a59f39beb38668635621273d6ac545f3b9c23dc",
+      "public_sha256": "17379c2a49eba99b63d7a2260a59f39beb38668635621273d6ac545f3b9c23dc",
+      "original_bytes": 1094,
+      "public_bytes": 1094,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "actual-native/es.ndjson",
+      "public": "native/es.ndjson",
+      "original_sha256": "64de9404edf660535da9d0842f004a1175f3b5a4976b1471ecfe236ee914f0c9",
+      "public_sha256": "bf7efaa3a132334ea48c0668d5345b0f659cea0c78593f060a6663d6794bd3ae",
+      "original_bytes": 404680,
+      "public_bytes": 404486,
+      "transformations": [
+        "NDJSON parsed and serialized as compact UTF-8 with one terminal LF per event",
+        "Removed private/capability field: turn_id"
+      ]
+    },
+    {
+      "original": "actual-native/es.ndjson",
+      "public": "native/es.wav",
+      "original_sha256": "64de9404edf660535da9d0842f004a1175f3b5a4976b1471ecfe236ee914f0c9",
+      "public_sha256": "7f2892f7e038613fc07fcd35c743ede212cb78c2c43ae9cfa1b550912f381e34",
+      "original_bytes": 404680,
+      "public_bytes": 302444,
+      "transformations": [
+        "Decoded original audio.data base64 chunks in event order; concatenated exact PCM bytes; wrapped mono 24000 Hz PCM16 little-endian WAV header",
+        "PCM SHA256: 6ddb486982047d26ea08f135a84d248cbbb1aa70cf1fc37885257b195ddf0dc6",
+        "PCM samples: 151200"
+      ]
+    },
+    {
+      "original": "actual-native/pt.ndjson",
+      "public": "native/pt.ndjson",
+      "original_sha256": "08bfe9a35b153142c0ac05dc3071ce51e3abb3041389f39452f55ee17509dbea",
+      "public_sha256": "d91be4686338ad64d2cb86dbfe4b95b0d5de3c30254630cbf0a4deb37974013a",
+      "original_bytes": 154548,
+      "public_bytes": 154405,
+      "transformations": [
+        "NDJSON parsed and serialized as compact UTF-8 with one terminal LF per event",
+        "Removed private/capability field: turn_id"
+      ]
+    },
+    {
+      "original": "actual-native/pt.ndjson",
+      "public": "native/pt.wav",
+      "original_sha256": "08bfe9a35b153142c0ac05dc3071ce51e3abb3041389f39452f55ee17509dbea",
+      "public_sha256": "da9da69bd60331e437fdf9a724a863842faf2a32bf7efe97a77e4d83354e9556",
+      "original_bytes": 154548,
+      "public_bytes": 115244,
+      "transformations": [
+        "Decoded original audio.data base64 chunks in event order; concatenated exact PCM bytes; wrapped mono 24000 Hz PCM16 little-endian WAV header",
+        "PCM SHA256: a83d34f485a2e6ebda4aab431b5fe266fd24d3495f1945d4ac70bb68c08cd057",
+        "PCM samples: 57600"
+      ]
+    },
+    {
+      "original": "actual-native/receipt-private.json",
+      "public": "native/receipt.json",
+      "original_sha256": "6ce54cdf015a341ac66650948d16f138aa216174954efe5c5f3615ef229879a8",
+      "public_sha256": "6ce54cdf015a341ac66650948d16f138aa216174954efe5c5f3615ef229879a8",
+      "original_bytes": 7421,
+      "public_bytes": 7421,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/README.md",
+      "public": "offline/README.md",
+      "original_sha256": "e0c8d93b707c2896bd1ada2123bc1ce75fbdae475856e4cde8444f0d96e2e5d7",
+      "public_sha256": "e0c8d93b707c2896bd1ada2123bc1ce75fbdae475856e4cde8444f0d96e2e5d7",
+      "original_bytes": 4759,
+      "public_bytes": 4759,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/SHA256SUMS.txt",
+      "public": "offline/SHA256SUMS.txt",
+      "original_sha256": "de447e81db8871704ef90ee73991e3314af7a4bacb9ca5cdd8c874a2a980479f",
+      "public_sha256": "de447e81db8871704ef90ee73991e3314af7a4bacb9ca5cdd8c874a2a980479f",
+      "original_bytes": 1212,
+      "public_bytes": 1212,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/actions-stdout.txt",
+      "public": "offline/actions-stdout.txt",
+      "original_sha256": "2a9b7d14f1d1b493f4d3fd546dfc388cf7968efd512abc13b8ed1fc92024b8d3",
+      "public_sha256": "2a9b7d14f1d1b493f4d3fd546dfc388cf7968efd512abc13b8ed1fc92024b8d3",
+      "original_bytes": 228,
+      "public_bytes": 228,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/actions.xml",
+      "public": "offline/actions.xml",
+      "original_sha256": "9e92bead03b8d0ff09e70175b000cf81c49396a4f59532f3e9bef43905bc22ce",
+      "public_sha256": "9e92bead03b8d0ff09e70175b000cf81c49396a4f59532f3e9bef43905bc22ce",
+      "original_bytes": 21020,
+      "public_bytes": 21020,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/baseline-conversation.py",
+      "public": "offline/baseline-conversation.py",
+      "original_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+      "public_sha256": "6032e3ae6ba78a70f26d8ead44629450d0c5270ee614339c9a80e4a0b4bea795",
+      "original_bytes": 34300,
+      "public_bytes": 34300,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/baseline-stdout.txt",
+      "public": "offline/baseline-stdout.txt",
+      "original_sha256": "6c91b235bb6edf46e1fd87912ccccfed4b2e27fb08509a117cea81a62ccd27fa",
+      "public_sha256": "6c91b235bb6edf46e1fd87912ccccfed4b2e27fb08509a117cea81a62ccd27fa",
+      "original_bytes": 16220,
+      "public_bytes": 16220,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/baseline.xml",
+      "public": "offline/baseline.xml",
+      "original_sha256": "a520cd440e6f3160d7f79c00d5b414cbff6fc0ec50537c66676b7e8ccce820be",
+      "public_sha256": "a520cd440e6f3160d7f79c00d5b414cbff6fc0ec50537c66676b7e8ccce820be",
+      "original_bytes": 30145,
+      "public_bytes": 30145,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/card-stdout.txt",
+      "public": "offline/card-stdout.txt",
+      "original_sha256": "d0317971617252c85e3367fac7734f1a97489348801eed0cbee085e12f77ebc8",
+      "public_sha256": "d0317971617252c85e3367fac7734f1a97489348801eed0cbee085e12f77ebc8",
+      "original_bytes": 102,
+      "public_bytes": 102,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/card.xml",
+      "public": "offline/card.xml",
+      "original_sha256": "e7e87e774f23b1f49de90f69825854b899377c23ec0817682aac7617721738be",
+      "public_sha256": "e7e87e774f23b1f49de90f69825854b899377c23ec0817682aac7617721738be",
+      "original_bytes": 2954,
+      "public_bytes": 2954,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/conversation.py",
+      "public": "offline/conversation.py",
+      "original_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+      "public_sha256": "c978b41c6e2c9078a4659c9104a6fa60587a277417b1b926ff5ecc9d7813ec6d",
+      "original_bytes": 34334,
+      "public_bytes": 34334,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/environment.json",
+      "public": "offline/environment.json",
+      "original_sha256": "7c44f5e20f2820adbe4d5141878d6749d1c5620024337508a61d808d9c5b571f",
+      "public_sha256": "7c44f5e20f2820adbe4d5141878d6749d1c5620024337508a61d808d9c5b571f",
+      "original_bytes": 258,
+      "public_bytes": 258,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/patch.diff",
+      "public": "offline/patch.diff",
+      "original_sha256": "6a08a8e133fb0c2a765c52c5a39abe2e64ca89aeb55ccd064660e6288a334cda",
+      "public_sha256": "6a08a8e133fb0c2a765c52c5a39abe2e64ca89aeb55ccd064660e6288a334cda",
+      "original_bytes": 5232,
+      "public_bytes": 5232,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/receipt.json",
+      "public": "offline/receipt.json",
+      "original_sha256": "1ac1cb0d8f58f604359bf8739a33eeb68bd3300ca4db0669946171c7bdb71afa",
+      "public_sha256": "1ac1cb0d8f58f604359bf8739a33eeb68bd3300ca4db0669946171c7bdb71afa",
+      "original_bytes": 17835,
+      "public_bytes": 17835,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/test_voice.py",
+      "public": "offline/test_voice.py",
+      "original_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+      "public_sha256": "f0e18aec32962a2286eb75423e3b2d1c5510ed1ac6aaed605a474a9180201556",
+      "original_bytes": 51092,
+      "public_bytes": 51092,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/voice-stdout.txt",
+      "public": "offline/voice-stdout.txt",
+      "original_sha256": "18ede951970d18f20df2a2edfd828874103377802234a2f43404f69baddad1f3",
+      "public_sha256": "18ede951970d18f20df2a2edfd828874103377802234a2f43404f69baddad1f3",
+      "original_bytes": 264,
+      "public_bytes": 264,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "approved-offline/voice.xml",
+      "public": "offline/voice.xml",
+      "original_sha256": "5ea225e0d0f46b10fe3c9328fe277c0b89099dfb497f5a975eb27325d286c794",
+      "public_sha256": "5ea225e0d0f46b10fe3c9328fe277c0b89099dfb497f5a975eb27325d286c794",
+      "original_bytes": 44833,
+      "public_bytes": 44833,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "independent-public/portal-successor-f2fa597a-verification.json",
+      "public": "public/portal-successor-f2fa597a-verification.json",
+      "original_sha256": "c6c6fe496fe03979bbca2fdb5ca71c6aaeb26f0041c50a5b3534c6c23b58c74f",
+      "public_sha256": "c6c6fe496fe03979bbca2fdb5ca71c6aaeb26f0041c50a5b3534c6c23b58c74f",
+      "original_bytes": 6034,
+      "public_bytes": 6034,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "independent-public/verify-portal-successor.py",
+      "public": "public/verify-portal-successor.py",
+      "original_sha256": "f74625548ca13442130dfe964228600a4525443b8dca08cb4eed1c949929e53b",
+      "public_sha256": "f74625548ca13442130dfe964228600a4525443b8dca08cb4eed1c949929e53b",
+      "original_bytes": 3822,
+      "public_bytes": 3822,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/RELEASE-PLAN.txt",
+      "public": "release-helper/RELEASE-PLAN.txt",
+      "original_sha256": "c69294e887ac3b77c7db1ce61e83214036c95a7eb906d1c3614429a3c3562790",
+      "public_sha256": "23db7223a725f18e76a48f0cdc5354349041cda8931bc13ba886df076bd05b2d",
+      "original_bytes": 7274,
+      "public_bytes": 7280,
+      "transformations": [
+        "Replaced bound deployment machine ID literal with [private-machine-id]"
+      ]
+    },
+    {
+      "original": "release-helper/binding_gate.mjs",
+      "public": "release-helper/binding_gate.mjs",
+      "original_sha256": "cb133be286463be17f7e44738a4e66429c991f00a7de0272c40ce515c1f3b376",
+      "public_sha256": "5a23594a0ea9d7ab26db3b8e440ee8405ac9e054939296f4a08adbed2532c1cc",
+      "original_bytes": 7348,
+      "public_bytes": 7309,
+      "transformations": [
+        "Replaced identifying absolute local path literals"
+      ]
+    },
+    {
+      "original": "release-helper/build-only.fly.toml",
+      "public": "release-helper/build-only.fly.toml",
+      "original_sha256": "a3f0e33a8c65b74eb5709142b7fbfd285f0c671759f16753aa93eb29469b4e01",
+      "public_sha256": "a3f0e33a8c65b74eb5709142b7fbfd285f0c671759f16753aa93eb29469b4e01",
+      "original_bytes": 106,
+      "public_bytes": 106,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/build-only.ps1",
+      "public": "release-helper/build-only.ps1",
+      "original_sha256": "b801b7d0552725c162ecc49e8455eab6fec2ec3322500e2467f91b29a0ecf63a",
+      "public_sha256": "56987b4c250545c0c5eb934bb880194ee5e12939804dc7968e806ce075020a29",
+      "original_bytes": 2853,
+      "public_bytes": 2814,
+      "transformations": [
+        "Replaced identifying absolute local path literals"
+      ]
+    },
+    {
+      "original": "release-helper/core-source-congruence.json",
+      "public": "release-helper/core-source-congruence.json",
+      "original_sha256": "1f3cd0f8015ecbc3623a8975fcca6b031ba401621d28a3e7fbbf636e4020975e",
+      "public_sha256": "1f3cd0f8015ecbc3623a8975fcca6b031ba401621d28a3e7fbbf636e4020975e",
+      "original_bytes": 8518,
+      "public_bytes": 8518,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/event_gate.mjs",
+      "public": "release-helper/event_gate.mjs",
+      "original_sha256": "9f7d74ad1f17550f54492d3aa820f7c7528172d0e5c2b0b670683d85373a4fc0",
+      "public_sha256": "9f7d74ad1f17550f54492d3aa820f7c7528172d0e5c2b0b670683d85373a4fc0",
+      "original_bytes": 2947,
+      "public_bytes": 2947,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/native_message_live.mjs",
+      "public": "release-helper/native_message_live.mjs",
+      "original_sha256": "ac65086cba480cb93b5b6decea71039791e3336ff9b4598d2198c9cc996ece79",
+      "public_sha256": "a759522cb954e155a16ccd0a79b9198ffd1aa3854fd14d151fbd9e86256279b4",
+      "original_bytes": 11962,
+      "public_bytes": 11892,
+      "transformations": [
+        "Replaced identifying absolute local path literals"
+      ]
+    },
+    {
+      "original": "release-helper/offline-checks.json",
+      "public": "release-helper/offline-checks.json",
+      "original_sha256": "7984a2c7a77df6feac271c0d0551a4ad7dbe2a455c60ed7cff8f351197cea4d4",
+      "public_sha256": "7984a2c7a77df6feac271c0d0551a4ad7dbe2a455c60ed7cff8f351197cea4d4",
+      "original_bytes": 840,
+      "public_bytes": 840,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/prepare_native_binding.py",
+      "public": "release-helper/prepare_native_binding.py",
+      "original_sha256": "83bfdeb96540a9836675601f5a32c76f8179e572a436e84c0cb6c96d67217503",
+      "public_sha256": "83bfdeb96540a9836675601f5a32c76f8179e572a436e84c0cb6c96d67217503",
+      "original_bytes": 3658,
+      "public_bytes": 3658,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/prepare_server_successor.py",
+      "public": "release-helper/prepare_server_successor.py",
+      "original_sha256": "ec26003b73bf449d6a5e44abe8c111686b38d5d1be2deb90951e2de0ee7591b9",
+      "public_sha256": "ec26003b73bf449d6a5e44abe8c111686b38d5d1be2deb90951e2de0ee7591b9",
+      "original_bytes": 8826,
+      "public_bytes": 8826,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/promote_successor.py",
+      "public": "release-helper/promote_successor.py",
+      "original_sha256": "5153e1e703da1875b77434ede5351088c55ab24d6fe2ff37ebbbb68a4b3216fa",
+      "public_sha256": "5153e1e703da1875b77434ede5351088c55ab24d6fe2ff37ebbbb68a4b3216fa",
+      "original_bytes": 4697,
+      "public_bytes": 4697,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/qualify_runtime.py",
+      "public": "release-helper/qualify_runtime.py",
+      "original_sha256": "14dd2a3258ab7564ae665147e1ce2e2bdc9e25be6d9f439025ef0a2f42086735",
+      "public_sha256": "14dd2a3258ab7564ae665147e1ce2e2bdc9e25be6d9f439025ef0a2f42086735",
+      "original_bytes": 5862,
+      "public_bytes": 5862,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/readiness.json",
+      "public": "release-helper/readiness.json",
+      "original_sha256": "8c5b295c48dca6b25cc5e01d6ae24ea2a806dead4e5f2291ed51f6de6cb9006c",
+      "public_sha256": "03aa0a4af2dfda3a0836690f2b6c57c0524d3d0680a9aead46ba56ecbabf6e12",
+      "original_bytes": 5922,
+      "public_bytes": 5732,
+      "transformations": [
+        "JSON parsed and serialized as UTF-8 with two-space indentation and terminal LF",
+        "Replaced identifying absolute local path"
+      ]
+    },
+    {
+      "original": "release-helper/release_common.py",
+      "public": "release-helper/release_common.py",
+      "original_sha256": "232571ffecb99d6642ad4555a02a51cde7647b5eef92fdf26e535be5cb54de04",
+      "public_sha256": "7a2fbb8aab8eeb84173263754dbdc39a069539d9fe04f5c632a6cdcba59705ae",
+      "original_bytes": 7627,
+      "public_bytes": 7600,
+      "transformations": [
+        "Replaced bound deployment machine ID literal with [private-machine-id]",
+        "Replaced identifying absolute local path literals"
+      ]
+    },
+    {
+      "original": "release-helper/test_execute_mock.mjs",
+      "public": "release-helper/test_execute_mock.mjs",
+      "original_sha256": "ecbd0487af14aa8136528097c1d51da65db222b30984df1b9fabaa332043b8aa",
+      "public_sha256": "b825b0f68f9944c1de2144e7abb0e1d98d7a25c544b2a3dc2a8f7d002818f30e",
+      "original_bytes": 6100,
+      "public_bytes": 5996,
+      "transformations": [
+        "Replaced identifying absolute local path literals"
+      ]
+    },
+    {
+      "original": "release-helper/test_gates.mjs",
+      "public": "release-helper/test_gates.mjs",
+      "original_sha256": "ec24edf7fbeab49229a3a25b93c16957a6df6cbf6d7daf37a397efb1ea005087",
+      "public_sha256": "bf6bea764f4b5113b1183d321eb68a6befc23df1f4a67c9de6d165938aee8d60",
+      "original_bytes": 9335,
+      "public_bytes": 9219,
+      "transformations": [
+        "Replaced identifying absolute local path literals"
+      ]
+    },
+    {
+      "original": "release-helper/test_helpers.py",
+      "public": "release-helper/test_helpers.py",
+      "original_sha256": "b31c101f9fff058e444928cef41e0b26be1a5ebc7c5068c8c40488d034216cce",
+      "public_sha256": "b31c101f9fff058e444928cef41e0b26be1a5ebc7c5068c8c40488d034216cce",
+      "original_bytes": 4912,
+      "public_bytes": 4912,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/verify_public_assets.py",
+      "public": "release-helper/verify_public_assets.py",
+      "original_sha256": "ae7032aa16648f6be271b8bd51f30ed99b08c1c3cd283d791ec17833ebee866a",
+      "public_sha256": "ae7032aa16648f6be271b8bd51f30ed99b08c1c3cd283d791ec17833ebee866a",
+      "original_bytes": 3027,
+      "public_bytes": 3027,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "release-helper/verify_server_layer.py",
+      "public": "release-helper/verify_server_layer.py",
+      "original_sha256": "2f5f4719d0d8d777a879054b3ef62075cc83132b17cf7cf0d4aba79003ad0a94",
+      "public_sha256": "2f5f4719d0d8d777a879054b3ef62075cc83132b17cf7cf0d4aba79003ad0a94",
+      "original_bytes": 6778,
+      "public_bytes": 6778,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "actual-runtime/promotion-verification.json",
+      "public": "runtime/promotion-verification.json",
+      "original_sha256": "71935d8a47871b5371b27a674cf78665509da9043e872f74dd60ef074976d643",
+      "public_sha256": "33bb76e9bbf4ef52bdac03fdcb7a85f72ef03603c8a6c1c6a79aecfad543645d",
+      "original_bytes": 788,
+      "public_bytes": 754,
+      "transformations": [
+        "JSON parsed and serialized as UTF-8 with two-space indentation and terminal LF",
+        "Removed private/capability field: machine_id"
+      ]
+    },
+    {
+      "original": "actual-runtime/public-assets-verification.json",
+      "public": "runtime/public-assets-verification.json",
+      "original_sha256": "444a4cf49fccd137dc4480d51aac51414e171676f14d915c0ac73eaff73f29e0",
+      "public_sha256": "444a4cf49fccd137dc4480d51aac51414e171676f14d915c0ac73eaff73f29e0",
+      "original_bytes": 5753,
+      "public_bytes": 5753,
+      "transformations": [
+        "Identity; exact original bytes"
+      ]
+    },
+    {
+      "original": "actual-runtime/runtime-verification.json",
+      "public": "runtime/runtime-verification.json",
+      "original_sha256": "878a6645b6bfcdb18c6e93691e926bcb64ebbe7dcf85b31520226b105c6f69e8",
+      "public_sha256": "dcd6f99ab22313d13e048858eba3773e317f5f28dccb476293fadb6fa6aa0216",
+      "original_bytes": 52133,
+      "public_bytes": 52099,
+      "transformations": [
+        "JSON parsed and serialized as UTF-8 with two-space indentation and terminal LF",
+        "Removed private/capability field: machine_id"
+      ]
+    }
+  ]
+}

@@ -8,22 +8,25 @@ Open the [submission portal](https://savia-rc-2026.fly.dev/submission/) for the 
 
 | Component | Qualified source or observation |
 | --- | --- |
-| Application and standalone analytics sources | `c44d416fcf1ab95bcb16c77651418e6570d79782`, tree `fabf02d622f51302e229137405e3607356d00ab0` |
-| Fresh browser build | The same `c44d416fcf1a` source; 21 files from an isolated production build with the committed lockfile |
-| Retained public portal and pitch | Source `634aa5244374b3e105ef7864fa100530bab45ec2`; all 28 tracked portal files unchanged; the retained 16-file pitch/media subset contains 12 pitch delivery files and four public assets |
-| Running image | `registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c` |
-| Source and machine continuity | All 183 sources, 21 fresh built browser files and four retained native runtime files verified; complete machine configuration preserved except image |
+| Application and standalone analytics sources | `f2fa597a481a87b5301531cf180f8f61d1f3ba70`, tree `1638e0be90b1046bbada1972b6ace1ee62a8e4fa`; 183 source entries: 149 application, six standalone analytics and 28 retained portal files |
+| Retained browser build | Source `c44d416fcf1ab95bcb16c77651418e6570d79782`, tree `fabf02d622f51302e229137405e3607356d00ab0`; the same 21 files and committed-lockfile build provenance as the dated `c44d416f` release |
+| Retained public portal and pitch | Source `634aa5244374b3e105ef7864fa100530bab45ec2`; all 28 tracked portal files unchanged, 27 public payloads; the retained 16-file pitch/media subset contains 12 pitch delivery files and four public assets |
+| Running image | `registry.fly.io/savia-rc-2026@sha256:11854442ddd395614d8d9c7cd030d3256365941613a730657c6740406709827c` |
+| Source and machine continuity | All 183 sources, 21 retained browser files and four native runtime files verified; complete current machine configuration preserved except image |
+| Exact runtime source delta | `frontend/server/conversation.py` adds direct ES/PT imperative admission; `resources/dispute_workflow.flow.json` refreshes that protected source hash. This is the required source-only generated graph artifact; no FLUJO integration or browser/native rebuild |
 | Public submission | All 27 allowlisted public payloads match; health and entry guard verified |
-| Card ledger after promotion | Two ES/PT owned-card saved receipts match the dated predecessor; 12 HTTP checks, zero new card blocks or provider calls |
-| Current canonical native voice | Two recorded ES/PT guidance cases across two attempts: exact host-script captions and two exact product-UI playback acknowledgments on `c44d416f` / image `d6be33f2…`; existing owned-card status is reread separately |
+| Native request admission | Two actual `POST /api/voice/turn` message calls: `bloquea mi tarjeta` (ES) and `bloqueie meu cartão` (PT), each with one exact original-request delegate and a normal completed 24 kHz audio stream: 151,200 samples / 6.30 s ES and 57,600 samples / 2.40 s PT |
+| Card ledger observations | Independent before/after owned-card status rereads preserve the existing saved receipts for both profiles; zero card writes |
 
-[Current native playback and release receipts](measurements/voice-ack-live/README.md) pin the fresh browser, running source and image, actual audio, exact acknowledgments, unchanged configuration, public assets and card continuity.
+[Current runtime and native-message admission receipts](measurements/native-card-admission/README.md) pin the actual application source, image, retained browser/native bytes, full configuration, public payloads and exact two-case event observations. The single successful two-case attempt took 18.542 s and made exactly two real provider message calls. These probes qualify native request admission. They do not establish ASR or microphone behavior, product-UI playback, `/api/voice/played` acknowledgment or full customer completion. A separate AI text review found no unsupported completed-action claim in the recorded captions; waveform/text alignment was not adjudicated.
 
-The original planned two-case capture completed ES, then stopped at a PT authentication wait before any PT provider request; its batch receipt remains failed. An explicit PT-only continuation passed. Across the two attempts, the two actual provider turns produced two exact captions, two HTTP 200 playback acknowledgments and two tampered-result HTTP 409 refusals, with zero new card writes. ES audio contains 399,600 PCM samples at 24 kHz (16.65 s); PT contains 370,800 (15.45 s).
+The [dated canonical native playback](measurements/voice-ack-live/README.md) remains tied to `c44d416fcf1ab95bcb16c77651418e6570d79782` / image `d6be33f27…`. Its original planned two-case capture completed ES, then stopped at a PT authentication wait before any PT provider request; that batch remains failed. An explicit PT-only continuation passed. Across those two attempts, two actual provider turns produced two exact host-guidance captions, two HTTP 200 product-UI playback acknowledgments and two tampered-result `/api/voice/turn` HTTP 409 refusals, with zero new card writes. ES contains 399,600 PCM samples at 24 kHz (16.65 s); PT contains 370,800 (15.45 s). Those recorded host-result observations remain dated and separate from the new request-admission probes.
 
-[ACK-recovery source qualification](measurements/voice-ack-recovery/README.md) records 148 passing frontend tests, including five failure cases; the live workload adds normal playback observations without injecting an ACK failure.
+[ACK-recovery source qualification](measurements/voice-ack-recovery/README.md) records 148 passing frontend tests, including five failure cases. The new release retains the exact browser and native result transport bytes; it adds no new UI playback acceptance claim.
 
-The [prior final-product release](measurements/final-product/README.md) retains its original `634aa524` / image `44bc554c…` proof and 22-file browser build from `f3c57b26`. [Earlier canonical native voice](measurements/native-canonical-live/README.md) keeps its original `6219bc81` / image `9aa240aa…` audio and screenshots. Source qualification and a merge are distinct from a live observation; neither changes an older receipt's pin.
+The [historical dispute-core workload](measurements/core-engine-final/README.md) retains its own 1,078 passing-check receipt and recorded `f3c57b26` source. The final application preserves 38/39 files in its actual qualified core subset, with only the [separately qualified banking snapshot reader](measurements/pipeline-publication/README.md) differing. Conversation admission and the generated graph are outside that 39-file subset.
+
+The [prior final-product release](measurements/final-product/README.md) retains its original `634aa524` / image `44bc554c…` proof and 22-file browser build from `f3c57b26`. [Earlier canonical native voice](measurements/native-canonical-live/README.md) keeps its original `6219bc81` / image `9aa240aa…` audio and screenshots. Every historical receipt retains its source and observation scope.
 
 ## Product evidence
 

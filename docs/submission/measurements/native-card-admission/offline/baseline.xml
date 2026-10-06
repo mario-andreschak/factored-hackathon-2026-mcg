@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="14" skipped="0" tests="82" time="2.019" timestamp="2026-10-05T21:33:59.447068-05:00"><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Tranquilo, respira hondo. Todo va a salir bien.]" time="0.007" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-Fique tranquilo, respire fundo. Tudo vai ficar bem.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Estoy preocupado por mi saldo.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Mi cuenta est\xe1 bien, me dijeron que el saldo est\xe1 correcto.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-Estou preocupado com minha conta.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-No quiero revisar mi cuenta, solo conversar.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Quiero tranquilizarme por mi saldo.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-Quero conversar sobre minha conta.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Mi banco revisa mi cuenta.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-S\xed, adelante.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-No quiero bloquear mi tarjeta, solo conversar.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-N\xe3o quero bloquear meu cart\xe3o, s\xf3 conversar.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-No bloquees mi tarjeta.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-N\xe3o bloqueie meu cart\xe3o.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Mi tarjeta ya est\xe1 bloqueada.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-Meu cart\xe3o j\xe1 est\xe1 bloqueado.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Estoy preocupado por mi tarjeta.]" time="0.007" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-Estou preocupado com meu cart\xe3o.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-El banco me dijo que bloquea mi tarjeta.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-Meu banco me disse para bloquear meu cart\xe3o.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Bloquea mi tel\xe9fono.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-Bloqueie meu telefone.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-es-Quiero bloquear mi tel\xe9fono.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[False-pt-Quero bloquear meu telefone.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Tranquilo, respira hondo. Todo va a salir bien.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-Fique tranquilo, respire fundo. Tudo vai ficar bem.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Estoy preocupado por mi saldo.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Mi cuenta est\xe1 bien, me dijeron que el saldo est\xe1 correcto.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-Estou preocupado com minha conta.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-No quiero revisar mi cuenta, solo conversar.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Quiero tranquilizarme por mi saldo.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-Quero conversar sobre minha conta.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Mi banco revisa mi cuenta.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-S\xed, adelante.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-No quiero bloquear mi tarjeta, solo conversar.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-N\xe3o quero bloquear meu cart\xe3o, s\xf3 conversar.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-No bloquees mi tarjeta.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-N\xe3o bloqueie meu cart\xe3o.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Mi tarjeta ya est\xe1 bloqueada.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-Meu cart\xe3o j\xe1 est\xe1 bloqueado.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Estoy preocupado por mi tarjeta.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-Estou preocupado com meu cart\xe3o.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-El banco me dijo que bloquea mi tarjeta.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-Meu banco me disse para bloquear meu cart\xe3o.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Bloquea mi tel\xe9fono.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-Bloqueie meu telefone.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-es-Quiero bloquear mi tel\xe9fono.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output[True-pt-Quero bloquear meu telefone.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-\xbfCu\xe1nto tengo en mi cuenta de ahorros?]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-No reconozco este cargo.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Ay\xfadame a comparar este comercio con mis recibos y preparar el pr\xf3ximo paso.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Qual \xe9 o saldo da minha conta?]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-N\xe3o reconhe\xe7o esta cobran\xe7a.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Ajude-me a comparar este com\xe9rcio com meus recibos.]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-\xbfQu\xe9 comercio aparece en este cargo?]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Qual o valor desta transa\xe7\xe3o?]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-bloquea mi tarjeta]" time="0.003"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Bloquee mi tarjeta.]" time="0.003"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-bloqueie meu cart\xe3o]" time="0.003"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Quiero bloquear mi tarjeta.]" time="0.003"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Quero bloquear meu cart\xe3o.]" time="0.003"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-Por favor, bloquea mi tarjeta.]" time="0.003"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Por favor, bloqueie meu cart\xe3o.]" time="0.003"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-es-\xbfPuedes bloquear mi tarjeta?]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[False-pt-Pode bloquear meu cart\xe3o?]" time="0.003" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-\xbfCu\xe1nto tengo en mi cuenta de ahorros?]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-No reconozco este cargo.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Ay\xfadame a comparar este comercio con mis recibos y preparar el pr\xf3ximo paso.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Qual \xe9 o saldo da minha conta?]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-N\xe3o reconhe\xe7o esta cobran\xe7a.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Ajude-me a comparar este com\xe9rcio com meus recibos.]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-\xbfQu\xe9 comercio aparece en este cargo?]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Qual o valor desta transa\xe7\xe3o?]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-bloquea mi tarjeta]" time="0.004"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Bloquee mi tarjeta.]" time="0.004"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-bloqueie meu cart\xe3o]" time="0.004"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Quiero bloquear mi tarjeta.]" time="0.004"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Quero bloquear meu cart\xe3o.]" time="0.004"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-Por favor, bloquea mi tarjeta.]" time="0.004"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Por favor, bloqueie meu cart\xe3o.]" time="0.004"><failure message="AssertionError: assert ('none' == 'auto'&#10;  &#10;  - auto&#10;  + none)">frontend\tests\test_voice.py:873: in test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite
+    asyncio.run(run())
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+frontend\tests\test_voice.py:862: in run
+    assert seen[-1]["tool_choice"] == "auto" and seen[-1]["tools"][0]["function"]["name"] == "consultar_savia"
+E   AssertionError: assert ('none' == 'auto'
+E     
+E     - auto
+E     + none)</failure></testcase><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-es-\xbfPuedes bloquear mi tarjeta?]" time="0.004" /><testcase classname="frontend.tests.test_voice" name="test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite[True-pt-Pode bloquear meu cart\xe3o?]" time="0.005" /></testsuite></testsuites>

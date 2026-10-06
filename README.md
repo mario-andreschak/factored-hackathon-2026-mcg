@@ -81,11 +81,11 @@ The human pitch above explains the product. This table maps technical claims to 
 
 **Fresh public replay:** [67 passing existing offline checks and 11 pipeline/analytics invariants](docs/review/PUBLIC_EVIDENCE.md), plus a paired uncertainty analysis of the unchanged routing diagnostic. Run `python scripts/review_evidence.py --out docs/review` after installing `requirements-review.txt`. [Exact source hashes and results](docs/review/replay-receipt.json).
 
-**Live successor:** [confirmed card protection in Spanish and Portuguese, deployed source/image pins and public asset verification](docs/submission/measurements/card-block-live/README.md). [Independent fresh source review and its exact scope](docs/review/FRESH_AGENT_REVIEW.md).
+**Current application release:** [Source `f2fa597a`, exact image and runtime verification](docs/submission/measurements/native-card-admission/README.md): 183 sources, the retained 21-file `c44d416f` browser, four unchanged native files and portal source `634aa524`. [Confirmed card protection in ES/PT retains its dated acceptance](docs/submission/measurements/card-block-live/README.md).
 
-**Current native voice:** [Two recorded ES/PT guidance cases across two attempts, actual audio and exact product-UI playback acknowledgments on the freshly built browser](docs/submission/measurements/voice-ack-live/README.md).
+**Native request admission:** [Two actual ES/PT direct message probes preserve the exact request in a native delegate and complete audio stream](docs/submission/measurements/native-card-admission/README.md), with independent unchanged card-status rereads and zero card writes. [Dated `c44d416f` canonical guidance playback](docs/submission/measurements/voice-ack-live/README.md) retains its two cases across two attempts and exact product-UI acknowledgments.
 
-**Pinned dispute-core qualification:** [1,078 passing offline checks](docs/submission/measurements/core-engine-final/README.md), with 39 executed core source files matched to the recorded `f3c57b26` deployment. The current release retains 38 unchanged files; the banking snapshot reader has [separate publication-boundary qualification](docs/submission/measurements/pipeline-publication/README.md).
+**Historical dispute-core qualification:** [1,078 passing offline checks](docs/submission/measurements/core-engine-final/README.md) belong to the recorded `f3c57b26` workload and its 39 executed core source files. The current application retains 38/39 of that qualified subset; the sole banking snapshot-reader delta has [separate publication-boundary qualification](docs/submission/measurements/pipeline-publication/README.md).
 
 | Evaluation dimension | What to inspect | Evidence |
 | --- | --- | --- |

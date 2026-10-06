@@ -1,0 +1,14 @@
+{
+  "schema": "savia-native-caption-text-review/v1",
+  "reviewer": "Root Codex agent",
+  "review_method": "Read the actual captured caption strings after the two live native-message probes; no provider rerun or caption editing",
+  "original_native_receipt_sha256": "6ce54cdf015a341ac66650948d16f138aa216174954efe5c5f3615ef229879a8",
+  "source": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+  "image": "registry.fly.io/savia-rc-2026@sha256:11854442ddd395614d8d9c7cd030d3256365941613a730657c6740406709827c",
+  "cases": [
+    {"language": "es", "caption": "Entiendo, vamos a ver esto ya.", "completed_card_action_claim": false, "decision": "General acknowledgment and proposed investigation; no claim that a card was blocked"},
+    {"language": "pt", "caption": "Entendo... já vamos ver isso.", "completed_card_action_claim": false, "decision": "General acknowledgment and proposed investigation; no claim that a card was blocked"}
+  ],
+  "passed": true,
+  "scope": "Agent review of caption text only; no human adjudication, waveform-text alignment, microphone, playback or heard-history claim"
+}

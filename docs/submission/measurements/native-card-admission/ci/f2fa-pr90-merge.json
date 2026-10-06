@@ -1,0 +1,12 @@
+{
+  "headRefOid": "f2fa597a481a87b5301531cf180f8f61d1f3ba70",
+  "mergeCommit": {
+    "oid": "164a596fbab17bbb5bfb963d3b8bd2ae78f16a0a"
+  },
+  "mergedAt": "2026-10-06T02:58:29Z",
+  "state": "MERGED",
+  "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/90",
+  "mergeTree": "1638e0be90b1046bbada1972b6ace1ee62a8e4fa",
+  "candidateTree": "1638e0be90b1046bbada1972b6ace1ee62a8e4fa",
+  "treeEquality": true
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "savia-card-admission-offline-checks/v1",
+  "at_utc": "2026-10-06T02:50:23.418191+00:00",
+  "python_tests_passed": 8,
+  "node_tests_passed": 10,
+  "actual_execute_flow_mock_passed": true,
+  "mock_message_requests": 2,
+  "mock_status_reads": 4,
+  "mock_chat_played_or_card_action_requests": 0,
+  "python_ast": "passed",
+  "node_syntax": "passed",
+  "powershell_syntax": "passed",
+  "describe": "passed",
+  "graph89_protected_hashes": "passed against final immutable Git",
+  "qualified_core_subset": "38/39, sole banking_mcp/repository.py delta",
+  "commands": [
+    "python -B -m unittest -v test_helpers.py",
+    "node --test test_gates.mjs test_execute_mock.mjs",
+    "node native_message_live.mjs --describe"
+  ],
+  "network_calls": 0,
+  "provider_calls": 0,
+  "docker_builds": 0,
+  "machine_writes": 0,
+  "repo_edits": 0
+}

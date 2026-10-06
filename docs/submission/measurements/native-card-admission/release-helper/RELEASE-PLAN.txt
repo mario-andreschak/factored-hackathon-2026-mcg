@@ -1,0 +1,102 @@
+Private preparation for committed f2fa597a481a87b5301531cf180f8f61d1f3ba70
+Tree 1638e0be90b1046bbada1972b6ace1ee62a8e4fa
+
+Scope: one production source conversation.py and its mandatory generated graph
+resources/dispute_workflow.flow.json source-hash refresh change in runtime183.
+frontend/tests/test_voice.py is in the tested source commit but absent from the
+accepted runtime183 manifest. No FLUJO change. FLUJO main remains generic;
+docs/FLUJO_PRODUCT_BOUNDARY.md and deployment source map were read.
+
+1. Offline preparation reads all183 committed files, checks each current c44
+   Git byte against its qualified manifest, compares the new committed source,
+   and rejects every exported delta except conversation.py and the required exact generated graph refresh. It writes a fresh
+   clean183 source-review export outside the minimal Docker context. It retains
+   portal metadata634 byte-for-byte, all28 portal payloads (27 public),12 pitch
+   delivery and16 pitch+media files, and the original frozen source media.
+2. Base image is EXACT current d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c.
+   Docker copies only conversation.py, refreshed graph and source-manifest.json,
+   plus reviewed
+   verifier/descriptor under /tmp/card-admission-release. Before/after verify
+   full183 source maps, initial/current/new21 browser files EXACT same hashes,
+   unchanged4 native files, portal28 and media16. Retained browser component
+   continues to name c44/fabf with unchanged locked build provenance. There is
+   no npm/browser recompilation, browser replacement/deletion, native/library
+   change, config in build context, or default deployment command. A root-run
+   fly build-only command must be explicit; build-only does not promote.
+3. Capture CURRENT started d6be machine[private-machine-id] complete config privately.
+   Old44bc captured config is invalid. Check shared2CPU4096MB and existing /data
+   volume binding. The image-only promoter deepcopies the current capture and
+   changes only image. It requires complete current==capture before updating
+   and exact post-update==wanted afterward. Env/init/services/guest/mounts and
+   every additional key, including exact vol_data binding, survive literally.
+   Root must review exact helper/context hashes and actual22 green CI before
+   promotion; failure is preserved privately and never automatically retried.
+4. Root-run read-only qualification invokes exact in-image AFTER verifier,
+   compares actual183+21+4+28+16 hashes to descriptor and rechecks full config.
+   Require successful27 public HTTP hashes, health200, entry gateway200,
+   anonymous API401 and internal portal manifest404. Runtime proof must be
+   within15 minutes before execution; stale proof fails. All receipts stay
+   private until root separately scrubs approved public evidence.
+5. A fresh normal browser authenticates each fictional ES/mexico and PT/colombia
+   profile through actual gateway/profile/code forms. Entry contexts are
+   unrecorded; storage state stays in memory. Voice UI remains OFF. One real
+   POST /api/voice/turn uses {message:"bloquea mi tarjeta",language:"es",fresh:true}
+   and one uses {message:"bloqueie meu cartão",language:"pt",fresh:true}.
+   Each full real NDJSON must contain exactly one exact original-input delegate,
+   positive complete PCM24k audio with exact samples, one start/complete and a
+   terminal normal newline. Source establishes delegate requires admitted tool
+   availability AND real provider consultar_savia choice. Mock tests separately
+   establish outbound allowed tools/exact request guards. Provider may decline
+   delegation; observed missing delegate is failure, never relabeled acceptance.
+   Exactly2 provider eligible calls total. No ASR/audio microphone input, host
+   chat dispatch, working/result speech, /played ACK, analytics or card writes.
+   Owned existing blocked-card status/receipt is independently read before/after
+   each probe; exact stable receipt hashes must match. Runtime admission is
+   mechanical source-bound proof, not full customer completion/UI playback.
+6. Retain dated c44 canonical host-result native_exact speech + actual UI ACK200
+   evidence and its exact tampered RESULT /api/voice/turn409 denial separately.
+   No new negative /played traffic and no relabeling409 as a negative ACK.
+   No need to spend2 additional result provider turns on unchanged browser/exact
+   native behavior. If root later requests fresh canonical UI playback, reuse
+   a separately amended old helper, preserve exactly its two normal UI typed
+   cases and tampered-result denial, and separately authorize the extra budget.
+
+Core evidence consequence: core-engine-final/source-manifest.json is a full184
+manifest. Its qualified source-congruence.json compared_core_files subset is39
+domain/coretest files and excludes conversation.py and generated resource graph.
+The current new release therefore still retains38/39 qualified core files;
+only banking_mcp/repository.py differs. Verify that actual39 subset independently
+on the final replacement head. Keep README/FAQ38 unchanged. Do not mutate raw
+core39/old voice receipts, human pitch, grades or score; root updates technical
+evidence only after actual receipts. This preparation does not pressure a90score.
+
+Dated preparation note: b13 is superseded after mandatory LinuxCI generatedgraph
+source-hash failure. No b13 context/export/build/promotion exists. Final guards bind f2fa and permit exactly conversation + generated graph.
+All89 protected graph hashes are checked against final committed source; graph
+object may differ only at conversation.py sourceHashes entry. Root codefreeze
+allows immutable offline preparation, while external execution remains held.
+
+Execution order and gates (commands are examples, not executed here):
+  python prepare_server_successor.py --repo <clean repo> --revision <f2fa full>
+    --reviewed-server-and-graph-delta
+  review readiness.json + exact context hashes + green CI
+  python promote_successor.py capture --accepted-config <NEW private json>
+    --descriptor <expected-server-runtime.json> --descriptor-sha <exact>
+    --root-go --frozen-cohort-complete
+  ROOT runs explicit fly build-only for nested build context, records actual
+    immutable digest, checks build BEFORE/AFTER receipts; no automatic promoter.
+  after actual22 greenCI and root GO: promote_successor.py promote --image
+    <exact digest> plus same config/descriptor/GO arguments
+  qualify_runtime.py then verify_public_assets.py with exact pins
+  prepare_native_binding.py --credentials <existing PRIVATE credentials>
+    --output <NEW helper descendant.private.json> plus exact pins/GO
+  node native_message_live.mjs --execute <NEW PRIVATE binding>
+
+Blockers until root: current fresh d6be full-config capture, actual immutable
+successor build digest/observed guards, actual22green CI, root promotion GO,
+fresh runtime/public proof, and new private approved binding. No network,
+provider, Docker build, machine capture/update or deployment occurred here.
+
+Caption review is mandatory before public acceptance: private exact complete
+caption is recorded for root inspection; obvious completed-card claims are
+rejected mechanically, and manual unsupported-action-claim review is required.

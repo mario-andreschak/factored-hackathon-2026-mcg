@@ -1,0 +1,11 @@
+**
+!Dockerfile
+!expected-server-runtime.json
+!verify_server_layer.py
+!application/
+!application/source-manifest.json
+!application/frontend/
+!application/frontend/server/
+!application/frontend/server/conversation.py
+!application/resources/
+!application/resources/dispute_workflow.flow.json

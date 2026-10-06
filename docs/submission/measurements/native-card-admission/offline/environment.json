@@ -1,0 +1,1 @@
+{"python": "3.13.1 (tags/v3.13.1:0671451, Dec  3 2024, 19:06:28) [MSC v.1942 64 bit (AMD64)]", "dependencies": {"pytest": "9.1.1", "httpx": "0.28.1", "fastapi": "0.141.1", "duckdb": "1.5.5", "PyJWT": "2.15.1", "cryptography": "46.0.7", "rfc8785": "0.1.4"}}
