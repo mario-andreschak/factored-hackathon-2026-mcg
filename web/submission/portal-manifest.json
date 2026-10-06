@@ -6,13 +6,13 @@
     "development.html": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946",
     "engine.html": "23945dfbb3050dfcf51667395d8aa3d423b9568bd275f57208712e1882a4eb03",
     "evidence/development-process.json": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e",
-    "evidence/DEVELOPMENT_PROCESS.md": "a8cf9bb103988e233eb1feb7b0f031ec4ed09a6b2daccd99cff63a39cccfeb6f",
+    "evidence/DEVELOPMENT_PROCESS.md": "7133d1b551a6c96e017ff8d4e36168a4ae06ff12587dd00460045a006825a915",
     "evidence/DISPUTE_ENGINE.md": "1e857bf728ab746bd791b83a71c37c1ef413969b1452587bad346d89f7e3c498",
     "evidence/ELEVENLABS_COMPARISON.md": "67d692d7ac25894684b7be3c8cbd84e83dbe10e6d097e869bc8b26b70e22a548",
-    "evidence/EVIDENCE_MAP.md": "656096ae0f8525c391e6f1eaca6c90c5f01ee4e53258dcb76e4f8d292709f5f6",
-    "evidence/START_HERE.md": "82313785f0a9ca3892d2ef8a5dfb3bf2abd80df54f42e9e5b9b588b6b23d123c",
-    "index.html": "4f894d96b4e0d011d90fcc9ef85262956aca282c7a5ab4b1bd08b8cc33417990",
-    "llms.txt": "4b80c56d987bf42a7815e2e6768b919fc8b6be01338823e868d39eb06f7f4aa1",
+    "evidence/EVIDENCE_MAP.md": "b6741999178effb1906a5dc777aa0c34dcc2e409697df265cdce55b2f43a7e63",
+    "evidence/START_HERE.md": "87b32e55778109dd12b690665d559fb43dadf28c49b287e4008b13699f68d569",
+    "index.html": "21b914206781b597cf49a84a4397d662a3d93814360753402e1eae31e9111c8a",
+    "llms.txt": "b50d0d1a675f7213ad47c4cf86853592851720f3089aa1df1def12b3b965f24c",
     "pitch/savia-final-pitch-manifest.json": "fccf39be86793d6b4aa4510001ff3422cafddac5ea02c20ad05b6503e6290268",
     "pitch/savia-final-pitch-sources.json": "88ca2ccc33cc4874f9a1630c0475727f888ab0e0e3dc59823f9c94499ca6b436",
     "pitch/savia-final-pitch-speaker-notes.md": "89156421b0b29ba7a745ea99b19820bb16fa52f70a6045cef070c2940b3c80d9",
@@ -27,6 +27,6 @@
     "pitch/slides/slide-06.png": "54014d1f240ae72d0d56d061886cc865ec10f4eb503c3501a683b193090c7644",
     "savia-submission.vtt": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6",
     "styles.css": "d5e8be817afee552c2ad8c9104baa37f1e33c3ed100620333e34ab29b9f5bad0",
-    "submission.json": "12ba42788f93ab6b99022e20abed664fc8a183ba33960722b2e8e344e53c173f"
+    "submission.json": "bb701f6578af8da432872d266bfe52ee1e4f4430c0f21344f85c226ff2951d20"
   }
 }

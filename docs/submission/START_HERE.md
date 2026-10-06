@@ -14,14 +14,14 @@ AI and orchestration engineering.
 
 Open the [submission portal](https://savia-rc-2026.fly.dev/submission/) for the four
 submission destinations: **Savia Pitch, Savia GitHub, Savia Video and Savia
-Development Process**. The portal labels the final-video placeholder and also
-provides the existing recorded demonstration.
+Development Process**. The customer film shows the qualified recorded
+demonstration in 140.611 seconds.
 
 | Destination | Direct access |
 | --- | --- |
 | Savia Pitch | [Six-slide pitch](https://savia-rc-2026.fly.dev/submission/pitch/savia-final-pitch.html), [PDF](media/decks/final/savia-final-pitch.pdf), [editable PowerPoint](media/decks/final/savia-final-pitch.pptx) |
 | Savia GitHub | [Repository](https://github.com/mario-andreschak/factored-hackathon-2026-mcg) |
-| Savia Video | [Video destination and placeholder](https://savia-rc-2026.fly.dev/submission/#video); [existing 140.611-second demonstration](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4) |
+| Savia Video | [Customer film](https://savia-rc-2026.fly.dev/submission/#video); [qualified 140.611-second demonstration](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/releases/download/v0.1.0-rc.2/savia-submission.mp4) |
 | Savia Development Process | [Readable development account](DEVELOPMENT_PROCESS.md), [visual timeline](https://savia-rc-2026.fly.dev/submission/development.html) |
 
 ## A useful review route
@@ -63,7 +63,9 @@ provides the existing recorded demonstration.
    The [public offline replay](../review/PUBLIC_EVIDENCE.md) passes 67/67 source
    checks plus seven pipeline and four analytics invariants. Use the
    [evidence map](EVIDENCE_MAP.md) for source files, tests, exact denominators,
-   reproduction commands and the boundary of each result. The
+   reproduction commands and the boundary of each result. [Live canonical voice](measurements/native-canonical-live/README.md)
+   adds two exact Spanish/Portuguese registered captions, actual full-playback
+   acknowledgments and owned-card saved-status rereads. The
    [verified presentation and host outcomes](measurements/verified-outcomes/README.md)
    add canonical result narration and separate current host receipts from planned
    workflow outcomes, with 183 passing tests and 195 subtests. The
