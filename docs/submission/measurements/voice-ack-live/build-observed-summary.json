@@ -1,0 +1,33 @@
+{
+  "schema": "savia-ack-successor-observed-build/v1",
+  "application_source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "git_tree": "fabf02d622f51302e229137405e3607356d00ab0",
+  "image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "evidence_type": "Root reported actual successful tool observations;not raw terminal byte identity",
+  "raw_terminal_build_log_recorded": false,
+  "observed_stages": [
+    {
+      "phase": "before",
+      "source_files": 183,
+      "browser_files": 22,
+      "native_files": 4,
+      "portal_files": 28,
+      "passed": true
+    },
+    {
+      "phase": "remove-ui",
+      "removed_old_browser_files": 22,
+      "remaining_browser_files": 0,
+      "passed": true
+    },
+    {
+      "phase": "after",
+      "source_files": 183,
+      "fresh_browser_files": 21,
+      "native_files": 4,
+      "portal_files": 28,
+      "passed": true
+    }
+  ],
+  "scope": "Immutable image build and guard observations reported by root;runtime and native acceptance require actual separate receipts."
+}

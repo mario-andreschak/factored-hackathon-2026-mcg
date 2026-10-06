@@ -1,0 +1,49 @@
+{
+  "schema": "savia-public-portal-source/v2",
+  "git_head": "634aa5244374b3e105ef7864fa100530bab45ec2",
+  "git_tree": "e27ee184520af7fde74831cd553faf1899b4babe",
+  "files": {
+    "web/submission/assets/mark.svg": "79464cd0ee801ee9d8d51d23dfa9029a25c46991875fd6574d088e328c6594bb",
+    "web/submission/assets/savia-customer.png": "b2c280fcf2daeed17a56fb6af5403d1f19ca8c9f8ce39a643145deaa2b718587",
+    "web/submission/development.html": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946",
+    "web/submission/engine.html": "23945dfbb3050dfcf51667395d8aa3d423b9568bd275f57208712e1882a4eb03",
+    "web/submission/evidence/DEVELOPMENT_PROCESS.md": "7133d1b551a6c96e017ff8d4e36168a4ae06ff12587dd00460045a006825a915",
+    "web/submission/evidence/DISPUTE_ENGINE.md": "1e857bf728ab746bd791b83a71c37c1ef413969b1452587bad346d89f7e3c498",
+    "web/submission/evidence/ELEVENLABS_COMPARISON.md": "67d692d7ac25894684b7be3c8cbd84e83dbe10e6d097e869bc8b26b70e22a548",
+    "web/submission/evidence/EVIDENCE_MAP.md": "b6741999178effb1906a5dc777aa0c34dcc2e409697df265cdce55b2f43a7e63",
+    "web/submission/evidence/START_HERE.md": "87b32e55778109dd12b690665d559fb43dadf28c49b287e4008b13699f68d569",
+    "web/submission/evidence/development-process.json": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e",
+    "web/submission/index.html": "21b914206781b597cf49a84a4397d662a3d93814360753402e1eae31e9111c8a",
+    "web/submission/llms.txt": "b50d0d1a675f7213ad47c4cf86853592851720f3089aa1df1def12b3b965f24c",
+    "web/submission/pitch/savia-final-pitch-manifest.json": "fccf39be86793d6b4aa4510001ff3422cafddac5ea02c20ad05b6503e6290268",
+    "web/submission/pitch/savia-final-pitch-sources.json": "88ca2ccc33cc4874f9a1630c0475727f888ab0e0e3dc59823f9c94499ca6b436",
+    "web/submission/pitch/savia-final-pitch-speaker-notes.md": "89156421b0b29ba7a745ea99b19820bb16fa52f70a6045cef070c2940b3c80d9",
+    "web/submission/pitch/savia-final-pitch.html": "31c418736c9b83805a087e70b53c1f3227bbffc9d7efe1ae1d86973c8f06a67f",
+    "web/submission/pitch/savia-final-pitch.pdf": "656eaddffb8a513b3ec65ca7cd8bd48f5800d1d4934e47a2948685c7030efd84",
+    "web/submission/pitch/savia-final-pitch.pptx": "6793894acf7ff6aa3d6c0cb897eacc9cfb900aa2d09ea8ad5ecfd5a95fcfed3f",
+    "web/submission/pitch/slides/slide-01.png": "96a40905192c7ed8b2de0295350b2244b334d06a32aacddd6c1c34a2c62f981a",
+    "web/submission/pitch/slides/slide-02.png": "ae52252d43774a47faa6e6a6409c17359dccd4199ae5d17490b5422811e6aeab",
+    "web/submission/pitch/slides/slide-03.png": "6a6a62e803a4f293ff6562c5899f66d0309f31eafe25c4149ef61f9290ac123a",
+    "web/submission/pitch/slides/slide-04.png": "eabca0607882740c935463d780838d4679123c4afed2bbb5e58109acb3335058",
+    "web/submission/pitch/slides/slide-05.png": "de7225b54632655e6b43251dbec33f24539e2010ad756475db1853782961621d",
+    "web/submission/pitch/slides/slide-06.png": "54014d1f240ae72d0d56d061886cc865ec10f4eb503c3501a683b193090c7644",
+    "web/submission/portal-manifest.json": "e9d3a96b87fcaa80a1afaf50d71cecea6a675d8384f24856e843dea4e1c38aca",
+    "web/submission/savia-submission.vtt": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6",
+    "web/submission/styles.css": "d5e8be817afee552c2ad8c9104baa37f1e33c3ed100620333e34ab29b9f5bad0",
+    "web/submission/submission.json": "bb701f6578af8da432872d266bfe52ee1e4f4430c0f21344f85c226ff2951d20"
+  },
+  "application_source": "634aa5244374b3e105ef7864fa100530bab45ec2",
+  "retained_runtime_image": "registry.fly.io/savia-rc-2026@sha256:9aa240aa6fd4616e2f029d6667ea234aa7ec8f7c1c8e1eef7a918d640a1b8b9d",
+  "scope": "final committed public support and evidence content; delivered pitch assets retained",
+  "source_congruence": "portal files are exported from the final Git commit; 12 pitch delivery files and 4 public assets retain accepted predecessor hashes",
+  "original_portal_build": {
+    "application_source": "f3c57b26d07c1e96b6e61a25befcbbc5fd51a17f",
+    "retained_runtime_image": "registry.fly.io/savia-rc-2026@sha256:c38f3af736defdf55c7de47b0e1597ad361b3f748c845176b920377fd12b307f"
+  },
+  "predecessor_portal_source": {
+    "git_head": "4a7341209e56fd66468774316a0cc5883172e426",
+    "git_tree": "7cb21664bf44600f4d6ae511d9886ae5d561517e",
+    "application_source": "6219bc81a8a4c7f2936769e7727e5146dd2713d0",
+    "retained_runtime_image": "registry.fly.io/savia-rc-2026@sha256:75fda1618ec9c48a77c46e00573a51c4f0a86e780a5349e4e5cba38ad72f2517"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema": "savia-ack-pt-continuation-readiness/v1",
+  "prepared_only": true,
+  "source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "prior_es_partial_attempt_sha256": "67c436c315c0bb729ff5c68bc3d6919cea9eb5c5076d5a410f044e4960bd5c9e",
+  "approved_cases": [
+    "pt/colombia"
+  ],
+  "maximum_new_provider_calls": 1,
+  "maximum_negative_requests": 1,
+  "maximum_ui_acks": 1,
+  "maximum_duration_ms": 120000,
+  "profile_response_wait_ms": 30000,
+  "runtime_proof_max_age_seconds": 900,
+  "offline_gate_tests_passed": 7,
+  "source_review": "native_review + independent binding child passed; final auth-only2-line delta additionally reviewed",
+  "files": {
+    "binding_gate.mjs": "a0b2d69637c1df2b9bd110796dac8d95b8d514fd2d78bd89e93da6baacc9240f",
+    "capture_savia_audio.mjs": "118d1a124e2d4a256ebc94728633d4c0ecad2a0f67e20e83a83fe63ce299a4f6",
+    "native_live.mjs": "8658a56f3862a16112015dbe97407cad07a7eacb82b3eeae74d7c6786e79c615",
+    "offline-node-tests.txt": "a4dc293663c4ded03f2f6ed73793f974737650337b8914465f6e492b26c2f6ff",
+    "prepare_native_binding.py": "7b9cffc16c542467124d2ac59026325e2e06f56338d61798ce8f14fb821deeec",
+    "successor_common.py": "ed1d8a9250842c65d0749f9600a9e39add759459060a46a7ec401552a6eb2846",
+    "test_binding_gate.mjs": "86e520304d40aa443849b5c20072ff89efefa6f9e865149f3a538bec38a61e31"
+  },
+  "network_calls_by_preparer": 0,
+  "provider_calls_by_preparer": 0,
+  "original_batch_passed": false,
+  "auth_profile_response_wait_ms": 30000,
+  "auth_login_response_wait_ms": 30000,
+  "auth_default_timeout_ms": 30000,
+  "product_default_timeout_ms": 10000
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "savia-ack-successor-promotion/v1",
+  "at_utc": "2026-10-06T01:46:22.969668+00:00",
+  "application_source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "previous_image": "registry.fly.io/savia-rc-2026@sha256:44bc554cd82ad62db51d536d580df248cbb188d24732e7ec1ed8133617c632a0",
+  "image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "machine_id": "851d7dc4460048",
+  "expected_descriptor_sha256": "3d200c1f58957b3b3a032dbde642633e6c34eee70c7bee26734cdf0e1d137dd9",
+  "accepted_private_snapshot_sha256": "41c6f4631fdbac2f3d28f7ef102bad3874a16b526c4060693763c3887ccd3b3c",
+  "configuration_preserved": true,
+  "provider_calls": 0,
+  "scope": "Image-only machine update. Runtime bytes, HTTP assets and native playback still require independent future qualification."
+}

@@ -1,0 +1,35 @@
+TAP version 13
+# Subtest: fresh c44 source/UI/native/portal proof admits exact offline binding
+ok 1 - fresh c44 source/UI/native/portal proof admits exact offline binding
+  ---
+  duration_ms: 5.5201
+  ...
+# Subtest: old retained22 browser map is rejected before runtime execution
+ok 2 - old retained22 browser map is rejected before runtime execution
+  ---
+  duration_ms: 2.9454
+  ...
+# Subtest: stale runtime proof is rejected
+ok 3 - stale runtime proof is rejected
+  ---
+  duration_ms: 1.4873
+  ...
+# Subtest: root GO is required
+ok 4 - root GO is required
+  ---
+  duration_ms: 0.7186
+  ...
+# Subtest: altered gate fingerprint is rejected
+ok 5 - altered gate fingerprint is rejected
+  ---
+  duration_ms: 1.135
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 86.8365

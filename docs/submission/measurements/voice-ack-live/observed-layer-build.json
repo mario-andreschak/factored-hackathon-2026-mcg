@@ -1,0 +1,20 @@
+{
+  "schema": "savia-observed-ui-layer-build/v1",
+  "source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "tree": "fabf02d622f51302e229137405e3607356d00ab0",
+  "base_image": "registry.fly.io/savia-rc-2026@sha256:44bc554cd82ad62db51d536d580df248cbb188d24732e7ec1ed8133617c632a0",
+  "built_image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "dockerfile_sha256": "0411376ef09c732d8eeb150040561ea6c3159eb60d6d707105c0cf4c40f77ddb",
+  "descriptor_sha256": "3d200c1f58957b3b3a032dbde642633e6c34eee70c7bee26734cdf0e1d137dd9",
+  "verifier_sha256": "be18516367db625156c97244419c21047f7de3c69885023ae30d562203f11d7c",
+  "observed_stages": [
+    {"phase": "before", "source_files": 183, "browser_files": 22, "retained_native_files": 4, "retained_portal_files": 28, "source_integrity": true},
+    {"phase": "remove-ui", "source_files": 183, "browser_files": 0, "removed_old_browser_files": 22, "retained_native_files": 4, "retained_portal_files": 28, "source_integrity": true},
+    {"phase": "after", "source_files": 183, "browser_files": 21, "retained_native_files": 4, "retained_portal_files": 28, "source_integrity": true}
+  ],
+  "command_scope": "Fly remote build-only, push, skip-release-command; this command did not promote a machine.",
+  "command_exit_code": 0,
+  "output_provenance": "Structured transcription of the coordinator's observed build tool output. No original raw terminal log file or byte identity is claimed.",
+  "provider_calls": 0,
+  "machine_writes": 0
+}

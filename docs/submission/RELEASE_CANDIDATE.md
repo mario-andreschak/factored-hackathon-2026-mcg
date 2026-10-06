@@ -8,14 +8,22 @@ Open the [submission portal](https://savia-rc-2026.fly.dev/submission/) for the 
 
 | Component | Qualified source or observation |
 | --- | --- |
-| Application, standalone analytics sources and public portal | `634aa5244374b3e105ef7864fa100530bab45ec2`, tree `e27ee184520af7fde74831cd553faf1899b4babe` |
-| Running image | `registry.fly.io/savia-rc-2026@sha256:44bc554cd82ad62db51d536d580df248cbb188d24732e7ec1ed8133617c632a0` |
-| Source and machine continuity | All 183 sources, 22 built browser files and four native runtime files verified; complete machine configuration preserved except image |
-| Public submission | All 27 allowlisted payloads match; health and entry guard verified |
+| Application and standalone analytics sources | `c44d416fcf1ab95bcb16c77651418e6570d79782`, tree `fabf02d622f51302e229137405e3607356d00ab0` |
+| Fresh browser build | The same `c44d416fcf1a` source; 21 files from an isolated production build with the committed lockfile |
+| Retained public portal and pitch | Source `634aa5244374b3e105ef7864fa100530bab45ec2`; all 28 tracked portal files unchanged; the retained 16-file pitch/media subset contains 12 pitch delivery files and four public assets |
+| Running image | `registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c` |
+| Source and machine continuity | All 183 sources, 21 fresh built browser files and four retained native runtime files verified; complete machine configuration preserved except image |
+| Public submission | All 27 allowlisted public payloads match; health and entry guard verified |
 | Card ledger after promotion | Two ES/PT owned-card saved receipts match the dated predecessor; 12 HTTP checks, zero new card blocks or provider calls |
-| Canonical native voice | Actual two-language captions and exact product-UI playback acknowledgments on `6219bc81` / image `9aa240aa…`; those accepted transport bytes are unchanged in the final layer |
+| Current canonical native voice | Two recorded ES/PT guidance cases across two attempts: exact host-script captions and two exact product-UI playback acknowledgments on `c44d416f` / image `d6be33f2…`; existing owned-card status is reread separately |
 
-[Final release receipts and harnesses](measurements/final-product/README.md) pin the running source, hashes, unchanged configuration, public assets and card continuity. [Live canonical voice](measurements/native-canonical-live/README.md) keeps the original audio, screenshots and exact dated source/image. Source qualification and a merge are distinct from a live observation; neither changes an older receipt's pin.
+[Current native playback and release receipts](measurements/voice-ack-live/README.md) pin the fresh browser, running source and image, actual audio, exact acknowledgments, unchanged configuration, public assets and card continuity.
+
+The original planned two-case capture completed ES, then stopped at a PT authentication wait before any PT provider request; its batch receipt remains failed. An explicit PT-only continuation passed. Across the two attempts, the two actual provider turns produced two exact captions, two HTTP 200 playback acknowledgments and two tampered-result HTTP 409 refusals, with zero new card writes. ES audio contains 399,600 PCM samples at 24 kHz (16.65 s); PT contains 370,800 (15.45 s).
+
+[ACK-recovery source qualification](measurements/voice-ack-recovery/README.md) records 148 passing frontend tests, including five failure cases; the live workload adds normal playback observations without injecting an ACK failure.
+
+The [prior final-product release](measurements/final-product/README.md) retains its original `634aa524` / image `44bc554c…` proof and 22-file browser build from `f3c57b26`. [Earlier canonical native voice](measurements/native-canonical-live/README.md) keeps its original `6219bc81` / image `9aa240aa…` audio and screenshots. Source qualification and a merge are distinct from a live observation; neither changes an older receipt's pin.
 
 ## Product evidence
 
@@ -33,6 +41,7 @@ The [publication-boundary qualification](measurements/pipeline-publication/READM
 | Frozen rc.2 saved recommendation speech | `7089ca7b` / `sha256:39457d88…0d38e` | [Read-only freeze](runtime-listen-freeze.json), [supporting capture](measurements/saved-recommendations-native/README.md) |
 | Later October 5 prototype | `a5e48f09` / `sha256:35903f9a…6dc93` | [Dated customer measurements and original receipts](measurements/MEASURED_RESULTS.md) |
 | Accepted canonical native transport | `6219bc81` / `sha256:9aa240aa…a1b8b9d` | [Two-language live audit](measurements/native-canonical-live/README.md) |
+| Prior final-product release | `634aa524` / `sha256:44bc554c…c632a0` | [Original release receipts](measurements/final-product/README.md); browser `f3c57b26`, 22 served files, four retained native files and portal source `634aa524` |
 
 Frozen rc.1/rc.2 tags, recordings, captions, hashes and historical receipts retain their original scope. The [media freeze receipt](media/media-freeze-receipt.json) keeps the original film and two five-slide deck exports; the current six-slide pitch is a separately retained final artifact. [Measured results](measurements/MEASURED_RESULTS.md) preserve complete workload histories, timings and original receipts.
 

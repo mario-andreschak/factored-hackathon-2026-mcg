@@ -1,0 +1,3 @@
+app = "savia-rc-2026"
+
+# Build-only configuration. No runtime services, environment, secrets, or mounts.

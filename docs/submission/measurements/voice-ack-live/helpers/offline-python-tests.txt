@@ -1,0 +1,11 @@
+test_after_config_drift_never_claims_preservation (test_helpers.Helpers.test_after_config_drift_never_claims_preservation) ... ok
+test_config_drift_denies_before_update (test_helpers.Helpers.test_config_drift_denies_before_update) ... ok
+test_image_only_update_keeps_complete_config (test_helpers.Helpers.test_image_only_update_keeps_complete_config) ... ok
+test_missing_go_denies_before_network (test_helpers.Helpers.test_missing_go_denies_before_network) ... ok
+test_prepared_descriptor_and_complete_local_maps (test_helpers.Helpers.test_prepared_descriptor_and_complete_local_maps) ... ok
+test_unreviewed_descriptor_is_rejected (test_helpers.Helpers.test_unreviewed_descriptor_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.237s
+
+OK

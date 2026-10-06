@@ -1,0 +1,25 @@
+{
+  "schema": "savia-pt-continuation-root-approval/v1",
+  "evidence_type": "Trusted explicit root GO supplied in collaboration;not private binding bytes or raw full conversation identity",
+  "approved_source": "c44d416fcf1ab95bcb16c77651418e6570d79782",
+  "approved_image": "registry.fly.io/savia-rc-2026@sha256:d6be33f27d777e9e9adf9f86ef1fb381c24e02aaf6579d5947c6482ee67dc05c",
+  "approved_prior_es_attempt_sha256": "67c436c315c0bb729ff5c68bc3d6919cea9eb5c5076d5a410f044e4960bd5c9e",
+  "approved_cases": [
+    "pt/colombia"
+  ],
+  "maximum_new_provider_eligible_calls": 1,
+  "maximum_negative_requests": 1,
+  "maximum_product_ui_acks": 1,
+  "maximum_duration_ms": 120000,
+  "new_card_writes_allowed": 0,
+  "auth_profile_response_timeout_ms": 30000,
+  "auth_login_response_timeout_ms": 30000,
+  "auth_default_timeout_ms": 30000,
+  "product_default_timeout_ms": 10000,
+  "runtime_proof_max_age_seconds": 900,
+  "original_es_batch_remains_failed": true,
+  "replay_es_authorized": false,
+  "approved_helper_readiness_sha256": "4205add82ba2116a07c4d7b2ed682464de6450f791eefedbef90fd67cdc4060d",
+  "credential_or_binding_bytes_published": false,
+  "scope": "Fresh one-call PT-only continuation after exact prior ES evidence was reviewed;no automatic retry."
+}

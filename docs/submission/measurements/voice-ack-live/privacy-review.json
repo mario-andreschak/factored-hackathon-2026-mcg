@@ -1,0 +1,18 @@
+{
+  "schema": "savia-voice-ack-public-privacy/v1",
+  "passed": true,
+  "allowlisted_file_count": 63,
+  "checks": [
+    "explicit public allowlist",
+    "no private config/binding/state/cookies copied",
+    "no bearer/API key/signed URL patterns",
+    "native receipt is field-allowlisted",
+    "NDJSON turn capabilities omitted",
+    "WAV has only PCM16mono24k audio metadata",
+    "no auth screenshots/video/raw browser state copied"
+  ],
+  "scope": "Local content and allowlist review;independent source audit additionally requested. Raw nonsecret temporary paths retained only for provenance.",
+  "independent_source_pcm_mapping_review_passed": true,
+  "independent_review": "native_review approved all65 file hashes/sizes/inventory, exact actual PCM/captions/UIACK counts/original-to-derivative mappings, original failed batch retained, private-code and captured-capability exclusion;README and receipt alias final recheck passed",
+  "independent_final_readme_and_receipt_alias_review_passed": true
+}
