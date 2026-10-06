@@ -37,7 +37,8 @@ def test_prototype_publishes_clean_owned_gold_and_binds_provenance(tmp_path):
     build = current_build(snapshot)
     report = json.loads((reports / "manifest.json").read_text(encoding="utf-8"))
     manifest = json.loads((build / "snapshot.json").read_text(encoding="utf-8"))
-    assert report["published"] is True
+    assert report["publication_status"] == "ready"
+    assert report["run_id"] == build.name
     assert manifest["source_validation"] == "unchanged_inventory_after_ingestion"
     for table, stats in report["tables"].items():
         assert stats["silver"]["quarantined_rows"] == 0, table

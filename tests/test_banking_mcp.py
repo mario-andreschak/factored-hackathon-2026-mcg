@@ -795,6 +795,40 @@ def test_missing_published_bucket_is_not_empty_history(bank, tmp_path):
         service.close()
 
 
+@pytest.mark.parametrize("status,published,usable", [
+    ("ready", None, True),
+    (None, True, True),
+    (None, False, False),
+    ("not_ready", True, False),
+    ("unknown", True, False),
+])
+def test_current_snapshot_requires_ready_or_legacy_published_quality(bank, tmp_path, status, published, usable):
+    """Actual scoped banking reads accept new snapshots and preserve legacy compatibility."""
+    import shutil
+    copied = tmp_path / "copied"
+    shutil.copytree(bank[0].config.data_dir, copied)
+    build = copied / "builds" / (copied / "CURRENT").read_text(encoding="utf-8").strip()
+    path = build / "manifest.json"
+    quality = json.loads(path.read_text(encoding="utf-8"))
+    assert quality["publication_status"] == "ready"
+    quality.pop("publication_status")
+    if status is not None:
+        quality["publication_status"] = status
+    if published is not None:
+        quality["published"] = published
+    path.write_text(json.dumps(quality), encoding="utf-8")
+    service = Service(bank[0].config.model_copy(update={"data_dir": copied, "state_db": tmp_path / "copy.db"}))
+    try:
+        if usable:
+            assert service.repository.snapshot().id == build.name
+            assert call((service, bank[1]))["transactions"]
+        else:
+            with pytest.raises(BankError, match="dataset_unavailable"):
+                call((service, bank[1]))
+    finally:
+        service.close()
+
+
 def test_legacy_snapshot_without_file_inventory_fails_closed(bank, tmp_path):
     import shutil
     copied = tmp_path / "legacy"

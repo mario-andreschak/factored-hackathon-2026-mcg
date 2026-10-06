@@ -94,9 +94,15 @@ class Snapshot:
             or not {"customers.csv", "products.csv"}.issubset(self.objects)):
             raise BankError("dataset_unavailable")
         quality = json.loads((build / "manifest.json").read_text(encoding="utf-8"))
+        # Repository.snapshot resolved CURRENT before constructing this pinned
+        # snapshot. Readiness is candidate metadata, not a publication assertion;
+        # retain support for the old immutable manifests' published boolean.
+        publication_ready = (isinstance(quality, dict) and
+                             (quality.get("publication_status") == "ready"
+                              if "publication_status" in quality else quality.get("published") is True))
         if (not isinstance(quality, dict) or quality.get("run_id") != self.id or quality.get("source_fingerprint") != self.source_fingerprint
             or quality.get("source_validation") != manifest.get("source_validation")
-            or quality.get("published") is not True or quality.get("contract_failures") != []):
+            or not publication_ready or quality.get("contract_failures") != []):
             raise BankError("dataset_unavailable")
         cur = con.cursor()
         try:

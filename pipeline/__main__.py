@@ -158,7 +158,7 @@ def run_locked(settings: Settings, stages: list[str]) -> int:
             shutil.copyfile(previous / "silver" / f"{table}.parquet",
                             settings.silver / f"{table}.parquet")
     t0 = time.perf_counter()
-    published = False
+    publication_ready = False
     for stage in stages:
         if stage == "gold" and stats.get("_contract_failures"):
             print("gold    skipped: silver failed its contracts", flush=True)
@@ -195,7 +195,7 @@ def run_locked(settings: Settings, stages: list[str]) -> int:
             "gold_files": {p.relative_to(settings.gold).as_posix(): p.stat().st_size
                            for p in sorted(settings.gold.rglob("*.parquet"))},
         }) + "\n", encoding="utf-8")
-        published = True
+        publication_ready = True
     elif stats.get("_contract_failures"):
         print(f"publish SKIPPED: build {run_id} failed; the previous snapshot keeps serving", flush=True)
     elif derived:
@@ -206,7 +206,9 @@ def run_locked(settings: Settings, stages: list[str]) -> int:
     run = {
         "run_id": run_id, "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "seconds": round(time.perf_counter() - t0, 1), "source": redacted, "stages": ",".join(stages),
-        "published": published,
+        # Reports describe the candidate before CURRENT is swapped. Readiness
+        # is not proof that publication succeeded; CURRENT is authoritative.
+        "publication_status": "ready" if publication_ready else "not_ready",
         "source_fingerprint": stats.get("_source_fingerprint"),
         "source_validation": (inventory.get("source_validation", "legacy_inventory")
                               if inventory is not None else None),
@@ -214,13 +216,15 @@ def run_locked(settings: Settings, stages: list[str]) -> int:
         "silver_build_id": silver_build_id if "gold" in stages or "silver" in stages else None,
         "silver_contracts_sha256_12": silver_contracts if "gold" in stages or "silver" in stages else None,
     }
-    if published:
-        # Publish only after the serving files, lineage and aggregate quality
-        # manifest are complete in the same immutable build directory.
+    if publication_ready:
+        # Complete the immutable snapshot and required external aggregate
+        # reports before changing the serving pointer. No report writes follow
+        # publication, so their failure cannot turn a failed run into a release.
         report.write(settings.build_dir, run, stats)
+    report.write(settings.report_dir, run, stats)
+    if publication_ready:
         publish(settings.out_dir, run_id)
         print(f"publish build {run_id} is now serving", flush=True)
-    report.write(settings.report_dir, run, stats)
     print(f"report  {settings.report_dir / 'quality_report.md'}", flush=True)
     if stats.get("_contract_failures"):
         print("CONTRACT FAILURES:\n  " + "\n  ".join(stats["_contract_failures"]), file=sys.stderr)
