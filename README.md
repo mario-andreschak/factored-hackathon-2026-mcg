@@ -113,7 +113,7 @@ The human pitch above explains the product. This table maps technical claims to 
 | Router evaluation | [ML setup](ml/README.md) and [frozen evaluator](demo/evaluate_router.py) | Fixed diagnostic workload |
 | Public evidence replay | `python -m pip install -r requirements-review.txt`, then `python scripts/review_evidence.py --out docs/review` | Public six-table fixture, offline checks, fixed router and analytics replay |
 ## Architecture and development
-
+![system-landscape](https://github.com/mario-andreschak/factored-hackathon-2026-mcg/blob/main/docs/architecture/system-landscape.png)
 | Directory | Responsibility |
 | --- | --- |
 | `frontend/`, `frontend/src/avatar/` | Customer portal and integrated voice |
