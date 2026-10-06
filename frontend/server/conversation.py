@@ -121,7 +121,7 @@ def _explicit_bank_request(text: str) -> bool:
                     r"qual|quais|quanto|quanta|quantos|quantas|onde|quando|puedes|podrias|pode|poderia)\b", words)
     action = r"(?:revisa|revise|revisar|revises|verifica|verifique|verificar|consulta|consulte|consultar|" \
              r"muestra|mostra|mostre|mostrar|explica|explique|explicar|compara|compare|comparar|" \
-             r"abrir|abre|abra|continuar|continua|continue|preparar|prepara|prepare|saber|ver)"
+             r"abrir|abre|abra|continuar|continua|continue|preparar|prepara|prepare|saber|ver|bloquear|bloquea|bloquee|bloqueie)"
     request = re.search(prefix + action + r"\b", words)
     # Wanting reassurance or a joke about an account does not request a bank task.
     desire = re.search(prefix + r"(?:quiero|quisiera|necesito|quero|queria|preciso|gostaria)\b"

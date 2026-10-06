@@ -796,8 +796,23 @@ def test_dictation_narration_uses_only_current_host_chunks_once():
     ("pt", "Quero conversar sobre minha conta."),
     ("es", "Mi banco revisa mi cuenta."),
     ("es", "Sí, adelante."),
+    ("es", "No quiero bloquear mi tarjeta, solo conversar."),
+    ("pt", "Não quero bloquear meu cartão, só conversar."),
+    ("es", "No bloquees mi tarjeta."),
+    ("pt", "Não bloqueie meu cartão."),
+    ("es", "Mi tarjeta ya está bloqueada."),
+    ("pt", "Meu cartão já está bloqueado."),
+    ("es", "Estoy preocupado por mi tarjeta."),
+    ("pt", "Estou preocupado com meu cartão."),
+    ("es", "El banco me dijo que bloquea mi tarjeta."),
+    ("pt", "Meu banco me disse para bloquear meu cartão."),
+    ("es", "Bloquea mi teléfono."),
+    ("pt", "Bloqueie meu telefone."),
+    ("es", "Quiero bloquear mi teléfono."),
+    ("pt", "Quero bloquear meu telefone."),
 ])
-def test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output(language, text):
+@pytest.mark.parametrize("audio", [False, True])
+def test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_tool_output(language, text, audio):
     async def run():
         from frontend.server.conversation import Conversation
         transport, seen = audio_model(lambda body: ASKS, heard=text)
@@ -805,10 +820,11 @@ def test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_t
         talk = Conversation({}, voice, transport=transport)
         previous = [e async for e in await talk.turn("s", language, message="Revisa el saldo de mi cuenta.")]
         talk.played("s", previous[-1]["turn_id"], previous[-1]["samples"], True)
-        current = [e async for e in await talk.turn("s", language, audio=wav())]
+        current = [e async for e in await talk.turn("s", language, **({"audio": wav()} if audio else {"message": text}))]
         assert seen[-1]["tool_choice"] == "none" and seen[-1]["tools"] == []
         assert "Nunca conviertas tranquilidad" in seen[-1]["messages"][0]["content"]
-        assert {"type": "heard", "text": text} in current
+        if audio:
+            assert {"type": "heard", "text": text} in current
         assert not any(e["type"] == "delegate" for e in current)
         assert current[-1]["type"] == "complete"
         assert talk._ledgers["s"][1][-1] == {"role": "user", "content": text}
@@ -825,6 +841,15 @@ def test_current_smalltalk_cannot_delegate_even_after_bank_history_and_hostile_t
     ("pt", "Ajude-me a comparar este comércio com meus recibos."),
     ("es", "¿Qué comercio aparece en este cargo?"),
     ("pt", "Qual o valor desta transação?"),
+    ("es", "bloquea mi tarjeta"),
+    ("es", "Bloquee mi tarjeta."),
+    ("pt", "bloqueie meu cartão"),
+    ("es", "Quiero bloquear mi tarjeta."),
+    ("pt", "Quero bloquear meu cartão."),
+    ("es", "Por favor, bloquea mi tarjeta."),
+    ("pt", "Por favor, bloqueie meu cartão."),
+    ("es", "¿Puedes bloquear mi tarjeta?"),
+    ("pt", "Pode bloquear meu cartão?"),
 ])
 @pytest.mark.parametrize("audio", [False, True])
 def test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite(language, text, audio):
@@ -840,7 +865,8 @@ def test_explicit_current_bank_request_delegates_exact_words_not_model_rewrite(l
         assert not any(m["role"] == "assistant" for m in talk._ledgers["s"][1])
         talk.played("s", current[-1]["turn_id"], current[-1]["samples"], True)
         assert talk._ledgers["s"][1][-1] == {"role": "assistant", "content": "Claro, lo reviso."}
-        busy = [e async for e in await talk.turn("s", language, message=text, working=True)]
+        busy = [e async for e in await talk.turn("s", language,
+                **({"audio": wav()} if audio else {"message": text}), working=True)]
         assert seen[-1]["tool_choice"] == "none" and seen[-1]["tools"] == []
         assert not any(e["type"] == "delegate" for e in busy)
         await talk.close(), await voice.close()
