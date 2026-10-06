@@ -18,6 +18,7 @@
 | Total data rows | 120 |
 | Unique text values | 120 |
 | Human review | **Not human-reviewed or adjudicated yet** |
+| Completed automated sample audit | Two fresh AI audits agree with each other and the proposed labels on **8/8 fixed requests (8/120 coverage)**; [raw evidence and reproduction](../submission/measurements/router-policy-audit/README.md) |
 
 Each SHA256 identifies the corresponding CSV itself, including its header, encoding, punctuation, and line endings. Neither is a hash of this provenance note. Verify the bytes against this manifest before using or submitting a dataset version.
 
@@ -71,6 +72,8 @@ V1 was frozen after creation and structural validation. Its exact bytes remain p
 
 This balanced diagnostic workload is **not a prevalence estimate** and is not a random sample of customer traffic. Results on it cannot establish deployment performance, regional coverage, or the frequency of banking intents. Repeated scenario families and cross-language analogues are intentional; exact-text uniqueness alone does not establish semantic diversity.
 
-**Independent human adjudication is required before final submission**, especially for close charge-identification boundaries, negation, legal threats, security urgency, and vulnerability. Until then, labels remain AI-authored proposed ground truth. Record adjudicator decisions and any disagreements independently, retaining this frozen artifact and its manifest.
+**Handover decision, October 5, 2026 (America/Bogota):** the earlier plan required independent human adjudication before final submission. The owner then explained that they did not speak the sample languages and delegated the choice to the agents. For this bounded hackathon handover, that plan was replaced with a disclosed [automated policy audit of eight prespecified requests](../submission/measurements/router-policy-audit/README.md). Two fresh AI reviewers, each given only the fixed label-free packet and written protocol, agreed on all eight labels; comparison after their raw outputs were frozen found agreement with the original proposed labels on 8/8. This validates agreement on **8/120 cases**, not the other 112 labels, new classifier accuracy, or independent human truth. No examples, labels, model parameters or previous metrics changed.
+
+**Independent human adjudication remains pending.** All 120 labels remain AI-authored proposed ground truth. Language-speaking human adjudication is still needed for stronger human-validated or real-customer quality claims, especially close charge-identification boundaries, negation, legal threats, security urgency and vulnerability. Any future adjudication must record decisions and disagreements independently while retaining this frozen artifact and manifest. The owner's delegation is a choice of disclosed handover method, not human label approval or a general waiver of evaluation requirements.
 
 Do not use this holdout for model tuning, training, threshold or hyperparameter selection, feature design, prompt optimization, or iterative example selection. Evaluate only a previously fixed model and reporting procedure. Any diagnostic inspection of errors must be disclosed and must not be followed by tuning against this same holdout; further development requires a separate untouched evaluation set.

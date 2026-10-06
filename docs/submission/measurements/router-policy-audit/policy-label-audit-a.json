@@ -1,0 +1,85 @@
+{
+  "schema": "savia-ai-semantic-policy-label-audit/v1",
+  "audit_id": "policy-label-audit-a",
+  "audit_type": "AI-generated independent semantic label audit",
+  "input_packet": ".tmp/human-adjudication-sample.json",
+  "input_packet_sha256": "cb7cd689f9ee2543f3c32eca33d9ea8a0efa772c28f20dc72164037a65551d62",
+  "dataset_sha256_from_packet": "3c4f68d880146915d7fb27c7884733190c1d87d84e1fee6d066afeed85538684",
+  "protocol": {
+    "inquiry": "Neutral own-account or transaction fact request without an asserted problem.",
+    "dispute": "Asserted unrecognized, incorrect, or duplicate charge; missing refund; or money deducted but not received.",
+    "human": "Explicit person request, asserted immediate security/fraud/account-takeover/phishing incident, legal threat, or vulnerability/coercive control.",
+    "other": "Outside the chosen account/transaction support scope, including product information, opening an account, branch facilities, general education, or conversation.",
+    "priority": [
+      "human",
+      "dispute",
+      "inquiry",
+      "other"
+    ],
+    "negation_rule": "A negated incident or person request alone does not trigger human."
+  },
+  "cases": [
+    {
+      "id": "A",
+      "label": "inquiry",
+      "confidence": "clear",
+      "literal_english_gloss": "How much available limit do I have on the card right now?",
+      "policy_reason": "Neutral request for the user's current available card limit, with no asserted problem."
+    },
+    {
+      "id": "B",
+      "label": "human",
+      "confidence": "clear",
+      "literal_english_gloss": "My caregiver is pressuring me to hand over control of the account, and I am afraid of being left without my money.",
+      "policy_reason": "Asserted caregiver pressure to surrender account control indicates coercive control and vulnerability."
+    },
+    {
+      "id": "C",
+      "label": "dispute",
+      "confidence": "clear",
+      "literal_english_gloss": "The amount charged to the card is greater than the amount on the purchase receipt.",
+      "policy_reason": "Asserts an incorrect transaction amount."
+    },
+    {
+      "id": "D",
+      "label": "human",
+      "confidence": "clear",
+      "literal_english_gloss": "If you do not address this duplicate charge, I am going to file a lawsuit against the bank.",
+      "policy_reason": "Explicit legal threat takes priority over the asserted duplicate charge."
+    },
+    {
+      "id": "E",
+      "label": "other",
+      "confidence": "clear",
+      "literal_english_gloss": "Suggest an easy recipe for lunch.",
+      "policy_reason": "Recipe request is outside account and transaction support."
+    },
+    {
+      "id": "F",
+      "label": "other",
+      "confidence": "clear",
+      "literal_english_gloss": "Do you allow pets inside the branch?",
+      "policy_reason": "Question about branch facilities or access is outside the chosen account and transaction support scope."
+    },
+    {
+      "id": "G",
+      "label": "dispute",
+      "confidence": "clear",
+      "literal_english_gloss": "The refund appears as completed at the merchant, but I still do not have that money in the account.",
+      "policy_reason": "Asserts a missing refund despite the merchant reporting completion."
+    },
+    {
+      "id": "H",
+      "label": "inquiry",
+      "confidence": "clear",
+      "literal_english_gloss": "Hey, I sent money a little while ago. Can you tell me whether it is still being processed?",
+      "policy_reason": "Neutral request for a recent transfer's status; it does not assert missing funds, nonreceipt, or another transaction problem."
+    }
+  ],
+  "limitations": [
+    "This is AI-generated semantic interpretation, not human judgment or human adjudication.",
+    "Only the eight supplied requests were examined; this does not validate label quality for all 120 cases.",
+    "No dataset, training data, model, evaluation, predictions, prior reviews, chats, other repositories, or web sources were consulted.",
+    "No model, policy, or tuning changes were made."
+  ]
+}
