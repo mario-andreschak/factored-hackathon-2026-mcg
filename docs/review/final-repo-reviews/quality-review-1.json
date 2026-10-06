@@ -1,0 +1,242 @@
+{
+  "schema": "savia-independent-quality-review/v1",
+  "review_id": "quality-review-1",
+  "repository_root": "C:/Users/Moe/.codex/worktrees/savia-review-evidence/factored-hackathon-2026",
+  "head": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+  "assessment_scope": "Complete declared Savia/FLUJO hackathon submission: deterministic R0-R18 core, implemented conversational enhancements, expandable architecture, data/ML/analytics and committed evidence.",
+  "total": 88,
+  "maximum": 100,
+  "dimensions": [
+    {
+      "name": "Technical judgment",
+      "score": 19,
+      "maximum": 20,
+      "reason": "Real ordered policy, ownership/readback/consent/recovery and query scope boundaries, appropriate generic/domain separation, and source-pinned qualification. Small claim and operation-status ambiguities remain; no core correctness blocker found in the selected checks."
+    },
+    {
+      "name": "AI engineering",
+      "score": 17,
+      "maximum": 20,
+      "reason": "Integrated ES/PT text and voice, genuine two-role model completions, durable saved recommendations, exact playback admission, canonical host narration and rigorous fleet result correlation. Recorded reviewers choose bounded enums rather than conduct broad investigation; newest voice changes are source-qualified without new live comprehension evidence, and no broad answer-quality uplift is shown."
+    },
+    {
+      "name": "Data engineering",
+      "score": 19,
+      "maximum": 20,
+      "reason": "Contracts, typed stages, quarantine, row accounting, deterministic correction/deduplication, source lineage, customer buckets and atomic publication are substantive and replayed. Historical ownership/template defects changed product choices. A reproducible report failure can leave a nonzero run after publication; S3 inventory lacks VersionId pinning as disclosed."
+    },
+    {
+      "name": "ML/evaluation",
+      "score": 15,
+      "maximum": 20,
+      "reason": "Training-only CV, preserved frozen diagnostic, keyword/raw/abstention comparisons, language/error slices and paired uncertainty are useful. Required independent human label adjudication remains pending; safety/coverage tradeoff is substantial. Luna's audited 100/100 result covers 10 request phrasings and ties the deterministic baseline; it is not broad quality or product improvement."
+    },
+    {
+      "name": "Data analytics",
+      "score": 18,
+      "maximum": 20,
+      "reason": "Metadata-only read-only extraction, HMAC identities, outcome/evidence separation, explicit denominators, uncertainty and operating decisions are implemented and tested. Cost/token persistence, exact workflow-turn attribution and lifetime card-action analysis remain incomplete; tiny customer samples cannot quantify impact."
+    }
+  ],
+  "first_five_findings_in_discovery_order": [
+    {
+      "order": 1,
+      "type": "claim qualification",
+      "finding": "README's 'Same admission rules a production host would use' extends beyond what a fictional ledger and source checks prove.",
+      "source": "README.md:72",
+      "severity": "minor"
+    },
+    {
+      "order": 2,
+      "type": "strength",
+      "finding": "Product boundary deliberately keeps Savia/banking code outside generic FLUJO main; local copied public generic interfaces make platform contribution inspectable.",
+      "source": "docs/FLUJO_PRODUCT_BOUNDARY.md",
+      "severity": "none"
+    },
+    {
+      "order": 3,
+      "type": "scope",
+      "finding": "Pitch/architecture describe 100 team conversations as a larger design; recorded customer collaboration is two reviewers. The documented later failed provider attempt is separate from successful capacity receipts.",
+      "source": "docs/submission/media/decks/final/savia-final-pitch-speaker-notes.md:31",
+      "severity": "none"
+    },
+    {
+      "order": 4,
+      "type": "comparison limitation",
+      "finding": "ElevenLabs comparison offers useful product positioning but no matched benchmark or executed capability parity study; vendor latency and Savia end-to-end timings are not interchangeable.",
+      "source": "docs/submission/ELEVENLABS_COMPARISON.md",
+      "severity": "minor"
+    },
+    {
+      "order": 5,
+      "type": "implementation strength",
+      "finding": "R0-R18 is an implemented pure ordered policy with trusted identity, query-scoped confirmation, receipt matching and runtime recovery, not just a prompt/diagram.",
+      "source": "dispute_workflow/policy.py",
+      "severity": "none"
+    }
+  ],
+  "defects_and_gaps": [
+    {
+      "kind": "reproduced operational defect",
+      "source": "pipeline/__main__.py:221",
+      "finding": "External report.write occurs after CURRENT publication. A generated six-table run with reports/manifest.json occupied by a directory raises PermissionError after CURRENT advances; the new build is complete and prior build retained.",
+      "impact": "Failed CLI outcome is ambiguous about active snapshot; no corrupt data or failed-contract publication demonstrated.",
+      "improvement": "Write required external report before publication, or explicitly separate a post-commit optional-report failure from build/publication failure.",
+      "receipt": ".tmp/quality-review-1/independent-audit.json"
+    },
+    {
+      "kind": "evaluation acceptance gap",
+      "source": "docs/ml/router_holdout_provenance.md:74",
+      "finding": "Independent human adjudication is expressly required before final submission but remains pending.",
+      "impact": "Limits learned-quality conclusions; not a reason to discard deterministic core and implemented submission.",
+      "improvement": "Preserve blind human worksheets/disagreements, version adjudicated labels separately, and use a new untouched set for subsequent development."
+    },
+    {
+      "kind": "AI value measurement gap",
+      "source": "savia_assistant/service.py:327",
+      "finding": "Two real reviewer calls choose fixed suggestion enums and trusted templates. The provider fixture benchmark ties code; general usefulness/fluency and richer investigation quality are unmeasured.",
+      "improvement": "Compare these model choices against deterministic suggestions on varied, independently judged real-style cases before expanding the complexity."
+    },
+    {
+      "kind": "analytics coverage gap",
+      "source": "analytics/README.md:84",
+      "finding": "Exact turn/query outcome attribution, persistent usage/cost and lifetime card action analytics are unavailable.",
+      "improvement": "Add authenticated stable outcome linkage and usage observations while preserving metadata minimization and honest denominators."
+    },
+    {
+      "kind": "claim clarity",
+      "source": "README.md:72",
+      "finding": "Production-admission equivalence, 'ready to scale' and two-person/ten-day phrasing should keep their existing qualifications visible.",
+      "improvement": "Describe production-like control patterns, implemented scale contracts and owner-supplied active delivery scope instead of implying completed production/fleet acceptance."
+    }
+  ],
+  "submission_blocker": "No discovered blocker to the declared bounded hackathon handover. Human label adjudication remains an unresolved gate for stronger learned-component quality claims. Video destination/placeholder, larger fleet qualification and real-bank qualification are separate scopes and were not scored as missing hackathon implementation.",
+  "comparison_quality": {
+    "routing": "Strong component comparison: committed 70/120 keyword, 94/120 raw classifier, 65/120 abstention; paired raw uplift 20 points with 10-30-point interval; human misses 13/30, 3/30, 1/30 and unnecessary handoffs 6/90, 9/90, 52/90. AI-label and sample caveats remain.",
+    "luna": "Transparent actual records and independently derived fixture baseline; 100/100 both systems. Five scenarios and 10 phrases establish exact grounding/transport load, not AI advantage or general conversational quality.",
+    "infrastructure": "Preserves 217/300 first wording and 300/300 neutral reference repeat, queue-inclusive latency and sandbox failures. Original private request histories unavailable here; aggregate receipts remain historical evidence, not current customer acceptance.",
+    "commercial": "Useful bank-controlled case-lifecycle positioning with dated vendor citations and explicit lack of matched performance benchmark. Does not establish product superiority, lower cost, lower latency or absence of equivalent third-party tooling."
+  },
+  "checks": [
+    {
+      "name": "fresh guarded core qualification",
+      "result": "passed",
+      "tests": 1078,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsed_seconds": 135.798,
+      "network_attempts": 0,
+      "receipt": ".tmp/quality-review-1/core/receipt.json",
+      "command": "python docs/submission/measurements/core-engine-final/core-engine-run.py --repo . --expected-head df957f99a6e544cde5a698cfb6d9685e92ee3255 --out .tmp/quality-review-1/core"
+    },
+    {
+      "name": "public data/router-unit/analytics tests",
+      "result": "passed",
+      "tests": 67,
+      "receipt": ".tmp/quality-review-1/public-replay/offline-tests.json"
+    },
+    {
+      "name": "public pipeline and analytics invariants",
+      "result": "passed",
+      "pipeline": 7,
+      "analytics": 4,
+      "receipt": ".tmp/quality-review-1/public-replay"
+    },
+    {
+      "name": "selected conversational/action/host-analytics tests",
+      "result": "passed",
+      "tests": 166,
+      "elapsed_seconds": 52.67,
+      "external_python_network_attempts": 0,
+      "receipt": ".tmp/quality-review-1/enhancements.xml",
+      "command": "python .tmp/quality-review-1/enhancements.py"
+    },
+    {
+      "name": "Luna records independent baseline/hash/interval reconstruction",
+      "result": "passed",
+      "records": 100,
+      "unique": 100,
+      "correct": 100,
+      "bounded_safe": 100,
+      "peak_turn_overlap": 100,
+      "receipt": ".tmp/quality-review-1/luna-audit/audit.json"
+    },
+    {
+      "name": "generic FLUJO copied source verification",
+      "result": "passed",
+      "files": 39,
+      "bytes": 619009,
+      "upstream": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+      "command": "node docs/submission/measurements/flujo-platform/verify-source.cjs"
+    },
+    {
+      "name": "documented generic FLUJO retry smoke",
+      "result": "passed",
+      "checks": 5,
+      "command": "node --experimental-strip-types --require ./offline-preload.cjs ./offline-smoke.mjs"
+    },
+    {
+      "name": "core source congruence",
+      "result": "passed",
+      "matched": 39,
+      "total": 39,
+      "receipt": ".tmp/quality-review-1/independent-audit.json"
+    },
+    {
+      "name": "audio byte/container verification",
+      "result": "passed",
+      "files": 3,
+      "samples": [
+        158400,
+        94800,
+        196800
+      ],
+      "rate": 24000,
+      "receipt": ".tmp/quality-review-1/independent-audit.json",
+      "limit": "No human listening/comprehension or waveform/script alignment claim."
+    },
+    {
+      "name": "operating metrics reconstruction",
+      "result": "passed",
+      "receipt": ".tmp/quality-review-1/independent-audit.json",
+      "limit": "Recomputed published predictions and paired intervals, not fresh model fitting."
+    },
+    {
+      "name": "post-publication report fault probe",
+      "result": "defect reproduced",
+      "receipt": ".tmp/quality-review-1/independent-audit.json"
+    }
+  ],
+  "fresh_python_tests_total": 1311,
+  "failed_or_unavailable_checks": [
+    {
+      "command": "python scripts/review_evidence.py --out .tmp/quality-review-1/public-replay",
+      "result": "Final fixed-router evaluation unavailable: ModuleNotFoundError: sklearn. Prior 67 tests and all 11 invariants passed; no final replay receipt is claimed. No dependencies installed."
+    },
+    {
+      "command": "node offline-smoke.mjs",
+      "result": "Initial shorthand invocation lacked documented --experimental-strip-types and failed with ERR_UNKNOWN_FILE_EXTENSION. Correct documented invocation passed five checks."
+    },
+    {
+      "command": "initial publication probe",
+      "result": "Initial whole report-directory-as-file probe correctly failed before CURRENT changed; its scratch assertion assuming otherwise failed. A separate late manifest-path failure reproduced publication/status ambiguity."
+    }
+  ],
+  "limits": [
+    "Only the requested frozen evidence worktree was read; no earlier assessment/rating reports were opened and no other reviewer, repository, chat, web, provider or bank was consulted.",
+    "No live site/browser, provider requests, physical microphone tests, external deployment or bank actions.",
+    "No installs; scikit-learn unavailable and frontend node_modules absent. Full frontend build/UI suite, nine upstream suites/full FLUJO build and full cross-platform/all-repository CI were not rerun.",
+    "Historical 5,899,720-row aggregate/source report and private infrastructure raw traces were assessed as committed receipts, not independently rerun on private data.",
+    "Historical recordings qualify their original sources. Current canonical narration improvements have mock/source evidence; no new live voice acceptance is inferred.",
+    "Existing fixtures/doubles test real domain code; Python network guards are instrumentation, not an OS sandbox.",
+    "Scratch artifacts were confined to the requested .tmp/quality-review-1 prefix; the first committed core harness used pytest's normal temporary fixture location because it has no basetemp option. Later fixture/replay work explicitly used the assigned scratch temp directory."
+  ],
+  "source_unchanged": true,
+  "git_status_before": "",
+  "git_status_after": "",
+  "outputs": {
+    "markdown": "C:/Users/Moe/.codex/worktrees/savia-review-evidence/factored-hackathon-2026/.tmp/quality-review-1.md",
+    "json": "C:/Users/Moe/.codex/worktrees/savia-review-evidence/factored-hackathon-2026/.tmp/quality-review-1.json"
+  }
+}

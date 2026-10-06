@@ -1,0 +1,302 @@
+{
+  "schema": "savia-quality-review-cohort-archive/v1",
+  "scope": "Later independent repository-only assessments of the complete fictional Savia/FLUJO hackathon submission after PR #79. Ratings were finalized before archival and are not revised, rounded or rescored.",
+  "archived_at_utc": "2026-10-06T00:24:21.376595+00:00",
+  "source_commit": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+  "source_tree": "f6a8a5c64cf9cbae5fb9729f8a0f43ffd5958804",
+  "equivalent_main_merge": "1d904093e0a32dd3300e7063afef4b05a9f77d02",
+  "pull_request": {
+    "number": 79,
+    "url": "https://github.com/mario-andreschak/factored-hackathon-2026-mcg/pull/79",
+    "merge_commit": "1d904093e0a32dd3300e7063afef4b05a9f77d02",
+    "same_tree_as_assessed_source": true
+  },
+  "rubric": {
+    "technical_judgment": 20,
+    "ai_engineering": 20,
+    "data_engineering": 20,
+    "ml_evaluation": 20,
+    "data_analytics": 20
+  },
+  "rubric_qualification": "Unchanged five-by-twenty complete-submission review instrument; not an official organizer numeric score. Generic FLUJO evidence is included within the complete submission, without substituting a separate platform grade.",
+  "target": {
+    "subject": "complete Savia/FLUJO hackathon submission",
+    "minimum": 90,
+    "required_reviews": 3,
+    "total_reviews": 5,
+    "actual_reviews_at_or_above_minimum": 0,
+    "achieved": false
+  },
+  "scores": [
+    88,
+    89,
+    88,
+    87,
+    89
+  ],
+  "reviews": [
+    {
+      "reviewer": "quality-review-1",
+      "source_commit": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+      "complete_submission": 88,
+      "maximum": 100,
+      "dimensions": {
+        "technical_judgment": 19,
+        "ai_engineering": 17,
+        "data_engineering": 19,
+        "ml_evaluation": 15,
+        "data_analytics": 18
+      },
+      "reports": [
+        {
+          "path": "final-repo-reviews/quality-review-1.md",
+          "sha256": "21e1ad7df10dadf6a66bf516413081974616cdcbef6afcc1b158e96bf859430e",
+          "bytes": 19258,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "21e1ad7df10dadf6a66bf516413081974616cdcbef6afcc1b158e96bf859430e",
+          "original_copy_and_git_blob_verified": true
+        },
+        {
+          "path": "final-repo-reviews/quality-review-1.json",
+          "sha256": "3eb69141c8a1156c897ffbc9f954fba6cf16801e3651c4c382fd59184e62f9fb",
+          "bytes": 13994,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "3eb69141c8a1156c897ffbc9f954fba6cf16801e3651c4c382fd59184e62f9fb",
+          "original_copy_and_git_blob_verified": true
+        }
+      ],
+      "instrumentation_limits_as_reported": [
+        "Only the requested frozen evidence worktree was read; no earlier assessment/rating reports were opened and no other reviewer, repository, chat, web, provider or bank was consulted.",
+        "No live site/browser, provider requests, physical microphone tests, external deployment or bank actions.",
+        "No installs; scikit-learn unavailable and frontend node_modules absent. Full frontend build/UI suite, nine upstream suites/full FLUJO build and full cross-platform/all-repository CI were not rerun.",
+        "Historical 5,899,720-row aggregate/source report and private infrastructure raw traces were assessed as committed receipts, not independently rerun on private data.",
+        "Historical recordings qualify their original sources. Current canonical narration improvements have mock/source evidence; no new live voice acceptance is inferred.",
+        "Existing fixtures/doubles test real domain code; Python network guards are instrumentation, not an OS sandbox.",
+        "Scratch artifacts were confined to the requested .tmp/quality-review-1 prefix; the first committed core harness used pytest's normal temporary fixture location because it has no basetemp option. Later fixture/replay work explicitly used the assigned scratch temp directory."
+      ]
+    },
+    {
+      "reviewer": "quality-review-2",
+      "source_commit": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+      "complete_submission": 89,
+      "maximum": 100,
+      "dimensions": {
+        "technical_judgment": 19,
+        "ai_engineering": 17,
+        "data_engineering": 19,
+        "ml_evaluation": 16,
+        "data_analytics": 18
+      },
+      "reports": [
+        {
+          "path": "final-repo-reviews/quality-review-2.md",
+          "sha256": "ca29318c8e58085809c95df45d3472f9a46bb71cb25dfc0a06f64353bce8f3ad",
+          "bytes": 14592,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "ca29318c8e58085809c95df45d3472f9a46bb71cb25dfc0a06f64353bce8f3ad",
+          "original_copy_and_git_blob_verified": true
+        },
+        {
+          "path": "final-repo-reviews/quality-review-2.json",
+          "sha256": "6ba7b511e80d4af4690a890ab42abefe838c86a95e903197e3e872b659ec54b8",
+          "bytes": 17120,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "6ba7b511e80d4af4690a890ab42abefe838c86a95e903197e3e872b659ec54b8",
+          "original_copy_and_git_blob_verified": true
+        }
+      ],
+      "instrumentation_limits_as_reported": [
+        "No web/provider/real-bank requests, other repos/chats/reviewers or dependency installs.",
+        "Excluded earlier rating/review reports were not opened; README ratings ignored.",
+        "Private organizer rows not rescanned; committed aggregates and synthetic mechanisms audited.",
+        "scikit-learn absent: original router predictions/hashes audited; no fresh model fit or full public replay.",
+        "Frontend node_modules absent: no frontend build/browser/component suite run.",
+        "No waveform intelligibility/live GUI/provider interoperability/native compiler/full cross-platform CI acceptance inferred.",
+        "Historical deployed source and recording pins do not qualify this entire HEAD; 153/177 deployed-source HEAD blobs match."
+      ]
+    },
+    {
+      "reviewer": "quality-review-3",
+      "source_commit": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+      "complete_submission": 88,
+      "maximum": 100,
+      "dimensions": {
+        "technical_judgment": 19,
+        "ai_engineering": 18,
+        "data_engineering": 18,
+        "ml_evaluation": 15,
+        "data_analytics": 18
+      },
+      "reports": [
+        {
+          "path": "final-repo-reviews/quality-review-3.md",
+          "sha256": "829fcd21520cf9f49c050bb4b57801af1b916511ddd3216717538b16757e7fa2",
+          "bytes": 15090,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "829fcd21520cf9f49c050bb4b57801af1b916511ddd3216717538b16757e7fa2",
+          "original_copy_and_git_blob_verified": true
+        },
+        {
+          "path": "final-repo-reviews/quality-review-3.json",
+          "sha256": "74353278412244da79bde7a8fbaa1e209b64b5e4d26a88ce8c3ab281b17f88c9",
+          "bytes": 24634,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "74353278412244da79bde7a8fbaa1e209b64b5e4d26a88ce8c3ab281b17f88c9",
+          "original_copy_and_git_blob_verified": true
+        }
+      ],
+      "instrumentation_limits_as_reported": [
+        "No earlier assessment/rating reports were read; no other repository, chat, reviewer, website, provider or real bank was queried. No delegation or installation occurred.",
+        "No private full-data rerun: original six-table counts were arithmetically reconciled and public fixtures tested.",
+        "scikit-learn is absent in the existing runtime, so learned model fitting and similarity screening were not rerun. Frozen hashes, keyword source, published error-record predictions and denominators were checked independently. An unused pandas dependency probe also failed; pandas is not required by the selected checks.",
+        "No frontend npm install/build/UI suite or nine-suite full upstream FLUJO replay: existing dependency cache/complete neighboring source was outside permitted scope. Five copied-module behavior checks and all 39 copied-source hashes were verified.",
+        "No fresh graphical customer journey, physical microphone capture, human audio listening/adjudication, provider response generation, actual fleet run, production bank action, human pickup or longitudinal ROI study was performed.",
+        "Historical provider/remote observations remain evidence tied to their original receipts, not independently reobserved live state or blanket current-HEAD acceptance.",
+        "Source tests, fixtures, structural guards and finite examples do not prove arbitrary semantic safety."
+      ]
+    },
+    {
+      "reviewer": "quality-review-4",
+      "source_commit": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+      "complete_submission": 87,
+      "maximum": 100,
+      "dimensions": {
+        "technical_judgment": 18,
+        "ai_engineering": 17,
+        "data_engineering": 19,
+        "ml_evaluation": 15,
+        "data_analytics": 18
+      },
+      "reports": [
+        {
+          "path": "final-repo-reviews/quality-review-4.md",
+          "sha256": "067bdbce535bb7f633d7f67135fdbca0e8c6fc0ea8c6df0620f9b6e2a1d4b8b9",
+          "bytes": 21028,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "067bdbce535bb7f633d7f67135fdbca0e8c6fc0ea8c6df0620f9b6e2a1d4b8b9",
+          "original_copy_and_git_blob_verified": true
+        },
+        {
+          "path": "final-repo-reviews/quality-review-4.json",
+          "sha256": "1845b5b3234c582cf111af9b0632fc9bb73652b4362aad201beb6b63d874dbeb",
+          "bytes": 15016,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "1845b5b3234c582cf111af9b0632fc9bb73652b4362aad201beb6b63d874dbeb",
+          "original_copy_and_git_blob_verified": true
+        }
+      ],
+      "instrumentation_limits_as_reported": [
+        "Repository-only frozen assessment; no other repository, chat, reviewer/rating report, web, provider or bank request, credential access, install, deployment or product edit.",
+        "Read README first and ignored earlier review/rating links. No delegation.",
+        "Tests are controlled fixture/source behavior and doubles, with in-process Python external DNS/connect instrumentation; the guard is not an OS network sandbox.",
+        "No fresh browser interaction, physical microphone test, human semantic listening, production UI build, full Windows/Linux CI, installed native graph/compiler replay, or generic FLUJO 104-suite rerun.",
+        "Original organizer/S3 rows and private infrastructure per-request histories are unavailable in the permitted repository scope; historical aggregate counts are credited as recorded evidence, not independently re-ingested.",
+        "An initial bare Node smoke command failed because it omitted the documented TypeScript stripping flag; the documented guarded command then passed all five checks. An initial original-JUnit digest assertion failed because the public artifact is a documented curated derivative; all eight publication hashes match. Neither was an application defect.",
+        "ML refitting was not performed because scikit-learn was unavailable; hashes, actual keyword predictions, reported model error records/confusion matrices and paired uncertainty were independently reconstructed.",
+        "The five dimensions judge the complete submitted hackathon product plus evidence and expandable platform, not a fictional bank prototype as production certification."
+      ]
+    },
+    {
+      "reviewer": "quality-review-5",
+      "source_commit": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+      "complete_submission": 89,
+      "maximum": 100,
+      "dimensions": {
+        "technical_judgment": 19,
+        "ai_engineering": 17,
+        "data_engineering": 19,
+        "ml_evaluation": 16,
+        "data_analytics": 18
+      },
+      "reports": [
+        {
+          "path": "final-repo-reviews/quality-review-5.md",
+          "sha256": "a51d9804fc355e3e8a02dcb35dea092bfaf144f32c45a5ab92c39c548256f98e",
+          "bytes": 14153,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "a51d9804fc355e3e8a02dcb35dea092bfaf144f32c45a5ab92c39c548256f98e",
+          "original_copy_and_git_blob_verified": true
+        },
+        {
+          "path": "final-repo-reviews/quality-review-5.json",
+          "sha256": "125f6c647eb3571dcb5a7cab6a01aa852faeda27941ec32e261464e2d74e91a0",
+          "bytes": 9790,
+          "publication_transform": "none",
+          "original_to_copy_verified": true,
+          "staged_git_blob_sha256": "125f6c647eb3571dcb5a7cab6a01aa852faeda27941ec32e261464e2d74e91a0",
+          "original_copy_and_git_blob_verified": true
+        }
+      ],
+      "instrumentation_limits_as_reported": [
+        "No scikit-learn available; no installs, model retraining or fixed-model replay. Source, frozen datasets, provenance, metrics and errors inspected.",
+        "Historical organizer 5.9-million-row build not recomputed; public synthetic pipeline suites executed.",
+        "No full frontend build/current browser acceptance or external deployment verification.",
+        "No current human audio/semantic review, physical microphone test, provider replay or real-bank certification.",
+        "FLUJO subset exact-byte verified; upstream 104-test suite not rerun.",
+        "Source tests, historical recordings, provider/load tests and separate infrastructure exercises retain their own boundaries."
+      ]
+    }
+  ],
+  "verification": {
+    "all_five_source_heads_match": true,
+    "all_five_dimension_sums_match_original_totals": true,
+    "all_dimension_maxima_20": true,
+    "all_raw_reports_original_copy_staged_git_blob_match": true,
+    "raw_report_count": 10,
+    "text_attribute": "existing docs/review/final-repo-reviews/** -text whitespace=cr-at-eol",
+    "gitattributes_changed": false
+  },
+  "instrumentation_limits": {
+    "checks_not_pooled": "Overlapping suites remain per-reviewer test counts; no unique combined-suite or all-repository CI pass is inferred.",
+    "qualification_boundary": "Source fixtures and historical receipts do not establish a fresh deployed customer path, new provider quality, native integration, human semantics, larger fleet completion or production bank certification.",
+    "network_guard_boundary": "Python/Node connection guards are instrumentation, not OS network isolation.",
+    "quality_review_1": "The public replay passed 67 source tests and eleven invariants but the final router evaluation was unavailable without scikit-learn; no full replay receipt is claimed. The first core fixture run used pytest's normal temporary location; later tests used assigned scratch.",
+    "quality_review_2": "262 additional tests and 37 subtests remain separate denominators; no model refit, frontend build or current deployment acceptance is inferred.",
+    "quality_review_3": "Learned predictions were reconstructed from published outputs; keyword source was rerun. Private full data and the full neighboring FLUJO build remained out of scope.",
+    "quality_review_4": "An initial bare Node invocation lacked the documented flag and then passed with the documented command. Original private and curated public JUnit hashes were distinguished through the publication manifest.",
+    "quality_review_5": {
+      "core_pytest_passed": 1078,
+      "core_pytest_failures": 0,
+      "core_pytest_errors": 0,
+      "core_pytest_skips": 0,
+      "core_source_hashes_changed": false,
+      "core_wrapper_passed": false,
+      "reason": "PYTEST_ADDOPTS Windows absolute basetemp backslashes were stripped, creating generated untracked root scratch and failing the wrapper clean-status gate. The reviewer reports verifying the exact generated path and moving only that scratch into assigned scratch, preserving the original receipt. Passing pytest/source hashes do not establish an overall wrapper qualification pass.",
+      "supplemental_pytest_passed": 182
+    }
+  },
+  "preservation": {
+    "prior_cohort_manifest_sha256_unchanged": "d46cc460382c4104d3a8975570fca5d31808a86d1ded9bbdaf1ed50880972f5c",
+    "previous_raw_report_hashes": {
+      "docs/review/final-repo-reviews/final-review-1.json": "7dfa9420388662b813752f03f967821cc189b4268a005c27efad7615ef81bda6",
+      "docs/review/final-repo-reviews/final-review-1.md": "f74f802f8418162e488c6dddf3fc7e7598689a29d21f5b81e870114a97902173",
+      "docs/review/final-repo-reviews/final-review-2.json": "2747e941b8906c18c564f1035c8e8373019dc8137bcb4a4c2a5f80c49126eec7",
+      "docs/review/final-repo-reviews/final-review-2.md": "7b94949b63e3c26eccef6f3eb5d442f09f051ffa2c7e85aba9088473fcbd0ef7",
+      "docs/review/final-repo-reviews/final-review-3.json": "6e7a519b6d213d5ebca0ed68b953bbc73c93458055c0ff337f3423d74b6920e5",
+      "docs/review/final-repo-reviews/final-review-3.md": "a15e5ea80fef0d705284314bdd6043858abd3b9d38afe8383a94c7892ae6c069",
+      "docs/review/final-repo-reviews/final-review-4.json": "ae479fa7cc919ce23c43d57e2f108ad0912686861dbe3c640868c373aa6e021b",
+      "docs/review/final-repo-reviews/final-review-4.md": "52c930e5fbb295f754de9b80fe4300d7d3b58edbf1ad13beb93b85ae6ea71bbf",
+      "docs/review/final-repo-reviews/final-review-5.json": "38404a6e91d81ca7124eb4dc36202f714f20a837c5278e73e84e109ed40f153a",
+      "docs/review/final-repo-reviews/final-review-5.md": "e84bdbdc417e29912b1d53699df4fc365ca46615ded7415c8cf475f349096b2b",
+      "docs/review/final-repo-reviews/post-pitch-2c90d9c6.json": "7af299630d593ac5b8b06eecdb0f38b1b4c1bdac281e396d1b21130a228e8c7f",
+      "docs/review/final-repo-reviews/post-pitch-2c90d9c6.md": "d48bc8c2c364f5a6338fad4cc19b4581dce4503b32519fafe7c8476814424b26"
+    },
+    "prior_FINAL_REPO_REVIEWS_md_prefix_sha256": "0ea92bce86416512100dc103feb39b461d8465310c1e994c6558e1aab61b2c9f",
+    "existing_branch": "codex/savia-submission-final-review",
+    "existing_branch_head": "b4d83b53f22414ca2aa4368b3bb2c4ec0b0d79dc",
+    "ignored_scratch_preserved": true,
+    "frozen_evidence_worktree_read_only": true,
+    "README_and_portal_changed": false,
+    "deployment_performed": false,
+    "push_performed": false
+  }
+}

@@ -1,0 +1,240 @@
+{
+  "schema": "savia-independent-repository-assessment/v1",
+  "reviewer": "quality-review-4",
+  "frozen_head": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+  "repository_root": "C:/Users/Moe/.codex/worktrees/savia-review-evidence/factored-hackathon-2026",
+  "total_score": 87,
+  "maximum_score": 100,
+  "dimensions": [
+    {
+      "dimension": "technical judgment",
+      "score": 18,
+      "maximum": 20,
+      "rationale": "Strong deterministic R0-R18 lifecycle, owner/session/query/snapshot binding, explicit consent, independent receipt readback, revocation, idempotency and durable uncertain recovery. Banking stays outside generic FLUJO main. Deduction reflects overlapping legacy/direct/in-process/native integration modes and present-tense architecture wording that requires substantial appendix reading to distinguish targets from current behavior; no checked core action-authority defect was found."
+    },
+    {
+      "dimension": "AI engineering",
+      "score": 17,
+      "maximum": 20,
+      "rationale": "Implemented integrated voice, exact playback acknowledgments, bounded factual language inputs, schema/grounding checks and deterministic fallbacks, two real model reviewer roles, durable inquiries and reviewed fleet-result correlation. The recorded two-reviewer enhancement is useful but chooses from six prewritten suggestions; it is less substantive investigation than broad specialist-exploration language implies. Sparse useful-answer observations and pending human audio review limit evidence for conversational breadth. Larger fleet and real-bank qualification are separate scopes, not missing hackathon requirements."
+    },
+    {
+      "dimension": "data engineering",
+      "score": 19,
+      "maximum": 20,
+      "rationale": "Substantial six-table 5,899,720-row historical pipeline; raw reconciliation, lineage, typed quarantine, deterministic corrections/deduplication, owner-valid serving, safe aggregates, atomic last-good publication, writer fencing and customer-sharded serving. Critical implementation behavior passed local synthetic tests. A static-source inventory/ETag approach is weaker than version-pinned source reads, and full-refresh/single-writer operation plus explicit operator stale-lock recovery limit expansion, but are well disclosed and appropriate to a hackathon."
+    },
+    {
+      "dimension": "ML/evaluation",
+      "score": 15,
+      "maximum": 20,
+      "rationale": "Sound refusal to learn from template-leaked/no-signal source labels, training-only C/tau selection, frozen independently AI-authored ES/PT holdout, keyword/raw/abstention comparison, language/class errors, confusion matrices and uncertainty. Independent reconstruction confirms 70/120 vs 94/120 vs 65/120 and the safety/escalation tradeoff. Ground truth remains unadjudicated despite the provenance document's before-final-submission requirement. Synthetic family dependence and small class slices limit generalization. Luna adds 100 grounded structured completions but only ten request phrasings and ties a deterministic baseline; it is not evidence of ML decision improvement or current UI model quality."
+    },
+    {
+      "dimension": "data analytics",
+      "score": 18,
+      "maximum": 20,
+      "rationale": "Privacy-preserving operational extraction and verified current host snapshots keep intent, intake, existing intake, handoff request and actual resolution distinct. Operating evidence connects ownership/leakage/latency/token/error denominators to decisions, and host analytics tests pass. The report is a current-slot snapshot without exact workflow attribution, card-block ledger integration, durable token/cost capture or customer cohort outcome analysis. Those limits are honest, but constrain the analytical depth and decisions supported."
+    }
+  ],
+  "first_five_findings_discovery_order": [
+    {
+      "order": 1,
+      "kind": "strength",
+      "finding": "README and the submission/customer route describe an end-to-end focused product with explicit simulated-bank boundaries, retained facts, helpful informational closure and saved follow-through.",
+      "evidence": [
+        "README.md",
+        "docs/submission/START_HERE.md",
+        "docs/submission/CUSTOMER_JOURNEY.md"
+      ]
+    },
+    {
+      "order": 2,
+      "kind": "scope finding",
+      "finding": "The recorded two-reviewer success and larger fleet design are separate. A later customer fleet attempt failed on its first provider call; the customer guide discloses this. Present-tense ten-team/ready-to-scale phrasing in pitch/comparison needs the same adjacent scope qualification.",
+      "evidence": [
+        "docs/submission/CUSTOMER_JOURNEY.md",
+        "web/submission/pitch/savia-final-pitch.html",
+        "docs/submission/ELEVENLABS_COMPARISON.md"
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "comparison finding",
+      "finding": "ElevenLabs comparison is useful product positioning, but it is not a matched benchmark or proof that the commercial platform lacks durable cases, policy, tools or consent. The repository itself acknowledges a financial-services dispute showcase and vendor-reported voice metrics.",
+      "evidence": [
+        "docs/submission/ELEVENLABS_COMPARISON.md",
+        "web/submission/pitch/slides/slide-03.png",
+        "web/submission/pitch/savia-final-pitch.html"
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "strength with limit",
+      "finding": "The generic/domain product boundary is explicit and architecturally supported. The pinned generic FLUJO subset contains reusable chat/flow/tool/MCP/execution contracts; its 104 scoped upstream tests are historical, use mocks and a dependency cache with disclosed version drift.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/FLUJO_PRODUCT_BOUNDARY.md",
+        "docs/FLUJO_HACKATHON_DEPLOYMENT.md",
+        "docs/submission/FLUJO_PLATFORM_EVIDENCE.md"
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "strength",
+      "finding": "The R0-R18 engine is executable deterministic policy over typed state, with a runtime that exposes no bank write port and a separate trusted host/ledger boundary for consent and verified actions. This is substantive implementation, not only a diagram.",
+      "evidence": [
+        "docs/submission/DISPUTE_ENGINE.md",
+        "dispute_workflow/policy.py",
+        "dispute_workflow/runtime.py",
+        "dispute_workflow/action_host.py",
+        "banking_mcp/actions.py"
+      ]
+    }
+  ],
+  "checks": {
+    "offline_pytest": {
+      "passed": 1058,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsed_seconds": 101.951,
+      "suites": 14,
+      "external_network_attempts": 0,
+      "python": "3.13.1",
+      "receipt": ".tmp/quality-review-4/check-receipt.json",
+      "junit": ".tmp/quality-review-4/junit.xml",
+      "stdout": ".tmp/quality-review-4/pytest-output.txt",
+      "harness": ".tmp/quality-review-4/offline_checks.py"
+    },
+    "luna_reconstruction": {
+      "records": 100,
+      "unique_cases": 100,
+      "correct": 100,
+      "bounded_safe": 100,
+      "deterministic_baseline_matches": 100,
+      "peak_overlapping_turns": 100,
+      "language_mix": {
+        "es": 50,
+        "pt": 50
+      },
+      "request_phrasings": 10,
+      "provider_requests_made_by_review": 0,
+      "receipt": ".tmp/quality-review-4/luna-audit/audit.json"
+    },
+    "generic_flujo": {
+      "upstream_commit": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+      "verified_files": 39,
+      "verified_bytes": 619009,
+      "dependency_free_smoke_passed": 5,
+      "historical_104_tests_rerun": false
+    },
+    "core_congruence": {
+      "domain_and_test_files_compared": 39,
+      "matching_current_frozen_checkout": 39,
+      "qualification_publication_hashes_matched": 8,
+      "public_junit_is_disclosed_curated_derivative": true
+    },
+    "router_reconstruction": {
+      "n": 120,
+      "baseline_correct": 70,
+      "model_correct": 94,
+      "abstention_correct": 65,
+      "human_missed": [
+        13,
+        3,
+        1
+      ],
+      "unnecessary_handoffs": [
+        6,
+        9,
+        52
+      ],
+      "paired_model_minus_baseline": 0.2,
+      "paired_iid_case_bootstrap95": [
+        0.1,
+        0.3
+      ],
+      "resamples": 10000,
+      "seed": 7,
+      "train_and_holdout_hashes_verified": true,
+      "normalized_exact_overlap": 0,
+      "sklearn_refit": false,
+      "reason_refit_not_run": "scikit-learn unavailable in existing interpreter; no install allowed"
+    },
+    "saved_voice_file": {
+      "sha256_verified": true,
+      "pcm_frames": 196800,
+      "sample_rate_hz": 24000,
+      "channels": 1,
+      "sample_width_bytes": 2,
+      "seconds": 8.2,
+      "ack_sample_count_matches": true,
+      "human_semantic_listening": false
+    },
+    "source_unchanged": {
+      "head_verified": true,
+      "tracked_git_diff_empty": true,
+      "git_status_empty": true,
+      "writes": "Only assigned .tmp/quality-review-4 scratch and the requested .tmp/quality-review-4.md/.json assessment outputs."
+    },
+    "artifact_audit": ".tmp/quality-review-4/artifact-audit.json"
+  },
+  "defects_and_blockers": [
+    {
+      "severity": "evaluation qualification",
+      "finding": "Independent human adjudication of the 120-case intent labels is still pending. The provenance file explicitly requires it before final submission. This blocks an independently adjudicated ground-truth claim, not execution of the simulated deterministic core.",
+      "evidence": [
+        "docs/ml/router_holdout_provenance.md",
+        "docs/demo/intent_router_evaluation.md"
+      ]
+    },
+    {
+      "severity": "claims/documentation",
+      "finding": "Architecture introduction says it commissions 100 specialists and delivers push/email, while nearby sections describe a target and evidence explicitly leaves these unqualified. The comparison's 'architecture is ready to scale' and categorical voice/case contrast should state demonstrated scope adjacent to the claim.",
+      "evidence": [
+        "docs/architecture/system-landscape.md",
+        "docs/submission/ELEVENLABS_COMPARISON.md",
+        "docs/submission/measurements/INFRASTRUCTURE_CAPACITY.md"
+      ]
+    },
+    {
+      "severity": "reviewability",
+      "finding": "Historical source-only setup text remains prominent in frontend/DIRECT_MCP.md while current release records include in-process host/API acceptance. The release documentation preserves provenance well, but the reader must reconcile several different customer/voice/fleet/action sources. A concise current capability/source matrix would improve reproducibility.",
+      "evidence": [
+        "frontend/DIRECT_MCP.md",
+        "docs/submission/RELEASE_CANDIDATE.md",
+        "docs/submission/measurements/MEASURED_RESULTS.md"
+      ]
+    },
+    {
+      "severity": "scope limit",
+      "finding": "No checked core defect blocks a complete fictional-bank hackathon submission. Real-bank action certification, exact 100-agent customer completion, production operations, final-video placeholder replacement and larger-fleet qualification were not treated as missing requirements."
+    }
+  ],
+  "useful_improvements": [
+    "Have bilingual human adjudicators label a new untouched evaluation set, record disagreements and confidence, and compare routing plus grounded response quality against deterministic baselines without tuning on the known holdout.",
+    "Describe the current reviewer enhancement as two bounded suggestion selectors; show what additional evidence an expanded team obtains before claiming richer specialist investigation.",
+    "Put actual two-reviewer/current core behavior adjacent to the ten-team target and push/email ambition in every present-tense pitch or architecture claim.",
+    "Add one compact release map connecting each currently claimed capability to its exact source/image, fixture or recording, then retire or banner stale source-only setup text.",
+    "Persist per-turn model token/usage observations and explicit query/action attribution so analytics can report customer-case cohorts, cost per case and host outcomes without inference from latest session state.",
+    "For future scale qualification, use version-pinned source inputs and measure existing resource/latency/cost behavior under a defined customer workload; do not replace the valid hackathon evidence with general production claims."
+  ],
+  "comparison_quality": {
+    "commercial": "Clear product emphasis and dated vendor references, with explicit no-matched-benchmark caveat. It does not substantiate exclusivity, inferiority or quantitative voice advantage.",
+    "router": "Strong controlled component comparison with fixed parameters, same frozen workload, class/language denominators and safety/coverage tradeoff; label and authored-family uncertainty remain.",
+    "luna": "Strong artifact-grounding and overlap audit, but repeated fixture phrases and 100/100 baseline tie limit claims to bounded structured request performance.",
+    "customer": "Useful same-facts baseline and preservation of n=3 useful-answer failure plus a separate post-fix fallback; different source/provider/request boundaries are not pooled.",
+    "capacity": "Failure-preserving capacity story distinguishes 217/300 first wording, 300/300 neutral repeat, queued latency, actual filesystem observations and sandbox collaboration from a completed customer fleet."
+  },
+  "limits": [
+    "Repository-only frozen assessment; no other repository, chat, reviewer/rating report, web, provider or bank request, credential access, install, deployment or product edit.",
+    "Read README first and ignored earlier review/rating links. No delegation.",
+    "Tests are controlled fixture/source behavior and doubles, with in-process Python external DNS/connect instrumentation; the guard is not an OS network sandbox.",
+    "No fresh browser interaction, physical microphone test, human semantic listening, production UI build, full Windows/Linux CI, installed native graph/compiler replay, or generic FLUJO 104-suite rerun.",
+    "Original organizer/S3 rows and private infrastructure per-request histories are unavailable in the permitted repository scope; historical aggregate counts are credited as recorded evidence, not independently re-ingested.",
+    "An initial bare Node smoke command failed because it omitted the documented TypeScript stripping flag; the documented guarded command then passed all five checks. An initial original-JUnit digest assertion failed because the public artifact is a documented curated derivative; all eight publication hashes match. Neither was an application defect.",
+    "ML refitting was not performed because scikit-learn was unavailable; hashes, actual keyword predictions, reported model error records/confusion matrices and paired uncertainty were independently reconstructed.",
+    "The five dimensions judge the complete submitted hackathon product plus evidence and expandable platform, not a fictional bank prototype as production certification."
+  ]
+}

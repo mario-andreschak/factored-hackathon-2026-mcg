@@ -1,0 +1,368 @@
+{
+  "schema": "savia-independent-repository-quality-review/v1",
+  "reviewer": "quality-review-2",
+  "repository_root": "C:\\Users\\Moe\\.codex\\worktrees\\savia-review-evidence\\factored-hackathon-2026",
+  "source_head": "df957f99a6e544cde5a698cfb6d9685e92ee3255",
+  "source_tree": "f6a8a5c64cf9cbae5fb9729f8a0f43ffd5958804",
+  "completed_at_utc": "2026-10-06T00:06:29.548162+00:00",
+  "score_total": 89,
+  "score_maximum": 100,
+  "dimensions": [
+    {
+      "dimension": "technical judgment",
+      "score": 19,
+      "maximum": 20,
+      "reason": "Complete ordered R0-R18 core, ownership/authentication before private work, explicit host consent, independently reread receipts, uncertainty/replay/revocation/ledger-continuity boundaries, and generic/domain separation supported by source. Fresh core and card checks pass. Deduction for target/comparison claim precision and bounded qualification breadth."
+    },
+    {
+      "dimension": "AI engineering",
+      "score": 17,
+      "maximum": 20,
+      "reason": "Typed bounded model stages, guarded responses and deterministic fallback, durable inquiry/events, actual two-model reviewer recording, scoped fleet connector, integrated voice/playback and current canonical TTS. Demonstrated reviewers select bounded suggestion enums; human-reviewed customer quality and current waveform/comprehension acceptance remain limited. Larger fleet execution is treated as a separate scope."
+    },
+    {
+      "dimension": "data engineering",
+      "score": 19,
+      "maximum": 20,
+      "reason": "Substantive bronze/silver/gold pipeline with lineage, typed contracts/quarantine, deterministic deduplication, ownership enforcement, consumer outputs, immutable publication and writer locking; fixtures exercise corrections/late arrivals/failed builds. Historical six-table aggregates reconcile. Remaining limits are ETag/inventory freshness without VersionId-pinned ingestion and operator-only snapshot cleanup."
+    },
+    {
+      "dimension": "ML/evaluation",
+      "score": 16,
+      "maximum": 20,
+      "reason": "Correctly rejects template leakage and unlearnable labels; fixed train-only classifier/keyword/abstention comparison with frozen independent AI-authored holdout, errors/slices/uncertainty. Luna records audit to 100/100 and tie a deterministic baseline. Human adjudication required by the holdout's own final-submission gate remains pending; authored examples and ten repeated Luna phrases limit generalization/quality claims."
+    },
+    {
+      "dimension": "data analytics",
+      "score": 18,
+      "maximum": 20,
+      "reason": "Read-only privacy-preserving metadata and exact current-host admission checks separate plans, receipts, recovery, cancellations and revocation. Operating analysis produces useful decisions from ownership/template defects, paired routing, handoff burden, token/cache overhead and latency. Missing exact turn/query attribution, persistent workflow token/cost data and card/lifetime outcome aggregation limit completeness; measured ROI is not claimed or required."
+    }
+  ],
+  "overall": "Strong complete fictional-bank hackathon submission with deterministic core, implemented conversational enhancements, expandable generic/domain architecture and inspectable evidence. Not assessed as production banking certification.",
+  "first_five_findings_in_discovery_order": [
+    {
+      "discovery_order": 1,
+      "kind": "strength",
+      "title": "README establishes a focused complete core and separately scoped enhancements",
+      "source": "README.md:25",
+      "detail": "Product value, deterministic R0-R18, recorded two reviewers, capacity and fictional-bank boundaries are explicit; later source and fresh tests substantiate the core."
+    },
+    {
+      "discovery_order": 2,
+      "kind": "strength",
+      "title": "Generic/domain separation is supported by inspectable interfaces",
+      "source": "docs/FLUJO_PRODUCT_BOUNDARY.md",
+      "detail": "Domain facts/policy/consent/receipts remain application-owned. Copied generic FLUJO source and a non-banking example support reuse; 39 hashes/blobs independently verified."
+    },
+    {
+      "discovery_order": 3,
+      "kind": "claim_precision",
+      "title": "ElevenLabs comparison is positioning rather than comparative proof",
+      "source": "docs/submission/ELEVENLABS_COMPARISON.md:3",
+      "detail": "Opening voice-platform contrast is stronger than the same document's integrated-agent/dispute-showcase reference supports. No matched capability, latency or outcome benchmark establishes superiority or absence of competitor case/tooling features."
+    },
+    {
+      "discovery_order": 4,
+      "kind": "claim_precision",
+      "title": "Architecture opening uses present tense for target fleet/delivery connections",
+      "source": "docs/architecture/system-landscape.md:13",
+      "detail": "100-agent commissioning and push/email are described as current behavior before target/gap caveats. The caveats are explicit later. This is a wording defect, not a requirement to run the separately scoped larger fleet."
+    },
+    {
+      "discovery_order": 5,
+      "kind": "evidence_limit_with_source_repair",
+      "title": "Historical native recommendation speech omits canonical caveats",
+      "source": "docs/submission/measurements/saved-recommendations-native/receipt.json:24",
+      "detail": "Original 8.2-second PCM/full-playback receipt explicitly omits folio guidance and bank-not-resolved caveat and lacks human audio review. Current canonical TTS repairs the script path with source tests; fresh waveform/comprehension acceptance remains absent."
+    }
+  ],
+  "checks": {
+    "core": {
+      "command": "python docs/submission/measurements/core-engine-final/core-engine-run.py --repo . --expected-head df957f99a6e544cde5a698cfb6d9685e92ee3255 --out .tmp/quality-review-2/core",
+      "counts": {
+        "tests": 1078,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 1078
+      },
+      "elapsed_seconds": 136.911,
+      "source_unchanged": true,
+      "source_file_count": 185,
+      "network_guard": {
+        "external_python_dns_and_connect_disabled": true,
+        "blocked_external_attempts": 0,
+        "test_scope": "generated local stores and fixture observations; no provider tests"
+      },
+      "receipt": ".tmp/quality-review-2/core/receipt.json"
+    },
+    "additional": {
+      "suites": [
+        "tests/test_card_block.py",
+        "tests/test_card_block_api.py",
+        "savia_assistant/tests/test_service.py",
+        "savia_assistant/tests/test_api.py",
+        "savia_assistant/tests/test_fleet.py",
+        "savia_assistant/tests/test_fleet_api.py",
+        "tests/test_pipeline.py",
+        "tests/test_row_hash.py",
+        "tests/test_dataset_health.py",
+        "tests/test_agent_analytics.py",
+        "tests/test_host_outcome_analytics.py",
+        "tests/test_report_customer_outcomes.py",
+        "frontend/tests/test_voice.py"
+      ],
+      "pytest_tests_passed": 262,
+      "subtests_passed": 37,
+      "junit_checks": {
+        "tests": 299,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "elapsed_seconds": 146.984,
+      "source_unchanged": true,
+      "network_guard": {
+        "external_python_dns_and_connect_disabled": true,
+        "blocked_external_attempts": 0,
+        "test_scope": "generated local stores and fixture observations; no provider tests"
+      },
+      "receipt": ".tmp/quality-review-2/extra/receipt.json",
+      "includes_100_parallel_card_confirmations": true
+    },
+    "luna_offline_audit": {
+      "record_count": 100,
+      "unique_cases": 100,
+      "correct": 100,
+      "bounded_safe": 100,
+      "baseline_matches": 100,
+      "peak_overlapping_turns": 100,
+      "distinct_request_phrases": 10,
+      "receipt": ".tmp/quality-review-2/luna/audit.json",
+      "new_model_calls": 0
+    },
+    "pipeline_aggregate_arithmetic": {
+      "table_count": 6,
+      "raw_total": 5899720,
+      "tables": {
+        "customers": {
+          "raw": 150000,
+          "silver": 150000,
+          "quarantined": 0,
+          "removed_duplicates": 0,
+          "reconciles": true
+        },
+        "products": {
+          "raw": 400000,
+          "silver": 400000,
+          "quarantined": 0,
+          "removed_duplicates": 0,
+          "reconciles": true
+        },
+        "transactions": {
+          "raw": 4425008,
+          "silver": 4425008,
+          "quarantined": 0,
+          "removed_duplicates": 0,
+          "reconciles": true
+        },
+        "call_center_interactions": {
+          "raw": 686296,
+          "silver": 686296,
+          "quarantined": 0,
+          "removed_duplicates": 0,
+          "reconciles": true
+        },
+        "call_transcripts": {
+          "raw": 171321,
+          "silver": 171321,
+          "quarantined": 0,
+          "removed_duplicates": 0,
+          "reconciles": true
+        },
+        "complaints": {
+          "raw": 67095,
+          "silver": 67095,
+          "quarantined": 0,
+          "removed_duplicates": 0,
+          "reconciles": true
+        }
+      },
+      "scope": "Arithmetic check of committed aggregate receipt; private source rows not rescanned."
+    },
+    "router_original_output_reconstruction": {
+      "holdout_hash_verified": true,
+      "train_hash_verified": true,
+      "class_language_counts": {
+        "('inquiry', 'es')": 15,
+        "('dispute', 'es')": 15,
+        "('human', 'es')": 15,
+        "('other', 'es')": 15,
+        "('inquiry', 'pt')": 15,
+        "('dispute', 'pt')": 15,
+        "('human', 'pt')": 15,
+        "('other', 'pt')": 15
+      },
+      "systems": {
+        "keyword_baseline": {
+          "correct": 70,
+          "n": 120,
+          "human_missed": 13,
+          "human_n": 30,
+          "extra_handoffs": 6,
+          "nonhuman_n": 90,
+          "confusion_verified": true
+        },
+        "tfidf_logistic": {
+          "correct": 94,
+          "n": 120,
+          "human_missed": 3,
+          "human_n": 30,
+          "extra_handoffs": 9,
+          "nonhuman_n": 90,
+          "confusion_verified": true
+        },
+        "tfidf_logistic_abstention": {
+          "correct": 65,
+          "n": 120,
+          "human_missed": 1,
+          "human_n": 30,
+          "extra_handoffs": 52,
+          "nonhuman_n": 90,
+          "confusion_verified": true
+        }
+      },
+      "scope": "Original committed errors/confusion matrices reconstructed. Model not retrained; scikit-learn absent and installs forbidden."
+    },
+    "operating_aggregate_analysis": "Existing analyzer recomputed published latency/token/cache/paired-interval/customer-count calculations; output saved in .tmp/quality-review-2/audit.json.",
+    "flujo_copied_source": {
+      "verified_files": 39,
+      "verified_bytes": 619009,
+      "upstream_commit": "0be972ac7b748703d09e407ef96beba45ab17b2a",
+      "hash_and_git_blob_verification": true,
+      "dependency_free_retry_smoke_passed": 5,
+      "historical_104_upstream_tests_rerun": false
+    },
+    "historical_core_domain_hashes": {
+      "total": 39,
+      "matched": 39,
+      "differing": [],
+      "missing": []
+    },
+    "historical_full_184_file_manifest": {
+      "total": 184,
+      "matched": 176,
+      "differing": [
+        "contracts/policy_engine.md",
+        "frontend/server/conversation.py",
+        "frontend/server/deployment_transition.py",
+        "frontend/server/voice.py",
+        "resources/dispute_workflow.flow.json",
+        "tests/test_card_block_api.py",
+        "tests/test_dispute_deployment_transition.py",
+        "tests/test_history_codex.py"
+      ],
+      "missing": []
+    },
+    "deployed_source_vs_current_HEAD_git_blobs": {
+      "total": 177,
+      "matched": 153,
+      "differing": [
+        "contracts/policy_engine.md",
+        "frontend/server/conversation.py",
+        "frontend/server/voice.py",
+        "frontend/src/avatar/README.md",
+        "resources/dispute_workflow.flow.json",
+        "web/submission/evidence/DEVELOPMENT_PROCESS.md",
+        "web/submission/evidence/DISPUTE_ENGINE.md",
+        "web/submission/evidence/ELEVENLABS_COMPARISON.md",
+        "web/submission/evidence/EVIDENCE_MAP.md",
+        "web/submission/evidence/START_HERE.md",
+        "web/submission/index.html",
+        "web/submission/pitch/savia-final-pitch-manifest.json",
+        "web/submission/pitch/savia-final-pitch-sources.json",
+        "web/submission/pitch/savia-final-pitch-speaker-notes.md",
+        "web/submission/pitch/savia-final-pitch.html",
+        "web/submission/pitch/savia-final-pitch.pdf",
+        "web/submission/pitch/savia-final-pitch.pptx",
+        "web/submission/pitch/slides/slide-01.png",
+        "web/submission/pitch/slides/slide-02.png",
+        "web/submission/pitch/slides/slide-03.png",
+        "web/submission/pitch/slides/slide-04.png",
+        "web/submission/pitch/slides/slide-05.png",
+        "web/submission/pitch/slides/slide-06.png",
+        "web/submission/portal-manifest.json"
+      ],
+      "missing": []
+    }
+  },
+  "comparison_quality": {
+    "judgment": "Useful and dated product positioning, with correct workload separation; not a matched commercial benchmark or verified competitor capability exclusion.",
+    "vendor_claims_verified_on_web": false,
+    "original_customer_sample": 3,
+    "original_agent_screened_useful": 2,
+    "post_fix_portuguese_sample_kept_separate": 1,
+    "baseline_luna_tie": true,
+    "capacity_scope": "300 concurrent client reference-code requests including queueing; 18 live sandbox collaboration exercise. Neither is exact 100-agent Savia customer acceptance."
+  },
+  "defects_and_gates": [
+    {
+      "severity": "medium",
+      "title": "Human adjudication remains pending against the router's own final-submission requirement",
+      "source": "docs/ml/router_holdout_provenance.md:74",
+      "effect": "Blocks treating proposed AI labels as human-validated gold; limits ML score without invalidating the working core."
+    },
+    {
+      "severity": "low",
+      "title": "Target fleet/delivery and competitor contrast wording should match existing evidence caveats",
+      "sources": [
+        "docs/architecture/system-landscape.md:13",
+        "docs/submission/ELEVENLABS_COMPARISON.md:3",
+        "docs/submission/ELEVENLABS_COMPARISON.md:15"
+      ]
+    },
+    {
+      "severity": "evidence_limit",
+      "title": "Current canonical narration lacks fresh waveform/transcript and human comprehension acceptance",
+      "source": "docs/submission/measurements/verified-outcomes/README.md:24"
+    },
+    {
+      "severity": "analytics_limit",
+      "title": "Current slots lack exact query/turn linkage, persisted workflow costs and card/lifetime aggregation",
+      "source": "analytics/README.md:67"
+    }
+  ],
+  "implementation_submission_blocker_found": false,
+  "useful_improvements": [
+    "Human-adjudicate an untouched ES/PT diagnostic and preserve disagreements/versioned labels.",
+    "Compare bounded reviewer/fallback customer quality against a deterministic baseline on untouched requests.",
+    "Validate current complete narration with a fresh waveform/transcript or human listening review.",
+    "Align opening present-tense architecture and commercial comparison wording with their existing target/measurement boundaries.",
+    "Persist token/cost observations and explicit action/query linkage; add card-block and lifetime analytics with truthful outcome grains."
+  ],
+  "separate_scopes_not_required_for_this_score": [
+    "Exact ten-team/100-conversation customer completion",
+    "Real-bank qualification and live financial actions",
+    "Real human pickup",
+    "Push/email and multi-day reliability",
+    "Replacement for intentionally requested video destination"
+  ],
+  "limits": [
+    "No web/provider/real-bank requests, other repos/chats/reviewers or dependency installs.",
+    "Excluded earlier rating/review reports were not opened; README ratings ignored.",
+    "Private organizer rows not rescanned; committed aggregates and synthetic mechanisms audited.",
+    "scikit-learn absent: original router predictions/hashes audited; no fresh model fit or full public replay.",
+    "Frontend node_modules absent: no frontend build/browser/component suite run.",
+    "No waveform intelligibility/live GUI/provider interoperability/native compiler/full cross-platform CI acceptance inferred.",
+    "Historical deployed source and recording pins do not qualify this entire HEAD; 153/177 deployed-source HEAD blobs match."
+  ],
+  "source_unchanged": true,
+  "git_status_after": "",
+  "writes_limited_to": [
+    ".tmp/quality-review-2/",
+    ".tmp/quality-review-2.md",
+    ".tmp/quality-review-2.json"
+  ],
+  "markdown_report": ".tmp/quality-review-2.md"
+}
