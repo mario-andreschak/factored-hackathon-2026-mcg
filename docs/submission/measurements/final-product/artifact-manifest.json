@@ -9,6 +9,18 @@
       "sha256": "123830af3eb17b9445ee93d9f3305bb42952a212fcf8b6d515d5f605bc226d26",
       "bytes": 1161
     },
+    "independent-mobile-verification.json": {
+      "sha256": "ce876d90af9536f2ca82edbcea901b3e077397470a13e62de53099cf7a7fd7de",
+      "bytes": 763
+    },
+    "independent-portal-harness.py": {
+      "sha256": "f7096c755df978bc67d7cfea24e1ba46c7f88b77dc12a78d9ba39370a73e5340",
+      "bytes": 3754
+    },
+    "independent-portal-verification.json": {
+      "sha256": "a9d0a6cac455befe9391123559f08765a6817ce4c5142c17342ab4ed5fa34dfa",
+      "bytes": 6236
+    },
     "merged-source-gates.xml": {
       "sha256": "4a10c0dfb0c4459dac15fbd087b4bf947f20ec9c88838d8e73201428033b22b4",
       "bytes": 4842
@@ -22,8 +34,8 @@
       "bytes": 9452
     },
     "README.md": {
-      "sha256": "f8659fb9a5de923ca21ff5ccf0c24a15a05c967536e7c4559c5bfbde125eab95",
-      "bytes": 3212
+      "sha256": "3eb75d96254d4eebcf45ff23df388138db4a91cc7edfd74e8e5656f060c3dce6",
+      "bytes": 3789
     },
     "release-layer-verifier.py": {
       "sha256": "8b1804eaf812cc7146b1bebd8ce7ec9b9a9bf512d99952dc15a404be36bf2567",

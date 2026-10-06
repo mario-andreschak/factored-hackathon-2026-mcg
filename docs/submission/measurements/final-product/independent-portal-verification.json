@@ -1,0 +1,202 @@
+{
+  "schema": "savia-live-public-portal-verification/v1",
+  "verified_at_utc": "2026-10-06T01:01:38.821551+00:00",
+  "portal_source": "634aa5244374b3e105ef7864fa100530bab45ec2",
+  "runtime_source": "634aa5244374b3e105ef7864fa100530bab45ec2",
+  "image": "registry.fly.io/savia-rc-2026@sha256:44bc554cd82ad62db51d536d580df248cbb188d24732e7ec1ed8133617c632a0",
+  "runtime_metadata_scope": "supplied from coordinator release receipt; this harness verifies public portal bytes and ingress, not runtime source",
+  "files": [
+    {
+      "path": "assets/mark.svg",
+      "status": 200,
+      "bytes": 205,
+      "sha256": "79464cd0ee801ee9d8d51d23dfa9029a25c46991875fd6574d088e328c6594bb"
+    },
+    {
+      "path": "assets/savia-customer.png",
+      "status": 200,
+      "bytes": 695055,
+      "sha256": "b2c280fcf2daeed17a56fb6af5403d1f19ca8c9f8ce39a643145deaa2b718587"
+    },
+    {
+      "path": "development.html",
+      "status": 200,
+      "bytes": 9326,
+      "sha256": "5ab220a3c8832336162df4dc141efa37b29fa511cd5056f7ead44b6aa8a81946"
+    },
+    {
+      "path": "engine.html",
+      "status": 200,
+      "bytes": 11976,
+      "sha256": "23945dfbb3050dfcf51667395d8aa3d423b9568bd275f57208712e1882a4eb03"
+    },
+    {
+      "path": "evidence/development-process.json",
+      "status": 200,
+      "bytes": 33852,
+      "sha256": "1ed6d74dc010b99d204536183d819172b10ecfa931b31ff3244f813577e6a62e"
+    },
+    {
+      "path": "evidence/DEVELOPMENT_PROCESS.md",
+      "status": 200,
+      "bytes": 20140,
+      "sha256": "7133d1b551a6c96e017ff8d4e36168a4ae06ff12587dd00460045a006825a915",
+      "markdown_links_checked": 66
+    },
+    {
+      "path": "evidence/DISPUTE_ENGINE.md",
+      "status": 200,
+      "bytes": 9819,
+      "sha256": "1e857bf728ab746bd791b83a71c37c1ef413969b1452587bad346d89f7e3c498",
+      "markdown_links_checked": 27
+    },
+    {
+      "path": "evidence/ELEVENLABS_COMPARISON.md",
+      "status": 200,
+      "bytes": 6524,
+      "sha256": "67d692d7ac25894684b7be3c8cbd84e83dbe10e6d097e869bc8b26b70e22a548",
+      "markdown_links_checked": 22
+    },
+    {
+      "path": "evidence/EVIDENCE_MAP.md",
+      "status": 200,
+      "bytes": 26528,
+      "sha256": "b6741999178effb1906a5dc777aa0c34dcc2e409697df265cdce55b2f43a7e63",
+      "markdown_links_checked": 102
+    },
+    {
+      "path": "evidence/START_HERE.md",
+      "status": 200,
+      "bytes": 11158,
+      "sha256": "87b32e55778109dd12b690665d559fb43dadf28c49b287e4008b13699f68d569",
+      "markdown_links_checked": 34
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "bytes": 11265,
+      "sha256": "21b914206781b597cf49a84a4397d662a3d93814360753402e1eae31e9111c8a"
+    },
+    {
+      "path": "llms.txt",
+      "status": 200,
+      "bytes": 2550,
+      "sha256": "b50d0d1a675f7213ad47c4cf86853592851720f3089aa1df1def12b3b965f24c"
+    },
+    {
+      "path": "pitch/savia-final-pitch-manifest.json",
+      "status": 200,
+      "bytes": 2488,
+      "sha256": "fccf39be86793d6b4aa4510001ff3422cafddac5ea02c20ad05b6503e6290268"
+    },
+    {
+      "path": "pitch/savia-final-pitch-sources.json",
+      "status": 200,
+      "bytes": 13885,
+      "sha256": "88ca2ccc33cc4874f9a1630c0475727f888ab0e0e3dc59823f9c94499ca6b436"
+    },
+    {
+      "path": "pitch/savia-final-pitch-speaker-notes.md",
+      "status": 200,
+      "bytes": 12277,
+      "sha256": "89156421b0b29ba7a745ea99b19820bb16fa52f70a6045cef070c2940b3c80d9"
+    },
+    {
+      "path": "pitch/savia-final-pitch.html",
+      "status": 200,
+      "bytes": 15369,
+      "sha256": "31c418736c9b83805a087e70b53c1f3227bbffc9d7efe1ae1d86973c8f06a67f"
+    },
+    {
+      "path": "pitch/savia-final-pitch.pdf",
+      "status": 200,
+      "bytes": 348446,
+      "sha256": "656eaddffb8a513b3ec65ca7cd8bd48f5800d1d4934e47a2948685c7030efd84"
+    },
+    {
+      "path": "pitch/savia-final-pitch.pptx",
+      "status": 200,
+      "bytes": 220902,
+      "sha256": "6793894acf7ff6aa3d6c0cb897eacc9cfb900aa2d09ea8ad5ecfd5a95fcfed3f"
+    },
+    {
+      "path": "pitch/slides/slide-01.png",
+      "status": 200,
+      "bytes": 55830,
+      "sha256": "96a40905192c7ed8b2de0295350b2244b334d06a32aacddd6c1c34a2c62f981a"
+    },
+    {
+      "path": "pitch/slides/slide-02.png",
+      "status": 200,
+      "bytes": 144228,
+      "sha256": "ae52252d43774a47faa6e6a6409c17359dccd4199ae5d17490b5422811e6aeab"
+    },
+    {
+      "path": "pitch/slides/slide-03.png",
+      "status": 200,
+      "bytes": 51040,
+      "sha256": "6a6a62e803a4f293ff6562c5899f66d0309f31eafe25c4149ef61f9290ac123a"
+    },
+    {
+      "path": "pitch/slides/slide-04.png",
+      "status": 200,
+      "bytes": 53815,
+      "sha256": "eabca0607882740c935463d780838d4679123c4afed2bbb5e58109acb3335058"
+    },
+    {
+      "path": "pitch/slides/slide-05.png",
+      "status": 200,
+      "bytes": 58570,
+      "sha256": "de7225b54632655e6b43251dbec33f24539e2010ad756475db1853782961621d"
+    },
+    {
+      "path": "pitch/slides/slide-06.png",
+      "status": 200,
+      "bytes": 52377,
+      "sha256": "54014d1f240ae72d0d56d061886cc865ec10f4eb503c3501a683b193090c7644"
+    },
+    {
+      "path": "savia-submission.vtt",
+      "status": 200,
+      "bytes": 2268,
+      "sha256": "08f82e946c10f7987be8dffcf168e9bcf94704bc4fbf8026bd26d7c701b001c6"
+    },
+    {
+      "path": "styles.css",
+      "status": 200,
+      "bytes": 7946,
+      "sha256": "d5e8be817afee552c2ad8c9104baa37f1e33c3ed100620333e34ab29b9f5bad0"
+    },
+    {
+      "path": "submission.json",
+      "status": 200,
+      "bytes": 1942,
+      "sha256": "bb701f6578af8da432872d266bfe52ee1e4f4430c0f21344f85c226ff2951d20"
+    }
+  ],
+  "boundary": [
+    {
+      "path": "submission/portal-manifest.json",
+      "status": 404
+    },
+    {
+      "path": "submission/.env",
+      "status": 404
+    },
+    {
+      "path": "submission/%2e%2e/.env",
+      "status": 401
+    },
+    {
+      "path": "api/bank/accounts",
+      "status": 401
+    },
+    {
+      "path": "submission/",
+      "method": "HEAD",
+      "status": 200,
+      "body_bytes": 0
+    }
+  ],
+  "markdown_links_checked": 251
+}
