@@ -1,0 +1,98 @@
+{
+  "schema": "savia-publication-boundary-local-qualification/v1",
+  "base_commit": "1d904093e0a32dd3300e7063afef4b05a9f77d02",
+  "files": {
+    "banking_mcp/repository.py": "2cc364cf582ec1929fa39a96dfc069d41f2679a59dd8bfda9ebe78a95df51e22",
+    "pipeline/README.md": "af7b00c34b0e85541795961d26cb7fca7f43e83ec73f1b2c6d5c2a9b37f2728c",
+    "pipeline/__main__.py": "a41fce5d78dcdbb7d92cc12a83d4245cf1356045ecde31402782e87508e99009",
+    "resources/dispute_workflow.flow.json": "c6a1654b39e2aca0dfd22928b48d097bc64213ab411d375d484c51aca1ac493b",
+    "scripts/check_dataset.py": "7e7ffab475249cd8bff0818fd018c887f5dfecd58028ec3d3d263520ca74474a",
+    "tests/test_banking_mcp.py": "c6339d524f344d3828be12055e3c80ea0d8aa46184912befbd1b6ac01d4cc826",
+    "tests/test_dataset_health.py": "e621ff3a40868f2969a1bc0b9a2b3ce60e94f5fb8a111a04b51978f357e85e74",
+    "tests/test_pipeline.py": "ed31e5c7219c9f1efd40e372359e53878e5bcbd024438467e89abceefcb58b2a",
+    "tests/test_prototype_fixture.py": "d1adfb4b1e9f01158fe2d69411f68d4d54bbb35e9f25102ae0a9bf36cf8342ce"
+  },
+  "test_results": {
+    "publication-boundary-tests.xml": {
+      "tests": "73",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "73.439"
+    },
+    "publication-banking-suite.xml": {
+      "tests": "100",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "49.460"
+    },
+    "publication-source-tests.xml": {
+      "tests": "182",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "32.319"
+    }
+  },
+  "limitations": [
+    "Synthetic local fixtures only; no organizer S3 recomputation or production deployment.",
+    "Reports can describe a ready unpublished candidate; CURRENT is the actual serving pointer.",
+    "External report writes remain separate files; a failed report can leave partial mutable aggregates, without changing the serving snapshot.",
+    "Atomic pointer replacement is not a crash-durability or multi-filesystem transaction guarantee."
+  ],
+  "qualified_commit": "2ed5c363dc6ef8cae12f843ad1a97d271451cf40",
+  "nonoverlapping_counts": {
+    "tests": 249,
+    "subtests": 106,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "qualified_git_blob_equality": {
+    "banking_mcp/repository.py": true,
+    "pipeline/README.md": true,
+    "pipeline/__main__.py": true,
+    "resources/dispute_workflow.flow.json": true,
+    "scripts/check_dataset.py": true,
+    "tests/test_banking_mcp.py": true,
+    "tests/test_dataset_health.py": true,
+    "tests/test_pipeline.py": true,
+    "tests/test_prototype_fixture.py": true
+  },
+  "commands": [
+    "python -m pytest -q -p no:cacheprovider --basetemp=.tmp/publication-boundary-tests tests/test_pipeline.py tests/test_dataset_health.py tests/test_prototype_fixture.py --junitxml=.tmp/publication-boundary-tests.xml",
+    "python -m pytest -q -p no:cacheprovider --basetemp=.tmp/publication-banking-suite tests/test_banking_mcp.py --junitxml=.tmp/publication-banking-suite.xml",
+    "python -m pytest -q -p no:cacheprovider --basetemp=.tmp/publication-source-tests tests/test_dispute_graph.py tests/test_synthetic_integration_contract.py::SourceGates tests/test_event_date_search.py tests/test_row_hash.py tests/test_spill_location.py --junitxml=.tmp/publication-source-tests.xml"
+  ],
+  "runtime": {
+    "python": "3.13; exact patch version not recorded",
+    "pytest": "9.1.1",
+    "duckdb": "1.5.5"
+  },
+  "reports": [
+    {
+      "path": "publication-boundary-tests.xml",
+      "sha256": "46b628d2fc8ac5bfc550c175e8de59977f92ba74a392ebcf9171e1aa4018a07e",
+      "publication_transform": "none"
+    },
+    {
+      "path": "publication-banking-suite.xml",
+      "sha256": "53b060ce5b3d6502696064d3e62fd6c0aa64e742807cadfc4bc7e3c91ac51f22",
+      "publication_transform": "none"
+    },
+    {
+      "path": "publication-source-tests.xml",
+      "sha256": "d913386480700afb180eaca4449426745e2ff13cc0f935f33c84d04995ec4fd8",
+      "publication_transform": "none"
+    }
+  ],
+  "independent_review": {
+    "source_commit": "2ed5c363dc6ef8cae12f843ad1a97d271451cf40",
+    "decision": "approved; no actionable defects found",
+    "protected_source_hashes_verified": 89,
+    "qualified_file_hashes_verified": 9,
+    "test_rerun": false,
+    "scope": "source, consumer compatibility and committed-byte verification; test counts remain the original nonoverlapping qualification"
+  }
+}
